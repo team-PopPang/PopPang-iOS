@@ -20,7 +20,7 @@ extension Coordinator where T == OnboardingRoute {
         case .login:
             LoginView()
         case .nicknameSetting:
-            EmptyView()
+            NicknameSettingView()
         case .selectCategory:
             EmptyView()
         }

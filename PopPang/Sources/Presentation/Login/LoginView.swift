@@ -8,11 +8,34 @@
 import SwiftUI
 
 struct LoginView: View {
+    @EnvironmentObject var coordinator: Coordinator<OnboardingRoute, SheetRoute>
+    
     var body: some View {
-        Text("로그인 뷰")
+        VStack(spacing: 0) {
+            
+            Image("Logo Logo")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 200, height: 200)
+                
+            
+            VStack {
+                SocialLoginButton(type: .kakao) {
+                    print("카카오 로그인")
+                    coordinator.push(.nicknameSetting)
+                }
+                
+                SocialLoginButton(type: .apple) {
+                    print("애플 로그인")
+                }
+            }
+            .padding(.top, 50)
+        }
+        .padding(.horizontal, 10)
     }
 }
 
 #Preview {
     LoginView()
 }
+

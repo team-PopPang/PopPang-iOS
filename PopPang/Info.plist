@@ -4,5 +4,17 @@
 <dict>
     <key>UIUserInterfaceStyle</key>
     <string>Light</string>
+    <key>UIAppFonts</key>
+    <array>
+        <string>SCDream1.otf</string>
+        <string>SCDream2.otf</string>
+        <string>SCDream3.otf</string>
+        <string>SCDream4.otf</string>
+        <string>SCDream5.otf</string>
+        <string>SCDream6.otf</string>
+        <string>SCDream7.otf</string>
+        <string>SCDream8.otf</string>
+        <string>SCDream9.otf</string>
+    </array>
 </dict>
 </plist>

@@ -75,38 +75,17 @@ private struct PageContentView: View {
         GeometryReader { proxy in
             VStack(alignment: .center) {
                 Text(step.title)
-                    .font(.system(size: 25, weight: .bold))
+                    .font(.scdream(.extraBold, size: 20))
                     .padding(.top, proxy.size.height * 0.3)
                 
                 Text(step.content)
+                    .font(.scdream(.medium, size: 16))
                     .padding(.top, proxy.size.height * 0.1)
                 
             }
             .frame(maxWidth: .infinity)
         }
     }
-}
-
-struct NextButton: View {
-    var buttonTitle: String
-    var textColor: Color = .white
-    var buttonColor: Color = .orange
-    var action: () -> Void
-    
-    var body: some View {
-        Button {
-            action()
-        } label: {
-            Text(buttonTitle)
-                .frame(height: 56)
-                .frame(maxWidth: .infinity)
-                .foregroundStyle(textColor)
-                .background(buttonColor)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-
-    }
-    
 }
 
 #Preview {

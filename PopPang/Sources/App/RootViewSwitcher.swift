@@ -13,6 +13,10 @@ struct RootViewSwitcher: View {
     @State private var coordinator = Coordinator<OnboardingRoute, SheetRoute>()
     @AppStorage("firstLaunch") private var firstLaunch: Bool = true
     
+    init() {
+        UINavigationBar.configureAppearance()
+    }
+    
     enum RootScene {
         case launch
         case onboarding
