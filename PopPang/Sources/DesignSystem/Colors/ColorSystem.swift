@@ -42,7 +42,20 @@ extension Color {
     // MARK: - Main
     static let mainBlack = Color(hex: "#161717")
     static let mainWhite = Color(hex: "#F1F1F1")
-    static let mainOrange = Color(hex: "#EA6D00")
+    static let mainOrange = Color(hex: "#FF7A00")
+    static let mainGray = Color(hex: "#777777")
+    
+    
+    
+    // MARK: - TextField
+    static let textFieldPlaceHolder = Color(hex: "#AAAAAA")
+    static let textFieldFg = Color(hex: "#333333")
+    static let textFieldBg = Color(hex: "#F3F4F6")
+    static let textFieldGr = Color(hex: "#006813")
+    static let textFieldRe = Color(hex: "#DD0000")
+    
+    
+    
     /*
     static let kakaoTapped = Color(hex: "#CCC200")
     static let appleTapped = Color(hex: "#E5E5E5")

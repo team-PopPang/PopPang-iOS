@@ -9,8 +9,8 @@ import SwiftUI
 
 enum OnboardingRoute: Hashable {
     case login
-    case nicknameSetting
-    case selectCategory
+//    case nicknameSetting
+//    case categorySetting
 }
 
 extension Coordinator where T == OnboardingRoute {
@@ -19,10 +19,10 @@ extension Coordinator where T == OnboardingRoute {
         switch route {
         case .login:
             LoginView()
-        case .nicknameSetting:
-            NicknameSettingView()
-        case .selectCategory:
-            EmptyView()
+//        case .nicknameSetting:
+//            NicknameSettingView()
+//        case .categorySetting:
+//            CategorySettingView()
         }
     }
 }

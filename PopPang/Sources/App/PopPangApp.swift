@@ -11,7 +11,7 @@ import SwiftUI
 struct PopPangApp: App {
     var body: some Scene {
         WindowGroup {
-            RootViewSwitcher()
+            RootViewSwitcher(rootViewModel: ViewModelFactory.shared.createRoot())
 //                .onAppear {
 //                    for family in UIFont.familyNames.sorted() {
 //                        print("📂 Family: \(family)")

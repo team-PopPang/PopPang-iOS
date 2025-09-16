@@ -29,7 +29,7 @@ struct OnboadringView: View {
                     if currentStep.rawValue < OnboardingStep.allCases.count - 1 {
                         currentStep = OnboardingStep.allCases[currentStep.rawValue + 1]
                     } else {
-                        coordinator.push(.login)
+                         coordinator.push(.login)
                     }
                 }
                 .padding(.horizontal, 30)
