@@ -12,12 +12,11 @@ struct NicknameSettingView: View {
     @FocusState private var isFocused: Bool
     @State private var isValid: Bool? = nil
     @State private var step = 1
-    @EnvironmentObject var coordinator: Coordinator<OnboardingRoute, SheetRoute>
+    @EnvironmentObject var coordinator: Coordinator<RegisterRoute, SheetRoute>
+    var onNext: () -> Void
     
     var body: some View {
         VStack(alignment: .leading) {
-            StepIndicatorView(currentStep: step)
-                .padding(.top, 10)
             
             HStack {
                 VStack(alignment: .leading, spacing: 10) {
@@ -47,7 +46,7 @@ struct NicknameSettingView: View {
                         .foregroundStyle(Color.mainWhite)
                         .background(Color.mainOrange)
                         .cornerRadius(5)
-                }
+                }.buttonStyle(PressableButtonStyle())
             }
             .padding(.top, 20)
             
@@ -61,16 +60,23 @@ struct NicknameSettingView: View {
             Spacer()
             
             NextButton(buttonTitle: "다음") {
-                // coordinator.push(.categorySetting)
+                UIApplication.shared.endEditing(true)
+                Task {
+                    try? await Task.sleep(nanoseconds: 700_000_000) // 0.7초
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        onNext()
+                    }
+                }
             }
             // 키보드 올라오면 공백과 함께 버튼 올라감
             .padding(.bottom, 20)
             .frame(maxHeight: .infinity, alignment: .bottom)
             
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 24)
         .task {
-            await Task.yield()
+            // await Task.yield()
+            try? await Task.sleep(nanoseconds: 300_000_000) // 0.3초
             isFocused = true
             
             try? await Task.sleep(nanoseconds: 3_000_000_000)
@@ -82,68 +88,7 @@ struct NicknameSettingView: View {
 }
 
 #Preview {
-    NicknameSettingView()
-}
-
-struct StepIndicatorView: View {
-    var currentStep: Int
-    
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(1...3, id: \.self) { step in
-                Rectangle()
-                    .fill(step <= currentStep ? Color.mainOrange : Color.gray.opacity(0.3))
-                    .frame(height: 3)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .animation(.easeInOut(duration: 0.5), value: currentStep)
+    NicknameSettingView {
+        
     }
-}
-
-
-
-//
-//  OnboardingProgressBarView.swift
-//  WSSiOS
-//
-//  Created by SwiftUI Conversion
-//
-
-import SwiftUI
-
-struct OnboardingProgressBarView: View {
-    let progress: CGFloat // 0.0 ~ 1.0
-    let animationDuration: Double = 0.2
-    
-    var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                // Background (Gray)
-                Rectangle()
-                    .fill(Color.wssGray70)
-                    .frame(height: 4)
-                
-                // Progress (Purple)
-                Rectangle()
-                    .fill(Color.wssPrimary100)
-                    .frame(width: geometry.size.width * progress, height: 4)
-                    .animation(.easeInOut(duration: animationDuration), value: progress)
-            }
-        }
-        .frame(height: 4)
-    }
-}
-
-
-// MARK: - Color Extensions
-extension Color {
-    static let wssGray70 = Color(red: 0.8, green: 0.8, blue: 0.8) // 임시 색상
-    static let wssPrimary100 = Color(red: 0.415, green: 0.365, blue: 0.992) // #6A5DFD
-}
-
-#Preview {
-    OnboardingProgressBarView(progress: 0.33)
-    OnboardingProgressBarView(progress: 0.66)
-    OnboardingProgressBarView(progress: 1.0)
 }

@@ -76,7 +76,7 @@ struct LoginView: View {
             }
             .padding(.top, 50)
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, 24)
     }
     
     // MARK: - Apple 로그인 핸들러
@@ -116,7 +116,7 @@ final class AppleLoginDelegate: NSObject, ASAuthorizationControllerDelegate {
     
     // MARK: - 서버 전송 함수
     private func sendToServer(idToken: String, code: String) {
-        guard let url = URL(string: "https://index.zapto.org/api/redirect") else { return }
+        guard let url = URL(string: "https://index.zapto.org/api/oauth2/appleLogin") else { return }
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"

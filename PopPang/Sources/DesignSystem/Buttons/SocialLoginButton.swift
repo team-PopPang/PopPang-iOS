@@ -55,7 +55,7 @@ struct SocialLoginButton: View {
     
     init(type: SocialType,
          size: CGFloat = 20,
-         cornerRadius: CGFloat = 10,
+         cornerRadius: CGFloat = 5,
          action: @escaping () -> Void
     ) {
         self.type = type

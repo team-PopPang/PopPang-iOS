@@ -32,7 +32,7 @@ struct RootViewSwitcher: View {
             
             // MARK: - 회원가입 루트
             case .register:
-                NicknameSettingView()
+                RegisterFlowView()
                 
             // MARK: - 홈 루트
             case .authenticated:
@@ -44,17 +44,3 @@ struct RootViewSwitcher: View {
     }
 }
 
-
-
-
-
-
-
-
-
-//    enum RootScene {
-//        case launch     // 시작
-//        case onboarding // 온보딩
-//        case auth       // 회원가입
-//        case home       // 홈
-//    }

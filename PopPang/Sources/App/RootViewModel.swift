@@ -53,10 +53,17 @@ final class RootViewModel: ObservableObject {
         self.hasProfile = !isNewUser
         self.updateScene()
     }
+    
+    func completeRegistration() {
+        self.hasProfile = true
+        self.updateScene()
+    }
 
     func logout() {
         isLoggedIn = false
         hasProfile = false
         updateScene()
     }
+    
+
 }
