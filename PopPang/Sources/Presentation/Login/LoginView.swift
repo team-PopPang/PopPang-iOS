@@ -65,7 +65,6 @@ struct LoginView: View {
                 // ✅ 카카오
                 SocialLoginButton(type: .kakao) {
                     print("카카오 로그인")
-                    // coordinator.push(.nicknameSetting)
                     rootViewModel.loginSuccess(isNewUser: true)
                 }
                 
@@ -102,8 +101,10 @@ final class AppleLoginDelegate: NSObject, ASAuthorizationControllerDelegate {
             let idToken = String(data: credential.identityToken ?? Data(), encoding: .utf8) ?? ""
             let authCode = String(data: credential.authorizationCode ?? Data(), encoding: .utf8) ?? ""
             
+            print("✅ -- 사바로 전송 --")
             print("🍎 Apple ID Token: \(idToken)")
             print("🍎 Apple Authorization Code: \(authCode)")
+            
             
             // TODO: 서버로 전달
             sendToServer(idToken: idToken, code: authCode)
@@ -122,7 +123,8 @@ final class AppleLoginDelegate: NSObject, ASAuthorizationControllerDelegate {
         request.httpMethod = "POST"
         
         // ✅ application/x-www-form-urlencoded 방식으로 전송
-        let bodyString = "id_token=\(idToken)&code=\(code)"
+        // let bodyString = "id_token=\(idToken)&authCode=\(code)"
+        let bodyString = "authCode=\(code)"
         request.httpBody = bodyString.data(using: .utf8)
         
         URLSession.shared.dataTask(with: request) { data, response, error in
@@ -130,9 +132,26 @@ final class AppleLoginDelegate: NSObject, ASAuthorizationControllerDelegate {
                 print("❌ 서버 요청 실패: \(error.localizedDescription)")
                 return
             }
-            if let data = data, let responseText = String(data: data, encoding: .utf8) {
-                print("✅ 서버 응답: \(responseText)")
+            
+            guard let data = data else { return }
+            
+            do {
+                print("✅ -- 서버에서 받음 --")
+                let user = try JSONDecoder().decode(UserDTO.self, from: data)
+                if user.nickname == nil {
+                    print("신규 유저: \(user.toModel())")
+                    
+                } else {
+                    print("기존 유저: \(user.toModel())")
+                }
+            } catch {
+                print("❌ 디코딩 실패: \(error.localizedDescription)")
+                if let responseText = String(data: data, encoding: .utf8) {
+                    print("서버 응답 원문: \(responseText)")
+                }
             }
+            
+           
         }.resume()
     }
 }
