@@ -108,13 +108,13 @@ struct RegisterFlowView: View {
                         }
                     } label: {
                         Image(systemName: "chevron.left")
-                            .font(.title2)
+                            .font(.system(size: 20))
                             .foregroundStyle(Color.black)
                             .padding()
                     }
                 } else {
                     Image(systemName: "chevron.left")
-                        .font(.title2)
+                        .font(.system(size: 20))
                         .opacity(0)
                         .padding()
                 }

@@ -19,13 +19,13 @@ struct RoundedTextField: View {
     private var borderColor: Color {
         
         // 입력 전
-        guard !text.isEmpty else { return .Gray000 }
+        guard !text.isEmpty else { return .mainGray3 }
         
         // 검증 X
-        guard let isValid = isVaild else { return .Gray000 }
+        guard let isValid = isVaild else { return .mainGray3 }
         
         // 검증 0
-        return isValid ? .textFieldGr : .textFieldRe
+        return isValid ? .mainGreen : .mainRed
     }
     
     var body: some View {
@@ -35,7 +35,7 @@ struct RoundedTextField: View {
             if text.isEmpty {
                 Text(placeholder)
                     .font(.scdream(.medium, size: 12))
-                    .foregroundStyle(Color.textFieldPlaceHolder)
+                    .foregroundStyle(Color.mainGray2)
                     .padding(.horizontal, 16)
                     .opacity(text.isEmpty ? 1 : 0)
             }
@@ -44,7 +44,7 @@ struct RoundedTextField: View {
                 // 입력
                 TextField("", text: $text)
                     .font(.scdream(.medium, size: 12))
-                    .foregroundStyle(Color.textFieldFg)
+                    .foregroundStyle(Color.mainBlack)
                     .keyboardType(.default)
                     .padding(.horizontal, 16)
                     .tint(.mainBlack)

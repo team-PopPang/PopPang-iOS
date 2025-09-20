@@ -53,7 +53,7 @@ struct NicknameSettingView: View {
             if !text.isEmpty, let isValid {
                 Text(isValid ? "사용 가능한 닉네임입니다." : "이미 사용 중인 닉네임입니다.")
                     .font(.scdream(.medium, size: 12))
-                    .foregroundStyle(isValid ? Color.textFieldGr : Color.textFieldRe)
+                    .foregroundStyle(isValid ? Color.mainGreen : Color.mainRed)
                     .padding(.top, 5)
             }
             
@@ -73,7 +73,7 @@ struct NicknameSettingView: View {
             .frame(maxHeight: .infinity, alignment: .bottom)
             
         }
-        .padding(.horizontal, 24)
+        .padding(.horizontal, .contentPadding)
         .task {
             // await Task.yield()
             try? await Task.sleep(nanoseconds: 300_000_000) // 0.3초
