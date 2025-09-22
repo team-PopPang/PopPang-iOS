@@ -11,7 +11,6 @@ struct NicknameSettingView: View {
     @State private var text: String = ""
     @FocusState private var isFocused: Bool
     @State private var isValid: Bool? = nil
-    @State private var step = 1
     @EnvironmentObject var coordinator: Coordinator<RegisterRoute, SheetRoute>
     var onNext: () -> Void
     
@@ -37,7 +36,7 @@ struct NicknameSettingView: View {
                 .focused($isFocused)
                 
                 Button {
-                    step += 1
+
                 } label: {
                     Text("중복확인")
                         .font(.scdream(.medium, size: 12))

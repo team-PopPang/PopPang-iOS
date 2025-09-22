@@ -13,6 +13,7 @@ struct UserDTO: Codable {
     let nickname: String?
     let role: String
     let provider: String
+    let keywords: [String]?
     let recommands: [String]
 }
 
@@ -23,6 +24,7 @@ extension UserDTO {
                     nickname: nickname,
                     role: role,
                     provider: provider,
+                    keywords: keywords,
                     recommands: recommands)
     }
 }

@@ -13,6 +13,7 @@ struct User {
     var nickname: String?
     let role: String
     let provider: String
+    var keywords: [String]?
     var recommands: [String]
     
     var isNewUser: Bool {

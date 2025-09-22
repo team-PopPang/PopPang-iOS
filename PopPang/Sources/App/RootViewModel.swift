@@ -23,7 +23,7 @@ final class RootViewModel: ObservableObject {
     
     @Dependency private var appleLoginUsecase: AppleLoginUsecaseProtocol
     @Published var scene: RootScene = .launch
-    @Published private var user: User? = nil
+    @Published var user: User? = nil
     
     init() {
         Task {
