@@ -74,5 +74,3 @@ class Coordinator<T: Hashable, R: Identifiable>: ObservableObject {
         sheet = nil
     }
 }
-
-

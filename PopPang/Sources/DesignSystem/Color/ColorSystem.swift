@@ -9,6 +9,11 @@ import SwiftUI
 
 extension Color {
     
+    /// SwiftUI Color -> UIColor 변환
+    var uiColor: UIColor {
+        UIColor(self)
+    }
+    
     ///
     /// - Parameters:
     ///   - hex: 색상 Hex 문자열. `#` 포함/미포함 모두 가능 (예: "#FF5733" 또는 "FF5733").

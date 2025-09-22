@@ -23,13 +23,14 @@ struct LoginView: View {
             VStack {
                 // ✅ 카카오
                 SocialLoginButton(type: .kakao) {
-                    print("카카오 로그인")
-                    rootViewModel.loginSuccess(isNewUser: true)
+                    // rootViewModel.loginSuccess(isNewUser: true)
+                    rootViewModel.send(action: .kakaoLogin)
                 }
                 
                 // ✅ 커스텀 애플 로그인 버튼
                 SocialLoginButton(type: .apple) {
-
+                    // rootViewModel.loginSuccess(isNewUser: false)
+                    rootViewModel.send(action: .appleLogin)
                 }
             }
             .padding(.top, 50)

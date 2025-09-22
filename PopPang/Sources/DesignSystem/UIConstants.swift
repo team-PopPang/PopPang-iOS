@@ -41,6 +41,7 @@ extension Color {
     static let mainGreen = Color(hex: "#006813")
     static let mainWhite = Color(hex: "#F1F1F1")
     static let mainBlack = Color(hex: "#333333")
+    static let mainTab = Color(hex: "#FFFFFF")
     
     // MARK: - Gray
     static let mainGray = Color(hex: "#777777")
