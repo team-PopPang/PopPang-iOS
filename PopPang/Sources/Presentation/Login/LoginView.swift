@@ -37,6 +37,7 @@ struct LoginView: View {
                     } onCompletion: { result in
                         // 로그인 시도가 끝났을 때 실행: Result<ASAuthorization, any Error>
                         print("result: \(result)")
+                        rootViewModel.send(action: .appleLogin)
                     }
                     .frame(maxWidth: 375, maxHeight: 52)
                     

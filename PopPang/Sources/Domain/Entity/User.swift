@@ -10,9 +10,10 @@ import Foundation
 struct User {
     let uid: String
     let email: String?
-    let nickname: String?
+    var nickname: String?
     let role: String
     let provider: String
+    var recommands: [String]
     
     var isNewUser: Bool {
         return nickname == nil

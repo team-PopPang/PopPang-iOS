@@ -23,8 +23,7 @@ final class RootViewModel: ObservableObject {
     
     @Dependency private var appleLoginUsecase: AppleLoginUsecaseProtocol
     @Published var scene: RootScene = .launch
-    private var isLoggedIn: Bool = false    // 로그인 유무
-    private var hasProfile: Bool = false    // 로그인 후 기존 유저 유무
+    @Published private var user: User? = nil
     
     init() {
         Task {
@@ -58,10 +57,20 @@ extension RootViewModel {
         switch action {
         case .kakaoLogin:
             print("카카오 로그인")
-            loginSuccess(isNewUser: false)
+            self.user = User(uid: "1",
+                             email: nil,
+                             role: "member",
+                             provider: "kakao", recommands: [])
+            updateScene()
             
         case .appleLogin:
             print("애플 로그인")
+            self.user = User(uid: "1",
+                             email: nil,
+                             nickname: "index",
+                             role: "member",
+                             provider: "kakao", recommands: [])
+            updateScene()
         }
     }
 }
@@ -73,11 +82,12 @@ extension RootViewModel {
     // 화면 업데이트
     func updateScene() {
         // 비로그인
-        if !isLoggedIn {
+        guard let user else {
             scene = .unauthenticated
+            return
         }
         // 신규 유저
-        else if !hasProfile {
+        if user.nickname == nil {
             scene = .register
         }
         // 기존 유저
@@ -85,24 +95,65 @@ extension RootViewModel {
             scene = .authenticated
         }
     }
-    
+}
+
+// MARK: - 로그인 관련 로직
+extension RootViewModel {
     // 로그인 완료
-    func loginSuccess(isNewUser: Bool) {
-        self.isLoggedIn = true
-        self.hasProfile = !isNewUser
-        self.updateScene()
-    }
-    
-    // 가입 완료
-    func completeRegistration() {
-        self.hasProfile = true
+    func loginSuccess(user: User) {
+        self.user = user
         self.updateScene()
     }
 
     // 로그아웃
     func logout() {
-        isLoggedIn = false
-        hasProfile = false
+        user = nil
         updateScene()
+    }
+    
+    // 닉네임 설정
+    func updateNickname(_ nickname: String) {
+        guard var currentUser = user else { return }
+        currentUser.nickname = nickname
+        self.user = currentUser
+    }
+    
+    // 추천키워드 설정
+    func updateKeywords(_ keywords: [String]) {
+        guard var currentUser = user else { return }
+        currentUser.recommands = keywords
+        self.user = currentUser
+    }
+    
+    
+    // 서버에 최종 반영
+    func completeRegistration() {
+        guard let currentUser = user,
+                  currentUser.nickname != nil,
+                  !currentUser.recommands.isEmpty
+        else {
+            print("❌ 필수 정보가 비어있습니다.")
+            return
+        }
+        print(currentUser)
+        
+        /*
+        // 1. 서버 업데이트 요청
+        do {
+            
+            let updatedUser = try await UserAPI.updateUser(
+                uid: currentUser.uid,
+                nickname: nickname,
+                category: category
+            )
+            
+            // 2. 서버 응답값을 반영
+            self.user = updatedUser
+            updateScene()
+             
+        } catch {
+            
+        }
+         */
     }
 }

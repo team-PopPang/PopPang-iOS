@@ -13,10 +13,16 @@ struct UserDTO: Codable {
     let nickname: String?
     let role: String
     let provider: String
+    let recommands: [String]
 }
 
 extension UserDTO {
     func toModel() -> User {
-        return User(uid: uid, email: email, nickname: nickname, role: role, provider: provider)
+        return User(uid: uid,
+                    email: email,
+                    nickname: nickname,
+                    role: role,
+                    provider: provider,
+                    recommands: recommands)
     }
 }
