@@ -49,10 +49,11 @@ extension DIContainer {
     
     /// 앱 시작 시 의존성들을 한 번에 등록해주는 메서드입니다.
     /// 이 메서드에서 Repository → UseCase 순으로 필요한 객체들을 생성하여 등록합니다.
-    static func config() async {
+static func config() {
         // MARK: - Repository
         
         // MARK: - Uscase
+        self.shared.register(AppleLoginUsecaseImpl(), for: AppleLoginUsecaseProtocol.self)
     }
 }
 

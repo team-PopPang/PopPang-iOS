@@ -8,14 +8,14 @@
 import SwiftUI
 
 struct RootViewSwitcher: View {
-    @StateObject var rootViewModel: RootViewModel
+    @StateObject var rootViewModel: RootViewModel 
     @State private var coordinator = Coordinator<OnboardingRoute, SheetRoute>()
-
+    
     init(rootViewModel: RootViewModel) {
         self._rootViewModel = StateObject(wrappedValue: rootViewModel)
         UINavigationBar.configureAppearance()
     }
-    
+
     // MARK: - 각 파트의 Root View입니다
     var body: some View {
         Group {
@@ -43,4 +43,3 @@ struct RootViewSwitcher: View {
         .environmentObject(rootViewModel)
     }
 }
-

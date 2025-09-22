@@ -21,22 +21,34 @@ final class RootViewModel: ObservableObject {
         case appleLogin
     }
     
+    @Dependency private var appleLoginUsecase: AppleLoginUsecaseProtocol
     @Published var scene: RootScene = .launch
     private var isLoggedIn: Bool = false    // 로그인 유무
     private var hasProfile: Bool = false    // 로그인 후 기존 유저 유무
     
     init() {
-        Task { await boot() }
+        Task {
+            await boot()
+        }
     }
     
     func boot() async {
-        await DIContainer.config()
+        print("로그인 인증 진행")
         
-        // launch뷰 로딩 시간
+        // 1. 실제 비동기 로직 (서버 인증 요청)
+        
+        // 2. launch뷰 로딩 시간(1초 보장)
         try? await Task.sleep(for: .seconds(1))
         
-        // 준비 끝난 후 루트 뷰 전환
+        // 3. 인증 결과에 따른 화면 업데이트
         await MainActor.run { updateScene() }
+        /*
+        await MainActor.run {
+            loginSuccess(isNewUser: false)
+        }
+         */
+        
+        print("로그인 인증 진행 완료")
     }
 }
 
