@@ -78,10 +78,21 @@ struct SocialLoginButton: View {
             }
             .padding()
             .frame(maxWidth: .infinity)
+            .frame(height: 52)
             .contentShape(Rectangle())
         }
         .foregroundStyle(type.fgColor)
         .background(type.bgColor)
         .cornerRadius(cornerRadius)
+    }
+}
+
+#Preview {
+    SocialLoginButton(type: .apple) {
+        
+    }
+    
+    SocialLoginButton(type: .kakao) {
+        
     }
 }
