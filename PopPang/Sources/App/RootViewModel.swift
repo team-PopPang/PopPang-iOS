@@ -46,6 +46,8 @@ extension RootViewModel {
         switch action {
         case .kakaoLogin:
             print("카카오 로그인")
+            loginSuccess(isNewUser: false)
+            
         case .appleLogin:
             print("애플 로그인")
         }

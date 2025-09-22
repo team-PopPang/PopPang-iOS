@@ -36,7 +36,7 @@ struct RootViewSwitcher: View {
                 
             // MARK: - 홈 루트
             case .authenticated:
-                HomeView()
+                MainTabView()
             }
         }
         .animation(.linear(duration: 0.3), value: rootViewModel.scene == .launch)
