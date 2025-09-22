@@ -16,7 +16,7 @@ struct MainTabView: View {
         // 반투명 효과 제거, 불투명한 배경 설정, 상단 경계선 자동생성
         appearance.configureWithOpaqueBackground()
         // 상단 경계선 제거
-        // appearance.shadowColor = .clear
+        appearance.shadowColor = .clear
         // 탭바의 배경색 설정
         appearance.backgroundColor = Color.mainTab.uiColor
         
@@ -26,11 +26,6 @@ struct MainTabView: View {
         UITabBar.appearance().layer.shadowOpacity = 0.1
         UITabBar.appearance().layer.shadowRadius = 6
         
-        // 일반상태(스크롤 안할 때)외형에 적용
-        UITabBar.appearance().standardAppearance = appearance
-        // 스크롤 edge에서의 탭바 외형에도 같은 appearance적용
-        UITabBar.appearance().scrollEdgeAppearance = appearance
-        
         // 선택되지 않은 아이템의 색상 (텍스트 & 이미지)
         appearance.stackedLayoutAppearance.normal.iconColor = UIColor.red
         appearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.gray]
@@ -38,6 +33,22 @@ struct MainTabView: View {
         // 선택된 아이템 색상
         appearance.stackedLayoutAppearance.selected.iconColor = UIColor.black
         appearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: UIColor.black]
+        
+        // 그림자 적용
+        let image = UIImage.gradientImageWithBounds(
+            bounds: CGRect( x: 0, y: 0, width: UIScreen.main.scale, height: 8),
+            colors: [
+                UIColor.clear.cgColor,
+                UIColor.black.withAlphaComponent(0.07).cgColor
+            ]
+        )
+        appearance.backgroundImage = UIImage()
+        appearance.shadowImage = image
+        
+        // 일반상태(스크롤 안할 때)외형에 적용
+        UITabBar.appearance().standardAppearance = appearance
+        // 스크롤 edge에서의 탭바 외형에도 같은 appearance적용
+        UITabBar.appearance().scrollEdgeAppearance = appearance
     }
     
     var body: some View {
@@ -67,4 +78,6 @@ struct MainTabView: View {
 #Preview {
     MainTabView()
 }
+
+
 
