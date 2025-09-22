@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct NicknameSettingView: View {
+    @EnvironmentObject private var rootViewModel: RootViewModel
     @State private var text: String = ""
     @FocusState private var isFocused: Bool
     @State private var isValid: Bool? = nil
@@ -59,6 +60,7 @@ struct NicknameSettingView: View {
             Spacer()
             
             NextButton(buttonTitle: "다음") {
+                rootViewModel.updateNickname(text)
                 UIApplication.shared.endEditing(true)
                 Task {
                     try? await Task.sleep(nanoseconds: 700_000_000) // 0.7초

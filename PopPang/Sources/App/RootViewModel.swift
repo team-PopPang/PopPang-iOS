@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AuthenticationServices
 
 enum RootScene {
     case launch
@@ -18,7 +19,7 @@ final class RootViewModel: ObservableObject {
     
     enum Action {
         case kakaoLogin
-        case appleLogin
+        case appleLogin(ASAuthorization)
     }
     
     @Dependency private var appleLoginUsecase: AppleLoginUsecaseProtocol
@@ -61,16 +62,26 @@ extension RootViewModel {
                              email: nil,
                              role: "member",
                              provider: "kakao", recommands: [])
-            updateScene()
-            
-        case .appleLogin:
-            print("애플 로그인")
             self.user = User(uid: "1",
                              email: nil,
                              nickname: "index",
                              role: "member",
                              provider: "kakao", recommands: [])
             updateScene()
+            
+        case .appleLogin(let authorization):
+            print("애플 로그인")
+            Task {
+                do {
+                    let user = try await appleLoginUsecase.appleLogin(authorization: authorization)
+                    print("user: \(user)")
+                    await MainActor.run {
+                        self.loginSuccess(user: user)
+                    }
+                } catch {
+                    print("❌ 애플 로그인 실패")
+                }
+            }
         }
     }
 }
@@ -129,8 +140,8 @@ extension RootViewModel {
     // 서버에 최종 반영
     func completeRegistration() {
         guard let currentUser = user,
-                  currentUser.nickname != nil,
-                  !currentUser.recommands.isEmpty
+                  currentUser.nickname != nil
+                  // ,!currentUser.recommands.isEmpty
         else {
             print("❌ 필수 정보가 비어있습니다.")
             return
@@ -155,5 +166,8 @@ extension RootViewModel {
             
         }
          */
+        
+        self.user = user
+        self.updateScene()
     }
 }

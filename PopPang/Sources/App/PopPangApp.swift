@@ -13,7 +13,7 @@ struct PopPangApp: App {
     
     init() {
         // 1. 의존성 등록
-        DIContainer.config()
+        DIContainer.config(isStub: true)
         
         // 2. RootViewModel 생성
         _rootViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createRoot())

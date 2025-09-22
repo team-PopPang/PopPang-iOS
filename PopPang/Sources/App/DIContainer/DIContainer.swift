@@ -49,11 +49,26 @@ extension DIContainer {
     
     /// 앱 시작 시 의존성들을 한 번에 등록해주는 메서드입니다.
     /// 이 메서드에서 Repository → UseCase 순으로 필요한 객체들을 생성하여 등록합니다.
-static func config() {
+    static func config(isStub: Bool = false) {
+        if isStub {
+            configStub()
+        } else {
+            configLive()
+        }
+    }
+
+    private static func configStub() {
         // MARK: - Repository
-        
+        // MARK: - Uscase
+        self.shared.register(StubAppleLoginUsecaseImpl(), for: AppleLoginUsecaseProtocol.self)
+        print("✅ Stub UseCase registered")
+    }
+
+    private static func configLive() {
+        // MARK: - Repository
         // MARK: - Uscase
         self.shared.register(AppleLoginUsecaseImpl(), for: AppleLoginUsecaseProtocol.self)
+        print("✅ Live UseCase registered")
     }
 }
 

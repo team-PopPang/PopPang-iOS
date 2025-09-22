@@ -33,11 +33,18 @@ struct LoginView: View {
                     // MARK: - 실제 Apple 로그인 버튼
                     SignInWithAppleButton { request in
                         // 로그인 요청에 포함할 정보 지정
-                        print("request: \(request)")
+                        // print("request: \(request)")
+                       
                     } onCompletion: { result in
                         // 로그인 시도가 끝났을 때 실행: Result<ASAuthorization, any Error>
-                        print("result: \(result)")
-                        rootViewModel.send(action: .appleLogin)
+                        // print("result: \(result)")
+                        switch result {
+                        case .success(let authorization):
+                            rootViewModel.send(action: .appleLogin(authorization))
+                        case .failure(let error):
+                            print("[LoginView] 애플 로그인 에러: \(error.localizedDescription)")
+                        }
+                        
                     }
                     .frame(maxWidth: 375, maxHeight: 52)
                     

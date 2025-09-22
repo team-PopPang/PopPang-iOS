@@ -92,7 +92,7 @@ struct KeywordSettingView: View {
             // 키보드 올라오면 공백과 함께 버튼 올라감
             .padding(.bottom, 20)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, .contentPadding)
     }
 }
 
