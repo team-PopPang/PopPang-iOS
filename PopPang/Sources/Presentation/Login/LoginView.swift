@@ -22,12 +22,13 @@ struct LoginView: View {
                 .frame(width: 200, height: 200)
                 
             VStack {
-                // ✅ 카카오
+                // MARK: - 카카오
                 SocialLoginButton(type: .kakao) {
                     // rootViewModel.loginSuccess(isNewUser: true)
                     rootViewModel.send(action: .kakaoLogin)
                 }
                 
+                // MARK: - 애플
                 ZStack {
                     // MARK: - 실제 Apple 로그인 버튼
                     SignInWithAppleButton { request in
