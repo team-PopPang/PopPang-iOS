@@ -28,6 +28,10 @@ extension Font {
     // MARK: - 3정렬
     static let title3 = Font.scdream(.medium, size: 8)
     static let caption3 = Font.scdream(.medium, size: 7)
+    
+    // MARK: - 탭 폰트
+    // static let normal = Font.scdream(.light, size: 10)
+    // static let tapped = Font.scdream(.bold, size: 20)
 }
 
 extension Color {

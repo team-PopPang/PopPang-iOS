@@ -28,3 +28,4 @@ enum MainTabType: String, CaseIterable {
         return selected ? "\(rawValue)_fill" : rawValue
     }
 }
+

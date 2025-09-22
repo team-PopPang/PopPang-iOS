@@ -45,6 +45,19 @@ struct MainTabView: View {
         appearance.backgroundImage = UIImage()
         appearance.shadowImage = image
         
+        // 폰트 적용
+        let normalAttributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: UIColor.gray,
+            .font: UIFont.scdream(.light, size: 10)
+        ]
+
+        let selectedAttributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: UIColor.black,
+            .font: UIFont.scdream(.bold, size: 10)
+        ]
+        appearance.stackedLayoutAppearance.normal.titleTextAttributes = normalAttributes
+        appearance.stackedLayoutAppearance.selected.titleTextAttributes = selectedAttributes
+
         // 일반상태(스크롤 안할 때)외형에 적용
         UITabBar.appearance().standardAppearance = appearance
         // 스크롤 edge에서의 탭바 외형에도 같은 appearance적용
@@ -66,7 +79,11 @@ struct MainTabView: View {
                     }
                     .tabItem {
                         Image(tab.tabImage(selected: selectedTab == tab))
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 25, height: 25)
                         Text(tab.title)
+                            // .font(selectedTab == tab ? Font.tapped : Font.normal)
                     }
                     .tag(tab)
                 }
