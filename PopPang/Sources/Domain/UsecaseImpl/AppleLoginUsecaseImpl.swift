@@ -25,7 +25,7 @@ final class AppleLoginUsecaseImpl: AppleLoginUsecaseProtocol {
     
     private func sendAuthCodeToServer(authCode: String) async throws -> UserDTO {
 
-        guard let url = URL(string: "https://index.zapto.org/api/oauth2/appleLogin") else {
+        guard let url = URL(string: Constants.PopPangAPI.url) else {
             throw AuthError.invalidAuthCode
         }
         var request = URLRequest(url: url)
