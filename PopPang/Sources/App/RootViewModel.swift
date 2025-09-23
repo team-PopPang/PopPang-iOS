@@ -62,11 +62,11 @@ extension RootViewModel {
                              email: nil,
                              role: "member",
                              provider: "kakao", recommands: [])
-            self.user = User(uid: "1",
-                             email: nil,
-                             nickname: "index",
-                             role: "member",
-                             provider: "kakao", recommands: [])
+//            self.user = User(uid: "1",
+//                             email: nil,
+//                             nickname: "index",
+//                             role: "member",
+//                             provider: "kakao", recommands: [])
             updateScene()
             
         case .appleLogin(let authorization):
@@ -74,12 +74,11 @@ extension RootViewModel {
             Task {
                 do {
                     let user = try await appleLoginUsecase.appleLogin(authorization: authorization)
-                    print("user: \(user)")
                     await MainActor.run {
                         self.loginSuccess(user: user)
                     }
-                } catch {
-                    print("❌ 애플 로그인 실패")
+                } catch (let error) {
+                    print("❌ 애플 로그인 실패: \(error)")
                 }
             }
         }

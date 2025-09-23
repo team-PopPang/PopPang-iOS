@@ -14,7 +14,7 @@ struct UserDTO: Codable {
     let role: String
     let provider: String
     let keywords: [String]?
-    let recommands: [String]
+    let recommands: [String]?
 }
 
 extension UserDTO {

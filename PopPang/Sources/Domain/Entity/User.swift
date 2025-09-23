@@ -14,7 +14,7 @@ struct User {
     let role: String
     let provider: String
     var keywords: [String]?
-    var recommands: [String]
+    var recommands: [String]?
     
     var isNewUser: Bool {
         return nickname == nil
