@@ -9,9 +9,11 @@ import SwiftUI
 
 @main
 struct PopPangApp: App {
+    @UIApplicationDelegateAdaptor var appDelegate: AppDelegate
     @StateObject private var rootViewModel: RootViewModel
     
     init() {
+        
         // 1. 의존성 등록
         DIContainer.config(isStub: false)
         
