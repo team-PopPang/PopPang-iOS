@@ -20,6 +20,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     /// - Important: 이 메서드에서 Kakao SDK 초기화를 성공해야 카카오 로그인 및 API 가 정상 동작
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
+        
+        print("kakao: \(Constants.KakaoAPI.key)")
         // 1. KakaoSdk 설정
         KakaoSDK.initSDK(appKey: Constants.KakaoAPI.key)
         
