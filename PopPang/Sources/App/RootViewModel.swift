@@ -145,7 +145,6 @@ extension RootViewModel {
             print("❌ 필수 정보가 비어있습니다.")
             return
         }
-        print(currentUser)
         
         /*
         // 1. 서버 업데이트 요청

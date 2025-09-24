@@ -38,6 +38,7 @@ extension Color {
     // MARK: - Login
     static let kakao = Color(hex: "#FEE500")
     static let apple = Color(hex: "#1B1B1B")
+    static let categoryOrange = Color(hex: "#FFF4EA")
     
     // MARK: - Main
     static let mainOrange = Color(hex: "#FF7A00")

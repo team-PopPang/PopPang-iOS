@@ -15,7 +15,14 @@ enum AuthError: Error {
 }
 
 protocol AppleLoginUsecaseProtocol {
-    /// Apple 로그인 -> auth code 반환
+ 
+    /// 애플로그인 후 유저 엔티티 반환
+    /// ASAuthorization객체에서  ASAuthorizationAppleIDCredential를 추출하여
+    /// 사용자 정보를 확인하고 `User` 객체를 생성
+    ///
+    /// - Parameter authorization: 애플 로그인 인증 요청 결과 객체
+    /// - Returns: User
+    /// - Throws: 토큰 검증 실패, 네트워크 오류 등 로그인 과정에서 발생한 오류
     func appleLogin(authorization: ASAuthorization) async throws -> User
 }
 

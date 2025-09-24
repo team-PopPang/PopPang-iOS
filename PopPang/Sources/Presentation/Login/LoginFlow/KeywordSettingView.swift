@@ -84,7 +84,7 @@ struct KeywordSettingView: View {
             
             NextButton(buttonTitle: "다음") {
                 rootViewModel.updateKeywords(keywords)
-                print("현재 진행중: \(rootViewModel.user!)")
+                // print("현재 진행중: \(rootViewModel.user!)")
                 DispatchQueue.main.async {
                     onNext()
                 }

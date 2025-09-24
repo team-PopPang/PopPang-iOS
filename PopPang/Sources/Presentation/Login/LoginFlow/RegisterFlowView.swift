@@ -180,4 +180,5 @@ struct RegisterFlowView: View {
 
 #Preview {
     RegisterFlowView()
+        .environmentObject(RootViewModel())
 }
