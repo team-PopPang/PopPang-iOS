@@ -21,7 +21,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
         
-        print("kakao: \(Constants.KakaoAPI.key)")
+        print("✅ kakao: \(Constants.KakaoAPI.key)")
         // 1. KakaoSdk 설정
         KakaoSDK.initSDK(appKey: Constants.KakaoAPI.key)
         

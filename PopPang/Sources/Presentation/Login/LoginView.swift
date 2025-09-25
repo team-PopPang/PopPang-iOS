@@ -12,6 +12,10 @@ import Combine
 struct LoginView: View {
     @EnvironmentObject var coordinator: Coordinator<OnboardingRoute, SheetRoute>
     @EnvironmentObject var rootViewModel: RootViewModel
+    @StateObject private var kakaoAuthViewModel = KakaoAuthViewModel()
+    let loginStatusInfo: (Bool) -> String = { isLoggedIn in
+        return isLoggedIn ? "로그인" : "로그아웃"
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -24,6 +28,7 @@ struct LoginView: View {
             VStack {
                 // MARK: - 카카오
                 SocialLoginButton(type: .kakao) {
+                    kakaoAuthViewModel.handleKakaoLogin()
                     // rootViewModel.loginSuccess(isNewUser: true)
                     rootViewModel.send(action: .kakaoLogin)
                 }
