@@ -31,13 +31,18 @@ struct SearchTextField: View {
                     .keyboardType(.default)
                     .padding(.horizontal, 16)
                     .tint(.mainBlack)
-                
+            }
+            
+            HStack {
+                // 돋보기 UI
+                Spacer()
                 Image("Search")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 20, height: 20)
                     .padding(.trailing, 16)
             }
+            
         }
         .frame(height: 48)
         .background(Color.mainGray4)
