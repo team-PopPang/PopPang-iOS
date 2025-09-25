@@ -10,9 +10,9 @@ import KakaoSDKUser
 
 enum KakaoAuthError: Error {
     case tokenNotFound // 토큰 없음
-    case invalidURL
-    case serverError
-    case decodeError
+    // case invalidURL
+    // case serverError
+    // case decodeError
 }
 
 protocol KakaoAuthRepositoryProtocol {

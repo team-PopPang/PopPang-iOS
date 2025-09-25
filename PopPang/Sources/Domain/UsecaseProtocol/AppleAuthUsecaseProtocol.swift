@@ -8,13 +8,13 @@
 import Foundation
 import AuthenticationServices
 
-enum AuthError: Error {
-    case invalidCredential
+enum AppleAuthError: Error {
+    // case invalidCredential
     case invalidAuthCode
     case serverError(String)
 }
 
-protocol AppleLoginUsecaseProtocol {
+protocol AppleAuthUsecaseProtocol {
  
     /// 애플로그인 후 유저 엔티티 반환
     /// ASAuthorization객체에서  ASAuthorizationAppleIDCredential를 추출하여
@@ -25,4 +25,3 @@ protocol AppleLoginUsecaseProtocol {
     /// - Throws: 토큰 검증 실패, 네트워크 오류 등 로그인 과정에서 발생한 오류
     func appleLogin(authorization: ASAuthorization) async throws -> User
 }
-

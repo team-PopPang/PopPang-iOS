@@ -7,11 +7,6 @@
 
 import Foundation
 
-protocol KakaoAuthUsecaseProtocol {
-    func kakaoLogin() async throws -> User
-    func kakaoLogout() async throws
-}
-
 final class KakaoAuthUsecaseImpl: KakaoAuthUsecaseProtocol {
     private let kakaoAuthRepository: KakaoAuthRepositoryProtocol
     
@@ -25,5 +20,16 @@ final class KakaoAuthUsecaseImpl: KakaoAuthUsecaseProtocol {
     
     func kakaoLogout() async throws {
         try await kakaoAuthRepository.kakaoLogout()
+    }
+}
+
+final class StubKakaoAuthUsecaseImpl: KakaoAuthUsecaseProtocol {
+    func kakaoLogin() async throws -> User {
+        print("스텁 kakaoLogin")
+        return User.adminUser
+    }
+    
+    func kakaoLogout() async throws {
+        return
     }
 }

@@ -8,41 +8,20 @@
 import Foundation
 import AuthenticationServices
 
-final class AppleLoginUsecaseImpl: AppleLoginUsecaseProtocol {
+final class AppleAuthUsecaseImpl: AppleAuthUsecaseProtocol {
     
-    func appleLogin(authorization: ASAuthorization) async throws -> User {
-        guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
-              let authCodeData = credential.authorizationCode,
-              let authCode = String(data: authCodeData, encoding: .utf8) else {
-            throw AuthError.invalidAuthCode
-        }
-        
-        // 서버에 authCode 전달
-        let userDto = try await sendAuthCodeToServer(authCode: authCode)
-        return userDto.toModel()
+    private let appleAuthRepository: AppleAuthRepositoryProtocol
+    
+    init(appleAuthRepository: AppleAuthRepositoryProtocol) {
+        self.appleAuthRepository = appleAuthRepository
     }
     
-    private func sendAuthCodeToServer(authCode: String) async throws -> UserDTO {
-
-        guard let url = URL(string: Constants.PopPangAPI.url) else {
-            throw AuthError.invalidAuthCode
-        }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        let bodyString = "code=\(authCode)"
-        request.httpBody = bodyString.data(using: .utf8)
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw AuthError.serverError("Invalid response")
-        }
-        print("data: \(data)")
-        print("response data:", String(data: data, encoding: .utf8) ?? "invalid encoding")
-        return try JSONDecoder().decode(UserDTO.self, from: data)
+    func appleLogin(authorization: ASAuthorization) async throws -> User {
+        try await appleAuthRepository.appleLogin(authorization: authorization)
     }
 }
 
-final class StubAppleLoginUsecaseImpl: AppleLoginUsecaseProtocol {
+final class StubAppleAuthUsecaseImpl: AppleAuthUsecaseProtocol {
     
     func appleLogin(authorization: ASAuthorization) async throws -> User {
         

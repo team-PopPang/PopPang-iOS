@@ -22,7 +22,7 @@ final class RootViewModel: ObservableObject {
         case appleLogin(ASAuthorization)
     }
     
-    @Dependency private var appleLoginUsecase: AppleLoginUsecaseProtocol
+    @Dependency private var appleLoginUsecase: AppleAuthUsecaseProtocol
     @Published var scene: RootScene = .launch
     @Published var user: User? = nil
     

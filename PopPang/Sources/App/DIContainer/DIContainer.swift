@@ -60,18 +60,21 @@ extension DIContainer {
     private static func configStub() {
         
         // MARK: - Uscase
-        self.shared.register(StubAppleLoginUsecaseImpl(), for: AppleLoginUsecaseProtocol.self)
+        self.shared.register(StubKakaoAuthUsecaseImpl(), for: KakaoAuthUsecaseProtocol.self)
+        self.shared.register(StubAppleAuthUsecaseImpl(), for: AppleAuthUsecaseProtocol.self)
+        
         print("✅ Stub UseCase registered")
     }
 
     private static func configLive() {
         // MARK: - Repository
         let kakaoAuthRepository = KakaoAuthRepositoryImpl()
+        let appleAuthRepository = AppleAuthRepositoryImpl()
         
         // MARK: - Uscase
         self.shared.register(KakaoAuthUsecaseImpl(kakaoAuthRepository: kakaoAuthRepository), for: KakaoAuthUsecaseProtocol.self)
         
-        self.shared.register(AppleLoginUsecaseImpl(), for: AppleLoginUsecaseProtocol.self)
+        self.shared.register(AppleAuthUsecaseImpl(appleAuthRepository: appleAuthRepository), for: AppleAuthUsecaseProtocol.self)
         print("✅ Live UseCase registered")
     }
 }
