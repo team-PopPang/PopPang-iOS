@@ -8,11 +8,18 @@
 import SwiftUI
 
 struct HomeView: View {
+    @State private var searchText = ""
     var body: some View {
-        Text("Home View")
+        VStack {
+            SearchTextField(placeholder: "궁금한 장소를 검색해보세요", text: $searchText)
+            
+            Spacer()
+        }
+        .padding(.contentPadding)
     }
 }
 
 #Preview {
     HomeView()
 }
+
