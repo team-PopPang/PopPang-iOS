@@ -8,7 +8,7 @@
 import KakaoSDKAuth
 import KakaoSDKUser
 
-final class KakaoAuthRepository: KakaoAuthRepositoryProtocol {
+final class KakaoAuthRepositoryImpl: KakaoAuthRepositoryProtocol {
     
     func kakaoLogin() async throws -> User {
         let oauthToken: OAuthToken
@@ -34,7 +34,7 @@ final class KakaoAuthRepository: KakaoAuthRepositoryProtocol {
 }
 
 // MARK: - kakao 서버 요청
-extension KakaoAuthRepository {
+extension KakaoAuthRepositoryImpl {
     // 카카오 앱으로 로그인
     @MainActor
     private func handleWithKakaoApp() async throws -> OAuthToken {
@@ -91,7 +91,7 @@ extension KakaoAuthRepository {
 }
 
 // MARK: - PopPang 서버 요청
-extension KakaoAuthRepository {
+extension KakaoAuthRepositoryImpl {
     // 서버에 accessToken 보낸 후 서버에서 idToken 받고 uid 식별 후 유저 반환
     private func requestUserToServer(accessToken: String) async throws -> User {
 //        guard let url = URL(string: "https://index.zapto.org/api/oauth2/kakaoLogin") else {

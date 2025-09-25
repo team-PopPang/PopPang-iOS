@@ -58,7 +58,7 @@ extension DIContainer {
     }
 
     private static func configStub() {
-        // MARK: - Repository
+        
         // MARK: - Uscase
         self.shared.register(StubAppleLoginUsecaseImpl(), for: AppleLoginUsecaseProtocol.self)
         print("✅ Stub UseCase registered")
@@ -66,7 +66,11 @@ extension DIContainer {
 
     private static func configLive() {
         // MARK: - Repository
+        let kakaoAuthRepository = KakaoAuthRepositoryImpl()
+        
         // MARK: - Uscase
+        self.shared.register(KakaoAuthUsecaseImpl(kakaoAuthRepository: kakaoAuthRepository), for: KakaoAuthUsecaseProtocol.self)
+        
         self.shared.register(AppleLoginUsecaseImpl(), for: AppleLoginUsecaseProtocol.self)
         print("✅ Live UseCase registered")
     }
