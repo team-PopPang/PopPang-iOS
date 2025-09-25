@@ -24,7 +24,7 @@ final class KakaoAuthRepositoryImpl: KakaoAuthRepositoryProtocol {
         }
         
         // 2. PopPang 서버에 토큰 전달 및 유저 반환
-        let user = try await requestUserToServer(accessToken: oauthToken.accessToken)
+        let user = try await requestUserToServer(accessToken: oauthToken.accessToken).toModel()
         return user
     }
     
@@ -93,7 +93,7 @@ extension KakaoAuthRepositoryImpl {
 // MARK: - PopPang 서버 요청
 extension KakaoAuthRepositoryImpl {
     // 서버에 accessToken 보낸 후 서버에서 idToken 받고 uid 식별 후 유저 반환
-    private func requestUserToServer(accessToken: String) async throws -> User {
+    private func requestUserToServer(accessToken: String) async throws -> UserDTO {
 //        guard let url = URL(string: "https://index.zapto.org/api/oauth2/kakaoLogin") else {
 //            throw KakaoAuthError.invalidURL
 //        }
@@ -117,6 +117,6 @@ extension KakaoAuthRepositoryImpl {
 //        } catch {
 //            throw KakaoAuthError.decodeError
 //        }
-        return User.adminUser
+        return UserDTO.adminUser
     }
 }

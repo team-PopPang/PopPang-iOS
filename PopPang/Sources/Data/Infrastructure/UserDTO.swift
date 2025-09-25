@@ -28,3 +28,13 @@ extension UserDTO {
                     recommands: recommands)
     }
 }
+
+extension UserDTO {
+    static let adminUser = UserDTO(uid: "67890",
+                                email: "john@example.com",
+                                nickname: "JohnDoe",
+                                role: "user",
+                                provider: "kakao",
+                                keywords: ["팝업스토어", "카페"],
+                                recommands: ["패션", "굿즈"])
+}
