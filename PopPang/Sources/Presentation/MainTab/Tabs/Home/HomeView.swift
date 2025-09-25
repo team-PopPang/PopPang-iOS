@@ -15,7 +15,7 @@ struct HomeView: View {
                 SearchTextField(placeholder: "궁금한 장소를 검색해보세요", text: $searchText)
                 
                 AlertButton {
-                    
+                    print("알림 버튼 클릭됨")
                 }
                 .padding(.leading, .contentPadding)
                 
@@ -31,11 +31,13 @@ private struct AlertButton: View {
     var action: () -> Void
     
     var body: some View {
-        Image("Bell")
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(width: 20, height: 20)
-            .padding(10)
+        Button(action: action) {
+            Image("Bell")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 20, height: 20)
+                .padding(10)
+        }
     }
 }
 
