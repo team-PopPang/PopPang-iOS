@@ -13,7 +13,6 @@ struct LoginView: View {
     @EnvironmentObject var coordinator: Coordinator<OnboardingRoute, SheetRoute>
     @EnvironmentObject var rootViewModel: RootViewModel
     @StateObject private var kakaoAuthViewModel = KakaoAuthViewModel()
-
     
     var body: some View {
         VStack(spacing: 0) {
@@ -26,7 +25,7 @@ struct LoginView: View {
             VStack {
                 // MARK: - 카카오
                 SocialLoginButton(type: .kakao) {
-                    kakaoAuthViewModel.kakaoLogin()
+                    // kakaoAuthViewModel.kakaoLogin()
                     // rootViewModel.loginSuccess(isNewUser: true)
                     rootViewModel.send(action: .kakaoLogin)
                 }

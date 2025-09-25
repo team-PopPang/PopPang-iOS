@@ -23,6 +23,7 @@ final class RootViewModel: ObservableObject {
     }
     
     @Dependency private var appleLoginUsecase: AppleAuthUsecaseProtocol
+    @Dependency private var kakaoAuthUsecase: KakaoAuthUsecaseProtocol
     @Published var scene: RootScene = .launch
     @Published var user: User? = nil
     
@@ -58,16 +59,17 @@ extension RootViewModel {
         switch action {
         case .kakaoLogin:
             print("카카오 로그인")
-            self.user = User(uid: "1",
-                             email: nil,
-                             role: "member",
-                             provider: "kakao", recommands: [])
-//            self.user = User(uid: "1",
-//                             email: nil,
-//                             nickname: "index",
-//                             role: "member",
-//                             provider: "kakao", recommands: [])
-            updateScene()
+            Task {
+                do {
+                    let user = try await kakaoAuthUsecase.kakaoLogin()
+                    await MainActor.run {
+                        self.loginSuccess(user: user)
+                    }
+                } catch (let error) {
+                    print("❌ 카카오 로그인 실패: \(error)")
+                }
+            }
+            // updateScene()
             
         case .appleLogin(let authorization):
             print("애플 로그인")
@@ -134,7 +136,6 @@ extension RootViewModel {
         currentUser.recommands = keywords
         self.user = currentUser
     }
-    
     
     // 서버에 최종 반영
     func completeRegistration() {
