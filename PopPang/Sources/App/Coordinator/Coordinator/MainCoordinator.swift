@@ -46,6 +46,10 @@
 import SwiftUI
 
 enum MainRoute: Hashable {
+    
+    // Home
+    case search
+    case alert
 }
 
 enum SheetRoute: Identifiable {
@@ -57,6 +61,11 @@ enum SheetRoute: Identifiable {
 extension Coordinator where T == MainRoute {
     @ViewBuilder
     func buildView(for route: T) -> some View {
-        
+        switch route {
+        case .search:
+            SearchView()
+        case .alert:
+            AlertView()
+        }
     }
 }

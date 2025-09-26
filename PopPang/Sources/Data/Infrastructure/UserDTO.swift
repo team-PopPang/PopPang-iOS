@@ -30,9 +30,9 @@ extension UserDTO {
 }
 
 extension UserDTO {
-    static let adminUser = UserDTO(uid: "67890",
-                                email: "john@example.com",
-                                nickname: "JohnDoe",
+    static let adminUser = UserDTO(uid: "0000",
+                                email: "index@example.com",
+                                nickname: "김동현",
                                 role: "user",
                                 provider: "kakao",
                                 keywords: ["팝업스토어", "카페"],
