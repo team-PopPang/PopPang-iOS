@@ -18,7 +18,7 @@ struct MainTabView: View {
         // 상단 경계선 제거
         appearance.shadowColor = .clear
         // 탭바의 배경색 설정
-        appearance.backgroundColor = Color.mainTab.uiColor
+        appearance.backgroundColor = Color.subWhite.uiColor
         
         // 경계선 대신 그림자 효과 추가
         UITabBar.appearance().layer.shadowColor = UIColor.black.cgColor

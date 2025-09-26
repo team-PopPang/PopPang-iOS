@@ -45,8 +45,9 @@ extension Color {
     static let mainRed = Color(hex: "#DD0000")
     static let mainGreen = Color(hex: "#006813")
     static let mainWhite = Color(hex: "#F1F1F1")
+    static let subWhite = Color(hex: "#FFFFFF")
+    static let subWhite2 = Color(hex: "#CCCCCC")
     static let mainBlack = Color(hex: "#333333")
-    static let mainTab = Color(hex: "#FFFFFF")
     
     // MARK: - BestPost
     static let bestPostTitle = Color(hex: "#FFFFFF")
