@@ -34,6 +34,7 @@ extension AppleAuthRepositoryImpl {
         request.httpMethod = "POST"
         let bodyString = "code=\(authCode)"
         request.httpBody = bodyString.data(using: .utf8)
+        
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
@@ -41,6 +42,7 @@ extension AppleAuthRepositoryImpl {
         }
         print("data: \(data)")
         print("response data:", String(data: data, encoding: .utf8) ?? "invalid encoding")
+        
         return try JSONDecoder().decode(UserDTO.self, from: data)
     }
 }

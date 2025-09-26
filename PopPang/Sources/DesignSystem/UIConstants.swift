@@ -48,6 +48,11 @@ extension Color {
     static let mainBlack = Color(hex: "#333333")
     static let mainTab = Color(hex: "#FFFFFF")
     
+    // MARK: - BestPost
+    static let bestPostTitle = Color(hex: "#FFFFFF")
+    static let bestPostAddress = Color(hex: "#EEEEEE")
+    
+    
     // MARK: - Gray
     static let mainGray = Color(hex: "#777777")
     static let mainGray2 = Color(hex: "#AAAAAA")
