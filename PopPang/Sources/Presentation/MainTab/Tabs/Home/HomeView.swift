@@ -30,149 +30,173 @@ struct HomeView: View {
     @State private var selectRegion: String? = nil
     @State private var selectSort: String? = nil
     
-    var body: some View {
-        VStack(spacing: 0) {
-            
-            // MARK: - Search & Alert
-            HStack(spacing: 0) {
-                SearchTextField(placeholder: "궁금한 장소를 검색해보세요",
-                                text: $searchText)
-                .disabled(true)
-                .overlay {
-                    Color.clear
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            coordinator.push(.search)
-                        }
-                }
-                
-                AlertButton {
-                    print("알림 버튼 클릭됨")
-                    coordinator.push(.alert)
-                }
-                .padding(.leading, .contentPadding)
-            }
-            .padding(.top, .contentPadding)
-            .padding(.horizontal, .contentPadding)
-            .padding(.bottom, 10)
-            
-            ScrollView {
-                VStack(spacing: 0) {
-                    // MARK: - Best Popup
-                    BestPopupScrollView(bestPopups: bestPopups)
+    // MARK: - 테스트 공지
+    @State private var isPresented = false
     
-                    
-                    // MARK: - Coming Popup
-                    HStack {
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("COMING SOON")
-                                .font(.scdream(.medium, size: 11))
-                                .foregroundStyle(Color.mainOrange)
-                            
-                            Text("곧 생기는 팝업")
-                                .font(.scdream(.bold, size: 15))
-                            
-                        }
-                        Spacer()
-                        
-                        Button {
-                            
-                        } label: {
-                            Image("navigationBtn")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 16, height: 16)
-                        }
-                        .padding(.trailing, .contentPadding)
+    var body: some View {
+        ZStack {
+            VStack(spacing: 0) {
+                
+                // MARK: - Search & Alert
+                HStack(spacing: 0) {
+                    SearchTextField(placeholder: "궁금한 장소를 검색해보세요",
+                                    text: $searchText)
+                    .disabled(true)
+                    .overlay {
+                        Color.clear
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                coordinator.push(.search)
+                            }
                     }
-                    .padding(.top, 25)
-                    ComingPopupScrollView(comingPopups: comingPopups)
                     
-                    // MARK: - DropDownView
-                    HStack {
-                        DropDownView(hint: "전체",
-                                     options: [
-                                        "전체",
-                                        "서울",
-                                        "부산",
-                                        "진주"
-                                     ],
-                                     anchor: .bottom,
-                                     maxWidth: 100,
-                                     selection: $selectRegion,
-                                     overlay: false
-                        )
-                        
-                        Spacer()
-                        
-                        DropDownView(hint: "추천순",
-                                     options: [
-                                        "가까운순",
-                                        "추천순",
-                                     ],
-                                     anchor: .bottom,
-                                     maxWidth: 110,
-                                     cornerRadius: 17,
-                                     stroke: .mainGray5,
-                                     imgSize: 10,
-                                     imgColor: .mainGray2,
-                                     selection: $selectSort,
-                                     overlay: true
-                        )
+                    AlertButton {
+                        print("알림 버튼 클릭됨")
+                        // coordinator.push(.alert)
+                        isPresented.toggle()
                     }
-                    .zIndex(1)
-                    .padding(.top, 20)
-                    .padding(.trailing, .contentPadding)
-                    
-      
-                    LazyVGrid(columns: columns, spacing: 20) {
-                        ForEach(gridPopups) { popup in
-                            
-                            VStack(alignment: .leading) {
-                                Image(popup.imageURL)
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(height: 206)
-                                    .clipped()
+                    //                .fullScreenCover(isPresented: $isPresented, content: {
+                    //                    CustomPopupView(isPresented: $isPresented, title: "공지사항", content: "키워드 화면 구현 예정입니다")
+                    //                })
+                    //                .transaction { transaction in
+                    //                    transaction.disablesAnimations = true /// 팝업이 빝에서 위로 올라오는 애니메이션 제거
+                    //                }
+                    .padding(.leading, .contentPadding)
+                }
+                .padding(.top, .contentPadding)
+                .padding(.horizontal, .contentPadding)
+                .padding(.bottom, 10)
+                
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // MARK: - Best Popup
+                        BestPopupScrollView(bestPopups: bestPopups)
+                        
+                        
+                        // MARK: - Coming Popup
+                        HStack {
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("COMING SOON")
+                                    .font(.scdream(.medium, size: 11))
+                                    .foregroundStyle(Color.mainOrange)
                                 
-                                Text(popup.name)
+                                Text("곧 생기는 팝업")
                                     .font(.scdream(.bold, size: 15))
                                 
+                            }
+                            Spacer()
+                            
+                            Button {
                                 
-                                VStack(alignment: .leading, spacing: 2) {
-                                    HStack(spacing: 2) {
-                                        Image("Address")
-                                            .resizable()
-                                            .renderingMode(.template)
-                                            .aspectRatio(contentMode: .fit)
-                                            .foregroundStyle(Color.mainGray)
-                                            .frame(width: 15, height: 15)
-                                        
-                                        Text(popup.address)
-                                            .font(.scdream(.medium, size: 11))
-                                            .foregroundStyle(Color.mainGray)
-                                    }
+                            } label: {
+                                Image("navigationBtn")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 16, height: 16)
+                            }
+                            .padding(.trailing, .contentPadding)
+                        }
+                        .padding(.top, 25)
+                        ComingPopupScrollView(comingPopups: comingPopups)
+                        
+                        // MARK: - DropDownView
+                        HStack {
+                            DropDownView(hint: "전체",
+                                         options: [
+                                            "전체",
+                                            "서울",
+                                            "부산",
+                                            "진주"
+                                         ],
+                                         anchor: .bottom,
+                                         maxWidth: 100,
+                                         selection: $selectRegion,
+                                         overlay: false
+                            )
+                            
+                            Spacer()
+                            
+                            DropDownView(hint: "추천순",
+                                         options: [
+                                            "가까운순",
+                                            "추천순",
+                                         ],
+                                         anchor: .bottom,
+                                         maxWidth: 110,
+                                         cornerRadius: 17,
+                                         stroke: .mainGray5,
+                                         imgSize: 10,
+                                         imgColor: .mainGray2,
+                                         selection: $selectSort,
+                                         overlay: true
+                            )
+                        }
+                        .zIndex(1)
+                        .padding(.top, 20)
+                        .padding(.trailing, .contentPadding)
+                        
+                        
+                        LazyVGrid(columns: columns, spacing: 20) {
+                            ForEach(gridPopups) { popup in
+                                
+                                VStack(alignment: .leading) {
+                                    Image(popup.imageURL)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(height: 206)
+                                        .clipped()
                                     
-                                    HStack {
-                                        Text(popup.startDate, formatter: DateFormatter.popupFormat)
-                                        Text("-")
-                                        Text(popup.endDate, formatter: DateFormatter.popupFormat)
+                                    Text(popup.name)
+                                        .font(.scdream(.bold, size: 15))
+                                    
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        HStack(spacing: 2) {
+                                            Image("Address")
+                                                .resizable()
+                                                .renderingMode(.template)
+                                                .aspectRatio(contentMode: .fit)
+                                                .foregroundStyle(Color.mainGray)
+                                                .frame(width: 15, height: 15)
+                                            
+                                            Text(popup.address)
+                                                .font(.scdream(.medium, size: 11))
+                                                .foregroundStyle(Color.mainGray)
+                                        }
+                                        
+                                        HStack {
+                                            Text(popup.startDate, formatter: DateFormatter.popupFormat)
+                                            Text("-")
+                                            Text(popup.endDate, formatter: DateFormatter.popupFormat)
+                                        }
+                                        .font(.scdream(.medium, size: 11))
+                                        .foregroundStyle(Color.mainGray)
                                     }
-                                    .font(.scdream(.medium, size: 11))
-                                    .foregroundStyle(Color.mainGray)
                                 }
                             }
                         }
+                        .padding(.top, 15)
+                        .padding(.trailing, .contentPadding)
+                        
+                        Spacer()
                     }
-                    .padding(.top, 15)
-                    .padding(.trailing, .contentPadding)
-                    
-                    Spacer()
                 }
+                .padding(.leading, .contentPadding)
             }
-            .padding(.leading, .contentPadding)
+            
+            // 팝업
+            if isPresented {
+                Color.black.opacity(0.4)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        isPresented = false
+                    }
+                
+                CustomPopupView(isPresented: $isPresented, title: "공지사항", content: "키워드 화면 구현 예정입니다.")
+                    .transition(.scale) // 애니메이션
+                    .zIndex(1)
+            }
         }
-        // .padding(.contentPadding)
     }
 }
 
