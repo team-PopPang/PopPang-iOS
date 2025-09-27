@@ -35,44 +35,49 @@ struct HomeView: View {
                         }
                 }
                 
+                
                 AlertButton {
                     print("알림 버튼 클릭됨")
                     coordinator.push(.alert)
                 }
                 .padding(.leading, .contentPadding)
             }
+            .padding(.contentPadding)
             
-            // MARK: - Best Popup
-            BestPopupScrollView(bestPopups: bestPopups)
-                .padding(.top, 10)
-            
-            // MARK: - Coming Popup
-            HStack {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text("COMING SOON")
-                        .font(.scdream(.medium, size: 11))
-                        .foregroundStyle(Color.mainOrange)
-                    
-                    Text("곧 생기는 팝업")
-                        .font(.scdream(.bold, size: 15))
-                }
-                Spacer()
+            VStack(spacing: 0) {
+                // MARK: - Best Popup
+                BestPopupScrollView(bestPopups: bestPopups)
+                    .padding(.top, 10)
                 
-                Button {
+                // MARK: - Coming Popup
+                HStack {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("COMING SOON")
+                            .font(.scdream(.medium, size: 11))
+                            .foregroundStyle(Color.mainOrange)
+                        
+                        Text("곧 생기는 팝업")
+                            .font(.scdream(.bold, size: 15))
+                    }
+                    Spacer()
                     
-                } label: {
-                    Image("navigationBtn")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 16, height: 16)
+                    Button {
+                        
+                    } label: {
+                        Image("navigationBtn")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 16, height: 16)
+                    }
                 }
+                .padding(.top, 20)
+                ComingPopupScrollView(comingPopups: comingPopups)
+                
+                Spacer()
             }
-            .padding(.top, 20)
-            ComingPopupScrollView(comingPopups: comingPopups)
-            
-            Spacer()
+            .padding(.leading, .contentPadding)
         }
-        .padding(.contentPadding)
+        // .padding(.contentPadding)
     }
 }
 
@@ -87,6 +92,7 @@ private struct BestPopupScrollView: View {
                     BestPopupCell(popup: popup)
                 }
             }
+            .padding(.trailing, .contentPadding)
         }
     }
 }
@@ -156,6 +162,7 @@ private struct ComingPopupScrollView: View {
                 }
             }
             .padding(.vertical, 10)
+            .padding(.trailing, .contentPadding)
         }
     }
 }
