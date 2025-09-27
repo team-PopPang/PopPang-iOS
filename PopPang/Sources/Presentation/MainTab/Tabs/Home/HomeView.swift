@@ -58,9 +58,11 @@ struct HomeView: View {
                 .padding(.leading, .contentPadding)
             }
             
+            // MARK: - Best Popup
             BestPopupScrollView(bestPopups: bestPopups)
                 .padding(.top, 10)
             
+            // MARK: - Coming Popup
             HStack {
                 VStack(alignment: .leading, spacing: 5) {
                     Text("COMING SOON")
@@ -96,6 +98,8 @@ private struct BestPopupScrollView: View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 15) {
                 ForEach(bestPopups, id: \.self) { popup in
+                    
+                    // MARK: - Cell
                     BestPopupCell(popup: popup)
                 }
             }
@@ -242,6 +246,7 @@ private struct ComingPopupCell: View {
 
 #Preview {
     HomeView()
+        .environmentObject(Coordinator<MainRoute, SheetRoute>())
 }
 
 extension View {
