@@ -35,14 +35,14 @@ struct HomeView: View {
                         }
                 }
                 
-                
                 AlertButton {
                     print("알림 버튼 클릭됨")
                     coordinator.push(.alert)
                 }
                 .padding(.leading, .contentPadding)
             }
-            .padding(.contentPadding)
+            .padding(.top, .contentPadding)
+            .padding(.horizontal, .contentPadding)
             
             VStack(spacing: 0) {
                 // MARK: - Best Popup
@@ -58,6 +58,7 @@ struct HomeView: View {
                         
                         Text("곧 생기는 팝업")
                             .font(.scdream(.bold, size: 15))
+                        
                     }
                     Spacer()
                     
@@ -69,6 +70,7 @@ struct HomeView: View {
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 16, height: 16)
                     }
+                    .padding(.trailing, .contentPadding)
                 }
                 .padding(.top, 20)
                 ComingPopupScrollView(comingPopups: comingPopups)
