@@ -122,6 +122,22 @@ extension Popup {
                 mediaType: .image
             ),
             Popup(
+                name: "올리브영 9월 팝업스토어 총정리",
+                startDate: formatter.date(from: "2025-10-03 12:00") ?? Date(),
+                endDate: formatter.date(from: "2025-10-20 21:00") ?? Date(),
+                openTime: formatter.date(from: "2025-10-03 12:00") ?? Date(),
+                closeTime: formatter.date(from: "2025-10-03 21:00") ?? Date(),
+                address: "서울 마포구",
+                region: "서울",
+                instaPostId: "3344556677",
+                instaPostURL: "https://instagram.com/p/musinsa888",
+                likeCount: "980",
+                captionSummary: "무신사 스트리트 브랜드 팝업 요약",
+                caption: "신진 디자이너 브랜드들을 모아놓은 무신사 팝업스토어입니다.",
+                imageURL: "img_7",
+                mediaType: .image
+            ),
+            Popup(
                 name: "무신사 스트리트 팝업",
                 startDate: formatter.date(from: "2025-10-03 12:00") ?? Date(),
                 endDate: formatter.date(from: "2025-10-20 21:00") ?? Date(),
@@ -134,7 +150,7 @@ extension Popup {
                 likeCount: "980",
                 captionSummary: "무신사 스트리트 브랜드 팝업 요약",
                 caption: "신진 디자이너 브랜드들을 모아놓은 무신사 팝업스토어입니다.",
-                imageURL: "img_4",
+                imageURL: "img_7",
                 mediaType: .image
             ),
             Popup(
@@ -150,7 +166,7 @@ extension Popup {
                 likeCount: "2100",
                 captionSummary: "라인프렌즈 인기 캐릭터 팝업 요약",
                 caption: "브라운과 코니 등 인기 캐릭터 굿즈를 만나볼 수 있는 라인프렌즈 팝업스토어입니다.",
-                imageURL: "img_5",
+                imageURL: "img_7",
                 mediaType: .image
             )
         ]
