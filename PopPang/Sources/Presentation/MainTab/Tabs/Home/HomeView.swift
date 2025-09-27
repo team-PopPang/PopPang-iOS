@@ -17,6 +17,13 @@ struct HomeView: View {
     
     private var bestPopups: [Popup] = Popup.popupMocks
     private var comingPopups: [Popup] = Array(Popup.popupMocks[4...])
+    private var gridPopups: [Popup] = Array(Popup.popupMocks[7...])
+    
+    private let columns = [
+        // flexible: 가로 공간이 남으면 균등하게 나눠 쓰기
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10)
+    ]
     
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute>
     @State private var searchText = ""
@@ -48,74 +55,119 @@ struct HomeView: View {
             .padding(.top, .contentPadding)
             .padding(.horizontal, .contentPadding)
             
-            VStack(spacing: 0) {
-                // MARK: - Best Popup
-                BestPopupScrollView(bestPopups: bestPopups)
-                    .padding(.top, 10)
-                
-                // MARK: - Coming Popup
-                HStack {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("COMING SOON")
-                            .font(.scdream(.medium, size: 11))
-                            .foregroundStyle(Color.mainOrange)
-                        
-                        Text("곧 생기는 팝업")
-                            .font(.scdream(.bold, size: 15))
-                        
-                    }
-                    Spacer()
+            ScrollView {
+                VStack(spacing: 0) {
+                    // MARK: - Best Popup
+                    BestPopupScrollView(bestPopups: bestPopups)
+                        .padding(.top, 10)
                     
-                    Button {
+                    // MARK: - Coming Popup
+                    HStack {
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("COMING SOON")
+                                .font(.scdream(.medium, size: 11))
+                                .foregroundStyle(Color.mainOrange)
+                            
+                            Text("곧 생기는 팝업")
+                                .font(.scdream(.bold, size: 15))
+                            
+                        }
+                        Spacer()
                         
-                    } label: {
-                        Image("navigationBtn")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 16, height: 16)
+                        Button {
+                            
+                        } label: {
+                            Image("navigationBtn")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 16, height: 16)
+                        }
+                        .padding(.trailing, .contentPadding)
                     }
+                    .padding(.top, 25)
+                    ComingPopupScrollView(comingPopups: comingPopups)
+                    
+                    // MARK: - DropDownView
+                    HStack {
+                        DropDownView(hint: "전체",
+                                     options: [
+                                        "서울",
+                                        "부산",
+                                        "진주"
+                                     ],
+                                     anchor: .bottom,
+                                     maxWidth: 100,
+                                     selection: $selectRegion,
+                                     overlay: false
+                        )
+                        
+                        Spacer()
+                        
+                        DropDownView(hint: "추천순",
+                                     options: [
+                                        "서울",
+                                        "부산",
+                                        "진주"
+                                     ],
+                                     anchor: .bottom,
+                                     maxWidth: 100,
+                                     cornerRadius: 17,
+                                     stroke: .mainGray5,
+                                     imgSize: 10,
+                                     imgColor: .mainGray2,
+                                     selection: $selectSort,
+                                     overlay: true
+                        )
+                    }
+                    .zIndex(1)
+                    .padding(.top, 20)
                     .padding(.trailing, .contentPadding)
-                }
-                .padding(.top, 25)
-                ComingPopupScrollView(comingPopups: comingPopups)
-
-                // MARK: - DropDownView
-                HStack {
-                    DropDownView(hint: "전체",
-                                 options: [
-                                    "서울",
-                                    "부산",
-                                    "진주"
-                                 ],
-                                 anchor: .bottom,
-                                 maxWidth: 100,
-                                 selection: $selectRegion,
-                                 overlay: false
-                    )
+                    
+      
+                    LazyVGrid(columns: columns, spacing: 20) {
+                        ForEach(gridPopups) { popup in
+                            
+                            VStack(alignment: .leading) {
+                                Image(popup.imageURL)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(height: 206)
+                                    .clipped()
+                                
+                                Text(popup.name)
+                                    .font(.scdream(.bold, size: 15))
+                                
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack(spacing: 2) {
+                                        Image("Address")
+                                            .resizable()
+                                            .renderingMode(.template)
+                                            .aspectRatio(contentMode: .fit)
+                                            .foregroundStyle(Color.mainGray)
+                                            .frame(width: 15, height: 15)
+                                        
+                                        Text(popup.address)
+                                            .font(.scdream(.medium, size: 11))
+                                            .foregroundStyle(Color.mainGray)
+                                    }
+                                    
+                                    HStack {
+                                        Text(popup.startDate, formatter: DateFormatter.popupFormat)
+                                        Text("-")
+                                        Text(popup.endDate, formatter: DateFormatter.popupFormat)
+                                    }
+                                    .font(.scdream(.medium, size: 11))
+                                    .foregroundStyle(Color.mainGray)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.top, 15)
+                    .padding(.trailing, .contentPadding)
                     
                     Spacer()
-                    
-                    DropDownView(hint: "추천순",
-                                 options: [
-                                    "서울",
-                                    "부산",
-                                    "진주"
-                                 ],
-                                 anchor: .bottom,
-                                 maxWidth: 100,
-                                 cornerRadius: 17,
-                                 stroke: .mainGray5,
-                                 imgSize: 10,
-                                 imgColor: .mainGray2,
-                                 selection: $selectSort,
-                                 overlay: true
-                    )
                 }
-                .padding(.top, 20)
-                .padding(.trailing, .contentPadding)
-                
-                
-                Spacer()
             }
             .padding(.leading, .contentPadding)
         }
@@ -179,7 +231,9 @@ private struct BestPopupCell: View {
                 HStack(spacing: 2) {
                     Image("Address")
                         .resizable()
+                        .renderingMode(.template)
                         .aspectRatio(contentMode: .fit)
+                        .foregroundStyle(Color.bestPostAddress)
                         .frame(width: 15, height: 15)
                     Text(popup.address)
                         .font(.scdream(.medium, size: 12))

@@ -7,7 +7,8 @@
 
 import Foundation
 
-struct Popup: Hashable {
+struct Popup: Hashable, Identifiable {
+    let id = UUID()
     let name: String
     let startDate: Date
     let endDate: Date
@@ -167,6 +168,70 @@ extension Popup {
                 captionSummary: "라인프렌즈 인기 캐릭터 팝업 요약",
                 caption: "브라운과 코니 등 인기 캐릭터 굿즈를 만나볼 수 있는 라인프렌즈 팝업스토어입니다.",
                 imageURL: "img_7",
+                mediaType: .image
+            ),
+            Popup(
+                name: "라인프렌즈 팝업",
+                startDate: formatter.date(from: "2025-10-07 11:00") ?? Date(),
+                endDate: formatter.date(from: "2025-10-25 20:00") ?? Date(),
+                openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
+                closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
+                address: "서울 중구 명동길 45",
+                region: "서울",
+                instaPostId: "5566778899",
+                instaPostURL: "https://instagram.com/p/linefriends777",
+                likeCount: "2100",
+                captionSummary: "라인프렌즈 인기 캐릭터 팝업 요약",
+                caption: "브라운과 코니 등 인기 캐릭터 굿즈를 만나볼 수 있는 라인프렌즈 팝업스토어입니다.",
+                imageURL: "img_8",
+                mediaType: .image
+            ),
+            Popup(
+                name: "라인프렌즈 팝업",
+                startDate: formatter.date(from: "2025-10-07 11:00") ?? Date(),
+                endDate: formatter.date(from: "2025-10-25 20:00") ?? Date(),
+                openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
+                closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
+                address: "서울 중구 명동길 45",
+                region: "서울",
+                instaPostId: "5566778899",
+                instaPostURL: "https://instagram.com/p/linefriends777",
+                likeCount: "2100",
+                captionSummary: "라인프렌즈 인기 캐릭터 팝업 요약",
+                caption: "브라운과 코니 등 인기 캐릭터 굿즈를 만나볼 수 있는 라인프렌즈 팝업스토어입니다.",
+                imageURL: "img_8",
+                mediaType: .image
+            ),
+            Popup(
+                name: "라인프렌즈 팝업",
+                startDate: formatter.date(from: "2025-10-07 11:00") ?? Date(),
+                endDate: formatter.date(from: "2025-10-25 20:00") ?? Date(),
+                openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
+                closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
+                address: "서울 중구 명동길 45",
+                region: "서울",
+                instaPostId: "5566778899",
+                instaPostURL: "https://instagram.com/p/linefriends777",
+                likeCount: "2100",
+                captionSummary: "라인프렌즈 인기 캐릭터 팝업 요약",
+                caption: "브라운과 코니 등 인기 캐릭터 굿즈를 만나볼 수 있는 라인프렌즈 팝업스토어입니다.",
+                imageURL: "img_8",
+                mediaType: .image
+            ),
+            Popup(
+                name: "라인프렌즈 팝업",
+                startDate: formatter.date(from: "2025-10-07 11:00") ?? Date(),
+                endDate: formatter.date(from: "2025-10-25 20:00") ?? Date(),
+                openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
+                closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
+                address: "서울 중구 명동길 45",
+                region: "서울",
+                instaPostId: "5566778899",
+                instaPostURL: "https://instagram.com/p/linefriends777",
+                likeCount: "2100",
+                captionSummary: "라인프렌즈 인기 캐릭터 팝업 요약",
+                caption: "브라운과 코니 등 인기 캐릭터 굿즈를 만나볼 수 있는 라인프렌즈 팝업스토어입니다.",
+                imageURL: "img_8",
                 mediaType: .image
             ),
             Popup(
