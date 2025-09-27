@@ -208,14 +208,10 @@ private struct ComingPopupCell: View {
                         
                         Spacer()
                         
-                        Button {
+                        LikeButton {
                             
-                        } label: {
-                            Image("like")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 20, height: 20)
                         }
+                        
                     }
                     .padding(.top, 10)
                     .padding(.trailing, 15)
@@ -233,6 +229,23 @@ private struct ComingPopupCell: View {
                 .padding(.leading, 5)
             }
             .frame(width: 289, height: 114)
+        }
+    }
+}
+
+private struct LikeButton: View {
+    @State private var isLiked: Bool = false
+    var action: () -> Void
+    
+    var body: some View {
+        Button {
+            isLiked.toggle()
+            action()
+        } label: {
+            Image(isLiked ? "like_fill" : "like")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 20, height: 20)
         }
     }
 }
