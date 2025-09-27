@@ -54,12 +54,13 @@ struct HomeView: View {
             }
             .padding(.top, .contentPadding)
             .padding(.horizontal, .contentPadding)
+            .padding(.bottom, 10)
             
             ScrollView {
                 VStack(spacing: 0) {
                     // MARK: - Best Popup
                     BestPopupScrollView(bestPopups: bestPopups)
-                        .padding(.top, 10)
+    
                     
                     // MARK: - Coming Popup
                     HStack {
@@ -105,12 +106,11 @@ struct HomeView: View {
                         
                         DropDownView(hint: "추천순",
                                      options: [
-                                        "서울",
-                                        "부산",
-                                        "진주"
+                                        "좋아요순",
+                                        "추천순",
                                      ],
                                      anchor: .bottom,
-                                     maxWidth: 100,
+                                     maxWidth: 110,
                                      cornerRadius: 17,
                                      stroke: .mainGray5,
                                      imgSize: 10,
@@ -305,7 +305,7 @@ private struct ComingPopupCell: View {
                         LikeButton {
                             
                         }
-                        
+            
                     }
                     .padding(.top, 10)
                     .padding(.trailing, 15)
