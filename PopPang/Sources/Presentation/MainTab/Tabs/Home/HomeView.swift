@@ -20,9 +20,13 @@ struct HomeView: View {
     
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute>
     @State private var searchText = ""
+    @State private var selectRegion: String? = nil
+    @State private var selectSort: String? = nil
     
     var body: some View {
         VStack(spacing: 0) {
+            
+            // MARK: - Search & Alert
             HStack(spacing: 0) {
                 SearchTextField(placeholder: "궁금한 장소를 검색해보세요",
                                 text: $searchText)
@@ -72,8 +76,44 @@ struct HomeView: View {
                     }
                     .padding(.trailing, .contentPadding)
                 }
-                .padding(.top, 20)
+                .padding(.top, 25)
                 ComingPopupScrollView(comingPopups: comingPopups)
+
+                // MARK: - DropDownView
+                HStack {
+                    DropDownView(hint: "전체",
+                                 options: [
+                                    "서울",
+                                    "부산",
+                                    "진주"
+                                 ],
+                                 anchor: .bottom,
+                                 maxWidth: 100,
+                                 selection: $selectRegion,
+                                 overlay: false
+                    )
+                    
+                    Spacer()
+                    
+                    DropDownView(hint: "추천순",
+                                 options: [
+                                    "서울",
+                                    "부산",
+                                    "진주"
+                                 ],
+                                 anchor: .bottom,
+                                 maxWidth: 100,
+                                 cornerRadius: 17,
+                                 stroke: .mainGray5,
+                                 imgSize: 10,
+                                 imgColor: .mainGray2,
+                                 selection: $selectSort,
+                                 overlay: true
+                    )
+                }
+                .padding(.top, 20)
+                .padding(.trailing, .contentPadding)
+                
                 
                 Spacer()
             }
