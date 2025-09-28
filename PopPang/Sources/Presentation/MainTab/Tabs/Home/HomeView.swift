@@ -84,8 +84,7 @@ struct HomeView: View {
                         
                         // MARK: - DropDownView
                         HStack {
-                            DropDownView(hint: "전체",
-                                         options: [
+                            DropDownView(options: [
                                             "전체",
                                             "서울",
                                             "부산",
@@ -99,8 +98,7 @@ struct HomeView: View {
                             
                             Spacer()
                             
-                            DropDownView(hint: "추천순",
-                                         options: [
+                            DropDownView(options: [
                                             "가까운순",
                                             "추천순",
                                          ],

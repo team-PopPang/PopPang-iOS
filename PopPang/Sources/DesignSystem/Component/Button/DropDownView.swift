@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct DropDownView: View {
-    var hint: String
     var options: [String]
     var anchor: Anchor = .bottom
     var maxWidth: CGFloat = 180
@@ -23,10 +22,9 @@ struct DropDownView: View {
     @SceneStorage("drop_down_zindex") private var index = 1000.0
     @State private var zIndex: Double = 1000.0
     
-    
     var body: some View {
-        GeometryReader {
-            let size = $0.size
+        GeometryReader { geo in
+            let size = geo.size
             
             VStack(spacing: 0) {
                 
@@ -35,10 +33,11 @@ struct DropDownView: View {
                 }
                 
                 HStack(spacing: 0) {
-                    Text(selection ?? hint)
+                    Text(selection ?? "")
                         .font(.scdream(.medium, size: 15))
                         .foregroundStyle(Color.mainBlack)
                         .lineLimit(1)
+                        .animation(.none, value: selection)
                     
                     Spacer()
                     
@@ -54,7 +53,7 @@ struct DropDownView: View {
                 .background(scheme == .dark ? .black : .white)
                 .contentShape(.rect)
                 .onTapGesture {
-                    withAnimation(.snappy) {
+                    withAnimation(.snappy(duration: 0.28, extraBounce: 0)) {
                         index += 1
                         zIndex = index
                         showOptions.toggle()
@@ -75,8 +74,14 @@ struct DropDownView: View {
                         .stroke(stroke)
                 }
             }
-            .frame(height: size.height, alignment: anchor == .top ? .bottom : .top)
-            
+            .frame(height: size.height,
+                   alignment: anchor == .top ? .bottom : .top)
+            // ✅ 첫 번째 옵션 기본 선택
+            .onAppear {
+                if selection == nil {
+                    selection = options.first
+                }
+            }
         }
         .frame(maxWidth: maxWidth)
         .frame(height: 40)
@@ -98,7 +103,6 @@ struct DropDownView: View {
                         .frame(width: 12, height: 12)
                         .foregroundStyle(Color.mainBlack)
                         .opacity(selection == option ? 1 : 0)
-                    
                 }
                 .foregroundStyle(selection == option ? Color.primary : .gray)
                 .animation(.none, value: selection)
@@ -129,8 +133,7 @@ struct TestView: View {
     @State private var selection2: String?
     var body: some View {
         VStack {
-            DropDownView(hint: "전체",
-                         options: [
+            DropDownView(options: [
                             "서울",
                             "부산",
                             "진주"
@@ -139,8 +142,7 @@ struct TestView: View {
                          maxWidth: 100,
                          selection: $selection)
             
-            DropDownView(hint: "select",
-                         options: [
+            DropDownView(options: [
                             "서울",
                             "부산",
                             "진주"
@@ -164,8 +166,7 @@ struct TestView: View {
             }
             .pickerStyle(.menu) // 드롭다운처럼 보이게
             
-            
-
+    
         }
     }
 }
