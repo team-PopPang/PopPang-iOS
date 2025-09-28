@@ -11,58 +11,82 @@ struct PopupDetailView: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
     let popup: Popup
     var body: some View {
-        // Text("\(popup)")
-        ScrollView {
-            VStack(alignment: .leading) {
-//                Image(popup.imageURL)
-//                    .resizable()
-//                    .aspectRatio(contentMode: .fill)
-//                    .frame(height: 450)
-//                    .clipped()
-                GeometryReader { geo in
-                      let offset = geo.frame(in: .global).minY
-                      Image(popup.imageURL)
-                          .resizable()
-                          .aspectRatio(contentMode: .fill)
-                          .frame(width: geo.size.width,
-                                 height: 450 + (offset > 0 ? offset : 0)) // 세로만 늘어남
-                          .clipped()
-                          .offset(y: (offset > 0 ? -offset : 0)) // 위로 당길 때 자연스럽게 보정
-                  }
-                  .frame(height: 450) // 기본 높이
-                
+        ZStack(alignment: .bottom) {
+            ScrollView {
                 VStack(alignment: .leading) {
+                    /*
+                     Image(popup.imageURL)
+                     .resizable()
+                     .aspectRatio(contentMode: .fill)
+                     .frame(height: 450)
+                     .clipped()
+                     */
+                    GeometryReader { geo in
+                        let offset = geo.frame(in: .global).minY
+                        Image(popup.imageURL)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: geo.size.width,
+                                   height: 450 + (offset > 0 ? offset : 0)) // 세로만 늘어남
+                            .clipped()
+                            .offset(y: (offset > 0 ? -offset : 0)) // 위로 당길 때 자연스럽게 보정
+                    }
+                    .frame(height: 450) // 기본 높이
                     
-                    // MARK: - Title
-                    Text(popup.name)
-                        .font(.scdream(.bold, size: 17))
-                        .foregroundStyle(Color.mainBlack)
+                    VStack(alignment: .leading) {
+                        
+                        // MARK: - Title
+                        Text(popup.name)
+                            .font(.scdream(.bold, size: 17))
+                            .foregroundStyle(Color.mainBlack)
+                        
+                        // MARK: - Info
+                        InfoView(popup: popup)
+                            .padding(.top, 20)
+                        
+                        Divider()
+                            .background(Color.mainBlack)
+                            .padding(.vertical, 15)
+                        
+                        // MARK: - Body
+                        Text(popup.captionSummary)
+                            .font(.scdream(.regular, size: 12))
+                        
+                    }
+                    .padding(.top, 20)
+                    .padding(.horizontal, .contentPadding)
                     
-                    InfoView(popup: popup)
-                        .padding(.top, 20)
-                    
-                    Divider()
-                        .background(Color.mainBlack)
-                        .padding(.vertical, 15)
-                    
-                    Text(popup.captionSummary)
-                        .font(.scdream(.regular, size: 12))
+                    Spacer()
+                        .frame(height: 500)
+                }
+            }
+            .ignoresSafeArea()
+            
+            HStack {
+                MainOrangeButton(buttonTitle: "알림 받기") {
                     
                 }
-                .padding(.top, 20)
-                .padding(.horizontal, .contentPadding)
                 
-                Spacer()
-                    .frame(height: 500)
+                IconButton(image: "share", imageSize: 25) {
+                    
+                }
+                
+                BookmarkButton(info: .detail) {
+                    
+                }
             }
+            .padding(.top, 10)
+            .padding(.horizontal, .contentPadding)
+            .background(Color.mainGray4)
+            
         }
-        .ignoresSafeArea()
-        // .toolbarBackground(.hidden, for: .navigationBar)
+        
     }
 }
 
 private struct InfoView: View {
     let popup: Popup
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 20) {
@@ -88,7 +112,7 @@ private struct InfoView: View {
                 }
             }
         }
-        .font(.scdream(.regular, size: 12))
+        .font(.scdream(.regular, size: 15))
     }
 }
 

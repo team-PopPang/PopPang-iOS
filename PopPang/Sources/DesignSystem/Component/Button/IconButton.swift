@@ -7,21 +7,24 @@
 
 import SwiftUI
 
-struct AlertButton: View {
+struct IconButton: View {
+    var image: String = "Bell"
+    var imageSize: CGFloat = 20
     var action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            Image("Bell")
+            Image(image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 20, height: 20)
+                .frame(width: imageSize, height: imageSize)
                 .padding(10)
         }
+        .buttonStyle(PressableButtonStyle())
     }
 }
 #Preview {
-    AlertButton {
+    IconButton {
         
     }
 }

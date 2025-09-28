@@ -51,7 +51,7 @@ struct CategorySettingView: View {
             
             Spacer()
             
-            NextButton(buttonTitle: "완료") {
+            MainOrangeButton(buttonTitle: "완료") {
                 print(selectedCategories)
                 rootViewModel.completeRegistration()
             }

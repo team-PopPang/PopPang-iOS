@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct NextButton: View {
+struct MainOrangeButton: View {
     var buttonTitle: String
     var textColor: Color = .mainWhite
     var buttonColor: Color = .mainOrange
@@ -40,7 +40,7 @@ struct PressableButtonStyle: ButtonStyle {
 }
 
 #Preview {
-    NextButton(buttonTitle: "다음") {
+    MainOrangeButton(buttonTitle: "다음") {
         
     }
 }

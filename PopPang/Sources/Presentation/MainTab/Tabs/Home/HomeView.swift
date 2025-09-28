@@ -40,7 +40,7 @@ struct HomeView: View {
                             }
                     }
                     
-                    AlertButton {
+                    IconButton {
                         print("알림 버튼 클릭됨")
                         coordinator.presentOverlay(overlay: .notice(title: "공지사항",
                                                                     content: "키워드 화면 구현 예정입니다."))
@@ -274,7 +274,7 @@ private struct ComingPopupCell: View {
                         
                         Spacer()
                         
-                        LikeButton {
+                        BookmarkButton(info: .home) {
                             
                         }
             
@@ -299,8 +299,13 @@ private struct ComingPopupCell: View {
     }
 }
 
-private struct LikeButton: View {
+struct BookmarkButton: View {
+    enum Info {
+        case home
+        case detail
+    }
     @State private var isLiked: Bool = false
+    var info: Info
     var action: () -> Void
     
     var body: some View {
@@ -308,10 +313,20 @@ private struct LikeButton: View {
             isLiked.toggle()
             action()
         } label: {
-            Image(isLiked ? "like_fill" : "like")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 20, height: 20)
+            switch info {
+            case .home:
+                Image(isLiked ? "like_fill" : "like")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 20, height: 20)
+            case .detail:
+                Image(isLiked ? "bookmark_fill" : "bookmark")
+                    .renderingMode(.template)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 25, height: 25)
+                    .foregroundStyle(isLiked ? Color.mainOrange : Color.mainBlack)
+            }
         }
     }
 }
@@ -382,6 +397,7 @@ private struct GridPopupCell: View {
 #Preview {
     HomeView()
         .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+        .environmentObject(HomeViewModel())
 }
 
 extension View {

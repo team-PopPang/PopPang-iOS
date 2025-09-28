@@ -23,7 +23,7 @@ struct OnboadringView: View {
                     .frame(maxWidth: .infinity)
                 
                 // MARK: - 다음 버튼
-                NextButton(
+                MainOrangeButton(
                     buttonTitle: currentStep == .favorite ? "로그인" : "다음"
                 ) {
                     if currentStep.rawValue < OnboardingStep.allCases.count - 1 {

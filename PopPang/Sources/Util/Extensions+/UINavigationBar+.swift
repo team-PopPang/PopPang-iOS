@@ -44,7 +44,7 @@ extension UINavigationBar {
         // MARK: - 커스텀 뒤로가기
         if let chevronImage = UIImage(named: "backButton")?
             .withRenderingMode(.alwaysOriginal) // 에셋 색상 그대로 사용
-            .withAlignmentRectInsets(UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 0)) {
+            .withAlignmentRectInsets(UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)) {
             
             defaultAppearance.setBackIndicatorImage(chevronImage, transitionMaskImage: chevronImage)
         }

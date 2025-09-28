@@ -59,7 +59,7 @@ struct NicknameSettingView: View {
             
             Spacer()
             
-            NextButton(buttonTitle: "다음") {
+            MainOrangeButton(buttonTitle: "다음") {
                 rootViewModel.updateNickname(text)
                 UIApplication.shared.endEditing(true)
                 Task {
