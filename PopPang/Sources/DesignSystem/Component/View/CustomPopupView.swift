@@ -84,7 +84,7 @@ struct AdCustomPopupView: View {
                         .aspectRatio(contentMode: .fill)
                         .frame(maxWidth: .infinity)
                         .frame(height: 300)
-                        .cornerRadius(12)
+                        .cornerRadius(12, corners: [.topLeft, .topRight])
                 }
                 
                 
