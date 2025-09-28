@@ -13,7 +13,6 @@ struct RootViewSwitcher: View {
     
     init(rootViewModel: RootViewModel) {
         self._rootViewModel = StateObject(wrappedValue: rootViewModel)
-        UINavigationBar.configureAppearance()
     }
 
     // MARK: - 각 파트의 Root View입니다
