@@ -60,6 +60,7 @@ enum SheetRoute: Identifiable {
 
 enum OverlayRoute: Identifiable {
     case notice(title: String, content: String)
+    case ad(image: String)
     
     var id: String {
         String(describing: self)
@@ -86,6 +87,12 @@ extension Coordinator where O == OverlayRoute {
             CustomPopupView(title: title,
                             content: content,
                             onDismiss: self.dismissOverlay)
+        case .ad(let image):
+            AdCustomPopupView(imageURL: image,
+                              title: nil,
+                              content: nil,
+                              onDismiss: self.dismissOverlay,
+                              onDontShowToday: self.dismissOverlay)
         }
     }
 }

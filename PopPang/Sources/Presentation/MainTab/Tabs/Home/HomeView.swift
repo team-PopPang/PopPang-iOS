@@ -30,6 +30,9 @@ struct HomeView: View {
     @State private var selectRegion: String? = nil
     @State private var selectSort: String? = nil
     
+    // MARK: - 광고뷰 테스트
+    @State private var hasSeenPopup: Bool = false
+    
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
@@ -173,6 +176,12 @@ struct HomeView: View {
                     }
                 }
                 .padding(.leading, .contentPadding)
+            }
+        }
+        .onAppear {
+            if !hasSeenPopup {
+                coordinator.presentOverlay(overlay: .ad(image: "img_8"))
+                hasSeenPopup = true
             }
         }
     }

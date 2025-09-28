@@ -71,7 +71,7 @@ class Coordinator<T: Hashable, R: Identifiable, O: Identifiable>: ObservableObje
     }
     
     // 현재 띄운 sheet 닫기
-    func dismissSheer() {
+    func dismissSheet() {
         sheet = nil
     }
     
