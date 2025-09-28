@@ -14,7 +14,7 @@ struct BestPopup: Hashable {
 }
 
 struct HomeView: View {
-    @StateObject private var homeViewModel = HomeViewModel()
+    @EnvironmentObject private var homeViewModel: HomeViewModel
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @State private var searchText = ""
     @State private var selectRegion: String? = nil
@@ -138,6 +138,7 @@ struct HomeView: View {
 
 // MARK: - Best Popup
 private struct BestPopupScrollView: View {
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @ObservedObject var viewModel: HomeViewModel
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -146,6 +147,9 @@ private struct BestPopupScrollView: View {
                     
                     // MARK: - Cell
                     BestPopupCell(popup: popup)
+                        .onTapGesture {
+                            coordinator.push(.popupDetail(popup))
+                        }
                 }
             }
             .padding(.trailing, .contentPadding)
@@ -357,9 +361,9 @@ private struct GridPopupCell: View {
             }
             
             HStack {
-                Text(popup.startDate, formatter: DateFormatter.popupFormat)
+                Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
                 Text("-")
-                Text(popup.endDate, formatter: DateFormatter.popupFormat)
+                Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
             }
             .font(.scdream(.medium, size: 11))
             .foregroundStyle(Color.mainGray)

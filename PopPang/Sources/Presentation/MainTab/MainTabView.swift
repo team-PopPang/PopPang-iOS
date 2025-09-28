@@ -9,8 +9,10 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selectedTab: MainTabType = .home
+    @StateObject private var homeViewModel = HomeViewModel()
     
     init() {
+        // MARK: - 탭바 관련
         // 새로운 탭바 스타일(appearance) 인스턴스 생성
         let appearance = UITabBarAppearance()
         // 반투명 효과 제거, 불투명한 배경 설정, 상단 경계선 자동생성
@@ -70,7 +72,9 @@ struct MainTabView: View {
                 ForEach(MainTabType.allCases, id: \.self) { tab in
                     Group {
                         switch tab {
-                        case .home: HomeView()
+                        case .home:
+                            HomeView()
+                                .environmentObject(homeViewModel)
                         case .calendar: CalendarView()
                         case .map: MapView()
                         case .bookmark: BookmarkView()

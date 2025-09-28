@@ -8,9 +8,15 @@
 import Foundation
 
 extension DateFormatter {
-    static let popupFormat: DateFormatter = {
+    static let popupDateFormat: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "YY.MM.dd"
+        return formatter
+    }()
+    
+    static let popupTimeFormat: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
         return formatter
     }()
 }
