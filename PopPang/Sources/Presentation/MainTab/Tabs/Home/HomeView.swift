@@ -14,17 +14,7 @@ struct BestPopup: Hashable {
 }
 
 struct HomeView: View {
-    
-    private var bestPopups: [Popup] = Popup.popupMocks
-    private var comingPopups: [Popup] = Array(Popup.popupMocks[4...])
-    private var gridPopups: [Popup] = Array(Popup.popupMocks[7...])
-    
-    private let columns = [
-        // flexible: 가로 공간이 남으면 균등하게 나눠 쓰기
-        GridItem(.flexible(), spacing: 10),
-        GridItem(.flexible(), spacing: 10)
-    ]
-    
+    @StateObject private var homeViewModel = HomeViewModel()
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @State private var searchText = ""
     @State private var selectRegion: String? = nil
@@ -64,8 +54,7 @@ struct HomeView: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         // MARK: - Best Popup
-                        BestPopupScrollView(bestPopups: bestPopups)
-                        
+                        BestPopupScrollView(viewModel: homeViewModel)
                         
                         // MARK: - Coming Popup
                         HStack {
@@ -91,7 +80,7 @@ struct HomeView: View {
                             .padding(.trailing, .contentPadding)
                         }
                         .padding(.top, 25)
-                        ComingPopupScrollView(comingPopups: comingPopups)
+                        ComingPopupScrollView(viewModel: homeViewModel)
                         
                         // MARK: - DropDownView
                         HStack {
@@ -130,49 +119,11 @@ struct HomeView: View {
                         .padding(.trailing, .contentPadding)
                         
                         // MARK: - GridView
-                        LazyVGrid(columns: columns, spacing: 20) {
-                            ForEach(gridPopups) { popup in
-                                
-                                VStack(alignment: .leading) {
-                                    Image(popup.imageURL)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .frame(height: 206)
-                                        .clipped()
-                                    
-                                    Text(popup.name)
-                                        .font(.scdream(.bold, size: 15))
-                                    
-                                    
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        HStack(spacing: 2) {
-                                            Image("Address")
-                                                .resizable()
-                                                .renderingMode(.template)
-                                                .aspectRatio(contentMode: .fit)
-                                                .foregroundStyle(Color.mainGray)
-                                                .frame(width: 15, height: 15)
-                                            
-                                            Text(popup.address)
-                                                .font(.scdream(.medium, size: 11))
-                                                .foregroundStyle(Color.mainGray)
-                                        }
-                                        
-                                        HStack {
-                                            Text(popup.startDate, formatter: DateFormatter.popupFormat)
-                                            Text("-")
-                                            Text(popup.endDate, formatter: DateFormatter.popupFormat)
-                                        }
-                                        .font(.scdream(.medium, size: 11))
-                                        .foregroundStyle(Color.mainGray)
-                                    }
-                                }
-                            }
-                        }
+                        GridPopupScroppView(viewModel: homeViewModel)
                         .padding(.top, 15)
                         .padding(.trailing, .contentPadding)
                         
-                        Spacer()
+                        // Spacer()
                     }
                 }
                 .padding(.leading, .contentPadding)
@@ -187,12 +138,13 @@ struct HomeView: View {
     }
 }
 
+// MARK: - Best Popup
 private struct BestPopupScrollView: View {
-    var bestPopups: [Popup]
+    @ObservedObject var viewModel: HomeViewModel
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 15) {
-                ForEach(bestPopups, id: \.self) { popup in
+                ForEach(viewModel.bestPopups, id: \.self) { popup in
                     
                     // MARK: - Cell
                     BestPopupCell(popup: popup)
@@ -257,12 +209,14 @@ private struct BestPopupCell: View {
     }
 }
 
+// MARK: - Coming Popuo
 private struct ComingPopupScrollView: View {
-    var comingPopups: [Popup]
+    @ObservedObject var viewModel: HomeViewModel
+    
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
-                ForEach(comingPopups, id: \.self) { popup in
+                ForEach(viewModel.comingPopups, id: \.self) { popup in
                     
                     // MARK: - Cell
                     ComingPopupCell(popup: popup)
@@ -352,6 +306,65 @@ private struct LikeButton: View {
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 20, height: 20)
+        }
+    }
+}
+
+// MARK: - Current Popup
+private struct GridPopupScroppView: View {
+    @ObservedObject var viewModel: HomeViewModel
+    private let columns = [
+        // flexible: 가로 공간이 남으면 균등하게 나눠 쓰기
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10)
+    ]
+    
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: 20) {
+            ForEach(viewModel.gridPopups) { popup in
+                
+                VStack(alignment: .leading) {
+                    GridPopupCell(popup: popup)
+                }
+            }
+        }
+    }
+}
+
+private struct GridPopupCell: View {
+    let popup: Popup
+    var body: some View {
+        Image(popup.imageURL)
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .frame(height: 206)
+            .clipped()
+        
+        Text(popup.name)
+            .font(.scdream(.bold, size: 15))
+        
+        
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 2) {
+                Image("Address")
+                    .resizable()
+                    .renderingMode(.template)
+                    .aspectRatio(contentMode: .fit)
+                    .foregroundStyle(Color.mainGray)
+                    .frame(width: 15, height: 15)
+                
+                Text(popup.address)
+                    .font(.scdream(.medium, size: 11))
+                    .foregroundStyle(Color.mainGray)
+            }
+            
+            HStack {
+                Text(popup.startDate, formatter: DateFormatter.popupFormat)
+                Text("-")
+                Text(popup.endDate, formatter: DateFormatter.popupFormat)
+            }
+            .font(.scdream(.medium, size: 11))
+            .foregroundStyle(Color.mainGray)
         }
     }
 }
