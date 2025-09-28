@@ -8,13 +8,20 @@
 import SwiftUI
 
 struct CustomPopupView: View {
-    @Binding var isPresented: Bool
     let title: String
     let content: String
+    var onDismiss: () -> Void
     
     var body: some View {
         ZStack {
+            
+            // MARK: - 딤 처리
+            Color.black.opacity(0.4)
+                .ignoresSafeArea()
+            
+            // MARK: - 팝업 본문
             VStack(spacing: 0) {
+                
                 Text(title)
                     .font(.scdream(.bold, size: 17))
                 Text(content)
@@ -23,7 +30,7 @@ struct CustomPopupView: View {
                     .padding(.top, 20)
                 
                 Button {
-                    isPresented.toggle()
+                    onDismiss()
                 } label: {
                     Text("확인")
                         .font(.scdream(.medium, size: 15))
@@ -43,12 +50,11 @@ struct CustomPopupView: View {
                     .fill(Color.mainWhite)
             )
             .padding(.horizontal, 30)
-            
         }
     }
 }
 
 #Preview {
-    @Previewable @State var isPresented: Bool = false
-    CustomPopupView(isPresented: $isPresented, title: "공지사항", content: "팝팡 테스트 공지입니다.\n나중에 사진도 넣으면 어떨까요.")
+    // @Previewable @State var isPresented: Bool = false
+    // CustomPopupView(isPresented: $isPresented, title: "공지사항", content: "팝팡 테스트 공지입니다.\n나중에 사진도 넣으면 어떨까요.")
 }

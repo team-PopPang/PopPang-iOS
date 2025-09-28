@@ -58,6 +58,14 @@ enum SheetRoute: Identifiable {
     }
 }
 
+enum OverlayRoute: Identifiable {
+    case notice(title: String, content: String)
+    
+    var id: String {
+        String(describing: self)
+    }
+}
+
 extension Coordinator where T == MainRoute {
     @ViewBuilder
     func buildView(for route: T) -> some View {
@@ -66,6 +74,18 @@ extension Coordinator where T == MainRoute {
             SearchView()
         case .alert:
             AlertView()
+        }
+    }
+}
+
+extension Coordinator where O == OverlayRoute {
+    @ViewBuilder
+    func buildView(for overlay: O) -> some View {
+        switch overlay {
+        case .notice(let title, let content):
+            CustomPopupView(title: title,
+                            content: content,
+                            onDismiss: self.dismissOverlay)
         }
     }
 }

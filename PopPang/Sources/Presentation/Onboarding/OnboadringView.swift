@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct OnboadringView: View {
-    @EnvironmentObject private var coordinator: Coordinator<OnboardingRoute, SheetRoute>
+    @EnvironmentObject private var coordinator: Coordinator<OnboardingRoute, SheetRoute, OverlayRoute>
     @State private var currentStep: OnboardingStep = .welcome
     
     var body: some View {

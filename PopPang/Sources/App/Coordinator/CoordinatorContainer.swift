@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CoordinatorContainer<Content: View>: View {
-    @StateObject private var coordinator = Coordinator<MainRoute, SheetRoute>()
+    @StateObject private var coordinator = Coordinator<MainRoute, SheetRoute, OverlayRoute>()
     let content: () -> Content
     
     var body: some View {
@@ -20,6 +20,11 @@ struct CoordinatorContainer<Content: View>: View {
                 }
         }
         .environmentObject(coordinator)
+        .overlay {
+            if let overlay = coordinator.overlay {
+                coordinator.buildView(for: overlay)
+            }
+        }
         // 이 부분은 특정 뷰에서만 보이려면 주석처리하고, 특정 뷰에 달아준다
 //        .sheet(item: $coordinator.sheet) { sheet in
 //            coordinator.buildView(for: sheet)

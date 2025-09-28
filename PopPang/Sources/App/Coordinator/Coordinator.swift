@@ -13,9 +13,10 @@ import SwiftUI
 ///     - Identifiable제약 이유: SwiftUI의 .sheet(item:)에서 고유하게 구분할 수 있어야 함
 /// ObservableObject: Combime프로토콜
 ///     - @Published 프로퍼티가 변경되면 SwiftUI뷰가 자동으로 새로 그린다
-class Coordinator<T: Hashable, R: Identifiable>: ObservableObject {
+class Coordinator<T: Hashable, R: Identifiable, O: Identifiable>: ObservableObject {
     @Published var paths: [T] = [] /// 네비게이션 스택 경로 리스트
     @Published var sheet: R? = nil  /// 현재 표시 중인 모달(nil이면 닫힘, 값이 있으면 표시)
+    @Published var overlay: O? = nil
     
     /// 초기 화면 경로 설정 생성자
     /// - initial 값이 있다면 paths 배열을 [initial]로 시작
@@ -72,5 +73,15 @@ class Coordinator<T: Hashable, R: Identifiable>: ObservableObject {
     // 현재 띄운 sheet 닫기
     func dismissSheer() {
         sheet = nil
+    }
+    
+    // 오버레이 띄우기
+    func presentOverlay(overlay: O) {
+        self.overlay = overlay
+    }
+    
+    // 오버레이 닫기
+    func dismissOverlay() {
+        self.overlay = nil
     }
 }

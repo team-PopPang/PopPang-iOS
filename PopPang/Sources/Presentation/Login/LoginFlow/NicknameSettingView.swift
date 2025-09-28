@@ -12,7 +12,7 @@ struct NicknameSettingView: View {
     @State private var text: String = ""
     @FocusState private var isFocused: Bool
     @State private var isValid: Bool? = nil
-    @EnvironmentObject var coordinator: Coordinator<RegisterRoute, SheetRoute>
+    @EnvironmentObject var coordinator: Coordinator<RegisterRoute, SheetRoute, OverlayRoute>
     var onNext: () -> Void
     
     var body: some View {

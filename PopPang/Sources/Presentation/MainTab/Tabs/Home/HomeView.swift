@@ -25,13 +25,10 @@ struct HomeView: View {
         GridItem(.flexible(), spacing: 10)
     ]
     
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @State private var searchText = ""
     @State private var selectRegion: String? = nil
     @State private var selectSort: String? = nil
-    
-    // MARK: - 테스트 공지
-    @State private var isPresented = false
     
     var body: some View {
         ZStack {
@@ -52,15 +49,9 @@ struct HomeView: View {
                     
                     AlertButton {
                         print("알림 버튼 클릭됨")
-                        // coordinator.push(.alert)
-                        isPresented.toggle()
+                        coordinator.presentOverlay(overlay: .notice(title: "공지사항",
+                                                                    content: "키워드 화면 구현 예정입니다."))
                     }
-                    //                .fullScreenCover(isPresented: $isPresented, content: {
-                    //                    CustomPopupView(isPresented: $isPresented, title: "공지사항", content: "키워드 화면 구현 예정입니다")
-                    //                })
-                    //                .transaction { transaction in
-                    //                    transaction.disablesAnimations = true /// 팝업이 빝에서 위로 올라오는 애니메이션 제거
-                    //                }
                     .padding(.leading, .contentPadding)
                 }
                 .padding(.top, .contentPadding)
@@ -135,7 +126,7 @@ struct HomeView: View {
                         .padding(.top, 20)
                         .padding(.trailing, .contentPadding)
                         
-                        
+                        // MARK: - GridView
                         LazyVGrid(columns: columns, spacing: 20) {
                             ForEach(gridPopups) { popup in
                                 
@@ -182,19 +173,6 @@ struct HomeView: View {
                     }
                 }
                 .padding(.leading, .contentPadding)
-            }
-            
-            // 팝업
-            if isPresented {
-                Color.black.opacity(0.4)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        isPresented = false
-                    }
-                
-                CustomPopupView(isPresented: $isPresented, title: "공지사항", content: "키워드 화면 구현 예정입니다.")
-                    .transition(.scale) // 애니메이션
-                    .zIndex(1)
             }
         }
     }
@@ -371,7 +349,7 @@ private struct LikeButton: View {
 
 #Preview {
     HomeView()
-        .environmentObject(Coordinator<MainRoute, SheetRoute>())
+        .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
 }
 
 extension View {

@@ -10,7 +10,7 @@ import AuthenticationServices
 import Combine
 
 struct LoginView: View {
-    @EnvironmentObject var coordinator: Coordinator<OnboardingRoute, SheetRoute>
+    @EnvironmentObject var coordinator: Coordinator<OnboardingRoute, SheetRoute, OverlayRoute>
     @EnvironmentObject var rootViewModel: RootViewModel
     @StateObject private var kakaoAuthViewModel = KakaoAuthViewModel()
     
