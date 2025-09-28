@@ -19,6 +19,9 @@ struct PopPangApp: App {
         
         // 2. RootViewModel 생성
         _rootViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createRoot())
+        
+        UITabBar.configureAppearance()
+        UINavigationBar.configureAppearance()
     }
     
     var body: some Scene {

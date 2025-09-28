@@ -11,11 +11,6 @@ struct MainTabView: View {
     @State private var selectedTab: MainTabType = .home
     @StateObject private var homeViewModel = HomeViewModel()
     
-    init() {
-        UITabBar.configureAppearance()
-        UINavigationBar.configureAppearance()
-    }
-    
     var body: some View {
         CoordinatorContainer {
             TabView(selection: $selectedTab) {

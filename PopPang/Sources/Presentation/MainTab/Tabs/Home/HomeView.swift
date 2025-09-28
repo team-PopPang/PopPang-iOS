@@ -213,6 +213,7 @@ private struct BestPopupCell: View {
 
 // MARK: - Coming Popuo
 private struct ComingPopupScrollView: View {
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @ObservedObject var viewModel: HomeViewModel
     
     var body: some View {
@@ -222,6 +223,9 @@ private struct ComingPopupScrollView: View {
                     
                     // MARK: - Cell
                     ComingPopupCell(popup: popup)
+                        .onTapGesture {
+                            coordinator.push(.popupDetail(popup))
+                        }
                     
                 }
             }
@@ -314,6 +318,7 @@ private struct LikeButton: View {
 
 // MARK: - Current Popup
 private struct GridPopupScroppView: View {
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @ObservedObject var viewModel: HomeViewModel
     private let columns = [
         // flexible: 가로 공간이 남으면 균등하게 나눠 쓰기
@@ -327,6 +332,9 @@ private struct GridPopupScroppView: View {
                 
                 VStack(alignment: .leading) {
                     GridPopupCell(popup: popup)
+                        .onTapGesture {
+                            coordinator.push(.popupDetail(popup))
+                        }
                 }
             }
         }

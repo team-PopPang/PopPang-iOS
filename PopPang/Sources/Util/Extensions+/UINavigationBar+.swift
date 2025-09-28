@@ -32,11 +32,23 @@ extension UINavigationBar {
         // - 두께: light
         // - 색상: mainOrange
         // - 위치: 왼쪽으로 -8 이동 (화면 가장자리에 더 가깝게)
+        // MARK: - 기본 뒤로가기 + 주황색
+        /*
         let config = UIImage.SymbolConfiguration(pointSize: 20, weight: .light)
         let chevronImage = UIImage(systemName: "chevron.left", withConfiguration: config)?
             .withTintColor(UIColor(.mainOrange), renderingMode: .alwaysOriginal)
             .withAlignmentRectInsets(UIEdgeInsets(top: 0, left: -8, bottom: 0, right: 0))
         defaultAppearance.setBackIndicatorImage(chevronImage, transitionMaskImage: chevronImage)
+         */
+        
+        // MARK: - 커스텀 뒤로가기
+        if let chevronImage = UIImage(named: "backButton")?
+            .withRenderingMode(.alwaysOriginal) // 에셋 색상 그대로 사용
+            .withAlignmentRectInsets(UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 0)) {
+            
+            defaultAppearance.setBackIndicatorImage(chevronImage, transitionMaskImage: chevronImage)
+        }
+
         
         // 앱 전역 UINavigationBar appearance 적용
         // - standardAppearance: 기본 높이
