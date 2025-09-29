@@ -129,7 +129,13 @@ struct HomeView: View {
         }
         .onAppear {
             if !hasSeenPopup {
-                coordinator.presentOverlay(overlay: .ad(image: "img_8"))
+                // coordinator.presentOverlay(overlay: .ad(image: "img_8"))
+                coordinator.presentOverlay(overlay: .notice(title: "베타 업데이트 내용",
+                                                            content:  """
+                                                                      - 팝팡 테스트 공지입니다.
+                                                                      - 나중에 사진도 넣으면 어떨까요.
+                                                                      """
+                                                           ))
                 hasSeenPopup = true
             }
         }
