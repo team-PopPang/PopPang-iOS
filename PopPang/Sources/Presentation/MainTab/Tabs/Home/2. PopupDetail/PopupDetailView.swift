@@ -37,7 +37,7 @@ struct PopupDetailView: View {
                         
                         // MARK: - Title
                         Text(popup.name)
-                            .font(.scdream(.bold, size: 17))
+                            .font(.scdream(.bold, size: 24))
                             .foregroundStyle(Color.mainBlack)
                         
                         // MARK: - Info
