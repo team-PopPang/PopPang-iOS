@@ -22,4 +22,20 @@ enum Constants {
             }
         }()
     }
+    
+    enum BetaNotice {
+        static let beta_0930 = """
+        홈화면 
+        • 좌측 드롭다운버튼 글자 17(bold)
+        • 우측 드롭다운버튼 글자 12(regular)
+        • 좋아요 제거
+        
+        팝업 상세화면
+        • 글자 24(bold), 15(regular), 12(regular)
+        • 좋아요 제거
+        • 알림 받기 => 찜하기 변경
+        """
+    }
 }
+
+

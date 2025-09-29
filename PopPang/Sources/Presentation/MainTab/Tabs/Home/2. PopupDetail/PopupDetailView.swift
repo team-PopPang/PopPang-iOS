@@ -63,15 +63,11 @@ struct PopupDetailView: View {
             .ignoresSafeArea()
             
             HStack {
-                MainOrangeButton(buttonTitle: "알림 받기") {
+                MainOrangeButton(buttonTitle: "찜하기") {
                     
                 }
                 
                 IconButton(image: "share", imageSize: 25) {
-                    
-                }
-                
-                BookmarkButton(info: .detail) {
                     
                 }
             }

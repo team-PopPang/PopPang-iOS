@@ -17,6 +17,15 @@ struct DropDownView: View {
     var imgColor: Color = .mainBlack
     @Binding var selection: String?
     var overlay: Bool = false
+    // 글자 관련
+    var pickedFont: Font = .scdream(.medium, size: 15)
+    var pickedColor: Color = Color.mainBlack
+    
+    var detailFont: Font = .scdream(.medium, size: 15)
+    var detailClicked: Color = Color.mainBlack
+    var detailNotClicked: Color = Color.mainGray
+    
+    
     @State private var showOptions: Bool = false
     @Environment(\.colorScheme) private var scheme
     @SceneStorage("drop_down_zindex") private var index = 1000.0
@@ -34,8 +43,8 @@ struct DropDownView: View {
                 
                 HStack(spacing: 0) {
                     Text(selection ?? "")
-                        .font(.scdream(.medium, size: 15))
-                        .foregroundStyle(Color.mainBlack)
+                        .font(pickedFont)
+                        .foregroundStyle(pickedColor)
                         .lineLimit(1)
                         .animation(.none, value: selection)
                     
@@ -94,7 +103,7 @@ struct DropDownView: View {
             ForEach(options, id: \.self) { option in
                 HStack (spacing: 0) {
                     Text(option)
-                        .font(.scdream(.medium, size: 15))
+                        .font(detailFont)
                         .lineLimit(1)
                     Spacer()
                     Image(systemName: "checkmark")
@@ -104,7 +113,7 @@ struct DropDownView: View {
                         .foregroundStyle(Color.mainBlack)
                         .opacity(selection == option ? 1 : 0)
                 }
-                .foregroundStyle(selection == option ? Color.primary : .gray)
+                .foregroundStyle(selection == option ? detailClicked : detailNotClicked)
                 .animation(.none, value: selection)
                 .frame(height: 40)
                 .contentShape(.rect)

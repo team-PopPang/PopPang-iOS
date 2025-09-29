@@ -93,7 +93,9 @@ struct HomeView: View {
                                          anchor: .bottom,
                                          maxWidth: 100,
                                          selection: $selectRegion,
-                                         overlay: false
+                                         overlay: false,
+                                         pickedFont: .scdream(.bold, size: 17),
+                                         detailFont: .scdream(.bold, size: 17)
                             )
                             
                             Spacer()
@@ -109,7 +111,10 @@ struct HomeView: View {
                                          imgSize: 10,
                                          imgColor: .mainGray2,
                                          selection: $selectSort,
-                                         overlay: true
+                                         overlay: true,
+                                         pickedFont: .scdream(.regular, size: 12),
+                                         detailFont: .scdream(.regular, size: 12)
+                                        
                             )
                         }
                         .zIndex(1)
@@ -131,11 +136,7 @@ struct HomeView: View {
             if !hasSeenPopup {
                 // coordinator.presentOverlay(overlay: .ad(image: "img_8"))
                 coordinator.presentOverlay(overlay: .notice(title: "베타 업데이트 내용",
-                                                            content:  """
-                                                                      - 팝팡 테스트 공지입니다.
-                                                                      - 나중에 사진도 넣으면 어떨까요.
-                                                                      """
-                                                           ))
+                                                            content: Constants.BetaNotice.beta_0930))
                 hasSeenPopup = true
             }
         }
@@ -279,6 +280,7 @@ private struct ComingPopupCell: View {
                             .clipShape(Capsule())
                         
                         Spacer()
+                        
                         
                         BookmarkButton(info: .home) {
                             
