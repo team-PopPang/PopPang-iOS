@@ -22,7 +22,7 @@ enum SheetRoute: Identifiable {
 }
 
 enum OverlayRoute: Identifiable {
-    case notice(title: String, content: String)
+    case notice(title: String, content: String, isCenter: Bool = false)
     case ad(image: String)
     
     var id: String {
@@ -48,10 +48,12 @@ extension Coordinator where O == OverlayRoute {
     @ViewBuilder
     func buildView(for overlay: O) -> some View {
         switch overlay {
-        case .notice(let title, let content):
+        case .notice(let title, let content, let isCenter):
             CustomPopupView(title: title,
                             content: content,
-                            onDismiss: self.dismissOverlay)
+                            onDismiss: self.dismissOverlay,
+                            isCenter: isCenter
+            )
         case .ad(let image):
             AdCustomPopupView(imageURL: image,
                               title: nil,

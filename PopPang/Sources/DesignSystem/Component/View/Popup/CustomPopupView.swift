@@ -11,6 +11,7 @@ struct CustomPopupView: View {
     let title: String
     let content: String
     var onDismiss: () -> Void
+    var isCenter: Bool = false
     
     var body: some View {
         ZStack {
@@ -28,7 +29,9 @@ struct CustomPopupView: View {
                 
                 Text(content)
                     .font(.scdream(.regular, size: 14))
-                    // .multilineTextAlignment(.center) // 가운데정렬
+                    .multilineTextAlignment(isCenter ? .center : .leading)
+                    .frame(maxWidth: .infinity, alignment: isCenter ? .center : .leading)
+                    // .multilineTextAlignment(isCenter ? .center : .leading) // 가운데정렬
                     .padding(.top, 20)
                     .padding(.horizontal, 30)
                 
@@ -72,7 +75,8 @@ struct CustomPopupView: View {
     
     // @Previewable @State var isPresented: Bool = false
     CustomPopupView(title: "베타 업데이트",
-                    content: beta_0930) {
+                    content: beta_0930
+    ) {
     }
 }
 

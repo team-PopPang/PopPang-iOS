@@ -43,7 +43,9 @@ struct HomeView: View {
                     IconButton {
                         print("알림 버튼 클릭됨")
                         coordinator.presentOverlay(overlay: .notice(title: "공지사항",
-                                                                    content: "키워드 화면 구현 예정입니다."))
+                                                                    content: "키워드 화면 구현 예정입니다."
+                                                                    ,isCenter: true
+                                                                   ))
                     }
                     .padding(.leading, .contentPadding)
                 }
