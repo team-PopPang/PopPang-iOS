@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MainTabView: View {
     @State private var selectedTab: MainTabType = .home
-    @StateObject private var homeViewModel = HomeViewModel()
+    @StateObject private var homeViewModel = ViewModelFactory.shared.createHome()
     
     var body: some View {
         CoordinatorContainer {

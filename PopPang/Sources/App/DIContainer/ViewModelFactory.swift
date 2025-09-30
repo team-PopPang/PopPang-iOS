@@ -14,4 +14,8 @@ final class ViewModelFactory {
     func createRoot() -> RootViewModel {
         RootViewModel()
     }
+    
+    func createHome() -> HomeViewModel {
+        HomeViewModel()
+    }
 }
