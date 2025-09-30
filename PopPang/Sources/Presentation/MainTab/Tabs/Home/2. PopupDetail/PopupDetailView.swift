@@ -45,33 +45,44 @@ struct PopupDetailView: View {
                             .padding(.top, 20)
                         
                         Divider()
-                            .background(Color.mainBlack)
+                            .background(Color.mainGray5)
                             .padding(.vertical, 15)
                         
                         // MARK: - Body
                         Text(popup.captionSummary)
-//                            .font(.scdream(.regular, size: 12))
                             .ppStyleFont(.scdream(.regular, size: 12),
                                        lineHeight: 1.4,
                                        letterSpacing: 0.02)
                         
+                        Divider()
+                            .background(Color.mainGray5)
+                            .padding(.vertical, 15)
+                        
+                        VStack {
+                            Text("SNS / 홈페이지")
+                                .font(.scdream(.medium, size: 15))
+                        }
                     }
                     .padding(.top, 20)
                     .padding(.horizontal, .contentPadding)
                     
                     Spacer()
-                        .frame(height: 500)
+                        .frame(height: 200)
+                    
+                   
                 }
             }
             .ignoresSafeArea()
             
             HStack {
-                MainOrangeButton(buttonTitle: "찜하기") {
+                MainOrangeButton(buttonTitle: "찜하기",
+                                 height: 40) {
                     
                 }
                 
-                IconButton(image: "share", imageSize: 25) {
-                    
+                MainOrangeButton(buttonTitle: "친구에게 공유하기",
+                                 isReversed: true,
+                                 height: 40) {
                 }
             }
             .padding(.top, 10)

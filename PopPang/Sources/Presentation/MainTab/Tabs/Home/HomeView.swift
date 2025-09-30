@@ -225,7 +225,7 @@ private struct BestPopupCell: View {
     }
 }
 
-// MARK: - Coming Popuo
+// MARK: - Coming Popup
 private struct ComingPopupScrollView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @ObservedObject var viewModel: HomeViewModel
@@ -281,8 +281,8 @@ private struct ComingPopupCell: View {
                         Spacer()
                         Text("D-\(10)")
                             .font(.scdream(.medium, size: 11))
-                            .padding(.horizontal, 7)
-                            .padding(.vertical, 7)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
                             .background(Color.mainOrange)
                             .foregroundStyle(Color.subWhite)
                             .clipShape(Capsule())
@@ -344,7 +344,7 @@ private struct GridPopupCell: View {
                 BookmarkButton(info: .stroke) {
                     
                 }
-                .padding()
+                .padding(10)
             }
         
         Text(popup.name)

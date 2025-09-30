@@ -11,6 +11,8 @@ struct MainOrangeButton: View {
     var buttonTitle: String
     var textColor: Color = .mainWhite
     var buttonColor: Color = .mainOrange
+    var isReversed: Bool = false
+    var height: CGFloat = 56
     var action: () -> Void
     
     var body: some View {
@@ -18,12 +20,16 @@ struct MainOrangeButton: View {
             action()
         } label: {
             Text(buttonTitle)
-                .font(.scdream(.bold, size: 16))
-                .frame(height: 56)
+                .font(.scdream(.medium, size: 12))
+                .frame(height: height)
                 .frame(maxWidth: .infinity)
-                .foregroundStyle(textColor)
-                .background(buttonColor)
+                .foregroundStyle(isReversed ? buttonColor : textColor)
+                .background(isReversed ? .subWhite : buttonColor)
                 .clipShape(RoundedRectangle(cornerRadius: 5))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 5)
+                        .stroke(Color.mainOrange, lineWidth: isReversed ? 1 : 0)
+                }
         }
         .buttonStyle(PressableButtonStyle())
     }
@@ -41,6 +47,9 @@ struct PressableButtonStyle: ButtonStyle {
 
 #Preview {
     MainOrangeButton(buttonTitle: "다음") {
+        
+    }
+    MainOrangeButton(buttonTitle: "다음", isReversed: true) {
         
     }
 }
