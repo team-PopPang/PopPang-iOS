@@ -33,7 +33,7 @@ struct CustomPopupView: View {
                     .frame(maxWidth: .infinity, alignment: isCenter ? .center : .leading)
                     // .multilineTextAlignment(isCenter ? .center : .leading) // 가운데정렬
                     .padding(.top, 20)
-                    .padding(.horizontal, 30)
+                    .padding(.horizontal, isCenter ? 30 : 10)
                 
                 Button {
                     onDismiss()
@@ -73,9 +73,21 @@ struct CustomPopupView: View {
     • 알림 받기 => 찜하기 변경
     """
     
+    let beta_0931 = """
+    홈화면 
+    • 찜버튼 생성
+    • 곧생기는 팝업 UI 수정
+    • 검색 터치시 키보드 자동 올라오기 반영
+    • (검색창 최근 본 검색어 UI 수정예정)
+    
+    팝업 상세화면
+    • 자간(102%), 행간(140%) 반영
+    • 공유하기 버튼 수정
+    """
+    
     // @Previewable @State var isPresented: Bool = false
     CustomPopupView(title: "베타 업데이트",
-                    content: beta_0930
+                    content: beta_0931
     ) {
     }
 }
