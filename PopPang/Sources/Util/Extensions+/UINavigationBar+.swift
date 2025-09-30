@@ -15,6 +15,7 @@ extension UINavigationBar {
         // 투명하게 만들기
         defaultAppearance.configureWithOpaqueBackground() // 스크롤 시에도 투명 유지
         defaultAppearance.backgroundColor = .clear        // 완전 투명
+        defaultAppearance.shadowColor = .clear            // 바 하단 선 제거
         
         // 뒤로가기 버튼 텍스트 숨기기
         let backAppearance = UIBarButtonItemAppearance()

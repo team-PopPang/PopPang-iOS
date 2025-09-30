@@ -13,6 +13,22 @@ struct SearchView: View {
     @State private var searchText = ""
     @FocusState private var isFocused: Bool
     
+    @State private var selectedCategories: Set<String> = []
+    private let categories = [
+        "애니메이션", "캐릭터", "화장품", "패션",
+        "식음료"
+    ]
+    
+    /// 카테고리 추가/삭제
+    /// - Parameter category: 카테고리 타이틀
+    private func toggleCategory(_ category: String) {
+        if selectedCategories.contains(category) {
+            selectedCategories.remove(category)
+        } else {
+            selectedCategories.insert(category)
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             // MARK: - Search & Alert
@@ -43,6 +59,32 @@ struct SearchView: View {
             .padding(.top, .contentPadding)
             .padding(.horizontal, .contentPadding)
             .padding(.bottom, 10)
+            
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    Text("홍길동")
+                        .foregroundStyle(Color.mainOrange)
+                        .font(.scdream(.bold, size: 12))
+                    Text("님의 최근 본 검색어예요")
+                        .font(.scdream(.regular, size: 12))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                
+                // 선택 버튼들
+                FlowLayout(categories, id: \.self) { category in
+                                CategoryButton(
+                                    title: category,
+                                    isSelected: selectedCategories.contains(category)
+                                ) {
+                                    toggleCategory(category)
+                                }
+                            }
+                .padding(.top, 15)
+                
+                
+            }
+            .padding(.contentPadding)
             
             Spacer()
         }

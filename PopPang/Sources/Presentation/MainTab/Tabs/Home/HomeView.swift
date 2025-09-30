@@ -140,7 +140,7 @@ struct HomeView: View {
             if !hasSeenPopup {
                 // coordinator.presentOverlay(overlay: .ad(image: "img_8"))
                 coordinator.presentOverlay(overlay: .notice(title: "베타 업데이트 내용",
-                                                            content: Constants.BetaNotice.beta_0930))
+                                                            content: Constants.BetaNotice.beta_0931))
                 hasSeenPopup = true
             }
         }
@@ -445,10 +445,3 @@ extension View {
 
 
 
-extension View {
-    func withoutAnimation() -> some View {
-        self.transaction { transaction in
-            transaction.disablesAnimations = true
-        }
-    }
-}

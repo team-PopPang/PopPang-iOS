@@ -31,3 +31,12 @@ extension View {
         )
     }
 }
+
+// MARK: - 애니메이션 제거
+extension View {
+    func withoutAnimation() -> some View {
+        self.transaction { transaction in
+            transaction.disablesAnimations = true
+        }
+    }
+}

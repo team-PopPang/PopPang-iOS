@@ -78,7 +78,7 @@ struct CategorySettingView: View {
 /// - title
 /// - isSelected
 /// - action
-private struct CategoryButton: View {
+struct CategoryButton: View {
     let title: String
     let isSelected: Bool
     let action: () -> Void
@@ -109,7 +109,7 @@ private struct CategoryButton: View {
 ///  data: 보여줄 원본 데이터 배열
 ///  id: 각 아이템 고유 식별자
 ///  content 데이터를 실제 뷰로 변환하는 클로저
-private struct FlowLayout<Data: RandomAccessCollection, Content: View, ID: Hashable>: View {
+struct FlowLayout<Data: RandomAccessCollection, Content: View, ID: Hashable>: View {
     private let data: Data
     private let id: KeyPath<Data.Element, ID>
     private let content: (Data.Element) -> Content
