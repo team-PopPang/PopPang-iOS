@@ -307,38 +307,6 @@ private struct ComingPopupCell: View {
     }
 }
 
-struct BookmarkButton: View {
-    enum Info {
-        case fill
-        case stroke
-    }
-    @State private var isLiked: Bool = false
-    var info: Info
-    var action: () -> Void
-    
-    var body: some View {
-        Button {
-            isLiked.toggle()
-            action()
-        } label: {
-            switch info {
-            case .fill:
-                Image(isLiked ? "like_fill" : "like")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 20, height: 20)
-            case .stroke:
-                Image(isLiked ? "bookmark_fill" : "bookmark")
-                    .renderingMode(.template)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 25, height: 25)
-                    .foregroundStyle(isLiked ? Color.mainOrange : Color.subWhite)
-            }
-        }
-    }
-}
-
 // MARK: - Current Popup
 private struct GridPopupScroppView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
@@ -404,6 +372,39 @@ private struct GridPopupCell: View {
             }
             .font(.scdream(.medium, size: 11))
             .foregroundStyle(Color.mainGray)
+        }
+    }
+}
+
+// MARK: - 찜버튼
+struct BookmarkButton: View {
+    enum Info {
+        case fill
+        case stroke
+    }
+    @State private var isLiked: Bool = false
+    var info: Info
+    var action: () -> Void
+    
+    var body: some View {
+        Button {
+            isLiked.toggle()
+            action()
+        } label: {
+            switch info {
+            case .fill:
+                Image(isLiked ? "like_fill" : "like")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 20, height: 20)
+            case .stroke:
+                Image(isLiked ? "bookmark_fill" : "bookmark")
+                    .renderingMode(.template)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 25, height: 25)
+                    .foregroundStyle(isLiked ? Color.mainOrange : Color.subWhite)
+            }
         }
     }
 }
