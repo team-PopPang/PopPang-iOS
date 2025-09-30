@@ -50,7 +50,10 @@ struct PopupDetailView: View {
                         
                         // MARK: - Body
                         Text(popup.captionSummary)
-                            .font(.scdream(.regular, size: 12))
+//                            .font(.scdream(.regular, size: 12))
+                            .ppStyleFont(.scdream(.regular, size: 12),
+                                       lineHeight: 1.4,
+                                       letterSpacing: 0.02)
                         
                     }
                     .padding(.top, 20)
