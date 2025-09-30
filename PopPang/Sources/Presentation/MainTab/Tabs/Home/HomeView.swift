@@ -138,16 +138,11 @@ struct HomeView: View {
         }
         .onAppear {
             if !hasSeenPopup {
-                // coordinator.presentOverlay(overlay: .ad(image: "img_8"))
                 coordinator.presentOverlay(overlay: .notice(title: "베타 업데이트 내용",
                                                             content: Constants.BetaNotice.beta_0931))
                 hasSeenPopup = true
             }
         }
-//        .sheet(item: $coordinator.sheet) { route in
-//            coordinator.buildView(for: route)
-//                .presentationDetents([.fraction(0.8)])
-//        }
         .fullScreenCover(item: $coordinator.sheet) { route in
             coordinator.buildView(for: route)
         }
@@ -283,21 +278,14 @@ private struct ComingPopupCell: View {
                 // MARK: - 설명문구
                 VStack(alignment: .leading, spacing: 0) {
                     HStack {
-                        Text("10.05 오픈")
+                        Spacer()
+                        Text("D-\(10)")
                             .font(.scdream(.medium, size: 11))
                             .padding(.horizontal, 7)
                             .padding(.vertical, 7)
                             .background(Color.mainOrange)
                             .foregroundStyle(Color.subWhite)
                             .clipShape(Capsule())
-                        
-                        Spacer()
-                        
-                        
-                        BookmarkButton(info: .home) {
-                            
-                        }
-            
                     }
                     .padding(.top, 10)
                     .padding(.trailing, 15)
@@ -321,8 +309,8 @@ private struct ComingPopupCell: View {
 
 struct BookmarkButton: View {
     enum Info {
-        case home
-        case detail
+        case fill
+        case stroke
     }
     @State private var isLiked: Bool = false
     var info: Info
@@ -334,18 +322,18 @@ struct BookmarkButton: View {
             action()
         } label: {
             switch info {
-            case .home:
+            case .fill:
                 Image(isLiked ? "like_fill" : "like")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 20, height: 20)
-            case .detail:
+            case .stroke:
                 Image(isLiked ? "bookmark_fill" : "bookmark")
                     .renderingMode(.template)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 25, height: 25)
-                    .foregroundStyle(isLiked ? Color.mainOrange : Color.mainBlack)
+                    .foregroundStyle(isLiked ? Color.mainOrange : Color.subWhite)
             }
         }
     }
@@ -384,6 +372,12 @@ private struct GridPopupCell: View {
             .aspectRatio(contentMode: .fill)
             .frame(height: 206)
             .clipped()
+            .overlay (alignment: .topTrailing){
+                BookmarkButton(info: .stroke) {
+                    
+                }
+                .padding()
+            }
         
         Text(popup.name)
             .font(.scdream(.bold, size: 15))
