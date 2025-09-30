@@ -19,6 +19,8 @@ enum SheetRoute: Identifiable {
     var id: String {
         String(describing: self)
     }
+    
+    case search
 }
 
 enum OverlayRoute: Identifiable {
@@ -60,6 +62,16 @@ extension Coordinator where O == OverlayRoute {
                               content: nil,
                               onDismiss: self.dismissOverlay,
                               onDontShowToday: self.dismissOverlay)
+        }
+    }
+}
+
+extension Coordinator where R == SheetRoute {
+    @ViewBuilder
+    func buildView(for route: R) -> some View {
+        switch route {
+        case .search:
+            SearchView()
         }
     }
 }

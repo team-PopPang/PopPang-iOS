@@ -16,7 +16,8 @@ import SwiftUI
 class Coordinator<T: Hashable, R: Identifiable, O: Identifiable>: ObservableObject {
     @Published var paths: [T] = [] /// 네비게이션 스택 경로 리스트
     @Published var sheet: R? = nil  /// 현재 표시 중인 모달(nil이면 닫힘, 값이 있으면 표시)
-    @Published var overlay: O? = nil
+    // @Published var sheetDetentsL Set<PresentationDetent> = []
+    @Published var overlay: O? = nil /// 공지사항 같은 오버레이
     
     /// 초기 화면 경로 설정 생성자
     /// - initial 값이 있다면 paths 배열을 [initial]로 시작

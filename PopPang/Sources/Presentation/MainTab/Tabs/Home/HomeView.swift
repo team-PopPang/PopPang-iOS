@@ -36,7 +36,8 @@ struct HomeView: View {
                         Color.clear
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                coordinator.push(.search)
+                                // coordinator.push(.search)
+                                coordinator.presentSheet(.search)
                             }
                     }
                     
@@ -143,6 +144,14 @@ struct HomeView: View {
                 hasSeenPopup = true
             }
         }
+//        .sheet(item: $coordinator.sheet) { route in
+//            coordinator.buildView(for: route)
+//                .presentationDetents([.fraction(0.8)])
+//        }
+        .fullScreenCover(item: $coordinator.sheet) { route in
+            coordinator.buildView(for: route)
+        }
+        .withoutAnimation()
     }
 }
 
@@ -425,5 +434,21 @@ extension View {
             x: x,
             y: y
         )
+    }
+}
+
+
+
+
+
+
+
+
+
+extension View {
+    func withoutAnimation() -> some View {
+        self.transaction { transaction in
+            transaction.disablesAnimations = true
+        }
     }
 }
