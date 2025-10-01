@@ -86,3 +86,52 @@ class Coordinator<T: Hashable, R: Identifiable, O: Identifiable>: ObservableObje
         self.overlay = nil
     }
 }
+
+
+
+
+//// MARK: - 범용 코드
+///// @CoordinatorWrapper<MainRoute, SheetRoute, OverlayRoute> var coordinator
+//@propertyWrapper
+//struct CoordinatorWrapper<T: Hashable, R: Identifiable, O: Identifiable>: DynamicProperty {
+//    @StateObject private var coordinator = Coordinator<T, R, O>()
+//    
+//    // getter
+//    var wrappedValue: Coordinator<T, R, O> {
+//        return coordinator
+//    }
+//}
+//
+//// MARK: - 메인 코디네이터 전용
+///// @MainCoordinator var coordinator
+//@propertyWrapper
+//struct MainCoordinator: DynamicProperty {
+//    @StateObject private var coordinator = Coordinator<MainRoute, SheetRoute, OverlayRoute>()
+//    
+//    // getter
+//    var wrappedValue: Coordinator<MainRoute, SheetRoute, OverlayRoute> {
+//        return coordinator
+//    }
+//}
+
+//// MARK: - 범용 코드
+///// @CoordinatorWrapper<MainRoute, SheetRoute, OverlayRoute> var coordinator
+//@propertyWrapper
+//class CoordinatorWrapper<T: Hashable, R: Identifiable, O: Identifiable>: DynamicProperty {
+//    let wrappedValue: Coordinator<T, R, O>
+//    
+//    init() {
+//        self.wrappedValue = Coordinator<T, R, O>()
+//    }
+//}
+//
+//// MARK: - 메인 코디네이터 전용
+///// @MainCoordinator var coordinator
+//@propertyWrapper
+//class MainCoordinator {
+//    let wrappedValue: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+//    
+//    init() {
+//        self.wrappedValue = Coordinator<MainRoute, SheetRoute, OverlayRoute>()
+//    }
+//}

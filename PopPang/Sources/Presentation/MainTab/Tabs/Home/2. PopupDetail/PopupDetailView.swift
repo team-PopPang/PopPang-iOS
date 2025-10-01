@@ -101,11 +101,13 @@ private struct InfoView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 20) {
                 Text("운영 장소")
+                    .foregroundStyle(Color.mainGray)
                 Text("\(popup.address)")
             }
             
             HStack(spacing: 20) {
                 Text("운영 날짜")
+                    .foregroundStyle(Color.mainGray)
                 HStack(spacing: 10) {
                     Text(popup.openTime, formatter: DateFormatter.popupDateFormat)
                     Text("-")
@@ -115,6 +117,7 @@ private struct InfoView: View {
             
             HStack(spacing: 20) {
                 Text("운영 시간")
+                    .foregroundStyle(Color.mainGray)
                 HStack(spacing: 10) {
                     Text(popup.startDate, formatter: DateFormatter.popupTimeFormat)
                     Text("-")

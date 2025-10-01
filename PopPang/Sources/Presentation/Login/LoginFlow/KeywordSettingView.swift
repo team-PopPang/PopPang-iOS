@@ -99,5 +99,4 @@ struct KeywordSettingView: View {
 #Preview {
     KeywordSettingView {}
         .environmentObject(RootViewModel())
-    
 }

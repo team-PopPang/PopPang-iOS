@@ -54,10 +54,11 @@ struct SearchView: View {
                     coordinator.presentOverlay(overlay: .notice(title: "공지사항",
                                                                 content: "키워드 화면 구현 예정입니다."))
                 }
-                .padding(.leading, .contentPadding)
+                .padding(.leading, 15)
             }
-            .padding(.top, .contentPadding)
-            .padding(.horizontal, .contentPadding)
+            .padding(.top, 15)
+            .padding(.leading, .contentPadding)
+            .padding(.trailing, 15)
             .padding(.bottom, 10)
             
             VStack(spacing: 0) {

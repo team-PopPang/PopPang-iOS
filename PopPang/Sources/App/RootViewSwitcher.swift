@@ -8,8 +8,9 @@
 import SwiftUI
 
 struct RootViewSwitcher: View {
-    @StateObject var rootViewModel: RootViewModel 
-    @State private var coordinator = Coordinator<OnboardingRoute, SheetRoute, OverlayRoute>()
+    @StateObject var rootViewModel: RootViewModel
+    @StateObject private var coordinator = OnboardingCoordinator()
+    // @StateObject private var coordinator = Coordinator<OnboardingRoute, SheetRoute, OverlayRoute>()
     
     init(rootViewModel: RootViewModel) {
         self._rootViewModel = StateObject(wrappedValue: rootViewModel)

@@ -36,7 +36,6 @@ struct HomeView: View {
                         Color.clear
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                // coordinator.push(.search)
                                 coordinator.presentSheet(.search)
                             }
                     }
@@ -48,11 +47,12 @@ struct HomeView: View {
                                                                     ,isCenter: true
                                                                    ))
                     }
-                    .padding(.leading, .contentPadding)
+                    .padding(.leading, 15)
                 }
-                .padding(.top, .contentPadding)
-                .padding(.horizontal, .contentPadding)
-                .padding(.bottom, 10)
+                .padding(.top, 15)
+                .padding(.leading, .contentPadding)
+                .padding(.trailing, 15)
+                .padding(.bottom, 15)
                 
                 ScrollView {
                     VStack(spacing: 0) {
@@ -121,7 +121,7 @@ struct HomeView: View {
                             )
                         }
                         .zIndex(1)
-                        .padding(.top, 20)
+                        .padding(.top, 25)
                         .padding(.trailing, .contentPadding)
                         
                         // MARK: - GridView
@@ -197,11 +197,6 @@ private struct BestPopupCell: View {
             )
             .frame(height: 100) // 이미지 하단 100px 영역만 덮음
             .clipped()          // 그라데이션 100px만 보이고 넘는 부분 차단
-            
-            // 기본 버전
-            // .frame(width: 194, height: 271) // 이미지와 동일 크기
-            // .clipped()
-           
             
             // MARK: - 텍스트 오버레이
             VStack(alignment: .leading) {
@@ -346,24 +341,13 @@ private struct GridPopupCell: View {
                 }
                 .padding(10)
             }
-        
-        Text(popup.name)
-            .font(.scdream(.bold, size: 15))
-        
-        
         VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: 2) {
-                Image("Address")
-                    .resizable()
-                    .renderingMode(.template)
-                    .aspectRatio(contentMode: .fit)
-                    .foregroundStyle(Color.mainGray)
-                    .frame(width: 15, height: 15)
-                
-                Text(popup.address)
-                    .font(.scdream(.medium, size: 11))
-                    .foregroundStyle(Color.mainGray)
-            }
+            Text(popup.name)
+                .font(.scdream(.medium, size: 15))
+            
+            Text(popup.address)
+                .font(.scdream(.regular, size: 11))
+                .foregroundStyle(Color.mainGray)
             
             HStack {
                 Text(popup.startDate, formatter: DateFormatter.popupDateFormat)

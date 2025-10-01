@@ -7,6 +7,8 @@
 
 import SwiftUI
 
+typealias MainCoordinator = Coordinator<MainRoute, SheetRoute, OverlayRoute>
+
 enum MainRoute: Hashable {
     
     // Home

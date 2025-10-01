@@ -8,7 +8,9 @@
 import SwiftUI
 
 struct CoordinatorContainer<Content: View>: View {
-    @StateObject private var coordinator = Coordinator<MainRoute, SheetRoute, OverlayRoute>()
+    @StateObject private var coordinator = MainCoordinator()
+    // @StateObject private var coordinator = Coordinator<MainRoute, SheetRoute, OverlayRoute>()
+    
     let content: () -> Content
     
     var body: some View {

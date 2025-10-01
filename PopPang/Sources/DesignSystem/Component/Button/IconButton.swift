@@ -18,7 +18,10 @@ struct IconButton: View {
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: imageSize, height: imageSize)
-                .padding(10)
+                .padding(10) // 파란 영역 크기 = 터치 영역
+                // .background(Color.blue)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .contentShape(RoundedRectangle(cornerRadius: 6)) // 터치 영역 제한
         }
         .buttonStyle(PressableButtonStyle())
     }
