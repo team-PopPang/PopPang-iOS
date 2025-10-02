@@ -12,22 +12,11 @@ struct SearchView: View {
     @Environment(\.dismiss) var dismiss
     @State private var searchText = ""
     @FocusState private var isFocused: Bool
-    
-    @State private var selectedCategories: Set<String> = []
-    private let categories = [
+
+    @State private var categories = [
         "애니메이션", "캐릭터", "화장품", "패션",
         "식음료"
     ]
-    
-    /// 카테고리 추가/삭제
-    /// - Parameter category: 카테고리 타이틀
-    private func toggleCategory(_ category: String) {
-        if selectedCategories.contains(category) {
-            selectedCategories.remove(category)
-        } else {
-            selectedCategories.insert(category)
-        }
-    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -73,14 +62,15 @@ struct SearchView: View {
                 
                 
                 // 선택 버튼들
-                FlowLayout(categories, id: \.self) { category in
-                                CategoryButton(
-                                    title: category,
-                                    isSelected: selectedCategories.contains(category)
-                                ) {
-                                    toggleCategory(category)
-                                }
-                            }
+                SearchFlowLayout(data: categories, id: \.self) { category in
+                    SearchFlowButton(title: category) {
+                        print("\(category) 클릭됨")
+                    } onRemove: {
+                        if let index = categories.firstIndex(of: category) {
+                            categories.remove(at: index)
+                        }
+                    }
+                }
                 .padding(.top, 15)
                 
                 
