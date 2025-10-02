@@ -17,15 +17,53 @@ final class AppleAuthRepositoryImpl: AppleAuthRepositoryProtocol {
         }
         
         // 서버에 authCode 전달
-        let userDto = try await requestUserToServer(authCode: authCode)
+        // let userDto = try await requestUserToServer(authCode: authCode)
+        // return userDto.toModel()
+    
+        let userDto = try await NetworkProvider.shared.appleProvider.asyncRequest(.login(authCode: authCode),
+                                                                                  decodeTo: UserDTO.self)
         return userDto.toModel()
     }
 }
 
-// MARK: - PopPang 서버 요청
+
+
+
+
+
+
+
+
+
+
+
+
+// MARK: - Moya Completion 방식
 extension AppleAuthRepositoryImpl {
     // 서버에 authCode 보낸 후 서버에서 idToken 받고 uid 식별 후 유저 반환
-    private func requestUserToServer(authCode: String) async throws -> UserDTO {
+    private func requestUserToServerMoya(authCode: String) async throws -> UserDTO {
+        return try await withCheckedThrowingContinuation { continuation in
+            NetworkProvider.shared.appleProvider.request(.login(authCode: authCode)) { result in
+                switch result {
+                case .success(let response):
+                    do {
+                        let dto = try JSONDecoder().decode(UserDTO.self, from: response.data)
+                        continuation.resume(returning: dto)
+                    } catch {
+                        continuation.resume(throwing: error)
+                    }
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - URLSession 방식
+extension AppleAuthRepositoryImpl {
+    // 서버에 authCode 보낸 후 서버에서 idToken 받고 uid 식별 후 유저 반환
+    private func requestUserToServerUrlSession(authCode: String) async throws -> UserDTO {
         print("✅ requestUserToServer 실행됨, authCode: \(authCode)")
 
         guard let url = URL(string: Constants.PopPangAPI.appleURL) else {
