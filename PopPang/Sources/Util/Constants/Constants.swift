@@ -9,7 +9,8 @@ import Foundation
 
 enum Constants {
     enum PopPangAPI {
-        static let url = "https://index.zapto.org/api/oauth2/appleLogin"
+        static let kakaoURL = "https://poppang.co.kr/api/v1/auth/kakao/login"
+        static let appleURL = "https://poppang.co.kr/api/v1/auth/apple/login"
     }
     
     enum KakaoAPI {

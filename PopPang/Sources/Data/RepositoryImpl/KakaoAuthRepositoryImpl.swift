@@ -7,6 +7,7 @@
 
 import KakaoSDKAuth
 import KakaoSDKUser
+import UIKit
 
 final class KakaoAuthRepositoryImpl: KakaoAuthRepositoryProtocol {
     
@@ -94,29 +95,52 @@ extension KakaoAuthRepositoryImpl {
 extension KakaoAuthRepositoryImpl {
     // 서버에 accessToken 보낸 후 서버에서 idToken 받고 uid 식별 후 유저 반환
     private func requestUserToServer(accessToken: String) async throws -> UserDTO {
-//        guard let url = URL(string: "https://index.zapto.org/api/oauth2/kakaoLogin") else {
-//            throw KakaoAuthError.invalidURL
-//        }
-//
-//        var request = URLRequest(url: url)
-//        request.httpMethod = "POST"
-//        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-//
-//        let body: [String: Any] = ["accessToken": accessToken]
-//        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-//
-//        let (data, response) = try await URLSession.shared.data(for: request)
-//
-//        guard let httpResponse = response as? HTTPURLResponse,
-//              httpResponse.statusCode == 200 else {
-//            throw KakaoAuthError.serverError
-//        }
-//
-//        do {
-//            return try JSONDecoder().decode(User.self, from: data)
-//        } catch {
-//            throw KakaoAuthError.decodeError
-//        }
-        return UserDTO.adminUser
+        print("✅ requestUserToServer 실행됨, code: \(accessToken)")
+        
+        // ✅ URL + queryItems 로 code 전달
+        guard var components = URLComponents(string: Constants.PopPangAPI.kakaoURL) else {
+            throw AppleAuthError.invalidAuthCode
+        }
+        components.queryItems = [
+            URLQueryItem(name: "code", value: accessToken)
+        ]
+        
+        guard let url = components.url else {
+            throw AppleAuthError.invalidAuthCode
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"  // ✅ GET은 body 없음
+        
+        print("➡️ Request URL: \(url.absoluteString)")
+        print("➡️ Request Method: \(request.httpMethod ?? "")")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        // 📦 data 출력
+        print("📦 Raw Data size: \(data.count) bytes")
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("📦 Response Body String:\n\(jsonString)")
+        } else {
+            print("📦 Response Body: (디코딩 불가)")
+        }
+        
+        // 📡 response 출력
+        if let httpResponse = response as? HTTPURLResponse {
+            print("📡 Status Code: \(httpResponse.statusCode)")
+            print("📡 Headers:")
+            for (key, value) in httpResponse.allHeaderFields {
+                print("   \(key): \(value)")
+            }
+            
+            guard httpResponse.statusCode == 200 else {
+                throw AppleAuthError.serverError("Invalid response: \(httpResponse.statusCode)")
+            }
+        } else {
+            throw AppleAuthError.serverError("Invalid response type")
+        }
+        
+        return try JSONDecoder().decode(UserDTO.self, from: data)
     }
 }
+

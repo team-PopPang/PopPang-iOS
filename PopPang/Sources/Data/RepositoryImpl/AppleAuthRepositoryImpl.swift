@@ -17,31 +17,59 @@ final class AppleAuthRepositoryImpl: AppleAuthRepositoryProtocol {
         }
         
         // 서버에 authCode 전달
-        let userDto = try await sendAuthCodeToServer(authCode: authCode)
+        let userDto = try await requestUserToServer(authCode: authCode)
         return userDto.toModel()
     }
 }
 
 // MARK: - PopPang 서버 요청
 extension AppleAuthRepositoryImpl {
-    
-    // 서버에 accessToken 보낸 후 서버에서 idToken 받고 uid 식별 후 유저 반환
-    private func sendAuthCodeToServer(authCode: String) async throws -> UserDTO {
-        guard let url = URL(string: Constants.PopPangAPI.url) else {
+    // 서버에 authCode 보낸 후 서버에서 idToken 받고 uid 식별 후 유저 반환
+    private func requestUserToServer(authCode: String) async throws -> UserDTO {
+        print("✅ sendAuthCodeToServer 실행됨, code: \(authCode)")
+        
+        // ✅ URL + queryItems 로 code 전달
+        guard var components = URLComponents(string: Constants.PopPangAPI.appleURL) else {
             throw AppleAuthError.invalidAuthCode
         }
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        let bodyString = "code=\(authCode)"
-        request.httpBody = bodyString.data(using: .utf8)
+        components.queryItems = [
+            URLQueryItem(name: "code", value: authCode)
+        ]
         
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-            throw AppleAuthError.serverError("Invalid response")
+        guard let url = components.url else {
+            throw AppleAuthError.invalidAuthCode
         }
-        print("data: \(data)")
-        print("response data:", String(data: data, encoding: .utf8) ?? "invalid encoding")
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"  // ✅ GET은 body 없음
+        
+        print("➡️ Request URL: \(url.absoluteString)")
+        print("➡️ Request Method: \(request.httpMethod ?? "")")
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        // 📦 data 출력
+        print("📦 Raw Data size: \(data.count) bytes")
+        if let jsonString = String(data: data, encoding: .utf8) {
+            print("📦 Response Body String:\n\(jsonString)")
+        } else {
+            print("📦 Response Body: (디코딩 불가)")
+        }
+        
+        // 📡 response 출력
+        if let httpResponse = response as? HTTPURLResponse {
+            print("📡 Status Code: \(httpResponse.statusCode)")
+            print("📡 Headers:")
+            for (key, value) in httpResponse.allHeaderFields {
+                print("   \(key): \(value)")
+            }
+            
+            guard httpResponse.statusCode == 200 else {
+                throw AppleAuthError.serverError("Invalid response: \(httpResponse.statusCode)")
+            }
+        } else {
+            throw AppleAuthError.serverError("Invalid response type")
+        }
         
         return try JSONDecoder().decode(UserDTO.self, from: data)
     }
