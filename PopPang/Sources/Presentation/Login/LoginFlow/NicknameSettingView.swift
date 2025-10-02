@@ -9,9 +9,11 @@ import SwiftUI
 
 struct NicknameSettingView: View {
     @EnvironmentObject private var rootViewModel: RootViewModel
-    @State private var text: String = ""
+    // @State private var text: String = ""
     @FocusState private var isFocused: Bool
-    @State private var isValid: Bool? = nil
+    
+    // MARK: - nil이면 미검증, true이면 성고으 false면 실패
+    // @State private var isValid: Bool? = nil
     @EnvironmentObject var coordinator: Coordinator<RegisterRoute, SheetRoute, OverlayRoute>
     var onNext: () -> Void
     
@@ -32,12 +34,14 @@ struct NicknameSettingView: View {
             
             HStack(spacing: 10) {
                 RoundedTextField(placeholder: "닉네임을 입력해 주세요",
-                                 text: $text,
-                                 isVaild: isValid)
+                                 text: $rootViewModel.nickname,
+                                 validationState: rootViewModel.validationState)
                 .focused($isFocused)
+                // MARK: - 실시간 바인딩 검증
+ 
                 
                 Button {
-
+                    rootViewModel.checkServerNickname()
                 } label: {
                     Text("중복확인")
                         .font(.scdream(.medium, size: 12))
@@ -50,17 +54,40 @@ struct NicknameSettingView: View {
             }
             .padding(.top, 20)
             
-            if !text.isEmpty, let isValid {
-                Text(isValid ? "사용 가능한 닉네임입니다." : "이미 사용 중인 닉네임입니다.")
-                    .font(.scdream(.medium, size: 12))
-                    .foregroundStyle(isValid ? Color.mainGreen : Color.mainRed)
-                    .padding(.top, 5)
+            if !rootViewModel.nickname.isEmpty {
+                switch rootViewModel.validationState {
+                case .success:
+                    Text("사용 가능한 닉네임입니다.")
+                        .font(.scdream(.medium, size: 12))
+                        .foregroundStyle(Color.mainGreen)
+                        .padding(.top, 5)
+                case .duplicate:
+                    Text("이미 사용 중인 닉네임입니다.")
+                        .font(.scdream(.medium, size: 12))
+                        .foregroundStyle(Color.mainRed)
+                        .padding(.top, 5)
+                case .invalidSpace:
+                    Text("공백은 사용할 수 없습니다.")
+                        .font(.scdream(.medium, size: 12))
+                        .foregroundStyle(Color.mainRed)
+                        .padding(.top, 5)
+                case .tooShort:
+                    Text("2글자 이하는 사용할 수 없습니다.")
+                        .font(.scdream(.medium, size: 12))
+                        .foregroundStyle(Color.mainRed)
+                        .padding(.top, 5)
+                default:
+                    EmptyView()
+                }
             }
             
             Spacer()
             
-            MainOrangeButton(buttonTitle: "다음") {
-                rootViewModel.updateNickname(text)
+            MainOrangeButton(buttonTitle: "다음",
+                             buttonColor: rootViewModel.validationState == .success ?
+                             Color.mainOrange
+                             : Color.mainGray2) {
+                rootViewModel.updateNickname()
                 UIApplication.shared.endEditing(true)
                 Task {
                     try? await Task.sleep(nanoseconds: 700_000_000) // 0.7초
@@ -69,21 +96,21 @@ struct NicknameSettingView: View {
                     }
                 }
             }
-            // 키보드 올라오면 공백과 함께 버튼 올라감
+
+            // MARK: - 활성화 오잭
+            .disabled(rootViewModel.validationState != .success) // 성공시 활성화
+            .opacity(rootViewModel.validationState == .success ? 1.0 : 0.8)
+            .background()
+            
+            // MARK: - 키보드 올라오면 공백과 함께 버튼 올라감
             .padding(.bottom, 20)
             .frame(maxHeight: .infinity, alignment: .bottom)
             
         }
         .padding(.horizontal, .contentPadding)
         .task {
-            // await Task.yield()
             try? await Task.sleep(nanoseconds: 300_000_000) // 0.3초
             isFocused = true
-            
-            try? await Task.sleep(nanoseconds: 3_000_000_000)
-            if !text.isEmpty {
-                isValid = true
-            }
         }
     }
 }
@@ -92,4 +119,5 @@ struct NicknameSettingView: View {
     NicknameSettingView {
         
     }
+    .environmentObject(RootViewModel())
 }

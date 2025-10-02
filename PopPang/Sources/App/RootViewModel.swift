@@ -15,6 +15,15 @@ enum RootScene {
     case authenticated     // 홈
 }
 
+enum NicknameValidationState {
+    case none          // 미검증
+    case success       // 사용가능
+    case duplicate     // 중복
+    case invalidSpace  // 공백 불가
+    case checking      // 확인중
+    case tooShort      // 글자 길이 짧음
+}
+
 final class RootViewModel: ObservableObject {
     
     enum Action {
@@ -26,6 +35,14 @@ final class RootViewModel: ObservableObject {
     @Dependency private var kakaoAuthUsecase: KakaoAuthUsecaseProtocol
     @Published var scene: RootScene = .launch
     @Published var user: User? = nil
+    
+    // MARK: - NicknameSetting
+    @Published var nickname: String = "" {
+        didSet {
+            checkLocalNickname(value: nickname)
+        }
+    }
+    @Published var validationState: NicknameValidationState = .none
     
     init() {
         Task {
@@ -109,6 +126,67 @@ extension RootViewModel {
     }
 }
 
+// MARK: - 닉네임뷰
+extension RootViewModel {
+    
+    // 로컬 검증 로직
+    private func checkLocalNickname(value: String) {
+        
+        // 미검증
+        guard !value.isEmpty else {
+            validationState = .none
+            return
+        }
+        
+        // 공백여부
+        if value.contains(" ") {
+            validationState = .invalidSpace
+            return
+        }
+        
+        if value.count <= 2 {
+            validationState = .tooShort
+            return
+        }
+        
+        // 아직 서버 검증 전 단계
+        validationState = .none
+    }
+    
+    // 서버 검증 로직
+    func checkServerNickname() {
+        // 로컬에서 이미 실패 상태면 서버 안탐
+        switch validationState {
+        case .invalidSpace, .tooShort:
+            return
+        default:
+            break
+        }
+        
+        // 서버에서 중복 여부
+        validationState = .checking
+        
+        Task {
+            // 서버 흉내(1초 지연)
+            try? await Task.sleep(for: .seconds(1))
+            
+            // 서버 응답 흉내
+            let isDuplicate = nickname.lowercased() == "admin"
+            
+            await MainActor.run {
+                self.validationState = isDuplicate ? .duplicate : .success
+            }
+        }
+    }
+    
+    // 닉네임 설정(다음 버튼)
+    func updateNickname() {
+        guard var currentUser = user else { return }
+        currentUser.nickname = nickname
+        self.user = currentUser
+    }
+}
+
 // MARK: - 로그인 관련 로직
 extension RootViewModel {
     // 로그인 완료
@@ -119,15 +197,8 @@ extension RootViewModel {
 
     // 로그아웃
     func logout() {
-        user = nil
+        self.user = nil
         updateScene()
-    }
-    
-    // 닉네임 설정
-    func updateNickname(_ nickname: String) {
-        guard var currentUser = user else { return }
-        currentUser.nickname = nickname
-        self.user = currentUser
     }
     
     // 추천키워드 설정

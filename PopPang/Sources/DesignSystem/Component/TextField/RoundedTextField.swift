@@ -14,18 +14,37 @@ struct RoundedTextField: View {
     
     /// 뷰모델에서 던져주는 유효성 결과
     /// nil이면 검증 x, true면 초록, false면 빨강
-    var isVaild: Bool? = nil
+    // var isVaild: Bool? = nil
+    
+    var validationState: NicknameValidationState = .none
     
     private var borderColor: Color {
+        switch validationState {
+        case .none, .checking:
+            return .mainGray3
+        case .success:
+            return .mainGreen
+        case .duplicate, .invalidSpace, .tooShort:
+            return .mainRed
+        }
         
         // 입력 전
-        guard !text.isEmpty else { return .mainGray3 }
+        // guard !text.isEmpty else { return .mainGray3 }
         
         // 검증 X
-        guard let isValid = isVaild else { return .mainGray3 }
+        // guard let isValid = isVaild else { return .mainGray3 }
         
         // 검증 0
-        return isValid ? .mainGreen : .mainRed
+        // return isValid ? .mainGreen : .mainRed
+
+    }
+    
+    private var statusIcon: String? {
+        switch validationState {
+        case .success: return "Success"               // ✅
+        case .duplicate, .invalidSpace, .tooShort: return "Fail" // ❌
+        default: return nil
+        }
     }
     
     var body: some View {
@@ -50,8 +69,8 @@ struct RoundedTextField: View {
                     .tint(.mainBlack)
                 
                 // 성공유무 이미지
-                if !text.isEmpty, let isVaild {
-                    Image(isVaild ? "Success" : "Fail")
+                if let icon = statusIcon {
+                    Image(icon)
                         .resizable()
                         .frame(width: 15, height: 15)
                         .padding(.horizontal, 16)
@@ -59,7 +78,6 @@ struct RoundedTextField: View {
             }
         }
         .frame(height: 48)
-        // .background(Color.textFieldBg)
         .cornerRadius(5)
         .overlay {
             RoundedRectangle(cornerRadius: 8)
@@ -70,20 +88,30 @@ struct RoundedTextField: View {
 }
 
 #Preview {
-    @Previewable @State var nickname = ""
-    @Previewable @State var pages = ""
+    @Previewable @State var nickname = "23"
     
     VStack {
-        RoundedTextField(placeholder: "닉네임을 입력해주세요",
-                         text: $nickname)
         
         RoundedTextField(placeholder: "닉네임을 입력해주세요",
                          text: $nickname,
-                         isVaild: false)
+                         validationState: .none)
         
         RoundedTextField(placeholder: "닉네임을 입력해주세요",
                          text: $nickname,
-                         isVaild: true)
+                         validationState: .checking)
+        
+        RoundedTextField(placeholder: "닉네임을 입력해주세요",
+                         text: $nickname,
+                         validationState: .invalidSpace)
+        
+        RoundedTextField(placeholder: "닉네임을 입력해주세요",
+                         text: $nickname,
+                         validationState: .duplicate)
+        
+        RoundedTextField(placeholder: "닉네임을 입력해주세요",
+                         text: $nickname,
+                         validationState: .success)
+        
     }
     .padding()
 }
