@@ -61,14 +61,13 @@ struct HomeView: View {
                         
                         // MARK: - Coming Popup
                         HStack {
-                            VStack(alignment: .leading, spacing: 5) {
+                            VStack(alignment: .leading, spacing: 3) {
                                 Text("COMING SOON")
-                                    .font(.scdream(.medium, size: 11))
+                                    .font(.scdream(.medium, size: 12))
                                     .foregroundStyle(Color.mainOrange)
                                 
                                 Text("곧 생기는 팝업")
                                     .font(.scdream(.bold, size: 15))
-                                
                             }
                             Spacer()
                             
@@ -82,7 +81,7 @@ struct HomeView: View {
                             }
                             .padding(.trailing, .contentPadding)
                         }
-                        .padding(.top, 25)
+                        .padding(.top, 50)
                         ComingPopupScrollView(viewModel: homeViewModel)
                         
                         // MARK: - DropDownView
@@ -94,34 +93,35 @@ struct HomeView: View {
                                             "진주"
                                          ],
                                          anchor: .bottom,
-                                         maxWidth: 100,
+                                         maxWidth: 90,
                                          selection: $selectRegion,
                                          overlay: false,
-                                         pickedFont: .scdream(.bold, size: 17),
-                                         detailFont: .scdream(.bold, size: 17)
+                                         pickedFont: .scdream(.medium, size: 17),
+                                         detailFont: .scdream(.medium, size: 17)
                             )
+                            .padding(.leading, -10)
                             
                             Spacer()
                             
                             DropDownView(options: [
-                                            "가까운순",
                                             "추천순",
+                                            "가까운순",
                                          ],
                                          anchor: .bottom,
-                                         maxWidth: 110,
+                                         maxWidth: 90,
                                          cornerRadius: 17,
                                          stroke: .mainGray5,
                                          imgSize: 10,
                                          imgColor: .mainGray2,
                                          selection: $selectSort,
                                          overlay: true,
-                                         pickedFont: .scdream(.regular, size: 12),
-                                         detailFont: .scdream(.regular, size: 12)
+                                         pickedFont: .scdream(.light, size: 10),
+                                         detailFont: .scdream(.light, size: 10)
                                         
                             )
                         }
                         .zIndex(1)
-                        .padding(.top, 25)
+                        .padding(.top, 50)
                         .padding(.trailing, .contentPadding)
                         
                         // MARK: - GridView
@@ -227,7 +227,7 @@ private struct ComingPopupScrollView: View {
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
+            HStack(spacing: 15) {
                 ForEach(viewModel.comingPopups, id: \.self) { popup in
                     
                     // MARK: - Cell
@@ -238,9 +238,10 @@ private struct ComingPopupScrollView: View {
                     
                 }
             }
-            .padding(.vertical, 10)
+            .padding(.vertical, 15)
             .padding(.trailing, .contentPadding)
         }
+        //.background(Color.blue)
     }
 }
 
@@ -250,55 +251,43 @@ private struct ComingPopupCell: View {
         ZStack {
             RoundedRectangle(cornerRadius: 5)
                 .fill(Color.subWhite)
-                .frame(width: 289, height: 114)
+                .frame(width: 283, height: 138)
                 // MARK: - Spread 임시
                 .overlay {
                     RoundedRectangle(cornerRadius: 5)
-                        .stroke(Color.subWhite2, lineWidth: 0.05)
+                        .stroke(Color.mainGray3, lineWidth: 0.05)
                 }
                 // MARK: - 그림자 작용
                 .applyShadow(color: .subWhite2, alpha: 0.2, x: 0, y: 0, blur: 13)
               
-               
-            
             HStack(spacing: 0) {
                 // MARK: - 이미지
                 Image(popup.imageURL)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .frame(width: 83, height: 104)
+                    .frame(width: 94.4, height: 118)
+                    .cornerRadius(5)
                     .clipped()
-                    .padding(5)
+                    .padding(10)
                 
                 // MARK: - 설명문구
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack {
-                        Spacer()
-                        Text("D-\(10)")
-                            .font(.scdream(.medium, size: 11))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(Color.mainOrange)
-                            .foregroundStyle(Color.subWhite)
-                            .clipShape(Capsule())
-                    }
-                    .padding(.top, 10)
-                    .padding(.trailing, 15)
-                    
-                    Spacer()
-                    
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("\(popup.name)")
-                            .font(.scdream(.medium, size: 13))
-                        Text("\(popup.address)")
-                            .font(.scdream(.regular, size: 11))
-                    }
-                    .padding(.bottom, 15)
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("\("오픈 D-10")")
+                        .font(.scdream(.bold, size: 10))
+                        .foregroundStyle(Color.mainOrange)
+                    Text("\(popup.name)")
+                        .font(.scdream(.medium, size: 12))
+                    Text("\(popup.address)")
+                        .font(.scdream(.regular, size: 11))
+                        .foregroundStyle(Color.mainGray)
                 }
-                .padding(.leading, 5)
+                .padding(.bottom, 15)
+                
+                Spacer()
             }
-            .frame(width: 289, height: 114)
+            .frame(width: 283, height: 138)
         }
+        
     }
 }
 

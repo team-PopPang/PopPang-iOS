@@ -19,7 +19,7 @@ struct SearchTextField: View {
                 // 입력
                 TextField("", text: $text)
                     .font(.scdream(.medium, size: 12))
-                    .frame(height: 48)
+                    .frame(height: 45)
                     .keyboardType(.default)
                     .padding(.horizontal, 16)
                     .tint(.mainBlack)
@@ -30,9 +30,11 @@ struct SearchTextField: View {
                         HStack {
                             Spacer()
                             Image("Search")
+                                .renderingMode(.template)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .frame(width: 20, height: 20)
+                                .foregroundStyle(Color.mainGray)
+                                .frame(width: 17, height: 17)
                                 .padding(.trailing, 16)
                                 .allowsHitTesting(false) 
                         }
@@ -42,8 +44,8 @@ struct SearchTextField: View {
             // 플레이스홀더
             if text.isEmpty {
                 Text(placeholder)
-                    .font(.scdream(.medium, size: 12))
-                    .foregroundStyle(Color.mainGray2)
+                    .font(.scdream(.regular, size: 12))
+                    .foregroundStyle(Color.mainGray)
                     .padding(.horizontal, 16)
                     .opacity(text.isEmpty ? 1 : 0)
             }
