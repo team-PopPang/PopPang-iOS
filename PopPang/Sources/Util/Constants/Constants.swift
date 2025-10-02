@@ -9,8 +9,8 @@ import Foundation
 
 enum Constants {
     enum PopPangAPI {
-        static let kakaoURL = "https://poppang.co.kr/api/v1/auth/kakao/login"
-        static let appleURL = "https://poppang.co.kr/api/v1/auth/apple/login"
+        static let kakaoURL = "https://poppang.co.kr/api/v1/auth/kakao/mobile/login"
+        static let appleURL = "https://poppang.co.kr/api/v1/auth/apple/mobile/login"
     }
     
     enum KakaoAPI {
@@ -47,6 +47,12 @@ enum Constants {
         팝업 상세화면
         • 자간(102%), 행간(140%) 반영
         • 공유하기 버튼 수정
+        """
+        
+        static let beta_1002 = """
+        홈화면 
+        • 검색창, 곧 생기는 팝업 디자인 변경
+        • 검색창 최근 검색어 기능 추가(목업 데이터)
         """
     }
 }

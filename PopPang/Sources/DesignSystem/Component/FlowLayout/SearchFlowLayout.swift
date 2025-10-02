@@ -22,7 +22,7 @@ struct SearchFlowButton: View {
                 Button {
                     onRemove()
                 } label: {
-                    Image("remove")
+                    Image("removeBtn")
                         .resizable()
                         .frame(width: 25, height: 25)
                         .foregroundStyle(Color.mainBlack)
