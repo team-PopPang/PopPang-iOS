@@ -9,9 +9,17 @@ import Foundation
 
 final class UserRepositoryImpl: UserRepositoryProtocol {
     func checkNickname(nickname: String) async throws -> Bool {
-        let nicknameDuplicate = try await NetworkProvider.shared.userProvider.asyncRequest(.checkNickname(nickname: nickname),
-                                                                                decodeTo: Bool.self)
-        return nicknameDuplicate
+        do {
+            return try await NetworkProvider.shared.userProvider.asyncRequest(.checkNickname(nickname: nickname),
+                                                                              decodeTo: Bool.self)
+        } catch {
+            switch error {
+            case is DecodingError:
+                throw UserRepositoryError.decodingError
+            default:
+                throw UserRepositoryError.unknown(error)
+            }
+        }
     }
     
     func autoLogin(uid: String) async throws -> User {

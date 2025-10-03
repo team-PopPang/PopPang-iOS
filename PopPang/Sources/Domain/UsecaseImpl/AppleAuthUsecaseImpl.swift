@@ -23,7 +23,6 @@ final class AppleAuthUsecaseImpl: AppleAuthUsecaseProtocol {
     func appleRegister(user: User) async throws -> User {
         try await appleAuthRepository.appleRegister(user: user)
     }
-    
 }
 
 final class StubAppleAuthUsecaseImpl: AppleAuthUsecaseProtocol {

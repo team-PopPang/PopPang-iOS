@@ -13,20 +13,16 @@ final class AppleAuthRepositoryImpl: AppleAuthRepositoryProtocol {
         guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
               let authCodeData = credential.authorizationCode,
               let authCode = String(data: authCodeData, encoding: .utf8) else {
-            throw AppleAuthError.invalidAuthCode
+            throw AppleAuthRepositoryError.authCodeNotFound
         }
-        
-        // 서버에 authCode 전달
-        // let userDto = try await requestUserToServer(authCode: authCode)
-        // return userDto.toModel()
     
-        let userDto = try await NetworkProvider.shared.appleProvider.asyncRequest(.login(authCode: authCode),
+        let userDTO = try await NetworkProvider.shared.appleProvider.asyncRequest(.login(authCode: authCode),
                                                                                   decodeTo: UserDTO.self)
-        return userDto.toModel()
+        return userDTO.toModel()
     }
     
     func appleRegister(user: User) async throws -> User {
-        let userDto =  try await NetworkProvider.shared.appleProvider.asyncRequest(.signUp(userDto: user.toDTO()), decodeTo: UserDTO.self)
+        let userDto =  try await NetworkProvider.shared.appleProvider.asyncRequest(.signup(userDto: user.toDTO()), decodeTo: UserDTO.self)
         return userDto.toModel()
     }
 }
@@ -41,6 +37,13 @@ final class AppleAuthRepositoryImpl: AppleAuthRepositoryProtocol {
 
 
 
+
+
+
+
+// 서버에 authCode 전달
+// let userDto = try await requestUserToServer(authCode: authCode)
+// return userDto.toModel()
 
 /*
 // MARK: - Moya Completion 방식

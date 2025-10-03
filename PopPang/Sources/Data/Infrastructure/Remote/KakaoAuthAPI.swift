@@ -10,6 +10,7 @@ import Foundation
 
 enum KakaoAuthAPI {
     case login(accessToken: String)
+    case signup(userDto: UserDTO)
 }
 
 extension KakaoAuthAPI: TargetType {
@@ -19,13 +20,14 @@ extension KakaoAuthAPI: TargetType {
         switch self {
         case .login:
             return "/auth/kakao/mobile/login"
+        case .signup: return "/auth/kakao/signup"
         }
     }
     
     var method: Moya.Method {
         switch self {
-        case .login:
-            return .post
+        case .login: return .post
+        case .signup: return .post
         }
     }
     
@@ -33,6 +35,8 @@ extension KakaoAuthAPI: TargetType {
         switch self {
         case .login(let accessToken):
             return .requestJSONEncodable(["access_token": accessToken])
+        case .signup(let userDto):
+            return .requestJSONEncodable(userDto)
         }
     }
     

@@ -62,6 +62,7 @@ extension DIContainer {
         // MARK: - Uscase
         self.shared.register(StubKakaoAuthUsecaseImpl(), for: KakaoAuthUsecaseProtocol.self)
         self.shared.register(StubAppleAuthUsecaseImpl(), for: AppleAuthUsecaseProtocol.self)
+        self.shared.register(StubUserUsecaseImpl(), for: UserUsecaseProtocol.self)
         
         print("✅ Stub UseCase registered")
     }
@@ -70,11 +71,17 @@ extension DIContainer {
         // MARK: - Repository
         let kakaoAuthRepository = KakaoAuthRepositoryImpl()
         let appleAuthRepository = AppleAuthRepositoryImpl()
+        let userRepository = UserRepositoryImpl()
         
         // MARK: - Uscase
-        self.shared.register(KakaoAuthUsecaseImpl(kakaoAuthRepository: kakaoAuthRepository), for: KakaoAuthUsecaseProtocol.self)
+        self.shared.register(KakaoAuthUsecaseImpl(kakaoAuthRepository: kakaoAuthRepository),
+                             for: KakaoAuthUsecaseProtocol.self)
         
-        self.shared.register(AppleAuthUsecaseImpl(appleAuthRepository: appleAuthRepository), for: AppleAuthUsecaseProtocol.self)
+        self.shared.register(AppleAuthUsecaseImpl(appleAuthRepository: appleAuthRepository),
+                             for: AppleAuthUsecaseProtocol.self)
+        
+        self.shared.register(UserUsecaseImpl(userRepository: userRepository),
+                             for: UserUsecaseProtocol.self)
         print("✅ Live UseCase registered")
     }
 }

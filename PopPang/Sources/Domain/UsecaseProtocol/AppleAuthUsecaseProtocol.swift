@@ -21,5 +21,8 @@ protocol AppleAuthUsecaseProtocol {
     /// - Throws: 토큰 검증 실패, 네트워크 오류 등 로그인 과정에서 발생한 오류
     func appleLogin(authorization: ASAuthorization) async throws -> User
     
-    func appleRegister(user: User) async throws -> User 
+    /// 애플 회원가입
+    /// - Parameter user: 회원가입 정보
+    /// - Returns: 유저 정보
+    func appleRegister(user: User) async throws -> User
 }

@@ -10,7 +10,7 @@ import Foundation
 
 enum AppleAuthAPI {
     case login(authCode: String)
-    case signUp(userDto: UserDTO)
+    case signup(userDto: UserDTO)
 }
 
 extension AppleAuthAPI: TargetType {
@@ -19,14 +19,14 @@ extension AppleAuthAPI: TargetType {
     var path: String {
         switch self {
         case .login: return "/auth/apple/mobile/login"
-        case .signUp: return "/auth/apple/signup"
+        case .signup: return "/auth/apple/signup"
         }
     }
     
     var method: Moya.Method {
         switch self {
         case .login: return .post
-        case .signUp: return .post
+        case .signup: return .post
         }
     }
     
@@ -34,7 +34,7 @@ extension AppleAuthAPI: TargetType {
         switch self {
         case .login(let authCode):
             return .requestJSONEncodable(["auth_code": authCode])
-        case .signUp(let userDto):
+        case .signup(let userDto):
             return .requestJSONEncodable(userDto)
         }
     }

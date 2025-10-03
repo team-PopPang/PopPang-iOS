@@ -7,6 +7,22 @@
 
 import Foundation
 
+enum UserRepositoryError: Error {
+    case decodingError          // JSON 파싱 실패
+    case unknown(Error)         // 알 수 없는 에러
+}
+
+extension UserRepositoryError: LocalizedError {
+    var errorDescription: String? {
+        switch self {
+        case .decodingError:
+            return "데이터를 불러올 수 없습니다"
+        case .unknown(let error):
+            return "알 수 없는 오류: \(error.localizedDescription)"
+        }
+    }
+}
+
 protocol UserRepositoryProtocol {
     
     /// 닉네임 중복 여부 확인

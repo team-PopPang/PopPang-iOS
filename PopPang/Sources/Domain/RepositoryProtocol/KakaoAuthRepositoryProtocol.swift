@@ -8,11 +8,8 @@
 import KakaoSDKAuth
 import KakaoSDKUser
 
-enum KakaoAuthError: Error {
+enum KakaoAuthRepositoryError: Error {
     case tokenNotFound // 토큰 없음
-     case invalidURL
-     case serverError
-     case decodeError
 }
 
 protocol KakaoAuthRepositoryProtocol {
@@ -22,6 +19,8 @@ protocol KakaoAuthRepositoryProtocol {
     /// - Returns: User
     func kakaoLogin() async throws -> User
     
-    /// 카카오톡 로그아웃
-    // func kakaoLogout() async throws
+    /// 카카오 회원가입
+    /// - Parameter user: 회원가입 정보
+    /// - Returns: 유저 정보
+    func kakaoRegister(user: User) async throws -> User
 }

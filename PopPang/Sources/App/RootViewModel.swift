@@ -30,11 +30,13 @@ final class RootViewModel: ObservableObject {
     enum Action {
         case kakaoLogin
         case appleLogin(ASAuthorization)
+        case checkNickname(String)
     }
     
     // MARK: - Dependency
-    @Dependency private var appleLoginUsecase: AppleAuthUsecaseProtocol
+    @Dependency private var appleAuthUsecase: AppleAuthUsecaseProtocol
     @Dependency private var kakaoAuthUsecase: KakaoAuthUsecaseProtocol
+    @Dependency private var userUsecase: UserUsecaseProtocol
     
     // MARK: - Scene
     @Published var scene: RootScene = .launch
@@ -80,6 +82,8 @@ final class RootViewModel: ObservableObject {
 extension RootViewModel {
     func send(action: Action) {
         switch action {
+            
+        // MARK: - 카카오 로그인
         case .kakaoLogin:
             print("카카오 로그인")
             Task {
@@ -92,11 +96,13 @@ extension RootViewModel {
                     print("❌ 카카오 로그인 실패: \(error)")
                 }
             }
+            
+        // MARK: - 애플 로그인
         case .appleLogin(let authorization):
             print("애플 로그인")
             Task {
                 do {
-                    let user = try await appleLoginUsecase.appleLogin(authorization: authorization)
+                    let user = try await appleAuthUsecase.appleLogin(authorization: authorization)
                     await MainActor.run {
                         self.loginSuccess(user: user)
                     }
@@ -104,6 +110,28 @@ extension RootViewModel {
                     print("❌ 애플 로그인 실패: \(error)")
                 }
             }
+            
+        // MARK: - 중복확인
+        case .checkNickname(let nickname):
+            switch validationState {
+            case .invalidSpace, .tooShort: return // 로컬에서 이미 실패 상태면 서버 안탐
+            default: break                        // 그 외에는 허용
+            }
+            
+            // 확인중
+            validationState = .checking
+            
+            Task {
+                do {
+                    let isDuplicated = try await userUsecase.checkNickname(nickname: nickname)
+                    await MainActor.run {
+                        self.validationState = isDuplicated ? .duplicate : .success
+                    }
+                } catch {
+                    print("❌ 중복 확인 실패: \(error)")
+                }
+            }
+            
         }
     }
 }
@@ -161,10 +189,8 @@ extension RootViewModel {
     func checkServerNickname() {
         // 로컬에서 이미 실패 상태면 서버 안탐
         switch validationState {
-        case .invalidSpace, .tooShort:
-            return
-        default:
-            break
+        case .invalidSpace, .tooShort: return
+        default: break
         }
         
         // 서버에서 중복 여부
@@ -244,7 +270,7 @@ extension RootViewModel {
         Task {
             do {
                 guard let currentUser = user else { return }
-                let user = try await appleLoginUsecase.appleRegister(user: currentUser)
+                let user = try await appleAuthUsecase.appleRegister(user: currentUser)
                 self.user = user
                 print("여기: \(user)")
                 self.updateScene()

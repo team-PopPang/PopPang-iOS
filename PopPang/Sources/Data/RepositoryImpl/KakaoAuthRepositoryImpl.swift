@@ -28,18 +28,17 @@ final class KakaoAuthRepositoryImpl: KakaoAuthRepositoryProtocol {
         // let user = try await requestUserToServer(accessToken: oauthToken.accessToken).toModel()
         // return user
         
-//        let userDto = try await NetworkProvider.shared.kakaoProvider.asyncRequest(.login(accessToken: oauthToken.accessToken), decodeTo: UserDTO.self)
-//         print(userDto)
-//         return userDto.toModel()
+        let userDTO = try await NetworkProvider.shared.kakaoProvider.asyncRequest(.login(accessToken: oauthToken.accessToken), decodeTo: UserDTO.self)
+         return userDTO.toModel()
         
-         return User.adminUser
+         // return User.adminUser
     }
     
-    /*
-    func kakaoLogout() async throws {
-        try await handleKakaoLogout()
+    func kakaoRegister(user: User) async throws -> User {
+        let userDTO = try await NetworkProvider.shared.kakaoProvider.asyncRequest(.signup(userDto: user.toDTO()),
+                                                                                  decodeTo: UserDTO.self)
+        return userDTO.toModel()
     }
-     */
 }
 
 // MARK: - kakao 서버 요청
@@ -57,7 +56,7 @@ extension KakaoAuthRepositoryImpl {
                     continuation.resume(returning: token)
                 }
                 else {
-                    continuation.resume(throwing: KakaoAuthError.tokenNotFound)
+                    continuation.resume(throwing: KakaoAuthRepositoryError.tokenNotFound)
                 }
             }
         }
@@ -76,7 +75,7 @@ extension KakaoAuthRepositoryImpl {
                     continuation.resume(returning: token)
                 }
                 else {
-                    continuation.resume(throwing: KakaoAuthError.tokenNotFound)
+                    continuation.resume(throwing: KakaoAuthRepositoryError.tokenNotFound)
                 }
             }
         }
@@ -98,47 +97,3 @@ extension KakaoAuthRepositoryImpl {
         }
     }
 }
-
-
-/*
-// MARK: - PopPang 서버 요청
-extension KakaoAuthRepositoryImpl {
-    private func requestUserToServerURLSession(accessToken: String) async throws -> UserDTO {
-        print("✅ requestUserToServer 실행됨, accessToken: \(accessToken)")
-
-        guard let url = URL(string: Constants.PopPangAPI.apiURL) else {
-            throw AppleAuthError.invalidAuthCode
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        // ✅ 서버 DTO와 동일한 JSON Body
-        let body = ["access_token": accessToken]
-        request.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
-
-        print("➡️ Request URL: \(url.absoluteString)")
-        print("➡️ Request Method: \(request.httpMethod ?? "")")
-        if let jsonString = String(data: request.httpBody ?? Data(), encoding: .utf8) {
-            print("➡️ Request Body JSON: \(jsonString)")
-        }
-
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        if let httpResponse = response as? HTTPURLResponse {
-            print("📡 Status Code: \(httpResponse.statusCode)")
-            guard httpResponse.statusCode == 200 else {
-                throw AppleAuthError.serverError("Invalid response: \(httpResponse.statusCode)")
-            }
-        }
-
-        print("📦 Raw Data size: \(data.count) bytes")
-        if let jsonString = String(data: data, encoding: .utf8) {
-            print("📦 Response Body String:\n\(jsonString)")
-        }
-
-        return try JSONDecoder().decode(UserDTO.self, from: data)
-    }
-}
-*/
