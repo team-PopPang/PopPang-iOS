@@ -43,12 +43,28 @@ extension UINavigationBar {
          */
         
         // MARK: - 커스텀 뒤로가기
+        /*
         if let chevronImage = UIImage(named: "backButton")?
             .withRenderingMode(.alwaysOriginal) // 에셋 색상 그대로 사용
             .withAlignmentRectInsets(UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 0)) {
             
             defaultAppearance.setBackIndicatorImage(chevronImage, transitionMaskImage: chevronImage)
         }
+         */
+        
+        // MARK: - 커스텀 뒤로가기 + 크기조절
+        if let chevronImage = UIImage(named: "backButton")?
+            .withRenderingMode(.alwaysTemplate) { // template 모드로 바꿔야 색상 입힐 수 있음
+            
+            let resized = chevronImage.preparingThumbnail(of: CGSize(width: 18, height: 18)) // 크기 줄이기
+            let tinted = resized?.withTintColor(UIColor(.subBlack), renderingMode: .alwaysOriginal)
+            let adjusted = tinted?.withAlignmentRectInsets(UIEdgeInsets(top: 0, left: -6, bottom: 0, right: 0))
+            
+            if let adjusted {
+                defaultAppearance.setBackIndicatorImage(adjusted, transitionMaskImage: adjusted)
+            }
+        }
+
 
         
         // 앱 전역 UINavigationBar appearance 적용

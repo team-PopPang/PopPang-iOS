@@ -10,20 +10,23 @@ import Foundation
 
 enum AppleAuthAPI {
     case login(authCode: String)
+    case signUp(userDto: UserDTO)
 }
 
 extension AppleAuthAPI: TargetType {
-    var baseURL: URL { URL(string: Constants.PopPangAPI.appleURL)! }
+    var baseURL: URL { URL(string: Constants.PopPangAPI.apiURL)! }
     
     var path: String {
         switch self {
         case .login: return "/auth/apple/mobile/login"
+        case .signUp: return "/auth/apple/signup"
         }
     }
     
     var method: Moya.Method {
         switch self {
         case .login: return .post
+        case .signUp: return .post
         }
     }
     
@@ -31,6 +34,8 @@ extension AppleAuthAPI: TargetType {
         switch self {
         case .login(let authCode):
             return .requestJSONEncodable(["auth_code": authCode])
+        case .signUp(let userDto):
+            return .requestJSONEncodable(userDto)
         }
     }
     

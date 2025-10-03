@@ -19,6 +19,10 @@ final class NetworkProvider {
     let kakaoProvider = MoyaProvider<KakaoAuthAPI>(
         plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
     )
+    
+    let userProvider = MoyaProvider<UserAPI>(
+        plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
+    )
 }
 
 extension MoyaProvider {

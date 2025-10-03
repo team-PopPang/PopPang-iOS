@@ -9,24 +9,41 @@ import Foundation
 
 struct User {
     let uid: String
+    let provider: String
     let email: String?
     var nickname: String?
     let role: String
-    let provider: String
-    var keywords: [String]?
-    var recommands: [String]?
-    
-    var isNewUser: Bool {
-        return nickname == nil
+    let isAlerted: Bool
+    let fcmToken: String?
+    var keywordList: [String]?
+    var recommandList: [String]?
+//    var isNewUser: Bool {
+//        return nickname == nil
+//    }
+}
+
+extension User {
+    func toDTO() -> UserDTO {
+        return UserDTO(uid: uid,
+                       provider: provider,
+                       email: email,
+                       nickname: nickname,
+                       role: role,
+                       isAlerted: isAlerted,
+                       fcmToken: fcmToken,
+                       keywordList: keywordList,
+                       recommandList: recommandList)
     }
 }
 
 extension User {
     static let adminUser = User(uid: "67890",
+                                provider: "kakao",
                                 email: "john@example.com",
                                 nickname: "JohnDoe",
                                 role: "user",
-                                provider: "kakao",
-                                keywords: ["팝업스토어", "카페"],
-                                recommands: ["패션", "굿즈"])
+                                isAlerted: false,
+                                fcmToken: "",
+                                keywordList: ["팝업스토어", "카페"],
+                                recommandList: ["패션", "굿즈"])
 }

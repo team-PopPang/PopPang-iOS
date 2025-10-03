@@ -26,23 +26,29 @@ enum NicknameValidationState {
 
 final class RootViewModel: ObservableObject {
     
+    // MARK: - Action
     enum Action {
         case kakaoLogin
         case appleLogin(ASAuthorization)
     }
     
+    // MARK: - Dependency
     @Dependency private var appleLoginUsecase: AppleAuthUsecaseProtocol
     @Dependency private var kakaoAuthUsecase: KakaoAuthUsecaseProtocol
+    
+    // MARK: - Scene
     @Published var scene: RootScene = .launch
+    
+    // MARK: - User
     @Published var user: User? = nil
     
     // MARK: - NicknameSetting
+    @Published var validationState: NicknameValidationState = .none
     @Published var nickname: String = "" {
         didSet {
-            checkLocalNickname(value: nickname)
+            checkLocalNickname()
         }
     }
-    @Published var validationState: NicknameValidationState = .none
     
     init() {
         Task {
@@ -86,8 +92,6 @@ extension RootViewModel {
                     print("❌ 카카오 로그인 실패: \(error)")
                 }
             }
-            // updateScene()
-            
         case .appleLogin(let authorization):
             print("애플 로그인")
             Task {
@@ -130,21 +134,21 @@ extension RootViewModel {
 extension RootViewModel {
     
     // 로컬 검증 로직
-    private func checkLocalNickname(value: String) {
+    private func checkLocalNickname() {
         
         // 미검증
-        guard !value.isEmpty else {
+        guard !nickname.isEmpty else {
             validationState = .none
             return
         }
         
         // 공백여부
-        if value.contains(" ") {
+        if nickname.contains(" ") {
             validationState = .invalidSpace
             return
         }
         
-        if value.count <= 2 {
+        if nickname.count <= 2 {
             validationState = .tooShort
             return
         }
@@ -204,19 +208,19 @@ extension RootViewModel {
     // 추천키워드 설정
     func updateKeywords(_ keywords: [String]) {
         guard var currentUser = user else { return }
-        currentUser.recommands = keywords
+        currentUser.recommandList = keywords
         self.user = currentUser
     }
     
     // 서버에 최종 반영
     func completeRegistration() {
-        guard let currentUser = user,
-                  currentUser.nickname != nil
-                  // ,!currentUser.recommands.isEmpty
-        else {
-            print("❌ 필수 정보가 비어있습니다.")
-            return
-        }
+//        guard let currentUser = user,
+//                  currentUser.nickname != nil
+//                  // ,!currentUser.recommands.isEmpty
+//        else {
+//            print("❌ 필수 정보가 비어있습니다.")
+//            return
+//        }
         
         /*
         // 1. 서버 업데이트 요청
@@ -236,8 +240,20 @@ extension RootViewModel {
             
         }
          */
+            
+        Task {
+            do {
+                guard let currentUser = user else { return }
+                let user = try await appleLoginUsecase.appleRegister(user: currentUser)
+                self.user = user
+                print("여기: \(user)")
+                self.updateScene()
+            } catch {
+                
+            }
+        }
         
-        self.user = user
-        self.updateScene()
+//        self.user = user
+//        self.updateScene()
     }
 }

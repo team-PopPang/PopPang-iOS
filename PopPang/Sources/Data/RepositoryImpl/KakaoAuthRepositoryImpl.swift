@@ -28,8 +28,9 @@ final class KakaoAuthRepositoryImpl: KakaoAuthRepositoryProtocol {
         // let user = try await requestUserToServer(accessToken: oauthToken.accessToken).toModel()
         // return user
         
-       // let userDto = try await NetworkProvider.shared.kakaoProvider.asyncRequest(.login(accessToken: oauthToken.accessToken), decodeTo: UserDTO.self)
-        // return userDto.toModel()
+//        let userDto = try await NetworkProvider.shared.kakaoProvider.asyncRequest(.login(accessToken: oauthToken.accessToken), decodeTo: UserDTO.self)
+//         print(userDto)
+//         return userDto.toModel()
         
          return User.adminUser
     }
@@ -101,7 +102,7 @@ extension KakaoAuthRepositoryImpl {
     private func requestUserToServerURLSession(accessToken: String) async throws -> UserDTO {
         print("✅ requestUserToServer 실행됨, accessToken: \(accessToken)")
 
-        guard let url = URL(string: Constants.PopPangAPI.kakaoURL) else {
+        guard let url = URL(string: Constants.PopPangAPI.apiURL) else {
             throw AppleAuthError.invalidAuthCode
         }
 

@@ -9,32 +9,38 @@ import Foundation
 
 struct UserDTO: Codable {
     let uid: String
+    let provider: String
     let email: String?
     let nickname: String?
     let role: String
-    let provider: String
-    let keywords: [String]?
-    let recommands: [String]?
+    let isAlerted: Bool
+    let fcmToken: String?
+    let keywordList: [String]?
+    let recommandList: [String]?
 }
 
 extension UserDTO {
     func toModel() -> User {
         return User(uid: uid,
+                    provider: provider,
                     email: email,
                     nickname: nickname,
                     role: role,
-                    provider: provider,
-                    keywords: keywords,
-                    recommands: recommands)
+                    isAlerted: isAlerted,
+                    fcmToken: fcmToken,
+                    keywordList: keywordList,
+                    recommandList: recommandList)
     }
 }
 
 extension UserDTO {
     static let adminUser = UserDTO(uid: "0000",
-                                email: "index@example.com",
-                                nickname: "김동현",
-                                role: "user",
-                                provider: "kakao",
-                                keywords: ["팝업스토어", "카페"],
-                                recommands: ["패션", "굿즈"])
+                                   provider: "kakao",
+                                   email: "index@example.com",
+                                   nickname: "김동현",
+                                   role: "user",
+                                   isAlerted: false,
+                                   fcmToken: "",
+                                   keywordList: ["팝업스토어", "카페"],
+                                   recommandList: ["패션", "굿즈"])
 }

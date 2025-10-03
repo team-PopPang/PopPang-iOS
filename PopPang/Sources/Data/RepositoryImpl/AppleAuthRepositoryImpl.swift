@@ -24,6 +24,11 @@ final class AppleAuthRepositoryImpl: AppleAuthRepositoryProtocol {
                                                                                   decodeTo: UserDTO.self)
         return userDto.toModel()
     }
+    
+    func appleRegister(user: User) async throws -> User {
+        let userDto =  try await NetworkProvider.shared.appleProvider.asyncRequest(.signUp(userDto: user.toDTO()), decodeTo: UserDTO.self)
+        return userDto.toModel()
+    }
 }
 
 

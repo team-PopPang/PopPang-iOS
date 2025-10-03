@@ -25,13 +25,14 @@ struct SearchView: View {
                 Button {
                     dismiss()
                 } label: {
-                    Image("navigationBtn")
+                    // Image("navigationBtn")
+                    Image("backButton")
                         .renderingMode(.template)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 15, height: 15)
-                        .rotationEffect(.degrees(180))
-                        .foregroundStyle(Color.mainBlack)
+                        .frame(width: 14, height: 14)
+                        // .rotationEffect(.degrees(180))
+                        .foregroundStyle(Color.subBlack)
                 }.padding(.trailing, 10)
                 
                 SearchTextField(placeholder: "궁금한 장소를 검색해보세요",
