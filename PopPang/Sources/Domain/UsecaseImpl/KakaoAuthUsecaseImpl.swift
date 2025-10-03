@@ -18,9 +18,11 @@ final class KakaoAuthUsecaseImpl: KakaoAuthUsecaseProtocol {
         try await kakaoAuthRepository.kakaoLogin()
     }
     
+    /*
     func kakaoLogout() async throws {
         try await kakaoAuthRepository.kakaoLogout()
     }
+     */
 }
 
 final class StubKakaoAuthUsecaseImpl: KakaoAuthUsecaseProtocol {

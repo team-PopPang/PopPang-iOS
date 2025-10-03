@@ -9,7 +9,9 @@ import Moya
 import Foundation
 
 enum UserAPI {
-    case nicknameDuplicate(nickname: String)
+    case checkNickname(nickname: String)
+    case autoLogin(uid: String)
+    case getRecommandList
 }
 
 extension UserAPI: TargetType {
@@ -17,21 +19,30 @@ extension UserAPI: TargetType {
     
     var path: String {
         switch self {
-        case .nicknameDuplicate: return "/auth/nicknameDuplicate"
+        case .checkNickname: return "/auth/nicknameDuplicate"
+        case .autoLogin: return "/auth/autoLogin"
+        case .getRecommandList: return "/auth/"
         }
     }
     
     var method: Moya.Method {
         switch self {
-        case .nicknameDuplicate: return .get
+        case .checkNickname: return .get
+        case .autoLogin: return .get
+        case .getRecommandList: return .get
         }
     }
     
     var task: Moya.Task {
         switch self {
-        case .nicknameDuplicate(let nickname):
+        case .checkNickname(let nickname):
             return .requestParameters(parameters: ["nickname": nickname],
                                       encoding: URLEncoding.queryString)
+        case .autoLogin(let uid):
+            return .requestParameters(parameters: ["uid": uid],
+                                      encoding: URLEncoding.queryString)
+        case .getRecommandList:
+            return .requestPlain
         }
     }
     

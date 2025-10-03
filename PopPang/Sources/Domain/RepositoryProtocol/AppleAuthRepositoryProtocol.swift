@@ -8,6 +8,12 @@
 import Foundation
 import AuthenticationServices
 
+enum AppleAuthError: Error {
+    // case invalidCredential
+    case invalidAuthCode
+    case serverError(String)
+}
+
 protocol AppleAuthRepositoryProtocol {
     
     /// 애플 로그인
@@ -15,5 +21,10 @@ protocol AppleAuthRepositoryProtocol {
     /// - Returns: User
     func appleLogin(authorization: ASAuthorization) async throws -> User
     
+    
+    /// 애플 회원가입
+    /// - Parameter user: 회원가입 정보
+    /// - Returns: 유저 정보
     func appleRegister(user: User) async throws -> User
 }
+

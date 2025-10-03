@@ -9,5 +9,5 @@ import Foundation
 
 protocol KakaoAuthUsecaseProtocol {
     func kakaoLogin() async throws -> User
-    func kakaoLogout() async throws
+    // func kakaoLogout() async throws
 }

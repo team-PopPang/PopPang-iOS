@@ -13,7 +13,7 @@ enum KakaoAuthAPI {
 }
 
 extension KakaoAuthAPI: TargetType {
-    var baseURL: URL { URL(string: Constants.PopPangAPI.kakaoURL)! }
+    var baseURL: URL { URL(string: Constants.PopPangAPI.apiURL)! }
     
     var path: String {
         switch self {

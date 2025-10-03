@@ -42,7 +42,7 @@ final class AppleAuthRepositoryImpl: AppleAuthRepositoryProtocol {
 
 
 
-
+/*
 // MARK: - Moya Completion 방식
 extension AppleAuthRepositoryImpl {
     // 서버에 authCode 보낸 후 서버에서 idToken 받고 uid 식별 후 유저 반환
@@ -71,7 +71,7 @@ extension AppleAuthRepositoryImpl {
     private func requestUserToServerUrlSession(authCode: String) async throws -> UserDTO {
         print("✅ requestUserToServer 실행됨, authCode: \(authCode)")
 
-        guard let url = URL(string: Constants.PopPangAPI.appleURL) else {
+        guard let url = URL(string: Constants.PopPangAPI.apiURL) else {
             throw AppleAuthError.invalidAuthCode
         }
 
@@ -107,5 +107,4 @@ extension AppleAuthRepositoryImpl {
 
     }
 }
-
-
+*/

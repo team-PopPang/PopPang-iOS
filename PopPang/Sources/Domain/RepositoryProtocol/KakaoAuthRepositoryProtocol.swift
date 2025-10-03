@@ -23,5 +23,5 @@ protocol KakaoAuthRepositoryProtocol {
     func kakaoLogin() async throws -> User
     
     /// 카카오톡 로그아웃
-    func kakaoLogout() async throws
+    // func kakaoLogout() async throws
 }

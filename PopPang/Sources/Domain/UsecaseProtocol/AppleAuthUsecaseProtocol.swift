@@ -8,11 +8,7 @@
 import Foundation
 import AuthenticationServices
 
-enum AppleAuthError: Error {
-    // case invalidCredential
-    case invalidAuthCode
-    case serverError(String)
-}
+
 
 protocol AppleAuthUsecaseProtocol {
  

@@ -35,9 +35,11 @@ final class KakaoAuthRepositoryImpl: KakaoAuthRepositoryProtocol {
          return User.adminUser
     }
     
+    /*
     func kakaoLogout() async throws {
         try await handleKakaoLogout()
     }
+     */
 }
 
 // MARK: - kakao 서버 요청
@@ -97,6 +99,8 @@ extension KakaoAuthRepositoryImpl {
     }
 }
 
+
+/*
 // MARK: - PopPang 서버 요청
 extension KakaoAuthRepositoryImpl {
     private func requestUserToServerURLSession(accessToken: String) async throws -> UserDTO {
@@ -137,3 +141,4 @@ extension KakaoAuthRepositoryImpl {
         return try JSONDecoder().decode(UserDTO.self, from: data)
     }
 }
+*/
