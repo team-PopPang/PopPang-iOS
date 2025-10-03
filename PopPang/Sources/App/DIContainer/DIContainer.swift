@@ -71,6 +71,7 @@ extension DIContainer {
         // MARK: - Repository
         let kakaoAuthRepository = KakaoAuthRepositoryImpl()
         let appleAuthRepository = AppleAuthRepositoryImpl()
+        let googleAuthRepository = GoogleAuthRepositoryImpl()
         let userRepository = UserRepositoryImpl()
         
         // MARK: - Uscase
@@ -79,6 +80,9 @@ extension DIContainer {
         
         self.shared.register(AppleAuthUsecaseImpl(appleAuthRepository: appleAuthRepository),
                              for: AppleAuthUsecaseProtocol.self)
+        
+        self.shared.register(GoogleAuthUsecaseImpl(googleAuthRepository: googleAuthRepository),
+                             for: GoogleAuthUsecaseProtocol.self)
         
         self.shared.register(UserUsecaseImpl(userRepository: userRepository),
                              for: UserUsecaseProtocol.self)

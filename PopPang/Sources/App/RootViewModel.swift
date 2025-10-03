@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AuthenticationServices
+import GoogleSignIn
 
 enum RootScene {
     case launch
@@ -33,6 +34,7 @@ final class RootViewModel: ObservableObject {
     enum Action {
         case autoLogin
         case kakaoLogin
+        case googleLogin
         case appleLogin(ASAuthorization)
         case checkNickname
         case setalertList([String])     // 알림 키워드 설정
@@ -43,6 +45,7 @@ final class RootViewModel: ObservableObject {
     // MARK: - Dependency
     @Dependency private var appleAuthUsecase: AppleAuthUsecaseProtocol
     @Dependency private var kakaoAuthUsecase: KakaoAuthUsecaseProtocol
+    @Dependency private var googleAuthUsecase: GoogleAuthUsecaseProtocol
     @Dependency private var userUsecase: UserUsecaseProtocol
     
     // MARK: - Scene
@@ -50,6 +53,7 @@ final class RootViewModel: ObservableObject {
     
     // MARK: - User
     @Published var user: User? = nil
+    @Published var googleResponseDTO = GoogleResponseDTO()
     
     // MARK: - NicknameSetting
     @Published var validationState: NicknameValidationState = .none
@@ -142,6 +146,20 @@ extension RootViewModel {
                 }
             }
             
+        // MARK: - 구글 로그인
+        case .googleLogin:
+            print("구글 로그인")
+            Task {
+                do {
+                    let user = try await googleAuthUsecase.googleLogin()
+                    await MainActor.run {
+                        self.loginSuccess(user: user)
+                    }
+                } catch (let error) {
+                    print("❌ 구글 로그인 실패: \(error)")
+                }
+            }
+            
         // MARK: - 닉네임 중복확인
         case .checkNickname:
             switch validationState {
@@ -198,7 +216,9 @@ extension RootViewModel {
         // MARK: - 회원가입 완료 버튼
         case .register:
             let registerUser = user!
-            if registerUser.provider == "APPLE" {
+            
+            switch registerUser.provider {
+            case "APPLE":
                 Task {
                     do {
                         let newUser = try await appleAuthUsecase.appleRegister(user: registerUser)
@@ -210,7 +230,8 @@ extension RootViewModel {
                         print("❌ 애플 회원가입 실패: \(error)")
                     }
                 }
-            } else {
+                
+            case "KAKAO":
                 Task {
                     do {
                         let newUser = try await kakaoAuthUsecase.kakaoRegister(user: registerUser)
@@ -222,8 +243,22 @@ extension RootViewModel {
                         print("❌ 카카오 회원가입 실패: \(error)")
                     }
                 }
+            case "GOOGLE":
+                Task {
+                    do {
+                        let newUser = try await googleAuthUsecase.googleRegister(user: registerUser)
+                        await MainActor.run {
+                            self.loginSuccess(user: newUser)
+                            self.user = newUser
+                        }
+                    } catch (let error) {
+                        print("❌ 구글 회원가입 실패: \(error)")
+                    }
+                }
+                
+            default:
+                break
             }
-            
         }
     }
 }
@@ -293,51 +328,44 @@ extension RootViewModel {
         self.storeUID = ""
         updateScene()
     }
-    
-    // 서버에 최종 반영
-    /*
-    func completeRegistration() {
-//        guard let currentUser = user,
-//                  currentUser.nickname != nil
-//                  // ,!currentUser.recommands.isEmpty
-//        else {
-//            print("❌ 필수 정보가 비어있습니다.")
-//            return
-//        }
-        
-        /*
-        // 1. 서버 업데이트 요청
-        do {
-            
-            let updatedUser = try await UserAPI.updateUser(
-                uid: currentUser.uid,
-                nickname: nickname,
-                category: category
-            )
-            
-            // 2. 서버 응답값을 반영
-            self.user = updatedUser
-            updateScene()
-             
-        } catch {
-            
-        }
-         */
-            
-        Task {
-            do {
-                guard let currentUser = user else { return }
-                let user = try await appleAuthUsecase.appleRegister(user: currentUser)
-                self.user = user
-                print("여기: \(user)")
-                self.updateScene()
-            } catch {
-                
-            }
-        }
-        
-//        self.user = user
-//        self.updateScene()
-    }
-     */
 }
+
+
+
+/*
+// MARK: - 구글 로그인
+extension RootViewModel {
+    
+    func signIn() {
+        //현재 앱에서 최상위 뷰 컨트롤러를 찾는 부분
+        guard let presentingViewController = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.windows.first?.rootViewController else {
+            return
+        }
+
+        GIDSignIn.sharedInstance.signIn(//구글 로그인 프로세스를 시작
+            withPresenting: presentingViewController)
+        { _, error in
+            if let error = error {
+                print("error: \(error.localizedDescription)")
+            }
+
+            self.checkUserInfo()//현재 사용자의 정보를 확인하는 로직 실행
+        }
+    }
+    
+    func checkUserInfo() {
+        print("토큰받기")
+        if GIDSignIn.sharedInstance.currentUser != nil {//현재 사용자가 로그인되어 있는지 확인
+            let user = GIDSignIn.sharedInstance.currentUser
+            guard let user = user else {
+                return
+            }
+            googleResponseDTO.oauthId = user.userID ?? "" //사용자의 고유 ID
+            googleResponseDTO.idToken = user.idToken?.tokenString ?? ""//사용자의 ID 토큰
+            print("구글 토큰 받기: \(googleResponseDTO)")
+        } else {
+            print("error: Not Logged In")
+        }
+    }
+}
+*/

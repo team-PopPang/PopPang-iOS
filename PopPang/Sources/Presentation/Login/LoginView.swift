@@ -8,6 +8,8 @@
 import SwiftUI
 import AuthenticationServices
 import Combine
+import GoogleSignIn
+
 
 struct LoginView: View {
     @EnvironmentObject var coordinator: Coordinator<OnboardingRoute, SheetRoute, OverlayRoute>
@@ -56,6 +58,12 @@ struct LoginView: View {
                         triggerAppleLoginBtnTap()
                     }
                 }
+                
+                // MARK: - 구글
+                SocialLoginButton(type: .kakao) {
+                    rootViewModel.send(action: .googleLogin)
+                }
+                
             }
             .padding(.top, 50)
         }
@@ -99,3 +107,4 @@ extension LoginView {
     LoginView()
         .environmentObject(RootViewModel())
 }
+

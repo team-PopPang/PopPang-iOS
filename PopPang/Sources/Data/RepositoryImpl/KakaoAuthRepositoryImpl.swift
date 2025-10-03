@@ -35,7 +35,7 @@ final class KakaoAuthRepositoryImpl: KakaoAuthRepositoryProtocol {
     }
     
     func kakaoRegister(user: User) async throws -> User {
-        let userDTO = try await NetworkProvider.shared.kakaoProvider.asyncRequest(.signup(userDto: user.toDTO()),
+        let userDTO = try await NetworkProvider.shared.kakaoProvider.asyncRequest(.signup(userDTO: user.toDTO()),
                                                                                   decodeTo: UserDTO.self)
         return userDTO.toModel()
     }

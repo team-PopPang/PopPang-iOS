@@ -1,5 +1,5 @@
 //
-//  KakaoAuthAPI.swift
+//  GoogleAuthAPI.swift
 //  PopPang
 //
 //  Created by 김동현 on 10/3/25.
@@ -8,19 +8,18 @@
 import Moya
 import Foundation
 
-enum KakaoAuthAPI {
-    case login(accessToken: String)
+enum GoogleAuthAPI {
+    case login(idToken: String)
     case signup(userDTO: UserDTO)
 }
 
-extension KakaoAuthAPI: TargetType {
+extension GoogleAuthAPI: TargetType {
     var baseURL: URL { URL(string: Constants.PopPangAPI.apiURL)! }
     
     var path: String {
         switch self {
-        case .login:
-            return "/auth/kakao/mobile/login"
-        case .signup: return "/auth/kakao/signup"
+        case .login: return "/auth/google/mobile/login"
+        case .signup: return "/auth/google/signup"
         }
     }
     
@@ -33,8 +32,8 @@ extension KakaoAuthAPI: TargetType {
     
     var task: Moya.Task {
         switch self {
-        case .login(let accessToken):
-            return .requestJSONEncodable(["access_token": accessToken])
+        case .login(let idToken):
+            return .requestJSONEncodable(["id_token": idToken])
         case .signup(let userDto):
             return .requestJSONEncodable(userDto)
         }

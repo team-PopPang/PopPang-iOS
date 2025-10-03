@@ -8,6 +8,7 @@
 import UIKit
 import KakaoSDKCommon
 import KakaoSDKAuth
+import GoogleSignIn
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
@@ -37,11 +38,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     ///
     /// - Note: 카카오톡 로그인 시 카카오톡 앱에서 인증 후 돌아오는 URL을 처리한다
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        
+        // MARK: - Kakao
         if (AuthApi.isKakaoTalkLoginUrl(url)) {
             return AuthController.handleOpenUrl(url: url)
         }
-
-        return false
+        
+        // MARK: - Google
+        return GIDSignIn.sharedInstance.handle(url)
     }
     
     
@@ -63,3 +67,5 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return sceneConfiguration
     }
 }
+
+

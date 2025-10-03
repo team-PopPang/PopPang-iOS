@@ -7,6 +7,7 @@
 
 import Foundation
 
+// MARK: - 닉네임 파서
 struct CheckNicknameDTO: Decodable {
     let isDuplicated: Bool
 }

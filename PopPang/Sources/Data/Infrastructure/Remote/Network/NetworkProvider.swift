@@ -20,6 +20,10 @@ final class NetworkProvider {
         plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
     )
     
+    let googleProvider = MoyaProvider<GoogleAuthAPI>(
+        plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
+    )
+    
     let userProvider = MoyaProvider<UserAPI>(
         plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
     )
