@@ -26,11 +26,18 @@ enum NicknameValidationState {
 
 final class RootViewModel: ObservableObject {
     
+    // MARK: - Keychain으로 변환 예정
+    @AppStorage("uid") private var storeUID: String = ""
+    
     // MARK: - Action
     enum Action {
+        case autoLogin
         case kakaoLogin
         case appleLogin(ASAuthorization)
-        case checkNickname(String)
+        case checkNickname
+        case setalertList([String])     // 알림 키워드 설정
+        case setRecommandList([Int])    // 추천 키워드 설정
+        case register                   // 화원가입
     }
     
     // MARK: - Dependency
@@ -62,6 +69,9 @@ final class RootViewModel: ObservableObject {
         print("로그인 인증 진행")
         
         // 1. 실제 비동기 로직 (서버 인증 요청)
+        await MainActor.run {
+            self.send(action: .autoLogin)
+        }
         
         // 2. launch뷰 로딩 시간(1초 보장)
         try? await Task.sleep(for: .seconds(1))
@@ -82,6 +92,27 @@ final class RootViewModel: ObservableObject {
 extension RootViewModel {
     func send(action: Action) {
         switch action {
+        // MARK: - 자동 로그인
+        case .autoLogin:
+            print("자동로그인 시도")
+            if !storeUID.isEmpty {
+                Task {
+                    do {
+                        let user = try await userUsecase.autoLogin(uid: storeUID)
+                        print("자동로그인: \(user)")
+                        await MainActor.run {
+                            self.loginSuccess(user: user)
+                        }
+                        
+                    } catch (let error) {
+                        print("❌ 자동 로그인 실패: \(error)")
+                        await MainActor.run {
+                            self.user = nil
+                            self.scene = .unauthenticated
+                        }
+                    }
+                }
+            }
             
         // MARK: - 카카오 로그인
         case .kakaoLogin:
@@ -111,8 +142,8 @@ extension RootViewModel {
                 }
             }
             
-        // MARK: - 중복확인
-        case .checkNickname(let nickname):
+        // MARK: - 닉네임 중복확인
+        case .checkNickname:
             switch validationState {
             case .invalidSpace, .tooShort: return // 로컬에서 이미 실패 상태면 서버 안탐
             default: break                        // 그 외에는 허용
@@ -126,9 +157,70 @@ extension RootViewModel {
                     let isDuplicated = try await userUsecase.checkNickname(nickname: nickname)
                     await MainActor.run {
                         self.validationState = isDuplicated ? .duplicate : .success
+                        
+                        // MARK: - 만약 success이면 회원가입에 적용할 User속성에 추가한다
+                        if self.validationState == .success {
+                            precondition(user != nil, "⚠️ 회원가입 단계에서는 user가 nil일 수 없음")
+                            var registerUser = user!
+                            registerUser.nickname = self.nickname
+                            self.user = registerUser
+                        }
                     }
                 } catch {
                     print("❌ 중복 확인 실패: \(error)")
+                    
+                    // MARK: - 실패해도 넘어가도록 임시 세팅(지우면 됨)
+//                    let isDuplicated = false
+//                    await MainActor.run {
+//                        self.validationState = isDuplicated ? .duplicate : .success
+//                        precondition(user != nil, "⚠️ 회원가입 단계에서는 user가 nil일 수 없음")
+//                        var registerUser = user!
+//                        registerUser.nickname = self.nickname
+//                        self.user = registerUser
+//                    }
+                }
+            }
+            
+        // MARK: - 알림 키워드 세팅
+        case .setalertList(let alertList):
+            var registerUser = user!
+            registerUser.keywordList = alertList
+            self.user = registerUser
+            print("알림 키워드 적용됨: \(self.user!)")
+            
+        // MARK: - 추천 키워드 세팅
+        case .setRecommandList(let recommandList):
+            var registerUser = user!
+            registerUser.recommandList = recommandList
+            self.user = registerUser
+            print("추천 키워드 적용됨: \(self.user!)")
+            
+        // MARK: - 회원가입 완료 버튼
+        case .register:
+            let registerUser = user!
+            if registerUser.provider == "APPLE" {
+                Task {
+                    do {
+                        let newUser = try await appleAuthUsecase.appleRegister(user: registerUser)
+                        await MainActor.run {
+                            self.loginSuccess(user: newUser)
+                            self.user = newUser
+                        }
+                    } catch (let error) {
+                        print("❌ 애플 회원가입 실패: \(error)")
+                    }
+                }
+            } else {
+                Task {
+                    do {
+                        let newUser = try await kakaoAuthUsecase.kakaoRegister(user: registerUser)
+                        await MainActor.run {
+                            self.loginSuccess(user: newUser)
+                            self.user = newUser
+                        }
+                    } catch (let error) {
+                        print("❌ 카카오 회원가입 실패: \(error)")
+                    }
                 }
             }
             
@@ -184,37 +276,6 @@ extension RootViewModel {
         // 아직 서버 검증 전 단계
         validationState = .none
     }
-    
-    // 서버 검증 로직
-    func checkServerNickname() {
-        // 로컬에서 이미 실패 상태면 서버 안탐
-        switch validationState {
-        case .invalidSpace, .tooShort: return
-        default: break
-        }
-        
-        // 서버에서 중복 여부
-        validationState = .checking
-        
-        Task {
-            // 서버 흉내(1초 지연)
-            try? await Task.sleep(for: .seconds(1))
-            
-            // 서버 응답 흉내
-            let isDuplicate = nickname.lowercased() == "admin"
-            
-            await MainActor.run {
-                self.validationState = isDuplicate ? .duplicate : .success
-            }
-        }
-    }
-    
-    // 닉네임 설정(다음 버튼)
-    func updateNickname() {
-        guard var currentUser = user else { return }
-        currentUser.nickname = nickname
-        self.user = currentUser
-    }
 }
 
 // MARK: - 로그인 관련 로직
@@ -222,23 +283,19 @@ extension RootViewModel {
     // 로그인 완료
     func loginSuccess(user: User) {
         self.user = user
+        self.storeUID = user.uid
         self.updateScene()
     }
 
     // 로그아웃
     func logout() {
         self.user = nil
+        self.storeUID = ""
         updateScene()
     }
     
-    // 추천키워드 설정
-    func updateKeywords(_ keywords: [String]) {
-        guard var currentUser = user else { return }
-        currentUser.recommandList = keywords
-        self.user = currentUser
-    }
-    
     // 서버에 최종 반영
+    /*
     func completeRegistration() {
 //        guard let currentUser = user,
 //                  currentUser.nickname != nil
@@ -282,4 +339,5 @@ extension RootViewModel {
 //        self.user = user
 //        self.updateScene()
     }
+     */
 }

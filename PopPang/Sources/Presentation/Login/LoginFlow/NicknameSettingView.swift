@@ -41,7 +41,7 @@ struct NicknameSettingView: View {
  
                 
                 Button {
-                    rootViewModel.checkServerNickname()
+                    rootViewModel.send(action: .checkNickname)
                 } label: {
                     Text("중복확인")
                         .font(.scdream(.medium, size: 12))
@@ -87,7 +87,7 @@ struct NicknameSettingView: View {
                              buttonColor: rootViewModel.validationState == .success ?
                              Color.mainOrange
                              : Color.mainGray2) {
-                rootViewModel.updateNickname()
+                // rootViewModel.updateNickname()
                 UIApplication.shared.endEditing(true)
                 Task {
                     try? await Task.sleep(nanoseconds: 700_000_000) // 0.7초

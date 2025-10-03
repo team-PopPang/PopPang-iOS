@@ -7,11 +7,16 @@
 
 import Foundation
 
+struct CheckNicknameDTO: Decodable {
+    let isDuplicated: Bool
+}
+
 final class UserRepositoryImpl: UserRepositoryProtocol {
     func checkNickname(nickname: String) async throws -> Bool {
         do {
-            return try await NetworkProvider.shared.userProvider.asyncRequest(.checkNickname(nickname: nickname),
-                                                                              decodeTo: Bool.self)
+            let response =  try await NetworkProvider.shared.userProvider.asyncRequest(.checkNickname(nickname: nickname),
+                                                                              decodeTo: CheckNicknameDTO.self)
+            return response.isDuplicated
         } catch {
             switch error {
             case is DecodingError:

@@ -46,6 +46,4 @@ extension KakaoAuthAPI: TargetType {
             "accept": "application/json"
         ]
     }
-    
-    
 }

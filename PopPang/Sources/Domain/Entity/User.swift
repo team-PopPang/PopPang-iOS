@@ -16,7 +16,7 @@ struct User {
     let isAlerted: Bool
     let fcmToken: String?
     var keywordList: [String]?
-    var recommandList: [String]?
+    var recommandList: [Int]?
 //    var isNewUser: Bool {
 //        return nickname == nil
 //    }
@@ -45,5 +45,5 @@ extension User {
                                 isAlerted: false,
                                 fcmToken: "",
                                 keywordList: ["팝업스토어", "카페"],
-                                recommandList: ["패션", "굿즈"])
+                                recommandList: [1, 2])
 }

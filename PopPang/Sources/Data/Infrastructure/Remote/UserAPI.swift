@@ -19,16 +19,16 @@ extension UserAPI: TargetType {
     
     var path: String {
         switch self {
-        case .checkNickname: return "/auth/nicknameDuplicate"
+        case .checkNickname: return "/user/nickname/duplicated"
         case .autoLogin: return "/auth/autoLogin"
-        case .getRecommandList: return "/auth/"
+        case .getRecommandList: return "/auth/" // 개발중
         }
     }
     
     var method: Moya.Method {
         switch self {
         case .checkNickname: return .get
-        case .autoLogin: return .get
+        case .autoLogin: return .post
         case .getRecommandList: return .get
         }
     }
@@ -39,8 +39,8 @@ extension UserAPI: TargetType {
             return .requestParameters(parameters: ["nickname": nickname],
                                       encoding: URLEncoding.queryString)
         case .autoLogin(let uid):
-            return .requestParameters(parameters: ["uid": uid],
-                                      encoding: URLEncoding.queryString)
+            return .requestJSONEncodable(["uid": uid])
+
         case .getRecommandList:
             return .requestPlain
         }

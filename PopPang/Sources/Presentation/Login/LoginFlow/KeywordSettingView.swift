@@ -83,8 +83,7 @@ struct KeywordSettingView: View {
             Spacer()
             
             MainOrangeButton(buttonTitle: "다음") {
-                rootViewModel.updateKeywords(keywords)
-                // print("현재 진행중: \(rootViewModel.user!)")
+                rootViewModel.send(action: .setalertList(keywords))
                 DispatchQueue.main.async {
                     onNext()
                 }
