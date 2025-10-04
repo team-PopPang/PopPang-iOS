@@ -37,9 +37,8 @@ struct NicknameSettingView: View {
                                  text: $rootViewModel.nickname,
                                  validationState: rootViewModel.validationState)
                 .focused($isFocused)
-                // MARK: - 실시간 바인딩 검증
- 
                 
+                // MARK: - 실시간 바인딩 검증
                 Button {
                     rootViewModel.send(action: .checkNickname)
                 } label: {
@@ -50,7 +49,8 @@ struct NicknameSettingView: View {
                         .foregroundStyle(Color.mainWhite)
                         .background(Color.mainOrange)
                         .cornerRadius(5)
-                }.buttonStyle(PressableButtonStyle())
+                }
+                .buttonStyle(PressableButtonStyle())                
             }
             .padding(.top, 20)
             

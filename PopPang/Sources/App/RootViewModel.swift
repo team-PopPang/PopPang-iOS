@@ -162,6 +162,10 @@ extension RootViewModel {
             
         // MARK: - 닉네임 중복확인
         case .checkNickname:
+            
+            // 닉네임이 빈값이면 서버 안탐
+            guard !nickname.isEmpty else { return }
+            
             switch validationState {
             case .invalidSpace, .tooShort: return // 로컬에서 이미 실패 상태면 서버 안탐
             default: break                        // 그 외에는 허용
@@ -188,14 +192,16 @@ extension RootViewModel {
                     print("❌ 중복 확인 실패: \(error)")
                     
                     // MARK: - 실패해도 넘어가도록 임시 세팅(지우면 됨)
-//                    let isDuplicated = false
-//                    await MainActor.run {
-//                        self.validationState = isDuplicated ? .duplicate : .success
-//                        precondition(user != nil, "⚠️ 회원가입 단계에서는 user가 nil일 수 없음")
-//                        var registerUser = user!
-//                        registerUser.nickname = self.nickname
-//                        self.user = registerUser
-//                    }
+                    /*
+                    let isDuplicated = false
+                    await MainActor.run {
+                        self.validationState = isDuplicated ? .duplicate : .success
+                        precondition(user != nil, "⚠️ 회원가입 단계에서는 user가 nil일 수 없음")
+                        var registerUser = user!
+                        registerUser.nickname = self.nickname
+                        self.user = registerUser
+                    }
+                     */
                 }
             }
             
@@ -243,6 +249,7 @@ extension RootViewModel {
                         print("❌ 카카오 회원가입 실패: \(error)")
                     }
                 }
+                
             case "GOOGLE":
                 Task {
                     do {

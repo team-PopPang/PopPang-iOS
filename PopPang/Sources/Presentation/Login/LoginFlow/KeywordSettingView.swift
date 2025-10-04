@@ -84,8 +84,15 @@ struct KeywordSettingView: View {
             
             MainOrangeButton(buttonTitle: "다음") {
                 rootViewModel.send(action: .setalertList(keywords))
-                DispatchQueue.main.async {
-                    onNext()
+//                DispatchQueue.main.async {
+//                    onNext()
+//                }
+                UIApplication.shared.endEditing(true)
+                Task {
+                    try? await Task.sleep(nanoseconds: 700_000_000) // 0.7초
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        onNext()
+                    }
                 }
             }
             // 키보드 올라오면 공백과 함께 버튼 올라감

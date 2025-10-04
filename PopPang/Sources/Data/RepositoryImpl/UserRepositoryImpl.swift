@@ -7,11 +7,6 @@
 
 import Foundation
 
-// MARK: - 닉네임 파서
-struct CheckNicknameDTO: Decodable {
-    let isDuplicated: Bool
-}
-
 final class UserRepositoryImpl: UserRepositoryProtocol {
     func checkNickname(nickname: String) async throws -> Bool {
         do {
