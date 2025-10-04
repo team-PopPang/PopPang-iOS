@@ -331,6 +331,7 @@ private struct GridPopupCell: View {
                 .padding(10)
             }
         VStack(alignment: .leading, spacing: 2) {
+         
             Text(popup.name)
                 .font(.scdream(.medium, size: 15))
             

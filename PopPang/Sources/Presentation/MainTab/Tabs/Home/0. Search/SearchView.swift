@@ -25,7 +25,6 @@ struct SearchView: View {
                 Button {
                     dismiss()
                 } label: {
-                    // Image("navigationBtn")
                     Image("backButton")
                         .renderingMode(.template)
                         .resizable()
@@ -65,7 +64,7 @@ struct SearchView: View {
                 // 선택 버튼들
                 SearchFlowLayout(data: categories, id: \.self) { category in
                     SearchFlowButton(title: category) {
-                        print("\(category) 클릭됨")
+                        self.searchText = category
                     } onRemove: {
                         if let index = categories.firstIndex(of: category) {
                             categories.remove(at: index)
