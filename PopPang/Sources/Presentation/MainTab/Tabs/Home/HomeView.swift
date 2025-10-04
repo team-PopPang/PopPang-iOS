@@ -42,10 +42,13 @@ struct HomeView: View {
                     
                     IconButton {
                         print("알림 버튼 클릭됨")
+                        coordinator.push(.alert)
+                        /*
                         coordinator.presentOverlay(overlay: .notice(title: "공지사항",
                                                                     content: "키워드 화면 구현 예정입니다."
                                                                     ,isCenter: true
                                                                    ))
+                         */
                     }
                     .padding(.leading, 15)
                 }
@@ -138,8 +141,10 @@ struct HomeView: View {
         }
         .onAppear {
             if !hasSeenPopup {
+                /*
                 coordinator.presentOverlay(overlay: .notice(title: "베타 업데이트 내용",
                                                             content: Constants.BetaNotice.beta_1004))
+                 */
                 hasSeenPopup = true
             }
         }
@@ -318,6 +323,16 @@ private struct GridPopupScroppView: View {
 
 private struct GridPopupCell: View {
     let popup: Popup
+    
+    private var addressShort: String {
+        let comments = popup.address.split(separator: " ")
+        if comments.count >= 2 {
+            return comments[0...1].joined(separator: " ")
+        } else {
+            return popup.address
+        }
+    }
+    
     var body: some View {
         Image(popup.imageURL)
             .resizable()
@@ -330,21 +345,22 @@ private struct GridPopupCell: View {
                 }
                 .padding(10)
             }
-        VStack(alignment: .leading, spacing: 2) {
-         
+        VStack(alignment: .leading, spacing: 5) {
+            
+            Text(addressShort)
+                .font(.scdream(.regular, size: 12))
+                .foregroundStyle(Color.mainBlack)
+            
             Text(popup.name)
                 .font(.scdream(.medium, size: 15))
-            
-            Text(popup.address)
-                .font(.scdream(.regular, size: 11))
-                .foregroundStyle(Color.mainGray)
+                .foregroundStyle(Color.mainBlack)
             
             HStack {
                 Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
                 Text("-")
                 Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
             }
-            .font(.scdream(.medium, size: 11))
+            .font(.scdream(.medium, size: 12))
             .foregroundStyle(Color.mainGray)
         }
     }
