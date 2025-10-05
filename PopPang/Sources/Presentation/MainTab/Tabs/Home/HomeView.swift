@@ -141,10 +141,10 @@ struct HomeView: View {
         }
         .onAppear {
             if !hasSeenPopup {
-                /*
+ 
                 coordinator.presentOverlay(overlay: .notice(title: "베타 업데이트 내용",
-                                                            content: Constants.BetaNotice.beta_1004))
-                 */
+                                                            content: Constants.BetaNotice.beta_1005))
+
                 hasSeenPopup = true
             }
         }
@@ -324,7 +324,6 @@ private struct GridPopupScrollView: View {
 private struct GridPopupCell: View {
     let popup: Popup
     
-    
     var body: some View {
         Image(popup.imageURL)
             .resizable()
@@ -336,6 +335,7 @@ private struct GridPopupCell: View {
                     
                 }
                 .padding(10)
+                .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
             }
         VStack(alignment: .leading, spacing: 5) {
             
@@ -395,23 +395,6 @@ struct BookmarkButton: View {
     HomeView()
         .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
         .environmentObject(HomeViewModel())
-}
-
-extension View {
-    func applyShadow(
-        color: Color = .black,
-        alpha: Double = 0.5,
-        x: CGFloat = 0,
-        y: CGFloat = 20,
-        blur: CGFloat = 35
-    ) -> some View {
-        self.shadow(
-            color: color.opacity(alpha),
-            radius: blur / 2,
-            x: x,
-            y: y
-        )
-    }
 }
 
 

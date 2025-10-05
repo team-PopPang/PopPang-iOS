@@ -21,7 +21,8 @@ struct AlertView: View {
                                  views: [AView(),
                                   BView()],
                           background: .mainGray3,
-                          foreground: .mainOrange)
+                                 foreground: .mainOrange,
+                                 font: .scdream(.medium, size: 12))
         }
         // toolbar
         .toolbar {
@@ -64,18 +65,17 @@ struct AView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
                 ForEach(Array(homeViewModel.gridPopups.enumerated()), id: \.element) { index, popup in
-                    HStack {
-                        AlertPopupCell(popup: popup)
-                            .onTapGesture {
-                                coordinator.push(.popupDetail(popup))
-                            }
-                    }
+                    AlertPopupCell(popup: popup)
+                        .contentShape(Rectangle()) // 터치 영역을 셀 전체로 확장
+                        .onTapGesture {
+                            coordinator.push(.popupDetail(popup))
+                        }
                     
                     // 마지막 셀 아래에는 Divider 넣지 않겠다
                     if index != homeViewModel.gridPopups.count - 1 {
                         Divider()
                             .frame(height: 1)
-                            .background(Color.mainGray5)
+                            .background(Color.subWhite)
                     }
                 }
             }
@@ -96,13 +96,13 @@ private struct AlertPopupCell: View {
                     .frame(width: 106, height: 133)
                     .clipped()
                 
-                VStack(alignment: .leading, spacing: 5) {
+                VStack(alignment: .leading, spacing: 0) {
                     Text(popup.address.shortAddress)
-                        .font(.scdream(.regular, size: 12))
+                        .ppStyleFont(.scdream(.regular, size: 12))
                         .foregroundStyle(Color.mainBlack)
                     
                     Text(popup.name)
-                        .font(.scdream(.medium, size: 15))
+                        .ppStyleFont(.scdream(.medium, size: 15))
                         .foregroundStyle(Color.mainBlack)
                     
                     HStack {
@@ -110,10 +110,13 @@ private struct AlertPopupCell: View {
                         Text("-")
                         Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
                     }
-                    .font(.scdream(.medium, size: 12))
+                    .ppStyleFont(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainGray)
+                    
+                    Spacer()
                 }
                 .padding(.leading, 18)
+                .padding(.top, 10)
                 
                 Spacer()
             }
@@ -128,7 +131,6 @@ struct BView: View {
         ZStack {
             Color.white.ignoresSafeArea()
         }
-        //.padding(.horizontal, .contentPadding)
     }
 }
 

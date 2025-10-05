@@ -24,11 +24,11 @@ struct CustomPopupView: View {
             VStack(alignment: .leading, spacing: 0) {
                 
                 Text(title)
-                    .font(.scdream(.bold, size: 17))
+                    .ppStyleFont(.scdream(.bold, size: 17))
                     .frame(maxWidth: .infinity, alignment: .center)
                 
                 Text(content)
-                    .font(.scdream(.regular, size: 14))
+                    .ppStyleFont(.scdream(.regular, size: 14))
                     .multilineTextAlignment(isCenter ? .center : .leading)
                     .frame(maxWidth: .infinity, alignment: isCenter ? .center : .leading)
                     // .multilineTextAlignment(isCenter ? .center : .leading) // 가운데정렬
@@ -39,7 +39,7 @@ struct CustomPopupView: View {
                     onDismiss()
                 } label: {
                     Text("확인")
-                        .font(.scdream(.medium, size: 15))
+                        .ppStyleFont(.scdream(.medium, size: 15))
                         .frame(maxWidth: .infinity)
                         .padding()
                         .foregroundStyle(Color.mainWhite)
@@ -60,6 +60,7 @@ struct CustomPopupView: View {
     }
 }
 
+/*
 #Preview {
     
     let beta_0930 = """
@@ -92,5 +93,4 @@ struct CustomPopupView: View {
     }
 }
 
-
-
+*/
