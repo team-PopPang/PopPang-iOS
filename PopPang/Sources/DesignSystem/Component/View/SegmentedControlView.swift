@@ -17,6 +17,7 @@ struct SegmentedControlView: View {
     var height: CGFloat
     var font: UIFont
     
+    
     // ✅ 외부에서는 어떤 View든 받을 수 있게 [any View]
     init(segments: [String],
          views: [any View],
@@ -56,8 +57,8 @@ struct SegmentedControlView: View {
             GeometryReader { geometry in
                 let segmentWidth = geometry.size.width / CGFloat(segments.count)
                 ZStack(alignment: .leading) {
-                    background.frame(height: 1)
-                    Rectangle()
+                    Color.mainGray5.frame(height: 2)
+                     Capsule()
                         .fill(foreground)
                         .frame(width: segmentWidth, height: height)
                         .offset(x: CGFloat(selectedIndex) * segmentWidth)

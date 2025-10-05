@@ -128,7 +128,7 @@ struct HomeView: View {
                         .padding(.trailing, .contentPadding)
                         
                         // MARK: - GridView
-                        GridPopupScroppView(viewModel: homeViewModel)
+                        GridPopupScrollView(viewModel: homeViewModel)
                         .padding(.top, 15)
                         .padding(.trailing, .contentPadding)
                         
@@ -297,7 +297,7 @@ private struct ComingPopupCell: View {
 }
 
 // MARK: - Current Popup
-private struct GridPopupScroppView: View {
+private struct GridPopupScrollView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @ObservedObject var viewModel: HomeViewModel
     private let columns = [
@@ -324,14 +324,6 @@ private struct GridPopupScroppView: View {
 private struct GridPopupCell: View {
     let popup: Popup
     
-    private var addressShort: String {
-        let comments = popup.address.split(separator: " ")
-        if comments.count >= 2 {
-            return comments[0...1].joined(separator: " ")
-        } else {
-            return popup.address
-        }
-    }
     
     var body: some View {
         Image(popup.imageURL)
@@ -347,7 +339,7 @@ private struct GridPopupCell: View {
             }
         VStack(alignment: .leading, spacing: 5) {
             
-            Text(addressShort)
+            Text(popup.address.shortAddress)
                 .font(.scdream(.regular, size: 12))
                 .foregroundStyle(Color.mainBlack)
             

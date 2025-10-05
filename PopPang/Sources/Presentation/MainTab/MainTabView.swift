@@ -19,7 +19,6 @@ struct MainTabView: View {
                         switch tab {
                         case .home:
                             HomeView()
-                                .environmentObject(homeViewModel)
                         case .calendar: CalendarView()
                         case .map: MapView()
                         case .bookmark: BookmarkView()
@@ -38,6 +37,7 @@ struct MainTabView: View {
                 }
             }
         }
+        .environmentObject(homeViewModel)
     }
 }
 
