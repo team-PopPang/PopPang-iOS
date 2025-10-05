@@ -59,8 +59,8 @@ extension View {
     ///   - letterSpacing: 자간 배수 (ex: 0.02 -> 2%)
     /// - Returns: View
     func ppStyleFont(_ font: UIFont,
-                     lineHeight: CGFloat,
-                     letterSpacing: CGFloat = 0.0) -> some View {
+                     lineHeight: CGFloat = 1.4,
+                     letterSpacing: CGFloat = 0.02) -> some View {
         self.modifier(FontStyleModifier(font: font,
                                         lineHeight: lineHeight,
                                         letterSpacing: letterSpacing))
@@ -88,6 +88,9 @@ extension View {
         .ppStyleFont(.scdream(.bold, size: 18),
                    lineHeight: 1.4,
                    letterSpacing: 0.02)
+    
+    Text("제목 텍스트")
+        .ppStyleFont(.scdream(.bold, size: 18))
 
     Text("본문 텍스트")
       .font(.headline) // SwiftUI 폰트 직접 지정
