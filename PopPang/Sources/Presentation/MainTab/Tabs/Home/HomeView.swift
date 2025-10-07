@@ -84,7 +84,7 @@ struct HomeView: View {
                             }
                             .padding(.trailing, .contentPadding)
                         }
-                        .padding(.top, 50)
+                        .padding(.top, 30)
                         ComingPopupScrollView(viewModel: homeViewModel)
                         
                         // MARK: - DropDownView
@@ -124,7 +124,7 @@ struct HomeView: View {
                             )
                         }
                         .zIndex(1)
-                        .padding(.top, 50)
+                        .padding(.top, 30)
                         .padding(.trailing, .contentPadding)
                         
                         // MARK: - GridView

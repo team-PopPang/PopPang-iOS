@@ -9,14 +9,12 @@ import SwiftUI
 
 struct AlertView: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
-    @State private var selectedIndex = 0
     private let segments = ["활동", "키워드 설정"]
     
     var body: some View {
         VStack(spacing: 0) {
 
             // ✅ 세그먼트 헤더
-            // SegmentHeader(segments: segments, selectedIndex: $selectedIndex)
             SegmentedControlView(segments: segments,
                                  views: [AView(),
                                   BView()],
@@ -47,7 +45,6 @@ struct AlertView: View {
         }
         .navigationBarTitleDisplayMode(.inline)
     }
-        
 }
 
 #Preview {
@@ -127,10 +124,109 @@ private struct AlertPopupCell: View {
 }
 
 struct BView: View {
+    @State private var text: String = ""
+    @State private var categories = [
+        "애니메이션", "캐릭터", "화장품", "패션",
+        "식음료"
+    ]
+    @State private var keywords: [String] = []
     var body: some View {
-        ZStack {
-            Color.white.ignoresSafeArea()
+        VStack {
+            
+            HStack(spacing: .contentPadding) {
+                RoundedTextField(placeholder: "알림 받고 싶은 키워드를 입력해주세요",
+                                 text: $text)
+                Button {
+                    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard !trimmed.isEmpty else { return }
+                    
+                    // 배열에 같은 값이 없다면 추가
+                    if !keywords.contains(trimmed) {
+                        keywords.append(trimmed)
+                    }
+                    
+                    // 입력창 초기화
+                    text = ""
+                    
+                    
+                } label: {
+                    Image("plus")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 18, height: 18)
+                }
+            }
+            
+            ForEach(Array(keywords.enumerated()), id: \.1 ) { index, keyword in
+                HStack {
+                    Text(keyword)
+                        .ppStyleFont(.scdream(.medium, size: 12))
+                    Spacer()
+                    Button {
+                        keywords.remove(at: index)
+                    } label: {
+                        Image(systemName: "xmark")
+                            .foregroundStyle(Color.mainGray)
+                    }
+                }
+            }
+            .padding(.top, 10)
+            
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    Text("홍길동")
+                        .foregroundStyle(Color.mainOrange)
+                        .font(.scdream(.bold, size: 12))
+                    Text("님의 최근 본 검색어예요")
+                        .font(.scdream(.regular, size: 12))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                
+                // 선택 버튼들
+                SearchFlowLayout(data: categories, id: \.self) { category in
+                    SearchFlowButton(title: category) {
+                        self.text = category
+                    } onRemove: {
+                        if let index = categories.firstIndex(of: category) {
+                            categories.remove(at: index)
+                        }
+                    }
+                }
+                .padding(.top, 15)
+            }
+            .padding(.top, 30)
+            
+            
+            Spacer()
         }
+        .padding(.top, 24)
+        .padding(.horizontal, .contentPadding)
     }
 }
 
+#Preview {
+    BView()
+}
+//
+//Button {
+//    let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+//    guard !trimmed.isEmpty else { return }
+//    
+//    if keywordSet.contains(trimmed) {
+//        showDuplicateWarning = true
+//        return
+//    }
+//    keywords.append(trimmed)
+//    keywordSet.insert(trimmed)
+//    showDuplicateWarning = false
+//    text = ""
+//} label: {
+//    Text("등록")
+//        .font(.scdream(.medium, size: 12))
+//        .frame(width: 70)
+//        .frame(height: 48)
+//        .foregroundStyle(Color.mainWhite)
+//        .background(Color.mainOrange)
+//        .cornerRadius(5)
+//}.buttonStyle(PressableButtonStyle())
