@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Popup: Hashable, Identifiable {
+struct Popup: Hashable, Identifiable, Encodable {
     let id = UUID()
     let name: String
     let startDate: Date
@@ -15,18 +15,74 @@ struct Popup: Hashable, Identifiable {
     let openTime: Date
     let closeTime: Date
     let address: String
+    let roadAddress: String
     let region: String
+    let latitude: Double
+    let longitude: Double
     let instaPostId: String
     let instaPostURL: String
-    var likeCount: String
+    // var likeCount: String
     let captionSummary: String
     let caption: String
     let imageURL: String
     let mediaType: MediaType
+    let errorCode: String
     
     enum MediaType: String, Codable {
-        case image
-        case video
+        case image = "IMAGE"
+        case video = "VIDEO"
+        case carousel = "CAROUSEL_ALBUM"
+    }
+}
+
+struct PopupDTO: Decodable {
+    let name: String
+    let startDate: String
+    let endDate: String
+    let openTime: String
+    let closeTime: String
+    let address: String
+    let roadAddress: String
+    let region: String
+    let latitude: Double
+    let longitude: Double
+    // let geocodingQuery: String 일단 임시로 뻄
+    let instaPostId: String
+    let instaPostUrl: String
+    // let like: String: 일단 임시로 뻄
+    let captionSummary: String
+    let caption: String
+    let imageUrl: String
+    let mediaType: String
+    let errorCode: String
+}
+
+extension PopupDTO {
+    func toEntity() -> Popup {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "HH:mm:ss"
+        
+        return Popup(
+            name: name,
+            startDate: dateFormatter.date(from: startDate) ?? Date(),
+            endDate: dateFormatter.date(from: endDate) ?? Date(),
+            openTime: timeFormatter.date(from: openTime) ?? Date(),
+            closeTime: timeFormatter.date(from: closeTime) ?? Date(),
+            address: address,
+            roadAddress: roadAddress,
+            region: region,
+            latitude: latitude,
+            longitude: longitude,
+            instaPostId: instaPostId,
+            instaPostURL: instaPostUrl,
+            captionSummary: captionSummary,
+            caption: caption,
+            imageURL: imageUrl,
+            mediaType: Popup.MediaType(rawValue: mediaType.uppercased()) ?? .image,
+            errorCode: errorCode)
     }
 }
 
@@ -43,10 +99,13 @@ extension Popup {
             openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
             closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
             address: "부산 해운대구 우동 123-4",
+            roadAddress: "부산 해운대구 우동 123-4",
             region: "부산",
+            latitude: 1,
+            longitude: 2,
             instaPostId: "5566778899",
             instaPostURL: "https://instagram.com/p/shinchan2025",
-            likeCount: "2100",
+            // likeCount: "2100",
             captionSummary: """
             짱구와 흰둥이, 철수, 훈이, 유리, 맹구까지 온 가족이 사랑하는 캐릭터들이 한자리에 모이는 
             2025 짱구 부산 팝업스토어는 단순한 전시가 아니라 애니메이션 속 세계를 현실로 옮겨놓은 몰입형 체험 공간입니다.\n
@@ -74,7 +133,8 @@ extension Popup {
             티켓은 한정 수량으로, 사전 예약과 현장 구매 모두 조기 매진이 예상되니 방문을 계획하고 있다면 서두르는 것이 좋습니다.
             """,
             imageURL: "img_8",
-            mediaType: .image
+            mediaType: .image,
+            errorCode: "200"
         )
     }()
 
@@ -90,14 +150,18 @@ extension Popup {
             openTime: formatter.date(from: "2025-09-27 10:00") ?? Date(),
             closeTime: formatter.date(from: "2025-09-27 22:00") ?? Date(),
             address: "서울 강남구 테헤란로 123",
+            roadAddress: "부산 해운대구 우동 123-4",
             region: "서울",
+            latitude: 1,
+            longitude: 2,
             instaPostId: "1234567890",
             instaPostURL: "https://instagram.com/p/abc123",
-            likeCount: "1200",
+            // likeCount: "1200",
             captionSummary: "여기는 새로운 굿즈를 선보이는 카카오팝업스토어입니다.",
             caption: "인스타 게시글 원문",
             imageURL: "https://example.com/image.jpg",
-            mediaType: .image
+            mediaType: .image,
+            errorCode: "200"
         )
     }()
     
@@ -115,14 +179,18 @@ extension Popup {
                 openTime: formatter.date(from: "2025-09-27 10:00") ?? Date(),
                 closeTime: formatter.date(from: "2025-09-27 22:00") ?? Date(),
                 address: "서울 강남구 테헤란로 123",
+                roadAddress: "부산 해운대구 우동 123-4",
                 region: "서울",
+                latitude: 1,
+                longitude: 2,
                 instaPostId: "1234567890",
                 instaPostURL: "https://instagram.com/p/abc123",
-                likeCount: "1200",
+                // likeCount: "1200",
                 captionSummary: "여기는 새로운 굿즈를 선보이는 카카오팝업스토어입니다.",
                 caption: "인스타 게시글 원문",
                 imageURL: "img_0",
-                mediaType: .image
+                mediaType: .image,
+                errorCode: "200"
             ),
             Popup(
                 name: "스타벅스 한정 팝업",
@@ -131,14 +199,18 @@ extension Popup {
                 openTime: formatter.date(from: "2025-10-01 09:00") ?? Date(),
                 closeTime: formatter.date(from: "2025-10-01 20:00") ?? Date(),
                 address: "서울 마포구 합정동 456",
+                roadAddress: "부산 해운대구 우동 123-4",
                 region: "서울",
+                latitude: 1,
+                longitude: 2,
                 instaPostId: "0987654321",
                 instaPostURL: "https://instagram.com/p/xyz789",
-                likeCount: "845",
+                // likeCount: "845",
                 captionSummary: "스타벅스 신메뉴 팝업 요약",
                 caption: "따뜻한 가을 한정 음료를 즐길 수 있는 스타벅스 팝업스토어입니다.",
                 imageURL: "img_1",
-                mediaType: .image
+                mediaType: .image,
+                errorCode: "200"
             ),
             Popup(
                 name: "나이키 한정판 팝업",
@@ -147,14 +219,18 @@ extension Popup {
                 openTime: formatter.date(from: "2025-10-05 11:00") ?? Date(),
                 closeTime: formatter.date(from: "2025-10-05 21:00") ?? Date(),
                 address: "서울 송파구 올림픽로 300",
+                roadAddress: "부산 해운대구 우동 123-4",
                 region: "서울",
+                latitude: 1,
+                longitude: 2,
                 instaPostId: "2468135790",
                 instaPostURL: "https://instagram.com/p/nike123",
-                likeCount: "1560",
+                // likeCount: "1560",
                 captionSummary: "나이키 한정판 신발 팝업 요약",
                 caption: "한정판 스니커즈를 직접 체험할 수 있는 나이키 팝업스토어입니다.",
                 imageURL: "img_2",
-                mediaType: .image
+                mediaType: .image,
+                errorCode: "200"
             ),
             Popup(
                 name: "레고 체험 팝업",
@@ -163,14 +239,18 @@ extension Popup {
                 openTime: formatter.date(from: "2025-09-29 10:00") ?? Date(),
                 closeTime: formatter.date(from: "2025-09-29 19:00") ?? Date(),
                 address: "서울 용산구 이태원로 99",
+                roadAddress: "부산 해운대구 우동 123-4",
                 region: "서울",
+                latitude: 1,
+                longitude: 2,
                 instaPostId: "1122334455",
                 instaPostURL: "https://instagram.com/p/lego456",
-                likeCount: "430",
+                // likeCount: "430",
                 captionSummary: "아이와 함께 즐기는 레고 체험 팝업 요약",
                 caption: "가족 단위 방문객을 위한 다양한 레고 체험 프로그램이 준비된 팝업스토어입니다.",
                 imageURL: "img_3",
-                mediaType: .image
+                mediaType: .image,
+                errorCode: "200"
             ),
             Popup(
                 name: "올리브영 9월 팝업스토어 총정리",
@@ -179,14 +259,18 @@ extension Popup {
                 openTime: formatter.date(from: "2025-10-03 12:00") ?? Date(),
                 closeTime: formatter.date(from: "2025-10-03 21:00") ?? Date(),
                 address: "서울 마포구",
+                roadAddress: "부산 해운대구 우동 123-4",
                 region: "서울",
+                latitude: 1,
+                longitude: 2,
                 instaPostId: "3344556677",
                 instaPostURL: "https://instagram.com/p/musinsa888",
-                likeCount: "980",
+                // likeCount: "980",
                 captionSummary: "무신사 스트리트 브랜드 팝업 요약",
                 caption: "신진 디자이너 브랜드들을 모아놓은 무신사 팝업스토어입니다.",
                 imageURL: "img_7",
-                mediaType: .image
+                mediaType: .image,
+                errorCode: "200"
             ),
             Popup(
                 name: "무신사 스트리트 팝업",
@@ -195,14 +279,18 @@ extension Popup {
                 openTime: formatter.date(from: "2025-10-03 12:00") ?? Date(),
                 closeTime: formatter.date(from: "2025-10-03 21:00") ?? Date(),
                 address: "서울 성동구 성수동 88",
+                roadAddress: "부산 해운대구 우동 123-4",
                 region: "서울",
+                latitude: 1,
+                longitude: 2,
                 instaPostId: "3344556677",
                 instaPostURL: "https://instagram.com/p/musinsa888",
-                likeCount: "980",
+                // likeCount: "980",
                 captionSummary: "무신사 스트리트 브랜드 팝업 요약",
                 caption: "신진 디자이너 브랜드들을 모아놓은 무신사 팝업스토어입니다.",
                 imageURL: "img_7",
-                mediaType: .image
+                mediaType: .image,
+                errorCode: "200"
             ),
             Popup(
                 name: "2025 짱구 부산 팝업스토어",
@@ -211,10 +299,13 @@ extension Popup {
                 openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
                 closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
                 address: "부산 해운대구 우동 123-4",
+                roadAddress: "부산 해운대구 우동 123-4",
                 region: "부산",
+                latitude: 1,
+                longitude: 2,
                 instaPostId: "5566778899",
                 instaPostURL: "https://instagram.com/p/shinchan2025",
-                likeCount: "2100",
+                // likeCount: "2100",
                 captionSummary: """
                 짱구와 흰둥이, 철수, 훈이, 유리, 맹구까지 온 가족이 사랑하는 캐릭터들이 한자리에 모이는 
                 2025 짱구 부산 팝업스토어는 단순한 전시가 아니라 애니메이션 속 세계를 현실로 옮겨놓은 몰입형 체험 공간입니다.\n
@@ -242,7 +333,8 @@ extension Popup {
                 티켓은 한정 수량으로, 사전 예약과 현장 구매 모두 조기 매진이 예상되니 방문을 계획하고 있다면 서두르는 것이 좋습니다.
                 """,
                 imageURL: "img_8",
-                mediaType: .image
+                mediaType: .image,
+                errorCode: "200"
             ),
             Popup(
                 name: "라인프렌즈 팝업",
@@ -251,14 +343,18 @@ extension Popup {
                 openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
                 closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
                 address: "서울 중구 명동길 45",
+                roadAddress: "부산 해운대구 우동 123-4",
                 region: "서울",
+                latitude: 1,
+                longitude: 2,
                 instaPostId: "5566778899",
                 instaPostURL: "https://instagram.com/p/linefriends777",
-                likeCount: "2100",
+                // likeCount: "2100",
                 captionSummary: "라인프렌즈 인기 캐릭터 팝업 요약",
                 caption: "브라운과 코니 등 인기 캐릭터 굿즈를 만나볼 수 있는 라인프렌즈 팝업스토어입니다.",
                 imageURL: "img_8",
-                mediaType: .image
+                mediaType: .image,
+                errorCode: "200"
             ),
             Popup(
                 name: "라인프렌즈 팝업",
@@ -267,14 +363,18 @@ extension Popup {
                 openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
                 closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
                 address: "서울 중구 명동길 45",
+                roadAddress: "부산 해운대구 우동 123-4",
                 region: "서울",
+                latitude: 1,
+                longitude: 2,
                 instaPostId: "5566778899",
                 instaPostURL: "https://instagram.com/p/linefriends777",
-                likeCount: "2100",
+                // likeCount: "2100",
                 captionSummary: "라인프렌즈 인기 캐릭터 팝업 요약",
                 caption: "브라운과 코니 등 인기 캐릭터 굿즈를 만나볼 수 있는 라인프렌즈 팝업스토어입니다.",
                 imageURL: "img_8",
-                mediaType: .image
+                mediaType: .image,
+                errorCode: "200"
             ),
             Popup(
                 name: "라인프렌즈 팝업",
@@ -283,14 +383,18 @@ extension Popup {
                 openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
                 closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
                 address: "서울 중구 명동길 45",
+                roadAddress: "부산 해운대구 우동 123-4",
                 region: "서울",
+                latitude: 1,
+                longitude: 2,
                 instaPostId: "5566778899",
                 instaPostURL: "https://instagram.com/p/linefriends777",
-                likeCount: "2100",
+                // likeCount: "2100",
                 captionSummary: "라인프렌즈 인기 캐릭터 팝업 요약",
                 caption: "브라운과 코니 등 인기 캐릭터 굿즈를 만나볼 수 있는 라인프렌즈 팝업스토어입니다.",
                 imageURL: "img_8",
-                mediaType: .image
+                mediaType: .image,
+                errorCode: "200"
             ),
             Popup(
                 name: "라인프렌즈 팝업",
@@ -299,14 +403,18 @@ extension Popup {
                 openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
                 closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
                 address: "서울 중구 명동길 45",
+                roadAddress: "부산 해운대구 우동 123-4",
                 region: "서울",
+                latitude: 1,
+                longitude: 2,
                 instaPostId: "5566778899",
                 instaPostURL: "https://instagram.com/p/linefriends777",
-                likeCount: "2100",
+                // likeCount: "2100",
                 captionSummary: "라인프렌즈 인기 캐릭터 팝업 요약",
                 caption: "브라운과 코니 등 인기 캐릭터 굿즈를 만나볼 수 있는 라인프렌즈 팝업스토어입니다.",
                 imageURL: "img_8",
-                mediaType: .image
+                mediaType: .image,
+                errorCode: "200"
             ),
             Popup(
                 name: "라인프렌즈 팝업",
@@ -315,14 +423,18 @@ extension Popup {
                 openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
                 closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
                 address: "서울 중구 명동길 45",
+                roadAddress: "부산 해운대구 우동 123-4",
                 region: "서울",
+                latitude: 1,
+                longitude: 2,
                 instaPostId: "5566778899",
                 instaPostURL: "https://instagram.com/p/linefriends777",
-                likeCount: "2100",
+                // likeCount: "2100",
                 captionSummary: "라인프렌즈 인기 캐릭터 팝업 요약",
                 caption: "브라운과 코니 등 인기 캐릭터 굿즈를 만나볼 수 있는 라인프렌즈 팝업스토어입니다.",
                 imageURL: "img_8",
-                mediaType: .image
+                mediaType: .image,
+                errorCode: "200"
             ),
             Popup(
                 name: "라인프렌즈 팝업",
@@ -331,17 +443,20 @@ extension Popup {
                 openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
                 closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
                 address: "서울 중구 명동길 45",
+                roadAddress: "부산 해운대구 우동 123-4",
                 region: "서울",
+                latitude: 1,
+                longitude: 2,
                 instaPostId: "5566778899",
                 instaPostURL: "https://instagram.com/p/linefriends777",
-                likeCount: "2100",
+                // likeCount: "2100",
                 captionSummary: "라인프렌즈 인기 캐릭터 팝업 요약",
                 caption: "브라운과 코니 등 인기 캐릭터 굿즈를 만나볼 수 있는 라인프렌즈 팝업스토어입니다.",
                 imageURL: "img_8",
-                mediaType: .image
+                mediaType: .image,
+                errorCode: "200"
             )
         ]
         
     }()
 }
-

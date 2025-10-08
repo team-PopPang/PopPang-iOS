@@ -9,6 +9,7 @@ import Moya
 import Foundation
 
 enum AppleAuthAPI {
+    case loginWithEmail(authCode: String, email: String)
     case login(authCode: String)
     case signup(userDto: UserDTO)
 }
@@ -18,6 +19,7 @@ extension AppleAuthAPI: TargetType {
     
     var path: String {
         switch self {
+        case .loginWithEmail: return "/auth/apple/mobile/login"
         case .login: return "/auth/apple/mobile/login"
         case .signup: return "/auth/apple/signup"
         }
@@ -25,6 +27,7 @@ extension AppleAuthAPI: TargetType {
     
     var method: Moya.Method {
         switch self {
+        case .loginWithEmail: return .post
         case .login: return .post
         case .signup: return .post
         }
@@ -32,6 +35,11 @@ extension AppleAuthAPI: TargetType {
     
     var task: Task {
         switch self {
+        case .loginWithEmail(let authCode, let email):
+            return .requestJSONEncodable([
+                "auth_code": authCode,
+                "email": email
+            ])
         case .login(let authCode):
             return .requestJSONEncodable(["auth_code": authCode])
         case .signup(let userDto):

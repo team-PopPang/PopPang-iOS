@@ -15,9 +15,20 @@ final class AppleAuthRepositoryImpl: AppleAuthRepositoryProtocol {
               let authCode = String(data: authCodeData, encoding: .utf8) else {
             throw AppleAuthRepositoryError.authCodeNotFound
         }
-    
-        let userDTO = try await NetworkProvider.shared.appleProvider.asyncRequest(.login(authCode: authCode),
+        
+        // 최초 로그인 시에만 존재하는 이메일
+        let email = credential.email
+        
+        // 서버 요청: 이메일이 있으면 함께 전송
+        let userDTO: UserDTO
+        if let email = email {
+            
+            userDTO = try await NetworkProvider.shared.appleProvider.asyncRequest(.loginWithEmail(authCode: authCode, email: email), decodeTo: UserDTO.self)
+        } else {
+            userDTO = try await NetworkProvider.shared.appleProvider.asyncRequest(.login(authCode: authCode),
                                                                                   decodeTo: UserDTO.self)
+        }
+
         return userDTO.toModel()
     }
     
