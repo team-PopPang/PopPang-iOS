@@ -13,6 +13,7 @@
 		DF0510E72E83DB65006AF8C3 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = DF0510E62E83DB65006AF8C3 /* .gitignore */; };
 		DF0510F72E83DB9B006AF8C3 /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = DF0510F62E83DB9B006AF8C3 /* Config.xcconfig */; };
 		DF5266182E6CAB8700FC46FD /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = DF5266172E6CAB8700FC46FD /* README.md */; };
+		DFA5E27F2E969C8F002921C1 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = DFA5E27E2E969C8F002921C1 /* Kingfisher */; };
 		DFD430FB2E8FFB3D00B886F9 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = DFD430FA2E8FFB3D00B886F9 /* GoogleSignIn */; };
 		DFFD40782E8ED0AB009E8477 /* Moya in Frameworks */ = {isa = PBXBuildFile; productRef = DFFD40772E8ED0AB009E8477 /* Moya */; };
 /* End PBXBuildFile section */
@@ -52,6 +53,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DFA5E27F2E969C8F002921C1 /* Kingfisher in Frameworks */,
 				DFD430FB2E8FFB3D00B886F9 /* GoogleSignIn in Frameworks */,
 				DF0510E32E83D9E1006AF8C3 /* KakaoSDKCommon in Frameworks */,
 				DF0510E12E83D9E1006AF8C3 /* KakaoSDKAuth in Frameworks */,
@@ -107,6 +109,7 @@
 				DF0510E42E83D9E1006AF8C3 /* KakaoSDKUser */,
 				DFFD40772E8ED0AB009E8477 /* Moya */,
 				DFD430FA2E8FFB3D00B886F9 /* GoogleSignIn */,
+				DFA5E27E2E969C8F002921C1 /* Kingfisher */,
 			);
 			productName = PopPang;
 			productReference = DFAC8E7C2E6C717100B4A917 /* PopPang.app */;
@@ -140,6 +143,7 @@
 				DF0510DF2E83D9E1006AF8C3 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */,
 				DFFD40762E8ED0AB009E8477 /* XCRemoteSwiftPackageReference "Moya" */,
 				DFD430F92E8FFB3D00B886F9 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				DFA5E27D2E969C8F002921C1 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DFAC8E7D2E6C717100B4A917 /* Products */;
@@ -308,7 +312,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 24;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = LGX4B4WC66;
 				ENABLE_PREVIEWS = YES;
@@ -351,7 +355,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 22;
+				CURRENT_PROJECT_VERSION = 24;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = LGX4B4WC66;
 				ENABLE_PREVIEWS = YES;
@@ -416,6 +420,14 @@
 				minimumVersion = 2.24.6;
 			};
 		};
+		DFA5E27D2E969C8F002921C1 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.6.0;
+			};
+		};
 		DFD430F92E8FFB3D00B886F9 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
@@ -449,6 +461,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DF0510DF2E83D9E1006AF8C3 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */;
 			productName = KakaoSDKUser;
+		};
+		DFA5E27E2E969C8F002921C1 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DFA5E27D2E969C8F002921C1 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
 		};
 		DFD430FA2E8FFB3D00B886F9 /* GoogleSignIn */ = {
 			isa = XCSwiftPackageProductDependency;

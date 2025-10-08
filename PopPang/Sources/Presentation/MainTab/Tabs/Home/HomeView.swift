@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct BestPopup: Hashable {
     let imageName: String
@@ -143,7 +144,7 @@ struct HomeView: View {
             if !hasSeenPopup {
  
                 coordinator.presentOverlay(overlay: .notice(title: "베타 업데이트 내용",
-                                                            content: Constants.BetaNotice.beta_1005))
+                                                            content: Constants.BetaNotice.beta_1008))
 
                 hasSeenPopup = true
             }
@@ -182,7 +183,7 @@ private struct BestPopupCell: View {
         ZStack(alignment: .bottomLeading) {
             
             // MARK: - 이미지
-            Image("\(popup.imageURL)")
+            KFImage(URL(string: popup.imageURL))
                 .resizable()
                 .aspectRatio(contentMode: .fill) // 프레임을 채움
                 .frame(width: 194, height: 271)  // 포스트 사이즈
@@ -267,7 +268,7 @@ private struct ComingPopupCell: View {
               
             HStack(spacing: 0) {
                 // MARK: - 이미지
-                Image(popup.imageURL)
+                KFImage(URL(string: popup.imageURL))
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 94.4, height: 118)
@@ -325,11 +326,69 @@ private struct GridPopupCell: View {
     let popup: Popup
     
     var body: some View {
-        Image(popup.imageURL)
+        ZStack {
+            Rectangle()
+                .fill(Color.blue)
+                .frame(width: 165, height: 206, alignment: .center)
+            
+            KFImage(URL(string: popup.imageURL))
+                .placeholder {
+                    Rectangle()
+                        .frame(width: 165, height: 206)
+                }
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 165, height: 206, alignment: .center)
+                .clipped() // 넘치는 영역 완전히 제거
+                .overlay (alignment: .topTrailing) {
+                    BookmarkButton(info: .stroke) {
+                        
+                    }
+                    .padding(10)
+                    .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
+                }
+        }
+        .frame(width: 165, height: 206)
+        
+        VStack(alignment: .leading, spacing: 5) {
+            
+            Text(popup.address.shortAddress)
+                .font(.scdream(.regular, size: 12))
+                .foregroundStyle(Color.mainBlack)
+            
+            Text(popup.name)
+                .font(.scdream(.medium, size: 15))
+                .foregroundStyle(Color.mainBlack)
+                .lineLimit(1) // 한줄만 표시
+                .truncationMode(.tail) // 넘치면 ...으로 표시
+            
+            HStack {
+                Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
+                Text("-")
+                Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
+            }
+            .font(.scdream(.medium, size: 12))
+            .foregroundStyle(Color.mainGray)
+
+        }
+        .frame(width: 165, alignment: .leading)
+    }
+}
+
+private struct GridPopupCellDefault: View {
+    let popup: Popup
+    
+    var body: some View {
+        KFImage(URL(string: popup.imageURL))
+            .placeholder {
+                Rectangle()
+                    .fill(Color.clear)
+                    .frame(width: 165, height: 206)
+            }
             .resizable()
             .aspectRatio(contentMode: .fill)
-            .frame(height: 206)
-            .clipped()
+            .frame(width: 165, height: 206, alignment: .top)
+            .clipped() // 넘치는 영역 완전히 제거
             .overlay (alignment: .topTrailing){
                 BookmarkButton(info: .stroke) {
                     
@@ -337,6 +396,7 @@ private struct GridPopupCell: View {
                 .padding(10)
                 .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
             }
+            
         VStack(alignment: .leading, spacing: 5) {
             
             Text(popup.address.shortAddress)

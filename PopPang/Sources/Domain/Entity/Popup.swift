@@ -12,13 +12,13 @@ struct Popup: Hashable, Identifiable, Encodable {
     let name: String
     let startDate: Date
     let endDate: Date
-    let openTime: Date
-    let closeTime: Date
+    let openTime: Date?
+    let closeTime: Date?
     let address: String
-    let roadAddress: String
+    let roadAddress: String?
     let region: String
-    let latitude: Double
-    let longitude: Double
+    let latitude: Double?
+    let longitude: Double?
     let instaPostId: String
     let instaPostURL: String
     // var likeCount: String
@@ -26,7 +26,7 @@ struct Popup: Hashable, Identifiable, Encodable {
     let caption: String
     let imageURL: String
     let mediaType: MediaType
-    let errorCode: String
+    let errorCode: String?
     
     enum MediaType: String, Codable {
         case image = "IMAGE"
@@ -39,13 +39,13 @@ struct PopupDTO: Decodable {
     let name: String
     let startDate: String
     let endDate: String
-    let openTime: String
-    let closeTime: String
+    let openTime: String?
+    let closeTime: String?
     let address: String
-    let roadAddress: String
+    let roadAddress: String?
     let region: String
-    let latitude: Double
-    let longitude: Double
+    let latitude: Double?
+    let longitude: Double?
     // let geocodingQuery: String 일단 임시로 뻄
     let instaPostId: String
     let instaPostUrl: String
@@ -54,23 +54,18 @@ struct PopupDTO: Decodable {
     let caption: String
     let imageUrl: String
     let mediaType: String
-    let errorCode: String
+    let errorCode: String?
 }
 
 extension PopupDTO {
     func toEntity() -> Popup {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        
-        let timeFormatter = DateFormatter()
-        timeFormatter.dateFormat = "HH:mm:ss"
         
         return Popup(
             name: name,
-            startDate: dateFormatter.date(from: startDate) ?? Date(),
-            endDate: dateFormatter.date(from: endDate) ?? Date(),
-            openTime: timeFormatter.date(from: openTime) ?? Date(),
-            closeTime: timeFormatter.date(from: closeTime) ?? Date(),
+            startDate: DateFormatter.popupDateFormat.date(from: startDate) ?? Date(),
+            endDate: DateFormatter.popupDateFormat.date(from: endDate) ?? Date(),
+            openTime: DateFormatter.popupTimeFormat.date(from: openTime ?? "") ?? Date(),
+            closeTime: DateFormatter.popupTimeFormat.date(from: closeTime ?? "") ?? Date(),
             address: address,
             roadAddress: roadAddress,
             region: region,

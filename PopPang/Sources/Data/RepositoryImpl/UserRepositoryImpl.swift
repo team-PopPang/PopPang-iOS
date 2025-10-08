@@ -10,7 +10,7 @@ import Foundation
 final class UserRepositoryImpl: UserRepositoryProtocol {
     func checkNickname(nickname: String) async throws -> Bool {
         do {
-            let response =  try await NetworkProvider.shared.userProvider.asyncRequest(.checkNickname(nickname: nickname),
+            let response = try await NetworkProvider.shared.userProvider.asyncRequest(.checkNickname(nickname: nickname),
                                                                               decodeTo: CheckNicknameDTO.self)
             return response.isDuplicated
         } catch {

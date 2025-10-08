@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct PopupDetailView: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
@@ -23,7 +24,7 @@ struct PopupDetailView: View {
                      */
                     GeometryReader { geo in
                         let offset = geo.frame(in: .global).minY
-                        Image(popup.imageURL)
+                        KFImage(URL(string: popup.imageURL))
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(width: geo.size.width,
@@ -109,9 +110,14 @@ private struct InfoView: View {
                 Text("운영 날짜")
                     .foregroundStyle(Color.mainGray)
                 HStack(spacing: 10) {
-                    Text(popup.openTime, formatter: DateFormatter.popupDateFormat)
-                    Text("-")
-                    Text(popup.closeTime, formatter: DateFormatter.popupDateFormat)
+                    if let openTime = popup.openTime {
+                        Text(openTime, formatter: DateFormatter.popupDateFormat)
+                    }
+                    
+                    if let closeTime = popup.closeTime {
+                        Text("-")
+                        Text(closeTime, formatter: DateFormatter.popupDateFormat)
+                    }
                 }
             }
             

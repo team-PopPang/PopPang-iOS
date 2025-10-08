@@ -73,6 +73,7 @@ extension DIContainer {
         let appleAuthRepository = AppleAuthRepositoryImpl()
         let googleAuthRepository = GoogleAuthRepositoryImpl()
         let userRepository = UserRepositoryImpl()
+        let popupRepository = PopupRepositoryImpl()
         
         // MARK: - Uscase
         self.shared.register(KakaoAuthUsecaseImpl(kakaoAuthRepository: kakaoAuthRepository),
@@ -86,6 +87,9 @@ extension DIContainer {
         
         self.shared.register(UserUsecaseImpl(userRepository: userRepository),
                              for: UserUsecaseProtocol.self)
+        
+        self.shared.register(PopupUsecaseImpl(popupRepository: popupRepository),
+                             for: PopupUsecaseProtocol.self)
         print("✅ Live UseCase registered")
     }
 }

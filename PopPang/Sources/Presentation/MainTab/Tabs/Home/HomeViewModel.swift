@@ -8,12 +8,40 @@
 import Foundation
 
 final class HomeViewModel: ObservableObject {
-    @Published var bestPopups: [Popup] = Popup.popupMocks
-    @Published var comingPopups: [Popup] = Array(Popup.popupMocks[4...])
-    @Published var gridPopups: [Popup] = Array(Popup.popupMocks[7...])
+    @Dependency private var popupUsecase: PopupUsecaseProtocol
+    
+    @Published var bestPopups: [Popup] = []
+    @Published var comingPopups: [Popup] = []
+    @Published var gridPopups: [Popup] = []
     
     // 내가 좋아요한 팝업 id 모음
     @Published var likePostIds: Set<UUID> = []
+    
+    init() {
+        Task {
+            do {
+                // 백그라운드 스레드에서 비동기 처리
+                let popups = try await popupUsecase.getPopupList()
+                await MainActor.run {
+                    self.bestPopups = popups
+                }
+                
+                let comingPopups = try await popupUsecase.getPopupList()
+                await MainActor.run {
+                    self.comingPopups = comingPopups
+                }
+                
+                let gridPopups = try await popupUsecase.getPopupList()
+                await MainActor.run {
+                    self.gridPopups = gridPopups
+                }
+                
+            } catch {
+                print("❌ getPopupList Error: \(error)")
+            }
+        }
+    }
+    
     
     /// 좋아요 상태 바꿔주는 함수
     func toggleLike(popup: Popup) {
@@ -28,5 +56,4 @@ final class HomeViewModel: ObservableObject {
     func isLiked(popup: Popup) -> Bool {
         likePostIds.contains(popup.id)
     }
-    
 }

@@ -27,6 +27,10 @@ final class NetworkProvider {
     let userProvider = MoyaProvider<UserAPI>(
         plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
     )
+    
+    let popupProvidder = MoyaProvider<PopupAPI>(
+        plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
+    )
 }
 
 extension MoyaProvider {
