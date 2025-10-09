@@ -17,11 +17,11 @@ final class AppleAuthUsecaseImpl: AppleAuthUsecaseProtocol {
     }
     
     func appleLogin(authorization: ASAuthorization) async throws -> User {
-        try await appleAuthRepository.appleLogin(authorization: authorization)
+        try await appleAuthRepository.appleLogin(authorization: authorization).toModel()
     }
     
     func appleRegister(user: User) async throws -> User {
-        try await appleAuthRepository.appleRegister(user: user)
+        try await appleAuthRepository.appleRegister(user: user).toModel()
     }
 }
 

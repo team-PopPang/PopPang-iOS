@@ -11,7 +11,7 @@ import UIKit
 
 final class KakaoAuthRepositoryImpl: KakaoAuthRepositoryProtocol {
     
-    func kakaoLogin() async throws -> User {
+    func kakaoLogin() async throws -> UserDTO {
         let oauthToken: OAuthToken
 
         // 1. 카카오톡앱 설치 여부 확인
@@ -29,15 +29,15 @@ final class KakaoAuthRepositoryImpl: KakaoAuthRepositoryProtocol {
         // return user
         
         let userDTO = try await NetworkProvider.shared.kakaoProvider.asyncRequest(.login(accessToken: oauthToken.accessToken), decodeTo: UserDTO.self)
-         return userDTO.toModel()
+         return userDTO
         
          // return User.adminUser
     }
     
-    func kakaoRegister(user: User) async throws -> User {
+    func kakaoRegister(user: User) async throws -> UserDTO {
         let userDTO = try await NetworkProvider.shared.kakaoProvider.asyncRequest(.signup(userDTO: user.toDTO()),
                                                                                   decodeTo: UserDTO.self)
-        return userDTO.toModel()
+        return userDTO
     }
 }
 

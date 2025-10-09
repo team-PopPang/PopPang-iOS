@@ -13,7 +13,7 @@ struct RecommandDTO: Decodable, Identifiable {
 }
 
 extension RecommandDTO {
-    func toEntity() -> Recommand {
+    func toModel() -> Recommand {
         Recommand(id: id,
                   recommendName: recommendName)
     }

@@ -23,10 +23,10 @@ final class UserRepositoryImpl: UserRepositoryProtocol {
         }
     }
     
-    func autoLogin(uid: String) async throws -> User {
+    func autoLogin(uid: String) async throws -> UserDTO {
         let userDTO = try await NetworkProvider.shared.userProvider.asyncRequest(.autoLogin(uid: uid),
                                                                                  decodeTo: UserDTO.self)
-        return userDTO.toModel()
+        return userDTO
     }
     
     func getRecommandList() async throws -> [RecommandDTO] {

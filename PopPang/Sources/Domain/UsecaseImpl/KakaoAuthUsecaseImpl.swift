@@ -15,11 +15,11 @@ final class KakaoAuthUsecaseImpl: KakaoAuthUsecaseProtocol {
     }
     
     func kakaoLogin() async throws -> User {
-        try await kakaoAuthRepository.kakaoLogin()
+        try await kakaoAuthRepository.kakaoLogin().toModel()
     }
     
     func kakaoRegister(user: User) async throws -> User {
-        try await kakaoAuthRepository.kakaoRegister(user: user)
+        try await kakaoAuthRepository.kakaoRegister(user: user).toModel()
     }
 }
 

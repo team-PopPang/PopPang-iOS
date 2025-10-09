@@ -16,10 +16,10 @@ final class GoogleAuthUsecaseImpl: GoogleAuthUsecaseProtocol {
     }
     
     func googleLogin() async throws -> User {
-        try await googleAuthRepository.googleLogin()
+        try await googleAuthRepository.googleLogin().toModel()
     }
     
     func googleRegister(user: User) async throws -> User {
-        try await googleAuthRepository.googleRegister(user: user)
+        try await googleAuthRepository.googleRegister(user: user).toModel()
     }
 }

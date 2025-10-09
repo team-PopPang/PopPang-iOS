@@ -11,7 +11,7 @@ import GoogleSignIn
 final class GoogleAuthRepositoryImpl: GoogleAuthRepositoryProtocol {
     
     @MainActor
-    func googleLogin() async throws -> User {
+    func googleLogin() async throws -> UserDTO {
         //현재 앱에서 최상위 뷰 컨트롤러를 찾는 부분
           let presentingVC = try await MainActor.run {
               guard let vc = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?
@@ -32,12 +32,12 @@ final class GoogleAuthRepositoryImpl: GoogleAuthRepositoryProtocol {
         
         let userDTO = try await NetworkProvider.shared.googleProvider.asyncRequest(.login(idToken: responseDTO.idToken),
                                                                                    decodeTo: UserDTO.self)
-        return userDTO.toModel()
+        return userDTO
     }
     
-    func googleRegister(user: User) async throws -> User {
+    func googleRegister(user: User) async throws -> UserDTO {
         let userDTO = try await NetworkProvider.shared.googleProvider.asyncRequest(.signup(userDTO: user.toDTO()), decodeTo: UserDTO.self)
-        return userDTO.toModel()
+        return userDTO
     }
 }
 

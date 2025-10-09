@@ -9,7 +9,7 @@ import Foundation
 import AuthenticationServices
 
 final class AppleAuthRepositoryImpl: AppleAuthRepositoryProtocol {
-    func appleLogin(authorization: ASAuthorization) async throws -> User {
+    func appleLogin(authorization: ASAuthorization) async throws -> UserDTO {
         guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
               let authCodeData = credential.authorizationCode,
               let authCode = String(data: authCodeData, encoding: .utf8) else {
@@ -29,12 +29,12 @@ final class AppleAuthRepositoryImpl: AppleAuthRepositoryProtocol {
                                                                                   decodeTo: UserDTO.self)
         }
 
-        return userDTO.toModel()
+        return userDTO
     }
     
-    func appleRegister(user: User) async throws -> User {
+    func appleRegister(user: User) async throws -> UserDTO {
         let userDTO =  try await NetworkProvider.shared.appleProvider.asyncRequest(.signup(userDto: user.toDTO()), decodeTo: UserDTO.self)
-        return userDTO.toModel()
+        return userDTO
     }
 }
 

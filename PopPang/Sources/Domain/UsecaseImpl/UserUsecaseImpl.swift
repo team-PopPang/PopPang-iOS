@@ -20,12 +20,12 @@ final class UserUsecaseImpl: UserUsecaseProtocol {
     }
     
     func autoLogin(uid: String) async throws -> User {
-        try await userRepository.autoLogin(uid: uid)
+        try await userRepository.autoLogin(uid: uid).toModel()
     }
     
     func getRecommandList() async throws -> [Recommand] {
         try await userRepository.getRecommandList()
-            .map { $0.toEntity() }
+            .map { $0.toModel() }
     }
 }
 
