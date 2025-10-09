@@ -21,7 +21,7 @@ extension UserAPI: TargetType {
         switch self {
         case .checkNickname: return "/user/nickname/duplicated"
         case .autoLogin: return "/auth/autoLogin"
-        case .getRecommandList: return "/auth/" // 개발중
+        case .getRecommandList: return "/recommend" // 개발중
         }
     }
     

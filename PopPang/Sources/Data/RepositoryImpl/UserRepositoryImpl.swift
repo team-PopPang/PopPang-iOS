@@ -28,4 +28,13 @@ final class UserRepositoryImpl: UserRepositoryProtocol {
                                                                                  decodeTo: UserDTO.self)
         return userDTO.toModel()
     }
+    
+    func getRecommandList() async throws -> [RecommandDTO] {
+        do {
+            let response = try await NetworkProvider.shared.userProvider.asyncRequest(.getRecommandList, decodeTo: [RecommandDTO].self)
+            return response
+        } catch {
+            throw error
+        }
+    }
 }

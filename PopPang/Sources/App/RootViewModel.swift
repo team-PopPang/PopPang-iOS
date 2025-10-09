@@ -63,6 +63,9 @@ final class RootViewModel: ObservableObject {
         }
     }
     
+    // MARK: - RecommandList
+    @Published var recommandList: [Recommand] = []
+    
     init() {
         Task {
             await boot()
@@ -82,11 +85,6 @@ final class RootViewModel: ObservableObject {
         
         // 3. 인증 결과에 따른 화면 업데이트
         await MainActor.run { updateScene() }
-        /*
-        await MainActor.run {
-            loginSuccess(isNewUser: false)
-        }
-         */
         
         print("로그인 인증 진행 완료")
     }
@@ -284,6 +282,10 @@ extension RootViewModel {
         // 신규 유저
         if user.nickname == nil {
             scene = .register
+            
+            Task {
+                await getRecommandList()
+            }
         }
         // 기존 유저
         else {
@@ -320,6 +322,21 @@ extension RootViewModel {
     }
 }
 
+extension RootViewModel {
+    // 추천 리스트 불러오기
+    private func getRecommandList() async {
+        do {
+            let response = try await userUsecase.getRecommandList()
+            await MainActor.run {
+                self.recommandList = response
+            }
+            print("✅ recommandList: \(recommandList)")
+        } catch {
+            print("❌ recommandList Error: \(error)")
+        }
+    }
+}
+
 // MARK: - 로그인 관련 로직
 extension RootViewModel {
     // 로그인 완료
@@ -338,41 +355,3 @@ extension RootViewModel {
 }
 
 
-
-/*
-// MARK: - 구글 로그인
-extension RootViewModel {
-    
-    func signIn() {
-        //현재 앱에서 최상위 뷰 컨트롤러를 찾는 부분
-        guard let presentingViewController = (UIApplication.shared.connectedScenes.first as? UIWindowScene)?.windows.first?.rootViewController else {
-            return
-        }
-
-        GIDSignIn.sharedInstance.signIn(//구글 로그인 프로세스를 시작
-            withPresenting: presentingViewController)
-        { _, error in
-            if let error = error {
-                print("error: \(error.localizedDescription)")
-            }
-
-            self.checkUserInfo()//현재 사용자의 정보를 확인하는 로직 실행
-        }
-    }
-    
-    func checkUserInfo() {
-        print("토큰받기")
-        if GIDSignIn.sharedInstance.currentUser != nil {//현재 사용자가 로그인되어 있는지 확인
-            let user = GIDSignIn.sharedInstance.currentUser
-            guard let user = user else {
-                return
-            }
-            googleResponseDTO.oauthId = user.userID ?? "" //사용자의 고유 ID
-            googleResponseDTO.idToken = user.idToken?.tokenString ?? ""//사용자의 ID 토큰
-            print("구글 토큰 받기: \(googleResponseDTO)")
-        } else {
-            print("error: Not Logged In")
-        }
-    }
-}
-*/

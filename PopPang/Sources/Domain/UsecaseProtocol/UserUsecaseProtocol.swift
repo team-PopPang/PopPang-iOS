@@ -18,5 +18,9 @@ protocol UserUsecaseProtocol {
     /// - Parameter uid: 로컬에 저장된 UID
     /// - Returns: User
     func autoLogin(uid: String) async throws -> User
+    
+    /// 추첰 카테고리 리스트 가져오기
+    /// - Returns: [Recommand]
+    func getRecommandList() async throws -> [Recommand]
 }
 

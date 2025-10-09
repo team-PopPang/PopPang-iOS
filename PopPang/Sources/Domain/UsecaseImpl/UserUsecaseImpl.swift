@@ -22,6 +22,11 @@ final class UserUsecaseImpl: UserUsecaseProtocol {
     func autoLogin(uid: String) async throws -> User {
         try await userRepository.autoLogin(uid: uid)
     }
+    
+    func getRecommandList() async throws -> [Recommand] {
+        try await userRepository.getRecommandList()
+            .map { $0.toEntity() }
+    }
 }
 
 final class StubUserUsecaseImpl: UserUsecaseProtocol {
@@ -32,4 +37,9 @@ final class StubUserUsecaseImpl: UserUsecaseProtocol {
     func autoLogin(uid: String) async throws -> User {
         return User.adminUser
     }
+    
+    func getRecommandList() async throws -> [Recommand] {
+        return [Recommand(id: 1, recommendName: "123")]
+    }
+    
 }
