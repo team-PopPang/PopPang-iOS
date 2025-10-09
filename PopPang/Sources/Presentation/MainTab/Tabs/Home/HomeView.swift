@@ -352,7 +352,7 @@ private struct GridPopupCell: View {
         
         VStack(alignment: .leading, spacing: 5) {
             
-            Text(popup.address.shortAddress)
+            Text(popup.roadAddress?.shortAddress ?? popup.address.shortAddress)
                 .font(.scdream(.regular, size: 12))
                 .foregroundStyle(Color.mainBlack)
             

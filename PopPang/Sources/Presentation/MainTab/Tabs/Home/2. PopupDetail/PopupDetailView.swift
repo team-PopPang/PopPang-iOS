@@ -100,24 +100,25 @@ private struct InfoView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 20) {
+            HStack(alignment: .top, spacing: 20) {
                 Text("운영 장소")
                     .foregroundStyle(Color.mainGray)
-                Text("\(popup.address)")
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("\(popup.address)")
+                    if let roadAddress = popup.roadAddress {
+                        Text(roadAddress)
+                    }
+                }
             }
             
             HStack(spacing: 20) {
                 Text("운영 날짜")
                     .foregroundStyle(Color.mainGray)
                 HStack(spacing: 10) {
-                    if let openTime = popup.openTime {
-                        Text(openTime, formatter: DateFormatter.popupDateFormat)
-                    }
-                    
-                    if let closeTime = popup.closeTime {
-                        Text("-")
-                        Text(closeTime, formatter: DateFormatter.popupDateFormat)
-                    }
+                    Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
+                    Text("-")
+                    Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
                 }
             }
             
@@ -125,14 +126,23 @@ private struct InfoView: View {
                 Text("운영 시간")
                     .foregroundStyle(Color.mainGray)
                 HStack(spacing: 10) {
-                    Text(popup.startDate, formatter: DateFormatter.popupTimeFormat)
-                    Text("-")
-                    Text(popup.endDate, formatter: DateFormatter.popupTimeFormat)
+                    if let openTime = popup.openTime {
+                        Text(openTime, formatter: DateFormatter.popupTimeFormat)
+                    }
+                    
+                    if let closeTime = popup.closeTime {
+                        Text("-")
+                        Text(closeTime, formatter: DateFormatter.popupTimeFormat)
+                    }
                 }
             }
         }
         .font(.scdream(.regular, size: 15))
+        .onAppear {
+            print("✅ \(popup)")
+        }
     }
+ 
 }
 
 #Preview {
