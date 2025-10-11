@@ -17,8 +17,8 @@ struct AlertView: View {
             // ✅ 세그먼트 헤더
             SegmentedControlView(segments: segments,
                                  views: [AView(),
-                                  BView()],
-                          background: .mainGray3,
+                                         BView()],
+                                 background: .mainGray3,
                                  foreground: .mainOrange,
                                  font: .scdream(.medium, size: 12))
         }
