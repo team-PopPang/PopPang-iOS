@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct CustomCalendar: View {
     @StateObject private var viewModel: CustomCalendarViewModel
@@ -16,13 +17,28 @@ struct CustomCalendar: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            MonthHeaderView(viewModel: viewModel)
-            WeekHeaderView()
-                .padding(.top, 15)
-            DateGridView(viewModel: viewModel)
-                .padding(.top, 15)
+            // MARK: - 캘린더
+            VStack {
+                MonthHeaderView(viewModel: viewModel)
+                    .padding(.horizontal, 10)
+                WeekHeaderView()
+                    .padding(.top, 15)
+                DateGridView(viewModel: viewModel)
+                    .padding(.top, 15)
+            }
+            .padding(.horizontal, .contentPadding)
+            
+            // MARK: - 시트
+            VStack(spacing: 0) {
+                ShadowDivider()
+                    .ignoresSafeArea(edges: .horizontal)
+                
+                PopupListView(date: viewModel.currentDate,
+                              popups: viewModel.popupForDate(viewModel.currentDate))
+                    .padding(.horizontal, .contentPadding)
+            }
+            .padding(.top, 15)
         }
-        .padding(.horizontal, 20)
     }
 }
 
@@ -33,6 +49,7 @@ private struct MonthHeaderView: View {
         HStack {
             Button {
                 viewModel.currentMonth -= 1
+                viewModel.currentDate = viewModel.getCurrentMonth()
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 20))
@@ -52,6 +69,7 @@ private struct MonthHeaderView: View {
             
             Button {
                 viewModel.currentMonth += 1
+                viewModel.currentDate = viewModel.getCurrentMonth()
             } label: {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 20))
@@ -132,6 +150,27 @@ private struct DateCardView: View {
     }
 }
 
+extension Date {
+    
+    /// 현재 월의 날짜를 Date 배열로 만들어준다
+    /// - Returns: [Date]]
+    func getAllDates() -> [Date] {
+        let calendar = Calendar.current
+        
+        // 현재 월의 첫 날(startDate) 구하기 -> 일자를 지정하지 않고 year와 month만 구하기 때문에 그 해, 그 달의 첫날을 이렇게 구할 수 있다
+        let startDate = calendar.date(from: Calendar.current.dateComponents([.year, .month], from: self))!
+        
+        // 현재 월의 일자 범위(날짜 수)(1...30 or 1...31)
+        let range = calendar.range(of: .day, in: .month, for: startDate)!
+        
+        // range의 각각의 날짜(day)를 Date로 매핑해서 배열로 리턴
+        return range.compactMap { day -> Date in
+            // to: (현재 날짜, 일자)에 day를 더해서 새로운 날짜를 만든다
+            return calendar.date(byAdding: .day, value: day - 1 , to: startDate)!
+        }
+    }
+}
+
 
 // MARK: - ViewModel
 final class CustomCalendarViewModel: ObservableObject {
@@ -153,7 +192,7 @@ final class CustomCalendarViewModel: ObservableObject {
     func extratYearAndMonth() -> [String] {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "ko_KR")
-        formatter.dateFormat = "YYYY MMMM"
+        formatter.dateFormat = "yyyy MMMM"
         
         let date = formatter.string(from: currentDate)
         return date.components(separatedBy: " ")
@@ -242,45 +281,114 @@ final class CustomCalendarViewModel: ObservableObject {
         }
         .count
     }
-}
-
-extension Date {
     
-    /// 현재 월의 날짜를 Date 배열로 만들어준다
-    /// - Returns: [Date]]
-    func getAllDates() -> [Date] {
-        let calendar = Calendar.current
-        
-        // 현재 월의 첫 날(startDate) 구하기 -> 일자를 지정하지 않고 year와 month만 구하기 때문에 그 해, 그 달의 첫날을 이렇게 구할 수 있다
-        let startDate = calendar.date(from: Calendar.current.dateComponents([.year, .month], from: self))!
-        
-        // 현재 월의 일자 범위(날짜 수)(1...30 or 1...31)
-        let range = calendar.range(of: .day, in: .month, for: startDate)!
-        
-        // range의 각각의 날짜(day)를 Date로 매핑해서 배열로 리턴
-        return range.compactMap { day -> Date in
-            // to: (현재 날짜, 일자)에 day를 더해서 새로운 날짜를 만든다
-            return calendar.date(byAdding: .day, value: day - 1 , to: startDate)!
+    /// 특정 날짜에 해당하는 팝업 리스트 반환
+    /// - Parameter date: 선택된 날짜
+    /// - Returns: 팝업 배열
+    func popupForDate(_ date: Date) -> [Popup] {
+        popupList.filter { popup in
+            isDate(date, between: popup.startDate, and: popup.endDate)
         }
     }
 }
 
+private struct PopupListView: View {
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    let date: Date
+    let popups: [Popup]
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            
+            HStack {
+                Text(formattedDate(date))
+                    .ppStyleFont(.scdream(.bold, size: 15))
+                Spacer()
+            }
+            .padding(.top, 10)
+            
+            if popups.isEmpty {
+                Text("선택한 날짜에 팝업이 없습니다")
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 24)
+            } else {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 10) {
+                        ForEach(Array(popups.enumerated()), id: \.element) { index, popup in
+                            CalendarPopupCell(popup: popup)
+                                .onTapGesture {
+                                    coordinator.push(.popupDetail(popup))
+                                }
+                            
+                            // 마미막 셀 아래에는 Divider 넣지 않겠다
+                            if index != popups.count - 1 {
+                                Divider()
+                                    .frame(height: 1)
+                                    .background(Color.subWhite)
+                            }
+                        }
+                    }
+                }
+                .padding(.top, 24)
+            }
+        }
+    }
+    
+    private func formattedDate(_ date: Date) -> String {
+        let dayFormatter = DateFormatter()
+        dayFormatter.locale = Locale(identifier: "ko_KR")
+        dayFormatter.dateFormat = "d일 (E)"
+        return dayFormatter.string(from: date)
+    }
+}
+
+private struct CalendarPopupCell: View {
+    let popup: Popup
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                KFImage(URL(string: popup.imageURL))
+                    .placeholder {
+                        Rectangle()
+                            .fill(Color.mainGray3)
+                            .frame(width: 106, height: 133)
+                    }
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 106, height: 133, alignment: .center)
+                    .clipped()
+                
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(popup.address.shortAddress)
+                        .ppStyleFont(.scdream(.regular, size: 12))
+                        .foregroundStyle(Color.mainBlack)
+                    
+                    Text(popup.name)
+                        .ppStyleFont(.scdream(.medium, size: 15))
+                        .foregroundStyle(Color.mainBlack)
+                    
+                    HStack {
+                        Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
+                        Text("-")
+                        Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
+                    }
+                    .ppStyleFont(.scdream(.medium, size: 12))
+                    .foregroundStyle(Color.mainGray)
+                    
+                    Spacer()
+                }
+                .padding(.leading, 18)
+                .padding(.top, 10)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+
 #Preview {
     @Previewable @State var currentDate = Date()
-    CustomCalendar(popupList: [.popupMock, .popupMock2])
-}
-
-/// 달력에 그릴 각각의 날짜 셀 표현
-struct DateValue: Identifiable {
-    var id = UUID().uuidString
-    var day: Int
-    var date: Date
-}
-
-func getSampleDate(offset: Int) -> Date {
-    let calender = Calendar.current
-    let date = calender.date(byAdding: .day, value: offset, to: Date())
-    return date ?? Date()
+    CustomCalendar(popupList: [.popupMock, .popupMock, .popupMock])
 }
 
 

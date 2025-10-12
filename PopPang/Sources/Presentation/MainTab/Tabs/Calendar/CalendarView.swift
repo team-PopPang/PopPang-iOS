@@ -48,9 +48,15 @@ private struct CustomNavigation: View {
 }
 
 private struct MonthlyCalendarView: View {
+    @EnvironmentObject private var calendarViewModel: CalendarViewModel
     var body: some View {
-        VStack {
-            
+        ScrollView {
+            VStack {
+                CustomCalendar(popupList: calendarViewModel.calendarPopups)
+                    .padding(.top, 24)
+                Spacer()
+            }
+            .padding(.horizontal, 10)
         }
     }
 }

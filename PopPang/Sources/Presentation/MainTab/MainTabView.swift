@@ -10,6 +10,7 @@ import SwiftUI
 struct MainTabView: View {
     @State private var selectedTab: MainTabType = .home
     @StateObject private var homeViewModel = ViewModelFactory.shared.createHome()
+    @StateObject private var calendarViewModel = ViewModelFactory.shared.createCalendar()
     
     var body: some View {
         CoordinatorContainer {
@@ -38,6 +39,7 @@ struct MainTabView: View {
             }
         }
         .environmentObject(homeViewModel)
+        .environmentObject(calendarViewModel)
     }
 }
 

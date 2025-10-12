@@ -8,7 +8,7 @@
 import SwiftUI
 
 extension CGFloat {
-    static let contentPadding: CGFloat = 16
+    static let contentPadding: CGFloat = 15
     static let cornerRadius: CGFloat = 5
 }
 

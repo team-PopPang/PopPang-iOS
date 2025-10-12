@@ -18,4 +18,8 @@ final class ViewModelFactory {
     func createHome() -> HomeViewModel {
         HomeViewModel()
     }
+    
+    func createCalendar() -> CalendarViewModel {
+        CalendarViewModel()
+    }
 }
