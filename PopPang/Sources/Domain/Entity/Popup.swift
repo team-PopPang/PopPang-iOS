@@ -89,8 +89,8 @@ extension Popup {
         
         return Popup(
             name: "2025 짱구 부산 팝업스토어",
-            startDate: formatter.date(from: "2025-10-07 11:00") ?? Date(),
-            endDate: formatter.date(from: "2025-10-25 20:00") ?? Date(),
+            startDate: formatter.date(from: "2025-10-13 11:00") ?? Date(),
+            endDate: formatter.date(from: "2025-10-15 20:00") ?? Date(),
             openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
             closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
             address: "부산 해운대구 우동 123-4",
@@ -140,8 +140,8 @@ extension Popup {
         
         return Popup(
             name: "카카오팝업스토어",
-            startDate: formatter.date(from: "2025-09-27 10:00") ?? Date(),
-            endDate: formatter.date(from: "2025-10-05 22:00") ?? Date(),
+            startDate: formatter.date(from: "2025-10-15 10:00") ?? Date(),
+            endDate: formatter.date(from: "2025-10-17 22:00") ?? Date(),
             openTime: formatter.date(from: "2025-09-27 10:00") ?? Date(),
             closeTime: formatter.date(from: "2025-09-27 22:00") ?? Date(),
             address: "서울 강남구 테헤란로 123",
