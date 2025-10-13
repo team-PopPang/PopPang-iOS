@@ -8,11 +8,11 @@
 import SwiftUI
 import Kingfisher
 
-struct BestPopup: Hashable {
-    let imageName: String
-    let title: String
-    let address: String
-}
+//struct BestPopup: Hashable {
+//    let imageName: String
+//    let title: String
+//    let address: String
+//}
 
 struct HomeView: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
@@ -136,7 +136,7 @@ struct HomeView: View {
             if !hasSeenPopup {
  
                 coordinator.presentOverlay(overlay: .notice(title: "베타 업데이트 내용",
-                                                            content: Constants.BetaNotice.beta_1008))
+                                                            content: Constants.BetaNotice.beta_1012))
 
                 hasSeenPopup = true
             }

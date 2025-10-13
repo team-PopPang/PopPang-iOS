@@ -304,7 +304,7 @@ private struct PopupListView: View {
                     .ppStyleFont(.scdream(.bold, size: 15))
                 Spacer()
             }
-            .padding(.top, 10)
+            .padding(.top, 19)
             
             if popups.isEmpty {
                 Text("선택한 날짜에 팝업이 없습니다")
@@ -359,21 +359,21 @@ private struct CalendarPopupCell: View {
                     .clipped()
                 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(popup.address.shortAddress)
-                        .ppStyleFont(.scdream(.regular, size: 12))
-                        .foregroundStyle(Color.mainBlack)
-                    
                     Text(popup.name)
-                        .ppStyleFont(.scdream(.medium, size: 15))
+                        .ppStyleFont(.scdream(.medium, size: 17))
                         .foregroundStyle(Color.mainBlack)
                     
+                    Text(popup.address.shortAddress)
+                        .ppStyleFont(.scdream(.medium, size: 10))
+                        .foregroundStyle(Color.mainBlack)
+                  
                     HStack {
                         Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
                         Text("-")
                         Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
                     }
-                    .ppStyleFont(.scdream(.medium, size: 12))
-                    .foregroundStyle(Color.mainGray)
+                    .ppStyleFont(.scdream(.medium, size: 10))
+                    .foregroundStyle(Color.mainBlack)
                     
                     Spacer()
                 }

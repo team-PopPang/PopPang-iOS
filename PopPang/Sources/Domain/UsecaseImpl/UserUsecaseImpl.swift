@@ -27,6 +27,13 @@ final class UserUsecaseImpl: UserUsecaseProtocol {
         try await userRepository.getRecommandList()
             .map { $0.toModel() }
     }
+    
+    /// 키워드 리스트 가져오기
+    /// - Returns: [Keyword]
+    func getKeywordList() async throws -> [Keyword] {
+        try await userRepository.getKeywordList()
+            .map { $0.toModel() }
+    }
 }
 
 final class StubUserUsecaseImpl: UserUsecaseProtocol {
@@ -42,4 +49,7 @@ final class StubUserUsecaseImpl: UserUsecaseProtocol {
         return [Recommand(id: 1, recommendName: "123")]
     }
     
+    func getKeywordList() async throws -> [Keyword] {
+        return [Keyword(keyword: "키워드1")]
+    }
 }

@@ -37,4 +37,13 @@ final class UserRepositoryImpl: UserRepositoryProtocol {
             throw error
         }
     }
+    
+    func getKeywordList() async throws -> [KeywordDTO] {
+        do {
+            let keywordDTO = try await NetworkProvider.shared.userProvider.asyncRequest(.getKeywordList, decodeTo: [KeywordDTO].self)
+            return keywordDTO
+        } catch {
+            throw error
+        }
+    }
 }

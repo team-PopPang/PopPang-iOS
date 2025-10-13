@@ -12,6 +12,7 @@ enum UserRepositoryError: Error {
     case unknown(Error)         // 알 수 없는 에러
 }
 
+// MARK: - 레포지토리에서는 에러를 처리하지 않고 에러를 변환해서 상위 계층에 던지자
 extension UserRepositoryError: LocalizedError {
     var errorDescription: String? {
         switch self {
@@ -40,5 +41,10 @@ protocol UserRepositoryProtocol {
     /// 추첰 카테고리 리스트 가져오기
     /// - Returns: [RecommandDTO]
     func getRecommandList() async throws -> [RecommandDTO]
+    
+    
+    /// 키워드 리스트 가져오기
+    /// - Returns: [KeywordDTO]
+    func getKeywordList() async throws -> [KeywordDTO]
 }
 

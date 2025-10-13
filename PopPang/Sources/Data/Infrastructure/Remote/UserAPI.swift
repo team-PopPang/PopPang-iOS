@@ -12,6 +12,7 @@ enum UserAPI {
     case checkNickname(nickname: String)
     case autoLogin(uid: String)
     case getRecommandList
+    case getKeywordList
 }
 
 extension UserAPI: TargetType {
@@ -21,7 +22,8 @@ extension UserAPI: TargetType {
         switch self {
         case .checkNickname: return "/user/nickname/duplicated"
         case .autoLogin: return "/auth/autoLogin"
-        case .getRecommandList: return "/recommend" // 개발중
+        case .getRecommandList: return "/recommend"
+        case .getKeywordList: return "/keyword"
         }
     }
     
@@ -30,6 +32,7 @@ extension UserAPI: TargetType {
         case .checkNickname: return .get
         case .autoLogin: return .post
         case .getRecommandList: return .get
+        case .getKeywordList: return .get
         }
     }
     
@@ -42,6 +45,9 @@ extension UserAPI: TargetType {
             return .requestJSONEncodable(["uid": uid])
 
         case .getRecommandList:
+            return .requestPlain
+            
+        case .getKeywordList:
             return .requestPlain
         }
     }

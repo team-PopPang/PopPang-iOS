@@ -44,6 +44,7 @@ private struct CustomNavigation: View {
                 coordinator.push(.alert)
             }
         }
+        .frame(height: 45)
     }
 }
 
