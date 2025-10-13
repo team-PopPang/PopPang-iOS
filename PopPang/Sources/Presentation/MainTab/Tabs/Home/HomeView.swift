@@ -134,9 +134,10 @@ struct HomeView: View {
         }
         .onAppear {
             if !hasSeenPopup {
- 
+                /*
                 coordinator.presentOverlay(overlay: .notice(title: "베타 업데이트 내용",
                                                             content: Constants.BetaNotice.beta_1012))
+                 */
 
                 hasSeenPopup = true
             }

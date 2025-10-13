@@ -18,30 +18,36 @@ final class HomeViewModel: ObservableObject {
     @Published var likePostIds: Set<UUID> = []
     
     init() {
-        Task {
+        Task { [weak self] in
+            guard let self = self else { return }
             do {
-                // 백그라운드 스레드에서 비동기 처리
-                let popups = try await popupUsecase.getPopupList()
-                await MainActor.run {
-                    self.bestPopups = popups
+                try await withThrowingTaskGroup(of: (Int, [Popup]).self) {  group in
+                    // 0, 1, 2로 구분해서 요청
+                    group.addTask { (0, try await self.popupUsecase.getPopupList()) }
+                    group.addTask { (1, try await self.popupUsecase.getPopupList()) }
+                    group.addTask { (2, try await self.popupUsecase.getPopupList()) }
+
+                    // 완료된 순서대로 결과 받기
+                    for try await (index, popups) in group {
+                        await MainActor.run {
+                            switch index {
+                            case 0:
+                                self.bestPopups = popups
+                            case 1:
+                                self.comingPopups = popups
+                            case 2:
+                                self.gridPopups = popups
+                            default:
+                                break
+                            }
+                        }
+                    }
                 }
-                
-                let comingPopups = try await popupUsecase.getPopupList()
-                await MainActor.run {
-                    self.comingPopups = comingPopups
-                }
-                
-                let gridPopups = try await popupUsecase.getPopupList()
-                await MainActor.run {
-                    self.gridPopups = gridPopups
-                }
-                
             } catch {
-                print("❌ getPopupList Error: \(error)")
+                print("❌ 네트워크 오류:", error)
             }
         }
     }
-    
     
     /// 좋아요 상태 바꿔주는 함수
     func toggleLike(popup: Popup) {
