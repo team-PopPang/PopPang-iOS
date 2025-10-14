@@ -11,7 +11,9 @@ final class KeywordViewModel: ObservableObject {
     @Dependency private var userUsecase: UserUsecaseProtocol
     @Published var keywordList: [Keyword] = []
     
-    init() {
+    let uuid: String
+    init(uuid: String) {
+        self.uuid = uuid
         Task {
             await fetchKeywordList()
         }
@@ -20,14 +22,17 @@ final class KeywordViewModel: ObservableObject {
     // MARK: - 키워드 조회
     func fetchKeywordList() async {
         do {
-            // let keywords = try await userUsecase.getAlertKeywordList(uuid: <#T##String#>, )
-            // self.keywordList = keywords
+            let keywords = try await userUsecase.getAlertKeywordList(uuid: uuid)
+            await MainActor.run {
+                self.keywordList = keywords
+                print("키워드리스트: \(keywords)")
+            }
         } catch {
             print("❌ KeywordViewModel Error: \(error)")
         }
     }
     
-    // MARK: - 키워드 추가(로컬, 서버API 연동전)
+    // MARK: - 키워드 추가(로컬, 서버API 연ㅁ동전)
     func addKeyword(_ newKeyword: String) {
         let trimmed = newKeyword.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
@@ -48,7 +53,7 @@ final class KeywordViewModel: ObservableObject {
 
 
 struct KeywordView: View {
-    @StateObject private var keywordViewModel = KeywordViewModel()
+    @ObservedObject var keywordViewModel: KeywordViewModel
     @State private var text: String = ""
     @State private var categories = [
         "애니메이션", "캐릭터", "화장품", "패션",
@@ -121,6 +126,6 @@ struct KeywordView: View {
 }
 
 #Preview {
-    KeywordView()
+    KeywordView(keywordViewModel: KeywordViewModel(uuid: "1234"))
 }
 

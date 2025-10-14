@@ -13,7 +13,7 @@ enum MainRoute: Hashable {
     
     // Home
     case search
-    case alert
+    case alert(uuid: String)
     case popupDetail(Popup)
 }
 
@@ -40,8 +40,8 @@ extension Coordinator where T == MainRoute {
         switch route {
         case .search:
             SearchView()
-        case .alert:
-            AlertView()
+        case .alert(let uuid):
+            AlertView(uuid: uuid)
         case .popupDetail(let popup):
             PopupDetailView(popup: popup)
         }

@@ -206,7 +206,7 @@ extension RootViewModel {
         // MARK: - 알림 키워드 세팅
         case .setalertList(let alertList):
             var registerUser = user!
-            registerUser.keywordList = alertList
+            registerUser.alertKeywordList = alertList
             self.user = registerUser
             print("알림 키워드 적용됨: \(self.user!)")
             
@@ -342,7 +342,7 @@ extension RootViewModel {
     // 로그인 완료
     func loginSuccess(user: User) {
         self.user = user
-        self.storeUID = user.uuid
+        self.storeUID = user.uuid ?? ""
         self.updateScene()
     }
 

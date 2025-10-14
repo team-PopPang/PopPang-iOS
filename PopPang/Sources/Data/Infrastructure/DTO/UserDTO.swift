@@ -17,7 +17,7 @@ struct UserDTO: Codable {
     let isAlerted: Bool
     let fcmToken: String?
     // let alertList: [String]?
-    let keywordList: [String]?
+    let alertKeywordList: [String]?
     let recommandList: [Int]?
 }
 
@@ -31,7 +31,7 @@ extension UserDTO {
                     role: role,
                     isAlerted: isAlerted,
                     fcmToken: fcmToken,
-                    keywordList: keywordList,
+                    alertKeywordList: alertKeywordList,
                     recommandList: recommandList)
     }
 }
@@ -45,6 +45,6 @@ extension UserDTO {
                                    role: "user",
                                    isAlerted: false,
                                    fcmToken: "",
-                                   keywordList: ["팝업스토어", "카페"],
+                                   alertKeywordList: ["팝업스토어", "카페"],
                                    recommandList: [1, 2])
 }

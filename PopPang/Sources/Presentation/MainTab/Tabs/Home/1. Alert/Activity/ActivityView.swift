@@ -10,6 +10,8 @@ import SwiftUI
 struct ActivityView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @EnvironmentObject private var homeViewModel: HomeViewModel
+    @ObservedObject var activityViewModel: ActivityViewModel
+    
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
@@ -76,5 +78,12 @@ private struct AlertPopupCell: View {
 }
 
 #Preview {
-    ActivityView()
+    ActivityView(activityViewModel: ActivityViewModel(uuid: "1234"))
+}
+
+final class ActivityViewModel: ObservableObject {
+    let uuid: String
+    init(uuid: String) {
+        self.uuid = uuid
+    }
 }

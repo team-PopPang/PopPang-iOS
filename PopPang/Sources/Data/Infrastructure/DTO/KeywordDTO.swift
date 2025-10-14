@@ -10,6 +10,10 @@ import Foundation
 struct KeywordDTO: Decodable, Identifiable {
     var id: String { keyword }
     let keyword: String
+    
+    enum CodingKeys: String, CodingKey {
+        case keyword = "alertKeyword"
+    }
 }
 
 extension KeywordDTO {

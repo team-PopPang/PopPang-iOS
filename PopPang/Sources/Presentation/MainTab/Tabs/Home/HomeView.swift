@@ -15,6 +15,7 @@ import Kingfisher
 //}
 
 struct HomeView: View {
+    @EnvironmentObject private var rootViewModel: RootViewModel
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @State private var searchText = ""
@@ -23,6 +24,8 @@ struct HomeView: View {
     
     // MARK: - 광고뷰 테스트
     @State private var hasSeenPopup: Bool = false
+    
+     // rootViewModel.user?.uuid
     
     var body: some View {
         ZStack {
@@ -43,7 +46,7 @@ struct HomeView: View {
                     
                     IconButton {
                         print("알림 버튼 클릭됨")
-                        coordinator.push(.alert)
+                        coordinator.push(.alert(uuid: rootViewModel.user?.uuid ?? ""))
                     }
                     .padding(.leading, 15)
                 }

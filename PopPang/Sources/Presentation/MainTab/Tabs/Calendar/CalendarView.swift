@@ -48,12 +48,18 @@ private struct CustomNavigation: View {
             
             IconButton {
                 print("알림 버튼 클릭됨")
-                coordinator.push(.alert)
+                // coordinator.push(.alert)
             }
         }
         .frame(height: 45)
     }
 }
+
+#Preview {
+    CalendarView()
+        .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+}
+
 
 /*
 private struct MonthlyCalendarView: View {
@@ -78,8 +84,3 @@ private struct WeeklyCalendarView: View {
     }
 }
  */
-
-#Preview {
-    CalendarView()
-        .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
-}

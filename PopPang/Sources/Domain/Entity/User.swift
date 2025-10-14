@@ -16,7 +16,7 @@ struct User {
     let role: String
     let isAlerted: Bool
     let fcmToken: String?
-    var keywordList: [String]?
+    var alertKeywordList: [String]?
     var recommandList: [Int]?
 //    var isNewUser: Bool {
 //        return nickname == nil
@@ -33,13 +33,13 @@ extension User {
                        role: role,
                        isAlerted: isAlerted,
                        fcmToken: fcmToken,
-                       keywordList: keywordList,
+                       alertKeywordList: alertKeywordList,
                        recommandList: recommandList)
     }
 }
 
 extension User {
-    static let adminUser = User(uuid: "123",
+    static let adminUser = User(uuid: "uuid",
                                 uid: "67890",
                                 provider: "kakao",
                                 email: "john@example.com",
@@ -47,6 +47,6 @@ extension User {
                                 role: "user",
                                 isAlerted: false,
                                 fcmToken: "",
-                                keywordList: ["팝업스토어", "카페"],
+                                alertKeywordList: ["팝업스토어", "카페"],
                                 recommandList: [1, 2])
 }

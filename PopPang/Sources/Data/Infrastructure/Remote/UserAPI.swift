@@ -48,7 +48,7 @@ extension UserAPI: TargetType {
             return .requestPlain
             
         case .getAlertKeywordList(let uuid):
-            return .requestParameters(parameters: ["uuid": uuid],
+            return .requestParameters(parameters: ["userUuid": uuid],
                                       encoding: URLEncoding.queryString)
         }
     }
