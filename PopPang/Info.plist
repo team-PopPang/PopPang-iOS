@@ -33,6 +33,8 @@
 		<string>kakaolink</string>
 		<string>kakaoplus</string>
 	</array>
+	<key>NMFClientID</key>
+	<string>${NMFClientID}</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

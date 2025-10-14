@@ -23,6 +23,16 @@ enum Constants {
         }()
     }
     
+    enum NaverAPI {
+        static let key = {
+            if let key = Bundle.main.infoDictionary?["NMFClientID"] as? String {
+                return key
+            } else {
+                fatalError("❌ KAKAO_NATIVE_APP_KEY가 Info.plist에 등록되지 않았습니다.")
+            }
+        }()
+    }
+    
     enum BetaNotice {
         static let beta_0930 = """
         홈화면 

@@ -9,6 +9,7 @@ import UIKit
 import KakaoSDKCommon
 import KakaoSDKAuth
 import GoogleSignIn
+import NMapsMap
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
@@ -22,9 +23,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
         
-        print("✅ kakao: \(Constants.KakaoAPI.key)")
-        // 1. KakaoSdk 설정
+        // print("✅ kakao: \(Constants.KakaoAPI.key)")
+        
+        // 1. KakaoSDK 설정
         KakaoSDK.initSDK(appKey: Constants.KakaoAPI.key)
+        
+        // 2-1. NaverMapSDK 설정
+        NMFAuthManager.shared().ncpKeyId = Constants.NaverAPI.key
+        
+        // 2-2. 지도 오토 레이아웃 경고 제거
+        UserDefaults.standard.set(false, forKey: "_UIConstraintBasedLayoutLogUnsatisfiable")
         
         return true
     }
