@@ -13,11 +13,13 @@ final class CalendarViewModel: ObservableObject {
     @Published var calendarPopups: [Popup] = []
     
     init() {
+        print("❌❌❌❌❌❌❌❌❌❌❌")
         Task {
             do {
                 let popups = try await popupUsecase.getPopupList()
                 await MainActor.run {
                     self.calendarPopups = popups
+                    print(popups)
                 }
             } catch {
                 print("❌ getPopupList Error: \(error)")

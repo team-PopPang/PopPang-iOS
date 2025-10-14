@@ -39,6 +39,7 @@ struct CalendarView: View {
 // MARK: - Custom Navigation
 private struct CustomNavigation: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var rootViewModel: RootViewModel
     var body: some View {
         HStack(spacing: 0) {
             Text("캘린더")
@@ -48,7 +49,7 @@ private struct CustomNavigation: View {
             
             IconButton {
                 print("알림 버튼 클릭됨")
-                // coordinator.push(.alert)
+                coordinator.push(.alert(uuid: rootViewModel.user?.uuid ?? ""))
             }
         }
         .frame(height: 45)
