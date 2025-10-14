@@ -8,12 +8,6 @@
 import SwiftUI
 import Kingfisher
 
-//struct BestPopup: Hashable {
-//    let imageName: String
-//    let title: String
-//    let address: String
-//}
-
 struct HomeView: View {
     @EnvironmentObject private var rootViewModel: RootViewModel
     @EnvironmentObject private var homeViewModel: HomeViewModel
@@ -24,8 +18,6 @@ struct HomeView: View {
     
     // MARK: - 광고뷰 테스트
     @State private var hasSeenPopup: Bool = false
-    
-     // rootViewModel.user?.uuid
     
     var body: some View {
         ZStack {
@@ -46,7 +38,7 @@ struct HomeView: View {
                     
                     IconButton {
                         print("알림 버튼 클릭됨")
-                        coordinator.push(.alert(uuid: rootViewModel.user?.uuid ?? ""))
+                        coordinator.push(.alert(uuid: rootViewModel.user?.userUuid ?? ""))
                     }
                     .padding(.leading, 15)
                 }
@@ -319,6 +311,7 @@ private struct GridPopupScrollView: View {
 }
 
 private struct GridPopupCell: View {
+    @EnvironmentObject private var homeViewModel: HomeViewModel
     let popup: Popup
     
     var body: some View {
@@ -337,7 +330,8 @@ private struct GridPopupCell: View {
                 .frame(width: 165, height: 206, alignment: .center)
                 .clipped() // 넘치는 영역 완전히 제거
                 .overlay (alignment: .topTrailing) {
-                    BookmarkButton(info: .stroke) {
+                    BookmarkButton(isLiked: homeViewModel.isLiked(popup: popup),
+                                   info: .stroke) {
                         
                     }
                     .padding(10)
@@ -372,6 +366,7 @@ private struct GridPopupCell: View {
 }
 
 private struct GridPopupCellDefault: View {
+    @EnvironmentObject private var homeViewModel: HomeViewModel
     let popup: Popup
     
     var body: some View {
@@ -386,7 +381,8 @@ private struct GridPopupCellDefault: View {
             .frame(width: 165, height: 206, alignment: .top)
             .clipped() // 넘치는 영역 완전히 제거
             .overlay (alignment: .topTrailing){
-                BookmarkButton(info: .stroke) {
+                BookmarkButton(isLiked: homeViewModel.isLiked(popup: popup),
+                               info: .stroke) {
                     
                 }
                 .padding(10)
@@ -420,13 +416,12 @@ struct BookmarkButton: View {
         case fill
         case stroke
     }
-    @State private var isLiked: Bool = false
+    var isLiked: Bool
     var info: Info
     var action: () -> Void
     
     var body: some View {
         Button {
-            isLiked.toggle()
             action()
         } label: {
             switch info {
@@ -450,7 +445,7 @@ struct BookmarkButton: View {
 #Preview {
     HomeView()
         .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
-        .environmentObject(HomeViewModel())
+        .environmentObject(HomeViewModel(userUuid: "1234"))
 }
 
 

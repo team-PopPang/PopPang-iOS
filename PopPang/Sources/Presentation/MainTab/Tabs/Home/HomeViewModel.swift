@@ -9,15 +9,20 @@ import Foundation
 
 final class HomeViewModel: ObservableObject {
     @Dependency private var popupUsecase: PopupUsecaseProtocol
+    let userUuid: String
     
     @Published var bestPopups: [Popup] = []
     @Published var comingPopups: [Popup] = []
     @Published var gridPopups: [Popup] = []
     
-    // 내가 좋아요한 팝업 id 모음
-    @Published var likePostIds: Set<UUID> = []
+    // 내가 좋아요한 팝업 uuid 모음
+    @Published var likePostIds: Set<String> = []
     
-    init() {
+    
+    
+    init(userUuid: String) {
+        self.userUuid = userUuid
+        
         Task { [weak self] in
             guard let self = self else { return }
             do {
@@ -49,17 +54,17 @@ final class HomeViewModel: ObservableObject {
         }
     }
     
-    /// 좋아요 상태 바꿔주는 함수
-    func toggleLike(popup: Popup) {
-        if likePostIds.contains(popup.id) {
-            likePostIds.remove(popup.id)
-        } else {
-            likePostIds.insert(popup.id)
-        }
-    }
-    
     /// 팝업이 좋아요 눌린 상태인지 체크
     func isLiked(popup: Popup) -> Bool {
-        likePostIds.contains(popup.id)
+        likePostIds.contains(popup.popupUuid)
+    }
+    
+    /// 좋아요 상태 바꿔주는 함수
+    func toggleLike(popup: Popup) {
+        if likePostIds.contains(popup.popupUuid) {
+            likePostIds.remove(popup.popupUuid)
+        } else {
+            likePostIds.insert(popup.popupUuid)
+        }
     }
 }

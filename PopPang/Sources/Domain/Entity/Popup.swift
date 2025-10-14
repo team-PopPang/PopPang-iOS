@@ -8,7 +8,9 @@
 import Foundation
 
 struct Popup: Hashable, Identifiable, Encodable {
-    let id = UUID()
+    // SwiftUI용 Identifiable Id
+    var id: String { popupUuid }
+    let popupUuid: String
     let name: String
     let startDate: Date
     let endDate: Date
@@ -42,6 +44,7 @@ extension Popup {
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
         
         return Popup(
+            popupUuid: "1234",
             name: "2025 짱구 부산 팝업스토어",
             startDate: formatter.date(from: "2025-10-13 11:00") ?? Date(),
             endDate: formatter.date(from: "2025-10-15 20:00") ?? Date(),
@@ -93,6 +96,7 @@ extension Popup {
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
         
         return Popup(
+            popupUuid: "1234",
             name: "카카오팝업스토어",
             startDate: formatter.date(from: "2025-10-15 10:00") ?? Date(),
             endDate: formatter.date(from: "2025-10-17 22:00") ?? Date(),
@@ -122,6 +126,7 @@ extension Popup {
         
         return [
             Popup(
+                popupUuid: "1234",
                 name: "카카오팝업스토어",
                 startDate: formatter.date(from: "2025-09-27 10:00") ?? Date(),
                 endDate: formatter.date(from: "2025-10-05 22:00") ?? Date(),
@@ -142,6 +147,7 @@ extension Popup {
                 errorCode: "200"
             ),
             Popup(
+                popupUuid: "1234",
                 name: "스타벅스 한정 팝업",
                 startDate: formatter.date(from: "2025-10-01 09:00") ?? Date(),
                 endDate: formatter.date(from: "2025-10-10 20:00") ?? Date(),
@@ -162,6 +168,7 @@ extension Popup {
                 errorCode: "200"
             ),
             Popup(
+                popupUuid: "1234",
                 name: "나이키 한정판 팝업",
                 startDate: formatter.date(from: "2025-10-05 11:00") ?? Date(),
                 endDate: formatter.date(from: "2025-10-12 21:00") ?? Date(),
@@ -182,6 +189,7 @@ extension Popup {
                 errorCode: "200"
             ),
             Popup(
+                popupUuid: "1234",
                 name: "레고 체험 팝업",
                 startDate: formatter.date(from: "2025-09-29 10:00") ?? Date(),
                 endDate: formatter.date(from: "2025-10-15 19:00") ?? Date(),
@@ -202,6 +210,7 @@ extension Popup {
                 errorCode: "200"
             ),
             Popup(
+                popupUuid: "1234",
                 name: "올리브영 9월 팝업스토어 총정리",
                 startDate: formatter.date(from: "2025-10-03 12:00") ?? Date(),
                 endDate: formatter.date(from: "2025-10-20 21:00") ?? Date(),
@@ -222,6 +231,7 @@ extension Popup {
                 errorCode: "200"
             ),
             Popup(
+                popupUuid: "1234",
                 name: "무신사 스트리트 팝업",
                 startDate: formatter.date(from: "2025-10-03 12:00") ?? Date(),
                 endDate: formatter.date(from: "2025-10-20 21:00") ?? Date(),
@@ -242,6 +252,7 @@ extension Popup {
                 errorCode: "200"
             ),
             Popup(
+                popupUuid: "1234",
                 name: "2025 짱구 부산 팝업스토어",
                 startDate: formatter.date(from: "2025-10-07 11:00") ?? Date(),
                 endDate: formatter.date(from: "2025-10-25 20:00") ?? Date(),
@@ -286,6 +297,7 @@ extension Popup {
                 errorCode: "200"
             ),
             Popup(
+                popupUuid: "1234",
                 name: "라인프렌즈 팝업",
                 startDate: formatter.date(from: "2025-10-07 11:00") ?? Date(),
                 endDate: formatter.date(from: "2025-10-25 20:00") ?? Date(),
@@ -306,6 +318,7 @@ extension Popup {
                 errorCode: "200"
             ),
             Popup(
+                popupUuid: "1234",
                 name: "라인프렌즈 팝업",
                 startDate: formatter.date(from: "2025-10-07 11:00") ?? Date(),
                 endDate: formatter.date(from: "2025-10-25 20:00") ?? Date(),
@@ -326,6 +339,7 @@ extension Popup {
                 errorCode: "200"
             ),
             Popup(
+                popupUuid: "1234",
                 name: "라인프렌즈 팝업",
                 startDate: formatter.date(from: "2025-10-07 11:00") ?? Date(),
                 endDate: formatter.date(from: "2025-10-25 20:00") ?? Date(),
@@ -346,6 +360,7 @@ extension Popup {
                 errorCode: "200"
             ),
             Popup(
+                popupUuid: "1234",
                 name: "라인프렌즈 팝업",
                 startDate: formatter.date(from: "2025-10-07 11:00") ?? Date(),
                 endDate: formatter.date(from: "2025-10-25 20:00") ?? Date(),
@@ -366,6 +381,7 @@ extension Popup {
                 errorCode: "200"
             ),
             Popup(
+                popupUuid: "1234",
                 name: "라인프렌즈 팝업",
                 startDate: formatter.date(from: "2025-10-07 11:00") ?? Date(),
                 endDate: formatter.date(from: "2025-10-25 20:00") ?? Date(),
@@ -386,6 +402,7 @@ extension Popup {
                 errorCode: "200"
             ),
             Popup(
+                popupUuid: "1234",
                 name: "라인프렌즈 팝업",
                 startDate: formatter.date(from: "2025-10-07 11:00") ?? Date(),
                 endDate: formatter.date(from: "2025-10-25 20:00") ?? Date(),

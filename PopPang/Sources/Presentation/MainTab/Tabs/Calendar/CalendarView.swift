@@ -49,7 +49,7 @@ private struct CustomNavigation: View {
             
             IconButton {
                 print("알림 버튼 클릭됨")
-                coordinator.push(.alert(uuid: rootViewModel.user?.uuid ?? ""))
+                coordinator.push(.alert(uuid: rootViewModel.user?.userUuid ?? ""))
             }
         }
         .frame(height: 45)

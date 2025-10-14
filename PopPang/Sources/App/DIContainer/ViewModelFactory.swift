@@ -15,8 +15,8 @@ final class ViewModelFactory {
         RootViewModel()
     }
     
-    func createHome() -> HomeViewModel {
-        HomeViewModel()
+    func createHome(userUuid: String) -> HomeViewModel {
+        HomeViewModel(userUuid: userUuid)
     }
     
     func createCalendar() -> CalendarViewModel {

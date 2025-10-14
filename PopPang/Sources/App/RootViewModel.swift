@@ -100,7 +100,7 @@ extension RootViewModel {
             if !storeUID.isEmpty {
                 Task {
                     do {
-                        let user = try await userUsecase.autoLogin(uuid: storeUID)
+                        let user = try await userUsecase.autoLogin(userUuid: storeUID)
                         print("자동로그인: \(user)")
                         await MainActor.run {
                             self.loginSuccess(user: user)
@@ -342,7 +342,7 @@ extension RootViewModel {
     // 로그인 완료
     func loginSuccess(user: User) {
         self.user = user
-        self.storeUID = user.uuid ?? ""
+        self.storeUID = user.userUuid
         self.updateScene()
     }
 

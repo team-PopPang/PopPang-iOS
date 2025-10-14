@@ -8,9 +8,19 @@
 import SwiftUI
 
 struct MainTabView: View {
+    var userUduuid: String
     @State private var selectedTab: MainTabType = .home
-    @StateObject private var homeViewModel = ViewModelFactory.shared.createHome()
-    @StateObject private var calendarViewModel = ViewModelFactory.shared.createCalendar()
+    @EnvironmentObject private var rootViewModel: RootViewModel
+    @StateObject private var homeViewModel: HomeViewModel
+    @StateObject private var calendarViewModel: CalendarViewModel
+    
+    init(userUduuid: String) {
+        self.userUduuid = userUduuid
+        
+        // MARK: - 뷰모델초기화
+        _homeViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createHome(userUuid: userUduuid))
+        _calendarViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createCalendar())
+    }
     
     var body: some View {
         CoordinatorContainer {
@@ -32,7 +42,6 @@ struct MainTabView: View {
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 25, height: 25)
                         Text(tab.title)
-                            // .font(selectedTab == tab ? Font.tapped : Font.normal)
                     }
                     .tag(tab)
                 }
@@ -44,7 +53,7 @@ struct MainTabView: View {
 }
 
 #Preview {
-    MainTabView()
+    MainTabView(userUduuid: "1234")
 }
 
 

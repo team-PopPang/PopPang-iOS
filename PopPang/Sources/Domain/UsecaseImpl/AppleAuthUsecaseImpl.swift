@@ -42,7 +42,7 @@ final class StubAppleAuthUsecaseImpl: AppleAuthUsecaseProtocol {
     private func sendAuthCodeToServer(authCode: String) async throws -> UserDTO {
         print("authCode: \(authCode)")
         return UserDTO(
-            uuid: "1234",
+            userUuid: "1234",
             uid: "stub-uid-123",
             provider: "apple",
             email: "stub@example.com",

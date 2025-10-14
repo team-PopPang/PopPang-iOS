@@ -19,8 +19,8 @@ final class UserUsecaseImpl: UserUsecaseProtocol {
         try await userRepository.checkNickname(nickname: nickname)
     }
     
-    func autoLogin(uuid: String) async throws -> User {
-        try await userRepository.autoLogin(uuid: uuid).toModel()
+    func autoLogin(userUuid: String) async throws -> User {
+        try await userRepository.autoLogin(userUuid: userUuid).toModel()
     }
     
     func getRecommandList() async throws -> [Recommand] {
@@ -50,7 +50,7 @@ final class StubUserUsecaseImpl: UserUsecaseProtocol {
         return true
     }
     
-    func autoLogin(uuid: String) async throws -> User {
+    func autoLogin(userUuid: String) async throws -> User {
         return User.adminUser
     }
     

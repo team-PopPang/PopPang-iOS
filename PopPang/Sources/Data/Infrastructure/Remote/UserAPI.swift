@@ -10,7 +10,7 @@ import Foundation
 
 enum UserAPI {
     case checkNickname(nickname: String)
-    case autoLogin(uuid: String)
+    case autoLogin(userUuid: String)
     case getRecommandList
     case getAlertKeywordList(userUuid: String)
     case addAlertKeyword(userUuid: String, newAlertKeyword: String)
@@ -47,8 +47,8 @@ extension UserAPI: TargetType {
         case .checkNickname(let nickname):
             return .requestParameters(parameters: ["nickname": nickname],
                                       encoding: URLEncoding.queryString)
-        case .autoLogin(let uuid):
-            return .requestJSONEncodable(["uuid": uuid])
+        case .autoLogin(let userUuid):
+            return .requestJSONEncodable(["userUuid": userUuid])
 
         case .getRecommandList:
             return .requestPlain

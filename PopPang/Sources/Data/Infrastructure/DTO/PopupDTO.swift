@@ -8,6 +8,7 @@
 import Foundation
 
 struct PopupDTO: Decodable {
+    let popupUuid: String
     let name: String
     let startDate: String
     let endDate: String
@@ -33,6 +34,7 @@ extension PopupDTO {
     func toEntity() -> Popup {
         
         return Popup(
+            popupUuid: popupUuid,
             name: name,
             startDate: DateFormatter.popupDateFormat.date(from: startDate) ?? Date(),
             endDate: DateFormatter.popupDateFormat.date(from: endDate) ?? Date(),

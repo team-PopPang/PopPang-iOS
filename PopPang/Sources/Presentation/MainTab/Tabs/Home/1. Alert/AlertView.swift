@@ -59,7 +59,7 @@ struct AlertView: View {
 #Preview {
     NavigationStack {
         AlertView(userUuid: "1234")
-            .environmentObject(HomeViewModel())
+            .environmentObject(HomeViewModel(userUuid: "1234"))
             .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
     }
 }
