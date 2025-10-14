@@ -8,51 +8,59 @@
 import Foundation
 
 final class HomeViewModel: ObservableObject {
-    @Dependency private var popupUsecase: PopupUsecaseProtocol
     let userUuid: String
     
+    @Dependency private var popupUsecase: PopupUsecaseProtocol
     @Published var bestPopups: [Popup] = []
     @Published var comingPopups: [Popup] = []
     @Published var gridPopups: [Popup] = []
-    
-    // 내가 좋아요한 팝업 uuid 모음
-    @Published var likePostIds: Set<String> = []
-    
-    
+    @Published var likePostIds: Set<String> = [] // 찜 목록 popupUuid
     
     init(userUuid: String) {
         self.userUuid = userUuid
         
         Task { [weak self] in
             guard let self = self else { return }
-            do {
-                try await withThrowingTaskGroup(of: (Int, [Popup]).self) {  group in
-                    // 0, 1, 2로 구분해서 요청
-                    group.addTask { (0, try await self.popupUsecase.getPopupList()) }
-                    group.addTask { (1, try await self.popupUsecase.getPopupList()) }
-                    group.addTask { (2, try await self.popupUsecase.getPopupList()) }
+            await self.getFavoriteList()
+            await self.getAllPopupData()
+        }
+    }
+}
 
-                    // 완료된 순서대로 결과 받기
-                    for try await (index, popups) in group {
-                        await MainActor.run {
-                            switch index {
-                            case 0:
-                                self.bestPopups = popups
-                            case 1:
-                                self.comingPopups = popups
-                            case 2:
-                                self.gridPopups = popups
-                            default:
-                                break
-                            }
+// MARK: - 팝업 전체 불러오기
+extension HomeViewModel {
+    func getAllPopupData() async {
+        do {
+            try await withThrowingTaskGroup(of: (Int, [Popup]).self) {  group in
+                // 0, 1, 2로 구분해서 요청
+                group.addTask { (0, try await self.popupUsecase.getPopupList()) }
+                group.addTask { (1, try await self.popupUsecase.getPopupList()) }
+                group.addTask { (2, try await self.popupUsecase.getPopupList()) }
+
+                // 완료된 순서대로 결과 받기
+                for try await (index, popups) in group {
+                    await MainActor.run {
+                        switch index {
+                        case 0:
+                            self.bestPopups = popups
+                        case 1:
+                            self.comingPopups = popups
+                        case 2:
+                            self.gridPopups = popups
+                        default:
+                            break
                         }
                     }
                 }
-            } catch {
-                print("❌ 네트워크 오류:", error)
             }
+        } catch {
+            print("❌ 팝업 목록 불러오기 오류: \(error)")
         }
     }
+}
+
+// MARK: - 찜 관련 메서드
+extension HomeViewModel {
     
     /// 팝업이 좋아요 눌린 상태인지 체크
     func isLiked(popup: Popup) -> Bool {
@@ -61,10 +69,36 @@ final class HomeViewModel: ObservableObject {
     
     /// 좋아요 상태 바꿔주는 함수
     func toggleLike(popup: Popup) {
-        if likePostIds.contains(popup.popupUuid) {
-            likePostIds.remove(popup.popupUuid)
-        } else {
-            likePostIds.insert(popup.popupUuid)
+        Task {
+            do {
+                if likePostIds.contains(popup.popupUuid) {
+                    print("좋아요 취소")
+                    try await popupUsecase.removeFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
+                    _ = await MainActor.run {
+                        likePostIds.remove(popup.popupUuid)
+                    }
+                } else {
+                    print("좋아요 추가")
+                    try await popupUsecase.addFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
+                    _ = await MainActor.run {
+                        likePostIds.insert(popup.popupUuid)
+                    }
+                }
+            } catch {
+                print("❌ 찜 토글 실패:", error)
+            }
+        }
+    }
+    
+    func getFavoriteList() async {
+        do {
+            let favoritePopups = try await popupUsecase.getFavoriteList(userUuid: userUuid)
+            await MainActor.run {
+                likePostIds = Set(favoritePopups.map { $0.popupUuid })
+            }
+            print("좋아요한거: \(likePostIds)")
+        } catch {
+            print("❌ 찜 목록 불러오기 오류: \(error)")
         }
     }
 }

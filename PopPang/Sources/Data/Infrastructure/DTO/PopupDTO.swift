@@ -24,7 +24,7 @@ struct PopupDTO: Decodable {
     let instaPostUrl: String
     // let like: String: 일단 임시로 뻄
     let captionSummary: String
-    let caption: String
+    let caption: String?
     let imageUrl: String
     let mediaType: String
     let errorCode: String?

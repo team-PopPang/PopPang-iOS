@@ -25,7 +25,7 @@ struct Popup: Hashable, Identifiable, Encodable {
     let instaPostURL: String
     // var likeCount: String
     let captionSummary: String
-    let caption: String
+    let caption: String?
     let imageURL: String
     let mediaType: MediaType
     let errorCode: String?

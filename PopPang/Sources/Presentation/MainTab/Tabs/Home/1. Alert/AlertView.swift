@@ -64,11 +64,3 @@ struct AlertView: View {
     }
 }
 
-//final class AlertViewModel: ObservableObject {
-//    let uuid: String
-//    
-//    init(uuid: String) {
-//        self.uuid = uuid
-//        print("uuid출력: \(uuid)")
-//    }
-//}

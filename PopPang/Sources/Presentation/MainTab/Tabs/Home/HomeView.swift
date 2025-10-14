@@ -332,7 +332,7 @@ private struct GridPopupCell: View {
                 .overlay (alignment: .topTrailing) {
                     BookmarkButton(isLiked: homeViewModel.isLiked(popup: popup),
                                    info: .stroke) {
-                        
+                        homeViewModel.toggleLike(popup: popup)
                     }
                     .padding(10)
                     .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
