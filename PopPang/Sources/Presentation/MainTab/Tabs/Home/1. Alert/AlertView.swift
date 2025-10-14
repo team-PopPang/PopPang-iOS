@@ -11,13 +11,13 @@ struct AlertView: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @StateObject private var activityViewModel: ActivityViewModel
     @StateObject private var keywordViewModel: KeywordViewModel
-    let uuid: String
+    let userUuid: String
     private let segments = ["활동", "키워드 설정"]
     
-    init(uuid: String) {
-        self.uuid = uuid
-        _activityViewModel = StateObject(wrappedValue: ActivityViewModel(uuid: uuid))
-        _keywordViewModel = StateObject(wrappedValue: KeywordViewModel(uuid: uuid))
+    init(userUuid: String) {
+        self.userUuid = userUuid
+        _activityViewModel = StateObject(wrappedValue: ActivityViewModel(userUuid: userUuid))
+        _keywordViewModel = StateObject(wrappedValue: KeywordViewModel(userUuid: userUuid))
     }
     
     var body: some View {
@@ -58,7 +58,7 @@ struct AlertView: View {
 
 #Preview {
     NavigationStack {
-        AlertView(uuid: "1234")
+        AlertView(userUuid: "1234")
             .environmentObject(HomeViewModel())
             .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
     }

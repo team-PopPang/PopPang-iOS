@@ -25,6 +25,19 @@ protocol UserUsecaseProtocol {
     
     /// 키워드 리스트 가져오기
     /// - Returns: [Keyword]
-    func getAlertKeywordList(uuid: String) async throws -> [Keyword]
+    func getAlertKeywordList(userUuid: String) async throws -> [Keyword]
+    
+    /// 알림키워드 추가하기
+    /// - Parameters:
+    ///   - userUuid: 유저 고유값
+    ///   - alertKeyword: 알림 키워드 고유값
+    func addAlertKeyword(userUuid: String, alertKeyword: String) async throws
+    
+    
+    /// 알림키워드 삭제하기
+    /// - Parameters:
+    ///   - userUuid: 유저 고유값
+    ///   - alertKeyword: 알림 키워드 고유값
+    func removeAlertKeyword(userUuid: String, alertKeyword: String) async throws
 }
 

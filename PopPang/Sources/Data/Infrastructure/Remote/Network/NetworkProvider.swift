@@ -66,3 +66,40 @@ extension MoyaProvider {
         }
     }
 }
+
+// MARK: - 상태코드 알고싶을 떄
+extension MoyaProvider {
+    /// Decoding이 필요 없는 요청 (예: 200 OK만 반환되는 API)
+    func asyncRequest(_ target: Target) async throws -> Response {
+        try await withCheckedThrowingContinuation { continuation in
+            self.request(target) { result in
+                switch result {
+                case .success(let response):
+                    guard (200..<300).contains(response.statusCode) else {
+                        let msg = String(data: response.data, encoding: .utf8) ?? "Unknown error"
+                        continuation.resume(throwing: NSError(
+                            domain: "NetworkError",
+                            code: response.statusCode,
+                            userInfo: [NSLocalizedDescriptionKey: msg]
+                        ))
+                        return
+                    }
+                    continuation.resume(returning: response)
+                    
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - 상태코드도 필요없을 때
+extension MoyaProvider {
+    func asyncRequestVoid(_ target: Target) async throws {
+        let response = try await asyncRequest(target)
+        guard (200..<300).contains(response.statusCode) else {
+            throw NSError(domain: "NetworkError", code: response.statusCode)
+        }
+    }
+}

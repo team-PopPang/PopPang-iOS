@@ -30,9 +30,18 @@ final class UserUsecaseImpl: UserUsecaseProtocol {
     
     /// 키워드 리스트 가져오기
     /// - Returns: [Keyword]
-    func getAlertKeywordList(uuid: String) async throws -> [Keyword] {
-        try await userRepository.getAlertKeywordList(uuid: uuid)
+    func getAlertKeywordList(userUuid: String) async throws -> [Keyword] {
+        try await userRepository.getAlertKeywordList(userUuid: userUuid)
             .map { $0.toModel() }
+    }
+    
+    func addAlertKeyword(userUuid: String, alertKeyword: String) async throws {
+        try await userRepository.addAlertKeyword(userUuid: userUuid, alertKeyword: alertKeyword)
+    }
+    
+    
+    func removeAlertKeyword(userUuid: String, alertKeyword: String) async throws {
+        try await userRepository.removeAlertKeyword(userUuid: userUuid, alertKeyword: alertKeyword)
     }
 }
 
@@ -49,7 +58,15 @@ final class StubUserUsecaseImpl: UserUsecaseProtocol {
         return [Recommand(id: 1, recommendName: "123")]
     }
     
-    func getAlertKeywordList(uuid: String) async throws -> [Keyword] {
+    func getAlertKeywordList(userUuid: String) async throws -> [Keyword] {
         return [Keyword(keyword: "키워드1")]
+    }
+    
+    func addAlertKeyword(userUuid: String, alertKeyword: String) async throws {
+        
+    }
+        
+    func removeAlertKeyword(userUuid: String, alertKeyword: String) async throws {
+        
     }
 }

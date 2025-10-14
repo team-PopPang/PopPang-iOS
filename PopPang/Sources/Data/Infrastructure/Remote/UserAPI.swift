@@ -12,7 +12,9 @@ enum UserAPI {
     case checkNickname(nickname: String)
     case autoLogin(uuid: String)
     case getRecommandList
-    case getAlertKeywordList(uuid: String)
+    case getAlertKeywordList(userUuid: String)
+    case addAlertKeyword(userUuid: String, newAlertKeyword: String)
+    case removeAlertKeyword(userUuid: String, deleteAlertKeyword: String)
 }
 
 extension UserAPI: TargetType {
@@ -24,6 +26,8 @@ extension UserAPI: TargetType {
         case .autoLogin: return "/auth/autoLogin"
         case .getRecommandList: return "/recommend"
         case .getAlertKeywordList: return "/alert-keyword"
+        case .addAlertKeyword: return "/alert-keyword"
+        case .removeAlertKeyword: return "/alert-keyword"
         }
     }
     
@@ -33,6 +37,8 @@ extension UserAPI: TargetType {
         case .autoLogin: return .post
         case .getRecommandList: return .get
         case .getAlertKeywordList: return .get
+        case .addAlertKeyword: return .post
+        case .removeAlertKeyword: return .delete
         }
     }
     
@@ -47,9 +53,17 @@ extension UserAPI: TargetType {
         case .getRecommandList:
             return .requestPlain
             
-        case .getAlertKeywordList(let uuid):
-            return .requestParameters(parameters: ["userUuid": uuid],
+        case .getAlertKeywordList(let userUuid):
+            return .requestParameters(parameters: ["userUuid": userUuid],
                                       encoding: URLEncoding.queryString)
+        case .addAlertKeyword(let userUuid, let newAlertKeyword):
+            return .requestParameters(parameters: ["userUuid": userUuid,
+                                                   "newAlertKeyword": newAlertKeyword],
+                                      encoding: JSONEncoding.default)
+        case .removeAlertKeyword(let userUuid, let deleteAlertKeyword):
+            return .requestParameters(parameters: ["userUuid": userUuid,
+                                                   "deleteAlertKeyword": deleteAlertKeyword],
+                                      encoding: JSONEncoding.default)
         }
     }
     

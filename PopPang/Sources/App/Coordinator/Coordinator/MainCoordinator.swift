@@ -40,8 +40,8 @@ extension Coordinator where T == MainRoute {
         switch route {
         case .search:
             SearchView()
-        case .alert(let uuid):
-            AlertView(uuid: uuid)
+        case .alert(let userUuid):
+            AlertView(userUuid: userUuid)
         case .popupDetail(let popup):
             PopupDetailView(popup: popup)
         }
