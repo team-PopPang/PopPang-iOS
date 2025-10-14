@@ -13,23 +13,23 @@ final class NetworkProvider {
     private init() {}
     
     let appleProvider = MoyaProvider<AppleAuthAPI>(
-        plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
+        // plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
     )
     
     let kakaoProvider = MoyaProvider<KakaoAuthAPI>(
-        plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
+        // plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
     )
     
     let googleProvider = MoyaProvider<GoogleAuthAPI>(
-        plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
+        // plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
     )
     
     let userProvider = MoyaProvider<UserAPI>(
-        plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
+        // plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
     )
     
     let popupProvidder = MoyaProvider<PopupAPI>(
-        plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
+        // plugins: [NetworkLoggerPlugin(configuration: .init(logOptions: .verbose))]
     )
 }
 

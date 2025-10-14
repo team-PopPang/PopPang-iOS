@@ -8,6 +8,7 @@
 import Foundation
 
 struct User {
+    let uuid: String
     let uid: String
     let provider: String
     let email: String?
@@ -24,7 +25,8 @@ struct User {
 
 extension User {
     func toDTO() -> UserDTO {
-        return UserDTO(uid: uid,
+        return UserDTO(uuid: uuid,
+                       uid: uid,
                        provider: provider,
                        email: email,
                        nickname: nickname,
@@ -37,7 +39,8 @@ extension User {
 }
 
 extension User {
-    static let adminUser = User(uid: "67890",
+    static let adminUser = User(uuid: "123",
+                                uid: "67890",
                                 provider: "kakao",
                                 email: "john@example.com",
                                 nickname: "JohnDoe",

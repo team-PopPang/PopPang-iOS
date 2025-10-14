@@ -8,6 +8,7 @@
 import Foundation
 
 struct UserDTO: Codable {
+    let uuid: String
     let uid: String
     let provider: String
     let email: String?
@@ -22,7 +23,8 @@ struct UserDTO: Codable {
 
 extension UserDTO {
     func toModel() -> User {
-        return User(uid: uid,
+        return User(uuid: uuid,
+                    uid: uid,
                     provider: provider,
                     email: email,
                     nickname: nickname,
@@ -35,7 +37,8 @@ extension UserDTO {
 }
 
 extension UserDTO {
-    static let adminUser = UserDTO(uid: "0000",
+    static let adminUser = UserDTO(uuid: "1234",
+                                   uid: "0000",
                                    provider: "kakao",
                                    email: "index@example.com",
                                    nickname: "김동현",
