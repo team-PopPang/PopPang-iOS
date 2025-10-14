@@ -20,8 +20,8 @@ final class KeywordViewModel: ObservableObject {
     // MARK: - 키워드 조회
     func fetchKeywordList() async {
         do {
-            let keywords = try await userUsecase.getKeywordList()
-            self.keywordList = keywords
+            // let keywords = try await userUsecase.getAlertKeywordList(uuid: <#T##String#>, )
+            // self.keywordList = keywords
         } catch {
             print("❌ KeywordViewModel Error: \(error)")
         }

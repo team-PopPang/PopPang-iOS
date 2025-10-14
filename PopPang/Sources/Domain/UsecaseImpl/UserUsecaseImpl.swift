@@ -19,8 +19,8 @@ final class UserUsecaseImpl: UserUsecaseProtocol {
         try await userRepository.checkNickname(nickname: nickname)
     }
     
-    func autoLogin(uid: String) async throws -> User {
-        try await userRepository.autoLogin(uid: uid).toModel()
+    func autoLogin(uuid: String) async throws -> User {
+        try await userRepository.autoLogin(uuid: uuid).toModel()
     }
     
     func getRecommandList() async throws -> [Recommand] {
@@ -30,8 +30,8 @@ final class UserUsecaseImpl: UserUsecaseProtocol {
     
     /// 키워드 리스트 가져오기
     /// - Returns: [Keyword]
-    func getKeywordList() async throws -> [Keyword] {
-        try await userRepository.getKeywordList()
+    func getAlertKeywordList(uuid: String) async throws -> [Keyword] {
+        try await userRepository.getAlertKeywordList(uuid: uuid)
             .map { $0.toModel() }
     }
 }
@@ -41,7 +41,7 @@ final class StubUserUsecaseImpl: UserUsecaseProtocol {
         return true
     }
     
-    func autoLogin(uid: String) async throws -> User {
+    func autoLogin(uuid: String) async throws -> User {
         return User.adminUser
     }
     
@@ -49,7 +49,7 @@ final class StubUserUsecaseImpl: UserUsecaseProtocol {
         return [Recommand(id: 1, recommendName: "123")]
     }
     
-    func getKeywordList() async throws -> [Keyword] {
+    func getAlertKeywordList(uuid: String) async throws -> [Keyword] {
         return [Keyword(keyword: "키워드1")]
     }
 }

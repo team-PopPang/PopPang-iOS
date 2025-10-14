@@ -28,7 +28,7 @@ enum NicknameValidationState {
 final class RootViewModel: ObservableObject {
     
     // MARK: - Keychain으로 변환 예정
-    @AppStorage("uid") private var storeUID: String = ""
+    @AppStorage("uuid") private var storeUID: String = ""
     
     // MARK: - Action
     enum Action {
@@ -100,7 +100,7 @@ extension RootViewModel {
             if !storeUID.isEmpty {
                 Task {
                     do {
-                        let user = try await userUsecase.autoLogin(uid: storeUID)
+                        let user = try await userUsecase.autoLogin(uuid: storeUID)
                         print("자동로그인: \(user)")
                         await MainActor.run {
                             self.loginSuccess(user: user)
@@ -342,7 +342,7 @@ extension RootViewModel {
     // 로그인 완료
     func loginSuccess(user: User) {
         self.user = user
-        self.storeUID = user.uid
+        self.storeUID = user.uuid
         self.updateScene()
     }
 
@@ -353,5 +353,3 @@ extension RootViewModel {
         updateScene()
     }
 }
-
-

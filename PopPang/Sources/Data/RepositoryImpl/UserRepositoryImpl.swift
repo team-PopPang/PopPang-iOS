@@ -23,8 +23,8 @@ final class UserRepositoryImpl: UserRepositoryProtocol {
         }
     }
     
-    func autoLogin(uid: String) async throws -> UserDTO {
-        let userDTO = try await NetworkProvider.shared.userProvider.asyncRequest(.autoLogin(uid: uid),
+    func autoLogin(uuid: String) async throws -> UserDTO {
+        let userDTO = try await NetworkProvider.shared.userProvider.asyncRequest(.autoLogin(uuid: uuid),
                                                                                  decodeTo: UserDTO.self)
         return userDTO
     }
@@ -38,9 +38,9 @@ final class UserRepositoryImpl: UserRepositoryProtocol {
         }
     }
     
-    func getKeywordList() async throws -> [KeywordDTO] {
+    func getAlertKeywordList(uuid: String) async throws -> [KeywordDTO] {
         do {
-            let keywordDTO = try await NetworkProvider.shared.userProvider.asyncRequest(.getKeywordList, decodeTo: [KeywordDTO].self)
+            let keywordDTO = try await NetworkProvider.shared.userProvider.asyncRequest(.getAlertKeywordList(uuid: uuid), decodeTo: [KeywordDTO].self)
             return keywordDTO
         } catch {
             throw error

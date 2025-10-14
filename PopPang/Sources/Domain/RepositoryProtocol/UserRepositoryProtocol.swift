@@ -33,9 +33,9 @@ protocol UserRepositoryProtocol {
     
     
     /// 자동 로그인
-    /// - Parameter uid: 로컬에 저장된 UID
+    /// - Parameter uuid: 로컬에 저장된 UUID
     /// - Returns: User
-    func autoLogin(uid: String) async throws -> UserDTO
+    func autoLogin(uuid: String) async throws -> UserDTO
     
     
     /// 추첰 카테고리 리스트 가져오기
@@ -45,6 +45,6 @@ protocol UserRepositoryProtocol {
     
     /// 키워드 리스트 가져오기
     /// - Returns: [KeywordDTO]
-    func getKeywordList() async throws -> [KeywordDTO]
+    func getAlertKeywordList(uuid: String) async throws -> [KeywordDTO]
 }
 

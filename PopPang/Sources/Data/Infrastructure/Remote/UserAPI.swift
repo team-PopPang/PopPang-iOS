@@ -10,9 +10,9 @@ import Foundation
 
 enum UserAPI {
     case checkNickname(nickname: String)
-    case autoLogin(uid: String)
+    case autoLogin(uuid: String)
     case getRecommandList
-    case getKeywordList
+    case getAlertKeywordList(uuid: String)
 }
 
 extension UserAPI: TargetType {
@@ -23,7 +23,7 @@ extension UserAPI: TargetType {
         case .checkNickname: return "/user/nickname/duplicated"
         case .autoLogin: return "/auth/autoLogin"
         case .getRecommandList: return "/recommend"
-        case .getKeywordList: return "/keyword"
+        case .getAlertKeywordList: return "/alert-keyword"
         }
     }
     
@@ -32,7 +32,7 @@ extension UserAPI: TargetType {
         case .checkNickname: return .get
         case .autoLogin: return .post
         case .getRecommandList: return .get
-        case .getKeywordList: return .get
+        case .getAlertKeywordList: return .get
         }
     }
     
@@ -41,14 +41,15 @@ extension UserAPI: TargetType {
         case .checkNickname(let nickname):
             return .requestParameters(parameters: ["nickname": nickname],
                                       encoding: URLEncoding.queryString)
-        case .autoLogin(let uid):
-            return .requestJSONEncodable(["uid": uid])
+        case .autoLogin(let uuid):
+            return .requestJSONEncodable(["uuid": uuid])
 
         case .getRecommandList:
             return .requestPlain
             
-        case .getKeywordList:
-            return .requestPlain
+        case .getAlertKeywordList(let uuid):
+            return .requestParameters(parameters: ["uuid": uuid],
+                                      encoding: URLEncoding.queryString)
         }
     }
     

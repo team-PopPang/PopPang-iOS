@@ -9,20 +9,27 @@ import SwiftUI
 
 struct CalendarView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var calendarViewModel: CalendarViewModel
     private let segments: [String] = ["월간", "주간"]
     
     var body: some View {
         VStack(spacing: 0) {
             
+            // MARK: - 네비게이션바
             CustomNavigation()
                 .padding(.top, 15)
                 .padding(.horizontal, .contentPadding)
+            
+            // MARK: - 캘린더
+            ScrollView {
+                VStack {
+                    CustomCalendar(popupList: calendarViewModel.calendarPopups)
+                        .padding(.top, 24)
+                    Spacer()
+                }
+                .padding(.horizontal, 10)
                 
-            SegmentedControlView(segments: segments,
-                                 views: [MonthlyCalendarView(), WeeklyCalendarView()],
-                                 background: .mainGray3,
-                                 foreground: .mainOrange,
-                                 font: .scdream(.medium, size: 12))
+            }
             .padding(.top, 10)
             Spacer()
         }
@@ -48,6 +55,7 @@ private struct CustomNavigation: View {
     }
 }
 
+/*
 private struct MonthlyCalendarView: View {
     @EnvironmentObject private var calendarViewModel: CalendarViewModel
     var body: some View {
@@ -69,6 +77,7 @@ private struct WeeklyCalendarView: View {
         }
     }
 }
+ */
 
 #Preview {
     CalendarView()
