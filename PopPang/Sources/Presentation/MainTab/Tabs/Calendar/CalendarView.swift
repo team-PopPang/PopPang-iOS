@@ -44,6 +44,7 @@ private struct CustomNavigation: View {
         HStack(spacing: 0) {
             Text("캘린더")
                 .ppStyleFont(.scdream(.medium, size: 18))
+                .foregroundStyle(Color.mainBlack)
             
             Spacer()
             
@@ -59,6 +60,7 @@ private struct CustomNavigation: View {
 #Preview {
     CalendarView()
         .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+        .environmentObject(CalendarViewModel())
 }
 
 

@@ -54,11 +54,12 @@ struct HomeView: View {
                         HStack {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("COMING SOON")
-                                    .font(.scdream(.medium, size: 12))
+                                    .font(.scdream(.medium, size: 11))
                                     .foregroundStyle(Color.mainOrange)
                                 
                                 Text("곧 생기는 팝업")
                                     .font(.scdream(.bold, size: 15))
+                                    .foregroundStyle(Color.mainBlack)
                             }
                             Spacer()
                             
@@ -72,7 +73,7 @@ struct HomeView: View {
                             }
                             .padding(.trailing, .contentPadding)
                         }
-                        .padding(.top, 30)
+                        .padding(.top, 50)
                         ComingPopupScrollView(viewModel: homeViewModel)
                         
                         // MARK: - DropDownView
@@ -95,7 +96,7 @@ struct HomeView: View {
                             Spacer()
                             
                             DropDownView(options: [
-                                            "추천순",
+                                            "찜순",
                                             "가까운순",
                                          ],
                                          anchor: .bottom,
@@ -112,7 +113,7 @@ struct HomeView: View {
                             )
                         }
                         .zIndex(1)
-                        .padding(.top, 30)
+                        .padding(.top, 50)
                         .padding(.trailing, .contentPadding)
                         
                         // MARK: - GridView
@@ -195,7 +196,7 @@ private struct BestPopupCell: View {
             // MARK: - 텍스트 오버레이
             VStack(alignment: .leading) {
                 Text(popup.name)
-                    .font(.scdream(.bold, size: 14))
+                    .font(.scdream(.bold, size: 15))
                     .foregroundStyle(Color.bestPostTitle)
                 HStack(spacing: 2) {
                     Image("Address")
@@ -204,7 +205,7 @@ private struct BestPopupCell: View {
                         .aspectRatio(contentMode: .fit)
                         .foregroundStyle(Color.bestPostAddress)
                         .frame(width: 15, height: 15)
-                    Text(popup.address)
+                    Text(popup.address.shortAddress)
                         .font(.scdream(.medium, size: 12))
                         .foregroundStyle(Color.bestPostAddress)
                 }
@@ -229,7 +230,6 @@ private struct ComingPopupScrollView: View {
                         .onTapGesture {
                             coordinator.push(.popupDetail(popup))
                         }
-                    
                 }
             }
             .padding(.vertical, 15)
@@ -267,11 +267,12 @@ private struct ComingPopupCell: View {
                 // MARK: - 설명문구
                 VStack(alignment: .leading, spacing: 5) {
                     Text("\("오픈 D-10")")
-                        .font(.scdream(.bold, size: 10))
+                        .font(.scdream(.bold, size: 11))
                         .foregroundStyle(Color.mainOrange)
                     Text("\(popup.name)")
-                        .font(.scdream(.medium, size: 12))
-                    Text("\(popup.address)")
+                        .font(.scdream(.medium, size: 13))
+                        .foregroundStyle(Color.mainBlack)
+                    Text("\(popup.address.shortAddress)")
                         .font(.scdream(.regular, size: 11))
                         .foregroundStyle(Color.mainGray)
                 }
@@ -291,8 +292,8 @@ private struct GridPopupScrollView: View {
     @ObservedObject var viewModel: HomeViewModel
     private let columns = [
         // flexible: 가로 공간이 남으면 균등하게 나눠 쓰기
-        GridItem(.flexible(), spacing: 10),
-        GridItem(.flexible(), spacing: 10)
+        GridItem(.flexible(), spacing: 15),
+        GridItem(.flexible(), spacing: 0)
     ]
     
     var body: some View {
@@ -304,6 +305,7 @@ private struct GridPopupScrollView: View {
                         .onTapGesture {
                             coordinator.push(.popupDetail(popup))
                         }
+                        .padding(.bottom, 20)
                 }
             }
         }
@@ -315,51 +317,55 @@ private struct GridPopupCell: View {
     let popup: Popup
     
     var body: some View {
-        ZStack {
-            Rectangle()
-                .fill(Color.blue)
-                .frame(width: 165, height: 206, alignment: .center)
-            
-            KFImage(URL(string: popup.imageURL))
-                .placeholder {
-                    Rectangle()
-                        .frame(width: 165, height: 206)
-                }
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: 165, height: 206, alignment: .center)
-                .clipped() // 넘치는 영역 완전히 제거
-                .overlay (alignment: .topTrailing) {
-                    BookmarkButton(isLiked: homeViewModel.isLiked(popup: popup),
-                                   info: .stroke) {
-                        homeViewModel.toggleLike(popup: popup)
-                    }
-                    .padding(10)
-                    .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
-                }
-        }
-        .frame(width: 165, height: 206)
         
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 0) {
+            
+            ZStack {
+                Rectangle()
+                    .fill(Color.blue)
+                    .frame(width: 165, height: 206, alignment: .center)
+                
+                KFImage(URL(string: popup.imageURL))
+                    .placeholder {
+                        Rectangle()
+                            .frame(width: 165, height: 206)
+                    }
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 165, height: 206, alignment: .center)
+                    .clipped() // 넘치는 영역 완전히 제거
+                    .overlay (alignment: .topTrailing) {
+                        BookmarkButton(isLiked: homeViewModel.isLiked(popup: popup),
+                                       info: .stroke) {
+                            homeViewModel.toggleLike(popup: popup)
+                        }
+                        .padding(10)
+                        .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
+                    }
+            }
+            .frame(width: 165, height: 206)
             
             Text(popup.roadAddress?.shortAddress ?? popup.address.shortAddress)
                 .font(.scdream(.regular, size: 12))
                 .foregroundStyle(Color.mainBlack)
+                .padding(.top, 10)
             
             Text(popup.name)
-                .font(.scdream(.medium, size: 15))
+                .font(.scdream(.bold, size: 15))
                 .foregroundStyle(Color.mainBlack)
                 .lineLimit(1) // 한줄만 표시
                 .truncationMode(.tail) // 넘치면 ...으로 표시
+                .padding(.top, 5)
             
             HStack {
                 Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
                 Text("-")
                 Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
             }
-            .font(.scdream(.medium, size: 12))
+            .font(.scdream(.regular, size: 12))
             .foregroundStyle(Color.mainGray)
-
+            .padding(.top, 5)
+            .padding(.leading, -1)
         }
         .frame(width: 165, alignment: .leading)
     }

@@ -64,6 +64,7 @@ private struct MonthHeaderView: View {
                 Text(parts[1])
             }
             .ppStyleFont(.scdream(.medium, size: 15))
+            .foregroundStyle(Color.mainBlack)
             
             Spacer()
             
@@ -86,7 +87,8 @@ private struct WeekHeaderView: View {
         HStack(spacing: 0) {
             ForEach(days, id: \.self) { day in
                 Text(day)
-                    .ppStyleFont(.scdream(.medium, size: 10))
+                    .ppStyleFont(.scdream(.regular, size: 12))
+                    .foregroundStyle(Color.mainGray2)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -301,10 +303,11 @@ private struct PopupListView: View {
             
             HStack {
                 Text(formattedDate(date))
-                    .ppStyleFont(.scdream(.bold, size: 15))
+                    .ppStyleFont(.scdream(.bold, size: 12))
+                    .foregroundStyle(Color.mainBlack)
                 Spacer()
             }
-            .padding(.top, 19)
+            .padding(.top, 20)
             
             if popups.isEmpty {
                 Text("선택한 날짜에 팝업이 없습니다")
@@ -328,7 +331,7 @@ private struct PopupListView: View {
                         }
                     }
                 }
-                .padding(.top, 24)
+                .padding(.top, 20)
             }
         }
     }
@@ -359,21 +362,26 @@ private struct CalendarPopupCell: View {
                     .clipped()
                 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(popup.name)
-                        .ppStyleFont(.scdream(.medium, size: 17))
+                    Text(popup.roadAddress?.shortAddress ?? popup.address.shortAddress)
+                        .font(.scdream(.regular, size: 12))
                         .foregroundStyle(Color.mainBlack)
                     
-                    Text(popup.address.shortAddress)
-                        .ppStyleFont(.scdream(.medium, size: 10))
+                    Text(popup.name)
+                        .font(.scdream(.bold, size: 15))
                         .foregroundStyle(Color.mainBlack)
+                        .lineLimit(1) // 한줄만 표시
+                        .truncationMode(.tail) // 넘치면 ...으로 표시
+                        .padding(.top, 5)
                   
                     HStack {
                         Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
                         Text("-")
                         Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
                     }
-                    .ppStyleFont(.scdream(.medium, size: 10))
-                    .foregroundStyle(Color.mainBlack)
+                    .font(.scdream(.regular, size: 12))
+                    .foregroundStyle(Color.mainGray)
+                    .padding(.top, 5)
+                    .padding(.leading, -1)
                     
                     Spacer()
                 }

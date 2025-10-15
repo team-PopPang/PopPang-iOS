@@ -18,7 +18,7 @@ struct SearchTextField: View {
             HStack {
                 // 입력
                 TextField("", text: $text)
-                    .font(.scdream(.medium, size: 12))
+                    .font(.scdream(.medium, size: 11))
                     .frame(height: 45)
                     .keyboardType(.default)
                     .padding(.horizontal, 16)
@@ -44,9 +44,9 @@ struct SearchTextField: View {
             // 플레이스홀더
             if text.isEmpty {
                 Text(placeholder)
-                    .font(.scdream(.regular, size: 12))
+                    .ppStyleFont(.scdream(.regular, size: 11))
                     .foregroundStyle(Color.mainGray)
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, 15)
                     .opacity(text.isEmpty ? 1 : 0)
             }
         }
