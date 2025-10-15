@@ -8,11 +8,33 @@
 import SwiftUI
 
 struct BookmarkView: View {
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var rootViewModel: RootViewModel
     var body: some View {
-        Text("BookmarkView")
+        VStack(spacing: 0) {
+            
+            // MARK: - 네비게이션바            
+            CustomNavigationBar {
+                Text("찜")
+                    .ppStyleFont(.scdream(.medium, size: 18))
+                    .foregroundStyle(Color.mainBlack)
+                    .frame(height: 45)
+                
+                Spacer()
+                
+                IconButton {
+                    print("알림 버튼 클릭됨")
+                    coordinator.push(.alert(uuid: rootViewModel.user?.userUuid ?? ""))
+                }
+            }
+            
+            Spacer()
+        }
     }
 }
 
 #Preview {
-    BookmarkView()
+    NavigationStack {
+        BookmarkView()
+    }
 }

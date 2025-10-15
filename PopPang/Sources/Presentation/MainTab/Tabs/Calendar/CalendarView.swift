@@ -10,15 +10,25 @@ import SwiftUI
 struct CalendarView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @EnvironmentObject private var calendarViewModel: CalendarViewModel
+    @EnvironmentObject private var rootViewModel: RootViewModel
     private let segments: [String] = ["월간", "주간"]
     
     var body: some View {
         VStack(spacing: 0) {
             
             // MARK: - 네비게이션바
-            CustomNavigation()
-                .padding(.top, 15)
-                .padding(.horizontal, .contentPadding)
+            CustomNavigationBar {
+                Text("캘린더")
+                    .ppStyleFont(.scdream(.medium, size: 18))
+                    .foregroundStyle(Color.mainBlack)
+                
+                Spacer()
+                
+                IconButton {
+                    print("알림 버튼 클릭됨")
+                    coordinator.push(.alert(uuid: rootViewModel.user?.userUuid ?? ""))
+                }
+            }
             
             // MARK: - 캘린더
             ScrollView {
@@ -33,27 +43,6 @@ struct CalendarView: View {
             .padding(.top, 10)
             Spacer()
         }
-    }
-}
-
-// MARK: - Custom Navigation
-private struct CustomNavigation: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
-    @EnvironmentObject private var rootViewModel: RootViewModel
-    var body: some View {
-        HStack(spacing: 0) {
-            Text("캘린더")
-                .ppStyleFont(.scdream(.medium, size: 18))
-                .foregroundStyle(Color.mainBlack)
-            
-            Spacer()
-            
-            IconButton {
-                print("알림 버튼 클릭됨")
-                coordinator.push(.alert(uuid: rootViewModel.user?.userUuid ?? ""))
-            }
-        }
-        .frame(height: 45)
     }
 }
 

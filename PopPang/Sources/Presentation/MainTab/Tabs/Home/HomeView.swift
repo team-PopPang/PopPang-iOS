@@ -24,7 +24,7 @@ struct HomeView: View {
             VStack(spacing: 0) {
                 
                 // MARK: - Search & Alert
-                HStack(spacing: 0) {
+                CustomNavigationBar {
                     SearchTextField(placeholder: "궁금한 장소를 검색해보세요",
                                     text: $searchText)
                     .disabled(true)
@@ -42,8 +42,7 @@ struct HomeView: View {
                     }
                     .padding(.leading, 15)
                 }
-                .padding(.horizontal, .contentPadding)
-                .padding(.vertical, 15)
+                .padding(.bottom, 15)
                 
                 ScrollView {
                     VStack(spacing: 0) {
