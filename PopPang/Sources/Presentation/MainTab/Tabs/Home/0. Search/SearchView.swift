@@ -47,7 +47,7 @@ struct SearchView: View {
                 }
                 .padding(.leading, 15)
             }
-            .padding(.top, 15)
+            .padding(.top, 10)
             .padding(.leading, .contentPadding)
             .padding(.trailing, 15)
             .padding(.bottom, 10)
