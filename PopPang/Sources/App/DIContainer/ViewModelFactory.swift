@@ -19,7 +19,7 @@ final class ViewModelFactory {
         HomeViewModel(userUuid: userUuid)
     }
     
-    func createCalendar() -> CalendarViewModel {
-        CalendarViewModel()
+    func createCalendar(userUuid: String) -> CalendarViewModel {
+        CalendarViewModel(userUuid: userUuid)
     }
 }

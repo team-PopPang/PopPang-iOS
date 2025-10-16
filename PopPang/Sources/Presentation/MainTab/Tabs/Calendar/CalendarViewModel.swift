@@ -8,11 +8,15 @@
 import Foundation
 
 final class CalendarViewModel: ObservableObject {
+    let userUuid: String
     @Dependency private var popupUsecase: PopupUsecaseProtocol
     
     @Published var calendarPopups: [Popup] = []
     
-    init() {
+    init(userUuid: String) {
+        self.userUuid = "test"
+        
+        
         Task {
             do {
                 let popups = try await popupUsecase.getPopupList()

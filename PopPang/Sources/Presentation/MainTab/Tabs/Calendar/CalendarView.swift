@@ -49,7 +49,7 @@ struct CalendarView: View {
 #Preview {
     CalendarView()
         .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
-        .environmentObject(CalendarViewModel())
+        .environmentObject(CalendarViewModel(userUuid: "1234"))
 }
 
 

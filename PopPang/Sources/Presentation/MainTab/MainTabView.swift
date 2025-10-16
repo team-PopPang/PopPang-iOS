@@ -19,7 +19,7 @@ struct MainTabView: View {
         
         // MARK: - 뷰모델초기화
         _homeViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createHome(userUuid: userUduuid))
-        _calendarViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createCalendar())
+        _calendarViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createCalendar(userUuid: userUduuid))
     }
     
     var body: some View {

@@ -13,7 +13,7 @@ struct CustomNavigationBar<Content: View>: View {
         self.content = content()
     }
     var body: some View {
-        HStack {
+        HStack(spacing: 0) {
             content
         }
         .padding(.top, 10)
