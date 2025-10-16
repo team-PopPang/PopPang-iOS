@@ -10,6 +10,8 @@ import SwiftUI
 struct BookmarkView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @EnvironmentObject private var rootViewModel: RootViewModel
+    private let segments: [String] = ["리스트", "캘린더"]
+    
     var body: some View {
         VStack(spacing: 0) {
             
@@ -28,6 +30,15 @@ struct BookmarkView: View {
                 }
             }
             
+            // MARK: - 세그먼트
+            SegmentedControlView(segments: segments,
+                                 views: [
+                                    ListView(),
+                                    FavoriteCalendarView()
+                                ],
+                                 background: .mainGray3,
+                                 foreground: .mainOrange,
+            )
             Spacer()
         }
     }
@@ -36,5 +47,39 @@ struct BookmarkView: View {
 #Preview {
     NavigationStack {
         BookmarkView()
+    }
+}
+
+struct ListView: View {
+    var body: some View {
+        VStack {
+            Text("ListView")
+        }
+    }
+}
+
+struct FavoriteCalendarView: View {
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 0) {
+                // MARK: - 캘린더
+                CustomCalendar(eventCounts: [:], onDateSelected: { date in
+                    
+                })
+                .padding(.top, 24)
+                
+                // MARK: - 시트
+                ShadowDivider()
+                    .ignoresSafeArea(edges: .horizontal)
+                
+                PopupListView(
+                    date: .now,
+                    popups: []
+                )
+                
+                Spacer()
+            }
+            .padding(.horizontal, 10)
+        }
     }
 }
