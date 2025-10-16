@@ -9,12 +9,15 @@ import SwiftUI
 import Kingfisher
 
 struct CustomCalendar: View {
-    @StateObject private var viewModel: CustomCalendarViewModel
+    @StateObject private var viewModel = CustomCalendarViewModel()
+    let eventCounts: [Date: Int]
+    let onDateSelected: (Date) -> Void
     
-    init(popupList: [Popup]) {
-        _viewModel = StateObject(wrappedValue: CustomCalendarViewModel(popupList: popupList))
+    init(eventCounts: [Date: Int],
+         onDateSelected: @escaping (Date) -> Void) {
+        self.eventCounts = eventCounts
+        self.onDateSelected = onDateSelected
     }
-    
     var body: some View {
         VStack(spacing: 0) {
             // MARK: - 캘린더
@@ -23,21 +26,14 @@ struct CustomCalendar: View {
                     .padding(.horizontal, 10)
                 WeekHeaderView()
                     .padding(.top, 15)
-                DateGridView(viewModel: viewModel)
+                DateGridView(
+                    viewModel: viewModel,
+                    eventCounts: eventCounts,
+                    onSelect: onDateSelected
+                )
                     .padding(.top, 15)
             }
             .padding(.horizontal, .contentPadding)
-            
-            // MARK: - 시트
-            VStack(spacing: 0) {
-                ShadowDivider()
-                    .ignoresSafeArea(edges: .horizontal)
-                
-                PopupListView(date: viewModel.currentDate,
-                              popups: viewModel.popupForDate(viewModel.currentDate))
-                    .padding(.horizontal, .contentPadding)
-            }
-            .padding(.top, 15)
         }
     }
 }
@@ -98,14 +94,21 @@ private struct WeekHeaderView: View {
 // MARK: - 날짜 그리드
 private struct DateGridView: View {
     @ObservedObject var viewModel: CustomCalendarViewModel
+    let eventCounts: [Date: Int]
+    let onSelect: (Date) -> Void
     
     let columns = Array(repeating: GridItem(.flexible()), count: 7)
     var body: some View {
         LazyVGrid(columns: columns, spacing: 15) {
             ForEach(viewModel.extractDate()) { value in
-                DateCardView(viewModel: viewModel, value: value)
+                let count = eventCounts[value.date.stripTime()] ?? 0
+                DateCardView(viewModel: viewModel, value: value,
+                             eventCount: count)
                     .onTapGesture {
                         viewModel.currentDate = value.date
+                        if value.day != -1 {
+                            onSelect(value.date)   // 날짜 클릭 시 콜백 전달
+                        }
                     }
             }
         }
@@ -116,6 +119,7 @@ private struct DateGridView: View {
 private struct DateCardView: View {
     @ObservedObject var viewModel: CustomCalendarViewModel
     var value: DateValue
+    var eventCount: Int
 
     var body: some View {
         VStack(spacing: 5) {
@@ -136,9 +140,9 @@ private struct DateCardView: View {
                                          : Color.mainBlack)
                 }
                 
-                let count = viewModel.popupCount(for: value.date)
-                if count > 0 {
-                    Text("+\(count)건")
+
+                if eventCount > 0 {
+                    Text("+\(eventCount)건")
                         .ppStyleFont(.scdream(.medium, size: 8))
                         .foregroundStyle(Color.mainOrange)
                         .frame(height: 10)
@@ -146,6 +150,8 @@ private struct DateCardView: View {
                     Spacer()
                         .frame(height: 10)
                 }
+
+                Spacer().frame(height: 10)
             }
         }
         .frame(height: 43)
@@ -171,6 +177,13 @@ extension Date {
             return calendar.date(byAdding: .day, value: day - 1 , to: startDate)!
         }
     }
+    
+    
+    /// 날짜(Date)에서 시간(Hour, Minute, Second)을 잘라내고 “0시 0분 0초”로 만든다
+    /// - Returns: 2025-10-16 00:00:00
+    func stripTime() -> Date {
+        Calendar.current.startOfDay(for: self)
+    }
 }
 
 
@@ -182,12 +195,6 @@ final class CustomCalendarViewModel: ObservableObject {
     
     // MARK: - 달력을 그릴 때 쓰는 기준 달(화살표 버튼 클릭 시 월 업데이트)
     @Published var currentMonth: Int = 0
-    
-    let popupList: [Popup]
-    
-    init(popupList: [Popup]) {
-        self.popupList = popupList
-    }
     
     /// 년도와 월 추출
     /// - Returns: [String]]
@@ -256,149 +263,11 @@ final class CustomCalendarViewModel: ObservableObject {
         let calendar = Calendar.current
         return calendar.isDate(date1, inSameDayAs: date2)
     }
-    
-    /// 날짜가 기간 안에 포함되는지 확인하는 함수
-    /// - Parameters:
-    ///   - date: 검사할 대상 날짜
-    ///   - start: 팝업 시작일
-    ///   - end: 팝업 종료일
-    /// - Returns: true이면 해당 날짜가 팝업 기간 내에 포함됨
-    func isDate(_ date: Date, between start: Date, and end: Date) -> Bool {
-        let calendar = Calendar.current
-        let startDay = calendar.startOfDay(for: start)
-        let endDay = calendar.startOfDay(for: end)
-        let target = calendar.startOfDay(for: date)
-        return target >= startDay && target <= endDay
-    }
-    
-    /// 날짜별 팝업 개수 계산 함수
-    /// 팝업A (13~15일)
-    /// 팝업B (14~16일)
-    /// popupCount: 13일: 1, 14일: 2, 15일: 2, 16일: 1
-    /// - Parameter date: 팝업 개수를 계산할 대상 날짜
-    /// - Returns: 해당 날짜에 진행중인 팝업 개수
-    func popupCount(for date: Date) -> Int {
-        popupList.filter { popup in
-            isDate(date, between: popup.startDate, and: popup.endDate)
-        }
-        .count
-    }
-    
-    /// 특정 날짜에 해당하는 팝업 리스트 반환
-    /// - Parameter date: 선택된 날짜
-    /// - Returns: 팝업 배열
-    func popupForDate(_ date: Date) -> [Popup] {
-        popupList.filter { popup in
-            isDate(date, between: popup.startDate, and: popup.endDate)
-        }
-    }
 }
 
-private struct PopupListView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
-    let date: Date
-    let popups: [Popup]
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            
-            HStack {
-                Text(formattedDate(date))
-                    .ppStyleFont(.scdream(.bold, size: 12))
-                    .foregroundStyle(Color.mainBlack)
-                Spacer()
-            }
-            .padding(.top, 20)
-            
-            if popups.isEmpty {
-                Text("선택한 날짜에 팝업이 없습니다")
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, 24)
-            } else {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 10) {
-                        ForEach(Array(popups.enumerated()), id: \.element) { index, popup in
-                            CalendarPopupCell(popup: popup)
-                                .onTapGesture {
-                                    coordinator.push(.popupDetail(popup))
-                                }
-                            
-                            // 마미막 셀 아래에는 Divider 넣지 않겠다
-                            if index != popups.count - 1 {
-                                Divider()
-                                    .frame(height: 1)
-                                    .background(Color.subWhite)
-                            }
-                        }
-                    }
-                }
-                .padding(.top, 20)
-            }
-        }
-    }
-    
-    private func formattedDate(_ date: Date) -> String {
-        let dayFormatter = DateFormatter()
-        dayFormatter.locale = Locale(identifier: "ko_KR")
-        dayFormatter.dateFormat = "d일 (E)"
-        return dayFormatter.string(from: date)
-    }
-}
-
-private struct CalendarPopupCell: View {
-    let popup: Popup
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                KFImage(URL(string: popup.imageURL))
-                    .placeholder {
-                        Rectangle()
-                            .fill(Color.mainGray3)
-                            .frame(width: 106, height: 133)
-                    }
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 106, height: 133, alignment: .center)
-                    .clipped()
-                
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(popup.roadAddress?.shortAddress ?? popup.address.shortAddress)
-                        .font(.scdream(.regular, size: 12))
-                        .foregroundStyle(Color.mainBlack)
-                    
-                    Text(popup.name)
-                        .font(.scdream(.bold, size: 15))
-                        .foregroundStyle(Color.mainBlack)
-                        .lineLimit(1) // 한줄만 표시
-                        .truncationMode(.tail) // 넘치면 ...으로 표시
-                        .padding(.top, 5)
-                  
-                    HStack {
-                        Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
-                        Text("-")
-                        Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
-                    }
-                    .font(.scdream(.regular, size: 12))
-                    .foregroundStyle(Color.mainGray)
-                    .padding(.top, 5)
-                    .padding(.leading, -1)
-                    
-                    Spacer()
-                }
-                .padding(.leading, 18)
-                .padding(.top, 10)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-}
-
-
-#Preview {
-    @Previewable @State var currentDate = Date()
-    CustomCalendar(popupList: [.popupMock, .popupMock, .popupMock])
-}
-
-
+//#Preview {
+//    @Previewable @State var currentDate = Date()
+//    CustomCalendar(popupList: [.popupMock, .popupMock, .popupMock])
+//}
 
 
