@@ -292,7 +292,7 @@ private struct GridPopupScrollView: View {
     private let columns = [
         // flexible: 가로 공간이 남으면 균등하게 나눠 쓰기
         GridItem(.flexible(), spacing: 15),
-        GridItem(.flexible(), spacing: 0)
+        GridItem(.flexible(), spacing: 15)
     ]
     
     var body: some View {
@@ -322,27 +322,31 @@ private struct GridPopupCell: View {
             ZStack {
                 Rectangle()
                     .fill(Color.blue)
-                    .frame(width: 165, height: 206, alignment: .center)
+                    .frame(height: 217, alignment: .center)
                 
-                KFImage(URL(string: popup.imageURL))
-                    .placeholder {
-                        Rectangle()
-                            .frame(width: 165, height: 206)
-                    }
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 165, height: 206, alignment: .center)
-                    .clipped() // 넘치는 영역 완전히 제거
-                    .overlay (alignment: .topTrailing) {
-                        BookmarkButton(isLiked: homeViewModel.isLiked(popup: popup),
-                                       info: .stroke) {
-                            homeViewModel.toggleLike(popup: popup)
+                GeometryReader { geo in
+                    KFImage(URL(string: popup.imageURL))
+                        .placeholder {
+                            Rectangle()
+                                .frame(height: 217)
                         }
-                        .padding(10)
-                        .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geo.size.width, height: 217, alignment: .center)
+                        .clipped() // 넘치는 영역 완전히 제거
+                }
+                
+                .overlay (alignment: .topTrailing) {
+                    BookmarkButton(isLiked: homeViewModel.isLiked(popup: popup),
+                                   info: .stroke) {
+                        homeViewModel.toggleLike(popup: popup)
                     }
+                                   .padding(10)
+                                   .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
+                }
+                
             }
-            .frame(width: 165, height: 206)
+            .frame(height: 217)
             
             Text(popup.roadAddress?.shortAddress ?? popup.address.shortAddress)
                 .font(.scdream(.regular, size: 12))
@@ -366,7 +370,6 @@ private struct GridPopupCell: View {
             .padding(.top, 5)
             .padding(.leading, -1)
         }
-        .frame(width: 165, alignment: .leading)
     }
 }
 
