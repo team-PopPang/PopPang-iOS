@@ -9,10 +9,10 @@ import SwiftUI
 import Kingfisher
 
 struct FavoriteListView: View {
-    @EnvironmentObject private var bookmarkViewModel: BookmarkViewModel
+    @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
     var body: some View {
         VStack(spacing: 0) {
-            ListGridPopupScrollView(bookmarkViewModel: bookmarkViewModel)
+            ListGridPopupScrollView(favoriteViewModel: favoriteViewModel)
                 .padding(.top, 24)
         }
         .padding(.horizontal, .contentPadding)
@@ -21,7 +21,7 @@ struct FavoriteListView: View {
 
 private struct ListGridPopupScrollView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
-    @ObservedObject var bookmarkViewModel: BookmarkViewModel
+    @ObservedObject var favoriteViewModel: FavoriteViewModel
     private let columns = [
         // flexible: 가로 공간이 남으면 균등하게 나눠 쓰기
         GridItem(.flexible(), spacing: 15),
@@ -31,7 +31,7 @@ private struct ListGridPopupScrollView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             LazyVGrid(columns: columns, spacing: 20) {
-                ForEach(bookmarkViewModel.favoritePopups) { popup in
+                ForEach(favoriteViewModel.favoritePopups) { popup in
                     VStack(alignment: .leading) {
                         ListPopupCell(popup: popup)
                             .onTapGesture {
@@ -46,7 +46,7 @@ private struct ListGridPopupScrollView: View {
 }
 
 private struct ListPopupCell: View {
-    @EnvironmentObject private var bookmarkViewModel: BookmarkViewModel
+    @EnvironmentObject private var bookmarkViewModel: FavoriteViewModel
     @EnvironmentObject private var homeViewModel: HomeViewModel
     let popup: Popup
     

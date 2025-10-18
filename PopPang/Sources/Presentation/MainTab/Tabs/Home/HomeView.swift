@@ -313,7 +313,7 @@ private struct GridPopupScrollView: View {
 
 private struct GridPopupCell: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
-    @EnvironmentObject private var bookmarkViewModel: BookmarkViewModel
+    @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
     let popup: Popup
     
     var body: some View {
@@ -344,7 +344,7 @@ private struct GridPopupCell: View {
                         // MARK: - 좋아요 토글 및 팝팡뷰 갱신
                         Task {
                             await homeViewModel.toggleLike(popup: popup)
-                            await bookmarkViewModel.loadFavoritePopups()
+                            await favoriteViewModel.loadFavoritePopups()
                         }
                     }
                    .padding(10)

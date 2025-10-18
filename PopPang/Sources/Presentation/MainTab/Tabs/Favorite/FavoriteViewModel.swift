@@ -1,52 +1,13 @@
 //
-//  BookmarkView.swift
+//  FavoriteViewModel.swift
 //  PopPang
 //
-//  Created by 김동현 on 9/16/25.
+//  Created by 김동현 on 10/18/25.
 //
 
-import SwiftUI
-import Kingfisher
+import Foundation
 
-struct BookmarkView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
-    @EnvironmentObject private var rootViewModel: RootViewModel
-    @EnvironmentObject private var bookmarkViewModel: BookmarkViewModel
-    private let segments: [String] = ["찜리스트", "찜캘린더"]
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            
-            // MARK: - 네비게이션바            
-            CustomNavigationBar {
-                Text("찜")
-                    .ppStyleFont(.scdream(.medium, size: 18))
-                    .foregroundStyle(Color.mainBlack)
-                    .frame(height: 45)
-                
-                Spacer()
-                
-                IconButton {
-                    print("알림 버튼 클릭됨")
-                    coordinator.push(.alert(uuid: rootViewModel.user?.userUuid ?? ""))
-                }
-            }
-            
-            // MARK: - 세그먼트
-            SegmentedControlView(segments: segments,
-                                 views: [
-                                    FavoriteListView(),
-                                    FavoriteCalendarView()
-                                ],
-                                 background: .mainGray3,
-                                 foreground: .mainOrange,
-            )
-            Spacer()
-        }
-    }
-}
-
-final class BookmarkViewModel: ObservableObject {
+final class FavoriteViewModel: ObservableObject {
     let userUuid: String
     @Dependency private var popupUsecase: PopupUsecaseProtocol
     @Published var likePostIds: Set<String> = [] // 찜 목록 popupUuid
@@ -74,7 +35,7 @@ final class BookmarkViewModel: ObservableObject {
 }
 
 // MARK: - 팝업 load 및 캘린더 관련 메서드
-extension BookmarkViewModel {
+extension FavoriteViewModel {
     
     /// 서버에서 찜 팝업 리스트 비동기 호출, 완료 후 날짜별 이벤트 개수 계산
     func loadFavoritePopups() async {
@@ -144,7 +105,7 @@ extension BookmarkViewModel {
 }
 
 // MARK: - 찜 누르기 관련 메서드
-extension BookmarkViewModel {
+extension FavoriteViewModel {
     
     /// 팝업이 좋아요 눌린 상태인지 체크
     func isLiked(popup: Popup) -> Bool {
@@ -175,16 +136,3 @@ extension BookmarkViewModel {
     }
     
 }
-
-#Preview {
-    NavigationStack {
-        BookmarkView()
-            .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
-            .environmentObject(RootViewModel())
-            .environmentObject(BookmarkViewModel(userUuid: "1234"))
-    }
-}
-
-
-
-

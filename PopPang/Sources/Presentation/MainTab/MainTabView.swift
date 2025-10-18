@@ -13,7 +13,7 @@ struct MainTabView: View {
     @EnvironmentObject private var rootViewModel: RootViewModel
     @StateObject private var homeViewModel: HomeViewModel
     @StateObject private var calendarViewModel: CalendarViewModel
-    @StateObject private var bookmarkViewModel: BookmarkViewModel
+    @StateObject private var bookmarkViewModel: FavoriteViewModel
     
     init(userUduuid: String) {
         self.userUduuid = userUduuid
@@ -34,7 +34,7 @@ struct MainTabView: View {
                             HomeView()
                         case .calendar: CalendarView()
                         case .map: MapView()
-                        case .bookmark: BookmarkView()
+                        case .bookmark: FavoritekView()
                         case .profile: ProfileView()
                         }
                     }

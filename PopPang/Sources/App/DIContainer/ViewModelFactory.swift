@@ -23,7 +23,7 @@ final class ViewModelFactory {
         CalendarViewModel(userUuid: userUuid)
     }
     
-    func createBookmark(userUuid: String) -> BookmarkViewModel {
-        BookmarkViewModel(userUuid: userUuid)
+    func createBookmark(userUuid: String) -> FavoriteViewModel {
+        FavoriteViewModel(userUuid: userUuid)
     }
 }
