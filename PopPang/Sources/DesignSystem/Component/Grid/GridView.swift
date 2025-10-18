@@ -8,7 +8,7 @@
 import SwiftUI
 import Kingfisher
 
-struct GritView: View {
+struct GridView: View {
     
     let imageURLs: [String] = [
         "https://picsum.photos/300/400",
@@ -51,5 +51,5 @@ struct GritView: View {
 }
 
 #Preview {
-    GritView()
+    GridView()
 }

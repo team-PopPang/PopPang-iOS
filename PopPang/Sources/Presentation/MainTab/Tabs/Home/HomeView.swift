@@ -44,7 +44,7 @@ struct HomeView: View {
                 }
                  .padding(.bottom, 15)
                 
-                ScrollView {
+                ScrollView(showsIndicators: false) {
                     VStack(spacing: 0) {
                         // MARK: - Best Popup
                         BestPopupScrollView(viewModel: homeViewModel)
@@ -313,6 +313,7 @@ private struct GridPopupScrollView: View {
 
 private struct GridPopupCell: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
+    @EnvironmentObject private var bookmarkViewModel: BookmarkViewModel
     let popup: Popup
     
     var body: some View {
@@ -339,12 +340,16 @@ private struct GridPopupCell: View {
                 .overlay (alignment: .topTrailing) {
                     BookmarkButton(isLiked: homeViewModel.isLiked(popup: popup),
                                    info: .stroke) {
-                        homeViewModel.toggleLike(popup: popup)
+                        
+                        // MARK: - 좋아요 토글 및 팝팡뷰 갱신
+                        Task {
+                            await homeViewModel.toggleLike(popup: popup)
+                            await bookmarkViewModel.loadFavoritePopups()
+                        }
                     }
-                                   .padding(10)
-                                   .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
+                   .padding(10)
+                   .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
                 }
-                
             }
             .frame(height: 217)
             
@@ -369,51 +374,6 @@ private struct GridPopupCell: View {
             .foregroundStyle(Color.mainGray)
             .padding(.top, 5)
             .padding(.leading, -1)
-        }
-    }
-}
-
-private struct GridPopupCellDefault: View {
-    @EnvironmentObject private var homeViewModel: HomeViewModel
-    let popup: Popup
-    
-    var body: some View {
-        KFImage(URL(string: popup.imageURL))
-            .placeholder {
-                Rectangle()
-                    .fill(Color.clear)
-                    .frame(width: 165, height: 206)
-            }
-            .resizable()
-            .aspectRatio(contentMode: .fill)
-            .frame(width: 165, height: 206, alignment: .top)
-            .clipped() // 넘치는 영역 완전히 제거
-            .overlay (alignment: .topTrailing){
-                BookmarkButton(isLiked: homeViewModel.isLiked(popup: popup),
-                               info: .stroke) {
-                    
-                }
-                .padding(10)
-                .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
-            }
-            
-        VStack(alignment: .leading, spacing: 5) {
-            
-            Text(popup.address.shortAddress)
-                .font(.scdream(.regular, size: 12))
-                .foregroundStyle(Color.mainBlack)
-            
-            Text(popup.name)
-                .font(.scdream(.medium, size: 15))
-                .foregroundStyle(Color.mainBlack)
-            
-            HStack {
-                Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
-                Text("-")
-                Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
-            }
-            .font(.scdream(.medium, size: 12))
-            .foregroundStyle(Color.mainGray)
         }
     }
 }

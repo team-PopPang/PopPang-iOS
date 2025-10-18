@@ -68,25 +68,23 @@ extension HomeViewModel {
     }
     
     /// 좋아요 상태 바꿔주는 함수
-    func toggleLike(popup: Popup) {
-        Task {
-            do {
-                if likePostIds.contains(popup.popupUuid) {
-                    print("좋아요 취소")
-                    try await popupUsecase.removeFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
-                    _ = await MainActor.run {
-                        likePostIds.remove(popup.popupUuid)
-                    }
-                } else {
-                    print("좋아요 추가")
-                    try await popupUsecase.addFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
-                    _ = await MainActor.run {
-                        likePostIds.insert(popup.popupUuid)
-                    }
+    func toggleLike(popup: Popup) async {
+        do {
+            if likePostIds.contains(popup.popupUuid) {
+                print("좋아요 취소")
+                try await popupUsecase.removeFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
+                _ = await MainActor.run {
+                    likePostIds.remove(popup.popupUuid)
                 }
-            } catch {
-                print("❌ 찜 토글 실패:", error)
+            } else {
+                print("좋아요 추가")
+                try await popupUsecase.addFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
+                _ = await MainActor.run {
+                    likePostIds.insert(popup.popupUuid)
+                }
             }
+        } catch {
+            print("❌ 찜 토글 실패:", error)
         }
     }
     

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SegmentedControlView: View {
-    @State private var selectedIndex = 1
+    @State private var selectedIndex = 0
     private let anyViews: [AnyView]
     
     let segments: [String]

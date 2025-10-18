@@ -72,18 +72,6 @@ extension CalendarViewModel {
     }
     
     
-    /// 사용자가 캘린더에서 특정 날짜를 선택하면 호출
-    /// 선택된 날짜를 selectedData로 업데이트
-    /// 현재 날짜에 포함되는 팝업들을 필터링 하여 selectedPopups에 저장
-    /// - Parameter date: 사용자가 선택한 날짜
-    func selectDate(_ date: Date) {
-        selectedDate = date
-        selectedPopups = calendarPopups.filter {
-            isDate(date, between: $0.startDate, and: $0.endDate)
-        }
-    }
-    
-    
     /// 주어진 날짜가 특정 팝업의 시작일과 종료일 사이에 포함되는지 확인
     /// - Parameters:
     ///   - date: 검사할 대상 날짜
@@ -96,5 +84,17 @@ extension CalendarViewModel {
         let e = cal.startOfDay(for: end)
         let t = cal.startOfDay(for: date)
         return t >= s && t <= e
+    }
+    
+    
+    /// 사용자가 캘린더에서 특정 날짜를 선택하면 호출
+    /// 선택된 날짜를 selectedData로 업데이트
+    /// 현재 날짜에 포함되는 팝업들을 필터링 하여 selectedPopups에 저장
+    /// - Parameter date: 사용자가 선택한 날짜
+    func selectDate(_ date: Date) {
+        selectedDate = date
+        selectedPopups = calendarPopups.filter {
+            isDate(date, between: $0.startDate, and: $0.endDate)
+        }
     }
 }
