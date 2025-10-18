@@ -8,13 +8,17 @@
 import SwiftUI
 
 struct FavoriteCalendarView: View {
+    @EnvironmentObject private var bookmarkViewModel: BookmarkViewModel
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
                 // MARK: - 캘린더
-                CustomCalendar(eventCounts: [:], onDateSelected: { date in
-                    
-                })
+                CustomCalendar(
+                    eventCounts: bookmarkViewModel.popupEventCounts,
+                    onDateSelected: { date in
+                        bookmarkViewModel.selectDate(date)
+                    }
+                )
                 .padding(.top, 24)
                 
                 // MARK: - 시트
@@ -22,8 +26,8 @@ struct FavoriteCalendarView: View {
                     .ignoresSafeArea(edges: .horizontal)
                 
                 PopupListView(
-                    date: .now,
-                    popups: []
+                    date: bookmarkViewModel.selectedDate,
+                    popups: bookmarkViewModel.selectedPopups
                 )
                 
                 Spacer()

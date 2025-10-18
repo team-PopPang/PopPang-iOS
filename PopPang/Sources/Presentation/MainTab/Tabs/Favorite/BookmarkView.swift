@@ -55,7 +55,7 @@ final class BookmarkViewModel: ObservableObject {
     @Published var favoritePopups: [Popup] = [.popupMock, .popupMock2, .popupMock3]
     
     // 캘린더 에서 클릭된 찜 팝업 리스트
-    @Published var todayPopups: [Popup] = []
+    @Published var selectedPopups: [Popup] = []
     
     // 현재 선택된 날짜
     @Published var selectedDate: Date = Date()
@@ -137,7 +137,7 @@ extension BookmarkViewModel {
     /// - Parameter date: 사용자가 선택한 날짜
     func selectDate(_ date: Date) {
         selectedDate = date
-        todayPopups = favoritePopups.filter {
+        selectedPopups = favoritePopups.filter {
             isDate(date, between: $0.startDate, and: $0.endDate)
         }
     }
