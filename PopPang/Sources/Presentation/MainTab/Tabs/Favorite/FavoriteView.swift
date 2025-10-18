@@ -8,11 +8,12 @@
 import SwiftUI
 import Kingfisher
 
-struct FavoritekView: View {
+struct FavoriteView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @EnvironmentObject private var rootViewModel: RootViewModel
     @EnvironmentObject private var bookmarkViewModel: FavoriteViewModel
     private let segments: [String] = ["찜리스트", "찜캘린더"]
+    @Binding var selectedTab: MainTabType
     
     var body: some View {
         VStack(spacing: 0) {
@@ -35,7 +36,7 @@ struct FavoritekView: View {
             // MARK: - 세그먼트
             SegmentedControlView(segments: segments,
                                  views: [
-                                    FavoriteListView(),
+                                    FavoriteListView(selectedTab: $selectedTab),
                                     FavoriteCalendarView()
                                 ],
                                  background: .mainGray3,
@@ -47,8 +48,9 @@ struct FavoritekView: View {
 }
 
 #Preview {
+    @Previewable @State var selectedTab: MainTabType = .favorite
     NavigationStack {
-        FavoritekView()
+        FavoriteView(selectedTab: $selectedTab)
             .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
             .environmentObject(RootViewModel())
             .environmentObject(FavoriteViewModel(userUuid: "1234"))

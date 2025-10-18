@@ -10,10 +10,30 @@ import Kingfisher
 
 struct FavoriteListView: View {
     @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
+    @Binding var selectedTab: MainTabType
     var body: some View {
         VStack(spacing: 0) {
-            ListGridPopupScrollView(favoriteViewModel: favoriteViewModel)
-                .padding(.top, 24)
+            
+            if !favoriteViewModel.favoritePopups.isEmpty {
+                ListGridPopupScrollView(favoriteViewModel: favoriteViewModel)
+                    .padding(.top, 24)
+            } else {
+                VStack {
+                    Text("찜한 팝업스토어가 없어요")
+                        .ppStyleFont(.scdream(.medium, size: 15))
+                    
+                    Button {
+                        selectedTab = .home
+                    } label: {
+                        Text("팝업스토어 구경가기")
+                            .frame(width: 206, height: 32)
+                            .foregroundStyle(Color.subWhite)
+                            .background(Color.mainOrange)
+                            .cornerRadius(5)
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                }
+            }
         }
         .padding(.horizontal, .contentPadding)
     }
@@ -113,5 +133,7 @@ private struct ListPopupCell: View {
 }
 
 #Preview {
-    FavoriteListView()
+    @Previewable @State var selectedTab: MainTabType = .favorite
+    FavoriteListView(selectedTab: $selectedTab)
+        .environmentObject(FavoriteViewModel(userUuid: "1234"))
 }

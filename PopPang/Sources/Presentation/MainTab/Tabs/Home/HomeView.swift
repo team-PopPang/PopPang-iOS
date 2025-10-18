@@ -394,12 +394,12 @@ struct BookmarkButton: View {
         } label: {
             switch info {
             case .fill:
-                Image(isLiked ? "like_fill" : "like")
+                Image(isLiked ? "favorite_fill" : "favorite")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 20, height: 20)
             case .stroke:
-                Image(isLiked ? "bookmark_fill" : "bookmark")
+                Image(isLiked ? "favorite_fill" : "favorite")
                     .renderingMode(.template)
                     .resizable()
                     .aspectRatio(contentMode: .fit)

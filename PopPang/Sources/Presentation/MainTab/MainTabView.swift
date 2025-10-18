@@ -34,7 +34,7 @@ struct MainTabView: View {
                             HomeView()
                         case .calendar: CalendarView()
                         case .map: MapView()
-                        case .bookmark: FavoritekView()
+                        case .favorite: FavoriteView(selectedTab: $selectedTab)
                         case .profile: ProfileView()
                         }
                     }

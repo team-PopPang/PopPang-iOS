@@ -11,7 +11,7 @@ enum MainTabType: String, CaseIterable {
     case home
     case calendar
     case map
-    case bookmark
+    case favorite
     case profile
     
     var title: String {
@@ -19,7 +19,7 @@ enum MainTabType: String, CaseIterable {
         case .home: return "홈"
         case .calendar: return "캘린더"
         case .map: return "팝팡지도"
-        case .bookmark: return "팝팡"
+        case .favorite: return "팝팡"
         case .profile: return "마이"
         }
     }

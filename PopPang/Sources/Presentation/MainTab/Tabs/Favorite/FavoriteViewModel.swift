@@ -13,7 +13,7 @@ final class FavoriteViewModel: ObservableObject {
     @Published var likePostIds: Set<String> = [] // 찜 목록 popupUuid
     
     // 서버에서 가져온 찜 팝업 리스트
-    @Published var favoritePopups: [Popup] = [.popupMock, .popupMock2, .popupMock3]
+    @Published var favoritePopups: [Popup] = []
     
     // 캘린더 에서 클릭된 찜 팝업 리스트
     @Published var selectedPopups: [Popup] = []
