@@ -254,10 +254,12 @@ struct NaverMapView: UIViewRepresentable {
 import SwiftUI
 import NMapsMap
 import Kingfisher
+import BottomSheet
 
 struct MapView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @StateObject private var mapViewModel = MapViewModel()
+    @State var bottomSheetPosition: BottomSheetPosition = .relative(0.4)
     
     var body: some View {
         ZStack {
@@ -267,30 +269,17 @@ struct MapView: View {
         .onAppear {
             LocationPermissionManager.shared.requestPermission()
         }
-        .sheet(
-            isPresented: Binding(
-                get: {
-                    guard let current = coordinator.paths.last else { return true }
-                    switch current {
-                    case .popupDetail:
-                        return false    // 📌 디테일 진입 시 시트 숨김
-                    default:
-                        return true     // 📌 기본 상태에서는 시트 표시
-                    }
-                },
-                set: { _ in }
-            )
-        ) {
+        .bottomSheet(bottomSheetPosition: self.$bottomSheetPosition,
+                     switchablePositions: [.absolute(120), .relative(0.4), .relative(0.6), .relative(0.95)],
+                     content: {
+            
             MapListView(popups: mapViewModel.mapPopups)
-                .padding(.contentPadding)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .presentationDetents([.height(300), .medium, .large])
-                .presentationCornerRadius(20)
-                .presentationBackground(Color.subWhite)
-                .presentationBackgroundInteraction(.enabled(upThrough: .large))
-                .interactiveDismissDisabled()
-                .mapSheet(49)
-        }
+                .padding(.horizontal, .contentPadding)
+        })
+        .customBackground(
+            Color.subWhite
+                .cornerRadius(30)
+        )
     }
 }
 
@@ -452,10 +441,20 @@ struct NaverMapView: UIViewRepresentable {
         marker.height = 50
         marker.captionText = ""
         marker.mapView = mapView
+        
+        // ✅ 마커 클릭 시 동작
+        marker.touchHandler = { _ in
+            print("📍 마커 클릭됨")
+            // ✅ 여기에 원하는 동작만 바로 작성
+            // 예: 디테일 이동
+            // coordinator.push(.popupDetail(popup))
+            return true
+        }
     }
 }
 
 #Preview("지도 탭 미리보기") {
+    @Previewable @State var selectedTab: MainTabType = .map
     TabView(selection: .constant(MainTabType.map)) {
         MapView()
             .tabItem {
@@ -464,5 +463,6 @@ struct NaverMapView: UIViewRepresentable {
             }
             .tag(MainTabType.map)
     }
+    .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
 }
 
