@@ -263,7 +263,9 @@ struct MapView: View {
     
     var body: some View {
         ZStack {
-            NaverMapView(popups: mapViewModel.mapPopups)
+            NaverMapView(popups: mapViewModel.mapPopups) { popup in
+                coordinator.push(.popupDetail(popup))
+            }
                 .ignoresSafeArea(edges: .top)
         }
         .onAppear {
@@ -365,6 +367,7 @@ struct MapListPopupCell: View {
 
 struct NaverMapView: UIViewRepresentable {
     var popups: [Popup]
+    var onMarkSelected: ((Popup) -> Void)?
     
     func makeCoordinator() {}
     
@@ -395,20 +398,18 @@ struct NaverMapView: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: UIViewType, context: Context) {
+        // 추후에 개수 변경시만 업데이트
         guard !popups.isEmpty else { return }
         
-        // 추후에 개수 변경시만 업데이트
-        
-        for popup in popups {
-            guard let lat = popup.latitude, let lng = popup.longitude else {
-                continue
-            }
+        // 위경도가 nil이 아닌 것만
+        let validPopups = popups.filter { $0.latitude != nil && $0.longitude != nil }
+        for popup in validPopups {
             
             guard let imageURL = URL(string: popup.imageURL) else { continue }
             
             Task {
                 if let roundedImage = await makeRoundedMarkerImage(from: imageURL) {
-                    addCustomMarker(to: uiView.mapView, image: roundedImage, lat: lat, lng: lng)
+                    addCustomMarker(to: uiView.mapView, image: roundedImage, popup: popup)
                 }
             }
         }
@@ -433,21 +434,22 @@ struct NaverMapView: UIViewRepresentable {
     }
 
     /// Naver Map에 마커 추가
-    func addCustomMarker(to mapView: NMFMapView, image: UIImage, lat: Double, lng: Double) {
+    func addCustomMarker(to mapView: NMFMapView, image: UIImage, popup: Popup) {
         let marker = NMFMarker()
-        marker.position = NMGLatLng(lat: lat, lng: lng)
+        marker.position = NMGLatLng(lat: popup.latitude!, lng: popup.longitude!)
         marker.iconImage = NMFOverlayImage(image: image)
         marker.width = 50
         marker.height = 50
         marker.captionText = ""
+        marker.userInfo = ["popup": popup]
         marker.mapView = mapView
         
         // ✅ 마커 클릭 시 동작
-        marker.touchHandler = { _ in
-            print("📍 마커 클릭됨")
-            // ✅ 여기에 원하는 동작만 바로 작성
-            // 예: 디테일 이동
-            // coordinator.push(.popupDetail(popup))
+        marker.touchHandler = { overlay in
+            if let marker = overlay as? NMFMarker,
+               let selectedPopup = marker.userInfo["popup"] as? Popup {
+                onMarkSelected?(selectedPopup)
+            }
             return true
         }
     }
