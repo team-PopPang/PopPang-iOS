@@ -65,7 +65,7 @@ struct HomeView: View {
                             Button {
                                 
                             } label: {
-                                Image("navigationBtn")
+                                Image("navigationButton")
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
                                     .frame(width: 16, height: 16)

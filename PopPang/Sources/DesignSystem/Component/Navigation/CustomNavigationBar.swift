@@ -9,7 +9,11 @@ import SwiftUI
 
 struct CustomNavigationBar<Content: View>: View {
     let content: Content
-    init(@ViewBuilder content: () -> Content) {
+    let hPadding: CGFloat
+    init(hPadding: CGFloat = .contentPadding,
+         @ViewBuilder content: () -> Content
+    ) {
+        self.hPadding = hPadding
         self.content = content()
     }
     var body: some View {
@@ -17,7 +21,7 @@ struct CustomNavigationBar<Content: View>: View {
             content
         }
         .padding(.top, 10)
-        .padding(.horizontal, .contentPadding)
+        .padding(.horizontal, hPadding)
         .frame(height: 45 + 10) // 필요하면 아래 패딩 추가
     }
 }

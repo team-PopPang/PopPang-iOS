@@ -25,7 +25,6 @@ struct CalendarView: View {
                 Spacer()
                 
                 IconButton {
-                    print("알림 버튼 클릭됨")
                     coordinator.push(.alert(uuid: rootViewModel.user?.userUuid ?? ""))
                 }
             }

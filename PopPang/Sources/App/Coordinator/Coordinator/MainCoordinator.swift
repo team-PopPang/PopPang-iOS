@@ -15,6 +15,8 @@ enum MainRoute: Hashable {
     case search
     case alert(uuid: String)
     case popupDetail(Popup)
+    
+    // profile
 }
 
 enum SheetRoute: Identifiable {
