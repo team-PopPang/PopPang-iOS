@@ -170,12 +170,14 @@ private struct BestPopupCell: View {
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             
-            // MARK: - 이미지
-            KFImage(URL(string: popup.imageUrlList[0]))
-                .resizable()
-                .aspectRatio(contentMode: .fill) // 프레임을 채움
-                .frame(width: 194, height: 271)  // 포스트 사이즈
-                .clipped()                       // 넘치는 영역 제거
+            GeometryReader { geo in
+                // MARK: - 이미지
+                KFImage(URL(string: popup.imageUrlList[0]))
+                    .resizable()
+                    .aspectRatio(contentMode: .fill) // 프레임을 채움
+                    .frame(width: geo.size.width, height: geo.size.height)  // 포스트 사이즈
+                    .clipped()                       // 넘치는 영역 제거
+            }
             
             // MARK: - 그라데이션
             /// startPoint -> endPoint방향으로 색이 변함
@@ -204,13 +206,15 @@ private struct BestPopupCell: View {
                         .aspectRatio(contentMode: .fit)
                         .foregroundStyle(Color.bestPostAddress)
                         .frame(width: 15, height: 15)
-                    Text(popup.address.shortAddress)
+                    Text(popup.roadAddress.shortAddress)
                         .font(.scdream(.medium, size: 12))
                         .foregroundStyle(Color.bestPostAddress)
                 }
             }
             .padding(11)
         }
+        .frame(width: 194, height: 271)
+        // .cornerRadius(10)
     }
 }
 
@@ -271,7 +275,7 @@ private struct ComingPopupCell: View {
                     Text("\(popup.name)")
                         .font(.scdream(.medium, size: 13))
                         .foregroundStyle(Color.mainBlack)
-                    Text("\(popup.address.shortAddress)")
+                    Text("\(popup.roadAddress.shortAddress)")
                         .font(.scdream(.regular, size: 11))
                         .foregroundStyle(Color.mainGray)
                 }

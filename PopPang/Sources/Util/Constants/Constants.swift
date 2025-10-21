@@ -10,6 +10,7 @@ import Foundation
 enum Constants {
     enum PopPangAPI {
         static let apiURL = "https://poppang.co.kr/api/v1"
+        static let imageURL = "https://poppang.co.kr"
     }
     
     enum KakaoAPI {

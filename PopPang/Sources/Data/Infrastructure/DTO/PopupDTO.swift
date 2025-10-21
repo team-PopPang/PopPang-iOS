@@ -34,7 +34,7 @@ extension PopupDTO {
             if url.hasPrefix("http") {
                 return url
             } else {
-                return Constants.PopPangAPI.apiURL + url
+                return Constants.PopPangAPI.imageURL + url
             }
         }
         

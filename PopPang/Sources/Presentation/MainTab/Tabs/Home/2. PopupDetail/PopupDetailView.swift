@@ -15,22 +15,23 @@ struct PopupDetailView: View {
         ZStack(alignment: .bottom) {
             ScrollView {
                 VStack(alignment: .leading) {
-                    /*
-                     Image(popup.imageURL)
-                     .resizable()
-                     .aspectRatio(contentMode: .fill)
-                     .frame(height: 450)
-                     .clipped()
-                     */
                     GeometryReader { geo in
                         let offset = geo.frame(in: .global).minY
-                        KFImage(URL(string: popup.imageUrlList[0]))
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: geo.size.width,
-                                   height: 450 + (offset > 0 ? offset : 0)) // 세로만 늘어남
-                            .clipped()
-                            .offset(y: (offset > 0 ? -offset : 0)) // 위로 당길 때 자연스럽게 보정
+
+                        TabView {
+                            ForEach(popup.imageUrlList, id: \.self) { imageUrl in
+                                KFImage(URL(string: imageUrl))
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: geo.size.width,
+                                           height: 450 + (offset > 0 ? offset : 0)) // 전체 TabView 높이 늘림
+                                    .clipped()
+                            }
+                        }
+                        .tabViewStyle(.page)
+                        // 여기서 TabView 자체에 offset 적용
+                        .frame(height: 450 + (offset > 0 ? offset : 0))
+                        .offset(y: (offset > 0 ? -offset : 0))
                     }
                     .frame(height: 450) // 기본 높이
                     
@@ -92,6 +93,32 @@ struct PopupDetailView: View {
             
         }
         
+        // MARK: - onAppear 시점에 Kingfisher의 retriveImage API로 모든 사진 로드
+        .onAppear {
+            for urlString in popup.imageUrlList {
+                guard let url = URL(string: urlString) else { continue }
+
+                // ✅ 캐시 확인 후 없으면 다운로드
+                ImageCache.default.retrieveImage(forKey: url.cacheKey) { result in
+                    switch result {
+                    case .success(let value):
+                        if value.image == nil {
+                            // 메모리/디스크에 캐시가 없을 경우 다운로드 실행
+                            KingfisherManager.shared.retrieveImage(with: url) { _ in
+                                print("✅ Preloaded \(url)")
+                            }
+                        } else {
+                            print("✅ Already cached \(url)")
+                        }
+                    case .failure:
+                        // 실패한 경우도 다시 다운로드 시도
+                        KingfisherManager.shared.retrieveImage(with: url) { _ in
+                            print("✅ Preloaded \(url)")
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
