@@ -13,6 +13,8 @@ protocol PopupUsecaseProtocol {
     
     func getFavoriteList(userUuid: String) async throws -> [Popup]
     
+    func searchPopupList(searchText: String) async throws -> [Popup]
+    
     func addFavorite(userUuid: String, popupUuid: String) async throws
     
     func removeFavorite(userUuid: String, popupUuid: String) async throws

@@ -32,7 +32,7 @@ struct HomeView: View {
                         Color.clear
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                coordinator.presentSheet(.search)
+                                coordinator.presentSheet(.search(uuid: rootViewModel.user?.userUuid ?? ""))
                             }
                     }
                     

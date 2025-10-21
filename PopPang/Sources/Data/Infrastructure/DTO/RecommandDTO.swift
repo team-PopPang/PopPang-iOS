@@ -7,14 +7,14 @@
 
 import Foundation
 
-struct RecommandDTO: Decodable, Identifiable {
+struct RecommendListDTO: Decodable, Identifiable {
     let id: Int
     let recommendName: String
 }
 
-extension RecommandDTO {
-    func toModel() -> Recommand {
-        Recommand(id: id,
+extension RecommendListDTO {
+    func toModel() -> RecommendList {
+        RecommendList(id: id,
                   recommendName: recommendName)
     }
 }

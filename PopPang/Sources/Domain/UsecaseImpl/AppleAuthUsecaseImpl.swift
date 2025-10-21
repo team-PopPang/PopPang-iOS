@@ -52,7 +52,7 @@ final class StubAppleAuthUsecaseImpl: AppleAuthUsecaseProtocol {
             isAlerted: false,
             fcmToken: "",
             alertKeywordList: [],
-            recommandList: []
+            recommendList: []
         )
     }
 }

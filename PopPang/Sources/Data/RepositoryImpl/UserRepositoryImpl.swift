@@ -29,9 +29,9 @@ final class UserRepositoryImpl: UserRepositoryProtocol {
         return userDTO
     }
     
-    func getRecommandList() async throws -> [RecommandDTO] {
+    func getRecommandList() async throws -> [RecommendListDTO] {
         do {
-            let response = try await NetworkProvider.shared.userProvider.asyncRequest(.getRecommandList, decodeTo: [RecommandDTO].self)
+            let response = try await NetworkProvider.shared.userProvider.asyncRequest(.getRecommendList, decodeTo: [RecommendListDTO].self)
             return response
         } catch {
             throw error

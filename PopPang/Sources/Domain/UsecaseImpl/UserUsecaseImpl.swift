@@ -23,7 +23,7 @@ final class UserUsecaseImpl: UserUsecaseProtocol {
         try await userRepository.autoLogin(userUuid: userUuid).toModel()
     }
     
-    func getRecommandList() async throws -> [Recommand] {
+    func getRecommandList() async throws -> [RecommendList] {
         try await userRepository.getRecommandList()
             .map { $0.toModel() }
     }
@@ -54,8 +54,8 @@ final class StubUserUsecaseImpl: UserUsecaseProtocol {
         return User.adminUser
     }
     
-    func getRecommandList() async throws -> [Recommand] {
-        return [Recommand(id: 1, recommendName: "123")]
+    func getRecommandList() async throws -> [RecommendList] {
+        return [RecommendList(id: 1, recommendName: "123")]
     }
     
     func getAlertKeywordList(userUuid: String) async throws -> [Keyword] {

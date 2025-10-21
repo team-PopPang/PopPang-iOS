@@ -24,6 +24,11 @@ final class PopupRepositoryImpl: PopupRepositoryProtocol {
         return response
     }
     
+    func searchPopupList(searchText: String) async throws -> [PopupDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.searchPopupList(searchText: searchText),
+                                                                     decodeTo: [PopupDTO].self)
+    }
+    
     func addFavorite(userUuid: String, popupUuid: String) async throws {
         try await NetworkProvider.shared.popupProvidder.asyncRequestVoid(.addFavorite(userUuid: userUuid, popupUuid: popupUuid))
     }

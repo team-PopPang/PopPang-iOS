@@ -19,13 +19,16 @@ protocol UserUsecaseProtocol {
     /// - Returns: User
     func autoLogin(userUuid: String) async throws -> User
     
+    
     /// 추첰 카테고리 리스트 가져오기
     /// - Returns: [Recommand]
-    func getRecommandList() async throws -> [Recommand]
+    func getRecommandList() async throws -> [RecommendList]
+    
     
     /// 키워드 리스트 가져오기
     /// - Returns: [Keyword]
     func getAlertKeywordList(userUuid: String) async throws -> [Keyword]
+    
     
     /// 알림키워드 추가하기
     /// - Parameters:

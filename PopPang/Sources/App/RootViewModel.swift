@@ -64,7 +64,7 @@ final class RootViewModel: ObservableObject {
     }
     
     // MARK: - RecommandList
-    @Published var recommandList: [Recommand] = []
+    @Published var recommandList: [RecommendList] = []
     
     init() {
         Task {
@@ -213,7 +213,7 @@ extension RootViewModel {
         // MARK: - 추천 키워드 세팅
         case .setRecommandList(let recommandList):
             var registerUser = user!
-            registerUser.recommandList = recommandList
+            registerUser.recommendList = recommandList
             self.user = registerUser
             print("추천 키워드 적용됨: \(self.user!)")
             

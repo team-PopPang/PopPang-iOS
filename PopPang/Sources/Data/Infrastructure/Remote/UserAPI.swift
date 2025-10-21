@@ -11,7 +11,7 @@ import Foundation
 enum UserAPI {
     case checkNickname(nickname: String)
     case autoLogin(userUuid: String)
-    case getRecommandList
+    case getRecommendList
     case getAlertKeywordList(userUuid: String)
     case addAlertKeyword(userUuid: String, newAlertKeyword: String)
     case removeAlertKeyword(userUuid: String, deleteAlertKeyword: String)
@@ -24,7 +24,7 @@ extension UserAPI: TargetType {
         switch self {
         case .checkNickname: return "/user/nickname/duplicated"
         case .autoLogin: return "/auth/autoLogin"
-        case .getRecommandList: return "/recommend"
+        case .getRecommendList: return "/recommend"
         case .getAlertKeywordList: return "/alert-keyword"
         case .addAlertKeyword: return "/alert-keyword"
         case .removeAlertKeyword: return "/alert-keyword"
@@ -35,7 +35,7 @@ extension UserAPI: TargetType {
         switch self {
         case .checkNickname: return .get
         case .autoLogin: return .post
-        case .getRecommandList: return .get
+        case .getRecommendList: return .get
         case .getAlertKeywordList: return .get
         case .addAlertKeyword: return .post
         case .removeAlertKeyword: return .delete
@@ -50,7 +50,7 @@ extension UserAPI: TargetType {
         case .autoLogin(let userUuid):
             return .requestJSONEncodable(["userUuid": userUuid])
 
-        case .getRecommandList:
+        case .getRecommendList:
             return .requestPlain
             
         case .getAlertKeywordList(let userUuid):

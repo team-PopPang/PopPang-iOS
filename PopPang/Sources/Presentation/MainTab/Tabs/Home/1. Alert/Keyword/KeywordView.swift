@@ -117,14 +117,17 @@ struct KeywordView: View {
                 
                 
                 // 선택 버튼들
-                SearchFlowLayout(data: categories, id: \.self) { category in
-                    SearchFlowButton(title: category) {
-                        self.text = category
-                    } onRemove: {
-                        if let index = categories.firstIndex(of: category) {
-                            categories.remove(at: index)
+                SearchFlowLayout {
+                    ForEach(categories, id: \.self) { category in
+                        SearchFlowButton(title: category) {
+                            self.text = category
+                        } onRemove: {
+                            if let index = categories.firstIndex(of: category) {
+                                categories.remove(at: index)
+                            }
                         }
                     }
+                    .padding(4)
                 }
                 .padding(.top, 15)
             }

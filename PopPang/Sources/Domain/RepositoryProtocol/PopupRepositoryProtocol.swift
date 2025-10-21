@@ -20,6 +20,12 @@ protocol PopupRepositoryProtocol {
     func getFavoriteList(userUuid: String) async throws -> [PopupDTO]
     
     
+    /// 팝업 검색 결과를 반환합니다
+    /// - Parameter searchText: searchText
+    /// - Returns: [PopupDTO]
+    func searchPopupList(searchText: String) async throws -> [PopupDTO]
+    
+    
     /// 찜 리스트에 팝업을 추가합니다
     /// - Parameters:
     ///   - userUuid: userUuid

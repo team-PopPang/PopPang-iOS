@@ -12,7 +12,6 @@ typealias MainCoordinator = Coordinator<MainRoute, SheetRoute, OverlayRoute>
 enum MainRoute: Hashable {
     
     // Home
-    case search
     case alert(uuid: String)
     case popupDetail(Popup)
     
@@ -28,7 +27,7 @@ enum SheetRoute: Identifiable {
         String(describing: self)
     }
     
-    case search
+    case search(uuid: String)
 }
 
 enum OverlayRoute: Identifiable {
@@ -44,8 +43,6 @@ extension Coordinator where T == MainRoute {
     @ViewBuilder
     func buildView(for route: T) -> some View {
         switch route {
-        case .search:
-            SearchView()
         case .alert(let userUuid):
             AlertView(userUuid: userUuid)
         case .popupDetail(let popup):
@@ -82,8 +79,8 @@ extension Coordinator where R == SheetRoute {
     @ViewBuilder
     func buildView(for route: R) -> some View {
         switch route {
-        case .search:
-            SearchView()
+        case .search(let userUuid):
+            SearchView(userUuid: userUuid)
         }
     }
 }

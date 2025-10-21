@@ -11,7 +11,7 @@ import Kingfisher
 struct FavoriteView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @EnvironmentObject private var rootViewModel: RootViewModel
-    @EnvironmentObject private var bookmarkViewModel: FavoriteViewModel
+    // @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
     private let segments: [String] = ["찜리스트", "찜캘린더"]
     @Binding var selectedTab: MainTabType
     

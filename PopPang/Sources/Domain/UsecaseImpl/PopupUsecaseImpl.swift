@@ -25,6 +25,11 @@ final class PopupUsecaseImpl: PopupUsecaseProtocol {
             .map { $0.toEntity() }
     }
     
+    func searchPopupList(searchText: String) async throws -> [Popup] {
+        try await popupRepository.searchPopupList(searchText: searchText)
+            .map { $0.toEntity() }
+    }
+    
     func addFavorite(userUuid: String, popupUuid: String) async throws {
         try await popupRepository.addFavorite(userUuid: userUuid, popupUuid: popupUuid)
     }

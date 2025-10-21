@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Recommand: Identifiable, Equatable {
+struct RecommendList: Identifiable, Equatable {
     let id: Int
     let recommendName: String
 }

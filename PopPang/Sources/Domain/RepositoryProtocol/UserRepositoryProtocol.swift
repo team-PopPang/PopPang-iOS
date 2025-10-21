@@ -40,7 +40,7 @@ protocol UserRepositoryProtocol {
     
     /// 추첰 카테고리 리스트 가져오기
     /// - Returns: [RecommandDTO]
-    func getRecommandList() async throws -> [RecommandDTO]
+    func getRecommandList() async throws -> [RecommendListDTO]
     
     
     /// 키워드 리스트 가져오기

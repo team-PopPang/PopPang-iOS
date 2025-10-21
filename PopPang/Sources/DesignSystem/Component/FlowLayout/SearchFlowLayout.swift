@@ -47,11 +47,56 @@ struct SearchFlowButton: View {
 //    }
 //}
 
+
+/// 플로우 레이아웃
+struct SearchFlowLayout: Layout {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        var width: CGFloat = 0
+        var height: CGFloat = 0
+        var lineHeight: CGFloat = 0
+        let maxWidth = proposal.width ?? .infinity
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+
+            if width + size.width > maxWidth {
+                width = 0
+                height += lineHeight
+                lineHeight = 0
+            }
+
+            lineHeight = max(lineHeight, size.height)
+            width += size.width
+        }
+        height += lineHeight
+        return CGSize(width: maxWidth, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var x: CGFloat = bounds.minX
+        var y: CGFloat = bounds.minY
+        var lineHeight: CGFloat = 0
+        let maxWidth = bounds.width
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if x + size.width > bounds.minX + maxWidth {
+                x = bounds.minX
+                y += lineHeight
+                lineHeight = 0
+            }
+            subview.place(at: CGPoint(x: x, y: y), proposal: .unspecified)
+            x += size.width
+            lineHeight = max(lineHeight, size.height)
+        }
+    }
+}
+
 /// 검색 FlowLayout
 ///  data: 보여줄 원본 데이터 배열
 ///  id: 각 아이템 고유 식별자
 ///  content 데이터를 실제 뷰로 변환하는 클로저
-struct SearchFlowLayout<Data: RandomAccessCollection, Content: View, ID: Hashable>: View {
+struct SearchFlowLayout_save<Data: RandomAccessCollection, Content: View, ID: Hashable>: View {
     private let data: Data
     private let id: KeyPath<Data.Element, ID>
     private let content: (Data.Element) -> Content
@@ -97,7 +142,6 @@ struct SearchFlowLayout<Data: RandomAccessCollection, Content: View, ID: Hashabl
         }
         .frame(maxHeight: .infinity, alignment: .topLeading)
     }
-    
 }
 
 #Preview {
@@ -107,14 +151,33 @@ struct SearchFlowLayout<Data: RandomAccessCollection, Content: View, ID: Hashabl
         "식음료"
     ]
     
-    SearchFlowLayout(data: searched, id: \.self) { search in
-        SearchFlowButton(title: search) {
-            print("keyword")
-        } onRemove: {
-            if let index = searched.firstIndex(of: search) {
-                searched.remove(at: index)
+    VStack {
+        
+        SearchFlowLayout {
+            ForEach(searched, id: \.self) { search in
+                SearchFlowButton(title: search) {
+                    print("keyword")
+                } onRemove: {
+                    if let index = searched.firstIndex(of: search) {
+                        searched.remove(at: index)
+                    }
+                }
+                .padding(4)
+            }
+        }
+
+
+        Text("123")
+        
+  
+        SearchFlowLayout_save(data: searched, id: \.self) { search in
+            SearchFlowButton(title: search) {
+                print("keyword")
+            } onRemove: {
+                if let index = searched.firstIndex(of: search) {
+                    searched.remove(at: index)
+                }
             }
         }
     }
 }
-
