@@ -17,6 +17,10 @@ enum MainRoute: Hashable {
     case popupDetail(Popup)
     
     // profile
+    case profileSetting
+    // case notice
+    // case contectUs      // 문의하기
+    // case termsOfService // 이용약관
 }
 
 enum SheetRoute: Identifiable {
@@ -46,6 +50,10 @@ extension Coordinator where T == MainRoute {
             AlertView(userUuid: userUuid)
         case .popupDetail(let popup):
             PopupDetailView(popup: popup)
+            
+        // profile
+        case .profileSetting:
+            ProfileSettingView()
         }
     }
 }

@@ -29,13 +29,13 @@ struct ProfileView: View {
             }
             
             VStack(spacing: 20) {
-                NavigationButton(title: "홍길동",
+                NavigationButton(title: rootViewModel.user?.nickname ?? "홍길동",
                                  buttonType: .navigation,
                                  font: .bold,
                                  size: 15,
                                
                 ) {
-                    
+                    coordinator.push(.profileSetting)
                 }
                 
                 NavigationButton(title: "키워드 알림",
@@ -173,5 +173,9 @@ struct NavigationButton: View {
 }
 
 #Preview {
-    ProfileView()
+    NavigationStack {
+        ProfileView()
+            .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+            .environmentObject(RootViewModel())
+    }
 }

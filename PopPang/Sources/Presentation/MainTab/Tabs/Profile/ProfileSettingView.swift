@@ -1,58 +1,39 @@
 //
-//  NicknameSettingView.swift
+//  ProfileSettingView.swift
 //  PopPang
 //
-//  Created by 김동현 on 9/14/25.
+//  Created by 김동현 on 10/21/25.
 //
 
 import SwiftUI
 
-struct NicknameSettingView: View {
+struct ProfileSettingView: View {
     @EnvironmentObject private var rootViewModel: RootViewModel
-    // @State private var text: String = ""
+    @Environment(\.dismiss) private var dismiss
+    @State private var nickname: String = ""
     @FocusState private var isFocused: Bool
-    
-    // MARK: - nil이면 미검증, true이면 성고으 false면 실패
-    // @State private var isValid: Bool? = nil
-    @EnvironmentObject var coordinator: Coordinator<RegisterRoute, SheetRoute, OverlayRoute>
-    var onNext: () -> Void
-    
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 0) {
             
-            HStack {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("닉네임을\n설정해주세요.")
-                        .font(.scdream(.bold, size: 17))
-                    Text("닉네임은 나중에 변경할 수 있습니다.")
-                        .font(.scdream(.medium, size: 12))
-                        .foregroundStyle(Color.mainGray)
-                }
-                Spacer()
-            }
-            .padding(.top, 50)
-            
+            // MARK: - 닉네임 설정
             HStack(spacing: 10) {
                 RoundedTextField(placeholder: "닉네임을 입력해 주세요",
                                  text: $rootViewModel.nickname,
-                                 validationState: rootViewModel.validationState)
+                                 validationState: rootViewModel.validationState
+                )
                 .focused($isFocused)
                 
-                // MARK: - 실시간 바인딩 검증
                 Button {
                     rootViewModel.send(action: .checkNickname)
                 } label: {
                     Text("중복확인")
                         .font(.scdream(.medium, size: 12))
-                        .frame(width: 100)
-                        .frame(height: 48)
+                        .frame(width: 100, height: 48)
                         .foregroundStyle(Color.mainWhite)
                         .background(Color.mainOrange)
                         .cornerRadius(5)
                 }
-                .buttonStyle(PressableButtonStyle())                
             }
-            .padding(.top, 20)
             
             if !rootViewModel.nickname.isEmpty {
                 switch rootViewModel.validationState {
@@ -81,43 +62,67 @@ struct NicknameSettingView: View {
                 }
             }
             
+            // MARK: - 로그아웃
+            Button {
+                
+            } label: {
+                Text("로그아웃")
+                    .frame(height: 22)
+                    .ppStyleFont(.scdream(.regular, size: 12))
+                    .foregroundStyle(Color.subBlack)
+            }
+            .padding(.top, 20)
+            
+            // MARK: - 회원탈퇴
+            Button {
+                 
+            } label: {
+                Text("회원탈퇴")
+                    .frame(height: 22)
+                    .ppStyleFont(.scdream(.regular, size: 10))
+                    .foregroundStyle(Color.mainGray2)
+            }
+            .padding(.top, 4)
+            
             Spacer()
             
             MainOrangeButton(buttonTitle: "다음",
                              buttonColor: rootViewModel.validationState == .success ?
                              Color.mainOrange
                              : Color.mainGray2) {
-                // rootViewModel.updateNickname()
                 UIApplication.shared.endEditing(true)
-                Task {
-                    try? await Task.sleep(nanoseconds: 700_000_000) // 0.7초
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        onNext()
-                    }
-                }
+                dismiss()
             }
-
+            
             // MARK: - 활성화 로직
             .disabled(rootViewModel.validationState != .success) // 성공시 활성화
             .opacity(rootViewModel.validationState == .success ? 1.0 : 0.8)
-            .background()
             
-            // MARK: - 키보드 올라오면 공백과 함께 버튼 올라감
+            // MARK: - 키워드 올라오면 공백과 함꼐 버튼 올라옴
             .padding(.bottom, 20)
-            .frame(maxHeight: .infinity, alignment: .bottom)
-            
         }
-        .padding(.horizontal, .contentPadding)
-        .task {
-            try? await Task.sleep(nanoseconds: 300_000_000) // 0.3초
+        .padding(.top, 24)
+        .padding(.horizontal, 24)
+        .toolbar {
+            // 커스텀 타이틀
+            ToolbarItem(placement: .principal) {
+                Text("프로필 설정")
+                    .ppStyleFont(.scdream(.medium, size: 18))
+                    .padding(.top, 10)
+            }
+        }
+        .onAppear {
             isFocused = true
         }
     }
 }
 
 #Preview {
-    NicknameSettingView {
-        
+    NavigationStack {
+        ProfileSettingView()
+            .navigationTitle("프로필 설정") // Preview에서만 타이틀 보이게
+            .navigationBarTitleDisplayMode(.inline)
+            .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+            .environmentObject(RootViewModel())
     }
-    .environmentObject(RootViewModel())
 }
