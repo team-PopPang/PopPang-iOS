@@ -171,7 +171,7 @@ private struct BestPopupCell: View {
         ZStack(alignment: .bottomLeading) {
             
             // MARK: - 이미지
-            KFImage(URL(string: popup.imageURL))
+            KFImage(URL(string: popup.imageUrlList[0]))
                 .resizable()
                 .aspectRatio(contentMode: .fill) // 프레임을 채움
                 .frame(width: 194, height: 271)  // 포스트 사이즈
@@ -255,7 +255,7 @@ private struct ComingPopupCell: View {
               
             HStack(spacing: 0) {
                 // MARK: - 이미지
-                KFImage(URL(string: popup.imageURL))
+                KFImage(URL(string: popup.imageUrlList[0]))
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 94.4, height: 118)
@@ -326,7 +326,7 @@ private struct GridPopupCell: View {
                     .frame(height: 217, alignment: .center)
                 
                 GeometryReader { geo in
-                    KFImage(URL(string: popup.imageURL))
+                    KFImage(URL(string: popup.imageUrlList[0]))
                         .placeholder {
                             Rectangle()
                                 .frame(height: 217)
@@ -353,7 +353,7 @@ private struct GridPopupCell: View {
             }
             .frame(height: 217)
             
-            Text(popup.roadAddress?.shortAddress ?? popup.address.shortAddress)
+            Text(popup.roadAddress.shortAddress)
                 .font(.scdream(.regular, size: 12))
                 .foregroundStyle(Color.mainBlack)
                 .padding(.top, 10)

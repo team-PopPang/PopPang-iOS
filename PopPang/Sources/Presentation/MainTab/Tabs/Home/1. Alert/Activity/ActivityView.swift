@@ -41,7 +41,7 @@ private struct AlertPopupCell: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                Image("\(popup.imageURL)")
+                Image("\(popup.imageUrlList[0])")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 106, height: 133)

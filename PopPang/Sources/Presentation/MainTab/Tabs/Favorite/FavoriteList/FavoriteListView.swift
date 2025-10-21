@@ -80,7 +80,7 @@ private struct ListPopupCell: View {
                     .frame(height: 217, alignment: .center)
                 
                 GeometryReader { geo in
-                    KFImage(URL(string: popup.imageURL))
+                    KFImage(URL(string: popup.imageUrlList[0]))
                         .placeholder {
                             Rectangle()
                                 .frame(height: 217)
@@ -107,7 +107,7 @@ private struct ListPopupCell: View {
             }
             .frame(height: 217)
             
-            Text(popup.roadAddress?.shortAddress ?? popup.address.shortAddress)
+            Text(popup.roadAddress.shortAddress)
                 .font(.scdream(.regular, size: 12))
                 .foregroundStyle(Color.mainBlack)
                 .padding(.top, 10)

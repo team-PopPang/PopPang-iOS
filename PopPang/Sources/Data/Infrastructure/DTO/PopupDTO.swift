@@ -15,23 +15,28 @@ struct PopupDTO: Decodable {
     let openTime: String?
     let closeTime: String?
     let address: String
-    let roadAddress: String?
+    let roadAddress: String
     let region: String
     let latitude: Double?
     let longitude: Double?
-    // let geocodingQuery: String 일단 임시로 뻄
     let instaPostId: String
     let instaPostUrl: String
-    // let like: String: 일단 임시로 뻄
     let captionSummary: String
-    let caption: String?
-    let imageUrl: String
+    let imageUrlList: [String]
     let mediaType: String
-    let errorCode: String?
 }
 
 extension PopupDTO {
     func toEntity() -> Popup {
+        
+        // MARK: - 이미지 경로에 baseURL이 없으면 추가하겠다
+        let fullImageUrlList = imageUrlList.map { url in
+            if url.hasPrefix("http") {
+                return url
+            } else {
+                return Constants.PopPangAPI.apiURL + url
+            }
+        }
         
         return Popup(
             popupUuid: popupUuid,
@@ -46,11 +51,10 @@ extension PopupDTO {
             latitude: latitude,
             longitude: longitude,
             instaPostId: instaPostId,
-            instaPostURL: instaPostUrl,
+            instaPostUrl: instaPostUrl,
             captionSummary: captionSummary,
-            caption: caption,
-            imageURL: imageUrl,
-            mediaType: Popup.MediaType(rawValue: mediaType.uppercased()) ?? .image,
-            errorCode: errorCode)
+            imageUrlList: fullImageUrlList,
+            mediaType: Popup.MediaType(rawValue: mediaType.uppercased()) ?? .image
+            )
     }
 }

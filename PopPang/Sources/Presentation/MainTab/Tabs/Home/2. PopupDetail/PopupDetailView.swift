@@ -24,7 +24,7 @@ struct PopupDetailView: View {
                      */
                     GeometryReader { geo in
                         let offset = geo.frame(in: .global).minY
-                        KFImage(URL(string: popup.imageURL))
+                        KFImage(URL(string: popup.imageUrlList[0]))
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(width: geo.size.width,
@@ -106,9 +106,7 @@ private struct InfoView: View {
                 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("\(popup.address)")
-                    if let roadAddress = popup.roadAddress {
-                        Text(roadAddress)
-                    }
+                    Text("\(popup.roadAddress)")
                 }
             }
             

@@ -14,7 +14,7 @@ struct CalendarPopupCell: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                KFImage(URL(string: popup.imageURL))
+                KFImage(URL(string: popup.imageUrlList[0]))
                     .placeholder {
                         Rectangle()
                             .fill(Color.mainGray3)
@@ -26,7 +26,7 @@ struct CalendarPopupCell: View {
                     .clipped()
                 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(popup.roadAddress?.shortAddress ?? popup.address.shortAddress)
+                    Text(popup.roadAddress.shortAddress)
                         .font(.scdream(.regular, size: 12))
                         .foregroundStyle(Color.mainBlack)
                     
