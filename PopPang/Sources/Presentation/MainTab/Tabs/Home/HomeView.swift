@@ -269,7 +269,7 @@ private struct ComingPopupCell: View {
                 
                 // MARK: - 설명문구
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("\("오픈 D-10")")
+                    Text(dDay(date: popup.startDate))
                         .font(.scdream(.bold, size: 11))
                         .foregroundStyle(Color.mainOrange)
                     Text("\(popup.name)")
@@ -286,6 +286,21 @@ private struct ComingPopupCell: View {
             .frame(width: 283, height: 138)
         }
         
+    }
+    
+    private func dDay(date: Date) -> String {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let target = calendar.startOfDay(for: date)
+        
+        if let diff = calendar.dateComponents([.day], from: today, to: target).day {
+            if diff > 0 {
+                return "오픈 D-\(diff)"
+            } else {
+                return "오늘 오픈"
+            }
+        }
+        return ""
     }
 }
 

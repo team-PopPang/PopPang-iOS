@@ -9,119 +9,50 @@
 import SwiftUI
 import NMapsMap
 import Kingfisher
+import BottomSheet
 
 struct MapView: View {
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @StateObject private var mapViewModel = MapViewModel()
-    @State private var showSheet: Bool = true
+    @State var bottomSheetPosition: BottomSheetPosition = .relative(0.4)
+    
     var body: some View {
         ZStack {
-            NaverMapView(popups: mapViewModel.mapPopups)
+            NaverMapView(popups: mapViewModel.mapPopups) { popup in
+                coordinator.push(.popupDetail(popup))
+            }
                 .ignoresSafeArea(edges: .top)
-                
         }
         .onAppear {
             LocationPermissionManager.shared.requestPermission()
         }
-        .sheet(isPresented: $showSheet) {
+        .bottomSheet(bottomSheetPosition: self.$bottomSheetPosition,
+                     switchablePositions: [.absolute(120), .relative(0.4), .relative(0.6), .relative(0.95)],
+                     content: {
+            
             MapListView(popups: mapViewModel.mapPopups)
-                .padding(.contentPadding)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .presentationDetents([.height(300), .medium, .large])
-                .presentationCornerRadius(20) // ✅ 시스템 라운드
-                // .presentationBackground(.regularMaterial)
-                .presentationBackground(Color.subWhite)
-                .presentationBackgroundInteraction(.enabled(upThrough: .large))
-                .interactiveDismissDisabled()
-                .mapSheet(49)
-        }
-    }
-}
-
-struct MapListView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
-    let popups: [Popup]
-    
-    var body: some View {
-        if popups.isEmpty {
-            Text("팝업 데이터 수집중")
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top, 24)
-        } else {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 10) {
-                    ForEach(Array(popups.enumerated()), id: \.element) { index, popup in
-                        MapListPopupCell(popup: popup)
-                            .onTapGesture {
-                                coordinator.push(.popupDetail(popup))
-                            }
-                        
-                        // 마미막 셀 아래에는 Divider 넣지 않겠다
-                        if index != popups.count - 1 {
-                            Divider()
-                                .frame(height: 1)
-                                .background(Color.subWhite)
-                        }
-                    }
-                }
-            }
-            .padding(.top, 20)
-        }
-    }
-}
-
-struct MapListPopupCell: View {
-    let popup: Popup
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                KFImage(URL(string: popup.imageURL))
-                    .placeholder {
-                        Rectangle()
-                            .fill(Color.mainGray3)
-                            .frame(width: 106, height: 133)
-                    }
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 106, height: 133, alignment: .center)
-                    .clipped()
-                
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(popup.roadAddress?.shortAddress ?? popup.address.shortAddress)
-                        .font(.scdream(.regular, size: 12))
-                        .foregroundStyle(Color.mainBlack)
-                    
-                    Text(popup.name)
-                        .font(.scdream(.bold, size: 15))
-                        .foregroundStyle(Color.mainBlack)
-                        .lineLimit(1) // 한줄만 표시
-                        .truncationMode(.tail) // 넘치면 ...으로 표시
-                        .padding(.top, 5)
-                  
-                    HStack {
-                        Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
-                        Text("-")
-                        Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
-                    }
-                    .font(.scdream(.regular, size: 12))
-                    .foregroundStyle(Color.mainGray)
-                    .padding(.top, 5)
-                    .padding(.leading, -1)
-                    
-                    Spacer()
-                }
-                .padding(.leading, 18)
-                .padding(.top, 10)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
+                .padding(.horizontal, .contentPadding)
+        })
+        .customBackground(
+            Color.subWhite
+                .cornerRadius(30)
+        )
     }
 }
 
 struct NaverMapView: UIViewRepresentable {
-    var popups: [Popup]
+    class _Coordinator {
+        var clusterer: NMCClusterer<ItemKey>?
+    }
     
-    func makeCoordinator() {}
+    func makeCoordinator() -> _Coordinator {
+        _Coordinator()
+    }
+    
+    var popups: [Popup]
+    var onMarkSelected: ((Popup) -> Void)?
+    
+    
     
     func makeUIView(context: Context) -> some NMFNaverMapView {
         let mapView = NMFNaverMapView(frame: .zero)
@@ -136,7 +67,7 @@ struct NaverMapView: UIViewRepresentable {
         
         // 위치 오버레이(내 위치)
         let locationOverlay = mapView.mapView.locationOverlay
-        locationOverlay.hidden = false  // 내 위치 마커 표시
+        locationOverlay.hidden = false
         
         // 약간의 지연 후 카메라 이동
         DispatchQueue.main.asyncAfter(deadline: .now()) {
@@ -146,86 +77,113 @@ struct NaverMapView: UIViewRepresentable {
             mapView.mapView.moveCamera(cameraUpdate)
         }
         
-        // ✅ 기본 UI 컨트롤 비활성화
-        /*
-        mapView.showCompass = false
-        mapView.showScaleBar = false
-        mapView.showZoomControls = false
-        mapView.showLocationButton = false
-         */
+        // 클러스터 생성
+        let builder = NMCBuilder<ItemKey>()
+        let clusterUpdater = ClusterMarkerUpdater()
+        let leafUpdater = LeafMarkerUpdater()
+        leafUpdater.onTap = onMarkSelected
+        
+        builder.clusterMarkerUpdater = clusterUpdater
+        builder.leafMarkerUpdater = leafUpdater
+        builder.screenDistance = 30
+        builder.minZoom = 4
+        builder.maxZoom = 18
+        
+        
+        let clusterer = builder.build()
+        DispatchQueue.main.async {
+            clusterer.mapView = mapView.mapView
+            context.coordinator.clusterer = clusterer
+        }
         return mapView
     }
     
     func updateUIView(_ uiView: UIViewType, context: Context) {
-        for popup in popups {
-            guard let lat = popup.latitude, let lng = popup.longitude else {
-                // print("⚠️ 좌표 없음 → \(popup.name)")
-                continue
+        guard let clusterer = context.coordinator.clusterer else {
+            print("❌ clusterer가 nil입니다")
+            return
+        }
+        clusterer.clear()
+        
+        waitForValidSizeAndAdd(uiView, clusterer: clusterer, retryCount: 0)
+    }
+    
+    private func retryAddPopups(_ uiView: UIViewType, clusterer: NMCClusterer<ItemKey>) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            let width = uiView.bounds.width
+            let height = uiView.bounds.height
+            guard width > 0 && height > 0 else {
+                print("❌ 여전히 mapView 사이즈가 0입니다. 클러스터 적용 중단")
+                return
             }
-            
-            let imageURL = URL(string: popup.imageURL)!
-            
-            
-            // MARK: - 마커1
-            /*
-            let marker = NMFMarker()
-            marker.position = NMGLatLng(lat: lat, lng: lng)
-            marker.iconImage = NMF_MARKER_IMAGE_BLACK // 🟤 기본 검은 동그라미
-            marker.width = 30   // 기본보다 크게
-            marker.height = 30  // 정사각형으로 동그라미 느낌
-            marker.captionText = popup.name
-            marker.captionTextSize = 14
-            marker.captionColor = .black
-            marker.mapView = uiView.mapView
-             */
-            
-            // MARK: - 마커2
-            Task {
-                if let roundedImage = await makeRoundedMarkerImage(from: imageURL) {
-                    addCustomMarker(to: uiView.mapView, image: roundedImage, lat: lat, lng: lng)
+            uiView.layoutIfNeeded()
+            addPopupsToClusterer(popups, clusterer)
+            print("✅ 재시도 후 클러스터 적용 완료")
+        }
+    }
+    
+    private func waitForValidSizeAndAdd(
+        _ uiView: UIViewType,
+        clusterer: NMCClusterer<ItemKey>,
+        retryCount: Int
+    ) {
+        let width = uiView.bounds.width
+        let height = uiView.bounds.height
+
+        // ✅ 맵 사이즈가 잡히지 않았을 경우 일정 횟수까지 재시도
+        guard width > 0 && height > 0 else {
+            if retryCount < 10 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                    print("⏳ mapView 사이즈 아직 0, 재시도 \(retryCount + 1)")
+                    waitForValidSizeAndAdd(uiView, clusterer: clusterer, retryCount: retryCount + 1)
                 }
+            } else {
+                print("❌ mapView 사이즈가 끝내 0입니다. 클러스터 적용 중단")
             }
+            return
         }
+
+        uiView.layoutIfNeeded()
+        addPopupsToClusterer(popups, clusterer)
+        print("✅ mapView 크기 확인 후 클러스터 적용 완료")
     }
     
-    /// URL로부터 이미지를 불러와 둥근 사각형 UIImage로 변환
-    func makeRoundedMarkerImage(from url: URL, size: CGSize = CGSize(width: 50, height: 50)) async -> UIImage? {
-        do {
-            // ✅ Kingfisher로 비동기 이미지 다운로드 + 캐싱
-            let result = try await KingfisherManager.shared.retrieveImage(with: url)
-            let originalImage = result.image
+    // Popup 데이터를 클러스터러에 등록하는 함수
+    private func addPopupsToClusterer(_ popups: [Popup],
+                                      _ clusterer: NMCClusterer<ItemKey>
+    ) {
+        var keyTagMap: [ItemKey: NSObject] = [:]
+        var validCount = 0
 
-            // ✅ 둥근 사각형 마스크 적용
-            let renderer = UIGraphicsImageRenderer(size: size)
-            let roundedImage = renderer.image { context in
-                let rect = CGRect(origin: .zero, size: size)
-                let path = UIBezierPath(roundedRect: rect, cornerRadius: 10)
-                path.addClip()
-                originalImage.draw(in: rect)
+        for (index, popup) in popups.enumerated() {
+            if let lat = popup.latitude, let lng = popup.longitude {
+                let key = ItemKey(
+                    identifier: index,
+                    position: NMGLatLng(lat: lat, lng: lng),
+                    popup: popup
+                )
+                keyTagMap[key] = popup.name as NSString
+                validCount += 1
+                print("✅ 마커 추가: \(popup.name) at (\(lat), \(lng))")
+            } else {
+                print("⚠️ 좌표 없음: \(popup.name)")
             }
-
-            return roundedImage
-        } catch {
-            // print("❌ Kingfisher 이미지 로드 실패:", error)
-            return nil
         }
-    }
-
-    
-    /// Naver Map에 마커 추가
-    func addCustomMarker(to mapView: NMFMapView, image: UIImage, lat: Double, lng: Double) {
-        let marker = NMFMarker()
-        marker.position = NMGLatLng(lat: lat, lng: lng)
-        marker.iconImage = NMFOverlayImage(image: image)
-        marker.width = 50
-        marker.height = 50
-        marker.captionText = ""  // 텍스트를 따로 붙이고 싶으면 여기에 설정
-        marker.mapView = mapView
+        if !keyTagMap.isEmpty {
+            DispatchQueue.main.async {
+                clusterer.addAll(keyTagMap)
+                print("✅ 클러스터에 마커 추가 완료 (MainThread)")
+            }
+        }
+        
+        print("🧭 clusterer mapView:", clusterer.mapView as Any)
+        print("🧭 clusterer key count:", keyTagMap.count)
     }
 }
 
 #Preview("지도 탭 미리보기") {
-    TabView(selection: .constant(MainTabType.map)) {   // ✅ 프리뷰 전용 탭 뷰
+    @Previewable @State var selectedTab: MainTabType = .map
+    TabView(selection: .constant(MainTabType.map)) {
         MapView()
             .tabItem {
                 Image(systemName: "map")
@@ -233,16 +191,9 @@ struct NaverMapView: UIViewRepresentable {
             }
             .tag(MainTabType.map)
     }
+    .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
 }
-
-//#Preview {
-//    MapView()
-//}
 */
-
-
-
-
 
 //
 //  MapView.swift
@@ -282,86 +233,6 @@ struct MapView: View {
             Color.subWhite
                 .cornerRadius(30)
         )
-    }
-}
-
-struct MapListView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
-    let popups: [Popup]
-    
-    var body: some View {
-        if popups.isEmpty {
-            Text("팝업 데이터 수집중")
-                .frame(maxWidth: .infinity, alignment: .center)
-                .padding(.top, 24)
-        } else {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 10) {
-                    ForEach(Array(popups.enumerated()), id: \.element) { index, popup in
-                        MapListPopupCell(popup: popup)
-                            .onTapGesture {
-                                coordinator.push(.popupDetail(popup)) // ✅ 디테일 화면 이동
-                            }
-                        
-                        if index != popups.count - 1 {
-                            Divider()
-                                .frame(height: 1)
-                                .background(Color.subWhite)
-                        }
-                    }
-                }
-            }
-            .padding(.top, 20)
-        }
-    }
-}
-
-struct MapListPopupCell: View {
-    let popup: Popup
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                KFImage(URL(string: popup.imageUrlList[0]))
-                    .placeholder {
-                        Rectangle()
-                            .fill(Color.mainGray3)
-                            .frame(width: 106, height: 133)
-                    }
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 106, height: 133, alignment: .center)
-                    .clipped()
-                
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(popup.roadAddress.shortAddress)
-                        .font(.scdream(.regular, size: 12))
-                        .foregroundStyle(Color.mainBlack)
-                    
-                    Text(popup.name)
-                        .font(.scdream(.bold, size: 15))
-                        .foregroundStyle(Color.mainBlack)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .padding(.top, 5)
-                  
-                    HStack {
-                        Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
-                        Text("-")
-                        Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
-                    }
-                    .font(.scdream(.regular, size: 12))
-                    .foregroundStyle(Color.mainGray)
-                    .padding(.top, 5)
-                    .padding(.leading, -1)
-                    
-                    Spacer()
-                }
-                .padding(.leading, 18)
-                .padding(.top, 10)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
     }
 }
 
@@ -467,4 +338,5 @@ struct NaverMapView: UIViewRepresentable {
     }
     .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
 }
+
 

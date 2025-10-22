@@ -9,13 +9,13 @@ import Foundation
 
 final class PopupRepositoryImpl: PopupRepositoryProtocol {
     func getPopupList() async throws -> [PopupDTO] {
-        do {
-            let response = try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPopupList,
-                                                                                        decodeTo: [PopupDTO].self)
-            return response
-        } catch {
-            throw error
-        }
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPopupList,
+                                                                               decodeTo: [PopupDTO].self)
+    }
+    
+    func getUpcomingPopupList() async throws -> [PopupDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getUpcomingPopupList,
+                                                                                    decodeTo: [PopupDTO].self)
     }
     
     func getFavoriteList(userUuid: String) async throws -> [PopupDTO] {

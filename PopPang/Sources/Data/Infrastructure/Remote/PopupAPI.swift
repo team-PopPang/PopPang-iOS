@@ -11,6 +11,7 @@ import Foundation
 enum PopupAPI {
     // popup
     case getPopupList
+    case getUpcomingPopupList
     case searchPopupList(searchText: String)
     
     // favorite
@@ -25,6 +26,7 @@ extension PopupAPI: TargetType {
     var path: String {
         switch self {
         case .getPopupList: return "/popup"
+        case .getUpcomingPopupList: return "popup/upcoming"
         case .searchPopupList: return "popup/search"
         case .addFavorite: return "/favorite"
         case .removeFavorite: return "/favorite"
@@ -35,6 +37,7 @@ extension PopupAPI: TargetType {
     var method: Moya.Method {
         switch self {
         case .getPopupList: return .get
+        case .getUpcomingPopupList: return .get
         case .searchPopupList: return .get
         case .addFavorite: return .post
         case .removeFavorite: return .delete
@@ -45,6 +48,8 @@ extension PopupAPI: TargetType {
     var task: Moya.Task {
         switch self {
         case .getPopupList:
+            return .requestPlain
+        case .getUpcomingPopupList:
             return .requestPlain
         case .searchPopupList(let searchText):
             return .requestParameters(parameters: ["q": searchText],

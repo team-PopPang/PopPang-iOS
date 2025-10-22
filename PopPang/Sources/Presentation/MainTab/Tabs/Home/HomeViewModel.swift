@@ -34,7 +34,7 @@ extension HomeViewModel {
             try await withThrowingTaskGroup(of: (Int, [Popup]).self) {  group in
                 // 0, 1, 2로 구분해서 요청
                 group.addTask { (0, try await self.popupUsecase.getPopupList()) }
-                group.addTask { (1, try await self.popupUsecase.getPopupList()) }
+                group.addTask { (1, try await self.popupUsecase.getUpcomingPopupList()) }
                 group.addTask { (2, try await self.popupUsecase.getPopupList()) }
 
                 // 완료된 순서대로 결과 받기
@@ -45,6 +45,7 @@ extension HomeViewModel {
                             self.bestPopups = popups
                         case 1:
                             self.comingPopups = popups
+                                .sorted { $0.startDate < $1.startDate }
                         case 2:
                             self.gridPopups = popups
                         default:
