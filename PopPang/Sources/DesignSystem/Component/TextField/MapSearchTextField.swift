@@ -1,53 +1,48 @@
 //
-//  SearchTextField.swift
+//  MapSearchTextField.swift
 //  PopPang
 //
-//  Created by 김동현 on 9/25/25.
+//  Created by 김동현 on 10/23/25.
 //
 
 import SwiftUI
 
-struct SearchTextField: View {
-    
+struct MapSearchTextField: View {
     var placeholder: String
     @Binding var text: String
-    
     var body: some View {
         ZStack(alignment: .leading) {
-            
             HStack {
-                // 입력
                 TextField("", text: $text)
-                    .font(.scdream(.medium, size: 11))
+                    .font(.scdream(.medium, size: 12))
                     .frame(height: 45)
                     .keyboardType(.default)
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, 24)
                     .tint(.mainBlack)
-                    .background(Color.mainGray4)
-                    .cornerRadius(5)
+                    .background(Color.subWhite)
+                    .cornerRadius(3)
                     .contentShape(Rectangle())
-                    .overlay(
+                    .overlay {
                         HStack {
                             Spacer()
                             Image("Search")
                                 .renderingMode(.template)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .foregroundStyle(Color.mainGray)
+                                .foregroundStyle(Color.mainGray2)
                                 .frame(width: 17, height: 17)
-                                .padding(.trailing, 16)
-                                .allowsHitTesting(false) 
+                                .padding(.trailing, 24)
                         }
-                    )
+                    }
             }
             
             // 플레이스홀더
             if text.isEmpty {
                 Text(placeholder)
-                    .ppStyleFont(.scdream(.regular, size: 11))
-                    .foregroundStyle(Color.mainGray)
-                    .padding(.horizontal, 15)
+                    .font(.scdream(.medium, size: 12))
+                    .foregroundStyle(Color.mainGray2)
                     .opacity(text.isEmpty ? 1 : 0)
+                    .padding(.horizontal, 24)
             }
         }
     }
@@ -56,10 +51,8 @@ struct SearchTextField: View {
 #Preview {
     @Previewable @State var text = ""
     VStack {
-        SearchTextField(placeholder: "궁금한 장소를 검색해보세요", text: $text)
+        MapSearchTextField(placeholder: "궁금한 팝업을 검색해보세요",
+                           text: $text)
+            .padding(.contentPadding)
     }
-    .padding(.contentPadding)
 }
-
-
-

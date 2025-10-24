@@ -211,14 +211,20 @@ struct MapView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @StateObject private var mapViewModel = MapViewModel()
     @State var bottomSheetPosition: BottomSheetPosition = .relative(0.4)
+    @State private var text = ""
     
     var body: some View {
         ZStack {
             NaverMapView(popups: mapViewModel.mapPopups) { popup in
                 coordinator.push(.popupDetail(popup))
             }
-                .ignoresSafeArea(edges: .top)
+            
+            MapSearchTextField(placeholder: "궁금한 팝업을 검색해보세요",
+                               text: $text)
+            .frame(maxHeight: .infinity, alignment: .top)
+            .padding(.horizontal, 15)
         }
+        .ignoresSafeArea(edges: .top)
         .onAppear {
             LocationPermissionManager.shared.requestPermission()
         }
