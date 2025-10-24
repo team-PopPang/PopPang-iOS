@@ -2,179 +2,136 @@
 //  ItemKey.swift
 //  PopPang
 //
-//  Created by 김동현 on 10/23/25.
+//  Created by 김동현 on 10/24/25.
 //
 
 import NMapsMap
 
-
-/// NSObject: NMCClusteringKey 프로토콜이 Object-C 기반이라 NSObject를 상속해야함
-/// NMCClusteringKey: 네이버 지도 SDK 클러스터링에 필요한 Key 타입 프로토콜
-final class ItemKey: NSObject, NMCClusteringKey {
+class ItemKey: NSObject, NMCClusteringKey {
     let identifier: Int
     let position: NMGLatLng
-    let popup: Popup
-    
-    
-    init(identifier: Int,
-         position: NMGLatLng,
-         popup: Popup
-    ) {
+    let imageURL: String
+
+    init(identifier: Int, position: NMGLatLng, imageURL: String) {
         self.identifier = identifier
         self.position = position
-        self.popup = popup
+        self.imageURL = imageURL
     }
-    
-    
-    /// 두 ItemKey객체가 같은지 판별 메서드(Identifier기준으로 비교)
-    /// - Parameter object: 비교 대상 객체
-    /// - Returns: 두 객체의 identifier가 같은지 여부
-    override func isEqual(_ object: Any?) -> Bool {
-        guard let other = object as? ItemKey else { return false }
-        return identifier == other.identifier
+
+    static func markerKey(withIdentifier identifier: Int, position: NMGLatLng, imageURL: String) -> ItemKey {
+        return ItemKey(identifier: identifier, position: position, imageURL: imageURL)
     }
-    
-    
-    /// 딕셔너리처럼 클러스터링 키의 빠른 비교를 위한 해시값
+
+    override func isEqual(_ o: Any?) -> Bool {
+        guard let o = o as? ItemKey else {
+            return false
+        }
+        if self === o {
+            return true
+        }
+
+        return o.identifier == self.identifier
+    }
+
     override var hash: Int {
         return self.identifier
     }
-    
-    
-    /// 클러스터는 내부족으로 key 객체를 복제해서 관리할 수 있으므로
-    /// 프로토콜에 따라 copy 메서드를 구현해야 함
-    /// ItemKey의 동일한 값을 가진 새로운 신스턴스를 반환
-    /// - Parameter zone: 메모리 영역(nil)
-    /// - Returns: 동일한 값을 가진 새로운 ItemKey 인스턴스
+
     func copy(with zone: NSZone? = nil) -> Any {
-        return ItemKey(identifier: self.identifier, position: self.position, popup: self.popup)
+        return ItemKey(identifier: self.identifier, position: self.position, imageURL: self.imageURL)
     }
 }
 
-import Kingfisher
-
-/*
-// 모여있는 클러스터 마커 스타일
-final class ClusterMarkerUpdater: NMCDefaultClusterMarkerUpdater {
-    override func updateClusterMarker(_ info: NMCClusterMarkerInfo,
-                                      _ marker: NMFMarker
-    ) {
-        super.updateClusterMarker(info, marker)
-        marker.iconImage = info.size < 5
-        ? NMF_MARKER_IMAGE_CLUSTER_LOW_DENSITY
-        : NMF_MARKER_IMAGE_CLUSTER_MEDIUM_DENSITY
-    }
-}
-
-// 단일 마컷 스타일
-final class LeafMarkerUpdater: NMCDefaultLeafMarkerUpdater {
-    var onTap: ((Popup) -> Void)?
+/// 클러스터 마커 디자인을 커스터마이징하기 위한 클래스
+/// - NMCDefaultClusterMarkerUpdater 를 상속받아 오버라이드 함
+/// - 클러스터에 포함된 마커 개수(info.size)에 따라 다른 아이콘 이미지를 적용
+class ClusterMarkerUpdater: NMCDefaultClusterMarkerUpdater {
     
-    override func updateLeafMarker(_ info: NMCLeafMarkerInfo,
-                                   _ marker: NMFMarker
-    ) {
-        super.updateLeafMarker(info, marker)
-        guard let key = info.key as? ItemKey else { return }
+    /// 클러스터 마커를 업데이트할 때 호출되는 메서드
+    /// - Parameters:
+    ///   - info: 클러스터 마커에 대한 정보 (몇 개의 마커가 묶였는지 등)
+    ///   - marker: 실제 지도에 표시될 클러스터 마커 객체
+    override func updateClusterMarker(_ info: NMCClusterMarkerInfo, _ marker: NMFMarker) {
+        super.updateClusterMarker(info, marker)
         
-        // 기본 마커 스타일 변경
-        marker.width = 50
-        marker.height = 50
-        marker.captionText = ""
-        
-        // ✅ 테스트용: 일단 기본 파란 마커로만 표시
-        marker.iconImage = NMF_MARKER_IMAGE_BLUE
-        
-        // 마커 클릭 시 팝업 디테일 이동
-        marker.touchHandler = { [weak self] _ in
-            self?.onTap?(key.popup)
-            return true
-        }
-        
-
-        
-        /*
-        // 마커 이미지 로드
-        if let imageURL = URL(string: key.popup.imageUrlList.first ?? "") {
-            Task {
-                if let roundedImage = await Self.makeRoundedMarkerImage(from: imageURL) {
-                    marker.iconImage = NMFOverlayImage(image: roundedImage)
-                } else {
-                    marker.iconImage = NMF_MARKER_IMAGE_BLUE
-                }
-            }
+        let count = info.size
+    
+        if count < 3 {
+            // 마커가 2개 이하일 경우 — 저밀도 아이콘 사용
+            marker.iconImage = NMF_MARKER_IMAGE_CLUSTER_LOW_DENSITY
         } else {
-            marker.iconImage = NMF_MARKER_IMAGE_BLUE
+            // 마커가 3개 이상일 경우 — 중간 밀도 아이콘 사용
+            marker.iconImage = NMF_MARKER_IMAGE_CLUSTER_MEDIUM_DENSITY
+        }
+
+        /*
+        // 커스텀 사용시
+        if count < 3 {
+            marker.iconImage = NMFOverlayImage(name: "circle_fill")
+        } else if count < 10 {
+            marker.iconImage = NMFOverlayImage(name: "cluster_medium")
+        } else {
+            marker.iconImage = NMFOverlayImage(name: "cluster_large")
         }
          */
     }
-    
-    /// URL로부터 이미지를 불러와 둥근 사각형 UIImage로 변환
-    static func makeRoundedMarkerImage(from url: URL, size: CGSize = CGSize(width: 50, height: 50)) async -> UIImage? {
-        do {
-            let result = try await KingfisherManager.shared.retrieveImage(with: url)
-            let renderer = UIGraphicsImageRenderer(size: size)
-            return renderer.image { _ in
-                let rect = CGRect(origin: .zero, size: size)
-                let path = UIBezierPath(roundedRect: rect, cornerRadius: 10)
-                path.addClip()
-                result.image.draw(in: rect)
-            }
-        } catch {
-            return nil
-        }
-    }
 }
 
-*/
 
-class ClusterMarkerUpdater: NMCDefaultClusterMarkerUpdater {
-    override func updateClusterMarker(_ info: NMCClusterMarkerInfo, _ marker: NMFMarker) {
-        super.updateClusterMarker(info, marker)
-        if info.size < 3 {
-            marker.iconImage = NMF_MARKER_IMAGE_CLUSTER_LOW_DENSITY
-        } else {
-            marker.iconImage = NMF_MARKER_IMAGE_CLUSTER_MEDIUM_DENSITY
-        }
-    }
-}
 
-final class LeafMarkerUpdater: NMCDefaultLeafMarkerUpdater {
-    var onTap: ((Popup) -> Void)?
-    
-    override func updateLeafMarker(_ info: NMCLeafMarkerInfo,
-                                   _ marker: NMFMarker
-    ) {
+
+
+import NMapsMap
+import Kingfisher
+import UIKit
+
+class LeafMarkerUpdater: NMCDefaultLeafMarkerUpdater {
+    var clusterer: NMCClusterer<ItemKey>?
+    var onMarkerSelected: ((ItemKey) -> Void)?
+
+    override func updateLeafMarker(_ info: NMCLeafMarkerInfo, _ marker: NMFMarker) {
         super.updateLeafMarker(info, marker)
-        guard let key = info.key as? ItemKey else { return }
-        
-        // 기본 마커 스타일 변경
-        marker.width = 50
-        marker.height = 50
-        marker.captionText = ""
-        
-        // ✅ 테스트용: 일단 기본 파란 마커로만 표시
-        marker.iconImage = NMF_MARKER_IMAGE_BLUE
-        
-        // 마커 클릭 시 팝업 디테일 이동
+
+        guard let key = info.key as? ItemKey,
+              let imageURL = URL(string: key.imageURL) else { return }
+
+        Task {
+            if let roundedImage = await makeRoundedMarkerImage(from: imageURL, size: CGSize(width: 60, height: 60)) {
+                await MainActor.run {
+                    marker.iconImage = NMFOverlayImage(image: roundedImage)
+                    marker.width = 60
+                    marker.height = 60
+                }
+            }
+        }
+
         marker.touchHandler = { [weak self] _ in
-            self?.onTap?(key.popup)
+            self?.onMarkerSelected?(key) // 외부로 콜백 전달
+            print("📍 리프 마커 클릭됨")
             return true
         }
     }
-    
-    /// URL로부터 이미지를 불러와 둥근 사각형 UIImage로 변환
-    static func makeRoundedMarkerImage(from url: URL, size: CGSize = CGSize(width: 50, height: 50)) async -> UIImage? {
+
+    /// 📌 네트워크 이미지를 불러와 네모 박스로 변환하는 함수
+    func makeRoundedMarkerImage(from url: URL, size: CGSize = CGSize(width: 40, height: 40)) async -> UIImage? {
         do {
+            // Kingfisher로 이미지 비동기 로드
             let result = try await KingfisherManager.shared.retrieveImage(with: url)
+            let originalImage = result.image
+
+            // 렌더러로 모서리 둥근 사각형 만들기
             let renderer = UIGraphicsImageRenderer(size: size)
-            return renderer.image { _ in
+            let roundedImage = renderer.image { context in
                 let rect = CGRect(origin: .zero, size: size)
                 let path = UIBezierPath(roundedRect: rect, cornerRadius: 10)
                 path.addClip()
-                result.image.draw(in: rect)
+                originalImage.draw(in: rect)
             }
+            return roundedImage
         } catch {
+            print("❌ 이미지 로드 실패: \(error)")
             return nil
         }
     }
 }
+
