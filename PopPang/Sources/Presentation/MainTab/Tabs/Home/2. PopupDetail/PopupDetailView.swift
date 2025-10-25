@@ -98,6 +98,10 @@ struct PopupDetailView: View {
                 MainOrangeButton(buttonTitle: "친구에게 공유하기",
                                  isReversed: true,
                                  height: 40) {
+                    KakaoShareManager.shared.shareAppOnly(url: popup.imageUrlList[0],
+                                                          title: popup.name,
+                                                          description: popup.captionSummary,
+                                                          imageUrl: popup.imageUrlList[0])
                 }
             }
             .padding(.top, 10)
