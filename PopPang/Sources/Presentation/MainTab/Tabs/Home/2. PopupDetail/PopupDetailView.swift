@@ -9,6 +9,7 @@ import SwiftUI
 import Kingfisher
 
 struct PopupDetailView: View {
+    @Environment(\.openURL) var openURL
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
     let popup: Popup
@@ -61,9 +62,16 @@ struct PopupDetailView: View {
                             .background(Color.mainGray5)
                             .padding(.vertical, 15)
                         
-                        VStack {
+                        VStack(alignment: .leading, spacing: 0) {
                             Text("SNS / 홈페이지")
                                 .font(.scdream(.medium, size: 15))
+                                .frame(height: 21)
+                            
+                            SNSButton(imageName: "insta",
+                                      buttonTitle: "인스타그램") {
+                                openURL(URL(string: popup.instaPostUrl)!)
+                            }
+                            .padding(.top, 8)
                         }
                     }
                     .padding(.top, 20)
@@ -175,6 +183,7 @@ private struct InfoView: View {
  
 }
 
+// MARK: - 찜 버튼
 private struct FavoriteButton: View {
     var isFavorite: Bool
     var buttonTitle: String
@@ -203,14 +212,48 @@ private struct FavoriteButton: View {
     }
 }
 
+private struct SNSButton: View {
+    let imageName: String
+    let buttonTitle: String
+    let action: () -> Void
+    var body: some View {
+        Button {
+            action()
+        } label: {
+            HStack {
+                Image(imageName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 12, height: 12)
+                
+                Text(buttonTitle)
+                    .ppStyleFont(.scdream(.medium, size: 10))
+            }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 10)
+            .foregroundStyle(Color.mainGray6)
+            .background(Color.mainGray5)
+            .cornerRadius(17)
+        }
+        .buttonStyle(PressableButtonStyle())
+    }
+}
+
+
+
 #Preview {
     @Previewable @State var isFavorite: Bool = false
     VStack {
+        SNSButton(imageName: "insta",
+                  buttonTitle: "인스타그램") {
+        }
+        /*
         FavoriteButton(isFavorite: isFavorite,
                        buttonTitle: "찜하기",
                        buttonTitle2: "찜 취소하기") {
             isFavorite.toggle()
         }
+         */
     }
     .padding(.horizontal, 20)
 }
