@@ -37,7 +37,6 @@ struct HomeView: View {
                     }
                     
                     IconButton {
-                        print("알림 버튼 클릭됨")
                         coordinator.push(.alert(uuid: rootViewModel.user?.userUuid ?? ""))
                     }
                     .padding(.leading, 15)
@@ -119,8 +118,6 @@ struct HomeView: View {
                         GridPopupScrollView(viewModel: homeViewModel)
                         .padding(.top, 15)
                         .padding(.trailing, .contentPadding)
-                        
-                        // Spacer()
                     }
                     .padding(.bottom, 50)
                 }
@@ -166,6 +163,7 @@ private struct BestPopupScrollView: View {
 }
 
 private struct BestPopupCell: View {
+    
     let popup: Popup
     var body: some View {
         ZStack(alignment: .bottomLeading) {

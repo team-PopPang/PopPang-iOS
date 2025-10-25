@@ -204,11 +204,7 @@ extension MapCoordinator {
         // builder.screenDistance = 40.0  // 마커 간 거리 기준(px). 작을수록 빨리 분리됨
         
         builder.minZoom = 5           // 전국 축소에도 클러스터 작동
-        builder.maxZoom = 20          // 완전히 확대하면 분리
-
-
-        
-        
+        builder.maxZoom = 12          // 완전히 확대하면 분리
         
         self.clusterer = builder.build()
         

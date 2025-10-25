@@ -10,6 +10,7 @@ import Kingfisher
 
 struct PopupDetailView: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
+    @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
     let popup: Popup
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -70,16 +71,20 @@ struct PopupDetailView: View {
                     
                     Spacer()
                         .frame(height: 200)
-                    
-                   
                 }
             }
             .ignoresSafeArea()
             
             HStack {
-                MainOrangeButton(buttonTitle: "찜하기",
+                FavoriteButton(isFavorite: homeViewModel.isLiked(popup: popup),
+                               buttonTitle: "찜하기",
+                               buttonTitle2: "찜 취소하기",
                                  height: 40) {
-                    
+                    // MARK: - 좋아요 토글 및 팝팡뷰 갱신
+                    Task {
+                        await homeViewModel.toggleLike(popup: popup)
+                        await favoriteViewModel.loadFavoritePopups()
+                    }
                 }
                 
                 MainOrangeButton(buttonTitle: "친구에게 공유하기",
@@ -170,6 +175,48 @@ private struct InfoView: View {
  
 }
 
+private struct FavoriteButton: View {
+    var isFavorite: Bool
+    var buttonTitle: String
+    var buttonTitle2: String
+    var textColor: Color = .mainWhite
+    var buttonColor: Color = .mainOrange
+
+    var height: CGFloat = 40
+    var action: () -> Void
+    
+    var body: some View {
+        Button {
+          action()
+        } label: {
+            Text(isFavorite ? buttonTitle2 : buttonTitle)
+                .font(.scdream(.medium, size: 12))
+                .frame(maxWidth: .infinity)
+                .frame(height: height)
+                .foregroundStyle(Color.mainWhite)
+                .background(isFavorite ?
+                            Color.mainGray6 : Color.mainOrange)
+                .clipShape(RoundedRectangle(cornerRadius: 5))
+                .contentShape(RoundedRectangle(cornerRadius: 5))
+        }
+        .buttonStyle(PressableButtonStyle())
+    }
+}
+
+#Preview {
+    @Previewable @State var isFavorite: Bool = false
+    VStack {
+        FavoriteButton(isFavorite: isFavorite,
+                       buttonTitle: "찜하기",
+                       buttonTitle2: "찜 취소하기") {
+            isFavorite.toggle()
+        }
+    }
+    .padding(.horizontal, 20)
+}
+
 #Preview {
     PopupDetailView(popup: Popup.popupMock)
+        .environmentObject(HomeViewModel(userUuid: "1234"))
+        .environmentObject(FavoriteViewModel(userUuid: "1234"))
 }
