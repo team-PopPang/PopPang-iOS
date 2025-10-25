@@ -75,7 +75,7 @@ struct NaverMapView: UIViewRepresentable {
     func makeUIView(context: Context) -> some UIView {
         context.coordinator.getNaverMapView()
     }
-
+    
     func updateUIView(_ uiView: UIViewType, context: Context) {
         // vm에서 spots갱신시마다 Coordinator에 반영
         context.coordinator.updateSpots(popups)
@@ -83,8 +83,9 @@ struct NaverMapView: UIViewRepresentable {
 }
 
 final class MapCoordinator: NSObject,
-                         ObservableObject,
-                         CLLocationManagerDelegate {
+                            ObservableObject,
+                            CLLocationManagerDelegate,
+                            NMFMapViewCameraDelegate {
     
     static let shared = MapCoordinator()
     let view = NMFNaverMapView(frame: .zero)
@@ -108,6 +109,8 @@ final class MapCoordinator: NSObject,
     /// 지도 초기 상태를 설정합니다.
     /// - 줌 레벨, 최소/최대 줌, 모드(positionMode), 초기 카메라 위치 등을 지정
     private func setupMap() {
+        view.mapView.addCameraDelegate(delegate: self)
+        
         view.mapView.zoomLevel = 10
         view.mapView.minZoomLevel = 5
         view.mapView.maxZoomLevel = 20
@@ -173,6 +176,11 @@ extension MapCoordinator {
     /// - maxZoom: 이 줌 이상에서는 클러스터가 풀리고 개별 마커로 전환됨
     /// - screenDistance: 마커가 얼마나 가까이 있을 때 클러스터로 묶일지 (픽셀 단위)
     private func makeClusterer() {
+        
+        // 기존 클러스터 제거
+        self.clusterer?.clear()
+        self.clusterer = nil
+        
         let builder = NMCBuilder<ItemKey>()
         
         // 커스텀 리프 마커 등록 (사각형이나 파란색 심볼 등)
@@ -191,9 +199,17 @@ extension MapCoordinator {
         builder.clusterMarkerUpdater = clusterUpdater
         
         // 클러스터 동작 범위
-        builder.minZoom = 10            // 멀리서도 묶임 시작(필요시 조정)
-        builder.maxZoom = 12           // 이 줌 이상이면 바로 분리(값 낮출수록 빨리 풀림)
+        // builder.minZoom = 10            // 멀리서도 묶임 시작(필요시 조정)
+        // builder.maxZoom = 12           // 이 줌 이상이면 바로 분리(값 낮출수록 빨리 풀림)
         // builder.screenDistance = 40.0  // 마커 간 거리 기준(px). 작을수록 빨리 분리됨
+        
+        builder.minZoom = 5           // 전국 축소에도 클러스터 작동
+        builder.maxZoom = 20          // 완전히 확대하면 분리
+
+
+        
+        
+        
         self.clusterer = builder.build()
         
         // Spot을 ItemKey로 변환하여 클러스터에 추가
@@ -214,6 +230,13 @@ extension MapCoordinator {
     func updateSpots(_ newPopups: [Popup]) {
         self.popups = newPopups
         makeClusterer()
+    }
+}
+
+extension MapCoordinator {
+    func mapViewCameraIdle(_ mapView: NMFMapView) {
+        let zoom = mapView.zoomLevel
+        print("📸 현재 줌 레벨: \(zoom)")
     }
 }
 
