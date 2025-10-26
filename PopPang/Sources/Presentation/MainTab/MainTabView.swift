@@ -14,6 +14,7 @@ struct MainTabView: View {
     @StateObject private var homeViewModel: HomeViewModel
     @StateObject private var calendarViewModel: CalendarViewModel
     @StateObject private var bookmarkViewModel: FavoriteViewModel
+    @StateObject private var profileViewModel: ProfileViewModel
     
     init(userUduuid: String) {
         self.userUduuid = userUduuid
@@ -22,6 +23,7 @@ struct MainTabView: View {
         _homeViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createHome(userUuid: userUduuid))
         _calendarViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createCalendar(userUuid: userUduuid))
         _bookmarkViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createBookmark(userUuid: userUduuid))
+        _profileViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createProfile(userUuid: userUduuid))
     }
     
     var body: some View {
@@ -52,6 +54,7 @@ struct MainTabView: View {
         .environmentObject(homeViewModel)
         .environmentObject(calendarViewModel)
         .environmentObject(bookmarkViewModel)
+        .environmentObject(profileViewModel)
     }
 }
 

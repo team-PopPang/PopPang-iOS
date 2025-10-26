@@ -10,7 +10,9 @@ import SwiftUI
 struct ProfileView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @EnvironmentObject private var rootViewModel: RootViewModel
+    @EnvironmentObject private var profileViewModel: ProfileViewModel
     @State private var isOn: Bool = false
+    
     var body: some View {
         VStack(spacing: 0) {
             

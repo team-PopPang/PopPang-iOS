@@ -43,6 +43,10 @@ final class UserUsecaseImpl: UserUsecaseProtocol {
     func removeAlertKeyword(userUuid: String, alertKeyword: String) async throws {
         try await userRepository.removeAlertKeyword(userUuid: userUuid, alertKeyword: alertKeyword)
     }
+    
+    func updateNickname(userUuid: String, newNickname: String) async throws {
+        try await userRepository.updateNickname(userUuid: userUuid, newNickname: newNickname)
+    }
 }
 
 final class StubUserUsecaseImpl: UserUsecaseProtocol {
@@ -67,6 +71,10 @@ final class StubUserUsecaseImpl: UserUsecaseProtocol {
     }
         
     func removeAlertKeyword(userUuid: String, alertKeyword: String) async throws {
+        
+    }
+    
+    func updateNickname(userUuid: String, newNickname: String) async throws {
         
     }
 }

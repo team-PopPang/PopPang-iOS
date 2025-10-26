@@ -26,4 +26,8 @@ final class ViewModelFactory {
     func createBookmark(userUuid: String) -> FavoriteViewModel {
         FavoriteViewModel(userUuid: userUuid)
     }
+    
+    func createProfile(userUuid: String) -> ProfileViewModel {
+        ProfileViewModel(userUuid: userUuid)
+    }
 }

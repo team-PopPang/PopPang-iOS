@@ -55,4 +55,8 @@ final class UserRepositoryImpl: UserRepositoryProtocol {
     func removeAlertKeyword(userUuid: String, alertKeyword: String) async throws {
         try await NetworkProvider.shared.userProvider.asyncRequestVoid(.removeAlertKeyword(userUuid: userUuid, deleteAlertKeyword: alertKeyword))
     }
+    
+    func updateNickname(userUuid: String, newNickname: String) async throws {
+        try await NetworkProvider.shared.userProvider.asyncRequestVoid(.updateNickname(userUuid: userUuid, newNickname: newNickname))
+    }
 }

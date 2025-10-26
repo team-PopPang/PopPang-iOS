@@ -42,5 +42,11 @@ protocol UserUsecaseProtocol {
     ///   - userUuid: 유저 고유값
     ///   - alertKeyword: 알림 키워드 고유값
     func removeAlertKeyword(userUuid: String, alertKeyword: String) async throws
+    
+    /// 닉네임 수정
+    /// - Parameters:
+    ///   - userUuid: 유저 고유값
+    ///   - newNickname: 변경할 닉네임
+    func updateNickname(userUuid: String, newNickname: String) async throws
 }
 

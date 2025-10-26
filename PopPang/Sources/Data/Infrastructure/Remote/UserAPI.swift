@@ -10,6 +10,7 @@ import Foundation
 
 enum UserAPI {
     case checkNickname(nickname: String)
+    case updateNickname(userUuid: String, newNickname: String)
     case autoLogin(userUuid: String)
     case getRecommendList
     case getAlertKeywordList(userUuid: String)
@@ -23,6 +24,7 @@ extension UserAPI: TargetType {
     var path: String {
         switch self {
         case .checkNickname: return "/user/nickname/duplicated"
+        case .updateNickname(let userUuid, _): return "/user/\(userUuid)"
         case .autoLogin: return "/auth/autoLogin"
         case .getRecommendList: return "/recommend"
         case .getAlertKeywordList: return "/alert-keyword"
@@ -34,6 +36,7 @@ extension UserAPI: TargetType {
     var method: Moya.Method {
         switch self {
         case .checkNickname: return .get
+        case .updateNickname: return .patch
         case .autoLogin: return .post
         case .getRecommendList: return .get
         case .getAlertKeywordList: return .get
@@ -47,6 +50,10 @@ extension UserAPI: TargetType {
         case .checkNickname(let nickname):
             return .requestParameters(parameters: ["nickname": nickname],
                                       encoding: URLEncoding.queryString)
+            
+        case .updateNickname(_, let newNickname):
+            return .requestParameters(parameters: ["nickname": newNickname],
+                                      encoding: JSONEncoding.default)
         case .autoLogin(let userUuid):
             return .requestJSONEncodable(["userUuid": userUuid])
 

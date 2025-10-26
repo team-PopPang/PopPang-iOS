@@ -37,9 +37,9 @@ final class RootViewModel: ObservableObject {
         case googleLogin
         case appleLogin(ASAuthorization)
         case checkNickname
-        case setalertList([String])     // 알림 키워드 설정
-        case setRecommandList([Int])    // 추천 키워드 설정
-        case register                   // 화원가입
+        case setalertList([String])              // 알림 키워드 설정
+        case setRecommandList([Int])             // 추천 키워드 설정
+        case register                            // 화원가입
     }
     
     // MARK: - Dependency
@@ -57,9 +57,11 @@ final class RootViewModel: ObservableObject {
     
     // MARK: - NicknameSetting
     @Published var validationState: NicknameValidationState = .none
+    
+    // MARK: - 회원가입 or 프로필 세팅에서 닉네임 수정시 사용
     @Published var nickname: String = "" {
         didSet {
-            checkLocalNickname()
+            self.checkLocalNickname()
         }
     }
     
@@ -104,6 +106,7 @@ extension RootViewModel {
                         print("자동로그인: \(user)")
                         await MainActor.run {
                             self.loginSuccess(user: user)
+                            print(user)
                         }
                         
                     } catch (let error) {
@@ -188,18 +191,6 @@ extension RootViewModel {
                     }
                 } catch {
                     print("❌ 중복 확인 실패: \(error)")
-                    
-                    // MARK: - 실패해도 넘어가도록 임시 세팅(지우면 됨)
-                    /*
-                    let isDuplicated = false
-                    await MainActor.run {
-                        self.validationState = isDuplicated ? .duplicate : .success
-                        precondition(user != nil, "⚠️ 회원가입 단계에서는 user가 nil일 수 없음")
-                        var registerUser = user!
-                        registerUser.nickname = self.nickname
-                        self.user = registerUser
-                    }
-                     */
                 }
             }
             
@@ -322,6 +313,7 @@ extension RootViewModel {
     }
 }
 
+// MARK: - 추천 리스트(회원가입 마지막)
 extension RootViewModel {
     // 추천 리스트 불러오기
     private func getRecommandList() async {

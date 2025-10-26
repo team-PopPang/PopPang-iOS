@@ -9,22 +9,24 @@ import SwiftUI
 
 struct ProfileSettingView: View {
     @EnvironmentObject private var rootViewModel: RootViewModel
+    @EnvironmentObject private var profileViewModel: ProfileViewModel
     @Environment(\.dismiss) private var dismiss
-    @State private var nickname: String = ""
     @FocusState private var isFocused: Bool
+    
+    // @State private var newNickname: String = ""
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             
             // MARK: - 닉네임 설정
             HStack(spacing: 10) {
                 RoundedTextField(placeholder: "닉네임을 입력해 주세요",
-                                 text: $rootViewModel.nickname,
-                                 validationState: rootViewModel.validationState
+                                 text: $profileViewModel.newNickname,
+                                 validationState: profileViewModel.validationState
                 )
                 .focused($isFocused)
                 
                 Button {
-                    rootViewModel.send(action: .checkNickname)
+                    profileViewModel.send(action: .checkNewNickname)
                 } label: {
                     Text("중복확인")
                         .font(.scdream(.medium, size: 12))
@@ -35,8 +37,8 @@ struct ProfileSettingView: View {
                 }
             }
             
-            if !rootViewModel.nickname.isEmpty {
-                switch rootViewModel.validationState {
+            if !profileViewModel.newNickname.isEmpty {
+                switch profileViewModel.validationState {
                 case .success:
                     Text("사용 가능한 닉네임입니다.")
                         .font(.scdream(.medium, size: 12))
@@ -87,16 +89,27 @@ struct ProfileSettingView: View {
             Spacer()
             
             MainOrangeButton(buttonTitle: "다음",
-                             buttonColor: rootViewModel.validationState == .success ?
+                             buttonColor: profileViewModel.validationState == .success ?
                              Color.mainOrange
                              : Color.mainGray2) {
+                
+                Task {
+                    profileViewModel.send(action: .updateNewNickname(profileViewModel.userUuid,
+                                                                     profileViewModel.newNickname)) {
+                        
+                        // 비동기 호출 순서 보장을 위함
+                        rootViewModel.send(action: .autoLogin)
+                    }
+                }
                 UIApplication.shared.endEditing(true)
-                dismiss()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    dismiss()
+                }
             }
             
             // MARK: - 활성화 로직
-            .disabled(rootViewModel.validationState != .success) // 성공시 활성화
-            .opacity(rootViewModel.validationState == .success ? 1.0 : 0.8)
+            .disabled(profileViewModel.validationState != .success) // 성공시 활성화
+            .opacity(profileViewModel.validationState == .success ? 1.0 : 0.8)
             
             // MARK: - 키워드 올라오면 공백과 함꼐 버튼 올라옴
             .padding(.bottom, 20)
@@ -112,6 +125,7 @@ struct ProfileSettingView: View {
             }
         }
         .onAppear {
+            profileViewModel.newNickname = ""
             isFocused = true
         }
     }
