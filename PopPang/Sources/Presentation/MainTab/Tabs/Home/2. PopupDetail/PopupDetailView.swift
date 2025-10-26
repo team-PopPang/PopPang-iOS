@@ -101,7 +101,8 @@ struct PopupDetailView: View {
                     KakaoShareManager.shared.shareAppOnly(url: popup.imageUrlList[0],
                                                           title: popup.name,
                                                           description: popup.captionSummary,
-                                                          imageUrl: popup.imageUrlList[0])
+                                                          imageUrl: popup.imageUrlList[0],
+                                                          popupId: popup.popupUuid)
                 }
             }
             .padding(.top, 10)

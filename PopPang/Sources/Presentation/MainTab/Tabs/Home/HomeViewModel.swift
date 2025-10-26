@@ -15,6 +15,7 @@ final class HomeViewModel: ObservableObject {
     @Published var comingPopups: [Popup] = []
     @Published var gridPopups: [Popup] = []
     @Published var likePostIds: Set<String> = [] // 찜 목록 popupUuid
+    @Published var isLoaded: Bool = false
     
     init(userUuid: String) {
         self.userUuid = userUuid
@@ -23,6 +24,9 @@ final class HomeViewModel: ObservableObject {
             guard let self = self else { return }
             await self.getFavoriteList()
             await self.getAllPopupData()
+            await MainActor.run {
+                self.isLoaded = true
+            }
         }
     }
 }

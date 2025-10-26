@@ -53,7 +53,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         }
         
         // MARK: - Google
-        return GIDSignIn.sharedInstance.handle(url)
+        if GIDSignIn.sharedInstance.handle(url) {
+            return true
+        }
+        
+        // MARK: - 카카오 공유로 앱 실행 시 딥링크 처리
+        if url.scheme?.hasPrefix("kakao") == true && url.host == "kakaolink" {
+            if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+               let popupId = components.queryItems?.first(where: { $0.name == "popupId" })?.value {
+                print("딥링크로 받은 popupId: \(popupId)")
+                
+                NotificationCenter.default.post(name: .didReceiveDeepLink,
+                                                object: nil,
+                                                userInfo: ["popupId": popupId])
+            }
+        }
+        
+        return true
     }
     
     
@@ -76,4 +92,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 }
 
-
+extension Notification.Name {
+    static let didReceiveDeepLink = Notification.Name("didReceiveDeepLink")
+}

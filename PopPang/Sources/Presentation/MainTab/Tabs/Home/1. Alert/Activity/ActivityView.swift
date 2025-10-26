@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct ActivityView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
@@ -41,20 +42,28 @@ private struct AlertPopupCell: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                Image("\(popup.imageUrlList[0])")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 106, height: 133)
-                    .clipped()
+                GeometryReader { geo in
+                    // MARK: - 이미지
+                    KFImage(URL(string: popup.imageUrlList[0]))
+                        .resizable()
+                        .aspectRatio(contentMode: .fill) // 프레임을 채움
+                        .frame(width: geo.size.width, height: geo.size.height)  // 포스트 사이즈
+                        .clipped()                       // 넘치는 영역 제거
+                }
+                .frame(width: 106, height: 133)
                 
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(popup.address.shortAddress)
-                        .ppStyleFont(.scdream(.regular, size: 12))
+                    Text(popup.roadAddress.shortAddress)
+                        .font(.scdream(.regular, size: 12))
                         .foregroundStyle(Color.mainBlack)
+                        .padding(.top, 10)
                     
                     Text(popup.name)
-                        .ppStyleFont(.scdream(.medium, size: 15))
+                        .font(.scdream(.bold, size: 15))
                         .foregroundStyle(Color.mainBlack)
+                        .lineLimit(1) // 한줄만 표시
+                        .truncationMode(.tail) // 넘치면 ...으로 표시
+                        .padding(.top, 5)
                     
                     HStack {
                         Text(popup.startDate, formatter: DateFormatter.popupDateFormat)

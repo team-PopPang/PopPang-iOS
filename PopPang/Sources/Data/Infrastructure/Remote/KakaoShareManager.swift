@@ -35,7 +35,7 @@ final class KakaoShareManager {
         let button1 = Button(title: "웹으로 보기", link: link)
         let button2 = Button(
             title: "앱으로 보기",
-            link: Link(iosExecutionParams: ["targetUrl": url])
+            link: Link(iosExecutionParams: ["popupId": url])
         )
 
         let content = Content(
@@ -51,21 +51,22 @@ final class KakaoShareManager {
     }
 
     /// “앱으로 보기”만 있는 버전
-    func shareAppOnly(url: String,
-                      title: String,
-                      description: String,
-                      imageUrl: String,
-                      executionParams: [String: String] = [:]) {
+    func shareAppOnly(
+        url: String,
+        title: String,
+        description: String,
+        imageUrl: String,
+        popupId: String         // ✅ 동일하게 popupId 추가
+    ) {
         guard let shareUrl = URL(string: url),
               let imageURL = URL(string: imageUrl) else {
             print("❌ URL 변환 실패")
             return
         }
 
-        // 버튼을 앱 실행만으로 구성
         let button = Button(
             title: "앱으로 보기",
-            link: Link(iosExecutionParams: executionParams.isEmpty ? ["targetUrl": url] : executionParams)
+            link: Link(iosExecutionParams: ["popupId": popupId])  // ✅ popupId 전달
         )
 
         let content = Content(
@@ -76,7 +77,6 @@ final class KakaoShareManager {
         )
 
         let feedTemplate = FeedTemplate(content: content, buttons: [button])
-
         shareWithTemplate(feedTemplate)
     }
 

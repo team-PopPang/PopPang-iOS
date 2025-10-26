@@ -25,5 +25,21 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
                 _ = AuthController.handleOpenUrl(url: url)
             }
         }
+        
+        guard let url = URLContexts.first?.url else { return }
+        print("SceneDelegate에서 URL 수신됨: \(url)")
+        handleDeepLink(url)
+    }
+    
+    private func handleDeepLink(_ url: URL) {
+        if url.scheme?.hasPrefix("kakao") == true && url.host == "kakaolink" {
+            if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+               let popupId = components.queryItems?.first(where: { $0.name == "popupId" })?.value {
+                print("딥링크로 받은 popupId (SceneDelegate): \(popupId)")
+                NotificationCenter.default.post(name: .didReceiveDeepLink,
+                                                object: nil,
+                                                userInfo: ["popupId": popupId])
+            }
+        }
     }
 }
