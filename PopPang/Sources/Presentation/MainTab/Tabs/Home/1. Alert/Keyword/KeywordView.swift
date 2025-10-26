@@ -77,7 +77,7 @@ struct KeywordView: View {
         VStack {
             
             HStack(spacing: .contentPadding) {
-                RoundedTextField(placeholder: "알림 받고 싶은 키워드를 입력해주세요",
+                KeywordTextField(placeholder: "알림 받고 싶은 키워드를 입력해주세요",
                                  text: $text)
                 Button {
                     keywordViewModel.addKeyword(text)
@@ -90,17 +90,27 @@ struct KeywordView: View {
                 }
             }
             
-            ForEach(Array(keywordViewModel.keywordList.enumerated()), id: \.1.id ) { index, keyword in
-                HStack {
-                    Text(keyword.keyword)
-                        .ppStyleFont(.scdream(.medium, size: 12))
-                    Spacer()
-                    Button {
-                        keywordViewModel.removeKeyword(at: index, keyword: keyword.keyword)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .foregroundStyle(Color.mainGray)
+            VStack(spacing: 0) {
+                ForEach(Array(keywordViewModel.keywordList.enumerated()), id: \.1.id ) { index, keyword in
+                    HStack {
+                        Text(keyword.keyword)
+                            .ppStyleFont(.scdream(.medium, size: 12))
+                        Spacer()
+                        Button {
+                            keywordViewModel.removeKeyword(at: index, keyword: keyword.keyword)
+                        } label: {
+                            Image(systemName: "xmark")
+                                .foregroundStyle(Color.mainGray)
+                        }
                     }
+                    .padding(.top, 17)
+                    .padding(.horizontal, 5)
+                    
+                    Rectangle()
+                        .frame(height: 1)
+                        .foregroundStyle(Color.mainGray7)
+                        .padding(.top, 5)
+                        .padding(.horizontal, 5) // 좌우 패딩 조절 가능
                 }
             }
             .padding(.top, 10)

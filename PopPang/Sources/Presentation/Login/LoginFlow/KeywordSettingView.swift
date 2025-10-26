@@ -35,7 +35,7 @@ struct KeywordSettingView: View {
             .padding(.top, 50)
             
             HStack(spacing: 10) {
-                RoundedTextField(placeholder: "알림 받고 싶은 키워드를 입력해주세요",
+                KeywordTextField(placeholder: "ex) 화장품, 애니메이션",
                                  text: $text)
                 .focused($isFocused)
                 
@@ -63,20 +63,28 @@ struct KeywordSettingView: View {
             }
             .padding(.top, 20)
             
-            ForEach(Array(keywords.enumerated()), id: \.1) { index, keyword in
-                HStack {
-                     Text(keyword)
-                    Spacer()
-                    Button {
-                        let removed = keywords.remove(at: index)
-                        keywordSet.remove(removed)
-                    } label: {
-                        Image(systemName: "xmark")
-                            .foregroundStyle(Color.mainGray)
+            VStack(spacing: 0) {
+                ForEach(Array(keywords.enumerated()), id: \.1) { index, keyword in
+                    HStack {
+                        Text(keyword)
+                        Spacer()
+                        Button {
+                            let removed = keywords.remove(at: index)
+                            keywordSet.remove(removed)
+                        } label: {
+                            Image(systemName: "xmark")
+                                .foregroundStyle(Color.mainGray)
+                        }
                     }
+                    .padding(.top, 17)
+                    .padding(.horizontal, 5)
+                    
+                    Rectangle()
+                        .frame(height: 1)
+                        .foregroundStyle(Color.mainGray7)
+                        .padding(.top, 5)
+                        .padding(.horizontal, 5) // 좌우 패딩 조절 가능
                 }
-                .padding(.vertical, 4)
-                .padding(.horizontal, 4)
             }
             .padding(.top, 20)
             

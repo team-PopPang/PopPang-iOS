@@ -10,6 +10,7 @@ import SwiftUI
 struct MapSearchTextField: View {
     var placeholder: String
     @Binding var text: String
+    
     var body: some View {
         ZStack(alignment: .leading) {
             HStack {
