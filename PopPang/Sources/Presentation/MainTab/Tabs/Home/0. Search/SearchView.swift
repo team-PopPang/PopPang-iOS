@@ -40,7 +40,8 @@ struct SearchView: View {
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 14, height: 14)
                             .foregroundStyle(Color.subBlack)
-                    }.padding(.trailing, 10)
+                    }
+                    .padding(.trailing, 10)
                     
                     SearchTextField(placeholder: "궁금한 장소를 검색해보세요",
                                     text: $searchViewModel.searchText)
@@ -57,6 +58,7 @@ struct SearchView: View {
                 .padding(.bottom, 10)
                 
                 VStack(spacing: 0) {
+                    // MARK: - 최근 본 검색어
                     if searchViewModel.searchPopupList.isEmpty {
                         // MARK: - 글자
                         HStack(spacing: 0) {
@@ -116,14 +118,16 @@ private struct SearchGridPopupScrollView: View {
     ]
     
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 20) {
-            ForEach(viewModel.searchPopupList) { popup in
-                
-                VStack(alignment: .leading) {
-                    SearchGridPopupCell(popup: popup)
-                        .onTapGesture {
-                            onSelect(popup)
-                        }
+        ScrollView(showsIndicators: false) {
+            LazyVGrid(columns: columns, spacing: 20) {
+                ForEach(viewModel.searchPopupList) { popup in
+                    
+                    VStack(alignment: .leading) {
+                        SearchGridPopupCell(popup: popup)
+                            .onTapGesture {
+                                onSelect(popup)
+                            }
+                    }
                 }
             }
         }

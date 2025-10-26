@@ -33,7 +33,7 @@ struct OnboadringView: View {
                     }
                 }
                 .padding(.horizontal, 30)
-                .padding(.top, 20)
+                .padding(.vertical, 20)
             }
             .navigationDestination(for: OnboardingRoute.self) { route in
                 coordinator.buildView(for: route)
@@ -90,4 +90,5 @@ private struct PageContentView: View {
 
 #Preview {
     OnboadringView()
+        .environmentObject(Coordinator<OnboardingRoute, SheetRoute, OverlayRoute>())
 }

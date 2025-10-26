@@ -28,7 +28,7 @@ struct PopupListView: View {
                     .padding(.top, 24)
             } else {
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 10) {
+                    LazyVStack(spacing: 10) {
                         ForEach(Array(popups.enumerated()), id: \.element) { index, popup in
                             CalendarPopupCell(popup: popup)
                                 .onTapGesture {

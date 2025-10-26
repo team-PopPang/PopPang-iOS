@@ -147,7 +147,7 @@ private struct BestPopupScrollView: View {
     @ObservedObject var viewModel: HomeViewModel
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 15) {
+            LazyHStack(spacing: 15) {
                 ForEach(viewModel.bestPopups, id: \.self) { popup in
                     
                     // MARK: - Cell
@@ -223,7 +223,7 @@ private struct ComingPopupScrollView: View {
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 15) {
+            LazyHStack(spacing: 15) {
                 ForEach(viewModel.comingPopups, id: \.self) { popup in
                     
                     // MARK: - Cell

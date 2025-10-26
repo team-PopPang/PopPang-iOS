@@ -13,7 +13,7 @@ struct MainTabView: View {
     @EnvironmentObject private var rootViewModel: RootViewModel
     @StateObject private var homeViewModel: HomeViewModel
     @StateObject private var calendarViewModel: CalendarViewModel
-    @StateObject private var bookmarkViewModel: FavoriteViewModel
+    @StateObject private var favoriteViewModel: FavoriteViewModel
     @StateObject private var profileViewModel: ProfileViewModel
     
     init(userUduuid: String) {
@@ -22,7 +22,7 @@ struct MainTabView: View {
         // MARK: - 뷰모델초기화
         _homeViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createHome(userUuid: userUduuid))
         _calendarViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createCalendar(userUuid: userUduuid))
-        _bookmarkViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createBookmark(userUuid: userUduuid))
+        _favoriteViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createBookmark(userUuid: userUduuid))
         _profileViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createProfile(userUuid: userUduuid))
     }
     
@@ -53,13 +53,18 @@ struct MainTabView: View {
         }
         .environmentObject(homeViewModel)
         .environmentObject(calendarViewModel)
-        .environmentObject(bookmarkViewModel)
+        .environmentObject(favoriteViewModel)
         .environmentObject(profileViewModel)
     }
 }
 
 #Preview {
     MainTabView(userUduuid: "1234")
+        .environmentObject(RootViewModel())
+        .environmentObject(HomeViewModel(userUuid: "1234"))
+        .environmentObject(CalendarViewModel(userUuid: "1234"))
+        .environmentObject(FavoriteViewModel(userUuid: "1234"))
+        .environmentObject(ProfileViewModel(userUuid: "1234"))
 }
 
 

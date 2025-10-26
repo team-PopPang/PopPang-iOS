@@ -105,7 +105,7 @@ struct PopupDetailView: View {
                                                           popupId: popup.popupUuid)
                 }
             }
-            .padding(.top, 10)
+            .padding(.vertical, 10)
             .padding(.horizontal, .contentPadding)
             .background(Color.mainGray4)
             
