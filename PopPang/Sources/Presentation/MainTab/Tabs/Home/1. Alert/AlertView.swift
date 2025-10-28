@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct AlertView: View {
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @StateObject private var activityViewModel: ActivityViewModel
     @StateObject private var keywordViewModel: KeywordViewModel
@@ -33,6 +34,19 @@ struct AlertView: View {
         }
         // toolbar
         .toolbar {
+            // 커스텀 좌측
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image("backButton")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 18, height: 18)
+                        .foregroundStyle(Color.subBlack)
+                }
+            }
+            
             // 커스텀 타이틀
             ToolbarItem(placement: .principal) {
                 Text("알림")
@@ -53,6 +67,8 @@ struct AlertView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .background(EnableSwipeBackGesture())  // 제스처 복원
     }
 }
 
@@ -63,4 +79,19 @@ struct AlertView: View {
             .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
     }
 }
+
+// MARK: - 제스처 복원
+struct EnableSwipeBackGesture: UIViewControllerRepresentable {
+    func makeUIViewController(context: Context) -> UIViewController {
+        let controller = UIViewController()
+        DispatchQueue.main.async {
+            controller.navigationController?.interactivePopGestureRecognizer?.isEnabled = true
+            controller.navigationController?.interactivePopGestureRecognizer?.delegate = nil
+        }
+        return controller
+    }
+
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+}
+
 

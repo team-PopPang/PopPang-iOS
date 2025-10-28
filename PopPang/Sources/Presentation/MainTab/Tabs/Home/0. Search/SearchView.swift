@@ -46,11 +46,12 @@ struct SearchView: View {
                     SearchTextField(placeholder: "궁금한 장소를 검색해보세요",
                                     text: $searchViewModel.searchText)
                     .focused($isFocused)
-                    
+                    /*
                     IconButton {
                         print("알림 버튼 클릭됨")
                     }
                     .padding(.leading, 15)
+                     */
                 }
                 .padding(.top, 10)
                 .padding(.leading, .contentPadding)
