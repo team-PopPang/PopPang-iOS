@@ -267,6 +267,18 @@ private struct ComingPopupCell: View {
     let popup: Popup
     var body: some View {
         ZStack {
+            
+            RoundedRectangle(cornerRadius: 5)
+                .fill(Color.subWhite)
+                .frame(width: 283, height: 138)
+                // MARK: - Spread 임시
+                .overlay {
+                    RoundedRectangle(cornerRadius: 5)
+                        .stroke(Color.mainGray3, lineWidth: 0.05)
+                }
+                // MARK: - 그림자 적용
+                .applyShadow(color: .subWhite2, alpha: 0.2, x: 0, y: 0, blur: 13)
+            
             HStack(spacing: 0) {
                 // MARK: - 이미지
                 KFImage(URL(string: popup.imageUrlList[0]))
