@@ -13,8 +13,6 @@ struct HomeView: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @State private var searchText = ""
-    @State private var selectRegion: String? = nil
-    @State private var selectSort: String? = nil
     
     // MARK: - 광고뷰 테스트
     @State private var hasSeenPopup: Bool = false
@@ -74,6 +72,7 @@ struct HomeView: View {
                         .padding(.top, 50)
                         ComingPopupScrollView(viewModel: homeViewModel)
                         
+                        /*
                         // MARK: - DropDownView
                         HStack {
                             DropDownView(options: [
@@ -113,6 +112,18 @@ struct HomeView: View {
                         .zIndex(1)
                         .padding(.top, 50)
                         .padding(.trailing, .contentPadding)
+                         */
+                        
+                        // MARK: - DropDownView
+                        HStack {
+                            RegionButton(text: homeViewModel.selectedRegion?.region ?? "전체") {
+                                homeViewModel.showSheet.toggle()
+                            }
+                            .padding(.leading, -10)
+                            
+                            Spacer()
+                        }
+                        .padding(.top, 50)
                         
                         // MARK: - GridView
                         GridPopupScrollView(viewModel: homeViewModel)
@@ -138,6 +149,12 @@ struct HomeView: View {
             coordinator.buildView(for: route)
         }
         .withoutAnimation()
+        .sheet(isPresented: $homeViewModel.showSheet) {
+            RegionSheet(regions: homeViewModel.regions,
+                        selectedRegion: $homeViewModel.selectedRegion,
+                        selectedDistrict: $homeViewModel.selectedDistrict)
+            .presentationDetents([.fraction(0.4)])
+        }
     }
 }
 

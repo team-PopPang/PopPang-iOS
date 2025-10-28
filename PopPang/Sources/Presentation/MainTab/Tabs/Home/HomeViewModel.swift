@@ -17,6 +17,12 @@ final class HomeViewModel: ObservableObject {
     @Published var likePostIds: Set<String> = [] // 찜 목록 popupUuid
     @Published var isLoaded: Bool = false
     
+    // MARK: - 지역 시트 관련
+    @Published var showSheet: Bool = false
+    @Published var regions: [RegionList] = []
+    @Published var selectedRegion: RegionList?
+    @Published var selectedDistrict: String?
+    
     init(userUuid: String) {
         self.userUuid = userUuid
         
@@ -24,6 +30,7 @@ final class HomeViewModel: ObservableObject {
             guard let self = self else { return }
             await self.getFavoriteList()
             await self.getAllPopupData()
+            await self.fetchRegionList()
             await MainActor.run {
                 self.isLoaded = true
             }
@@ -102,6 +109,32 @@ extension HomeViewModel {
             print("좋아요한거: \(likePostIds)")
         } catch {
             print("❌ 찜 목록 불러오기 오류: \(error)")
+        }
+    }
+}
+
+// MARK: - 시트 관련 메서드
+extension HomeViewModel {
+    func fetchRegionList() async {
+        // ⏳ 네트워크 대신 목업 데이터 (비동기 시뮬레이션)
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초 지연
+        
+        let mockData: [RegionListDTO] = [
+            RegionListDTO(region: "전체", districts: ["전체"]),
+            RegionListDTO(region: "서울", districts: ["전체", "강남구", "성동구", "송파구", "종로구"]),
+            RegionListDTO(region: "부산", districts: ["전체"]),
+            RegionListDTO(region: "인천", districts: ["전체"]),
+            RegionListDTO(region: "경기", districts: ["전체"]),
+        ]
+        
+        let mapped = mockData.map { $0.toModel() }
+        
+        await MainActor.run {
+            self.regions = mapped
+            if let first = mapped.first {
+                self.selectedRegion = first
+                self.selectedDistrict = first.districts.first
+            }
         }
     }
 }

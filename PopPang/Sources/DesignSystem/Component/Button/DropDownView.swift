@@ -7,6 +7,40 @@
 
 import SwiftUI
 
+/*
+ DropDownView(options: [
+                 "전체",
+                 "서울",
+                 "부산",
+                 "진주"
+              ],
+              anchor: .bottom,
+              maxWidth: 90,
+              selection: $selectRegion,
+              overlay: false,
+              pickedFont: .scdream(.medium, size: 17),
+              detailFont: .scdream(.medium, size: 17)
+ )
+ .padding(.leading, -10)
+ 
+ DropDownView(options: [
+                 "찜순",
+                 "가까운순",
+              ],
+              anchor: .bottom,
+              maxWidth: 90,
+              cornerRadius: 17,
+              stroke: .mainGray5,
+              imgSize: 10,
+              imgColor: .mainGray2,
+              selection: $selectSort,
+              overlay: true,
+              pickedFont: .scdream(.light, size: 10),
+              detailFont: .scdream(.light, size: 10)
+             
+ )
+ */
+
 struct DropDownView: View {
     var options: [String]
     var anchor: Anchor = .bottom
