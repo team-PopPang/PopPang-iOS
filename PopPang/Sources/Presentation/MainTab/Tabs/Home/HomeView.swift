@@ -44,7 +44,7 @@ struct HomeView: View {
                  .padding(.bottom, 15)
                 
                 ScrollView(showsIndicators: false) {
-                    VStack(spacing: 0) {
+                    LazyVStack(spacing: 0) {
                         // MARK: - Best Popup
                         BestPopupScrollView(viewModel: homeViewModel)
                         
@@ -163,19 +163,17 @@ private struct BestPopupScrollView: View {
 }
 
 private struct BestPopupCell: View {
-    
     let popup: Popup
+    
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             
-            GeometryReader { geo in
-                // MARK: - 이미지
-                KFImage(URL(string: popup.imageUrlList[0]))
-                    .resizable()
-                    .aspectRatio(contentMode: .fill) // 프레임을 채움
-                    .frame(width: geo.size.width, height: geo.size.height)  // 포스트 사이즈
-                    .clipped()                       // 넘치는 영역 제거
-            }
+            // MARK: - 이미지
+            KFImage(URL(string: popup.imageUrlList[0]))
+                .resizable()
+                .scaledToFill()
+                .frame(width: 194, height: 271)
+                .clipped()                       // 넘치는 영역 제거
             
             // MARK: - 그라데이션
             /// startPoint -> endPoint방향으로 색이 변함
@@ -212,7 +210,6 @@ private struct BestPopupCell: View {
             .padding(11)
         }
         .frame(width: 194, height: 271)
-        // .cornerRadius(10)
     }
 }
 
@@ -244,22 +241,11 @@ private struct ComingPopupCell: View {
     let popup: Popup
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 5)
-                .fill(Color.subWhite)
-                .frame(width: 283, height: 138)
-                // MARK: - Spread 임시
-                .overlay {
-                    RoundedRectangle(cornerRadius: 5)
-                        .stroke(Color.mainGray3, lineWidth: 0.05)
-                }
-                // MARK: - 그림자 작용
-                .applyShadow(color: .subWhite2, alpha: 0.2, x: 0, y: 0, blur: 13)
-              
             HStack(spacing: 0) {
                 // MARK: - 이미지
                 KFImage(URL(string: popup.imageUrlList[0]))
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
+                    .scaledToFill()
                     .frame(width: 94.4, height: 118)
                     .cornerRadius(5)
                     .clipped()
@@ -328,60 +314,55 @@ private struct GridPopupScrollView: View {
     }
 }
 
+// MARK: - GridPopupCell
 private struct GridPopupCell: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
     let popup: Popup
-    
+
+    // 👉 셀 너비를 미리 계산해서 전달받거나 상수로 지정
+    let cellWidth: CGFloat = (UIScreen.main.bounds.width - 15 * 3) / 2  // 2열 기준
+
     var body: some View {
-        
         VStack(alignment: .leading, spacing: 0) {
-            
-            ZStack {
-                Rectangle()
-                    .fill(Color.blue)
-                    .frame(height: 217, alignment: .center)
-                
-                GeometryReader { geo in
-                    KFImage(URL(string: popup.imageUrlList[0]))
-                        .placeholder {
-                            Rectangle()
-                                .frame(height: 217)
-                        }
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: geo.size.width, height: 217, alignment: .center)
-                        .clipped() // 넘치는 영역 완전히 제거
-                }
-                
-                .overlay (alignment: .topTrailing) {
-                    BookmarkButton(isLiked: homeViewModel.isLiked(popup: popup),
-                                   info: .stroke) {
-                        
-                        // MARK: - 좋아요 토글 및 팝팡뷰 갱신
-                        Task {
-                            await homeViewModel.toggleLike(popup: popup)
-                            await favoriteViewModel.loadFavoritePopups()
-                        }
+            ZStack(alignment: .topTrailing) {
+                KFImage(URL(string: popup.imageUrlList[0]))
+                    .placeholder {
+                        Rectangle()
+                            .fill(Color.subWhite)
+                            .frame(width: cellWidth, height: 217)
                     }
-                   .padding(10)
-                   .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: cellWidth, height: 217)
+                    .clipped()
+
+                BookmarkButton(
+                    isLiked: homeViewModel.isLiked(popup: popup),
+                    info: .stroke
+                ) {
+                    Task {
+                        await homeViewModel.toggleLike(popup: popup)
+                        await favoriteViewModel.loadFavoritePopups()
+                    }
                 }
+                .padding(10)
+                .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
             }
-            .frame(height: 217)
-            
+            .frame(width: cellWidth, height: 217)
+
             Text(popup.roadAddress.shortAddress)
                 .font(.scdream(.regular, size: 12))
                 .foregroundStyle(Color.mainBlack)
                 .padding(.top, 10)
-            
+
             Text(popup.name)
                 .font(.scdream(.bold, size: 15))
                 .foregroundStyle(Color.mainBlack)
-                .lineLimit(1) // 한줄만 표시
-                .truncationMode(.tail) // 넘치면 ...으로 표시
+                .lineLimit(1)
+                .truncationMode(.tail)
                 .padding(.top, 5)
-            
+
             HStack {
                 Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
                 Text("-")
