@@ -90,7 +90,8 @@ struct RegionSheet: View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
                 Text("지역")
-                    .font(titlefont)
+                    .foregroundStyle(Color.mainBlack)
+                    .ppStyleFont(.scdream(.bold, size: 17))
                 Spacer()
                 Button {
                     dismiss()

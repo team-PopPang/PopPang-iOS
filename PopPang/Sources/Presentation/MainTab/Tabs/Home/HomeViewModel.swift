@@ -18,10 +18,14 @@ final class HomeViewModel: ObservableObject {
     @Published var isLoaded: Bool = false
     
     // MARK: - 지역 시트 관련
-    @Published var showSheet: Bool = false
+    @Published var showRegionSheet: Bool = false
     @Published var regions: [RegionList] = []
     @Published var selectedRegion: RegionList?
     @Published var selectedDistrict: String?
+    
+    // MARK: - 정렬 시트 관련
+    @Published var showSortSheet: Bool = false
+    @Published var selectedOption: SortButton.SortOption = .favorite
     
     init(userUuid: String) {
         self.userUuid = userUuid

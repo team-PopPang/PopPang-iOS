@@ -117,13 +117,18 @@ struct HomeView: View {
                         // MARK: - DropDownView
                         HStack {
                             RegionButton(text: homeViewModel.selectedRegion?.region ?? "전체") {
-                                homeViewModel.showSheet.toggle()
+                                homeViewModel.showRegionSheet.toggle()
                             }
                             .padding(.leading, -10)
                             
                             Spacer()
+                            
+                            SortButton(selectedOption: $homeViewModel.selectedOption) {
+                                homeViewModel.showSortSheet.toggle()
+                            }
                         }
                         .padding(.top, 50)
+                        .padding(.trailing, .contentPadding)
                         
                         // MARK: - GridView
                         GridPopupScrollView(viewModel: homeViewModel)
@@ -149,11 +154,15 @@ struct HomeView: View {
             coordinator.buildView(for: route)
         }
         .withoutAnimation()
-        .sheet(isPresented: $homeViewModel.showSheet) {
+        .sheet(isPresented: $homeViewModel.showRegionSheet) {
             RegionSheet(regions: homeViewModel.regions,
                         selectedRegion: $homeViewModel.selectedRegion,
                         selectedDistrict: $homeViewModel.selectedDistrict)
             .presentationDetents([.fraction(0.4)])
+        }
+        .sheet(isPresented: $homeViewModel.showSortSheet) {
+            RegionButtonSheet(selectedOption: $homeViewModel.selectedOption)
+                .presentationDetents([.fraction(0.4)])
         }
     }
 }
