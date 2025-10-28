@@ -119,7 +119,7 @@ extension HomeViewModel {
 
 // MARK: - 시트 관련 메서드
 extension HomeViewModel {
-    func fetchRegionList() async {
+    func fetchRegionListMock() async {
         // ⏳ 네트워크 대신 목업 데이터 (비동기 시뮬레이션)
         try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초 지연
         
@@ -131,7 +131,7 @@ extension HomeViewModel {
             RegionListDTO(region: "경기", districts: ["전체"]),
         ]
         
-        let mapped = mockData.map { $0.toModel() }
+        let mapped = mockData.map { $0.toEntity() }
         
         await MainActor.run {
             self.regions = mapped
@@ -139,6 +139,22 @@ extension HomeViewModel {
                 self.selectedRegion = first
                 self.selectedDistrict = first.districts.first
             }
+        }
+    }
+    
+    
+    func fetchRegionList() async {
+        do {
+            let regionListDTO = try await popupUsecase.getRegionList()
+            await MainActor.run {
+                self.regions = regionListDTO
+                if let first = regionListDTO.first {
+                    self.selectedRegion = first
+                    self.selectedDistrict = first.districts.first
+                }
+            }
+        } catch {
+            print("HomeViewModel.fetchRegionList(): ❌ 찜 목록 불러오기 오류: \(error)")
         }
     }
 }

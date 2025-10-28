@@ -158,7 +158,7 @@ struct HomeView: View {
             RegionSheet(regions: homeViewModel.regions,
                         selectedRegion: $homeViewModel.selectedRegion,
                         selectedDistrict: $homeViewModel.selectedDistrict)
-            .presentationDetents([.fraction(0.4)])
+            .presentationDetents([.fraction(0.7)])
         }
         .sheet(isPresented: $homeViewModel.showSortSheet) {
             RegionButtonSheet(selectedOption: $homeViewModel.selectedOption)

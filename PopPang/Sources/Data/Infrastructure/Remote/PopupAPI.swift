@@ -18,6 +18,9 @@ enum PopupAPI {
     case addFavorite(userUuid: String, popupUuid: String)
     case removeFavorite(userUuid: String, popupUuid: String)
     case getFavoriteList(userUuid: String)
+    
+    // 지역/구 목록 조회
+    case getRegionList
 }
 
 extension PopupAPI: TargetType {
@@ -26,11 +29,12 @@ extension PopupAPI: TargetType {
     var path: String {
         switch self {
         case .getPopupList: return "/popup"
-        case .getUpcomingPopupList: return "popup/upcoming"
-        case .searchPopupList: return "popup/search"
+        case .getUpcomingPopupList: return "/popup/upcoming"
+        case .searchPopupList: return "/popup/search"
         case .addFavorite: return "/favorite"
         case .removeFavorite: return "/favorite"
         case .getFavoriteList(let userUuid): return "/favorite/popup/\(userUuid)"
+        case .getRegionList: return "/popup/regions/districts"
         }
     }
     
@@ -42,6 +46,7 @@ extension PopupAPI: TargetType {
         case .addFavorite: return .post
         case .removeFavorite: return .delete
         case .getFavoriteList: return .get
+        case .getRegionList: return .get
         }
     }
     
@@ -68,6 +73,9 @@ extension PopupAPI: TargetType {
                                                 ],
                                       encoding: JSONEncoding.default)
         case .getFavoriteList:
+            return .requestPlain
+            
+        case .getRegionList:
             return .requestPlain
         }
     }

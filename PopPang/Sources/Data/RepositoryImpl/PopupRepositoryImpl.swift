@@ -36,4 +36,8 @@ final class PopupRepositoryImpl: PopupRepositoryProtocol {
     func removeFavorite(userUuid: String, popupUuid: String) async throws {
         try await NetworkProvider.shared.popupProvidder.asyncRequestVoid(.removeFavorite(userUuid: userUuid, popupUuid: popupUuid))
     }
+    
+    func getRegionList() async throws -> [RegionListDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getRegionList, decodeTo: [RegionListDTO].self)
+    }
 }

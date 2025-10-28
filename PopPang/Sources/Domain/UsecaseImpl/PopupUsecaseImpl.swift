@@ -42,4 +42,9 @@ final class PopupUsecaseImpl: PopupUsecaseProtocol {
     func removeFavorite(userUuid: String, popupUuid: String) async throws {
         try await popupRepository.removeFavorite(userUuid: userUuid, popupUuid: popupUuid)
     }
+    
+    func getRegionList() async throws -> [RegionList] {
+        try await popupRepository.getRegionList()
+            .map { $0.toEntity() }
+    }
 }

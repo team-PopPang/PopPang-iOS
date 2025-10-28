@@ -43,4 +43,9 @@ protocol PopupRepositoryProtocol {
     ///   - userUuid: userUuid
     ///   - popupUuid: popupUuid
     func removeFavorite(userUuid: String, popupUuid: String) async throws
+    
+    
+    /// 지역/구 목록을 가져옵니다
+    /// - Returns: [RegionListDTO]
+    func getRegionList() async throws -> [RegionListDTO]
 }

@@ -29,23 +29,6 @@ struct RegionButtonView: View {
     }
 }
 
-// MARK: - DTO
-struct RegionListDTO: Decodable, Hashable {
-    let region: String
-    let districts: [String]
-    
-    func toModel() -> RegionList{
-        return RegionList(region: region, districts: districts)
-    }
-}
-
-// MARK: - Entity
-struct RegionList: Identifiable, Hashable {
-    var id: String { region }
-    let region: String
-    let districts: [String]
-}
-
 // MARK: - Button
 struct RegionButton: View {
     let text: String
@@ -206,7 +189,7 @@ final class RegionViewModel: ObservableObject {
             RegionListDTO(region: "경기", districts: ["전체"]),
         ]
         
-        let mapped = mockData.map { $0.toModel() }
+        let mapped = mockData.map { $0.toEntity() }
         
         await MainActor.run {
             self.regions = mapped
