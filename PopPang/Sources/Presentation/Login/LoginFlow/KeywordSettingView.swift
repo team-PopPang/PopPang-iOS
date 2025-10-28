@@ -73,6 +73,9 @@ struct KeywordSettingView: View {
                             keywordSet.remove(removed)
                         } label: {
                             Image(systemName: "xmark")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
                                 .foregroundStyle(Color.mainGray)
                         }
                     }

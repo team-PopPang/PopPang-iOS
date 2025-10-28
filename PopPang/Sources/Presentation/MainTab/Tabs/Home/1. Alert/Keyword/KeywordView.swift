@@ -100,7 +100,11 @@ struct KeywordView: View {
                             keywordViewModel.removeKeyword(at: index, keyword: keyword.keyword)
                         } label: {
                             Image(systemName: "xmark")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 10, height: 10)
                                 .foregroundStyle(Color.mainGray)
+                            
                         }
                     }
                     .padding(.top, 17)
