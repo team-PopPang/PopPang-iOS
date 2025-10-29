@@ -66,7 +66,7 @@ struct ProfileSettingView: View {
             
             // MARK: - 로그아웃
             Button {
-                
+                rootViewModel.send(action: .logout)
             } label: {
                 Text("로그아웃")
                     .frame(height: 22)
@@ -88,7 +88,7 @@ struct ProfileSettingView: View {
             
             Spacer()
             
-            MainOrangeButton(buttonTitle: "다음",
+            MainOrangeButton(buttonTitle: "닉네임 변경",
                              buttonColor: profileViewModel.validationState == .success ?
                              Color.mainOrange
                              : Color.mainGray2) {

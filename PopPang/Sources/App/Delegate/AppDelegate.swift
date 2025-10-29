@@ -10,6 +10,7 @@ import KakaoSDKCommon
 import KakaoSDKAuth
 import GoogleSignIn
 import NMapsMap
+import FirebaseCore
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
@@ -24,6 +25,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         
         // print("✅ kakao: \(Constants.KakaoAPI.key)")
+        
+        // 0. firebase 초기화
+        FirebaseApp.configure()
         
         // 1. KakaoSDK 설정
         KakaoSDK.initSDK(appKey: Constants.KakaoAPI.key)

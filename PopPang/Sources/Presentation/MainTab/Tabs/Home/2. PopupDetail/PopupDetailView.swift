@@ -9,6 +9,7 @@ import SwiftUI
 import Kingfisher
 
 struct PopupDetailView: View {
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) var openURL
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
@@ -137,9 +138,30 @@ struct PopupDetailView: View {
                 }
             }
         }
+        
+        // MARK: - 디테일 화면에서만 뒤로가기 흰색으로
+        .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            // 커스텀 좌측
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    dismiss()
+                } label: {
+                    Image("backButton")
+                        .renderingMode(.template)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 18, height: 18)
+                        .foregroundStyle(Color.subWhite)
+                }
+            }
+        }
     }
 }
 
+
+// MARK: - 운영 정보 뷰
 private struct InfoView: View {
     let popup: Popup
     
@@ -217,6 +239,7 @@ private struct FavoriteButton: View {
     }
 }
 
+// MARK: - 소셜 버튼
 private struct SNSButton: View {
     let imageName: String
     let buttonTitle: String
@@ -243,8 +266,6 @@ private struct SNSButton: View {
         .buttonStyle(PressableButtonStyle())
     }
 }
-
-
 
 #Preview {
     @Previewable @State var isFavorite: Bool = false

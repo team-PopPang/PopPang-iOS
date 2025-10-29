@@ -19,6 +19,9 @@
 		DFC713CE2EACAE7F00BFA7A5 /* KakaoSDKShare in Frameworks */ = {isa = PBXBuildFile; productRef = DFC713CD2EACAE7F00BFA7A5 /* KakaoSDKShare */; };
 		DFD430FB2E8FFB3D00B886F9 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = DFD430FA2E8FFB3D00B886F9 /* GoogleSignIn */; };
 		DFFD40782E8ED0AB009E8477 /* Moya in Frameworks */ = {isa = PBXBuildFile; productRef = DFFD40772E8ED0AB009E8477 /* Moya */; };
+		DFFD93772EB137BB00B5B4A7 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = DFFD93762EB137BB00B5B4A7 /* FirebaseCore */; };
+		DFFD93792EB137BB00B5B4A7 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = DFFD93782EB137BB00B5B4A7 /* FirebaseMessaging */; };
+		DFFD937B2EB137D100B5B4A7 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = DFFD937A2EB137D100B5B4A7 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +29,7 @@
 		DF0510F62E83DB9B006AF8C3 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		DF5266172E6CAB8700FC46FD /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		DFAC8E7C2E6C717100B4A917 /* PopPang.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PopPang.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DFFD937A2EB137D100B5B4A7 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -62,8 +66,10 @@
 				DF0510E32E83D9E1006AF8C3 /* KakaoSDKCommon in Frameworks */,
 				DFC590EE2E9D7C3A00F2C78B /* NMapsMap in Frameworks */,
 				DF0510E12E83D9E1006AF8C3 /* KakaoSDKAuth in Frameworks */,
+				DFFD93772EB137BB00B5B4A7 /* FirebaseCore in Frameworks */,
 				DFFD40782E8ED0AB009E8477 /* Moya in Frameworks */,
 				DF0510E52E83D9E1006AF8C3 /* KakaoSDKUser in Frameworks */,
+				DFFD93792EB137BB00B5B4A7 /* FirebaseMessaging in Frameworks */,
 				DFC713CE2EACAE7F00BFA7A5 /* KakaoSDKShare in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -76,6 +82,7 @@
 			children = (
 				DF5266172E6CAB8700FC46FD /* README.md */,
 				DF0510E62E83DB65006AF8C3 /* .gitignore */,
+				DFFD937A2EB137D100B5B4A7 /* GoogleService-Info.plist */,
 				DF0510F62E83DB9B006AF8C3 /* Config.xcconfig */,
 				DFAC8E7E2E6C717100B4A917 /* PopPang */,
 				DFC713CC2EACAE7F00BFA7A5 /* Frameworks */,
@@ -127,6 +134,8 @@
 				DFC590ED2E9D7C3A00F2C78B /* NMapsMap */,
 				DF2A93EC2EA5324E00241E9E /* BottomSheet */,
 				DFC713CD2EACAE7F00BFA7A5 /* KakaoSDKShare */,
+				DFFD93762EB137BB00B5B4A7 /* FirebaseCore */,
+				DFFD93782EB137BB00B5B4A7 /* FirebaseMessaging */,
 			);
 			productName = PopPang;
 			productReference = DFAC8E7C2E6C717100B4A917 /* PopPang.app */;
@@ -163,6 +172,7 @@
 				DFA5E27D2E969C8F002921C1 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				DFC590EC2E9D7C3A00F2C78B /* XCRemoteSwiftPackageReference "SPM-NMapsMap" */,
 				DF2A93EB2EA5324E00241E9E /* XCRemoteSwiftPackageReference "BottomSheet" */,
+				DFFD93752EB137BB00B5B4A7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DFAC8E7D2E6C717100B4A917 /* Products */;
@@ -182,6 +192,7 @@
 				DF5266182E6CAB8700FC46FD /* README.md in Resources */,
 				DF0510E72E83DB65006AF8C3 /* .gitignore in Resources */,
 				DF0510F72E83DB9B006AF8C3 /* Config.xcconfig in Resources */,
+				DFFD937B2EB137D100B5B4A7 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -479,6 +490,14 @@
 				minimumVersion = 15.0.3;
 			};
 		};
+		DFFD93752EB137BB00B5B4A7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.4.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -526,6 +545,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DFFD40762E8ED0AB009E8477 /* XCRemoteSwiftPackageReference "Moya" */;
 			productName = Moya;
+		};
+		DFFD93762EB137BB00B5B4A7 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DFFD93752EB137BB00B5B4A7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		DFFD93782EB137BB00B5B4A7 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DFFD93752EB137BB00B5B4A7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

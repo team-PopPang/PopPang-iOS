@@ -148,7 +148,13 @@ final class MapCoordinator: NSObject,
                 DispatchQueue.main.async {
                     self.locationManager = CLLocationManager()
                     self.locationManager!.delegate = self
-                    self.locationManager!.desiredAccuracy = kCLLocationAccuracyBest  // 정확도 향상
+                    
+                    // 정확도 향상 하지만 실시간 고정밀 위치 추적이라 위치 업데이트 빈번 벌생
+                    self.locationManager!.desiredAccuracy = kCLLocationAccuracyBest
+                    
+                    // UI 업데이트 줄이기 위해 최소 30m이동시만 업데이트
+                    // self.locationManager!.desiredAccuracy = kCLLocationAccuracyHundredMeters
+                    // self.locationManager!.distanceFilter = 30
                 }
             } else {
                 print("⚠️ 위치 서비스가 꺼져 있습니다.")
@@ -224,15 +230,33 @@ extension MapCoordinator {
     /// ViewModel에서 Spot 배열이 변경될 때마다 호출됨
     /// 새로운 Spot 데이터로 클러스터를 다시 생성
     func updateSpots(_ newPopups: [Popup]) {
+        
+        // 값이 같으면 갱신 안함
+        guard newPopups != popups else { return }
+        
+        // 갱신
         self.popups = newPopups
-        makeClusterer()
+        // makeClusterer()
+        
+        // MARK: - 최적화
+        // 기존 클러스터 초기화 없이, 변경분만 반영
+        clusterer?.clear()
+        var keyTagMap: [ItemKey: NSObject] = [:]
+        for (index, popup) in newPopups.enumerated() {
+            let key = ItemKey(identifier: index,
+                              position: NMGLatLng(lat: popup.latitude ?? 0,
+                                                  lng: popup.longitude ?? 0),
+                              imageURL: popup.imageUrlList[0])
+            keyTagMap[key] = NSNull()
+        }
+        clusterer?.addAll(keyTagMap)
     }
 }
 
 extension MapCoordinator {
     func mapViewCameraIdle(_ mapView: NMFMapView) {
-        let zoom = mapView.zoomLevel
-        print("📸 현재 줌 레벨: \(zoom)")
+        // let zoom = mapView.zoomLevel
+        // print("📸 현재 줌 레벨: \(zoom)")
     }
 }
 

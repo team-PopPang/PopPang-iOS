@@ -57,7 +57,7 @@ extension UINavigationBar {
             .withRenderingMode(.alwaysTemplate) { // template 모드로 바꿔야 색상 입힐 수 있음
             
             let resized = chevronImage.preparingThumbnail(of: CGSize(width: 18, height: 18)) // 크기 줄이기
-            let tinted = resized?.withTintColor(UIColor(.subWhite), renderingMode: .alwaysOriginal)
+            let tinted = resized?.withTintColor(UIColor(.subBlack), renderingMode: .alwaysOriginal)
             let adjusted = tinted?.withAlignmentRectInsets(UIEdgeInsets(top: 0, left: -6, bottom: 0, right: 0))
             
             if let adjusted {

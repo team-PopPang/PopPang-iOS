@@ -40,6 +40,7 @@ final class RootViewModel: ObservableObject {
         case setalertList([String])              // 알림 키워드 설정
         case setRecommandList([Int])             // 추천 키워드 설정
         case register                            // 화원가입
+        case logout
     }
     
     // MARK: - Dependency
@@ -255,6 +256,9 @@ extension RootViewModel {
             default:
                 break
             }
+            
+        case .logout:
+            logout()
         }
     }
 }
@@ -342,6 +346,11 @@ extension RootViewModel {
     func logout() {
         self.user = nil
         self.storeUID = ""
-        updateScene()
+        self.nickname = ""
+        self.validationState = .none
+        self.scene = .unauthenticated
+        self.updateScene()
+        
+        // fcm 토큰 정리 로직 추가
     }
 }
