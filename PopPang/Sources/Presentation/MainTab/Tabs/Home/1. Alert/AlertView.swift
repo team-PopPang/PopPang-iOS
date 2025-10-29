@@ -24,7 +24,7 @@ struct AlertView: View {
     var body: some View {
         VStack(spacing: 0) {
 
-            // ✅ 세그먼트 헤더
+            // 세그먼트 헤더
             SegmentedControlView(segments: segments,
                                  views: [ActivityView(activityViewModel: activityViewModel),
                                          KeywordView(keywordViewModel: keywordViewModel)],

@@ -110,7 +110,6 @@ extension HomeViewModel {
             await MainActor.run {
                 likePostIds = Set(favoritePopups.map { $0.popupUuid })
             }
-            print("좋아요한거: \(likePostIds)")
         } catch {
             print("❌ 찜 목록 불러오기 오류: \(error)")
         }

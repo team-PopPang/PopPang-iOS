@@ -11,6 +11,7 @@ import KakaoSDKAuth
 import GoogleSignIn
 import NMapsMap
 import FirebaseCore
+import FirebaseMessaging
 
 class AppDelegate: UIResponder, UIApplicationDelegate {
     
@@ -23,19 +24,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     /// - Important: 이 메서드에서 Kakao SDK 초기화를 성공해야 카카오 로그인 및 API 가 정상 동작
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        
-        // print("✅ kakao: \(Constants.KakaoAPI.key)")
-        
+
         // 0. firebase 초기화
         FirebaseApp.configure()
         
-        // 1. KakaoSDK 설정
+        // 1. 알림 권한 요청
+        NotificationManager.shared.configureNotification()
+        
+        // 2. KakaoSDK 설정
         KakaoSDK.initSDK(appKey: Constants.KakaoAPI.key)
         
-        // 2-1. NaverMapSDK 설정
+        // 3-1. NaverMapSDK 설정
         NMFAuthManager.shared().ncpKeyId = Constants.NaverAPI.key
         
-        // 2-2. 지도 오토 레이아웃 경고 제거
+        // 3-2. 지도 오토 레이아웃 경고 제거
         UserDefaults.standard.set(false, forKey: "_UIConstraintBasedLayoutLogUnsatisfiable")
         
         return true
@@ -96,6 +98,102 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 }
 
+// 딥링크 노티 이름
 extension Notification.Name {
     static let didReceiveDeepLink = Notification.Name("didReceiveDeepLink")
+}
+
+
+// MARK: - 알림 관련(Swizzling)
+extension AppDelegate {
+
+    // APNs 등록 성공 → APNs 토큰을 FCM에 연결
+    func application(_ application: UIApplication,
+                     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        NotificationManager.shared.didRegisterForRemoteNotifications(deviceToken: deviceToken)
+    }
+
+    // APNs 등록 실패 로깅
+    func application(_ application: UIApplication,
+                     didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        NotificationManager.shared.didFailToRegisterForRemoteNotifications(error: error)
+    }
+}
+
+final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, MessagingDelegate {
+    static let shared = NotificationManager()
+    private override init() {}
+    
+    /// 알림 권한 요청 및 APNs 등록
+    func configureNotification() {
+        let center = UNUserNotificationCenter.current()
+        center.delegate = self
+        
+        Messaging.messaging().delegate = self
+        center.requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+            // 요청 과정에서 오류가 발생하였는지 확인
+            if let error = error {
+                print("❌ configureNotification 에러: \(error)")
+                return
+            }
+            
+            // 알림 권한 요청 결과
+            DispatchQueue.main.async {
+                if granted {
+                    // 권한이 허용된 경우
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            }
+        }
+    }
+    
+    /// FCM 등록 토큰을 수신했을 때 호출되는 메서드입니다.
+    ///
+    /// - Parameter fcmToken: Firebase Cloud Messaging에서 발급받은 고유 토큰 문자열.
+    ///
+    /// - Note:
+    ///   앱이 처음 실행되거나, APNs 토큰이 변경될 때, 또는 Firebase 토큰이 갱신될 때 자동으로 호출됩니다.
+    ///   이 토큰은 Firestore에 저장하거나, 서버 API로 전달해 푸시 발송 대상 식별용으로 사용합니다.
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        
+        guard let fcmToken = fcmToken else {
+            print("⚠️ FCM 토큰이 nil입니다.")
+            return
+        }
+        print("📱 FCM 토큰 수신 완료: \(fcmToken)")
+        UserDefaultsManager.saveFcmToken(fcmToken)
+        
+        // 🔹 (선택) Firestore나 서버에 토큰 저장
+        // FcmTokenManager.shared.saveToken(fcmToken)
+    }
+    
+    // APNs 등록 성공 → APNs 토큰을 FCM에 연결
+    func didRegisterForRemoteNotifications(deviceToken: Data) {
+        // 1) APNs 토큰 등록
+        Messaging.messaging().apnsToken = deviceToken
+        print("📮 APNs token set (\(deviceToken.count) bytes)")
+
+        // APNs 토큰이 설정된 '이후'에 FCM 토큰을 요청 (선택)
+        Messaging.messaging().token { token, error in
+            if let token = token?.trimmingCharacters(in: .whitespacesAndNewlines) {
+                print("✅ Fresh FCM token:", token, "len:", token.count)
+            } else if let error = error {
+                print("❌ FCM 토큰 가져오기 실패:", error.localizedDescription)
+            }
+        }
+    }
+
+    // APNs 등록 실패 로깅
+    func didFailToRegisterForRemoteNotifications(error: Error) {
+        print("❌ APNs 등록 실패:", error.localizedDescription)
+    }
+    
+    // 🔔 포그라운드 상태에서 알림이 도착했을 때 호출됨
+    func userNotificationCenter(_ center: UNUserNotificationCenter,
+                                willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        
+        // ✅ 알림을 배너 + 사운드 + 리스트에 표시되게 함
+        completionHandler([.banner, .sound, .list])
+    }
 }

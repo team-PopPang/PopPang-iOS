@@ -35,4 +35,19 @@ struct UserDefaultsManager {
         current.removeAll { $0 == keyword }
         save(current)
     }
+    
+    
+    static let fcmTokenKey = "fcmToken"
+    
+    static func saveFcmToken(_ token: String) {
+        UserDefaults.standard.set(token, forKey: fcmTokenKey)
+    }
+
+    static func loadFcmToken() -> String? {
+        UserDefaults.standard.string(forKey: fcmTokenKey)
+    }
+
+    static func removeFcmToken() {
+        UserDefaults.standard.removeObject(forKey: fcmTokenKey)
+    }
 }

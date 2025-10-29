@@ -37,9 +37,9 @@ class Coordinator<T: Hashable, R: Identifiable, O: Identifiable>: ObservableObje
         // 1) 직전 화면과 같은 걍로면 무시하겠다(중복 방지)
         guard paths.last != path else { return }
         print("\n--- push ---")
-        print("  - Before\(paths.map { "\($0)" }.joined(separator: " -> "))")
+        // print("  - Before\(paths.map { "\($0)" }.joined(separator: " -> "))")
         paths.append(path)
-        print("  - After: \(paths.map { "\($0)" }.joined(separator: " -> "))")
+        // print("  - After: \(paths.map { "\($0)" }.joined(separator: " -> "))")
     }
     
     // 마지막 경로 제거
@@ -47,17 +47,17 @@ class Coordinator<T: Hashable, R: Identifiable, O: Identifiable>: ObservableObje
         // 1) 비어있다면 무시
         guard !paths.isEmpty else { return }
         print("\n--- pop ---")
-        print("  - Before: \(paths.map { "\($0)" }.joined(separator: " -> "))")
+        // print("  - Before: \(paths.map { "\($0)" }.joined(separator: " -> "))")
         paths.removeLast()
-        print("  - After: \(paths.map { "\($0)" }.joined(separator: " -> "))")
+        // print("  - After: \(paths.map { "\($0)" }.joined(separator: " -> "))")
     }
     
     // 네비게이션 스택을 루트까지 되돌리기
     func popToRoot() {
         print("\n--- popToRoot ---")
-        print("  - Before: \(paths.map { "\($0)" }.joined(separator: " -> "))")
+        // print("  - Before: \(paths.map { "\($0)" }.joined(separator: " -> "))")
         paths.removeAll()
-        print("  - After: \(paths.map { "\($0)" }.joined(separator: " -> "))")
+        // print("  - After: \(paths.map { "\($0)" }.joined(separator: " -> "))")
     }
     
     // 특정 경로까지 스택을 되돌림

@@ -238,6 +238,7 @@ extension MapCoordinator {
         self.popups = newPopups
         // makeClusterer()
         
+
         // MARK: - 최적화
         // 기존 클러스터 초기화 없이, 변경분만 반영
         clusterer?.clear()

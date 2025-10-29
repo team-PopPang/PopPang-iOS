@@ -15,7 +15,7 @@ struct User {
     var nickname: String?
     let role: String
     let isAlerted: Bool
-    let fcmToken: String?
+    var fcmToken: String?
     var alertKeywordList: [String]?
     var recommendList: [Int]?
 //    var isNewUser: Bool {

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UserNotifications
 
 struct KeywordSettingView: View {
     @EnvironmentObject private var rootViewModel: RootViewModel
@@ -14,8 +15,6 @@ struct KeywordSettingView: View {
     
     // 중복 검사
     @State private var keywords: [String] = []
-    @State private var keywordSet: Set<String> = []
-    @State private var showDuplicateWarning = false
     
     var onNext: () -> Void
     var body: some View {
@@ -40,17 +39,47 @@ struct KeywordSettingView: View {
                 .focused($isFocused)
                 
                 Button {
+                    
+                    // 공백이면 무시한다
                     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
                     guard !trimmed.isEmpty else { return }
                     
-                    if keywordSet.contains(trimmed) {
-                        showDuplicateWarning = true
-                        return
+                    // 알림 권한이 없으면 알림 창을 띄우고 확인을 누르면 설정으로 이동시킨다
+                    UNUserNotificationCenter.current().getNotificationSettings { settings in
+                        switch settings.authorizationStatus {
+                            
+                        // MARK: - 권한이 거부된 경우
+                        case .denied:
+                            DispatchQueue.main.async {
+                                // 알림
+                                showNotificationPermissionAlert()
+                            }
+                            return
+                        
+                        // MARK: - 권한 요청 아직 안됨 -> 재요청
+                        case .notDetermined:
+                            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+                                if granted {
+                                    addKeyword(trimmed: trimmed)
+                                } else {
+                                    DispatchQueue.main.async {
+                                        // 알림
+                                        showNotificationPermissionAlert()
+                                    }
+                                }
+                            }
+                            
+                        // MARK: - 권한이 허용된 경우
+                        case .authorized, .provisional, .ephemeral:
+                            DispatchQueue.main.async {
+                                addKeyword(trimmed: trimmed)
+                            }
+                            
+                        @unknown default:
+                            break
+                        }
                     }
-                    keywords.append(trimmed)
-                    keywordSet.insert(trimmed)
-                    showDuplicateWarning = false
-                    text = ""
+                    
                 } label: {
                     Text("등록")
                         .font(.scdream(.medium, size: 12))
@@ -69,8 +98,7 @@ struct KeywordSettingView: View {
                         Text(keyword)
                         Spacer()
                         Button {
-                            let removed = keywords.remove(at: index)
-                            keywordSet.remove(removed)
+                            keywords.remove(at: index)
                         } label: {
                             Image(systemName: "xmark")
                                 .resizable()
@@ -95,9 +123,7 @@ struct KeywordSettingView: View {
             
             MainOrangeButton(buttonTitle: "다음") {
                 rootViewModel.send(action: .setalertList(keywords))
-//                DispatchQueue.main.async {
-//                    onNext()
-//                }
+
                 UIApplication.shared.endEditing(true)
                 Task {
                     try? await Task.sleep(nanoseconds: 700_000_000) // 0.7초
@@ -113,7 +139,35 @@ struct KeywordSettingView: View {
     }
 }
 
+extension KeywordSettingView {
+    func showNotificationPermissionAlert() {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let rootVC = windowScene.windows.first?.rootViewController else { return }
+        
+        let alert = UIAlertController(title: "알림 허용",
+                                       message: "키쿼드 알림을 받으려면 알림 권한을 허용해 주세요.",
+                                       preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
+            if let url = URL(string: UIApplication.openSettingsURLString),
+               UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url)
+            }
+        })
+        alert.addAction(UIAlertAction(title: "다음에 하기", style: .default))
+        rootVC.present(alert, animated: true)
+    }
+    
+    func addKeyword(trimmed: String) {
+        // 중복은 무시한다
+        if keywords.contains(trimmed) { return }
+        
+        keywords.append(trimmed)
+        text = ""
+    }
+}
+
 #Preview {
     KeywordSettingView {}
         .environmentObject(RootViewModel())
 }
+

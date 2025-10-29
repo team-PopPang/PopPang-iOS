@@ -15,21 +15,21 @@
 		DF2A93ED2EA5324E00241E9E /* BottomSheet in Frameworks */ = {isa = PBXBuildFile; productRef = DF2A93EC2EA5324E00241E9E /* BottomSheet */; };
 		DF5266182E6CAB8700FC46FD /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = DF5266172E6CAB8700FC46FD /* README.md */; };
 		DFA5E27F2E969C8F002921C1 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = DFA5E27E2E969C8F002921C1 /* Kingfisher */; };
+		DFA876632EB205220003C376 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = DFA876622EB205220003C376 /* GoogleService-Info.plist */; };
 		DFC590EE2E9D7C3A00F2C78B /* NMapsMap in Frameworks */ = {isa = PBXBuildFile; productRef = DFC590ED2E9D7C3A00F2C78B /* NMapsMap */; };
 		DFC713CE2EACAE7F00BFA7A5 /* KakaoSDKShare in Frameworks */ = {isa = PBXBuildFile; productRef = DFC713CD2EACAE7F00BFA7A5 /* KakaoSDKShare */; };
 		DFD430FB2E8FFB3D00B886F9 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = DFD430FA2E8FFB3D00B886F9 /* GoogleSignIn */; };
 		DFFD40782E8ED0AB009E8477 /* Moya in Frameworks */ = {isa = PBXBuildFile; productRef = DFFD40772E8ED0AB009E8477 /* Moya */; };
 		DFFD93772EB137BB00B5B4A7 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = DFFD93762EB137BB00B5B4A7 /* FirebaseCore */; };
 		DFFD93792EB137BB00B5B4A7 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = DFFD93782EB137BB00B5B4A7 /* FirebaseMessaging */; };
-		DFFD937B2EB137D100B5B4A7 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = DFFD937A2EB137D100B5B4A7 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		DF0510E62E83DB65006AF8C3 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		DF0510F62E83DB9B006AF8C3 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		DF5266172E6CAB8700FC46FD /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		DFA876622EB205220003C376 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		DFAC8E7C2E6C717100B4A917 /* PopPang.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PopPang.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		DFFD937A2EB137D100B5B4A7 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -81,8 +81,8 @@
 			isa = PBXGroup;
 			children = (
 				DF5266172E6CAB8700FC46FD /* README.md */,
+				DFA876622EB205220003C376 /* GoogleService-Info.plist */,
 				DF0510E62E83DB65006AF8C3 /* .gitignore */,
-				DFFD937A2EB137D100B5B4A7 /* GoogleService-Info.plist */,
 				DF0510F62E83DB9B006AF8C3 /* Config.xcconfig */,
 				DFAC8E7E2E6C717100B4A917 /* PopPang */,
 				DFC713CC2EACAE7F00BFA7A5 /* Frameworks */,
@@ -189,10 +189,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DFA876632EB205220003C376 /* GoogleService-Info.plist in Resources */,
 				DF5266182E6CAB8700FC46FD /* README.md in Resources */,
 				DF0510E72E83DB65006AF8C3 /* .gitignore in Resources */,
 				DF0510F72E83DB9B006AF8C3 /* Config.xcconfig in Resources */,
-				DFFD937B2EB137D100B5B4A7 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -349,6 +349,9 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PopPang/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "팝팡";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "지도를 위해 현재 위치를 사용합니다.2";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "팝업스토어 정보 제공을 위해 사용자의 위치를 받습니다.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "지도를 위해 현재 위치를 사용합니다.1";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -392,6 +395,9 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = PopPang/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "팝팡";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "지도를 위해 현재 위치를 사용합니다.2";
+				INFOPLIST_KEY_NSLocationAlwaysUsageDescription = "팝업스토어 정보 제공을 위해 사용자의 위치를 받습니다.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "지도를 위해 현재 위치를 사용합니다.1";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

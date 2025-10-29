@@ -104,10 +104,9 @@ extension RootViewModel {
                 Task {
                     do {
                         let user = try await userUsecase.autoLogin(userUuid: storeUID)
-                        print("자동로그인: \(user)")
+                        // print("자동로그인: \(user)")
                         await MainActor.run {
                             self.loginSuccess(user: user)
-                            print(user)
                         }
                         
                     } catch (let error) {
@@ -211,7 +210,12 @@ extension RootViewModel {
             
         // MARK: - 회원가입 완료 버튼
         case .register:
-            let registerUser = user!
+            var registerUser = user!
+            
+            // MARK: - 만약 FCM 토큰이 있는 경우 함께 저장
+            if let fcmToken = UserDefaultsManager.loadFcmToken() {
+                registerUser.fcmToken = fcmToken
+            }
             
             switch registerUser.provider {
             case "APPLE":

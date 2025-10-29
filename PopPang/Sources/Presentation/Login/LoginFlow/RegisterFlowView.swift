@@ -1,87 +1,9 @@
-////
-////  RegisterFlowView.swift
-////  PopPang
-////
-////  Created by 김동현 on 9/16/25.
-////
 //
-//import SwiftUI
+//  RegisterFlowView.swift
+//  PopPang
 //
-//enum RegisterRoute: Int, CaseIterable, Hashable {
-//    case nickname = 0
-//    case keyword
-//    case category
-//    
-//    var index: Int { rawValue }
-//}
+//  Created by 김동현 on 9/16/25.
 //
-//struct RegisterFlowView: View {
-//    @State private var currentStep: Int = 0
-//    
-//    var body: some View {
-//        VStack(spacing: 0) {
-//            // 커스텀 네비게이션바
-//            HStack {
-//                if currentStep > 0 {
-//                    Button {
-//                        withAnimation {
-//                            currentStep = max(currentStep - 1, 0)
-//                        }
-//                    } label: {
-//                        Image(systemName: "chevron.left")
-//                            .font(.title2)
-//                            .foregroundStyle(Color.mainBlack)
-//                            .padding()
-//                    }
-//                } else {
-//                    Image(systemName: "chevron.left")
-//                        .font(.title2)
-//                        .opacity(0)
-//                        .padding()
-//                }
-//                Spacer()
-//            }
-//            .frame(height: 44)
-//            .background(Color.white)
-//         
-//            // 주황색 프로그래스바
-//            ProgressView(value: Double(currentStep + 1),
-//                         total: Double(RegisterRoute.allCases.count))
-//            .progressViewStyle(.linear)
-//            .tint(.orange)
-//            .frame(height: 4)
-//            .animation(.easeInOut(duration: 0.3), value: currentStep)
-//            
-//            // 페이지 스타일 네비게이션
-//            TabView(selection: $currentStep) {
-//                NicknameSettingView {
-//                    withAnimation { currentStep = RegisterRoute.keyword.index }
-//                }
-////                .gesture(DragGesture())
-//                .tag(RegisterRoute.nickname.index)
-//                
-//                KeywordSettingView {
-//                    withAnimation { currentStep = RegisterRoute.category.index }
-//                }
-////                .gesture(DragGesture())
-//                .tag(RegisterRoute.keyword.index)
-//                
-//                CategorySettingView {
-//                    print("회원가입 완료")
-//                }
-////                .gesture(DragGesture())
-//                .tag(RegisterRoute.category.index)
-//            }
-//            .tabViewStyle(.page(indexDisplayMode: .never)) // ← UIPageController 느낌
-//        }
-//    }
-//}
-//
-//#Preview {
-//    RegisterFlowView()
-//}
-//
-
 
 import SwiftUI
 
