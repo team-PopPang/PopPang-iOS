@@ -33,6 +33,7 @@ struct RegionButtonView: View {
 struct RegionButton: View {
     let text: String
     let action: () -> Void
+    
     var body: some View {
         Button {
             action()
@@ -99,7 +100,7 @@ struct RegionSheet: View {
                     VStack(spacing: 0) {
                         Button {
                             selectedRegion = region
-                            selectedDistrict = region.districts.first
+                            selectedDistrict = region.districtList.first
                         } label: {
                             HStack(spacing: 0) {
                                 Spacer()
@@ -124,7 +125,7 @@ struct RegionSheet: View {
                 
                 // 우측: 구 목록
                 if let selected = selectedRegion {
-                    List(selected.districts, id: \.self) { district in
+                    List(selected.districtList, id: \.self) { district in
                         VStack(spacing: 0) {
                             Button {
                                 selectedDistrict = district
@@ -179,14 +180,10 @@ final class RegionViewModel: ObservableObject {
     
     func fetchRegions() async {
         // ⏳ 네트워크 대신 목업 데이터 (비동기 시뮬레이션)
-        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초 지연
+        // try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초 지연
         
         let mockData: [RegionListDTO] = [
-            RegionListDTO(region: "전체", districts: ["전체"]),
-            RegionListDTO(region: "서울", districts: ["전체", "강남구", "성동구", "송파구", "종로구"]),
-            RegionListDTO(region: "부산", districts: ["전체"]),
-            RegionListDTO(region: "인천", districts: ["전체"]),
-            RegionListDTO(region: "경기", districts: ["전체"]),
+ 
         ]
         
         let mapped = mockData.map { $0.toEntity() }
@@ -195,7 +192,7 @@ final class RegionViewModel: ObservableObject {
             self.regions = mapped
             if let first = mapped.first {
                 self.selectedRegion = first
-                self.selectedDistrict = first.districts.first
+                self.selectedDistrict = first.districtList.first
             }
         }
     }

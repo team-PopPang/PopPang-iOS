@@ -10,9 +10,9 @@ import Foundation
 // MARK: - DTO
 struct RegionListDTO: Decodable, Hashable {
     let region: String
-    let districts: [String]
+    let districtList: [String]
     
     func toEntity() -> RegionList{
-        return RegionList(region: region, districts: districts)
+        return RegionList(region: region, districtList: districtList)
     }
 }

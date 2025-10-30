@@ -123,11 +123,7 @@ extension HomeViewModel {
         try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초 지연
         
         let mockData: [RegionListDTO] = [
-            RegionListDTO(region: "전체", districts: ["전체"]),
-            RegionListDTO(region: "서울", districts: ["전체", "강남구", "성동구", "송파구", "종로구"]),
-            RegionListDTO(region: "부산", districts: ["전체"]),
-            RegionListDTO(region: "인천", districts: ["전체"]),
-            RegionListDTO(region: "경기", districts: ["전체"]),
+
         ]
         
         let mapped = mockData.map { $0.toEntity() }
@@ -136,7 +132,7 @@ extension HomeViewModel {
             self.regions = mapped
             if let first = mapped.first {
                 self.selectedRegion = first
-                self.selectedDistrict = first.districts.first
+                self.selectedDistrict = first.districtList.first
             }
         }
     }
@@ -149,7 +145,7 @@ extension HomeViewModel {
                 self.regions = regionListDTO
                 if let first = regionListDTO.first {
                     self.selectedRegion = first
-                    self.selectedDistrict = first.districts.first
+                    self.selectedDistrict = first.districtList.first
                 }
             }
         } catch {

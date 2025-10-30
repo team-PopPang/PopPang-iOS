@@ -22,7 +22,8 @@ struct MapListView: View {
                     ForEach(Array(popups.enumerated()), id: \.element) { index, popup in
                         MapListPopupCell(popup: popup)
                             .onTapGesture {
-                                coordinator.push(.popupDetail(popup)) // ✅ 디테일 화면 이동
+                                MapCoordinator.shared.moveCamera(to: popup)
+                                // coordinator.push(.popupDetail(popup)) // ✅ 디테일 화면 이동
                             }
                         
                         if index != popups.count - 1 {

@@ -12,16 +12,44 @@ final class MapViewModel: ObservableObject {
     @Dependency private var popupUsecase: PopupUsecaseProtocol
     @Published var mapPopups: [Popup] = []
     
+    // MARK: - 맵 지역 시트 관련
+    @Published var regions: [RegionList] = []
+    @Published var selectedRegion: RegionList?
+    @Published var selectedDistrict: String?
+    
     init() {
         Task {
-            do {
-                let popups = try await popupUsecase.getPopupList()
-                await MainActor.run {
-                    self.mapPopups = popups
-                }
-            } catch {
-                print("❌ MapViewModel getPopupList Error: \(error)")
+            await self.fetchPopupList()
+            await self.fetchRegionList()
+        }
+    }
+}
+
+extension MapViewModel {
+    func fetchPopupList() async {
+        do {
+            let popups = try await popupUsecase.getPopupList()
+            await MainActor.run {
+                self.mapPopups = popups
             }
+            
+            await self.fetchRegionList()
+        } catch {
+            print("❌ MapViewModel getPopupList Error: \(error)")
+        }
+    }
+    func fetchRegionList() async {
+        do {
+            let regionListDTO = try await popupUsecase.getRegionList()
+            await MainActor.run {
+                self.regions = regionListDTO
+                if let first = regionListDTO.first {
+                    self.selectedRegion = first
+                    self.selectedDistrict = first.districtList.first
+                }
+            }
+        } catch {
+            print("HomeViewModel.fetchRegionList(): ❌ 찜 목록 불러오기 오류: \(error)")
         }
     }
 }

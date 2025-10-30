@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MapSearchTextField: View {
     var placeholder: String
+    var background: Color = .subWhite
     @Binding var text: String
     
     var body: some View {
@@ -20,7 +21,7 @@ struct MapSearchTextField: View {
                     .keyboardType(.default)
                     .padding(.horizontal, 24)
                     .tint(.mainBlack)
-                    .background(Color.subWhite)
+                    .background(background)
                     .cornerRadius(3)
                     .contentShape(Rectangle())
                     .overlay {

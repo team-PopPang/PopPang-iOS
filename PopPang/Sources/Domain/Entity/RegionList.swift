@@ -11,5 +11,5 @@ import Foundation
 struct RegionList: Identifiable, Hashable {
     var id: String { region }
     let region: String
-    let districts: [String]
+    let districtList: [String]
 }
