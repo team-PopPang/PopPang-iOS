@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct KeywordView: View {
+    @EnvironmentObject private var rootViewModel: RootViewModel
     @ObservedObject var keywordViewModel: KeywordViewModel
     @State private var text: String = ""
     @State private var categories: [String] = UserDefaultsManager.load()
@@ -60,7 +61,7 @@ struct KeywordView: View {
             
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
-                    Text("홍길동")
+                    Text(rootViewModel.user?.nickname ?? "홍길동")
                         .foregroundStyle(Color.mainOrange)
                         .font(.scdream(.bold, size: 12))
                     Text("님의 최근 본 검색어예요")

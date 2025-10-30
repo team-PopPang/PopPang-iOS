@@ -33,7 +33,7 @@ struct FavoriteCalendarView: View {
                 
                 Spacer()
             }
-            .padding(.horizontal, 10)
+            .padding(.horizontal, 15)
         }
     }
 }

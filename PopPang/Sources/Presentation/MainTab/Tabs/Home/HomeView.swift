@@ -311,17 +311,19 @@ private struct ComingPopupCell: View {
                     Text("\(popup.name)")
                         .font(.scdream(.medium, size: 13))
                         .foregroundStyle(Color.mainBlack)
+                    
+                    Spacer()
+                    
                     Text("\(popup.roadAddress.shortAddress)")
                         .font(.scdream(.regular, size: 11))
                         .foregroundStyle(Color.mainGray)
                 }
-                .padding(.bottom, 15)
+                .padding(.vertical, 15)
                 
                 Spacer()
             }
             .frame(width: 283, height: 138)
         }
-        
     }
     
     private func dDay(date: Date) -> String {
@@ -359,7 +361,7 @@ private struct GridPopupScrollView: View {
                         .onTapGesture {
                             coordinator.push(.popupDetail(popup))
                         }
-                        .padding(.bottom, 20)
+                        .padding(.bottom, 0)
                 }
             }
         }
@@ -415,7 +417,7 @@ private struct GridPopupCell: View {
                 .truncationMode(.tail)
                 .padding(.top, 5)
 
-            HStack {
+            HStack(spacing: 2) {
                 Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
                 Text("-")
                 Text(popup.endDate, formatter: DateFormatter.popupDateFormat)

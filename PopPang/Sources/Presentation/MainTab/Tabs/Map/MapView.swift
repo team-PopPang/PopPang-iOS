@@ -31,13 +31,12 @@ struct MapView: View {
                         coordinator.push(.popupDetail(popup))
                     }
                 }
-
             
-//            MapSearchTextField(placeholder: "궁금한 팝업을 검색해보세요",
-//                               text: $text)
-//            .frame(maxHeight: .infinity, alignment: .top)
-//            .padding(.top, 70)
-//            .padding(.horizontal, 15)
+            MapSearchTextField(placeholder: "궁금한 팝업을 검색해보세요",
+                               text: $text)
+            .frame(maxHeight: .infinity, alignment: .top)
+            .padding(.top, 70)
+            .padding(.horizontal, 15)
             
             
             // MARK: - 내위치 이동 버튼
@@ -64,6 +63,7 @@ struct MapView: View {
                      switchablePositions: [.absolute(120), .relative(0.45), .relative(1.0)],
                      content: {
             
+            /*
             // 만약 시트가 최대 너비라면 검색바 보이게
             if firstSheetPosition == .relative(1.0) {
                 MapSearchTextField(placeholder: "궁금한 팝업을 검색해보세요",
@@ -71,6 +71,7 @@ struct MapView: View {
                                    text: $text)
                 .padding(.contentPadding)
             }
+             */
             
             // view
             FirstSheetView(mapViewModel: mapViewModel) {

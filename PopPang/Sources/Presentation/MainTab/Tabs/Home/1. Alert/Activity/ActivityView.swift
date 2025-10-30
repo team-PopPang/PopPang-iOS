@@ -16,7 +16,7 @@ struct ActivityView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
-                ForEach(Array(homeViewModel.gridPopups.enumerated()), id: \.element) { index, popup in
+                ForEach(Array(homeViewModel.gridPopups.prefix(3).enumerated()), id: \.element) { index, popup in
                     AlertPopupCell(popup: popup)
                         .contentShape(Rectangle()) // 터치 영역을 셀 전체로 확장
                         .onTapGesture {

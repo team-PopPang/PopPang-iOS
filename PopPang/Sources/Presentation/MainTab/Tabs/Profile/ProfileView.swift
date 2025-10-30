@@ -44,7 +44,11 @@ struct ProfileView: View {
                                
                 ) {
                     coordinator.push(.profileSetting)
-                }
+                }.padding(.horizontal, 24)
+                
+                Rectangle()
+                    .fill(Color.mainGray5)
+                    .frame(height: 2)
                 
                 NavigationButton(title: "키워드 알림",
                                  subTitle: "키워드의 팝업이 등록되면 안내해 드립니다.",
@@ -52,29 +56,28 @@ struct ProfileView: View {
                                  isOn: $isOn
                 ) {
                     
-                }
-                .padding(.bottom, 30)
+                }.padding(.horizontal, 24)
                 
                 NavigationButton(title: "공지사항",
                                  buttonType: .navigation,
                 ) {
                     coordinator.push(.notification)
-                }
+                }.padding(.horizontal, 24)
                 
                 NavigationButton(title: "문의하기",
                                  buttonType: .navigation,
                 ) {
                     emai.send(openURL: openURL)
-                }
+                }.padding(.horizontal, 24)
                 
                 NavigationButton(title: "서비스 이용약관",
                                  buttonType: .navigation,
                 ) {
                     
-                }
+                }.padding(.horizontal, 24)
             }
             .padding(.top, 20)
-            .padding(.horizontal, 24)
+            
             
             Spacer()
         }
@@ -145,8 +148,8 @@ struct NavigationButton: View {
                 
                 if let subTitle = subTitle {
                     Text(subTitle)
-                        .ppStyleFont(.scdream(.regular,
-                                              size: 12))
+                        .ppStyleFont(.scdream(.light,
+                                              size: 10))
                 }
             }
             .foregroundStyle(color)

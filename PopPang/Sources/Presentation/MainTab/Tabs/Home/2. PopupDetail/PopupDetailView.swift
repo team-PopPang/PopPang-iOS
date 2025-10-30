@@ -42,12 +42,15 @@ struct PopupDetailView: View {
                         
                         // MARK: - Title
                         Text(popup.name)
-                            .font(.scdream(.bold, size: 20))
+                            .ppStyleFont(.scdream(.bold, size: 20))
                             .foregroundStyle(Color.mainBlack)
+                        
+                        Divider()
+                            .background(Color.mainGray5)
+                            .padding(.vertical, 15)
                         
                         // MARK: - Info
                         InfoView(popup: popup)
-                            .padding(.top, 20)
                         
                         Divider()
                             .background(Color.mainGray5)
@@ -85,16 +88,6 @@ struct PopupDetailView: View {
             .ignoresSafeArea()
             
             HStack {
-                FavoriteButton(isFavorite: homeViewModel.isLiked(popup: popup),
-                               buttonTitle: "찜하기",
-                               buttonTitle2: "찜 취소하기",
-                                 height: 40) {
-                    // MARK: - 좋아요 토글 및 팝팡뷰 갱신
-                    Task {
-                        await homeViewModel.toggleLike(popup: popup)
-                        await favoriteViewModel.loadFavoritePopups()
-                    }
-                }
                 
                 MainOrangeButton(buttonTitle: "친구에게 공유하기",
                                  isReversed: true,
@@ -104,6 +97,17 @@ struct PopupDetailView: View {
                                                           description: popup.captionSummary,
                                                           imageUrl: popup.imageUrlList[0],
                                                           popupId: popup.popupUuid)
+                }
+                
+                FavoriteButton(isFavorite: homeViewModel.isLiked(popup: popup),
+                               buttonTitle: "찜하기",
+                               buttonTitle2: "찜 취소하기",
+                                 height: 40) {
+                    // MARK: - 좋아요 토글 및 팝팡뷰 갱신
+                    Task {
+                        await homeViewModel.toggleLike(popup: popup)
+                        await favoriteViewModel.loadFavoritePopups()
+                    }
                 }
             }
             .padding(.vertical, 10)

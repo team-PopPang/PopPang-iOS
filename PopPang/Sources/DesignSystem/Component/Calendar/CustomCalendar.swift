@@ -25,13 +25,13 @@ struct CustomCalendar: View {
                 MonthHeaderView(viewModel: viewModel)
                     .padding(.horizontal, 10)
                 WeekHeaderView()
-                    .padding(.top, 15)
+                    .padding(.top, 20)
                 DateGridView(
                     viewModel: viewModel,
                     eventCounts: eventCounts,
                     onSelect: onDateSelected
                 )
-                    .padding(.top, 15)
+                .padding(.top, 0)
             }
             .padding(.horizontal, .contentPadding)
         }
@@ -59,7 +59,7 @@ private struct MonthHeaderView: View {
                 Text("\(parts[0])년")
                 Text(parts[1])
             }
-            .ppStyleFont(.scdream(.medium, size: 15))
+            .ppStyleFont(.scdream(.medium, size: 17))
             .foregroundStyle(Color.mainBlack)
             
             Spacer()

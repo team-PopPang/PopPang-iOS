@@ -26,6 +26,7 @@ struct FavoriteListView: View {
                         selectedTab = .home
                     } label: {
                         Text("팝업스토어 구경가기")
+                            .ppStyleFont(.scdream(.medium, size: 12))
                             .frame(width: 206, height: 32)
                             .foregroundStyle(Color.subWhite)
                             .background(Color.mainOrange)
@@ -57,7 +58,7 @@ private struct ListGridPopupScrollView: View {
                             .onTapGesture {
                                 coordinator.push(.popupDetail(popup))
                             }
-                            .padding(.bottom, 20)
+//                            .padding(.bottom, 20)
                     }
                 }
             }

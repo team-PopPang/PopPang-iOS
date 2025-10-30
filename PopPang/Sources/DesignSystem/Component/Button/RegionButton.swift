@@ -160,8 +160,8 @@ struct RegionSheet: View {
             
             Spacer()
         }
-        .padding(.top, 20)
-        .padding(.horizontal, 15)
+        .padding(.top, 28)
+        .padding(.horizontal, 28)
         .presentationDragIndicator(.visible)
     }
 }

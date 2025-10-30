@@ -118,20 +118,20 @@ struct RegionButtonSheet: View {
                                 .frame(width: 15, height: 15)
                                 .foregroundColor(selectedOption == option ? .orange : .gray)
                             Text(option.title)
-                                .foregroundStyle(.black)
-                                .font(buttonFont)
+                                .foregroundStyle(Color.mainBlack)
+                                .ppStyleFont(.scdream(.regular, size: 15))
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .frame(height: 40)
                     }
                 }
             }
-            .padding(.top, 30)
+            .padding(.top, 28)
             
             Spacer()
         }
-        .padding(.top, 20)
-        .padding(.horizontal, 20)
+        .padding(.top, 28)
+        .padding(.horizontal, 28)
         .presentationDragIndicator(.visible)
     }
 }
