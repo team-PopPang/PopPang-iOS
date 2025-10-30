@@ -13,6 +13,12 @@ struct ProfileView: View {
     @EnvironmentObject private var profileViewModel: ProfileViewModel
     @State private var isOn: Bool = false
     
+    // MARK: - 이메일 관련
+    @Environment(\.openURL) var openURL /// 다른 앱으로 연결을 위함
+    private var emai = SupportEmail(toAddress: "poppang.app@gmail.com",
+                                    title: "팝팡 문의사항",
+                                    messageHeader: "문의사항을 입력해주세요.")
+    
     var body: some View {
         VStack(spacing: 0) {
             
@@ -58,7 +64,7 @@ struct ProfileView: View {
                 NavigationButton(title: "문의하기",
                                  buttonType: .navigation,
                 ) {
-                    
+                    emai.send(openURL: openURL)
                 }
                 
                 NavigationButton(title: "서비스 이용약관",
