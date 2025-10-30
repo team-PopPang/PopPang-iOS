@@ -52,7 +52,7 @@ struct ProfileView: View {
                 NavigationButton(title: "공지사항",
                                  buttonType: .navigation,
                 ) {
-                    
+                    coordinator.push(.notification)
                 }
                 
                 NavigationButton(title: "문의하기",

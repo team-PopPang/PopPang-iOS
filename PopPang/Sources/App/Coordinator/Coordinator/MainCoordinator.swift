@@ -17,6 +17,8 @@ enum MainRoute: Hashable {
     
     // profile
     case profileSetting
+    case notification
+    
     // case notice
     // case contectUs      // 문의하기
     // case termsOfService // 이용약관
@@ -51,6 +53,9 @@ extension Coordinator where T == MainRoute {
         // profile
         case .profileSetting:
             ProfileSettingView()
+            
+        case .notification:
+            NotificationView()
         }
     }
 }

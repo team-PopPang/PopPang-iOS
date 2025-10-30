@@ -8,6 +8,10 @@
 import Foundation
 
 enum Constants {
+    enum URL {
+        static let notification = "https://deciduous-jam-49e.notion.site/29cdb9e736cf8046babdd84eb78040b3"
+    }
+    
     enum PopPangAPI {
         static let apiURL = "https://poppang.co.kr/api/v1"
         static let imageURL = "https://poppang.co.kr"
