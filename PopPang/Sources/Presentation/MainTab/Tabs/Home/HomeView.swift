@@ -23,6 +23,8 @@ struct HomeView: View {
                 
                 // MARK: - Search & Alert
                 CustomNavigationBar {
+                    
+                    /*
                     SearchTextField(placeholder: "궁금한 장소를 검색해보세요",
                                     text: $searchText)
                     .disabled(true)
@@ -33,11 +35,23 @@ struct HomeView: View {
                                 coordinator.presentSheet(.search(uuid: rootViewModel.user?.userUuid ?? ""))
                             }
                     }
+                     */
+                    
+                    
+                    Text("POP PANG")
+                        .ppStyleFont(.scdream(.black, size: 20))
+                        .foregroundStyle(Color.mainOrange)
+                    
+                    Spacer()
+                    
+                    IconButton(image: "SearchDark", imageSize: 25) {
+                        coordinator.presentSheet(.search(uuid: rootViewModel.user?.userUuid ?? ""))
+                    }
                     
                     IconButton {
                         coordinator.push(.alert(uuid: rootViewModel.user?.userUuid ?? ""))
                     }
-                    .padding(.leading, 15)
+                    // .padding(.leading, 15)
                 }
                  .padding(.bottom, 15)
                 
