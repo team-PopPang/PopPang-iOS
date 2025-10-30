@@ -90,9 +90,3 @@ private struct AlertPopupCell: View {
     ActivityView(activityViewModel: ActivityViewModel(userUuid: "1234"))
 }
 
-final class ActivityViewModel: ObservableObject {
-    let userUuid: String
-    init(userUuid: String) {
-        self.userUuid = userUuid
-    }
-}
