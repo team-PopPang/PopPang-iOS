@@ -92,8 +92,11 @@ final class MapCoordinator: NSObject,
     /// 현재 사용자의 위치로 카메라를 이동
     /// 위치 오버레이의 좌표를 기반으로 이동
     func moveToUserLocation(zoomLevel: Double = 15) {
+        
+        // 위치 이동 + 줌 레벨 복구
         let coord = view.mapView.locationOverlay.location
-        let cameraUpdate = NMFCameraUpdate(scrollTo: coord, zoomTo: zoomLevel)
+        let cameraPosition = NMFCameraPosition(coord, zoom: zoomLevel, tilt: 0, heading: 0)
+        let cameraUpdate = NMFCameraUpdate(position: cameraPosition)
         cameraUpdate.animation = .easeIn
         view.mapView.moveCamera(cameraUpdate)
     }
