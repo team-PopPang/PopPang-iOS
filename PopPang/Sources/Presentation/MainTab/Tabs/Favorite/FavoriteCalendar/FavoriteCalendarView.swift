@@ -24,6 +24,7 @@ struct FavoriteCalendarView: View {
                 // MARK: - 시트
                 ShadowDivider()
                     .ignoresSafeArea(edges: .horizontal)
+                    .padding(.top, 20)
                 
                 PopupListView(
                     date: favoriteViewModel.selectedDate,
