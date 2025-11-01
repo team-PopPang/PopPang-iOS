@@ -19,6 +19,11 @@ protocol PopupRepositoryProtocol {
     func getUpcomingPopupList() async throws -> [PopupDTO]
     
     
+    /// 진행 중인 팝업 리스트를 가져옵니다
+    /// - Returns: [PopupDTO]
+    func getInProgressPopupList() async throws -> [PopupDTO]
+    
+    
     /// 찜 리스트를 가져옵니다
     /// - Parameter userUuid:userUuid
     /// - Returns: [PopupDTO]

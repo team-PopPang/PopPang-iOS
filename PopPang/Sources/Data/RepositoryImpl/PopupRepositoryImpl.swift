@@ -24,6 +24,11 @@ final class PopupRepositoryImpl: PopupRepositoryProtocol {
         return response
     }
     
+    func getInProgressPopupList() async throws -> [PopupDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getInProgressPopupList,
+                                                                     decodeTo: [PopupDTO].self)
+    }
+    
     func searchPopupList(searchText: String) async throws -> [PopupDTO] {
         try await NetworkProvider.shared.popupProvidder.asyncRequest(.searchPopupList(searchText: searchText),
                                                                      decodeTo: [PopupDTO].self)

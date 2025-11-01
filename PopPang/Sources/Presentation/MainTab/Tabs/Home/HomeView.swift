@@ -235,6 +235,8 @@ private struct BestPopupCell: View {
                 Text(popup.name)
                     .font(.scdream(.bold, size: 15))
                     .foregroundStyle(Color.bestPostTitle)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                 HStack(spacing: 2) {
                     Image("Address")
                         .resizable()
@@ -374,7 +376,7 @@ private struct GridPopupCell: View {
     @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
     let popup: Popup
 
-    // 👉 셀 너비를 미리 계산해서 전달받거나 상수로 지정
+    // 셀 너비를 미리 계산해서 전달받거나 상수로 지정
     let cellWidth: CGFloat = (UIScreen.main.bounds.width - 15 * 3) / 2  // 2열 기준
 
     var body: some View {
@@ -417,15 +419,10 @@ private struct GridPopupCell: View {
                 .truncationMode(.tail)
                 .padding(.top, 5)
 
-            HStack(spacing: 2) {
-                Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
-                Text("-")
-                Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
-            }
-            .font(.scdream(.regular, size: 12))
-            .foregroundStyle(Color.mainGray)
-            .padding(.top, 5)
-            .padding(.leading, -1)
+            Text("\(popup.startDate, formatter: DateFormatter.popupDateFormat)-\(popup.endDate, formatter: DateFormatter.popupDateFormat)")
+                .ppStyleFontFixedSpacing(.scdream(.regular, size: 12), letterSpacingPt: -1)
+                .foregroundStyle(Color.mainGray)
+                .padding(.top, 5)
         }
     }
 }

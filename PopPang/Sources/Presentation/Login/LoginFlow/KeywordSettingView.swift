@@ -52,7 +52,7 @@ struct KeywordSettingView: View {
                         case .denied:
                             DispatchQueue.main.async {
                                 // 알림
-                                showNotificationPermissionAlert()
+                                AlertManager.shared.showPermissionAlert()
                             }
                             return
                         
@@ -64,7 +64,7 @@ struct KeywordSettingView: View {
                                 } else {
                                     DispatchQueue.main.async {
                                         // 알림
-                                        showNotificationPermissionAlert()
+                                        AlertManager.shared.showPermissionAlert()
                                     }
                                 }
                             }
@@ -140,23 +140,7 @@ struct KeywordSettingView: View {
 }
 
 extension KeywordSettingView {
-    func showNotificationPermissionAlert() {
-        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                  let rootVC = windowScene.windows.first?.rootViewController else { return }
-        
-        let alert = UIAlertController(title: "알림 허용",
-                                       message: "키쿼드 알림을 받으려면 알림 권한을 허용해 주세요.",
-                                       preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
-            if let url = URL(string: UIApplication.openSettingsURLString),
-               UIApplication.shared.canOpenURL(url) {
-                UIApplication.shared.open(url)
-            }
-        })
-        alert.addAction(UIAlertAction(title: "다음에 하기", style: .default))
-        rootVC.present(alert, animated: true)
-    }
-    
+
     func addKeyword(trimmed: String) {
         // 중복은 무시한다
         if keywords.contains(trimmed) { return }

@@ -80,6 +80,23 @@ extension View {
                                     lineHeight: lineHeight,
                                     letterSpacing: letterSpacing))
     }
+    
+    
+    /// 팝팡 스타일 폰트 (자간: pt 단위)
+    /// - Parameters:
+    ///   - font: 적용할 UIFont
+    ///   - lineHeight: 줄간격 배수 (ex: 1.4 -> 140%)
+    ///   - letterSpacingPt: 자간 pt 단위 (ex: -1 -> -1pt)
+    func ppStyleFontFixedSpacing(_ font: UIFont,
+                                 lineHeight: CGFloat = 1.4,
+                                 letterSpacingPt: CGFloat = 0) -> some View {
+        let lineSpacing = font.pointSize * (lineHeight - 1)
+        return self
+            .font(Font(font))
+            .padding(.vertical, lineSpacing / 2)
+            .lineSpacing(lineSpacing)
+            .tracking(letterSpacingPt)
+    }
 }
 
 

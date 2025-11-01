@@ -10,9 +10,10 @@ import Foundation
 
 enum PopupAPI {
     // popup
-    case getPopupList
-    case getUpcomingPopupList
-    case searchPopupList(searchText: String)
+    case getPopupList                        /// 전체 팝업
+    case getUpcomingPopupList                /// 다가오는 팝업
+    case getInProgressPopupList              /// 진행 중인 팝업
+    case searchPopupList(searchText: String) /// 팝업 검색
     
     // favorite
     case addFavorite(userUuid: String, popupUuid: String)
@@ -30,6 +31,7 @@ extension PopupAPI: TargetType {
         switch self {
         case .getPopupList: return "/popup"
         case .getUpcomingPopupList: return "/popup/upcoming"
+        case .getInProgressPopupList: return "/popup/inProgress"
         case .searchPopupList: return "/popup/search"
         case .addFavorite: return "/favorite"
         case .removeFavorite: return "/favorite"
@@ -42,6 +44,7 @@ extension PopupAPI: TargetType {
         switch self {
         case .getPopupList: return .get
         case .getUpcomingPopupList: return .get
+        case .getInProgressPopupList: return .get
         case .searchPopupList: return .get
         case .addFavorite: return .post
         case .removeFavorite: return .delete
@@ -55,6 +58,8 @@ extension PopupAPI: TargetType {
         case .getPopupList:
             return .requestPlain
         case .getUpcomingPopupList:
+            return .requestPlain
+        case .getInProgressPopupList:
             return .requestPlain
         case .searchPopupList(let searchText):
             return .requestParameters(parameters: ["q": searchText],

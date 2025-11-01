@@ -25,6 +25,11 @@ final class PopupUsecaseImpl: PopupUsecaseProtocol {
             .map { $0.toEntity() }
     }
     
+    func getInProgressPopupList() async throws -> [Popup] {
+        try await popupRepository.getInProgressPopupList()
+            .map { $0.toEntity() }
+    }
+    
     func getFavoriteList(userUuid: String) async throws -> [Popup] {
         try await popupRepository.getFavoriteList(userUuid: userUuid)
             .map { $0.toEntity() }

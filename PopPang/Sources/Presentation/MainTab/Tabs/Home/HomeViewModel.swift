@@ -50,7 +50,7 @@ extension HomeViewModel {
                 // 0, 1, 2로 구분해서 요청
                 group.addTask { (0, try await self.popupUsecase.getPopupList()) }
                 group.addTask { (1, try await self.popupUsecase.getUpcomingPopupList()) }
-                group.addTask { (2, try await self.popupUsecase.getPopupList()) }
+                group.addTask { (2, try await self.popupUsecase.getInProgressPopupList()) }
 
                 // 완료된 순서대로 결과 받기
                 for try await (index, popups) in group {
