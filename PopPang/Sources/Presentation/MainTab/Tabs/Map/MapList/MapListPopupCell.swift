@@ -37,17 +37,38 @@ struct MapListPopupCell: View {
                         .truncationMode(.tail)
                         .padding(.top, 5)
                   
-                    HStack {
-                        Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
-                        Text("-")
-                        Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
-                    }
-                    .font(.scdream(.regular, size: 12))
-                    .foregroundStyle(Color.mainGray)
-                    .padding(.top, 5)
-                    .padding(.leading, -1)
+                    Text("\(popup.startDate, formatter: DateFormatter.popupDateFormat) - \(popup.endDate, formatter: DateFormatter.popupDateFormat)")
+                        .ppStyleFontFixedSpacing(.scdream(.regular, size: 12), letterSpacingPt: -1)
+                        .foregroundStyle(Color.mainGray)
+                        .padding(.top, 5)
                     
                     Spacer()
+                    
+                    // 조회수
+                    HStack(spacing: 5) {
+                        
+                        Spacer()
+                        
+                        if let viewCount = popup.viewCount {
+                            Image("viewCount")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 12, height: 12)
+                            
+                            Text("\(viewCount)")
+                                .ppStyleFont(.scdream(.regular, size: 9))
+                        }
+                        
+                        if let favoriteCount = popup.favoriteCount {
+                            Image("favoriteCount")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 12, height: 12)
+                            
+                            Text("\(favoriteCount)")
+                                .ppStyleFont(.scdream(.regular, size: 9))
+                        }
+                    }
                 }
                 .padding(.leading, 18)
                 .padding(.top, 10)

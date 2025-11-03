@@ -34,6 +34,10 @@ final class PopupRepositoryImpl: PopupRepositoryProtocol {
                                                                      decodeTo: [PopupDTO].self)
     }
     
+    func increaseViewCount(popupUuid: String) async throws {
+        try await NetworkProvider.shared.popupProvidder.asyncRequestVoid(.increaseViewCount(popupUuid: popupUuid))
+    }
+    
     func addFavorite(userUuid: String, popupUuid: String) async throws {
         try await NetworkProvider.shared.popupProvidder.asyncRequestVoid(.addFavorite(userUuid: userUuid, popupUuid: popupUuid))
     }

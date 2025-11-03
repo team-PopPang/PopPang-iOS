@@ -59,4 +59,12 @@ final class UserRepositoryImpl: UserRepositoryProtocol {
     func updateNickname(userUuid: String, newNickname: String) async throws {
         try await NetworkProvider.shared.userProvider.asyncRequestVoid(.updateNickname(userUuid: userUuid, newNickname: newNickname))
     }
+    
+    func checkFcmToken(userUuid: String, fcmToken: String) async throws -> Bool {
+        try await NetworkProvider.shared.userProvider.asyncRequest(.checkFcmToken(userUuid: userUuid, fcmToken: fcmToken), decodeTo: Bool.self)
+    }
+    
+    func updateFcmToken(userUuid: String, fcmToken: String) async throws {
+        try await NetworkProvider.shared.userProvider.asyncRequestVoid(.updateFcmToken(userUuid: userUuid, newFcmToken: fcmToken))
+    }
 }

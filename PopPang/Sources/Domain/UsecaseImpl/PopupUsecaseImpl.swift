@@ -40,6 +40,10 @@ final class PopupUsecaseImpl: PopupUsecaseProtocol {
             .map { $0.toEntity() }
     }
     
+    func increaseViewCount(popupUuid: String) async throws {
+        try await popupRepository.increaseViewCount(popupUuid: popupUuid)
+    }
+    
     func addFavorite(userUuid: String, popupUuid: String) async throws {
         try await popupRepository.addFavorite(userUuid: userUuid, popupUuid: popupUuid)
     }

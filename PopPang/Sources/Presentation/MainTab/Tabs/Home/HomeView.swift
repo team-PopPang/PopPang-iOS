@@ -419,7 +419,7 @@ private struct GridPopupCell: View {
                 .truncationMode(.tail)
                 .padding(.top, 5)
 
-            Text("\(popup.startDate, formatter: DateFormatter.popupDateFormat)-\(popup.endDate, formatter: DateFormatter.popupDateFormat)")
+            Text("\(popup.startDate, formatter: DateFormatter.popupDateFormat) - \(popup.endDate, formatter: DateFormatter.popupDateFormat)")
                 .ppStyleFontFixedSpacing(.scdream(.regular, size: 12), letterSpacingPt: -1)
                 .foregroundStyle(Color.mainGray)
                 .padding(.top, 5)

@@ -47,6 +47,14 @@ final class UserUsecaseImpl: UserUsecaseProtocol {
     func updateNickname(userUuid: String, newNickname: String) async throws {
         try await userRepository.updateNickname(userUuid: userUuid, newNickname: newNickname)
     }
+    
+    func checkFcmToken(userUuid: String, fcmToken: String) async throws -> Bool {
+        try await userRepository.checkFcmToken(userUuid: userUuid, fcmToken: fcmToken)
+    }
+    
+    func updateFcmToken(userUuid: String, fcmToken: String) async throws {
+        try await userRepository.updateFcmToken(userUuid: userUuid, fcmToken: fcmToken)
+    }
 }
 
 final class StubUserUsecaseImpl: UserUsecaseProtocol {
@@ -75,6 +83,14 @@ final class StubUserUsecaseImpl: UserUsecaseProtocol {
     }
     
     func updateNickname(userUuid: String, newNickname: String) async throws {
+        
+    }
+    
+    func checkFcmToken(userUuid: String, fcmToken: String) async throws -> Bool {
+        return true
+    }
+    
+    func updateFcmToken(userUuid: String, fcmToken: String) async throws {
         
     }
 }

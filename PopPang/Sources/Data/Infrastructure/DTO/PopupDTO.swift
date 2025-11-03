@@ -24,6 +24,8 @@ struct PopupDTO: Decodable {
     let captionSummary: String
     let imageUrlList: [String]
     let mediaType: String
+    let favoriteCount: Int?
+    let viewCount: Int?
 }
 
 extension PopupDTO {
@@ -54,7 +56,9 @@ extension PopupDTO {
             instaPostUrl: instaPostUrl,
             captionSummary: captionSummary,
             imageUrlList: fullImageUrlList,
-            mediaType: Popup.MediaType(rawValue: mediaType.uppercased()) ?? .image
-            )
+            mediaType: Popup.MediaType(rawValue: mediaType.uppercased()) ?? .image,
+            favoriteCount: favoriteCount,
+            viewCount: viewCount
+        )
     }
 }

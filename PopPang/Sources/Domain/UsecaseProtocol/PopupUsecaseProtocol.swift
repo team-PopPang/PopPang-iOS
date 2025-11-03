@@ -19,6 +19,8 @@ protocol PopupUsecaseProtocol {
     
     func searchPopupList(searchText: String) async throws -> [Popup]
     
+    func increaseViewCount(popupUuid: String) async throws
+    
     func addFavorite(userUuid: String, popupUuid: String) async throws
     
     func removeFavorite(userUuid: String, popupUuid: String) async throws

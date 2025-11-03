@@ -36,6 +36,11 @@ protocol PopupRepositoryProtocol {
     func searchPopupList(searchText: String) async throws -> [PopupDTO]
     
     
+    /// 팝업 조회수를 증가시킵니다
+    /// - Parameter popupUuid: popupUuid
+    func increaseViewCount(popupUuid: String) async throws
+    
+    
     /// 찜 리스트에 팝업을 추가합니다
     /// - Parameters:
     ///   - userUuid: userUuid

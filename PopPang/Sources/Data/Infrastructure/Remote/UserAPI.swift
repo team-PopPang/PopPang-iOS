@@ -16,6 +16,10 @@ enum UserAPI {
     case getAlertKeywordList(userUuid: String)
     case addAlertKeyword(userUuid: String, newAlertKeyword: String)
     case removeAlertKeyword(userUuid: String, deleteAlertKeyword: String)
+    
+    // fcm
+    case checkFcmToken(userUuid: String, fcmToken: String)
+    case updateFcmToken(userUuid: String, newFcmToken: String)
 }
 
 extension UserAPI: TargetType {
@@ -30,6 +34,8 @@ extension UserAPI: TargetType {
         case .getAlertKeywordList: return "/alert-keyword"
         case .addAlertKeyword: return "/alert-keyword"
         case .removeAlertKeyword: return "/alert-keyword"
+        case .checkFcmToken(let userUuid, _): return "/user/\(userUuid)/fcm-token/duplicate-check"
+        case .updateFcmToken(let userUuid, _): return "/user/\(userUuid)/fcm-token/update"
         }
     }
     
@@ -42,6 +48,8 @@ extension UserAPI: TargetType {
         case .getAlertKeywordList: return .get
         case .addAlertKeyword: return .post
         case .removeAlertKeyword: return .delete
+        case .checkFcmToken: return .get
+        case .updateFcmToken: return .put
         }
     }
     
@@ -71,6 +79,15 @@ extension UserAPI: TargetType {
             return .requestParameters(parameters: ["userUuid": userUuid,
                                                    "deleteAlertKeyword": deleteAlertKeyword],
                                       encoding: JSONEncoding.default)
+            
+        case .checkFcmToken(_, let fcmToken):
+            return .requestParameters(parameters: ["fcmToken": fcmToken],
+                                      encoding: URLEncoding.queryString)
+            
+        case .updateFcmToken(_, let fcmToken):
+            return .requestParameters(parameters: ["fcmToken": fcmToken],
+                                      encoding: JSONEncoding.default)
+            
         }
     }
     

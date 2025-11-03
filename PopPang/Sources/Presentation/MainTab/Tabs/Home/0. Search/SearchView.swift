@@ -167,15 +167,10 @@ private struct SearchGridPopupCell: View {
                 .truncationMode(.tail) // 넘치면 ...으로 표시
                 .padding(.top, 5)
             
-            HStack {
-                Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
-                Text("-")
-                Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
-            }
-            .font(.scdream(.regular, size: 12))
-            .foregroundStyle(Color.mainGray)
-            .padding(.top, 5)
-            .padding(.leading, -1)
+            Text("\(popup.startDate, formatter: DateFormatter.popupDateFormat) - \(popup.endDate, formatter: DateFormatter.popupDateFormat)")
+                .ppStyleFontFixedSpacing(.scdream(.regular, size: 12), letterSpacingPt: -1)
+                .foregroundStyle(Color.mainGray)
+                .padding(.top, 5)
         }
     }
 }

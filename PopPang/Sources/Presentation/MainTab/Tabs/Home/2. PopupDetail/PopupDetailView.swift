@@ -13,7 +13,14 @@ struct PopupDetailView: View {
     @Environment(\.openURL) var openURL
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
+    @StateObject private var popupDetailViewModel = PopupDetailViewModel()
     let popup: Popup
+    
+//    init(popup: Popup) {
+//        self.popup = popup
+//        _popupDetailViewModel = StateObject(wrappedValue: PopupDetailViewModel())
+//    }
+    
     var body: some View {
         ZStack(alignment: .bottom) {
             ScrollView {
@@ -44,6 +51,30 @@ struct PopupDetailView: View {
                         Text(popup.name)
                             .ppStyleFont(.scdream(.bold, size: 20))
                             .foregroundStyle(Color.mainBlack)
+                        
+                        // MARK: - 임시 카운트 위치
+                        HStack(spacing: 5) {
+                            
+                            if let viewCount = popup.viewCount {
+                                Image("viewCount")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 12, height: 12)
+                                
+                                Text("\(viewCount)")
+                                    .ppStyleFont(.scdream(.regular, size: 9))
+                            }
+                            
+                            if let favoriteCount = popup.favoriteCount {
+                                Image("favoriteCount")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 12, height: 12)
+                                
+                                Text("\(favoriteCount)")
+                                    .ppStyleFont(.scdream(.regular, size: 9))
+                            }
+                        }
                         
                         Divider()
                             .background(Color.mainGray5)
@@ -118,6 +149,8 @@ struct PopupDetailView: View {
         
         // MARK: - onAppear 시점에 Kingfisher의 retriveImage API로 모든 사진 로드
         .onAppear {
+            
+            // MARK: - 캐싱 로직
             for urlString in popup.imageUrlList {
                 guard let url = URL(string: urlString) else { continue }
 
@@ -140,6 +173,11 @@ struct PopupDetailView: View {
                         }
                     }
                 }
+            }
+            
+            // MARK: - 조회수 증가 로직
+            Task {
+                await popupDetailViewModel.increaseViewCount(popupUuid: popup.popupUuid)
             }
         }
         

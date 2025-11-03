@@ -28,6 +28,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // 0. firebase 초기화
         FirebaseApp.configure()
         
+//        Messaging.messaging().delegate = NotificationManager.shared
+        
         // 1. 알림 권한 요청
         NotificationManager.shared.configureNotification()
         
@@ -103,6 +105,10 @@ extension Notification.Name {
     static let didReceiveDeepLink = Notification.Name("didReceiveDeepLink")
 }
 
+// fcm 노티 이름
+extension Notification.Name {
+    static let didReceiveFcmToken = Notification.Name("didReceiveFcmToken")
+}
 
 // MARK: - 알림 관련(Swizzling)
 extension AppDelegate {
@@ -123,6 +129,8 @@ extension AppDelegate {
 final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, MessagingDelegate {
     static let shared = NotificationManager()
     private override init() {}
+    
+    @Published var fcmToken: String? = nil
     
     /// 알림 권한 요청 및 APNs 등록
     func configureNotification() {
@@ -163,8 +171,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, Mes
         print("📱 FCM 토큰 수신 완료: \(fcmToken)")
         UserDefaultsManager.saveFcmToken(fcmToken)
         
-        // 🔹 (선택) Firestore나 서버에 토큰 저장
-        // FcmTokenManager.shared.saveToken(fcmToken)
+        self.fcmToken = fcmToken
     }
     
     // APNs 등록 성공 → APNs 토큰을 FCM에 연결

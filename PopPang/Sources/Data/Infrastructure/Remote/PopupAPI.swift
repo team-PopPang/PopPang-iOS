@@ -10,10 +10,11 @@ import Foundation
 
 enum PopupAPI {
     // popup
-    case getPopupList                        /// 전체 팝업
-    case getUpcomingPopupList                /// 다가오는 팝업
-    case getInProgressPopupList              /// 진행 중인 팝업
-    case searchPopupList(searchText: String) /// 팝업 검색
+    case getPopupList                         /// 전체 팝업
+    case getUpcomingPopupList                 /// 다가오는 팝업
+    case getInProgressPopupList               /// 진행 중인 팝업
+    case searchPopupList(searchText: String)  /// 팝업 검색
+    case increaseViewCount(popupUuid: String) /// 팝업 조회수 증가
     
     // favorite
     case addFavorite(userUuid: String, popupUuid: String)
@@ -31,8 +32,9 @@ extension PopupAPI: TargetType {
         switch self {
         case .getPopupList: return "/popup"
         case .getUpcomingPopupList: return "/popup/upcoming"
-        case .getInProgressPopupList: return "/popup/inProgress"
+        case .getInProgressPopupList: return "/popup/inProgress" 
         case .searchPopupList: return "/popup/search"
+        case .increaseViewCount(let popupUuid): return "/popup/\(popupUuid)/view"
         case .addFavorite: return "/favorite"
         case .removeFavorite: return "/favorite"
         case .getFavoriteList(let userUuid): return "/favorite/popup/\(userUuid)"
@@ -46,6 +48,7 @@ extension PopupAPI: TargetType {
         case .getUpcomingPopupList: return .get
         case .getInProgressPopupList: return .get
         case .searchPopupList: return .get
+        case .increaseViewCount: return .post
         case .addFavorite: return .post
         case .removeFavorite: return .delete
         case .getFavoriteList: return .get
@@ -64,6 +67,9 @@ extension PopupAPI: TargetType {
         case .searchPopupList(let searchText):
             return .requestParameters(parameters: ["q": searchText],
                                       encoding: URLEncoding.queryString)
+            
+        case .increaseViewCount:
+            return .requestPlain
             
         case .addFavorite(let userUuid, let popupUuid):
             return .requestParameters(parameters: [

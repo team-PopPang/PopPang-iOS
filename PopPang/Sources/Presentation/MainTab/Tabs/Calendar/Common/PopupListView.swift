@@ -57,6 +57,6 @@ struct PopupListView: View {
     }
 }
 
-//#Preview {
-//    PopupListView()
-//}
+#Preview {
+    PopupListView(date: .now, popups: [.popupMock, .popupMock2])
+}

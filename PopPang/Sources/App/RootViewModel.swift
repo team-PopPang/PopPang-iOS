@@ -8,6 +8,7 @@
 import SwiftUI
 import AuthenticationServices
 import GoogleSignIn
+import Combine
 
 enum RootScene {
     case launch
@@ -41,6 +42,7 @@ final class RootViewModel: ObservableObject {
         case setRecommandList([Int])             // 추천 키워드 설정
         case register                            // 화원가입
         case logout
+        case checkFcmToken(String)
     }
     
     // MARK: - Dependency
@@ -69,7 +71,10 @@ final class RootViewModel: ObservableObject {
     // MARK: - RecommandList
     @Published var recommandList: [RecommendList] = []
     
+    private var cancellables = Set<AnyCancellable>()
+    
     init() {
+        
         Task {
             await boot()
         }
@@ -263,6 +268,29 @@ extension RootViewModel {
             
         case .logout:
             logout()
+            
+        case .checkFcmToken(let localFcmToken):
+            Task {
+                do {
+                    guard let userUuid = user?.userUuid else {
+                        print("⚠️ uuid 없음")
+                        return
+                    }
+
+                    let fcmTokenResult = try await userUsecase.checkFcmToken(userUuid:userUuid,
+                                                                             fcmToken: localFcmToken)
+                    print("토큰이 동일한지 확인: \(fcmTokenResult)")
+                    
+                    
+                    // fcm토큰이 일치하지 않거나 로컬에 존재하지 않는다면
+                    if !fcmTokenResult {
+                        try await userUsecase.updateFcmToken(userUuid: userUuid, fcmToken: localFcmToken)
+                        print("토큰 갱신")
+                    }
+                } catch {
+                    print("❌ FCM 토큰 중복 확인 실패: \(error)")
+                }
+            }
         }
     }
 }
@@ -344,6 +372,19 @@ extension RootViewModel {
         self.user = user
         self.storeUID = user.userUuid
         self.updateScene()
+        
+        // 이전 구독 제거 (중복 방지)
+        cancellables.removeAll()
+        
+        // fcm토큰 확인 및 갱신 로직
+        NotificationManager.shared.$fcmToken
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] token in
+                guard let self = self else { return }
+                self.send(action: .checkFcmToken(token))
+            }
+            .store(in: &cancellables)
     }
 
     // 로그아웃
@@ -356,5 +397,11 @@ extension RootViewModel {
         self.updateScene()
         
         // fcm 토큰 정리 로직 추가
+        
     }
+}
+
+// MARK: - FCM 관련 로직
+extension RootViewModel {
+    
 }

@@ -48,5 +48,17 @@ protocol UserUsecaseProtocol {
     ///   - userUuid: 유저 고유값
     ///   - newNickname: 변경할 닉네임
     func updateNickname(userUuid: String, newNickname: String) async throws
+    
+    /// FCM토큰 일치 확인
+    /// - Parameter userUuid: userUuid
+    /// - Parameter fcmToken: fcmToken
+    /// - Returns: 일치하면 true
+    func checkFcmToken(userUuid: String, fcmToken: String) async throws -> Bool
+    
+    /// FCM토큰 갱신
+    /// - Parameters:
+    /// - Parameter userUuid: userUuid
+    /// - Parameter fcmToken: fcmToken
+    func updateFcmToken(userUuid: String, fcmToken: String) async throws
 }
 
