@@ -279,13 +279,10 @@ extension RootViewModel {
 
                     let fcmTokenResult = try await userUsecase.checkFcmToken(userUuid:userUuid,
                                                                              fcmToken: localFcmToken)
-                    print("토큰이 동일한지 확인: \(fcmTokenResult)")
-                    
                     
                     // fcm토큰이 일치하지 않거나 로컬에 존재하지 않는다면
                     if !fcmTokenResult {
                         try await userUsecase.updateFcmToken(userUuid: userUuid, fcmToken: localFcmToken)
-                        print("토큰 갱신")
                     }
                 } catch {
                     print("❌ FCM 토큰 중복 확인 실패: \(error)")

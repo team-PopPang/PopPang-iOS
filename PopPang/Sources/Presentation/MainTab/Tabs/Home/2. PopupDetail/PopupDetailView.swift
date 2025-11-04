@@ -45,7 +45,7 @@ struct PopupDetailView: View {
                     }
                     .frame(height: 450) // 기본 높이
                     
-                    VStack(alignment: .leading) {
+                    VStack(alignment: .leading, spacing: 0) {
                         
                         // MARK: - Title
                         Text(popup.name)
@@ -54,6 +54,8 @@ struct PopupDetailView: View {
                         
                         // MARK: - 임시 카운트 위치
                         HStack(spacing: 5) {
+                            
+                            Spacer()
                             
                             if let viewCount = popup.viewCount {
                                 Image("viewCount")
@@ -234,12 +236,12 @@ private struct InfoView: View {
                     .foregroundStyle(Color.mainGray)
                 HStack(spacing: 10) {
                     if let openTime = popup.openTime {
-                        Text(openTime, formatter: DateFormatter.popupTimeFormat)
+                        Text(openTime)
                     }
                     
                     if let closeTime = popup.closeTime {
                         Text("-")
-                        Text(closeTime, formatter: DateFormatter.popupTimeFormat)
+                        Text(closeTime)
                     }
                 }
             }

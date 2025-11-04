@@ -14,8 +14,8 @@ struct Popup: Hashable, Identifiable, Encodable {
     let name: String
     let startDate: Date
     let endDate: Date
-    let openTime: Date?
-    let closeTime: Date?
+    let openTime: String?
+    let closeTime: String?
     let address: String
     let roadAddress: String
     let region: String
@@ -48,8 +48,8 @@ extension Popup {
             name: "2025 짱구 부산 팝업스토어",
             startDate: formatter.date(from: "2025-10-13 11:00") ?? Date(),
             endDate: formatter.date(from: "2025-10-15 20:00") ?? Date(),
-            openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
-            closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
+            openTime: "",
+            closeTime: "",
             address: "테스트 주소",
             roadAddress: "부산 해운대구 우동 123-4",
             region: "부산",
@@ -84,8 +84,8 @@ extension Popup {
             name: "2025 짱구 부산 팝업스토어",
             startDate: formatter.date(from: "2025-10-13 11:00") ?? Date(),
             endDate: formatter.date(from: "2025-10-15 20:00") ?? Date(),
-            openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
-            closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
+            openTime: "",
+            closeTime: "",
             address: "테스트 주소",
             roadAddress: "부산 해운대구 우동 123-4",
             region: "부산",
@@ -119,8 +119,8 @@ extension Popup {
             name: "2025 짱구 부산 팝업스토어",
             startDate: formatter.date(from: "2025-10-13 11:00") ?? Date(),
             endDate: formatter.date(from: "2025-10-15 20:00") ?? Date(),
-            openTime: formatter.date(from: "2025-10-07 11:00") ?? Date(),
-            closeTime: formatter.date(from: "2025-10-07 20:00") ?? Date(),
+            openTime: "",
+            closeTime: "",
             address: "테스트 주소",
             roadAddress: "부산 해운대구 우동 123-4",
             region: "부산",

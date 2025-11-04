@@ -16,11 +16,14 @@ struct MapView: View {
     @State private var text = ""
     
     // MARK: - 시트 관련
-    @State var firstSheetPosition: BottomSheetPosition = .relative(0.45)
+    @State var firstSheetPosition: BottomSheetPosition = .relative(0.5)
     @State var secondSheetPosition: BottomSheetPosition = .hidden
     
     // MARK: - 지역 필터링 선택
     @State private var selectedOption: SortButton.SortOption = .favorite
+    
+    // MARK: - 높이
+    @State private var mapSearchTextFieldFrame: CGRect = .zero
     
     var body: some View {
         ZStack(alignment: .trailing) {
@@ -34,10 +37,21 @@ struct MapView: View {
             
             MapSearchTextField(placeholder: "궁금한 팝업을 검색해보세요",
                                text: $text)
+            .background {
+                GeometryReader { geo in
+                    Color.clear
+                        .onAppear {
+                            mapSearchTextFieldFrame = geo.frame(in: .global)
+                            print(mapSearchTextFieldFrame) /// x, y, width, height
+                            print("top(minY): \(Int(mapSearchTextFieldFrame.minY))")
+                            print("bottom(maxY): \(Int(mapSearchTextFieldFrame.maxY))")
+                            print("height: \(Int(mapSearchTextFieldFrame.height))")
+                        }
+                }
+            }
             .frame(maxHeight: .infinity, alignment: .top)
             .padding(.top, 70)
             .padding(.horizontal, 15)
-            
             
             // MARK: - 내위치 이동 버튼
             Button {
@@ -53,6 +67,34 @@ struct MapView: View {
             }
             .padding(.trailing, 20)
             .padding(.bottom, 50)
+            
+            // MARK: - 목록 보기
+            if case .absolute(0) = firstSheetPosition {
+                VStack {
+                    Spacer()
+                    Button {
+                        firstSheetPosition = .relative(0.5)
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "list.bullet")
+                                .foregroundStyle(Color.mainOrange)
+                                .frame(width: 12, height: 12)
+                                .padding(.bottom, 3)
+                            
+                            Text("목록 보기")
+                                .foregroundStyle(Color.mainBlack)
+                                .font(.scdream(.light, size: 17))
+                                
+                        }
+                        .padding(.vertical, 7)
+                        .padding(.horizontal, 14)
+                        .background(Color.subWhite)
+                        .cornerRadius(20)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .bottom)
+                .padding(.bottom, 20)
+            }
         }
         .ignoresSafeArea(edges: .top)
         .onAppear {
@@ -60,25 +102,16 @@ struct MapView: View {
         }
         // MARK: - 첫 번째 시트
         .bottomSheet(bottomSheetPosition: $firstSheetPosition,
-                     switchablePositions: [.absolute(120), .relative(0.45), .relative(1.0)],
+                     switchablePositions: [.absolute(0),
+                                           .relative(0.5),
+                                           .absolute(UIScreen.main.bounds.height - (mapSearchTextFieldFrame.maxY + 20))
+                     ],
                      content: {
-            
-            /*
-            // 만약 시트가 최대 너비라면 검색바 보이게
-            if firstSheetPosition == .relative(1.0) {
-                MapSearchTextField(placeholder: "궁금한 팝업을 검색해보세요",
-                                   background: .mainGray4,
-                                   text: $text)
-                .padding(.contentPadding)
-            }
-             */
-            
             // view
             FirstSheetView(mapViewModel: mapViewModel) {
                 // 지역 버튼 누르면 두번째 시트 띄우기
                 secondSheetPosition = firstSheetPosition
             }
-            
         })
         // 첫 번째 배경
         .customBackground(
