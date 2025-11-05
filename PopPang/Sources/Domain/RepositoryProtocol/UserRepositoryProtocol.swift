@@ -43,6 +43,11 @@ protocol UserRepositoryProtocol {
     func getRecommandList() async throws -> [RecommendListDTO]
     
     
+    /// 유저 삭제
+    /// - Parameter userUuid: userUuid
+    func hardDeleteUser(userUuid: String) async throws
+    
+    
     /// 키워드 리스트 가져오기
     /// - Returns: [KeywordDTO]
     func getAlertKeywordList(userUuid: String) async throws -> [KeywordDTO]

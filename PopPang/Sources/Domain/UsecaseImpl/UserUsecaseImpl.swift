@@ -28,6 +28,10 @@ final class UserUsecaseImpl: UserUsecaseProtocol {
             .map { $0.toModel() }
     }
     
+    func hardDeleteUser(userUuid: String) async throws {
+        try await userRepository.hardDeleteUser(userUuid: userUuid)
+    }
+    
     /// 키워드 리스트 가져오기
     /// - Returns: [Keyword]
     func getAlertKeywordList(userUuid: String) async throws -> [Keyword] {
@@ -70,27 +74,19 @@ final class StubUserUsecaseImpl: UserUsecaseProtocol {
         return [RecommendList(id: 1, recommendName: "123")]
     }
     
+    func hardDeleteUser(userUuid: String) async throws {}
+    
     func getAlertKeywordList(userUuid: String) async throws -> [Keyword] {
         return [Keyword(keyword: "키워드1")]
     }
     
-    func addAlertKeyword(userUuid: String, alertKeyword: String) async throws {
+    func addAlertKeyword(userUuid: String, alertKeyword: String) async throws {}
         
-    }
-        
-    func removeAlertKeyword(userUuid: String, alertKeyword: String) async throws {
-        
-    }
+    func removeAlertKeyword(userUuid: String, alertKeyword: String) async throws {}
     
-    func updateNickname(userUuid: String, newNickname: String) async throws {
-        
-    }
+    func updateNickname(userUuid: String, newNickname: String) async throws {}
     
-    func checkFcmToken(userUuid: String, fcmToken: String) async throws -> Bool {
-        return true
-    }
+    func checkFcmToken(userUuid: String, fcmToken: String) async throws -> Bool { return true }
     
-    func updateFcmToken(userUuid: String, fcmToken: String) async throws {
-        
-    }
+    func updateFcmToken(userUuid: String, fcmToken: String) async throws {}
 }

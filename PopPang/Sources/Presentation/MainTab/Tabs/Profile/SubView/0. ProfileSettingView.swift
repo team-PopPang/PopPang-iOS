@@ -77,7 +77,10 @@ struct ProfileSettingView: View {
             
             // MARK: - 회원탈퇴
             Button {
-                 
+                AlertManager.shared.showHardDeleteUserAlert {
+                    profileViewModel.send(action: .hardDeleteUser)
+                    rootViewModel.send(action: .logout)
+                }
             } label: {
                 Text("회원탈퇴")
                     .frame(height: 22)

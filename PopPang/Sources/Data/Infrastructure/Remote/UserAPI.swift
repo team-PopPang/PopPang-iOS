@@ -9,10 +9,14 @@ import Moya
 import Foundation
 
 enum UserAPI {
+    //  user
     case checkNickname(nickname: String)
     case updateNickname(userUuid: String, newNickname: String)
     case autoLogin(userUuid: String)
     case getRecommendList
+    case hardDeleteUser(userUuid: String)
+    
+    // alert
     case getAlertKeywordList(userUuid: String)
     case addAlertKeyword(userUuid: String, newAlertKeyword: String)
     case removeAlertKeyword(userUuid: String, deleteAlertKeyword: String)
@@ -31,6 +35,7 @@ extension UserAPI: TargetType {
         case .updateNickname(let userUuid, _): return "/user/\(userUuid)"
         case .autoLogin: return "/auth/autoLogin"
         case .getRecommendList: return "/recommend"
+        case .hardDeleteUser(let userUuid): return "/user/\(userUuid)/hard-delete"
         case .getAlertKeywordList: return "/alert-keyword"
         case .addAlertKeyword: return "/alert-keyword"
         case .removeAlertKeyword: return "/alert-keyword"
@@ -45,6 +50,7 @@ extension UserAPI: TargetType {
         case .updateNickname: return .patch
         case .autoLogin: return .post
         case .getRecommendList: return .get
+        case .hardDeleteUser: return .delete
         case .getAlertKeywordList: return .get
         case .addAlertKeyword: return .post
         case .removeAlertKeyword: return .delete
@@ -67,6 +73,10 @@ extension UserAPI: TargetType {
 
         case .getRecommendList:
             return .requestPlain
+            
+        case .hardDeleteUser(let userUuid):
+            return .requestParameters(parameters: ["userUuid": userUuid],
+                                      encoding: JSONEncoding.default)
             
         case .getAlertKeywordList(let userUuid):
             return .requestParameters(parameters: ["userUuid": userUuid],

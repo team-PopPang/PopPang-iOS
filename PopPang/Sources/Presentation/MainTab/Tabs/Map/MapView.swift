@@ -102,8 +102,11 @@ struct MapView: View {
         }
         // MARK: - 첫 번째 시트
         .bottomSheet(bottomSheetPosition: $firstSheetPosition,
-                     switchablePositions: [.absolute(0),
-                                           .relative(0.5),
+                     
+                     // MARK: - 시트의 높이
+                     switchablePositions: [.absolute(0),   // 절댓값: 완전 화면에서 안보임(frame이 0)
+                                           .relative(0.5), // 상대값: 화면의 절반 차지
+                                           // 절댓값: 화면 검색바의 밑면까지의 높이 - 20만큼(frame이 20)
                                            .absolute(UIScreen.main.bounds.height - (mapSearchTextFieldFrame.maxY + 20))
                      ],
                      content: {

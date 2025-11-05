@@ -25,6 +25,11 @@ protocol UserUsecaseProtocol {
     func getRecommandList() async throws -> [RecommendList]
     
     
+    /// 유저 삭제
+    /// - Parameter userUuid: userUuid
+    func hardDeleteUser(userUuid: String) async throws
+    
+    
     /// 키워드 리스트 가져오기
     /// - Returns: [Keyword]
     func getAlertKeywordList(userUuid: String) async throws -> [Keyword]

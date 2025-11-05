@@ -38,6 +38,10 @@ final class UserRepositoryImpl: UserRepositoryProtocol {
         }
     }
     
+    func hardDeleteUser(userUuid: String) async throws {
+        try await NetworkProvider.shared.userProvider.asyncRequestVoid(.hardDeleteUser(userUuid: userUuid))
+    }
+    
     func getAlertKeywordList(userUuid: String) async throws -> [KeywordDTO] {
         do {
             let keywordDTO = try await NetworkProvider.shared.userProvider.asyncRequest(.getAlertKeywordList(userUuid: userUuid), decodeTo: [KeywordDTO].self)

@@ -18,6 +18,7 @@ final class ProfileViewModel: ObservableObject {
     enum Action {
         case checkNewNickname                    // 새 닉네임 중복 확인
         case updateNewNickname(String, String)   // 새 닉네임으로 갱신
+        case hardDeleteUser
     }
     
     func send(action: Action, completion: (() -> Void)? = nil) {
@@ -39,6 +40,9 @@ final class ProfileViewModel: ObservableObject {
 
         case .updateNewNickname(let userUuid, let newNickname):
             updateNickname(userUuid: userUuid, newNickname: newNickname, completion: completion)
+            
+        case .hardDeleteUser:
+            hardDeleteUser()
         }
     }
     
@@ -101,7 +105,18 @@ extension ProfileViewModel {
                     completion?()
                 }
             } catch {
-                print("❌ RootViewModel.updateNickname() Error: \(error)")
+                print("❌ ProfileViewModel.updateNickname() Error: \(error)")
+            }
+        }
+    }
+    
+    // 유저 삭제
+    private func hardDeleteUser() {
+        Task {
+            do {
+                try await userUsecase.hardDeleteUser(userUuid: userUuid)
+            } catch {
+                print("❌ ProfileViewModel.deleteUser() Error: \(error)")
             }
         }
     }
