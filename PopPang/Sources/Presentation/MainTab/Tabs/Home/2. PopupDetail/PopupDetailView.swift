@@ -13,6 +13,7 @@ struct PopupDetailView: View {
     @Environment(\.openURL) var openURL
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
+    @EnvironmentObject private var calendarViewModel: CalendarViewModel
     @StateObject private var popupDetailViewModel = PopupDetailViewModel()
     let popup: Popup
     
@@ -139,7 +140,8 @@ struct PopupDetailView: View {
                     // MARK: - 좋아요 토글 및 팝팡뷰 갱신
                     Task {
                         await homeViewModel.toggleLike(popup: popup)
-                        await favoriteViewModel.loadFavoritePopups()
+                        await favoriteViewModel.getFavoritePopups()
+                        await calendarViewModel.getCalendarPopups()
                     }
                 }
             }

@@ -29,7 +29,7 @@ final class FavoriteViewModel: ObservableObject {
         self.userUuid = userUuid
         
         Task {
-            await loadFavoritePopups()
+            await getFavoritePopups()
         }
     }
 }
@@ -38,7 +38,7 @@ final class FavoriteViewModel: ObservableObject {
 extension FavoriteViewModel {
     
     /// 서버에서 찜 팝업 리스트 비동기 호출, 완료 후 날짜별 이벤트 개수 계산
-    func loadFavoritePopups() async {
+    func getFavoritePopups() async {
         do {
             let favoritePopups = try await popupUsecase.getFavoriteList(userUuid: userUuid)
             await MainActor.run {
@@ -122,7 +122,7 @@ extension FavoriteViewModel {
                 _ = await MainActor.run {
                     likePostIds.remove(popup.popupUuid)
                 }
-                await loadFavoritePopups()
+                await getFavoritePopups()
             } else {
                 print("좋아요 추가")
                 try await popupUsecase.addFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)

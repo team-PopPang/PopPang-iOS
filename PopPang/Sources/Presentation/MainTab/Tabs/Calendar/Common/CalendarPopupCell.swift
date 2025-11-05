@@ -9,6 +9,9 @@ import SwiftUI
 import Kingfisher
 
 struct CalendarPopupCell: View {
+    @EnvironmentObject private var homeViewModel: HomeViewModel
+    @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
+    @EnvironmentObject private var calendarViewModel: CalendarViewModel
     let popup: Popup
     
     var body: some View {
@@ -48,7 +51,7 @@ struct CalendarPopupCell: View {
                     
                     Spacer()
                     
-                    // 조회수
+                    // 조회수 & 좋아요
                     HStack(spacing: 5) {
                         
                         Spacer()
@@ -64,13 +67,27 @@ struct CalendarPopupCell: View {
                         }
                         
                         if let favoriteCount = popup.favoriteCount {
-                            Image("favoriteCount")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 12, height: 12)
                             
-                            Text("\(favoriteCount)")
-                                .ppStyleFont(.scdream(.regular, size: 9))
+                            Button {
+                                print("좋아요 눌림")
+                                Task {
+                                    await calendarViewModel.toggleLike(popup: popup)
+                                    await homeViewModel.getFavoriteList()
+                                    await favoriteViewModel.getFavoritePopups()
+                                }
+                            } label: {
+                                HStack(spacing: 5) {
+                                    Image("favoriteCount")
+                                        .renderingMode(.template)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 12, height: 12)
+                                    
+                                    Text("\(favoriteCount)")
+                                        .ppStyleFont(.scdream(.regular, size: 9))
+                                }
+                            }
+                            .foregroundStyle(calendarViewModel.isLiked(popup: popup) ? Color.mainOrange : Color.mainGray)
                         }
                     }
                 }

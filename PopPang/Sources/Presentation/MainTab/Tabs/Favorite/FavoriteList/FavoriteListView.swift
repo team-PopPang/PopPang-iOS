@@ -69,6 +69,7 @@ private struct ListGridPopupScrollView: View {
 private struct ListPopupCell: View {
     @EnvironmentObject private var bookmarkViewModel: FavoriteViewModel
     @EnvironmentObject private var homeViewModel: HomeViewModel
+    @EnvironmentObject private var calendarViewModel: CalendarViewModel
     let popup: Popup
     
     var body: some View {
@@ -100,6 +101,7 @@ private struct ListPopupCell: View {
                         Task {
                             await bookmarkViewModel.toggleLike(popup: popup)
                             await homeViewModel.getFavoriteList()
+                            await calendarViewModel.getCalendarPopups()
                         }
                     }
                    .padding(10)

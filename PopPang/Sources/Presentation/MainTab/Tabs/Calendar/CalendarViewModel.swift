@@ -23,27 +23,33 @@ final class CalendarViewModel: ObservableObject {
     // 날짜별 팝업 개수(캘린더 숫자 하단 표시용)
     @Published var popupEventCounts: [Date: Int] = [:]
     
+    // 찜 목록(내가 찜한 목록 색상 설정을 위함)
+    @Published var likePostIds: Set<String> = []
+    
     init(userUuid: String) {
         self.userUuid = userUuid
-        loadPopups()
+        
+        Task {
+            await getCalendarPopups()
+        }
     }
 }
 
 extension CalendarViewModel {
     
     /// 서버에서 팝업 리스트 비동기 호출, 완료 후 날짜별 이벤트 개수 계산
-    private func loadPopups() {
-        Task {
-            do {
-                let popups = try await popupUsecase.getPopupList()
-                await MainActor.run {
-                    self.calendarPopups = popups
-                    self.calculateEventCounts()
-                    self.selectDate(self.selectedDate)
-                }
-            } catch {
-                print("❌ getPopupList Error: \(error)")
+    func getCalendarPopups() async {
+        do {
+            let popups = try await popupUsecase.getPopupList()
+            await getFavoriteList()
+            
+            await MainActor.run {
+                self.calendarPopups = popups
+                self.calculateEventCounts()
+                self.selectDate(self.selectedDate)
             }
+        } catch {
+            print("❌ getPopupList Error: \(error)")
         }
     }
     
@@ -95,6 +101,48 @@ extension CalendarViewModel {
         selectedDate = date
         selectedPopups = calendarPopups.filter {
             isDate(date, between: $0.startDate, and: $0.endDate)
+        }
+    }
+}
+
+
+// MARK: - 찜 관련 메서드
+extension CalendarViewModel {
+    
+    /// 팝업이 좋아요 눌린 상태인지 체크
+    func isLiked(popup: Popup) -> Bool {
+        likePostIds.contains(popup.popupUuid)
+    }
+    
+    /// 좋아요 상태 바꿔주는 함수
+    func toggleLike(popup: Popup) async {
+        do {
+            if likePostIds.contains(popup.popupUuid) {
+                print("좋아요 취소")
+                try await popupUsecase.removeFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
+                _ = await MainActor.run {
+                    likePostIds.remove(popup.popupUuid)
+                }
+            } else {
+                print("좋아요 추가")
+                try await popupUsecase.addFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
+                _ = await MainActor.run {
+                    likePostIds.insert(popup.popupUuid)
+                }
+            }
+        } catch {
+            print("❌ 찜 토글 실패:", error)
+        }
+    }
+    
+    func getFavoriteList() async {
+        do {
+            let favoritePopups = try await popupUsecase.getFavoriteList(userUuid: userUuid)
+            await MainActor.run {
+                likePostIds = Set(favoritePopups.map { $0.popupUuid })
+            }
+        } catch {
+            print("❌ 찜 목록 불러오기 오류: \(error)")
         }
     }
 }
