@@ -60,7 +60,7 @@ struct LoginView: View {
                 }
                 
                 // MARK: - 구글
-                SocialLoginButton(type: .kakao) {
+                SocialLoginButton(type: .google) {
                     rootViewModel.send(action: .googleLogin)
                 }
                 
@@ -107,4 +107,3 @@ extension LoginView {
     LoginView()
         .environmentObject(RootViewModel())
 }
-

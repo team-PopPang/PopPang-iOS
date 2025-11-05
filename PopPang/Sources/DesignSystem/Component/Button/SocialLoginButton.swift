@@ -11,11 +11,13 @@ struct SocialLoginButton: View {
     enum SocialType {
         case kakao
         case apple
+        case google
         
         var imageName: String {
             switch self {
             case .kakao: return "Logo Kakao"
             case .apple: return "Logo Apple"
+            case .google: return "Logo Google"
             }
         }
         
@@ -23,6 +25,7 @@ struct SocialLoginButton: View {
             switch self {
             case .kakao: return "카카오 로그인"
             case .apple: return "Apple 로그인"
+            case .google: return "Google 로그인"
             }
         }
         
@@ -30,6 +33,7 @@ struct SocialLoginButton: View {
             switch self {
             case .kakao: return .mainBlack
             case .apple: return .mainWhite
+            case .google: return .mainBlack
             }
         }
         
@@ -37,6 +41,7 @@ struct SocialLoginButton: View {
             switch self {
             case .kakao: return .kakao
             case .apple: return .apple
+            case .google: return .subWhite
             }
         }
         
@@ -44,6 +49,7 @@ struct SocialLoginButton: View {
             switch self {
             case .kakao: return .mainBlack
             case .apple: return .mainWhite
+            case .google: return .clear
             }
         }
     }
@@ -69,7 +75,7 @@ struct SocialLoginButton: View {
             HStack {
                 Image(type.imageName)
                     .resizable()
-                    .renderingMode(.template)
+                    .renderingMode(type == .google ? .original : .template)
                     .foregroundColor(type.iconColor)
                     .scaledToFit()
                     .frame(width: size, height: size)
@@ -84,6 +90,10 @@ struct SocialLoginButton: View {
         .foregroundStyle(type.fgColor)
         .background(type.bgColor)
         .cornerRadius(cornerRadius)
+        .overlay {
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .stroke(type == .google ? Color.subBlack : .clear, lineWidth: 0.5)
+        }
     }
 }
 
@@ -93,6 +103,10 @@ struct SocialLoginButton: View {
     }
     
     SocialLoginButton(type: .kakao) {
+        
+    }
+    
+    SocialLoginButton(type: .google) {
         
     }
 }

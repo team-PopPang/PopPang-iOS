@@ -90,7 +90,7 @@ extension DIContainer {
         
         self.shared.register(PopupUsecaseImpl(popupRepository: popupRepository),
                              for: PopupUsecaseProtocol.self)
-        print("✅ Live UseCase registered")
+        Logger.d("Live UseCase registered")
     }
 }
 
