@@ -27,7 +27,7 @@ final class ViewModelFactory {
         FavoriteViewModel(userUuid: userUuid)
     }
     
-    func createProfile(userUuid: String) -> ProfileViewModel {
-        ProfileViewModel(userUuid: userUuid)
+    func createProfile(userUuid: String, isAlerted: Bool) -> ProfileViewModel {
+        ProfileViewModel(userUuid: userUuid, isAlerted: isAlerted)
     }
 }

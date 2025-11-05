@@ -11,7 +11,7 @@ struct ProfileView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @EnvironmentObject private var rootViewModel: RootViewModel
     @EnvironmentObject private var profileViewModel: ProfileViewModel
-    @State private var isOn: Bool = false
+    @State private var tempIsOn: Bool = false
     
     // MARK: - 이메일 관련
     @Environment(\.openURL) var openURL /// 다른 앱으로 연결을 위함
@@ -50,13 +50,27 @@ struct ProfileView: View {
                     .fill(Color.mainGray5)
                     .frame(height: 2)
                 
-                NavigationButton(title: "키워드 알림",
-                                 subTitle: "키워드의 팝업이 등록되면 안내해 드립니다.",
-                                 buttonType: .toggle,
-                                 isOn: $isOn
-                ) {
+                HStack(spacing: 0) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("키워드 알림")
+                            .ppStyleFont(.scdream(.regular, size: 12))
+                        Text("키워드의 팝업이 등록되면 안내해 드립니다.")
+                            .ppStyleFont(.scdream(.light, size: 10))
+                    }
                     
-                }.padding(.horizontal, 24)
+                    Spacer()
+                    
+                    Toggle("", isOn: $tempIsOn)
+                        .labelsHidden()
+                        .tint(.mainOrange)
+                        .onAppear {
+                            tempIsOn = profileViewModel.isAlerted
+                        }
+                        .onChange(of: tempIsOn) { _, newValue in
+                            handleToggleChange(newValue)
+                        }
+                }
+                .padding(.horizontal, 24)
                 
                 NavigationButton(title: "공지사항",
                                  buttonType: .navigation,
@@ -80,6 +94,45 @@ struct ProfileView: View {
             
             
             Spacer()
+        }
+    }
+    
+    private func handleToggleChange(_ newValue: Bool) {
+        // MARK: - 알림 권한 인증
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            switch settings.authorizationStatus {
+                // MARK: - 권한이 거부된 경우
+            case .denied:
+                DispatchQueue.main.async {
+                    tempIsOn = false
+                    AlertManager.shared.showPermissionAlert()
+                }
+                
+                // MARK: - 권한 요청 아직 안됨 -> 재요청
+            case .notDetermined:
+                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+                    DispatchQueue.main.async {
+                        if granted {
+                            // 권한 허용 & 현재 토글 상태 서버 반영
+                            profileViewModel.send(action: .alertStatus)
+                        } else {
+                            // 권한 거부, 토글 상태 되돌리기
+                            tempIsOn = false
+                            AlertManager.shared.showPermissionAlert()
+                        }
+                    }
+                }
+                
+                // MARK: - 권한이 허용된 경우
+            case .authorized, .provisional, .ephemeral:
+                DispatchQueue.main.async {
+                    // 토글 변경
+                    profileViewModel.isAlerted = newValue
+                    profileViewModel.send(action: .alertStatus)
+                }
+            @unknown default:
+                break
+            }
         }
     }
 }
@@ -179,6 +232,9 @@ struct NavigationButton: View {
             }
         } else {
             content
+                .onChange(of: isOn) { _, _ in
+                    action()
+                }
         }
     }
 }
@@ -188,5 +244,6 @@ struct NavigationButton: View {
         ProfileView()
             .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
             .environmentObject(RootViewModel())
+            .environmentObject(ProfileViewModel(userUuid: "", isAlerted: true))
     }
 }

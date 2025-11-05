@@ -401,3 +401,42 @@ extension RootViewModel {
 extension RootViewModel {
     
 }
+
+// MARK: - 커스텀 바인딩
+/*
+extension RootViewModel {
+    /*
+     Binding<Value>(
+         get: { 현재 값 가져오기 },
+         set: { 새로운 값 들어오면 여기서 처리하기 }
+     )
+     */
+    var isAlertedBinding: Binding<Bool> {
+        Binding<Bool>(
+            get: {
+                // view가 읽을 때 호출
+                self.user?.isAlerted ?? false
+            },
+            set: { newValue in
+                // toggle 변경시 호출
+                
+                // 비로그인이면 무시
+                guard var user = self.user else { return }
+                
+                user.isAlerted = newValue
+                self.user = user
+                
+                Task {
+                    do {
+                        try await self.userUsecase.alertStatus(userUuid: user.userUuid,
+                                                          isAlerted: newValue)
+                        Logger.d("알림 상태 서버에 반영 완료: \(newValue)")
+                    } catch {
+                        Logger.e("알림 상태 업데이트 실패: \(error)")
+                    }
+                }
+            }
+        )
+    }
+}
+*/

@@ -20,6 +20,7 @@ enum UserAPI {
     case getAlertKeywordList(userUuid: String)
     case addAlertKeyword(userUuid: String, newAlertKeyword: String)
     case removeAlertKeyword(userUuid: String, deleteAlertKeyword: String)
+    case alertStatus(userUuid: String, isAlerted: Bool)
     
     // fcm
     case checkFcmToken(userUuid: String, fcmToken: String)
@@ -36,9 +37,12 @@ extension UserAPI: TargetType {
         case .autoLogin: return "/auth/autoLogin"
         case .getRecommendList: return "/recommend"
         case .hardDeleteUser(let userUuid): return "/user/\(userUuid)/hard-delete"
+            
         case .getAlertKeywordList: return "/alert-keyword"
         case .addAlertKeyword: return "/alert-keyword"
         case .removeAlertKeyword: return "/alert-keyword"
+        case .alertStatus(let userUuid, _): return "/user/\(userUuid)/alert-status"
+            
         case .checkFcmToken(let userUuid, _): return "/user/\(userUuid)/fcm-token/duplicate-check"
         case .updateFcmToken(let userUuid, _): return "/user/\(userUuid)/fcm-token/update"
         }
@@ -51,9 +55,12 @@ extension UserAPI: TargetType {
         case .autoLogin: return .post
         case .getRecommendList: return .get
         case .hardDeleteUser: return .delete
+            
         case .getAlertKeywordList: return .get
         case .addAlertKeyword: return .post
         case .removeAlertKeyword: return .delete
+        case .alertStatus: return .patch
+            
         case .checkFcmToken: return .get
         case .updateFcmToken: return .put
         }
@@ -90,6 +97,10 @@ extension UserAPI: TargetType {
                                                    "deleteAlertKeyword": deleteAlertKeyword],
                                       encoding: JSONEncoding.default)
             
+        case .alertStatus(_, let isAlerted):
+            return .requestParameters(parameters: ["isAlerted": isAlerted],
+                                      encoding: JSONEncoding.default)
+            
         case .checkFcmToken(_, let fcmToken):
             return .requestParameters(parameters: ["fcmToken": fcmToken],
                                       encoding: URLEncoding.queryString)
@@ -97,7 +108,6 @@ extension UserAPI: TargetType {
         case .updateFcmToken(_, let fcmToken):
             return .requestParameters(parameters: ["fcmToken": fcmToken],
                                       encoding: JSONEncoding.default)
-            
         }
     }
     

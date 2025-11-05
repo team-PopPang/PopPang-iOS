@@ -9,6 +9,8 @@ import SwiftUI
 
 struct MainTabView: View {
     var userUduuid: String
+    var isAlerted: Bool
+    
     @State private var selectedTab: MainTabType = .home
     @EnvironmentObject private var rootViewModel: RootViewModel
     @StateObject private var homeViewModel: HomeViewModel
@@ -16,14 +18,15 @@ struct MainTabView: View {
     @StateObject private var favoriteViewModel: FavoriteViewModel
     @StateObject private var profileViewModel: ProfileViewModel
     
-    init(userUduuid: String) {
+    init(userUduuid: String, isAlerted: Bool) {
         self.userUduuid = userUduuid
+        self.isAlerted = isAlerted
         
         // MARK: - 뷰모델초기화
         _homeViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createHome(userUuid: userUduuid))
         _calendarViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createCalendar(userUuid: userUduuid))
         _favoriteViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createBookmark(userUuid: userUduuid))
-        _profileViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createProfile(userUuid: userUduuid))
+        _profileViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createProfile(userUuid: userUduuid, isAlerted: isAlerted))
     }
     
     var body: some View {
@@ -59,12 +62,12 @@ struct MainTabView: View {
 }
 
 #Preview {
-    MainTabView(userUduuid: "1234")
+    MainTabView(userUduuid: "1234", isAlerted: false)
         .environmentObject(RootViewModel())
         .environmentObject(HomeViewModel(userUuid: "1234"))
         .environmentObject(CalendarViewModel(userUuid: "1234"))
         .environmentObject(FavoriteViewModel(userUuid: "1234"))
-        .environmentObject(ProfileViewModel(userUuid: "1234"))
+        .environmentObject(ProfileViewModel(userUuid: "1234", isAlerted: false))
 }
 
 

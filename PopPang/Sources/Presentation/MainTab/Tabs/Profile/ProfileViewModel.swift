@@ -10,15 +10,18 @@ import SwiftUI
 final class ProfileViewModel: ObservableObject {
     @Dependency private var userUsecase: UserUsecaseProtocol
     var userUuid: String
+    @Published var isAlerted: Bool = false
     
-    init(userUuid: String) {
+    init(userUuid: String, isAlerted: Bool) {
         self.userUuid = userUuid
+        self.isAlerted = isAlerted
     }
     
     enum Action {
         case checkNewNickname                    // 새 닉네임 중복 확인
         case updateNewNickname(String, String)   // 새 닉네임으로 갱신
         case hardDeleteUser
+        case alertStatus
     }
     
     func send(action: Action, completion: (() -> Void)? = nil) {
@@ -43,6 +46,8 @@ final class ProfileViewModel: ObservableObject {
             
         case .hardDeleteUser:
             hardDeleteUser()
+        case .alertStatus:
+            alertStatus()
         }
     }
     
@@ -117,6 +122,19 @@ extension ProfileViewModel {
                 try await userUsecase.hardDeleteUser(userUuid: userUuid)
             } catch {
                 print("❌ ProfileViewModel.deleteUser() Error: \(error)")
+            }
+        }
+    }
+    
+    // 알림 토글
+    private func alertStatus() {
+        Task {
+            do {
+                try await userUsecase.alertStatus(userUuid: userUuid,
+                                                  isAlerted: isAlerted)
+                Logger.d("알림 상태 서버 반영 완료: \(isAlerted)")
+            } catch {
+                Logger.e("알림 상태 서버 반영 실패: \(error)")
             }
         }
     }

@@ -37,7 +37,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				Sources/Network/.gitkeep,
 				Sources/Util/.gitkeep,
 			);
 			target = DFAC8E7B2E6C717100B4A917 /* PopPang */;

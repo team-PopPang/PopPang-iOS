@@ -67,6 +67,13 @@ protocol UserRepositoryProtocol {
     func removeAlertKeyword(userUuid: String, alertKeyword: String) async throws
     
     
+    /// 알림 토글
+    /// - Parameters:
+    ///   - userUuid: 유저 고유값
+    ///   - isAlerted: 알림 상태 변경 Bool
+    func alertStatus(userUuid: String, isAlerted: Bool) async throws
+    
+    
     /// 닉네임 수정
     /// - Parameters:
     ///   - userUuid: 유저 고유값

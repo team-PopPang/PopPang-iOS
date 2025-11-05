@@ -30,12 +30,7 @@ final class UserRepositoryImpl: UserRepositoryProtocol {
     }
     
     func getRecommandList() async throws -> [RecommendListDTO] {
-        do {
-            let response = try await NetworkProvider.shared.userProvider.asyncRequest(.getRecommendList, decodeTo: [RecommendListDTO].self)
-            return response
-        } catch {
-            throw error
-        }
+        try await NetworkProvider.shared.userProvider.asyncRequest(.getRecommendList, decodeTo: [RecommendListDTO].self)
     }
     
     func hardDeleteUser(userUuid: String) async throws {
@@ -43,21 +38,19 @@ final class UserRepositoryImpl: UserRepositoryProtocol {
     }
     
     func getAlertKeywordList(userUuid: String) async throws -> [KeywordDTO] {
-        do {
-            let keywordDTO = try await NetworkProvider.shared.userProvider.asyncRequest(.getAlertKeywordList(userUuid: userUuid), decodeTo: [KeywordDTO].self)
-            return keywordDTO
-        } catch {
-            throw error
-        }
+        try await NetworkProvider.shared.userProvider.asyncRequest(.getAlertKeywordList(userUuid: userUuid), decodeTo: [KeywordDTO].self)
     }
 
     func addAlertKeyword(userUuid: String, alertKeyword: String) async throws {
         try await NetworkProvider.shared.userProvider.asyncRequestVoid(.addAlertKeyword(userUuid: userUuid, newAlertKeyword: alertKeyword))
     }
     
-
     func removeAlertKeyword(userUuid: String, alertKeyword: String) async throws {
         try await NetworkProvider.shared.userProvider.asyncRequestVoid(.removeAlertKeyword(userUuid: userUuid, deleteAlertKeyword: alertKeyword))
+    }
+    
+    func alertStatus(userUuid: String, isAlerted: Bool) async throws {
+        try await NetworkProvider.shared.userProvider.asyncRequestVoid(.alertStatus(userUuid: userUuid, isAlerted: isAlerted))
     }
     
     func updateNickname(userUuid: String, newNickname: String) async throws {
