@@ -165,15 +165,15 @@ struct PopupDetailView: View {
                         if value.image == nil {
                             // 메모리/디스크에 캐시가 없을 경우 다운로드 실행
                             KingfisherManager.shared.retrieveImage(with: url) { _ in
-                                print("✅ Preloaded \(url)")
+                                // Logger.d("Preloaded \(url)")
                             }
                         } else {
-                            print("✅ Already cached \(url)")
+                            // Logger.d("Already cached \(url)")
                         }
                     case .failure:
                         // 실패한 경우도 다시 다운로드 시도
                         KingfisherManager.shared.retrieveImage(with: url) { _ in
-                            print("✅ Preloaded \(url)")
+                            Logger.d("Preloaded \(url)")
                         }
                     }
                 }
@@ -249,11 +249,7 @@ private struct InfoView: View {
             }
         }
         .font(.scdream(.regular, size: 15))
-        .onAppear {
-            print("✅ \(popup)")
-        }
     }
- 
 }
 
 // MARK: - 찜 버튼
@@ -319,13 +315,6 @@ private struct SNSButton: View {
         SNSButton(imageName: "insta",
                   buttonTitle: "인스타그램") {
         }
-        /*
-        FavoriteButton(isFavorite: isFavorite,
-                       buttonTitle: "찜하기",
-                       buttonTitle2: "찜 취소하기") {
-            isFavorite.toggle()
-        }
-         */
     }
     .padding(.horizontal, 20)
 }

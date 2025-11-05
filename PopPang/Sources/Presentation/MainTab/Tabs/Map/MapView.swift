@@ -42,10 +42,10 @@ struct MapView: View {
                     Color.clear
                         .onAppear {
                             mapSearchTextFieldFrame = geo.frame(in: .global)
-                            print(mapSearchTextFieldFrame) /// x, y, width, height
-                            print("top(minY): \(Int(mapSearchTextFieldFrame.minY))")
-                            print("bottom(maxY): \(Int(mapSearchTextFieldFrame.maxY))")
-                            print("height: \(Int(mapSearchTextFieldFrame.height))")
+                            // print(mapSearchTextFieldFrame) /// x, y, width, height
+                            // print("top(minY): \(Int(mapSearchTextFieldFrame.minY))")
+                            // print("bottom(maxY): \(Int(mapSearchTextFieldFrame.maxY))")
+                            // print("height: \(Int(mapSearchTextFieldFrame.height))")
                         }
                 }
             }

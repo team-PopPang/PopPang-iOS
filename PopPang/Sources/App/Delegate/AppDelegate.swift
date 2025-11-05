@@ -28,8 +28,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         // 0. firebase 초기화
         FirebaseApp.configure()
         
-//        Messaging.messaging().delegate = NotificationManager.shared
-        
         // 1. 알림 권한 요청
         NotificationManager.shared.configureNotification()
         
@@ -141,7 +139,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, Mes
         center.requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             // 요청 과정에서 오류가 발생하였는지 확인
             if let error = error {
-                print("❌ configureNotification 에러: \(error)")
+                Logger.e("❌ configureNotification 에러: \(error)")
                 return
             }
             
@@ -165,12 +163,12 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, Mes
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         
         guard let fcmToken = fcmToken else {
-            print("⚠️ FCM 토큰이 nil입니다.")
+            Logger.w("⚠️ FCM 토큰이 nil입니다.")
             return
         }
-        print("📱 FCM 토큰 수신 완료: \(fcmToken)")
-        UserDefaultsManager.saveFcmToken(fcmToken)
-        
+        Logger.d("Firebase에서 APNs 토큰을 기반으로 FCM 등록 및 클라이언트로 토큰 발급")
+        // Logger.d("FCM 토큰 수신 완료: \(fcmToken)")
+        // UserDefaultsManager.saveFcmToken(fcmToken)
         self.fcmToken = fcmToken
     }
     
@@ -178,9 +176,11 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, Mes
     func didRegisterForRemoteNotifications(deviceToken: Data) {
         // 1) APNs 토큰 등록
         Messaging.messaging().apnsToken = deviceToken
-        print("📮 APNs token set (\(deviceToken.count) bytes)")
+        Logger.d("Apple의 APNs(푸시 서버) 디바이스 토큰을 Firebase에 전달 완료")
+        // Logger.d("APNs token set (\(deviceToken.count) bytes)")
 
         // APNs 토큰이 설정된 '이후'에 FCM 토큰을 요청 (선택)
+        /*
         Messaging.messaging().token { token, error in
             if let token = token?.trimmingCharacters(in: .whitespacesAndNewlines) {
                 print("✅ Fresh FCM token:", token, "len:", token.count)
@@ -188,6 +188,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, Mes
                 print("❌ FCM 토큰 가져오기 실패:", error.localizedDescription)
             }
         }
+         */
     }
 
     // APNs 등록 실패 로깅
@@ -204,3 +205,6 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, Mes
         completionHandler([.banner, .sound, .list])
     }
 }
+
+
+

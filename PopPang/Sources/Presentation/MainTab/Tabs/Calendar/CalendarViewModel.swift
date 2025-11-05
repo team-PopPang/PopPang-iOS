@@ -118,13 +118,13 @@ extension CalendarViewModel {
     func toggleLike(popup: Popup) async {
         do {
             if likePostIds.contains(popup.popupUuid) {
-                print("좋아요 취소")
+                Logger.d("좋아요 취소")
                 try await popupUsecase.removeFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
                 _ = await MainActor.run {
                     likePostIds.remove(popup.popupUuid)
                 }
             } else {
-                print("좋아요 추가")
+                Logger.d("좋아요 추가")
                 try await popupUsecase.addFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
                 _ = await MainActor.run {
                     likePostIds.insert(popup.popupUuid)

@@ -184,7 +184,7 @@ extension MapCoordinator {
     
     func mapViewCameraIdle(_ mapView: NMFMapView) {
          let zoom = mapView.zoomLevel
-         print("📸 현재 줌 레벨: \(zoom)")
+        Logger.d("📸 현재 줌 레벨: \(zoom)")
     }
 }
 

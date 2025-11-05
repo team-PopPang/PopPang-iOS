@@ -15,7 +15,7 @@ final class HomeViewModel: ObservableObject {
     @Published var comingPopups: [Popup] = []
     @Published var gridPopups: [Popup] = []
     @Published var likePostIds: Set<String> = [] // 찜 목록 popupUuid
-    @Published var isLoaded: Bool = false
+    // @Published var isLoaded: Bool = false
     
     // MARK: - 지역 시트 관련
     @Published var showRegionSheet: Bool = false
@@ -32,18 +32,22 @@ final class HomeViewModel: ObservableObject {
         
         Task { [weak self] in
             guard let self = self else { return }
-            await self.getFavoriteList()
-            await self.getAllPopupData()
-            await self.fetchRegionList()
+            await self.getFavoriteList() /// 찜 항목 가져오기
+            await self.getAllPopupData() /// 3개 섹션 전체 팝업 가져오기
+            await self.getRegionList()   /// 지역 필터링 가져오기
+            /*
             await MainActor.run {
                 self.isLoaded = true
             }
+             */
         }
     }
 }
 
-// MARK: - 팝업 전체 불러오기
+// MARK: - 팝업 관련 메서드
 extension HomeViewModel {
+    
+    // MARK: - 팝업 전체 가져오기 비동기
     func getAllPopupData() async {
         do {
             try await withThrowingTaskGroup(of: (Int, [Popup]).self) {  group in
@@ -69,8 +73,9 @@ extension HomeViewModel {
                     }
                 }
             }
+            Logger.d("팝업 전체 가져오기 성공")
         } catch {
-            print("❌ 팝업 목록 불러오기 오류: \(error)")
+            Logger.e("❌ 팝업 목록 불러오기 오류: \(error)")
         }
     }
 }
@@ -87,58 +92,42 @@ extension HomeViewModel {
     func toggleLike(popup: Popup) async {
         do {
             if likePostIds.contains(popup.popupUuid) {
-                print("좋아요 취소")
+                Logger.d("좋아요 취소")
                 try await popupUsecase.removeFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
                 _ = await MainActor.run {
                     likePostIds.remove(popup.popupUuid)
                 }
             } else {
-                print("좋아요 추가")
+                Logger.d("좋아요 추가")
                 try await popupUsecase.addFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
                 _ = await MainActor.run {
                     likePostIds.insert(popup.popupUuid)
                 }
             }
         } catch {
-            print("❌ 찜 토글 실패:", error)
+            Logger.e("❌ 찜 토글 실패:")
         }
     }
     
+    // MARK: - 찜 항목 가져오기 비동기
     func getFavoriteList() async {
         do {
             let favoritePopups = try await popupUsecase.getFavoriteList(userUuid: userUuid)
             await MainActor.run {
                 likePostIds = Set(favoritePopups.map { $0.popupUuid })
             }
+            Logger.d("찜 팝업의 likePostIds 가져오기 성공")
         } catch {
-            print("❌ 찜 목록 불러오기 오류: \(error)")
+            Logger.e("❌ 찜 목록 불러오기 오류: \(error)")
         }
     }
 }
 
 // MARK: - 시트 관련 메서드
 extension HomeViewModel {
-    func fetchRegionListMock() async {
-        // ⏳ 네트워크 대신 목업 데이터 (비동기 시뮬레이션)
-        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초 지연
-        
-        let mockData: [RegionListDTO] = [
-
-        ]
-        
-        let mapped = mockData.map { $0.toEntity() }
-        
-        await MainActor.run {
-            self.regions = mapped
-            if let first = mapped.first {
-                self.selectedRegion = first
-                self.selectedDistrict = first.districtList.first
-            }
-        }
-    }
     
-    
-    func fetchRegionList() async {
+    // MARK: - 지역 필터링 가져오기 비동기
+    func getRegionList() async {
         do {
             let regionListDTO = try await popupUsecase.getRegionList()
             await MainActor.run {
@@ -148,8 +137,9 @@ extension HomeViewModel {
                     self.selectedDistrict = first.districtList.first
                 }
             }
+            Logger.d("지역 필터링 가져오기 성공")
         } catch {
-            print("HomeViewModel.fetchRegionList(): ❌ 찜 목록 불러오기 오류: \(error)")
+            Logger.e("❌ 찜 목록 불러오기 오류: \(error)")
         }
     }
 }

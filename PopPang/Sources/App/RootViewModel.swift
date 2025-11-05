@@ -81,7 +81,7 @@ final class RootViewModel: ObservableObject {
     }
     
     func boot() async {
-        print("로그인 인증 진행")
+        // print("로그인 인증 진행")
         
         // 1. 실제 비동기 로직 (서버 인증 요청)
         await MainActor.run {
@@ -93,8 +93,7 @@ final class RootViewModel: ObservableObject {
         
         // 3. 인증 결과에 따른 화면 업데이트
         await MainActor.run { updateScene() }
-        
-        print("로그인 인증 진행 완료")
+        // Logger.d("로그인 인증 진행 완료")
     }
 }
 
@@ -104,18 +103,17 @@ extension RootViewModel {
         switch action {
         // MARK: - 자동 로그인
         case .autoLogin:
-            print("자동로그인 시도")
             if !storeUID.isEmpty {
                 Task {
                     do {
                         let user = try await userUsecase.autoLogin(userUuid: storeUID)
-                        // print("자동로그인: \(user)")
                         await MainActor.run {
                             self.loginSuccess(user: user)
+                            Logger.d("자동로그인 성공")
                         }
                         
                     } catch (let error) {
-                        print("❌ 자동 로그인 실패: \(error)")
+                        Logger.e("❌ 자동 로그인 실패: \(error)")
                         await MainActor.run {
                             self.user = nil
                             self.scene = .unauthenticated
@@ -134,7 +132,7 @@ extension RootViewModel {
                         self.loginSuccess(user: user)
                     }
                 } catch (let error) {
-                    print("❌ 카카오 로그인 실패: \(error)")
+                    Logger.e("❌ 카카오 로그인 실패: \(error)")
                 }
             }
             
@@ -148,7 +146,7 @@ extension RootViewModel {
                         self.loginSuccess(user: user)
                     }
                 } catch (let error) {
-                    print("❌ 애플 로그인 실패: \(error)")
+                    Logger.e("❌ 애플 로그인 실패: \(error)")
                 }
             }
             
@@ -162,7 +160,7 @@ extension RootViewModel {
                         self.loginSuccess(user: user)
                     }
                 } catch (let error) {
-                    print("❌ 구글 로그인 실패: \(error)")
+                    Logger.e("❌ 구글 로그인 실패: \(error)")
                 }
             }
             
@@ -195,7 +193,7 @@ extension RootViewModel {
                         }
                     }
                 } catch {
-                    print("❌ 중복 확인 실패: \(error)")
+                    Logger.e("❌ 중복 확인 실패: \(error)")
                 }
             }
             
@@ -204,14 +202,14 @@ extension RootViewModel {
             var registerUser = user!
             registerUser.alertKeywordList = alertList
             self.user = registerUser
-            print("알림 키워드 적용됨: \(self.user!)")
+            Logger.d("알림 키워드 적용됨: \(self.user!)")
             
         // MARK: - 추천 키워드 세팅
         case .setRecommandList(let recommandList):
             var registerUser = user!
             registerUser.recommendList = recommandList
             self.user = registerUser
-            print("추천 키워드 적용됨: \(self.user!)")
+            Logger.d("추천 키워드 적용됨: \(self.user!)")
             
         // MARK: - 회원가입 완료 버튼
         case .register:
@@ -232,7 +230,7 @@ extension RootViewModel {
                             self.user = newUser
                         }
                     } catch (let error) {
-                        print("❌ 애플 회원가입 실패: \(error)")
+                        Logger.e("❌ 애플 회원가입 실패: \(error)")
                     }
                 }
                 
@@ -245,7 +243,7 @@ extension RootViewModel {
                             self.user = newUser
                         }
                     } catch (let error) {
-                        print("❌ 카카오 회원가입 실패: \(error)")
+                        Logger.e("❌ 카카오 회원가입 실패: \(error)")
                     }
                 }
                 
@@ -258,7 +256,7 @@ extension RootViewModel {
                             self.user = newUser
                         }
                     } catch (let error) {
-                        print("❌ 구글 회원가입 실패: \(error)")
+                        Logger.e("❌ 구글 회원가입 실패: \(error)")
                     }
                 }
                 
@@ -273,7 +271,7 @@ extension RootViewModel {
             Task {
                 do {
                     guard let userUuid = user?.userUuid else {
-                        print("⚠️ uuid 없음")
+                        Logger.w("⚠️ uuid 없음")
                         return
                     }
 
@@ -283,9 +281,10 @@ extension RootViewModel {
                     // fcm토큰이 일치하지 않거나 로컬에 존재하지 않는다면
                     if !fcmTokenResult {
                         try await userUsecase.updateFcmToken(userUuid: userUuid, fcmToken: localFcmToken)
+                        Logger.d("로컬 FCM 토큰을 서버로 전송 및 갱신 완료")
                     }
                 } catch {
-                    print("❌ FCM 토큰 중복 확인 실패: \(error)")
+                    Logger.e("❌ FCM 토큰 중복 확인 실패: \(error)")
                 }
             }
         }
@@ -355,9 +354,9 @@ extension RootViewModel {
             await MainActor.run {
                 self.recommandList = response
             }
-            print("✅ recommandList: \(recommandList)")
+            Logger.d("✅ recommandList: \(recommandList)")
         } catch {
-            print("❌ recommandList Error: \(error)")
+            Logger.e("❌ recommandList Error: \(error)")
         }
     }
 }

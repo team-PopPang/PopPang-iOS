@@ -25,7 +25,6 @@ final class KeywordViewModel: ObservableObject {
             let keywords = try await userUsecase.getAlertKeywordList(userUuid: userUuid)
             await MainActor.run {
                 self.keywordList = keywords
-                print("키워드리스트: \(keywords)")
             }
         } catch {
             print("❌ KeywordViewModel Error: \(error)")

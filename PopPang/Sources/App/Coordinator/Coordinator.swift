@@ -40,6 +40,9 @@ class Coordinator<T: Hashable, R: Identifiable, O: Identifiable>: ObservableObje
         // print("  - Before\(paths.map { "\($0)" }.joined(separator: " -> "))")
         paths.append(path)
         // print("  - After: \(paths.map { "\($0)" }.joined(separator: " -> "))")
+        let caseName = String(describing: path)
+            .components(separatedBy: "(").first ?? String(describing: path)
+        print("  - \(caseName)")
     }
     
     // 마지막 경로 제거

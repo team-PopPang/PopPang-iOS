@@ -78,11 +78,11 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         switch status {
         case .authorizedWhenInUse, .authorizedAlways:
-            print("✅ 위치 권한 허용됨")
+            Logger.d("위치 권한 허용됨")
         case .denied, .restricted:
-            print("❌ 위치 권한 거부됨")
+            Logger.e("위치 권한 거부됨")
         case .notDetermined:
-            print("🕒 아직 권한 선택 전")
+            Logger.w("🕒 아직 권한 선택 전")
         @unknown default:
             break
         }

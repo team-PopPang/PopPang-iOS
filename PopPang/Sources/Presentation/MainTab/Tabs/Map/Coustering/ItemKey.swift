@@ -107,7 +107,7 @@ class LeafMarkerUpdater: NMCDefaultLeafMarkerUpdater {
 
         marker.touchHandler = { [weak self] _ in
             self?.onMarkerSelected?(key) // 외부로 콜백 전달
-            print("📍 리프 마커 클릭됨")
+            // print("📍 리프 마커 클릭됨")
             return true
         }
     }
