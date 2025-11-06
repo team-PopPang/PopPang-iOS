@@ -13,25 +13,23 @@ struct SearchGridPopupCell: View {
     @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
     let popup: Popup
     
+    // 셀 너비를 미리 계산해서 전달받거나 상수로 지정
+    let cellWidth: CGFloat = (UIScreen.main.bounds.width - 15 * 3) / 2  // 2열 기준
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             
             ZStack {
-                Rectangle()
-                    .fill(Color.blue)
-                    .frame(height: 217, alignment: .center)
-                
-                GeometryReader { geo in
-                    KFImage(URL(string: popup.imageUrlList[0]))
-                        .placeholder {
-                            Rectangle()
-                                .frame(height: 217)
-                        }
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: geo.size.width, height: 217, alignment: .center)
-                        .clipped() // 넘치는 영역 완전히 제거
-                }
+                KFImage(URL(string: popup.imageUrlList[0]))
+                    .placeholder {
+                        Rectangle()
+                            .fill(Color.subWhite)
+                            .frame(width: cellWidth, height: 217)
+                    }
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: cellWidth, height: 217)
+                    .clipped()
             }
             .frame(height: 217)
             
