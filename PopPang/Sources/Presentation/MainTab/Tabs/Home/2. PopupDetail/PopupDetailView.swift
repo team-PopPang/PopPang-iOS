@@ -17,11 +17,6 @@ struct PopupDetailView: View {
     @StateObject private var popupDetailViewModel = PopupDetailViewModel()
     let popup: Popup
     
-//    init(popup: Popup) {
-//        self.popup = popup
-//        _popupDetailViewModel = StateObject(wrappedValue: PopupDetailViewModel())
-//    }
-    
     var body: some View {
         ZStack(alignment: .bottom) {
             ScrollView {
@@ -155,29 +150,7 @@ struct PopupDetailView: View {
         .onAppear {
             
             // MARK: - 캐싱 로직
-            for urlString in popup.imageUrlList {
-                guard let url = URL(string: urlString) else { continue }
-
-                // ✅ 캐시 확인 후 없으면 다운로드
-                ImageCache.default.retrieveImage(forKey: url.cacheKey) { result in
-                    switch result {
-                    case .success(let value):
-                        if value.image == nil {
-                            // 메모리/디스크에 캐시가 없을 경우 다운로드 실행
-                            KingfisherManager.shared.retrieveImage(with: url) { _ in
-                                // Logger.d("Preloaded \(url)")
-                            }
-                        } else {
-                            // Logger.d("Already cached \(url)")
-                        }
-                    case .failure:
-                        // 실패한 경우도 다시 다운로드 시도
-                        KingfisherManager.shared.retrieveImage(with: url) { _ in
-                            Logger.d("Preloaded \(url)")
-                        }
-                    }
-                }
-            }
+            popupDetailViewModel.prefetchImages(urls: popup.imageUrlList)
             
             // MARK: - 조회수 증가 로직
             Task {
@@ -205,7 +178,6 @@ struct PopupDetailView: View {
         }
     }
 }
-
 
 // MARK: - 운영 정보 뷰
 private struct InfoView: View {
@@ -250,73 +222,6 @@ private struct InfoView: View {
         }
         .font(.scdream(.regular, size: 15))
     }
-}
-
-// MARK: - 찜 버튼
-private struct FavoriteButton: View {
-    var isFavorite: Bool
-    var buttonTitle: String
-    var buttonTitle2: String
-    var textColor: Color = .mainWhite
-    var buttonColor: Color = .mainOrange
-
-    var height: CGFloat = 40
-    var action: () -> Void
-    
-    var body: some View {
-        Button {
-          action()
-        } label: {
-            Text(isFavorite ? buttonTitle2 : buttonTitle)
-                .font(.scdream(.medium, size: 12))
-                .frame(maxWidth: .infinity)
-                .frame(height: height)
-                .foregroundStyle(Color.mainWhite)
-                .background(isFavorite ?
-                            Color.mainGray6 : Color.mainOrange)
-                .clipShape(RoundedRectangle(cornerRadius: 5))
-                .contentShape(RoundedRectangle(cornerRadius: 5))
-        }
-        .buttonStyle(PressableButtonStyle())
-    }
-}
-
-// MARK: - 소셜 버튼
-private struct SNSButton: View {
-    let imageName: String
-    let buttonTitle: String
-    let action: () -> Void
-    var body: some View {
-        Button {
-            action()
-        } label: {
-            HStack {
-                Image(imageName)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 12, height: 12)
-                
-                Text(buttonTitle)
-                    .ppStyleFont(.scdream(.medium, size: 10))
-            }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 10)
-            .foregroundStyle(Color.mainGray6)
-            .background(Color.mainGray5)
-            .cornerRadius(17)
-        }
-        .buttonStyle(PressableButtonStyle())
-    }
-}
-
-#Preview {
-    @Previewable @State var isFavorite: Bool = false
-    VStack {
-        SNSButton(imageName: "insta",
-                  buttonTitle: "인스타그램") {
-        }
-    }
-    .padding(.horizontal, 20)
 }
 
 #Preview {

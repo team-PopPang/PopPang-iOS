@@ -40,20 +40,6 @@ struct AlertView: View {
                     .ppStyleFont(.scdream(.medium, size: 20))
                     .padding(.top, 10)
             }
-            
-            /*
-            // 커스텀 우측
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    
-                } label: {
-                    Image("gear")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 20, height: 20)
-                }
-            }
-             */
         }
         .navigationBarTitleDisplayMode(.inline)
     }

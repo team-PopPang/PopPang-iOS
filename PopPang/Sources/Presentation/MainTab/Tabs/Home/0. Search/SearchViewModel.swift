@@ -51,6 +51,8 @@ final class SearchViewModel: ObservableObject {
 }
 
 extension SearchViewModel {
+    
+    // MARK: - 검색 팝업 리스트 가져오기
     func getSearchPopupList(searchText: String) {
         Task {
             do {
