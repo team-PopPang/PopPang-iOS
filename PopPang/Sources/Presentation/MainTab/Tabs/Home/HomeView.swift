@@ -24,20 +24,6 @@ struct HomeView: View {
                 // MARK: - Search & Alert
                 CustomNavigationBar {
                     
-                    /*
-                    SearchTextField(placeholder: "궁금한 장소를 검색해보세요",
-                                    text: $searchText)
-                    .disabled(true)
-                    .overlay {
-                        Color.clear
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                coordinator.presentSheet(.search(uuid: rootViewModel.user?.userUuid ?? ""))
-                            }
-                    }
-                     */
-                    
-                    
                     Text("POP PANG")
                         .ppStyleFont(.scdream(.black, size: 20))
                         .foregroundStyle(Color.mainOrange)
@@ -51,7 +37,6 @@ struct HomeView: View {
                     IconButton {
                         coordinator.push(.alert(uuid: rootViewModel.user?.userUuid ?? ""))
                     }
-                    // .padding(.leading, 15)
                 }
                  .padding(.bottom, 15)
                 
@@ -85,48 +70,6 @@ struct HomeView: View {
                         }
                         .padding(.top, 50)
                         ComingPopupScrollView(viewModel: homeViewModel)
-                        
-                        /*
-                        // MARK: - DropDownView
-                        HStack {
-                            DropDownView(options: [
-                                            "전체",
-                                            "서울",
-                                            "부산",
-                                            "진주"
-                                         ],
-                                         anchor: .bottom,
-                                         maxWidth: 90,
-                                         selection: $selectRegion,
-                                         overlay: false,
-                                         pickedFont: .scdream(.medium, size: 17),
-                                         detailFont: .scdream(.medium, size: 17)
-                            )
-                            .padding(.leading, -10)
-                            
-                            Spacer()
-                            
-                            DropDownView(options: [
-                                            "찜순",
-                                            "가까운순",
-                                         ],
-                                         anchor: .bottom,
-                                         maxWidth: 90,
-                                         cornerRadius: 17,
-                                         stroke: .mainGray5,
-                                         imgSize: 10,
-                                         imgColor: .mainGray2,
-                                         selection: $selectSort,
-                                         overlay: true,
-                                         pickedFont: .scdream(.light, size: 10),
-                                         detailFont: .scdream(.light, size: 10)
-                                        
-                            )
-                        }
-                        .zIndex(1)
-                        .padding(.top, 50)
-                        .padding(.trailing, .contentPadding)
-                         */
                         
                         // MARK: - DropDownView
                         HStack {
@@ -168,13 +111,23 @@ struct HomeView: View {
             coordinator.buildView(for: route)
         }
         .withoutAnimation()
-        .sheet(isPresented: $homeViewModel.showRegionSheet) {
+        .sheet(isPresented: $homeViewModel.showRegionSheet, onDismiss: {
+            if let region = homeViewModel.selectedRegion {
+                Logger.d("선책된 지역: \(region.region)")
+            }
+            Logger.d("선택된 정렬: \(homeViewModel.selectedOption.rawValue)")
+        }) {
             RegionSheet(regions: homeViewModel.regions,
                         selectedRegion: $homeViewModel.selectedRegion,
                         selectedDistrict: $homeViewModel.selectedDistrict)
             .presentationDetents([.fraction(0.7)])
         }
-        .sheet(isPresented: $homeViewModel.showSortSheet) {
+        .sheet(isPresented: $homeViewModel.showSortSheet, onDismiss: {
+            if let region = homeViewModel.selectedRegion {
+                Logger.d("선책된 지역: \(region.region)")
+            }
+            Logger.d("선택된 정렬: \(homeViewModel.selectedOption.rawValue)")
+        }) {
             RegionButtonSheet(selectedOption: $homeViewModel.selectedOption)
                 .presentationDetents([.fraction(0.4)])
         }
