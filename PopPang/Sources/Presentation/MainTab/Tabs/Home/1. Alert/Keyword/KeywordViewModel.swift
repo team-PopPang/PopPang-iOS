@@ -14,13 +14,14 @@ final class KeywordViewModel: ObservableObject {
     let userUuid: String
     init(userUuid: String) {
         self.userUuid = userUuid
+        
         Task {
             await fetchKeywordList()
         }
     }
     
     // MARK: - 키워드 조회
-    func fetchKeywordList() async {
+    private func fetchKeywordList() async {
         do {
             let keywords = try await userUsecase.getAlertKeywordList(userUuid: userUuid)
             await MainActor.run {
@@ -30,8 +31,11 @@ final class KeywordViewModel: ObservableObject {
             print("❌ KeywordViewModel Error: \(error)")
         }
     }
+}
+
+extension KeywordViewModel {
     
-    // MARK: - 키워드 추가(로컬, 서버API 연ㅁ동전)
+    // MARK: - 키워드 추가
     func addKeyword(_ newKeyword: String) {
         let trimmed = newKeyword.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
@@ -50,7 +54,7 @@ final class KeywordViewModel: ObservableObject {
         }
     }
     
-    // MARK: - 키워드 삭제(로컬, 서버API 연동전)
+    // MARK: - 키워드 삭제
     func removeKeyword(at index: Int, keyword: String) {
         keywordList.remove(at: index)
         Task {
