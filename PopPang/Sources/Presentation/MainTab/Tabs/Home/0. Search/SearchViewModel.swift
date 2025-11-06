@@ -17,39 +17,50 @@ final class SearchViewModel: ObservableObject {
     
     init(userUuid: String) {
         self.userUuid = userUuid
+        bindDebounce()
+    }
+    
+    // searchText 변화를 동작과 연결(바인딩)한다
+    private func bindDebounce() {
         
-        // 검색 디바운스 적용
+        // MARK: - API 호출은 0.3초 디바운스
         $searchText
-            .debounce(for: .milliseconds(500),
-                      scheduler: RunLoop.main)
+            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
             .removeDuplicates()
             .sink { [weak self] text in
                 guard let self = self else { return }
                 
                 if text.isEmpty {
-                    // 검색어를 모두 지우면 그리드 배열도 초기화
                     self.searchPopupList = []
                 } else {
-                    // 디바운스 타이밍에 최근 검색어 저장
-                    UserDefaultsManager.add(text)
-                    Task {
-                        await self.getSearchPopupList(searchText: text)
-                    }
+                    self.getSearchPopupList(searchText: text)
                 }
+            }
+            .store(in: &cancellables)
+        
+        // MARK: - 최근 검색어 저장은 1초 디바운스
+        $searchText
+            .debounce(for: .milliseconds(1000), scheduler: RunLoop.main)
+            .removeDuplicates()
+            .sink { text in
+                guard !text.isEmpty else { return }
+                UserDefaultsManager.add(text)
             }
             .store(in: &cancellables)
     }
 }
 
 extension SearchViewModel {
-    func getSearchPopupList(searchText: String) async {
-        do {
-            let searchPopupList = try await popupUsecase.searchPopupList(searchText: searchText)
-            await MainActor.run {
-                self.searchPopupList = searchPopupList
+    func getSearchPopupList(searchText: String) {
+        Task {
+            do {
+                let searchPopupList = try await popupUsecase.searchPopupList(searchText: searchText)
+                await MainActor.run {
+                    self.searchPopupList = searchPopupList
+                }
+            } catch {
+                Logger.e("\(error)")
             }
-        } catch {
-            print("❌ SearchViewModel.getSearchPopupList(): \(error)")
         }
     }
 }
