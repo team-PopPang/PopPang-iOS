@@ -38,7 +38,7 @@ struct GridPopupCell: View {
                     Task {
                         await homeViewModel.toggleLike(popup: popup)
                         await favoriteViewModel.getFavoritePopups()
-                        await calendarViewModel.getCalendarPopups()
+                        await calendarViewModel.getAllPopupData()
                     }
                 }
                 .padding(10)

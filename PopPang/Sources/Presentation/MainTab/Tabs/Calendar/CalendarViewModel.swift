@@ -28,31 +28,44 @@ final class CalendarViewModel: ObservableObject {
     
     init(userUuid: String) {
         self.userUuid = userUuid
-        
         Task {
-            await getCalendarPopups()
+            await getAllPopupData()
         }
     }
 }
 
+// MARK: - 비동기 구조적 동시성
 extension CalendarViewModel {
-    
-    /// 서버에서 팝업 리스트 비동기 호출, 완료 후 날짜별 이벤트 개수 계산
-    func getCalendarPopups() async {
+    func getAllPopupData() async {
         do {
-            let popups = try await popupUsecase.getPopupList()
-            await getFavoriteList()
-            
-            await MainActor.run {
-                self.calendarPopups = popups
-                self.calculateEventCounts()
-                self.selectDate(self.selectedDate)
+            try await withThrowingTaskGroup(of: (Int, [Popup]).self) { group in
+                // 0, 1로 구분해서 요청
+                group.addTask { (0, await self.getCalendarPopupList()) }
+                group.addTask { (1, await self.getFavoriteList()) }
+                
+                for try await (index, popups) in group {
+                    await MainActor.run {
+                        switch index {
+                        case 0:
+                            self.calendarPopups = popups
+                            self.calculateEventCounts()
+                            self.selectDate(self.selectedDate)
+                        case 1:
+                            likePostIds = Set(popups.map { $0.popupUuid })
+                        default:
+                            break
+                        }
+                    }
+                }
             }
         } catch {
-            print("❌ getPopupList Error: \(error)")
+            
         }
     }
-    
+}
+
+// MARK: - 캘린더 관련 메서드
+extension CalendarViewModel {
     
     /// 팝업의 시작일~종료일을 순회하며 날짜별 이벤트 개수 집계하여 popupEventCounts에 저장
     /// - 팝업 기간이 10/15 ~ 10/17 이라면
@@ -92,7 +105,6 @@ extension CalendarViewModel {
         return t >= s && t <= e
     }
     
-    
     /// 사용자가 캘린더에서 특정 날짜를 선택하면 호출
     /// 선택된 날짜를 selectedData로 업데이트
     /// 현재 날짜에 포함되는 팝업들을 필터링 하여 selectedPopups에 저장
@@ -105,6 +117,21 @@ extension CalendarViewModel {
     }
 }
 
+// MARK: - 팝업 리스트 비동기 호출
+extension CalendarViewModel {
+    
+    /// 서버에서 팝업 리스트 비동기 호출, 완료 후 날짜별 이벤트 개수 계산
+    func getCalendarPopupList() async -> [Popup] {
+        do {
+            let popups =  try await popupUsecase.getPopupList()
+            Logger.d("캘린더 팝업 전체 가져오기 성공")
+            return popups
+        } catch {
+            print("❌ getPopupList Error: \(error)")
+            return []
+        }
+    }
+}
 
 // MARK: - 찜 관련 메서드
 extension CalendarViewModel {
@@ -135,14 +162,15 @@ extension CalendarViewModel {
         }
     }
     
-    func getFavoriteList() async {
+    /// 찜한 팝업만 가져오는 함수
+    func getFavoriteList() async -> [Popup] {
         do {
             let favoritePopups = try await popupUsecase.getFavoriteList(userUuid: userUuid)
-            await MainActor.run {
-                likePostIds = Set(favoritePopups.map { $0.popupUuid })
-            }
+            Logger.d("찜 팝업 likePostIds 가져오기 성공")
+            return favoritePopups
         } catch {
-            print("❌ 찜 목록 불러오기 오류: \(error)")
+            Logger.e("❌ 찜 목록 불러오기 오류: \(error)")
+            return []
         }
     }
 }

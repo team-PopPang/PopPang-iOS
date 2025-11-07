@@ -97,11 +97,11 @@ private struct ListPopupCell: View {
                     BookmarkButton(isLiked: bookmarkViewModel.isLiked(popup: popup),
                                    info: .stroke) {
                         
-                        // MARK: - 좋아요 해제 후 홈뷰 갱시
+                        // MARK: - 좋아요 해제 후 홈뷰 갱신
                         Task {
                             await bookmarkViewModel.toggleLike(popup: popup)
-                            await homeViewModel.getFavoriteList()
-                            await calendarViewModel.getCalendarPopups()
+                            await homeViewModel.getAllPopupData()
+                            await calendarViewModel.getAllPopupData()
                         }
                     }
                    .padding(10)

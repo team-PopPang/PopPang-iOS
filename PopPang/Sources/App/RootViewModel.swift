@@ -109,7 +109,7 @@ extension RootViewModel {
                         let user = try await userUsecase.autoLogin(userUuid: storeUID)
                         await MainActor.run {
                             self.loginSuccess(user: user)
-                            Logger.d("자동로그인 성공")
+                            Logger.d("자동로그인 성공\n")
                         }
                         
                     } catch (let error) {

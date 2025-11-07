@@ -72,7 +72,8 @@ struct CalendarPopupCell: View {
                                 print("좋아요 눌림")
                                 Task {
                                     await calendarViewModel.toggleLike(popup: popup)
-                                    await homeViewModel.getFavoriteList()
+                                    await calendarViewModel.getAllPopupData()
+                                    await homeViewModel.getAllPopupData()
                                     await favoriteViewModel.getFavoritePopups()
                                 }
                             } label: {

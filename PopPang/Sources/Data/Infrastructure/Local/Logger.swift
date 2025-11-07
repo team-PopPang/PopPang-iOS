@@ -51,11 +51,14 @@ struct Logger {
         case .error: icon = "🔴"
         }
 
-        let fileName = (file as NSString).lastPathComponent
+        // let fileName = (file as NSString).lastPathComponent
         // let logMessage = "\(icon) [\(fileName) -> \(line) -> \(function)] \(message)"
+        // let logMessage = "[\(icon)] [\(fileName):\(line)] \(function) — \(message)"
+        
+        let fileName = ((file as NSString).lastPathComponent as NSString).deletingPathExtension
         let logMessage = "[\(icon)] [\(fileName):\(line)] \(function) — \(message)"
-
         print(logMessage)
         return logMessage
     }
 }
+

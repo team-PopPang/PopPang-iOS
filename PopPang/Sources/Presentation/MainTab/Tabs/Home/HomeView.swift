@@ -98,6 +98,12 @@ struct HomeView: View {
             }
         }
         .onAppear {
+            
+//            print("열림")
+//            Task {
+//                await homeViewModel.getAllPopupData()
+//            }
+            
             if !hasSeenPopup {
                 /*
                 coordinator.presentOverlay(overlay: .notice(title: "베타 업데이트 내용",
@@ -205,49 +211,8 @@ private struct GridPopupScrollView: View {
     }
 }
 
-// MARK: - 찜버튼
-struct BookmarkButton: View {
-    enum Info {
-        case fill
-        case stroke
-    }
-    var isLiked: Bool
-    var info: Info
-    var action: () -> Void
-    
-    var body: some View {
-        Button {
-            action()
-        } label: {
-            switch info {
-            case .fill:
-                Image(isLiked ? "favorite_fill" : "favorite")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 20, height: 20)
-            case .stroke:
-                Image(isLiked ? "favorite_fill" : "favorite")
-                    .renderingMode(.template)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 25, height: 25)
-                    .foregroundStyle(isLiked ? Color.mainOrange : Color.subWhite)
-            }
-        }
-    }
-}
-
 #Preview {
     HomeView()
         .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
         .environmentObject(HomeViewModel(userUuid: "1234"))
 }
-
-
-
-
-
-
-
-
-

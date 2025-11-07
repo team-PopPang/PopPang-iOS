@@ -30,11 +30,8 @@ final class HomeViewModel: ObservableObject {
     init(userUuid: String) {
         self.userUuid = userUuid
         
-        Task { [weak self] in
-            guard let self = self else { return }
-            await self.getFavoriteList() /// 찜 항목 가져오기
-            await self.getAllPopupData() /// 3개 섹션 전체 팝업 가져오기
-            await self.getRegionList()   /// 지역 필터링 가져오기
+        Task {
+            await getAllPopupData() /// 3개 섹션 전체 팝업 가져오기
             /*
             await MainActor.run {
                 self.isLoaded = true
@@ -50,11 +47,25 @@ extension HomeViewModel {
     // MARK: - 팝업 전체 가져오기 비동기
     func getAllPopupData() async {
         do {
+            
+            // MARK: - 지역 리스트는 리턴값이 다르므로 async let으로 병렬 실행
+            async let regionTask = self.getRegionList()
+            let regionList = await regionTask
+            await MainActor.run {
+                self.regions = regionList
+                if let first = regionList.first {
+                    self.selectedRegion = first
+                    self.selectedDistrict = first.districtList.first
+                }
+            }
+           
+            // MARK: - 리턴값이 같은 팝업 관련 요청은 TaskGroup 안에서 벙렬 처리
             try await withThrowingTaskGroup(of: (Int, [Popup]).self) {  group in
                 // 0, 1, 2로 구분해서 요청
-                group.addTask { (0, try await self.popupUsecase.getPopupList()) }
-                group.addTask { (1, try await self.popupUsecase.getUpcomingPopupList()) }
-                group.addTask { (2, try await self.popupUsecase.getInProgressPopupList()) }
+                group.addTask { (0, try await self.popupUsecase.getPopupList()) }           // 첫 섹션
+                group.addTask { (1, try await self.popupUsecase.getUpcomingPopupList()) }   // 두번쨰 섹션
+                group.addTask { (2, try await self.popupUsecase.getInProgressPopupList()) } // 세번째 섹션
+                group.addTask { (3, await self.getFavoriteList()) }                         // 찜 리스트를 가져와서 uuid만 배열로 가짐
 
                 // 완료된 순서대로 결과 받기
                 for try await (index, popups) in group {
@@ -67,13 +78,15 @@ extension HomeViewModel {
                                 .sorted { $0.startDate < $1.startDate }
                         case 2:
                             self.gridPopups = popups
+                        case 3:
+                            self.likePostIds = Set(popups.map { $0.popupUuid })
                         default:
                             break
                         }
                     }
                 }
             }
-            Logger.d("팝업 전체 가져오기 성공")
+            // Logger.d("팝업 전체 가져오기 성공")
         } catch {
             Logger.e("❌ 팝업 목록 불러오기 오류: \(error)")
         }
@@ -110,15 +123,14 @@ extension HomeViewModel {
     }
     
     // MARK: - 찜 항목 가져오기 비동기
-    func getFavoriteList() async {
+    func getFavoriteList() async -> [Popup] {
         do {
             let favoritePopups = try await popupUsecase.getFavoriteList(userUuid: userUuid)
-            await MainActor.run {
-                likePostIds = Set(favoritePopups.map { $0.popupUuid })
-            }
-            Logger.d("찜 팝업의 likePostIds 가져오기 성공")
+            Logger.d("찜 팝업 likePostIds 가져오기 성공")
+            return favoritePopups
         } catch {
             Logger.e("❌ 찜 목록 불러오기 오류: \(error)")
+            return []
         }
     }
 }
@@ -127,19 +139,14 @@ extension HomeViewModel {
 extension HomeViewModel {
     
     // MARK: - 지역 필터링 가져오기 비동기
-    func getRegionList() async {
+    func getRegionList() async -> [RegionList] {
         do {
             let regionListDTO = try await popupUsecase.getRegionList()
-            await MainActor.run {
-                self.regions = regionListDTO
-                if let first = regionListDTO.first {
-                    self.selectedRegion = first
-                    self.selectedDistrict = first.districtList.first
-                }
-            }
             Logger.d("지역 필터링 가져오기 성공")
+            return regionListDTO
         } catch {
             Logger.e("❌ 찜 목록 불러오기 오류: \(error)")
+            return []
         }
     }
 }
