@@ -38,20 +38,26 @@ struct RegionButton: View {
         Button {
             action()
         } label: {
-            HStack(spacing: 5) {
+            HStack(spacing: 4) {                             // 화살표 간격 -> 명시해야함
                 Text(text)
-                    .foregroundStyle(Color.mainBlack)
-                    .ppStyleFont(.scdream(.medium, size: 17))
+                    .ppStyleFont(.scdream(.light, size: 10)) // 글자 폰트 light, 글자크기 10
+                    .foregroundStyle(Color.mainGray)         // 글자 색상 #777777
                 Image(systemName: "chevron.down")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 16, height: 16)
-                    .foregroundStyle(Color.mainBlack)
+                    .frame(width: 10, height: 10)
+                    .foregroundStyle(Color.mainGray)
             }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 12)
-            .background(Color.white)
-            .cornerRadius(17)
+            .padding(.vertical, 8)                          // 상하 패딩 8
+            .padding(.horizontal, 10)                       // 좌우 패딩 10
+            .frame(width: 80)                               // 길이 고정 가로 80
+            .background(Color.subWhite)                     // FFFFFF
+            .cornerRadius(17)                               // 모서리 라운딩
+            .overlay {
+                RoundedRectangle(cornerRadius: 17)
+                    .stroke(lineWidth: 1)
+                    .foregroundColor(Color.mainGray5)
+            }
         }
     }
 }

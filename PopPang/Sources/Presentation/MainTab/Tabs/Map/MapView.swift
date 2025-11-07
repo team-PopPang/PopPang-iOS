@@ -24,6 +24,7 @@ struct MapView: View {
     
     // MARK: - 높이
     @State private var mapSearchTextFieldFrame: CGRect = .zero
+    @State private var tabBarHeight: CGFloat = 0
     
     var body: some View {
         ZStack(alignment: .trailing) {
@@ -68,7 +69,7 @@ struct MapView: View {
             .padding(.trailing, 20)
             .padding(.bottom, 50)
             
-            // MARK: - 목록 보기
+            // MARK: - 목록 보기 버튼
             if case .absolute(0) = firstSheetPosition {
                 VStack {
                     Spacer()
@@ -93,12 +94,22 @@ struct MapView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .bottom)
-                .padding(.bottom, 20)
+                .padding(.bottom, 20 + tabBarHeight)
+                .onAppear {
+                    print("목록 보기 열림")
+                }
             }
         }
-        .ignoresSafeArea(edges: .top)
+        // TabBar 높이 추적
+        .background(
+            TabBarProxy { _, tabBar in
+                let contentHeight = tabBar.bounds.height
+                self.tabBarHeight = contentHeight
+            }
+        )
         .onAppear {
             LocationPermissionManager.shared.requestPermission()
+
         }
         // MARK: - 첫 번째 시트
         .bottomSheet(bottomSheetPosition: $firstSheetPosition,
@@ -107,7 +118,7 @@ struct MapView: View {
                      switchablePositions: [.absolute(0),   // 절댓값: 완전 화면에서 안보임(frame이 0)
                                            .relative(0.5), // 상대값: 화면의 절반 차지
                                            // 절댓값: 화면 검색바의 밑면까지의 높이 - 20만큼(frame이 20)
-                                           .absolute(UIScreen.main.bounds.height - (mapSearchTextFieldFrame.maxY + 20))
+                                           .absoluteTop(UIScreen.main.bounds.height - (mapSearchTextFieldFrame.maxY + 20))
                      ],
                      content: {
             // view
@@ -144,6 +155,9 @@ struct MapView: View {
                 firstSheetPosition = newValue
             }
         }
+        
+        .ignoresSafeArea(edges: .top)
+        .ignoresSafeArea(edges: .bottom)
     }
 }
 
@@ -200,48 +214,6 @@ struct MapRegionButton: View {
             .background(Color.white)
             .cornerRadius(17)
         }
-    }
-}
-
-struct FirstSheetView: View {
-    @ObservedObject var mapViewModel: MapViewModel
-    let onButtonTap: () -> Void
-    var body: some View {
-        VStack(spacing: 0) {
-            // button
-            HStack {
-                MapRegionButton(text: mapViewModel.selectedRegion?.region ?? "전체") {
-                    print("버튼눌림")
-                    onButtonTap()
-                }
-                Spacer()
-            }
-            .padding(.leading, -10)
-            
-            // view
-            MapListView(popups: mapViewModel.mapPopups)
-        }
-        .padding(.horizontal, .contentPadding)
-    }
-}
-
-struct SecondSheeetView: View {
-    @ObservedObject var mapViewModel: MapViewModel
-    let onDismiss: () -> Void
-    
-    var body: some View {
-        
-        ScrollView {
-            MapRegionSheet(
-                regions: mapViewModel.regions,
-                selectedRegion: $mapViewModel.selectedRegion,
-                selectedDistrict: $mapViewModel.selectedDistrict
-            ) {
-                onDismiss()
-            }
-            .padding(.bottom, 100)
-        }
-        .ignoresSafeArea(edges: .top)
     }
 }
 
@@ -352,4 +324,31 @@ struct MapRegionSheet: View {
         .padding(.horizontal, .contentPadding)
         .presentationDragIndicator(.visible)
     }
+}
+
+
+import SwiftUI
+import UIKit
+
+struct TabBarProxy: UIViewControllerRepresentable {
+    var callback: (_ view: UIView, _ tabBar: UITabBar) -> Void
+    
+    class ProxyController: UIViewController {
+        var callback: (_ view: UIView, _ tabBar: UITabBar) -> Void = { _, _ in }
+        
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            if let tabBarController = self.tabBarController {
+                callback(tabBarController.view, tabBarController.tabBar)
+            }
+        }
+    }
+    
+    func makeUIViewController(context: Context) -> UIViewController {
+        let vc = ProxyController()
+        vc.callback = callback
+        return vc
+    }
+    
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
 }

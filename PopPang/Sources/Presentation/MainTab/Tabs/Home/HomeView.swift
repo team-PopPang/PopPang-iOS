@@ -73,12 +73,17 @@ struct HomeView: View {
                         
                         // MARK: - DropDownView
                         HStack {
-                            RegionButton(text: homeViewModel.selectedRegion?.region ?? "전체") {
+                            
+                            Text(homeViewModel.selectedRegion?.region ?? "전체")
+                                .foregroundStyle(Color.mainBlack)
+                                .ppStyleFont(.scdream(.medium, size: 17))
+                            
+                            Spacer()
+                            
+                            RegionButton(text: "지역") {
                                 homeViewModel.showRegionSheet.toggle()
                             }
                             .padding(.leading, -10)
-                            
-                            Spacer()
                             
                             SortButton(selectedOption: $homeViewModel.selectedOption) {
                                 homeViewModel.showSortSheet.toggle()

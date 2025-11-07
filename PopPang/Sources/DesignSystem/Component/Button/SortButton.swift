@@ -66,7 +66,7 @@ struct SortButton: View {
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 10)
-             .frame(width: 80)
+            .frame(width: 80)
             .background(bgColor)
             .cornerRadius(17)
             .overlay {
