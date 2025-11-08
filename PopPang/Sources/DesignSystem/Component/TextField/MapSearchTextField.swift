@@ -11,6 +11,8 @@ struct MapSearchTextField: View {
     var placeholder: String
     var background: Color = .subWhite
     @Binding var text: String
+    @FocusState private var isFocused: Bool
+    var onTap: (() -> Void)? = nil
     
     var body: some View {
         ZStack(alignment: .leading) {
@@ -24,6 +26,10 @@ struct MapSearchTextField: View {
                     .background(background)
                     .cornerRadius(3)
                     .contentShape(Rectangle())
+                    .onTapGesture {
+                        isFocused = true
+                        onTap?()
+                    }
                     .overlay {
                         HStack {
                             Spacer()

@@ -7,10 +7,12 @@
 
 import Foundation
 import CoreLocation
+import Combine
 
 final class MapViewModel: ObservableObject {
     @Dependency private var popupUsecase: PopupUsecaseProtocol
     @Published var mapPopups: [Popup] = []
+    private var allPopups: [Popup] = [] // 전체 팝럽 저장용
     
     // MARK: - 맵 지역 시트 관련
     @Published var regions: [RegionList] = []
@@ -20,20 +22,57 @@ final class MapViewModel: ObservableObject {
     // MARK: - 정렬 시트 관련
     @Published var selectedOption: MapSortButton.SortOption = .distance
     
+    // MARK: - 로컬 검색 기능
+    @Published var searchText: String = ""
+    private var cancellables = Set<AnyCancellable>()
+    
     init() {
         Task {
             await self.fetchPopupList()
             await self.fetchRegionList()
         }
+        bindDebounce()
+    }
+    
+    // 검색 디바운스 바인딩
+    private func bindDebounce() {
+        $searchText
+            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+            .removeDuplicates()
+            .sink { [weak self] text in
+                guard let self = self else { return }
+                self.filterPopups(text: text)
+            }
+            .store(in: &cancellables)
+        
+    }
+    
+    // 필터링 로직
+    private func filterPopups(text: String) {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            mapPopups = allPopups
+            return
+        }
+        
+        let lowercased = trimmed.lowercased()
+        let filtered = allPopups.filter {
+            $0.name.lowercased().contains(lowercased) ||
+            ($0.address.lowercased().contains(lowercased))
+        }
+        
+        mapPopups = filtered
     }
 }
 
+// MARK: - 비동기 함수
 extension MapViewModel {
     func fetchPopupList() async {
         do {
             let popups = try await popupUsecase.getPopupList()
             await MainActor.run {
                 self.mapPopups = popups
+                self.allPopups = popups
             }
             
             await self.fetchRegionList()
@@ -56,6 +95,8 @@ extension MapViewModel {
         }
     }
 }
+
+
 
 final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
     static let shared = LocationPermissionManager()
@@ -91,3 +132,5 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
         }
     }
 }
+
+

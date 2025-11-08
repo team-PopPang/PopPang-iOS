@@ -13,8 +13,7 @@ import BottomSheet
 struct MapView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @StateObject private var mapViewModel = MapViewModel()
-    @State private var text = ""
-    
+
     // MARK: - 시트 관련
     @State var firstSheetPosition: BottomSheetPosition = .relative(0.5)
     @State var secondSheetPosition: BottomSheetPosition = .hidden
@@ -53,7 +52,8 @@ struct MapView: View {
                     .background(Color.mainGray8)
                 
                 MapSearchTextField(placeholder: "궁금한 팝업을 검색해보세요",
-                                   text: $text)
+                                   text: $mapViewModel.searchText) {
+                }
             }
             .background {
                 GeometryReader { geo in

@@ -33,6 +33,7 @@ struct MapListView: View {
                         }
                     }
                 }
+                .padding(.bottom, 133)
             }
             .padding(.top, 20)
         }
