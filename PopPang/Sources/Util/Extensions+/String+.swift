@@ -17,15 +17,3 @@ extension String {
         }
     }
 }
-
-/*
-private var addressShort: String {
-    let comments = popup.address.split(separator: " ")
-    if comments.count >= 2 {
-        return comments[0...1].joined(separator: " ")
-    } else {
-        return popup.address
-    }
-}
-*/
-

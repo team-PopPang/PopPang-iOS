@@ -35,11 +35,11 @@ struct FavoriteCalendarView: View {
             }
             .padding(.horizontal, 15)
         }
-//        .onAppear {
-//            Task {
-//                await favoriteViewModel.getFavoritePopups()
-//            }
-//        }
+        .onAppear {
+            Task {
+                await favoriteViewModel.getFavoritePopups()
+            }
+        }
     }
 }
 

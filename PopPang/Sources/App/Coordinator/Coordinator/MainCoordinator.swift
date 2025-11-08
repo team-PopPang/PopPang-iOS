@@ -14,6 +14,7 @@ enum MainRoute: Hashable {
     // Home
     case alert(uuid: String)
     case popupDetail(Popup)
+    case comingPopupDetail
     
     // profile
     case profileSetting
@@ -49,6 +50,8 @@ extension Coordinator where T == MainRoute {
             AlertView(userUuid: userUuid)
         case .popupDetail(let popup):
             PopupDetailView(popup: popup)
+        case .comingPopupDetail:
+            ComingPopupDetailView()
             
         // profile
         case .profileSetting:

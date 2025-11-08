@@ -86,7 +86,7 @@ extension HomeViewModel {
                     }
                 }
             }
-             Logger.d("홈뷰 데이터 로드 성공")
+             Logger.d("홈뷰 데이터 로드 완료")
         } catch {
             Logger.e("❌ 팝업 목록 불러오기 오류: \(error)")
         }

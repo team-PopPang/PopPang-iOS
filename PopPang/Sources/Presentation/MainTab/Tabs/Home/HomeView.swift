@@ -59,7 +59,7 @@ struct HomeView: View {
                             Spacer()
                             
                             Button {
-                                
+                                coordinator.push(.comingPopupDetail)
                             } label: {
                                 Image("navigationButton")
                                     .resizable()
@@ -69,6 +69,7 @@ struct HomeView: View {
                             .padding(.trailing, .contentPadding)
                         }
                         .padding(.top, 50)
+                        
                         ComingPopupScrollView(viewModel: homeViewModel)
                         
                         // MARK: - DropDownView
