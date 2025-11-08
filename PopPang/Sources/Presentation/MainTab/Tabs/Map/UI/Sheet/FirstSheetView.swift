@@ -16,6 +16,7 @@ struct FirstSheetView: View {
         VStack(spacing: 0) {
             // button
             HStack {
+                /*
                 Text(mapViewModel.selectedRegion?.region ?? "전체")
                     .foregroundStyle(Color.mainBlack)
                     .ppStyleFont(.scdream(.medium, size: 17))
@@ -26,10 +27,13 @@ struct FirstSheetView: View {
                     print("버튼눌림")
                     onRegionTap()
                 }
+                 */
                 
                 MapSortButton(selectedOption: $mapViewModel.selectedOption) {
                     onSortTap()
                 }
+                
+                Spacer()
             }
             
             // view

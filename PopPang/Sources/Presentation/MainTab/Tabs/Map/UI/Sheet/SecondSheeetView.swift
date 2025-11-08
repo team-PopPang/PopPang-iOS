@@ -34,16 +34,17 @@ struct SecondSheeetView: View {
                     }
                     onDismiss()
                 }
+                .padding(.bottom, 100)
             case .sort:
                 MapSortButtonSheet(selectedOption: $mapViewModel.selectedOption) {
                     Logger.d("선택된 정렬: \(mapViewModel.selectedOption)")
                     onDismiss()
                 }
+                .padding(.bottom, 100)
             case .none:
                 EmptyView()
             }
         }
-        .padding(.bottom, 100)
         .ignoresSafeArea(edges: .top)
     }
 }

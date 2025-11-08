@@ -17,24 +17,19 @@ struct MapRegionButton: View {
         } label: {
             HStack(spacing: 10) {
                 Text(text)
-                    .ppStyleFont(.scdream(.light, size: 10))
-                    .foregroundStyle(Color.mainGray)
+                    .ppStyleFont(.scdream(.regular, size: 12))
+                    .foregroundStyle(Color.subBlack)
                 Image(systemName: "chevron.down")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 10, height: 10)
-                    .foregroundStyle(Color.mainGray)
+                    .foregroundStyle(Color.subBlack)
             }
             .padding(.vertical, 8)                          // 상하 패딩 8
             .padding(.horizontal, 10)                       // 좌우 패딩 10
-            .frame(width: 80)                               // 길이 고정 가로 80
+            .frame(width: 80, height: 45)                               // 길이 고정 가로 80
             .background(Color.subWhite)                     // FFFFFF
-            .cornerRadius(17)                               // 모서리 라운딩
-            .overlay {
-                RoundedRectangle(cornerRadius: 17)
-                    .stroke(lineWidth: 1)
-                    .foregroundColor(Color.mainGray5)
-            }
+            .cornerRadius(3, corners: [.topLeft, .bottomLeft])
         }
     }
 }

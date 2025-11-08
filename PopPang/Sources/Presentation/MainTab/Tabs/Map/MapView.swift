@@ -40,11 +40,25 @@ struct MapView: View {
                     }
                 }
             
-            MapSearchTextField(placeholder: "궁금한 팝업을 검색해보세요",
-                               text: $text)
+            HStack(spacing: 0) {
+                
+                MapRegionButton(text: mapViewModel.selectedRegion?.region ?? "전체") {
+                    print("버튼눌림")
+                    secondSheetType = .region
+                    secondSheetPosition = firstSheetPosition
+                }
+                
+                Divider()
+                    .frame(width: 1, height: 20)
+                    .background(Color.mainGray8)
+                
+                MapSearchTextField(placeholder: "궁금한 팝업을 검색해보세요",
+                                   text: $text)
+            }
             .background {
                 GeometryReader { geo in
-                    Color.clear
+                    Color.subWhite
+                        .cornerRadius(3)
                         .onAppear {
                             mapSearchTextFieldFrame = geo.frame(in: .global)
                             // print(mapSearchTextFieldFrame) /// x, y, width, height
@@ -144,7 +158,8 @@ struct MapView: View {
         
         // MARK: - 두 번째 시트
         .bottomSheet(bottomSheetPosition: $secondSheetPosition,
-                     switchablePositions: [.relativeTop(0.45), .relativeTop(1.0)],
+                     switchablePositions: [.relative(0.5),
+                                           .absoluteTop(UIScreen.main.bounds.height - (mapSearchTextFieldFrame.maxY + 20))],
                      content: {
             // view
             SecondSheeetView(mapViewModel: mapViewModel,

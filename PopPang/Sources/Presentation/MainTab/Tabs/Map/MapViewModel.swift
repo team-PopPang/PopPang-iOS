@@ -18,7 +18,7 @@ final class MapViewModel: ObservableObject {
     @Published var selectedDistrict: String?
     
     // MARK: - 정렬 시트 관련
-    @Published var selectedOption: MapSortButton.SortOption = .favorite
+    @Published var selectedOption: MapSortButton.SortOption = .distance
     
     init() {
         Task {
