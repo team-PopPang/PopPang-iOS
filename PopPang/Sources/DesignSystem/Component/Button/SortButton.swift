@@ -22,7 +22,7 @@ struct SortButtonView: View {
                onDismiss: {
             print("시트 닫힘 — 선택된 정렬 옵션: \(selectedOption.rawValue)")
         }) {
-            RegionButtonSheet(selectedOption: $selectedOption)
+            SortButtonSheet(selectedOption: $selectedOption)
                 .presentationDetents([.medium])
         }
     }
@@ -61,8 +61,6 @@ struct SortButton: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 10, height: 10)
                     .foregroundStyle(Color.mainGray)
-                
-                  
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 10)
@@ -79,7 +77,7 @@ struct SortButton: View {
 }
 
 // MARK: - 시트
-struct RegionButtonSheet: View {
+struct SortButtonSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedOption: SortButton.SortOption
     

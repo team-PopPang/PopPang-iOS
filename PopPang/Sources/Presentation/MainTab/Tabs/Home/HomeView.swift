@@ -128,7 +128,7 @@ struct HomeView: View {
             }
             Logger.d("선택된 정렬: \(homeViewModel.selectedOption.rawValue)")
         }) {
-            RegionSheet(regions: homeViewModel.regions,
+            RegionButtonSheet(regions: homeViewModel.regions,
                         selectedRegion: $homeViewModel.selectedRegion,
                         selectedDistrict: $homeViewModel.selectedDistrict)
             .presentationDetents([.fraction(0.7)])
@@ -139,7 +139,7 @@ struct HomeView: View {
             }
             Logger.d("선택된 정렬: \(homeViewModel.selectedOption.rawValue)")
         }) {
-            RegionButtonSheet(selectedOption: $homeViewModel.selectedOption)
+            SortButtonSheet(selectedOption: $homeViewModel.selectedOption)
                 .presentationDetents([.fraction(0.4)])
         }
     }

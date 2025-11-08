@@ -86,7 +86,7 @@ extension HomeViewModel {
                     }
                 }
             }
-            // Logger.d("팝업 전체 가져오기 성공")
+             Logger.d("팝업 전체 가져오기 성공")
         } catch {
             Logger.e("❌ 팝업 목록 불러오기 오류: \(error)")
         }

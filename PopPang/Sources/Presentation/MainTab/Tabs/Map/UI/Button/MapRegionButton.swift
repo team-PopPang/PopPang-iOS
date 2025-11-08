@@ -1,36 +1,13 @@
 //
-//  RegionButton.swift
+//  MapRegionButton.swift
 //  PopPang
 //
-//  Created by 김동현 on 10/28/25.
+//  Created by 김동현 on 11/7/25.
 //
 
 import SwiftUI
 
-// MARK: - Preview
-struct RegionButtonView: View {
-    @StateObject private var viewModel = RegionViewModel()
-    @State private var showSheet = false
-    
-    var body: some View {
-        VStack {
-            RegionButton(text: viewModel.selectedRegion?.region ?? "전체") {
-                showSheet.toggle()
-            }
-        }
-        .sheet(isPresented: $showSheet) {
-            RegionButtonSheet(
-                regions: viewModel.regions,
-                selectedRegion: $viewModel.selectedRegion,
-                selectedDistrict: $viewModel.selectedDistrict
-            )
-            .presentationDetents([.medium])
-        }
-    }
-}
-
-// MARK: - Button
-struct RegionButton: View {
+struct MapRegionButton: View {
     let text: String
     let action: () -> Void
     
@@ -38,10 +15,10 @@ struct RegionButton: View {
         Button {
             action()
         } label: {
-            HStack(spacing: 4) {                             // 화살표 간격 -> 명시해야함
+            HStack(spacing: 10) {
                 Text(text)
-                    .ppStyleFont(.scdream(.light, size: 10)) // 글자 폰트 light, 글자크기 10
-                    .foregroundStyle(Color.mainGray)         // 글자 색상 #777777
+                    .ppStyleFont(.scdream(.light, size: 10))
+                    .foregroundStyle(Color.mainGray)
                 Image(systemName: "chevron.down")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -62,12 +39,11 @@ struct RegionButton: View {
     }
 }
 
-// MARK: - Sheet
-struct RegionButtonSheet: View {
-    @Environment(\.dismiss) private var dismiss
+struct MapRegionSheet: View {
     let regions: [RegionList]
     @Binding var selectedRegion: RegionList?
     @Binding var selectedDistrict: String?
+    let onDismiss: () -> Void
     
     let backFont: Font = .system(size: 17, weight: .bold)
     let titlefont: Font = .system(size: 24, weight: .medium)
@@ -84,7 +60,7 @@ struct RegionButtonSheet: View {
                     .ppStyleFont(.scdream(.bold, size: 17))
                 Spacer()
                 Button {
-                    dismiss()
+                    onDismiss()
                 } label: {
                     Image(systemName: "xmark")
                         .foregroundStyle(.black)
@@ -135,7 +111,7 @@ struct RegionButtonSheet: View {
                         VStack(spacing: 0) {
                             Button {
                                 selectedDistrict = district
-                                dismiss()
+                                onDismiss()
                             } label: {
                                 HStack(spacing: 0) {
                                     Text(district)
@@ -166,46 +142,8 @@ struct RegionButtonSheet: View {
             
             Spacer()
         }
-        .padding(.top, 28)
-        .padding(.horizontal, 28)
+        .padding(.vertical, 8)
+        .padding(.horizontal, .contentPadding)
         .presentationDragIndicator(.visible)
     }
 }
-
-final class RegionViewModel: ObservableObject {
-    
-    @Published var regions: [RegionList] = []
-    @Published var selectedRegion: RegionList?
-    @Published var selectedDistrict: String?
-    
-    init() {
-        Task {
-            await fetchRegions()
-        }
-    }
-    
-    func fetchRegions() async {
-        // ⏳ 네트워크 대신 목업 데이터 (비동기 시뮬레이션)
-        // try? await Task.sleep(nanoseconds: 500_000_000) // 0.5초 지연
-        
-        let mockData: [RegionListDTO] = [
- 
-        ]
-        
-        let mapped = mockData.map { $0.toEntity() }
-        
-        await MainActor.run {
-            self.regions = mapped
-            if let first = mapped.first {
-                self.selectedRegion = first
-                self.selectedDistrict = first.districtList.first
-            }
-        }
-    }
-}
-
-
-#Preview {
-    RegionButtonView()
-}
-

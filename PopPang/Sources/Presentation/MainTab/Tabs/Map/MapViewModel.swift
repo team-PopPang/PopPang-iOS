@@ -17,6 +17,9 @@ final class MapViewModel: ObservableObject {
     @Published var selectedRegion: RegionList?
     @Published var selectedDistrict: String?
     
+    // MARK: - 정렬 시트 관련
+    @Published var selectedOption: MapSortButton.SortOption = .favorite
+    
     init() {
         Task {
             await self.fetchPopupList()
