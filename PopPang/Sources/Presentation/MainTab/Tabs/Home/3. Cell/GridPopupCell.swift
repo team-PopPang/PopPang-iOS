@@ -37,8 +37,10 @@ struct GridPopupCell: View {
                 ) {
                     Task {
                         await homeViewModel.toggleLike(popup: popup)
-                        await favoriteViewModel.getFavoritePopups()
-                        await calendarViewModel.getAllPopupData()
+                        
+                        // MARK: - 비활성화
+                        // await favoriteViewModel.getFavoritePopups()
+                        // await calendarViewModel.getAllPopupData()
                     }
                 }
                 .padding(10)

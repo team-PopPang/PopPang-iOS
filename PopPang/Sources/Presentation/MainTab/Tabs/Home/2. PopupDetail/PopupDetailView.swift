@@ -135,8 +135,10 @@ struct PopupDetailView: View {
                     // MARK: - 좋아요 토글 및 팝팡뷰 갱신
                     Task {
                         await homeViewModel.toggleLike(popup: popup)
-                        await favoriteViewModel.getFavoritePopups()
-                        await calendarViewModel.getAllPopupData()
+                        
+                        // MARK: - 비활성화
+                        // await favoriteViewModel.getFavoritePopups()
+                        // await calendarViewModel.getAllPopupData()
                     }
                 }
             }
@@ -174,6 +176,7 @@ struct PopupDetailView: View {
                         .frame(width: 18, height: 18)
                         .foregroundStyle(Color.subWhite)
                 }
+                .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
             }
         }
     }

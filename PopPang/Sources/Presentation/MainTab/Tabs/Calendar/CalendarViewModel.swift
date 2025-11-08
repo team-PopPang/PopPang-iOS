@@ -58,8 +58,9 @@ extension CalendarViewModel {
                     }
                 }
             }
+            Logger.d("캘린더 데이터 로드 완료")
         } catch {
-            
+            Logger.e("\(error)")
         }
     }
 }
@@ -124,7 +125,7 @@ extension CalendarViewModel {
     func getCalendarPopupList() async -> [Popup] {
         do {
             let popups =  try await popupUsecase.getPopupList()
-            Logger.d("캘린더 팝업 전체 가져오기 성공")
+            // Logger.d("캘린더 팝업 전체 가져오기 성공")
             return popups
         } catch {
             print("❌ getPopupList Error: \(error)")
@@ -166,7 +167,7 @@ extension CalendarViewModel {
     func getFavoriteList() async -> [Popup] {
         do {
             let favoritePopups = try await popupUsecase.getFavoriteList(userUuid: userUuid)
-            Logger.d("찜 팝업 likePostIds 가져오기 성공")
+            // Logger.d("찜 팝업 likePostIds 가져오기 성공")
             return favoritePopups
         } catch {
             Logger.e("❌ 찜 목록 불러오기 오류: \(error)")

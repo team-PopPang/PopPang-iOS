@@ -26,7 +26,7 @@ struct FavoriteCalendarView: View {
                     .ignoresSafeArea(edges: .horizontal)
                     .padding(.top, 20)
                 
-                PopupListView(
+                FavoriteCalendarPopupListView(
                     date: favoriteViewModel.selectedDate,
                     popups: favoriteViewModel.selectedPopups
                 )
@@ -35,6 +35,11 @@ struct FavoriteCalendarView: View {
             }
             .padding(.horizontal, 15)
         }
+//        .onAppear {
+//            Task {
+//                await favoriteViewModel.getFavoritePopups()
+//            }
+//        }
     }
 }
 

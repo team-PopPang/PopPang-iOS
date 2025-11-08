@@ -47,11 +47,10 @@ struct CalendarView: View {
                         .ignoresSafeArea(edges: .horizontal)
                         .padding(.top, 20)
                     
-                    PopupListView(
+                    CalendarPopupListView(
                         date: calendarViewModel.selectedDate,
                         popups: calendarViewModel.selectedPopups
                     )
-                    
                     
                     Spacer()
                 }
@@ -60,6 +59,11 @@ struct CalendarView: View {
             }
             .padding(.top, 10)
             Spacer()
+        }
+        .onAppear {
+            Task {
+                await calendarViewModel.getAllPopupData()
+            }
         }
     }
 }

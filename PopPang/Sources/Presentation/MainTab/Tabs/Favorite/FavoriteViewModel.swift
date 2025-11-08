@@ -47,6 +47,7 @@ extension FavoriteViewModel {
                 self.selectDate(self.selectedDate)
                 self.likePostIds = Set(favoritePopups.map { $0.popupUuid })
             }
+            Logger.d("팝팡 데이터 로드 완료")
         } catch {
             print("❌ BookmarkViewModel.loadFavoritePopups 에러: \(error)")
         }

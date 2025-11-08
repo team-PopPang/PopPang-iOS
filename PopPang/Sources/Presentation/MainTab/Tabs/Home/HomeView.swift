@@ -104,10 +104,9 @@ struct HomeView: View {
         }
         .onAppear {
             
-//            print("열림")
-//            Task {
-//                await homeViewModel.getAllPopupData()
-//            }
+            Task {
+                await homeViewModel.getAllPopupData()
+            }
             
             if !hasSeenPopup {
                 /*

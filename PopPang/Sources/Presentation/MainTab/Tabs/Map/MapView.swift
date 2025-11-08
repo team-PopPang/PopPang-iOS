@@ -42,7 +42,13 @@ struct MapView: View {
             HStack(spacing: 0) {
                 
                 MapRegionButton(text: mapViewModel.selectedRegion?.region ?? "전체") {
-                    print("버튼눌림")
+                    
+                    // MARK: - 첫 시트가 닫혀 있다면 열기
+                    if firstSheetPosition == .absolute(0) {
+                        firstSheetPosition = .relative(0.5)
+                    }
+                    
+                    // MARK: - 두번째 시트 열기
                     secondSheetType = .region
                     secondSheetPosition = firstSheetPosition
                 }
@@ -60,7 +66,9 @@ struct MapView: View {
                     Color.subWhite
                         .cornerRadius(3)
                         .onAppear {
-                            mapSearchTextFieldFrame = geo.frame(in: .global)
+                            DispatchQueue.main.async {
+                                mapSearchTextFieldFrame = geo.frame(in: .global)
+                            }
                             // print(mapSearchTextFieldFrame) /// x, y, width, height
                             // print("top(minY): \(Int(mapSearchTextFieldFrame.minY))")
                             // print("bottom(maxY): \(Int(mapSearchTextFieldFrame.maxY))")
@@ -165,6 +173,8 @@ struct MapView: View {
                 // 닫기 버튼 누르면 숨기겠다
                 secondSheetPosition = .hidden
             }
+                             
+
         })
         // 두 번째 배경
         .customBackground(

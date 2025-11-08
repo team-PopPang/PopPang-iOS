@@ -31,7 +31,7 @@ final class HomeViewModel: ObservableObject {
         self.userUuid = userUuid
         
         Task {
-            await getAllPopupData() /// 3개 섹션 전체 팝업 가져오기
+            // await getAllPopupData() /// 3개 섹션 전체 팝업 가져오기
             /*
             await MainActor.run {
                 self.isLoaded = true
@@ -86,7 +86,7 @@ extension HomeViewModel {
                     }
                 }
             }
-             Logger.d("팝업 전체 가져오기 성공")
+             Logger.d("홈뷰 데이터 로드 성공")
         } catch {
             Logger.e("❌ 팝업 목록 불러오기 오류: \(error)")
         }
@@ -126,7 +126,7 @@ extension HomeViewModel {
     func getFavoriteList() async -> [Popup] {
         do {
             let favoritePopups = try await popupUsecase.getFavoriteList(userUuid: userUuid)
-            Logger.d("찜 팝업 likePostIds 가져오기 성공")
+            // Logger.d("찜 팝업 likePostIds 가져오기 성공")
             return favoritePopups
         } catch {
             Logger.e("❌ 찜 목록 불러오기 오류: \(error)")
@@ -142,7 +142,7 @@ extension HomeViewModel {
     func getRegionList() async -> [RegionList] {
         do {
             let regionListDTO = try await popupUsecase.getRegionList()
-            Logger.d("지역 필터링 가져오기 성공")
+            // Logger.d("지역 필터링 가져오기 성공")
             return regionListDTO
         } catch {
             Logger.e("❌ 찜 목록 불러오기 오류: \(error)")

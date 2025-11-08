@@ -28,8 +28,7 @@ final class MapViewModel: ObservableObject {
     
     init() {
         Task {
-            await self.fetchPopupList()
-            await self.fetchRegionList()
+            await getAllPopupData()
         }
         bindDebounce()
     }
@@ -67,20 +66,27 @@ final class MapViewModel: ObservableObject {
 
 // MARK: - 비동기 함수
 extension MapViewModel {
-    func fetchPopupList() async {
+    func getAllPopupData() async {
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await self.getRegionList() }
+            group.addTask { await self.getPopupList() }
+        }
+        Logger.d("지도 데이터 로드 완료")
+    }
+    
+    func getPopupList() async {
         do {
             let popups = try await popupUsecase.getPopupList()
             await MainActor.run {
                 self.mapPopups = popups
                 self.allPopups = popups
             }
-            
-            await self.fetchRegionList()
         } catch {
-            print("❌ MapViewModel getPopupList Error: \(error)")
+            Logger.e("\(error)")
         }
     }
-    func fetchRegionList() async {
+    
+    func getRegionList() async {
         do {
             let regionListDTO = try await popupUsecase.getRegionList()
             await MainActor.run {
@@ -91,13 +97,13 @@ extension MapViewModel {
                 }
             }
         } catch {
-            print("HomeViewModel.fetchRegionList(): ❌ 찜 목록 불러오기 오류: \(error)")
+            Logger.e("\(error)")
         }
     }
 }
 
 
-
+// MARK: - LocationManager
 final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
     static let shared = LocationPermissionManager()
     private var hasMovedToUserLocation = false   // 최초 1회만 이동시키기

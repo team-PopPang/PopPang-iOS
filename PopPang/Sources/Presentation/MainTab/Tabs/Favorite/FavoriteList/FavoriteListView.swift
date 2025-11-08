@@ -37,6 +37,11 @@ struct FavoriteListView: View {
             }
         }
         .padding(.horizontal, .contentPadding)
+        .onAppear {
+            Task {
+                await favoriteViewModel.getFavoritePopups()
+            }
+        }
     }
 }
 
@@ -58,7 +63,6 @@ private struct ListGridPopupScrollView: View {
                             .onTapGesture {
                                 coordinator.push(.popupDetail(popup))
                             }
-//                            .padding(.bottom, 20)
                     }
                 }
             }
@@ -100,8 +104,10 @@ private struct ListPopupCell: View {
                         // MARK: - 좋아요 해제 후 홈뷰 갱신
                         Task {
                             await bookmarkViewModel.toggleLike(popup: popup)
-                            await homeViewModel.getAllPopupData()
-                            await calendarViewModel.getAllPopupData()
+                            
+                            // MARK: - 비활성화
+                            // await homeViewModel.getAllPopupData()
+                            // await calendarViewModel.getAllPopupData()
                         }
                     }
                    .padding(10)

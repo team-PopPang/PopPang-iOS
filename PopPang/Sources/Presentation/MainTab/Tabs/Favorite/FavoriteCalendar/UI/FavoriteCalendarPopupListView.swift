@@ -1,13 +1,13 @@
 //
-//  PopupListView.swift
+//  FavoritePopupListView.swift
 //  PopPang
 //
-//  Created by 김동현 on 10/17/25.
+//  Created by 김동현 on 11/8/25.
 //
 
 import SwiftUI
 
-struct PopupListView: View {
+struct FavoriteCalendarPopupListView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     let date: Date
     let popups: [Popup]
@@ -30,7 +30,7 @@ struct PopupListView: View {
                 ScrollView(showsIndicators: false) {
                     LazyVStack(spacing: 10) {
                         ForEach(Array(popups.enumerated()), id: \.element) { index, popup in
-                            CalendarPopupCell(popup: popup)
+                            FavoriteCalendarPopupCell(popup: popup)
                                 .onTapGesture {
                                     coordinator.push(.popupDetail(popup))
                                 }
@@ -55,8 +55,4 @@ struct PopupListView: View {
         dayFormatter.dateFormat = "d일 (E)"
         return dayFormatter.string(from: date)
     }
-}
-
-#Preview {
-    PopupListView(date: .now, popups: [.popupMock, .popupMock2])
 }
