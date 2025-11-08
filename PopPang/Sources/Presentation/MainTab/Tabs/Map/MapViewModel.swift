@@ -100,6 +100,8 @@ extension MapViewModel {
 
 final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
     static let shared = LocationPermissionManager()
+    private var hasMovedToUserLocation = false   // 최초 1회만 이동시키기
+    
     private override init() {
         super.init()
         locationManager.delegate = self
@@ -123,12 +125,29 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
         switch status {
         case .authorizedWhenInUse, .authorizedAlways:
             Logger.d("위치 권한 허용됨")
+            locationManager.startUpdatingLocation()
+            MapCoordinator.shared.enableUserLocationOverlay()
+            
         case .denied, .restricted:
             Logger.e("위치 권한 거부됨")
+            DispatchQueue.main.async {
+                AlertManager.shared.showLocationPermissionAlert()
+            }
         case .notDetermined:
             Logger.w("🕒 아직 권한 선택 전")
         @unknown default:
             break
+        }
+    }
+    
+    // GPS에서 내 위치를 받으면 지도 카메라를 한번만 내 위치로 이동
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
+
+        // 앱 켰을 때 딱 한 번만 내 위치로 이동
+        if !hasMovedToUserLocation {
+            hasMovedToUserLocation = true
+            MapCoordinator.shared.moveToUserLocation(to: location.coordinate)
         }
     }
 }

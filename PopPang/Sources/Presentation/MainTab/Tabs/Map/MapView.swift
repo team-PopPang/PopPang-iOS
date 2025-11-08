@@ -113,9 +113,6 @@ struct MapView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .bottom)
                 .padding(.bottom, 20 + tabBarHeight)
-                .onAppear {
-                    print("목록 보기 열림")
-                }
             }
         }
         // TabBar 높이 추적

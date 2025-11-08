@@ -11,6 +11,7 @@ final class AlertManager {
     static let shared = AlertManager()
     private init() {}
     
+    // 알림 권한
     func showPermissionAlert() {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                   let rootVC = windowScene.windows.first?.rootViewController else { return }
@@ -28,6 +29,7 @@ final class AlertManager {
         rootVC.present(alert, animated: true)
     }
     
+    // 회원 탈퇴
     func showHardDeleteUserAlert(confirmHandler: @escaping () -> Void) {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
                   let rootVC = windowScene.windows.first?.rootViewController else { return }
@@ -45,6 +47,24 @@ final class AlertManager {
         
         alert.addAction(confirmAction)
         alert.addAction(cancelAction)
+        rootVC.present(alert, animated: true)
+    }
+    
+    // 위치 권한
+    func showLocationPermissionAlert() {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootVC = windowScene.windows.first?.rootViewController else { return }
+        
+        let alert = UIAlertController(title: "위치 권한이 필요합니다",
+                                      message: "내 위치로 이동하려면 위치 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
+                                      preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
+            if let url = URL(string: UIApplication.openSettingsURLString),
+               UIApplication.shared.canOpenURL(url) {
+                UIApplication.shared.open(url)
+            }
+        })
+        alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         rootVC.present(alert, animated: true)
     }
 }

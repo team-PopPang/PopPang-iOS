@@ -100,6 +100,26 @@ final class MapCoordinator: NSObject,
         cameraUpdate.animation = .easeIn
         view.mapView.moveCamera(cameraUpdate)
     }
+    
+    // MARK: - 권한이 나중에 추가되었을 때 내 위치로 이동
+    /// 외부에서 전달받은 실제 좌표로 카메라 이동
+    func moveToUserLocation(to coordinate: CLLocationCoordinate2D, zoomLevel: Double = 15) {
+        let coord = NMGLatLng(lat: coordinate.latitude, lng: coordinate.longitude)
+        
+        // ✅ 네이버맵 오버레이(파란 점) 위치도 같이 갱신
+        view.mapView.locationOverlay.location = coord
+        
+        let cameraPosition = NMFCameraPosition(coord, zoom: zoomLevel, tilt: 0, heading: 0)
+        let cameraUpdate = NMFCameraUpdate(position: cameraPosition)
+        cameraUpdate.animation = .easeIn
+        view.mapView.moveCamera(cameraUpdate)
+    }
+    
+    // MARK: - 권한이 나중에 추가되었을 때 내 위치 마커 표시
+    func enableUserLocationOverlay() {
+        view.mapView.positionMode = .direction  // 내 위치 표시 모드
+        view.mapView.locationOverlay.hidden = false
+    }
 }
 
 // MARK: - 클러스터 관련
