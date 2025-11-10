@@ -62,11 +62,9 @@ struct AlertView: View {
                     }
                     Button("취소", role: .cancel) { }
                 } message: {
-                    Text("선택한 팝업이 삭제되었습니다.")
+                    Text("선택한 팝업이 삭제됩니다.")
                 }
-
             }
-            
         }
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -101,9 +99,7 @@ struct TrashButton: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .contentShape(RoundedRectangle(cornerRadius: 6))
             }
-            
         }
         .buttonStyle(PressableButtonStyle())
     }
 }
-

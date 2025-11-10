@@ -28,12 +28,12 @@ struct FirstSheetView: View {
                     onRegionTap()
                 }
                  */
+
+                Spacer()
                 
                 MapSortButton(selectedOption: $mapViewModel.selectedOption) {
                     onSortTap()
                 }
-                
-                Spacer()
             }
             
             // view

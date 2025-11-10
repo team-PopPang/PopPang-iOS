@@ -53,11 +53,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     /// - Note: 카카오톡 로그인 시 카카오톡 앱에서 인증 후 돌아오는 URL을 처리한다
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
         
-        // MARK: - Kakao
-        if (AuthApi.isKakaoTalkLoginUrl(url)) {
-            return AuthController.handleOpenUrl(url: url)
-        }
-        
         // MARK: - Google
         if GIDSignIn.sharedInstance.handle(url) {
             return true
@@ -104,9 +99,9 @@ extension Notification.Name {
 }
 
 // fcm 노티 이름
-extension Notification.Name {
-    static let didReceiveFcmToken = Notification.Name("didReceiveFcmToken")
-}
+//extension Notification.Name {
+//    static let didReceiveFcmToken = Notification.Name("didReceiveFcmToken")
+//}
 
 // MARK: - 알림 관련(Swizzling)
 extension AppDelegate {
