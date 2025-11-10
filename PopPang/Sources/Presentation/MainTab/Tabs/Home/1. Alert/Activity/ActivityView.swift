@@ -16,12 +16,24 @@ struct ActivityView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
-                ForEach(Array(homeViewModel.gridPopups.prefix(50).enumerated()), id: \.element) { index, popup in
-                    AlertPopupCell(popup: popup)
-                        .contentShape(Rectangle()) // 터치 영역을 셀 전체로 확장
-                        .onTapGesture {
-                            coordinator.push(.popupDetail(popup))
+                ForEach(Array(activityViewModel.avtivityPopupList.prefix(50).enumerated()), id: \.element) { index, popup in
+                    
+                    HStack {
+                        AlertPopupCell(popup: popup)
+                            .contentShape(Rectangle()) // 터치 영역을 셀 전체로 확장
+                            .onTapGesture {
+                                coordinator.push(.popupDetail(popup))
+                            }
+                        
+                        if activityViewModel.isEditing {
+                            Button {
+                                activityViewModel.checkBoxTapped(popup: popup)
+                            } label: {
+                                Image(systemName: activityViewModel.selectedPopupIds.contains(popup.popupUuid) ? "checkmark.circle.fill" : "circle")
+                                    .foregroundStyle(Color.mainOrange)
+                            }
                         }
+                    }
                     
                     // 마지막 셀 아래에는 Divider 넣지 않겠다
                     if index != homeViewModel.gridPopups.count - 1 {

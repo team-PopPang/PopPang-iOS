@@ -40,6 +40,33 @@ struct AlertView: View {
                     .ppStyleFont(.scdream(.medium, size: 20))
                     .padding(.top, 10)
             }
+            
+            // 우측 삭제 버튼
+            ToolbarItem(placement: .topBarTrailing) {
+                
+                TrashButton(isEditing: activityViewModel.isEditing) {
+                    if activityViewModel.isEditing {
+                        // 삭제 확인 알림 보내기
+                        activityViewModel.showDeleteAlert = true
+                        
+                    } else {
+                        // 편집 모드 실행
+                        activityViewModel.isEditing = true
+                    }
+                }
+                .alert("정말로 삭제하시겠습니까?",
+                       isPresented: $activityViewModel.showDeleteAlert) {
+                    Button("삭제", role: .destructive) {
+                        activityViewModel.deleteSelectedPopups()
+                        activityViewModel.isEditing = false
+                    }
+                    Button("취소", role: .cancel) { }
+                } message: {
+                    Text("선택한 팝업이 삭제되었습니다.")
+                }
+
+            }
+            
         }
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -52,3 +79,31 @@ struct AlertView: View {
             .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
     }
 }
+
+struct TrashButton: View {
+    var isEditing: Bool
+    var action: () -> Void
+    
+    var body: some View {
+        Button {
+            action()
+        } label: {
+            
+            if isEditing {
+                Text("완료")
+                    .ppStyleFont(.scdream(.medium, size: 15))
+            } else {
+                Image(systemName: "trash")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 20, height: 20)
+                    .padding(10)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .contentShape(RoundedRectangle(cornerRadius: 6))
+            }
+            
+        }
+        .buttonStyle(PressableButtonStyle())
+    }
+}
+

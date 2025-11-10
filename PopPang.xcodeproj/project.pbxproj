@@ -24,12 +24,23 @@
 		DFFD93792EB137BB00B5B4A7 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = DFFD93782EB137BB00B5B4A7 /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		DFC42B092EBFD9F500C8B52A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DFAC8E742E6C717100B4A917 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = DFAC8E7B2E6C717100B4A917;
+			remoteInfo = PopPang;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		DF0510E62E83DB65006AF8C3 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		DF0510F62E83DB9B006AF8C3 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		DF5266172E6CAB8700FC46FD /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		DFA876622EB205220003C376 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		DFAC8E7C2E6C717100B4A917 /* PopPang.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PopPang.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		DFC42B052EBFD9F500C8B52A /* RepositoryTest.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RepositoryTest.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -49,6 +60,11 @@
 				DF0693F52E6D850F00F9AE41 /* Exceptions for "PopPang" folder in "PopPang" target */,
 			);
 			path = PopPang;
+			sourceTree = "<group>";
+		};
+		DFC42B062EBFD9F500C8B52A /* RepositoryTest */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = RepositoryTest;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -72,6 +88,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DFC42B022EBFD9F500C8B52A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -83,6 +106,7 @@
 				DF0510E62E83DB65006AF8C3 /* .gitignore */,
 				DF0510F62E83DB9B006AF8C3 /* Config.xcconfig */,
 				DFAC8E7E2E6C717100B4A917 /* PopPang */,
+				DFC42B062EBFD9F500C8B52A /* RepositoryTest */,
 				DFC713CC2EACAE7F00BFA7A5 /* Frameworks */,
 				DFAC8E7D2E6C717100B4A917 /* Products */,
 			);
@@ -92,6 +116,7 @@
 			isa = PBXGroup;
 			children = (
 				DFAC8E7C2E6C717100B4A917 /* PopPang.app */,
+				DFC42B052EBFD9F500C8B52A /* RepositoryTest.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -139,6 +164,29 @@
 			productReference = DFAC8E7C2E6C717100B4A917 /* PopPang.app */;
 			productType = "com.apple.product-type.application";
 		};
+		DFC42B042EBFD9F500C8B52A /* RepositoryTest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DFC42B0B2EBFD9F500C8B52A /* Build configuration list for PBXNativeTarget "RepositoryTest" */;
+			buildPhases = (
+				DFC42B012EBFD9F500C8B52A /* Sources */,
+				DFC42B022EBFD9F500C8B52A /* Frameworks */,
+				DFC42B032EBFD9F500C8B52A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				DFC42B0A2EBFD9F500C8B52A /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				DFC42B062EBFD9F500C8B52A /* RepositoryTest */,
+			);
+			name = RepositoryTest;
+			packageProductDependencies = (
+			);
+			productName = RepositoryTest;
+			productReference = DFC42B052EBFD9F500C8B52A /* RepositoryTest.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -151,6 +199,10 @@
 				TargetAttributes = {
 					DFAC8E7B2E6C717100B4A917 = {
 						CreatedOnToolsVersion = 16.4;
+					};
+					DFC42B042EBFD9F500C8B52A = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = DFAC8E7B2E6C717100B4A917;
 					};
 				};
 			};
@@ -178,6 +230,7 @@
 			projectRoot = "";
 			targets = (
 				DFAC8E7B2E6C717100B4A917 /* PopPang */,
+				DFC42B042EBFD9F500C8B52A /* RepositoryTest */,
 			);
 		};
 /* End PBXProject section */
@@ -194,6 +247,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DFC42B032EBFD9F500C8B52A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -204,7 +264,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		DFC42B012EBFD9F500C8B52A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		DFC42B0A2EBFD9F500C8B52A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = DFAC8E7B2E6C717100B4A917 /* PopPang */;
+			targetProxy = DFC42B092EBFD9F500C8B52A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		DFAC8E852E6C717200B4A917 /* Debug */ = {
@@ -340,7 +415,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 57;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = LGX4B4WC66;
 				ENABLE_PREVIEWS = YES;
@@ -386,7 +461,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 57;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = LGX4B4WC66;
 				ENABLE_PREVIEWS = YES;
@@ -422,6 +497,44 @@
 			};
 			name = Release;
 		};
+		DFC42B0C2EBFD9F500C8B52A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = LGX4B4WC66;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.indextrown.RepositoryTest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PopPang.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PopPang";
+			};
+			name = Debug;
+		};
+		DFC42B0D2EBFD9F500C8B52A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = LGX4B4WC66;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.indextrown.RepositoryTest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PopPang.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PopPang";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -439,6 +552,15 @@
 			buildConfigurations = (
 				DFAC8E882E6C717200B4A917 /* Debug */,
 				DFAC8E892E6C717200B4A917 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DFC42B0B2EBFD9F500C8B52A /* Build configuration list for PBXNativeTarget "RepositoryTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DFC42B0C2EBFD9F500C8B52A /* Debug */,
+				DFC42B0D2EBFD9F500C8B52A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
