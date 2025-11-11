@@ -16,18 +16,6 @@ struct FirstSheetView: View {
         VStack(spacing: 0) {
             // button
             HStack {
-                /*
-                Text(mapViewModel.selectedRegion?.region ?? "전체")
-                    .foregroundStyle(Color.mainBlack)
-                    .ppStyleFont(.scdream(.medium, size: 17))
-                
-                Spacer()
-                
-                MapRegionButton(text: "지역") {
-                    print("버튼눌림")
-                    onRegionTap()
-                }
-                 */
 
                 Spacer()
                 

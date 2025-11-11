@@ -57,15 +57,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if GIDSignIn.sharedInstance.handle(url) {
             return true
         }
-        
-        // MARK: - 카카오 공유로 앱 실행 시 딥링크 처리
-        if url.scheme?.hasPrefix("kakao") == true && url.host == "kakaolink" {
-            if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-               let popupId = components.queryItems?.first(where: { $0.name == "popupId" })?.value {
-                print("딥링크로 받은 popupId: \(popupId)")
-            }
-        }
-        
         return true
     }
     
@@ -149,8 +140,6 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, Mes
             return
         }
         Logger.d("Firebase에서 APNs 토큰을 기반으로 FCM 등록 및 클라이언트로 토큰 발급")
-        // Logger.d("FCM 토큰 수신 완료: \(fcmToken)")
-        // UserDefaultsManager.saveFcmToken(fcmToken)
         self.fcmToken = fcmToken
     }
     
@@ -159,18 +148,6 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, Mes
         // 1) APNs 토큰 등록
         Messaging.messaging().apnsToken = deviceToken
         Logger.d("Apple의 APNs(푸시 서버) 디바이스 토큰을 Firebase에 전달 완료")
-        // Logger.d("APNs token set (\(deviceToken.count) bytes)")
-
-        // APNs 토큰이 설정된 '이후'에 FCM 토큰을 요청 (선택)
-        /*
-        Messaging.messaging().token { token, error in
-            if let token = token?.trimmingCharacters(in: .whitespacesAndNewlines) {
-                print("✅ Fresh FCM token:", token, "len:", token.count)
-            } else if let error = error {
-                print("❌ FCM 토큰 가져오기 실패:", error.localizedDescription)
-            }
-        }
-         */
     }
 
     // APNs 등록 실패 로깅

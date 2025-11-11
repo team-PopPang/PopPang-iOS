@@ -74,7 +74,9 @@ struct KeywordView: View {
                 SearchFlowLayout {
                     ForEach(categories, id: \.self) { category in
                         SearchFlowButton(title: category) {
-                            self.text = category
+                            // self.text = category
+                            keywordViewModel.addKeyword(category)
+                            text = ""
                         } onRemove: {
                             if let index = categories.firstIndex(of: category) {
                                 categories.remove(at: index)
@@ -98,5 +100,6 @@ struct KeywordView: View {
 
 #Preview {
     KeywordView(keywordViewModel: KeywordViewModel(userUuid: "1234"))
+        .environmentObject(RootViewModel())
 }
 
