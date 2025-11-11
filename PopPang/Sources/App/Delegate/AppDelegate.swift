@@ -63,10 +63,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
                let popupId = components.queryItems?.first(where: { $0.name == "popupId" })?.value {
                 print("딥링크로 받은 popupId: \(popupId)")
-                
-                NotificationCenter.default.post(name: .didReceiveDeepLink,
-                                                object: nil,
-                                                userInfo: ["popupId": popupId])
             }
         }
         
@@ -93,16 +89,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 }
 
-// 딥링크 노티 이름
-extension Notification.Name {
-    static let didReceiveDeepLink = Notification.Name("didReceiveDeepLink")
-}
-
-// fcm 노티 이름
-//extension Notification.Name {
-//    static let didReceiveFcmToken = Notification.Name("didReceiveFcmToken")
-//}
-
 // MARK: - 알림 관련(Swizzling)
 extension AppDelegate {
 
@@ -119,6 +105,7 @@ extension AppDelegate {
     }
 }
 
+// MARK: - 알림 권한 관련
 final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, MessagingDelegate {
     static let shared = NotificationManager()
     private override init() {}

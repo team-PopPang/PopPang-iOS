@@ -14,6 +14,10 @@ struct HomeView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     @State private var searchText = ""
     
+    // MARK: - 딥링크 관련
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var lastHandledPopupId: String?
+    
     // MARK: - 광고뷰 테스트
     @State private var hasSeenPopup: Bool = false
     
@@ -118,6 +122,13 @@ struct HomeView: View {
                 hasSeenPopup = true
             }
         }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    handleDeeplinkIfNeeded()
+                }
+            }
+        }
         .fullScreenCover(item: $coordinator.sheet) { route in
             coordinator.buildView(for: route)
         }
@@ -141,6 +152,43 @@ struct HomeView: View {
         }) {
             SortButtonSheet(selectedOption: $homeViewModel.selectedOption)
                 .presentationDetents([.fraction(0.4)])
+        }
+    }
+}
+
+// MARK: - 딥링크 관련
+extension HomeView {
+    // MARK: - 딥링크 감지
+    private func handleDeeplinkIfNeeded() {
+        Task {
+            guard let popupId = UserDefaultsManager.loadDeeplinkPopupId() else { return }
+            Logger.d("딥링크 감지됨 — \(popupId)")
+
+            // ✅ 데이터가 로드될 때까지 대기
+            while homeViewModel.bestPopups.isEmpty &&
+                  homeViewModel.comingPopups.isEmpty &&
+                  homeViewModel.gridPopups.isEmpty {
+                try? await Task.sleep(nanoseconds: 200_000_000) // 0.2초씩 반복 확인
+                Logger.d("팝업 데이터 로드 대기 중...")
+            }
+
+            // 데이터가 준비되면 이동
+            await MainActor.run {
+                moveToPopupDetailIfExists(popupId: popupId)
+                UserDefaultsManager.removeDeeplinkPopupId()
+            }
+        }
+    }
+    
+    // MARK: - 딥링크 화면 이동
+    private func moveToPopupDetailIfExists(popupId: String) {
+        let allPopups = homeViewModel.bestPopups + homeViewModel.comingPopups + homeViewModel.gridPopups
+
+        if let targetPopup = allPopups.first(where: { $0.popupUuid == popupId }) {
+            coordinator.push(.popupDetail(targetPopup))
+            Logger.d("팝업 상세로 이동 — \(targetPopup.name)")
+        } else {
+            Logger.w("해당 popupId에 맞는 팝업을 찾을 수 없음")
         }
     }
 }

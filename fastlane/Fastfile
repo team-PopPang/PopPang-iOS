@@ -44,7 +44,7 @@ platform :ios do
       scheme: "PopPang",
       export_options: {
         provisioningProfiles: {
-          "kr.co.poppang.PopPang" => "match AppStore kr.co.poppang.PopPang"
+          "kr.co.poppang.PopPang" => "match AppStore kr.co.poppang.PopPang 1762797101"
         }
       }
     )

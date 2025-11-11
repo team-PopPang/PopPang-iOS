@@ -50,4 +50,22 @@ struct UserDefaultsManager {
     static func removeFcmToken() {
         UserDefaults.standard.removeObject(forKey: fcmTokenKey)
     }
+    
+    // MARK: - 딥링크
+    private static let deeplinkPopupIdKey = "deeplinkPopupId"
+    
+    // 딥링크에서 전달받은 popupId 저장
+    static func saveDeeplinkPopupId(_ popupId: String) {
+        UserDefaults.standard.set(popupId, forKey: deeplinkPopupIdKey)
+    }
+    
+    // 저장된 popupId 불러오기
+    static func loadDeeplinkPopupId() -> String? {
+        UserDefaults.standard.string(forKey: deeplinkPopupIdKey)
+    }
+    
+    // popupId 삭제
+    static func removeDeeplinkPopupId() {
+        UserDefaults.standard.removeObject(forKey: deeplinkPopupIdKey)
+    }
 }
