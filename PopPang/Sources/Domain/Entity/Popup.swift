@@ -26,8 +26,8 @@ struct Popup: Hashable, Identifiable, Encodable {
     let captionSummary: String
     let imageUrlList: [String]
     let mediaType: MediaType
-    var favoriteCount: Int?
-    var viewCount: Int?
+    var favoriteCount: Int
+    var viewCount: Int
     var isFavorited: Bool
     
     enum MediaType: String, Codable {

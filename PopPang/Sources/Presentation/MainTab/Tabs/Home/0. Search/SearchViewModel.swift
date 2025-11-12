@@ -56,7 +56,7 @@ extension SearchViewModel {
     func getSearchPopupList(searchText: String) {
         Task {
             do {
-                let searchPopupList = try await popupUsecase.searchPopupList(searchText: searchText)
+                let searchPopupList = try await popupUsecase.getPersonalSearchPopupList(userUuid: userUuid, searchText: searchText)
                 await MainActor.run {
                     self.searchPopupList = searchPopupList
                 }

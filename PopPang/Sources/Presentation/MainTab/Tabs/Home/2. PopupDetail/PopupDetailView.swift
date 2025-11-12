@@ -58,25 +58,24 @@ struct PopupDetailView: View {
                             
                             Spacer()
                             
-                            if let viewCount = popupDetailViewModel.popup.viewCount {
-                                Image("viewCount")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 12, height: 12)
-                                
-                                Text("\(viewCount)")
-                                    .ppStyleFont(.scdream(.regular, size: 9))
-                            }
+                            let viewCount = popupDetailViewModel.popup.viewCount
+                            Image("viewCount")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 12, height: 12)
                             
-                            if let favoriteCount = popupDetailViewModel.popup.favoriteCount {
-                                Image("favoriteCount")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 12, height: 12)
-                                
-                                Text("\(favoriteCount)")
-                                    .ppStyleFont(.scdream(.regular, size: 9))
-                            }
+                            Text("\(viewCount)")
+                                .ppStyleFont(.scdream(.regular, size: 9))
+                            
+                            
+                            let favoriteCount = popupDetailViewModel.popup.favoriteCount
+                            Image("favoriteCount")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 12, height: 12)
+                            
+                            Text("\(favoriteCount)")
+                                .ppStyleFont(.scdream(.regular, size: 9))
                         }
                         
                         Divider()

@@ -73,16 +73,15 @@ extension PopupDetailViewModel {
                 try await popupUsecase.removeFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
                 await MainActor.run {
                     self.popup.isFavorited = false
-                    if let count = popup.favoriteCount {
-                        self.popup.favoriteCount = max(0, count - 1)
-                    }
+                    let count = popup.favoriteCount
+                    self.popup.favoriteCount = max(0, count - 1)
                 }
             } else {
                 Logger.d("좋아요 추가")
                 try await popupUsecase.addFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
                 await MainActor.run {
                     self.popup.isFavorited = true
-                    self.popup.favoriteCount = (popup.favoriteCount ?? 0) + 1
+                    self.popup.favoriteCount = (popup.favoriteCount) + 1
                 }
             }
         } catch {

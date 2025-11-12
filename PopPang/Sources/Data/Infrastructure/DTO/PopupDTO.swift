@@ -24,8 +24,8 @@ struct PopupDTO: Decodable {
     let captionSummary: String
     let imageUrlList: [String]
     let mediaType: String
-    let favoriteCount: Int?
-    let viewCount: Int?
+    let favoriteCount: Int
+    let viewCount: Int
     let isFavorited: Bool
 }
 

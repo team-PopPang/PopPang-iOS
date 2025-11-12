@@ -17,12 +17,13 @@ enum PopupAPI {
     case increaseViewCount(popupUuid: String) /// 팝업 조회수 증가
     
     // 개인화 popup
-    case getPersonalPopupList(userUuid: String)             /// 팝업 전체 조회
-    case getPersonalUpcomingPopupList(userUuid: String)     /// 다가오는 팝업 조회/
-    case getPersonalFilteredPopupList(userUuid: String,
+    case getPersonalPopupList(userUuid: String)                            /// 팝업 전체 조회
+    case getPersonalUpcomingPopupList(userUuid: String)                    /// 다가오는 팝업 조회/
+    case getPersonalFilteredPopupList(userUuid: String,                    /// 홈 화면용 팝업 필터 조회
                                       region: String,
                                       district: String,
-                                      homeSortStandard: String)            /// 홈 화면용 팝업 필터 조회
+                                      homeSortStandard: String)
+    case getPersonalSearchPopupList(userUuid: String, searchText: String)  /// 팝업 검색
     
     // favorite
     case addFavorite(userUuid: String, popupUuid: String)
@@ -49,6 +50,7 @@ extension PopupAPI: TargetType {
         case .getPersonalPopupList(let userUuid): return "/users/\(userUuid)/popups"                                   /// 팝업 전체 조회
         case .getPersonalUpcomingPopupList(let userUuid): return "/users/\(userUuid)/popups/upcoming"                  /// 다가오는 팝업 조회
         case .getPersonalFilteredPopupList(let userUuid, _, _, _): return "/users/\(userUuid)/popups/filtered/home"    /// 홈 팝업 필터 조회
+        case .getPersonalSearchPopupList(let userUuid, _): return "/users/\(userUuid)/popups/search"                   /// 팝업 검색
             
         // favorite
         case .addFavorite: return "/favorite"
@@ -73,6 +75,7 @@ extension PopupAPI: TargetType {
         case .getPersonalPopupList: return .get
         case .getPersonalUpcomingPopupList: return .get
         case .getPersonalFilteredPopupList: return .get
+        case .getPersonalSearchPopupList: return .get
             
         // favorite
         case .addFavorite: return .post
@@ -109,6 +112,9 @@ extension PopupAPI: TargetType {
                                                    "district": district,
                                                    "homeSortStandard": homeSortStandard
                                                   ],
+                                      encoding: URLEncoding.queryString)
+        case .getPersonalSearchPopupList(_, let searchText):
+            return .requestParameters(parameters: ["q": searchText],
                                       encoding: URLEncoding.queryString)
             
         // favorite

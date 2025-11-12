@@ -29,6 +29,8 @@ protocol PopupUsecaseProtocol {
     
     func getPersonalFilteredPopupList(userUuid: String, region: String, district: String, homeSortStandard: String) async throws -> [Popup]
     
+    func getPersonalSearchPopupList(userUuid: String, searchText: String) async throws -> [Popup]
+    
     // MARK: - Favorite
     func increaseViewCount(popupUuid: String) async throws
     

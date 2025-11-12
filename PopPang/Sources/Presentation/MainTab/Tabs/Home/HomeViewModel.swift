@@ -152,11 +152,9 @@ extension HomeViewModel {
                         self.gridPopups[index].isFavorited = false
                         
                         // 좋아요 수 감소
-                        if let count = self.gridPopups[index].favoriteCount {
-                            self.gridPopups[index].favoriteCount = max(0, count - 1)
-                        } else {
-                            self.gridPopups[index].favoriteCount = 0
-                        }
+                        let count = self.gridPopups[index].favoriteCount
+                        self.gridPopups[index].favoriteCount = max(0, count - 1)
+                        
                     }
                 }
             } else {
@@ -168,7 +166,7 @@ extension HomeViewModel {
                         self.gridPopups[index].isFavorited = true
                         
                         // 좋아요 수 증가
-                        self.gridPopups[index].favoriteCount = (self.gridPopups[index].favoriteCount ?? 0) + 1
+                        self.gridPopups[index].favoriteCount += 1
                     }
                 }
             }
@@ -178,7 +176,7 @@ extension HomeViewModel {
     }
 }
 
-// MARK: - 시트 관련 메서드
+// MARK: - 지역 시트 관련 메서드
 extension HomeViewModel {
     
     // MARK: - 지역 필터링 가져오기 비동기
@@ -193,7 +191,6 @@ extension HomeViewModel {
                     if rhs.region == "서울" { return false }
                     return false
                 }
-            
             return regionList
         } catch {
             Logger.e("❌ 찜 목록 불러오기 오류: \(error)")

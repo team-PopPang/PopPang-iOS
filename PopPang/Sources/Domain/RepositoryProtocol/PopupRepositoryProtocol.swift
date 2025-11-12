@@ -61,6 +61,12 @@ protocol PopupRepositoryProtocol {
                                       region: String,
                                       district: String,
                                       homeSortStandard: String) async throws -> [PopupDTO]
+    
+    /// 팝업 검색 결과를 반환합니다
+    /// - Parameter userUuid: userUuid
+    /// - Parameter searchText: searchText
+    /// - Returns: [PopupDTO]
+    func getPersonalSearchPopupList(userUuid: String, searchText: String) async throws -> [PopupDTO]
 
     
     // MARK: - Favorite

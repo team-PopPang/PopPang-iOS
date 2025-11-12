@@ -49,25 +49,22 @@ struct MapListPopupCell: View {
                         
                         Spacer()
                         
-                        if let viewCount = popup.viewCount {
-                            Image("viewCount")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 12, height: 12)
-                            
-                            Text("\(viewCount)")
-                                .ppStyleFont(.scdream(.regular, size: 9))
-                        }
+                        Image("viewCount")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 12, height: 12)
                         
-                        if let favoriteCount = popup.favoriteCount {
-                            Image("favoriteCount")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 12, height: 12)
-                            
-                            Text("\(favoriteCount)")
-                                .ppStyleFont(.scdream(.regular, size: 9))
-                        }
+                        Text("\(popup.viewCount)")
+                            .ppStyleFont(.scdream(.regular, size: 9))
+                        
+                        Image("favoriteCount")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 12, height: 12)
+                        
+                        Text("\(popup.favoriteCount)")
+                            .ppStyleFont(.scdream(.regular, size: 9))
+                        
                     }
                 }
                 .padding(.leading, 18)

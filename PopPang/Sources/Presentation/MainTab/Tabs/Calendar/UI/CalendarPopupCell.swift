@@ -54,41 +54,39 @@ struct CalendarPopupCell: View {
                         
                         Spacer()
                         
-                        if let viewCount = popup.viewCount {
-                            Image("viewCount")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 12, height: 12)
-                            
-                            Text("\(viewCount)")
-                                .ppStyleFont(.scdream(.regular, size: 9))
-                        }
                         
-                        if let favoriteCount = popup.favoriteCount {
-                            
-                            Button {
-                                print("좋아요 눌림")
-                                Task {
-                                    await calendarViewModel.toggleLike(popup: popup)
-                                    
-                                    // MARK: - 비활성화
-                                    // await calendarViewModel.getAllPopupData()
-                                }
-                            } label: {
-                                HStack(spacing: 5) {
-                                    Image("favoriteCount")
-                                        .renderingMode(.template)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: 12, height: 12)
-                                    
-                                    Text("\(favoriteCount)")
-                                        .ppStyleFont(.scdream(.regular, size: 9))
-                                }
+                        Image("viewCount")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 12, height: 12)
+                        
+                        Text("\(popup.viewCount)")
+                            .ppStyleFont(.scdream(.regular, size: 9))
+                        
+                        
+                        Button {
+                            print("좋아요 눌림")
+                            Task {
+                                await calendarViewModel.toggleLike(popup: popup)
+                                
+                                // MARK: - 비활성화
+                                // await calendarViewModel.getAllPopupData()
                             }
-                            .foregroundStyle(calendarViewModel.isLiked(popup: popup) ? Color.mainOrange : Color.mainGray)
+                        } label: {
+                            HStack(spacing: 5) {
+                                Image("favoriteCount")
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 12, height: 12)
+                                
+                                Text("\(popup.favoriteCount)")
+                                    .ppStyleFont(.scdream(.regular, size: 9))
+                            }
                         }
+                        .foregroundStyle(calendarViewModel.isLiked(popup: popup) ? Color.mainOrange : Color.mainGray)
                     }
+                
                 }
                 .padding(.leading, 18)
                 .padding(.vertical, 10)

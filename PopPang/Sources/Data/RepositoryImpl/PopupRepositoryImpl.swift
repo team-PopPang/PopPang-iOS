@@ -54,6 +54,11 @@ final class PopupRepositoryImpl: PopupRepositoryProtocol {
                                                                                                    homeSortStandard: homeSortStandard), decodeTo: [PopupDTO].self)
     }
     
+    func getPersonalSearchPopupList(userUuid: String, searchText: String) async throws -> [PopupDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPersonalSearchPopupList(userUuid: userUuid, searchText: searchText),
+                                                                     decodeTo: [PopupDTO].self)
+    }
+    
     // MARK: - Favorite
     func increaseViewCount(popupUuid: String) async throws {
         try await NetworkProvider.shared.popupProvidder.asyncRequestVoid(.increaseViewCount(popupUuid: popupUuid))

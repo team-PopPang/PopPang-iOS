@@ -151,9 +151,9 @@ extension CalendarViewModel {
                         self.calendarPopups[index].isFavorited = false
                         
                         // 좋아요 -1
-                        if let count = self.calendarPopups[index].favoriteCount {
-                            self.calendarPopups[index].favoriteCount = max(0, count - 1)
-                        }
+                        let count = self.calendarPopups[index].favoriteCount
+                        self.calendarPopups[index].favoriteCount = max(0, count - 1)
+                        
                     }
                     // 현재 선택된 날짜의 목록도 갱신
                     if let index = self.selectedPopups.firstIndex(where: { $0.popupUuid == popupUuid }) {
@@ -162,9 +162,9 @@ extension CalendarViewModel {
                         self.selectedPopups[index].isFavorited = false
                         
                         // 좋아요 -1
-                        if let count = self.selectedPopups[index].favoriteCount {
-                            self.selectedPopups[index].favoriteCount = max(0, count - 1)
-                        }
+                        let count = self.selectedPopups[index].favoriteCount
+                        self.selectedPopups[index].favoriteCount = max(0, count - 1)
+                        
                     }
                 }
             } else {
@@ -177,13 +177,13 @@ extension CalendarViewModel {
                         // 좋아요 추가
                         self.calendarPopups[index].isFavorited = true
                         
-                        // 좋아요 + 1
-                        self.calendarPopups[index].favoriteCount = (self.calendarPopups[index].favoriteCount ?? 0) + 1
+                        // 좋아요 +1
+                        self.calendarPopups[index].favoriteCount += 1
                     }
                     // 현재 선택된 날짜의 목록도 갱신
                     if let index = self.selectedPopups.firstIndex(where: { $0.popupUuid == popupUuid }) {
                         self.selectedPopups[index].isFavorited = true
-                        self.selectedPopups[index].favoriteCount = (self.selectedPopups[index].favoriteCount ?? 0) + 1
+                        self.selectedPopups[index].favoriteCount += 1
                     }
                 }
             }
