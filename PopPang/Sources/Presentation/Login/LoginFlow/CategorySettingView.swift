@@ -14,6 +14,11 @@ struct CategorySettingView: View {
     // 선택한 카테고리들
     @State private var selectedCategories: [Int] = []
     
+    // 다음 스탭 활성화 유무
+    private var isNextEnabled: Bool {
+        !selectedCategories.isEmpty
+    }
+    
     var body: some View {
         VStack(alignment: .leading) {
             
@@ -43,11 +48,15 @@ struct CategorySettingView: View {
             
             Spacer()
             
-            MainOrangeButton(buttonTitle: "완료") {
-                print(selectedCategories)
+            MainOrangeButton(buttonTitle: "완료",
+                             buttonColor: isNextEnabled ? Color.mainOrange : Color.mainGray2) {
                 rootViewModel.send(action: .setRecommandList(selectedCategories))
                 rootViewModel.send(action: .register)
             }
+            // MARK: - 활성화 로직
+            .disabled(!isNextEnabled)
+            .opacity(isNextEnabled ? 1.0 : 0.8)
+            
             // 키보드 올라오면 공백과 함께 버튼 올라감
             .padding(.bottom, 20)
         }

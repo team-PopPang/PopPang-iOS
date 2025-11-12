@@ -18,9 +18,6 @@ struct User {
     var fcmToken: String?
     var alertKeywordList: [String]?
     var recommendList: [Int]?
-//    var isNewUser: Bool {
-//        return nickname == nil
-//    }
 }
 
 extension User {

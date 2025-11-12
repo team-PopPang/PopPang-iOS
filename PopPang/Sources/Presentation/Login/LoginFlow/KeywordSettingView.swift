@@ -16,6 +16,14 @@ struct KeywordSettingView: View {
     // 중복 검사
     @State private var keywords: [String] = []
     
+    // 최대 키워드 개수
+    private let maxKeywordCount: Int = 5
+    
+    // 다음 스탭 활성화 유무
+    private var isNextEnabled: Bool {
+        !keywords.isEmpty
+    }
+    
     var onNext: () -> Void
     var body: some View {
 
@@ -29,7 +37,12 @@ struct KeywordSettingView: View {
                         .font(.scdream(.medium, size: 12))
                         .foregroundStyle(Color.mainGray)
                 }
+                
                 Spacer()
+                
+                Text("\(keywords.count)/\(maxKeywordCount)")
+                    .font(.scdream(.medium, size: 12))
+                    .foregroundStyle(isNextEnabled ? Color.mainGreen : Color.mainRed)
             }
             .padding(.top, 50)
             
@@ -43,6 +56,9 @@ struct KeywordSettingView: View {
                     // 공백이면 무시한다
                     let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
                     guard !trimmed.isEmpty else { return }
+                    
+                    // 키워드는 최대 5개까지 가능하다
+                    if keywords.count >= maxKeywordCount { return }
                     
                     // 알림 권한이 없으면 알림 창을 띄우고 확인을 누르면 설정으로 이동시킨다
                     UNUserNotificationCenter.current().getNotificationSettings { settings in
@@ -61,6 +77,7 @@ struct KeywordSettingView: View {
                             UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
                                 if granted {
                                     addKeyword(trimmed: trimmed)
+                                    rootViewModel.send(action: .setIsAlertedUser(true))
                                 } else {
                                     DispatchQueue.main.async {
                                         // 알림
@@ -73,6 +90,7 @@ struct KeywordSettingView: View {
                         case .authorized, .provisional, .ephemeral:
                             DispatchQueue.main.async {
                                 addKeyword(trimmed: trimmed)
+                                rootViewModel.send(action: .setIsAlertedUser(true))
                             }
                             
                         @unknown default:
@@ -121,7 +139,8 @@ struct KeywordSettingView: View {
             
             Spacer()
             
-            MainOrangeButton(buttonTitle: "다음") {
+            MainOrangeButton(buttonTitle: "다음",
+                             buttonColor: isNextEnabled ? Color.mainOrange : Color.mainGray2) {
                 rootViewModel.send(action: .setalertList(keywords))
 
                 UIApplication.shared.endEditing(true)
@@ -132,6 +151,10 @@ struct KeywordSettingView: View {
                     }
                 }
             }
+            // MARK: - 활성화 로직
+            .disabled(!isNextEnabled)
+            .opacity(isNextEnabled ? 1.0 : 0.8)
+            
             // 키보드 올라오면 공백과 함께 버튼 올라감
             .padding(.bottom, 20)
         }

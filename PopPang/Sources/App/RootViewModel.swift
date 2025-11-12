@@ -39,6 +39,7 @@ final class RootViewModel: ObservableObject {
         case appleLogin(ASAuthorization)
         case checkNickname
         case setalertList([String])              // 알림 키워드 설정
+        case setIsAlertedUser(Bool)                  // 알림 권한 허용시 회원가입 유저 isAlerted도 적용
         case setRecommandList([Int])             // 추천 키워드 설정
         case register                            // 화원가입
         case logout
@@ -204,6 +205,13 @@ extension RootViewModel {
             self.user = registerUser
             Logger.d("알림 키워드 적용됨: \(self.user!)")
             
+        // MARK: - isAlerted 설정
+        case .setIsAlertedUser(let alertAuth):
+            var registerUser = user!
+            registerUser.isAlerted = alertAuth
+            self.user = registerUser
+            Logger.d("알림 권한 적용됨: \(self.user!)")
+            
         // MARK: - 추천 키워드 세팅
         case .setRecommandList(let recommandList):
             var registerUser = user!
@@ -213,11 +221,17 @@ extension RootViewModel {
             
         // MARK: - 회원가입 완료 버튼
         case .register:
-            var registerUser = user!
             
-            // MARK: - 만약 FCM 토큰이 있는 경우 함께 저장
-            if let fcmToken = UserDefaultsManager.loadFcmToken() {
-                registerUser.fcmToken = fcmToken
+            guard var registerUser = user else { return }
+            
+            // 알림 키워드 nil이면 빈배열로
+            if registerUser.alertKeywordList == nil {
+                registerUser.alertKeywordList = []
+            }
+            
+            // 추천 키워드 nil이면 빈배열로
+            if registerUser.recommendList == nil {
+                registerUser.recommendList = []
             }
             
             switch registerUser.provider {
@@ -354,7 +368,7 @@ extension RootViewModel {
             await MainActor.run {
                 self.recommandList = response
             }
-            Logger.d("✅ recommandList: \(recommandList)")
+            // Logger.d("✅ recommandList: \(recommandList)")
         } catch {
             Logger.e("❌ recommandList Error: \(error)")
         }
@@ -391,52 +405,5 @@ extension RootViewModel {
         self.validationState = .none
         self.scene = .unauthenticated
         self.updateScene()
-        
-        // fcm 토큰 정리 로직 추가
-        
     }
 }
-
-// MARK: - FCM 관련 로직
-extension RootViewModel {
-    
-}
-
-// MARK: - 커스텀 바인딩
-/*
-extension RootViewModel {
-    /*
-     Binding<Value>(
-         get: { 현재 값 가져오기 },
-         set: { 새로운 값 들어오면 여기서 처리하기 }
-     )
-     */
-    var isAlertedBinding: Binding<Bool> {
-        Binding<Bool>(
-            get: {
-                // view가 읽을 때 호출
-                self.user?.isAlerted ?? false
-            },
-            set: { newValue in
-                // toggle 변경시 호출
-                
-                // 비로그인이면 무시
-                guard var user = self.user else { return }
-                
-                user.isAlerted = newValue
-                self.user = user
-                
-                Task {
-                    do {
-                        try await self.userUsecase.alertStatus(userUuid: user.userUuid,
-                                                          isAlerted: newValue)
-                        Logger.d("알림 상태 서버에 반영 완료: \(newValue)")
-                    } catch {
-                        Logger.e("알림 상태 업데이트 실패: \(error)")
-                    }
-                }
-            }
-        )
-    }
-}
-*/

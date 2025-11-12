@@ -23,15 +23,9 @@ final class KakaoAuthRepositoryImpl: KakaoAuthRepositoryProtocol {
             // 웹뷰로 로그인
             oauthToken = try await handleWithKakaoWeb()
         }
-        
-        // 2. PopPang 서버에 토큰 전달 및 유저 반환
-        // let user = try await requestUserToServer(accessToken: oauthToken.accessToken).toModel()
-        // return user
-        
+
         let userDTO = try await NetworkProvider.shared.kakaoProvider.asyncRequest(.login(accessToken: oauthToken.accessToken), decodeTo: UserDTO.self)
          return userDTO
-        
-         // return User.adminUser
     }
     
     func kakaoRegister(user: User) async throws -> UserDTO {

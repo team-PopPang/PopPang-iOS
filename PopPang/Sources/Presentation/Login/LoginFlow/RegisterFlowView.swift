@@ -18,11 +18,13 @@ enum RegisterRoute: Int, CaseIterable, Hashable {
 struct RegisterFlowView: View {
     @State private var currentStep: RegisterRoute = .nickname
     @State private var isForward: Bool = true   // 전환 방향 기록
+    @EnvironmentObject private var rootViewModel: RootViewModel
     
     var body: some View {
         VStack(spacing: 0) {
             // 커스텀 네비게이션바
             HStack {
+                // 닉네임 화면이 아니라면
                 if currentStep != .nickname {
                     Button {
                         withAnimation(.easeInOut) {
@@ -34,13 +36,42 @@ struct RegisterFlowView: View {
                             .foregroundStyle(Color.black)
                             .padding()
                     }
+                    
+                    Spacer()
+                    
+                    // MARK: - 건너띄기
+                    Button {
+                        withAnimation(.easeOut) {
+                            // 현재 키워드창이면 추천 항목 칸으로 이동
+                            if currentStep == .keyword {
+                                withAnimation(.easeInOut) {
+                                    isForward = true
+                                    currentStep = .category
+                                }
+                                return
+                            }
+                            
+                            // 카테고리창이면 
+                            if currentStep == .category {
+                                rootViewModel.send(action: .register)
+                                return
+                            }
+                        }
+                    } label: {
+                        Text("건너뛰기")
+                            .ppStyleFont(.scdream(.regular, size: 13))
+                            .foregroundStyle(Color.mainGray)
+                            .padding()
+                    }
+                    
+                    // 닉네임 화면이라면
                 } else {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 20))
                         .opacity(0)
                         .padding()
+                    Spacer()
                 }
-                Spacer()
             }
             .frame(height: 44)
             .background(Color.white)
