@@ -47,7 +47,7 @@ struct HomeView: View {
                 ScrollView(showsIndicators: false) {
                     LazyVStack(spacing: 0) {
                         // MARK: - Best Popup
-                        BestPopupScrollView(viewModel: homeViewModel)
+                        BestPopupScrollView(homeViewModel: homeViewModel)
                         
                         // MARK: - Coming Popup
                         HStack {
@@ -74,7 +74,7 @@ struct HomeView: View {
                         }
                         .padding(.top, 50)
                         
-                        ComingPopupScrollView(viewModel: homeViewModel)
+                        ComingPopupScrollView(homeViewModel: homeViewModel)
                         
                         // MARK: - DropDownView
                         HStack {
@@ -104,7 +104,7 @@ struct HomeView: View {
                         .padding(.trailing, .contentPadding)
                         
                         // MARK: - GridView
-                        GridPopupScrollView(viewModel: homeViewModel)
+                        GridPopupScrollView(homeViewModel: homeViewModel)
                         .padding(.top, 15)
                         .padding(.trailing, .contentPadding)
                     }
@@ -198,7 +198,7 @@ extension HomeView {
         let allPopups = homeViewModel.bestPopups + homeViewModel.comingPopups + homeViewModel.gridPopups
 
         if let targetPopup = allPopups.first(where: { $0.popupUuid == popupId }) {
-            coordinator.push(.popupDetail(targetPopup))
+            coordinator.push(.popupDetail(homeViewModel.userUuid, targetPopup))
             Logger.d("팝업 상세로 이동 — \(targetPopup.name)")
         } else {
             Logger.w("해당 popupId에 맞는 팝업을 찾을 수 없음")
@@ -209,16 +209,16 @@ extension HomeView {
 // MARK: - Best Popup
 private struct BestPopupScrollView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
-    @ObservedObject var viewModel: HomeViewModel
+    @ObservedObject var homeViewModel: HomeViewModel
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: 15) {
-                ForEach(viewModel.bestPopups, id: \.self) { popup in
+                ForEach(homeViewModel.bestPopups, id: \.self) { popup in
                     
                     // MARK: - Cell
                     BestPopupCell(popup: popup)
                         .onTapGesture {
-                            coordinator.push(.popupDetail(popup))
+                            coordinator.push(.popupDetail(homeViewModel.userUuid, popup))
                         }
                 }
             }
@@ -230,17 +230,17 @@ private struct BestPopupScrollView: View {
 // MARK: - Coming Popup
 private struct ComingPopupScrollView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
-    @ObservedObject var viewModel: HomeViewModel
+    @ObservedObject var homeViewModel: HomeViewModel
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             LazyHStack(spacing: 15) {
-                ForEach(viewModel.comingPopups, id: \.self) { popup in
+                ForEach(homeViewModel.comingPopups, id: \.self) { popup in
                     
                     // MARK: - Cell
                     ComingPopupCell(popup: popup)
                         .onTapGesture {
-                            coordinator.push(.popupDetail(popup))
+                            coordinator.push(.popupDetail(homeViewModel.userUuid, popup))
                         }
                 }
             }
@@ -254,7 +254,7 @@ private struct ComingPopupScrollView: View {
 // MARK: - Current Popup
 private struct GridPopupScrollView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
-    @ObservedObject var viewModel: HomeViewModel
+    @ObservedObject var homeViewModel: HomeViewModel
     private let columns = [
         // flexible: 가로 공간이 남으면 균등하게 나눠 쓰기
         GridItem(.flexible(), spacing: 15),
@@ -263,12 +263,12 @@ private struct GridPopupScrollView: View {
     
     var body: some View {
         LazyVGrid(columns: columns, spacing: 20) {
-            ForEach(viewModel.gridPopups) { popup in
+            ForEach(homeViewModel.gridPopups) { popup in
                 
                 VStack(alignment: .leading) {
                     GridPopupCell(popup: popup)
                         .onTapGesture {
-                            coordinator.push(.popupDetail(popup))
+                            coordinator.push(.popupDetail(homeViewModel.userUuid, popup))
                         }
                         .padding(.bottom, 0)
                 }

@@ -14,8 +14,13 @@ struct PopupDetailView: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
     @EnvironmentObject private var calendarViewModel: CalendarViewModel
-    @StateObject private var popupDetailViewModel = PopupDetailViewModel()
+    @StateObject private var popupDetailViewModel: PopupDetailViewModel
     let popup: Popup
+    
+    init(userUuid: String, popup: Popup) {
+        _popupDetailViewModel = StateObject(wrappedValue: PopupDetailViewModel(userUuid: userUuid, popup: popup))
+        self.popup = popup
+    }
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -53,7 +58,7 @@ struct PopupDetailView: View {
                             
                             Spacer()
                             
-                            if let viewCount = popup.viewCount {
+                            if let viewCount = popupDetailViewModel.popup.viewCount {
                                 Image("viewCount")
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
@@ -63,7 +68,7 @@ struct PopupDetailView: View {
                                     .ppStyleFont(.scdream(.regular, size: 9))
                             }
                             
-                            if let favoriteCount = popup.favoriteCount {
+                            if let favoriteCount = popupDetailViewModel.popup.favoriteCount {
                                 Image("favoriteCount")
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
@@ -128,15 +133,17 @@ struct PopupDetailView: View {
                                                           popupId: popup.popupUuid)
                 }
                 
-                FavoriteButton(isFavorite: homeViewModel.isLiked(popup: popup),
+                FavoriteButton(isFavorite: popupDetailViewModel.popup.isFavorited,
                                buttonTitle: "찜하기",
                                buttonTitle2: "찜 취소하기",
                                  height: 40) {
+                    
                     // MARK: - 좋아요 토글 및 팝팡뷰 갱신
                     Task {
-                        await homeViewModel.toggleLike(popup: popup)
+                        await popupDetailViewModel.toggleLike()
                         
                         // MARK: - 비활성화
+                        // await homeViewModel.toggleLike(popup: popup)
                         // await favoriteViewModel.getFavoritePopups()
                         // await calendarViewModel.getAllPopupData()
                     }
@@ -228,7 +235,7 @@ private struct InfoView: View {
 }
 
 #Preview {
-    PopupDetailView(popup: Popup.popupMock)
+    PopupDetailView(userUuid: "", popup: Popup.popupMock)
         .environmentObject(HomeViewModel(userUuid: "1234"))
         .environmentObject(FavoriteViewModel(userUuid: "1234"))
 }

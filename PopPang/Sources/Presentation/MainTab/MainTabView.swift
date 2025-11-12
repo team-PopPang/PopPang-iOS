@@ -8,25 +8,28 @@
 import SwiftUI
 
 struct MainTabView: View {
-    var userUduuid: String
+    var userUuid: String
     var isAlerted: Bool
     
     @State private var selectedTab: MainTabType = .home
     @EnvironmentObject private var rootViewModel: RootViewModel
     @StateObject private var homeViewModel: HomeViewModel
     @StateObject private var calendarViewModel: CalendarViewModel
+    @StateObject private var mapViewModel: MapViewModel
     @StateObject private var favoriteViewModel: FavoriteViewModel
     @StateObject private var profileViewModel: ProfileViewModel
     
-    init(userUduuid: String, isAlerted: Bool) {
-        self.userUduuid = userUduuid
+    
+    init(userUuid: String, isAlerted: Bool) {
+        self.userUuid = userUuid
         self.isAlerted = isAlerted
         
         // MARK: - 뷰모델초기화
-        _homeViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createHome(userUuid: userUduuid))
-        _calendarViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createCalendar(userUuid: userUduuid))
-        _favoriteViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createBookmark(userUuid: userUduuid))
-        _profileViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createProfile(userUuid: userUduuid, isAlerted: isAlerted))
+        _homeViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createHome(userUuid: userUuid))
+        _calendarViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createCalendar(userUuid: userUuid))
+        _mapViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createMapViewModel(userUuid: userUuid))
+        _favoriteViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createBookmark(userUuid: userUuid))
+        _profileViewModel = StateObject(wrappedValue: ViewModelFactory.shared.createProfile(userUuid: userUuid, isAlerted: isAlerted))
     }
     
     var body: some View {
@@ -35,12 +38,11 @@ struct MainTabView: View {
                 ForEach(MainTabType.allCases, id: \.self) { tab in
                     Group {
                         switch tab {
-                        case .home:
-                            HomeView()
+                        case .home:     HomeView()
                         case .calendar: CalendarView()
-                        case .map: MapView()
+                        case .map:      MapView()
                         case .favorite: FavoriteView(selectedTab: $selectedTab)
-                        case .profile: ProfileView()
+                        case .profile:  ProfileView()
                         }
                     }
                     .tabItem {
@@ -56,16 +58,18 @@ struct MainTabView: View {
         }
         .environmentObject(homeViewModel)
         .environmentObject(calendarViewModel)
+        .environmentObject(mapViewModel)
         .environmentObject(favoriteViewModel)
         .environmentObject(profileViewModel)
     }
 }
 
 #Preview {
-    MainTabView(userUduuid: "1234", isAlerted: false)
+    MainTabView(userUuid: "1234", isAlerted: false)
         .environmentObject(RootViewModel())
         .environmentObject(HomeViewModel(userUuid: "1234"))
         .environmentObject(CalendarViewModel(userUuid: "1234"))
+        .environmentObject(MapViewModel(userUuid: "1234"))
         .environmentObject(FavoriteViewModel(userUuid: "1234"))
         .environmentObject(ProfileViewModel(userUuid: "1234", isAlerted: false))
 }

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct FavoriteCalendarPopupListView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
     let date: Date
     let popups: [Popup]
     var body: some View {
@@ -32,7 +33,7 @@ struct FavoriteCalendarPopupListView: View {
                         ForEach(Array(popups.enumerated()), id: \.element) { index, popup in
                             FavoriteCalendarPopupCell(popup: popup)
                                 .onTapGesture {
-                                    coordinator.push(.popupDetail(popup))
+                                    coordinator.push(.popupDetail(favoriteViewModel.userUuid, popup))
                                 }
                             
                             // 마미막 셀 아래에는 Divider 넣지 않겠다

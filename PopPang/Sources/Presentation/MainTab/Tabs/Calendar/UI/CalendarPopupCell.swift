@@ -9,8 +9,6 @@ import SwiftUI
 import Kingfisher
 
 struct CalendarPopupCell: View {
-    // @EnvironmentObject private var homeViewModel: HomeViewModel
-    // @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
     @EnvironmentObject private var calendarViewModel: CalendarViewModel
     let popup: Popup
     
@@ -74,9 +72,7 @@ struct CalendarPopupCell: View {
                                     await calendarViewModel.toggleLike(popup: popup)
                                     
                                     // MARK: - 비활성화
-                                    await calendarViewModel.getAllPopupData()
-                                    // await homeViewModel.getAllPopupData()
-                                    // await favoriteViewModel.getFavoritePopups()
+                                    // await calendarViewModel.getAllPopupData()
                                 }
                             } label: {
                                 HStack(spacing: 5) {

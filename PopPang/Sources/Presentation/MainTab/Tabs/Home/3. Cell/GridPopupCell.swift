@@ -10,8 +10,6 @@ import Kingfisher
 
 struct GridPopupCell: View {
     @EnvironmentObject private var homeViewModel: HomeViewModel
-    @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
-    @EnvironmentObject private var calendarViewModel: CalendarViewModel
     let popup: Popup
 
     // 셀 너비를 미리 계산해서 전달받거나 상수로 지정
@@ -37,10 +35,6 @@ struct GridPopupCell: View {
                 ) {
                     Task {
                         await homeViewModel.toggleLike(popup: popup)
-                        
-                        // MARK: - 비활성화
-                        // await favoriteViewModel.getFavoritePopups()
-                        // await calendarViewModel.getAllPopupData()
                     }
                 }
                 .padding(10)

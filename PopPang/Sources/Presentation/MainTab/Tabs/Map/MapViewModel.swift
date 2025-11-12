@@ -10,6 +10,7 @@ import CoreLocation
 import Combine
 
 final class MapViewModel: ObservableObject {
+    let userUuid: String
     @Dependency private var popupUsecase: PopupUsecaseProtocol
     @Published var mapPopups: [Popup] = []
     private var allPopups: [Popup] = [] // 전체 팝럽 저장용
@@ -26,7 +27,9 @@ final class MapViewModel: ObservableObject {
     @Published var searchText: String = ""
     private var cancellables = Set<AnyCancellable>()
     
-    init() {
+    init(userUuid: String) {
+        self.userUuid = userUuid
+        
         Task {
             await getAllPopupData()
         }

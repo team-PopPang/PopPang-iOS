@@ -26,6 +26,7 @@ struct PopupDTO: Decodable {
     let mediaType: String
     let favoriteCount: Int?
     let viewCount: Int?
+    let isFavorited: Bool
 }
 
 extension PopupDTO {
@@ -58,7 +59,8 @@ extension PopupDTO {
             imageUrlList: fullImageUrlList,
             mediaType: Popup.MediaType(rawValue: mediaType.uppercased()) ?? .image,
             favoriteCount: favoriteCount,
-            viewCount: viewCount
+            viewCount: viewCount,
+            isFavorited: isFavorited
         )
     }
 }

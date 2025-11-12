@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CalendarPopupListView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    let userUuid: String
     let date: Date
     let popups: [Popup]
     var body: some View {
@@ -32,7 +33,7 @@ struct CalendarPopupListView: View {
                         ForEach(Array(popups.enumerated()), id: \.element) { index, popup in
                             CalendarPopupCell(popup: popup)
                                 .onTapGesture {
-                                    coordinator.push(.popupDetail(popup))
+                                    coordinator.push(.popupDetail(userUuid, popup))
                                 }
                             
                             // 마미막 셀 아래에는 Divider 넣지 않겠다
@@ -58,5 +59,5 @@ struct CalendarPopupListView: View {
 }
 
 #Preview {
-    CalendarPopupListView(date: .now, popups: [.popupMock, .popupMock2])
+    CalendarPopupListView(userUuid: "1234", date: .now, popups: [.popupMock, .popupMock2])
 }

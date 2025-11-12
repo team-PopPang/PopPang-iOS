@@ -61,7 +61,7 @@ private struct ListGridPopupScrollView: View {
                     VStack(alignment: .leading) {
                         ListPopupCell(popup: popup)
                             .onTapGesture {
-                                coordinator.push(.popupDetail(popup))
+                                coordinator.push(.popupDetail(favoriteViewModel.userUuid, popup))
                             }
                     }
                 }

@@ -14,7 +14,6 @@ final class HomeViewModel: ObservableObject {
     @Published var bestPopups: [Popup] = []
     @Published var comingPopups: [Popup] = []
     @Published var gridPopups: [Popup] = []
-    @Published var likePostIds: Set<String> = [] // 찜 목록 popupUuid
     
     // MARK: - 지역 시트 관련
     @Published var showRegionSheet: Bool = false
@@ -24,7 +23,7 @@ final class HomeViewModel: ObservableObject {
     
     // MARK: - 정렬 시트 관련
     @Published var showSortSheet: Bool = false
-    @Published var selectedOption: SortButton.SortOption = .mostFavorited
+    @Published var selectedOption: SortButton.SortOption = .newest
     
     init(userUuid: String) {
         self.userUuid = userUuid
@@ -58,9 +57,6 @@ extension HomeViewModel {
                 group.addTask { (1, await self.getPersonalUpcomingPopupList()) }
                 group.addTask { (2, await self.getPersonalFilteredPopupList()) }
                 
-                // 찜 리스트를 가져와서 uuid만 배열로 가짐
-                group.addTask { (3, await self.getFavoriteList()) }
-
                 // 완료된 순서대로 결과 받기
                 for try await (index, popups) in group {
                     await MainActor.run {
@@ -72,8 +68,6 @@ extension HomeViewModel {
                                 .sorted { $0.startDate < $1.startDate }
                         case 2:
                             self.gridPopups = popups
-                        case 3:
-                            self.likePostIds = Set(popups.map { $0.popupUuid })
                         default:
                             break
                         }
@@ -139,46 +133,37 @@ extension HomeViewModel {
     }
 }
 
-
-
 // MARK: - 찜 관련 메서드
 extension HomeViewModel {
     
     /// 팝업이 좋아요 눌린 상태인지 체크
     func isLiked(popup: Popup) -> Bool {
-        likePostIds.contains(popup.popupUuid)
+        popup.isFavorited
     }
     
     /// 좋아요 상태 바꿔주는 함수
     func toggleLike(popup: Popup) async {
         do {
-            if likePostIds.contains(popup.popupUuid) {
+            if popup.isFavorited {
                 Logger.d("좋아요 취소")
                 try await popupUsecase.removeFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
-                _ = await MainActor.run {
-                    likePostIds.remove(popup.popupUuid)
+                await MainActor.run {
+                    if let index = self.gridPopups.firstIndex(where: { $0.popupUuid == popup.popupUuid }) {
+                        self.gridPopups[index].isFavorited = false
+                    }
                 }
             } else {
                 Logger.d("좋아요 추가")
                 try await popupUsecase.addFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
-                _ = await MainActor.run {
-                    likePostIds.insert(popup.popupUuid)
+                
+                await MainActor.run {
+                    if let index = self.gridPopups.firstIndex(where: { $0.popupUuid == popup.popupUuid }) {
+                        self.gridPopups[index].isFavorited = true
+                    }
                 }
             }
         } catch {
             Logger.e("❌ 찜 토글 실패:")
-        }
-    }
-    
-    // MARK: - 찜 항목 가져오기 비동기
-    func getFavoriteList() async -> [Popup] {
-        do {
-            let favoritePopups = try await popupUsecase.getFavoriteList(userUuid: userUuid)
-            // Logger.d("찜 팝업 likePostIds 가져오기 성공")
-            return favoritePopups
-        } catch {
-            Logger.e("❌ 찜 목록 불러오기 오류: \(error)")
-            return []
         }
     }
 }

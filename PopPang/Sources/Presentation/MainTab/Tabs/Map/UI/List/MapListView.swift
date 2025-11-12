@@ -23,7 +23,6 @@ struct MapListView: View {
                         MapListPopupCell(popup: popup)
                             .onTapGesture {
                                 MapCoordinator.shared.moveCamera(to: popup)
-                                // coordinator.push(.popupDetail(popup)) // ✅ 디테일 화면 이동
                             }
                         
                         if index != popups.count - 1 {

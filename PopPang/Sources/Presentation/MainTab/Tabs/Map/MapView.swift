@@ -12,7 +12,7 @@ import BottomSheet
 
 struct MapView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
-    @StateObject private var mapViewModel = MapViewModel()
+    @EnvironmentObject private var mapViewModel: MapViewModel
 
     // MARK: - 시트 관련
     @State var firstSheetPosition: BottomSheetPosition = .relative(0.5)
@@ -24,7 +24,7 @@ struct MapView: View {
     // MARK: - 높이
     @State private var mapSearchTextFieldFrame: CGRect = .zero
     @State private var tabBarHeight: CGFloat = 0
-    
+
     // MARK: - 테스트
     @State private var secondSheetType: SecondSheetType = .none
 
@@ -35,7 +35,7 @@ struct MapView: View {
                 .onAppear {
                     MapCoordinator.shared.checkIfLocationServiceIsEnabled()
                     MapCoordinator.shared.onMarkerSelected = { key, popup in
-                        coordinator.push(.popupDetail(popup))
+                        coordinator.push(.popupDetail(mapViewModel.userUuid, popup))
                     }
                 }
             

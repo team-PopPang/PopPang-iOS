@@ -10,6 +10,13 @@ import Kingfisher
 
 final class PopupDetailViewModel: ObservableObject {
     @Dependency var popupUsecase: PopupUsecaseProtocol
+    let userUuid: String
+    @Published var popup: Popup
+    
+    init(userUuid: String, popup: Popup) {
+        self.userUuid = userUuid
+        self.popup = popup
+    }
 }
 
 extension PopupDetailViewModel {
@@ -35,7 +42,7 @@ extension PopupDetailViewModel {
                     if value.image == nil {
                         // 메모리/디스크에 캐시가 없을 경우 다운로드 실행
                         KingfisherManager.shared.retrieveImage(with: url) { _ in
-                             // Logger.d("Preloaded \(url)")
+                            // Logger.d("Preloaded \(url)")
                         }
                     } else {
                         // Logger.d("Already cached \(url)")
@@ -50,3 +57,37 @@ extension PopupDetailViewModel {
         }
     }
 }
+
+// MARK: - 찜 관련
+extension PopupDetailViewModel {
+    /// 팝업이 찜 눌린 상태인지 체크
+    func isLiked(popup: Popup) -> Bool {
+        popup.isFavorited
+    }
+    
+    /// 찜 상태 바꿔주는 함수
+    func toggleLike() async {
+        do {
+            if popup.isFavorited {
+                Logger.d("좋아요 취소")
+                try await popupUsecase.removeFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
+                await MainActor.run {
+                    self.popup.isFavorited = false
+                    if let count = popup.favoriteCount {
+                        self.popup.favoriteCount = max(0, count - 1)
+                    }
+                }
+            } else {
+                Logger.d("좋아요 추가")
+                try await popupUsecase.addFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
+                await MainActor.run {
+                    self.popup.isFavorited = true
+                    self.popup.favoriteCount = (popup.favoriteCount ?? 0) + 1
+                }
+            }
+        } catch {
+            Logger.e("❌ 찜 토글 실패:")
+        }
+    }
+}
+

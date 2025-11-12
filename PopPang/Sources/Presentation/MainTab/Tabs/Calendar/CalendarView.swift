@@ -48,6 +48,7 @@ struct CalendarView: View {
                         .padding(.top, 20)
                     
                     CalendarPopupListView(
+                        userUuid: calendarViewModel.userUuid,
                         date: calendarViewModel.selectedDate,
                         popups: calendarViewModel.selectedPopups
                     )

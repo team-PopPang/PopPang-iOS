@@ -36,7 +36,7 @@ struct RootViewSwitcher: View {
                 
             // MARK: - 홈 루트
             case .authenticated:
-                MainTabView(userUduuid: rootViewModel.user?.userUuid ?? "", isAlerted: rootViewModel.user?.isAlerted ?? false)
+                MainTabView(userUuid: rootViewModel.user?.userUuid ?? "", isAlerted: rootViewModel.user?.isAlerted ?? false)
             }
         }
         .animation(.linear(duration: 0.3), value: rootViewModel.scene == .launch)

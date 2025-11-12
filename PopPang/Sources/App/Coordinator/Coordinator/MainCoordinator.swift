@@ -13,16 +13,12 @@ enum MainRoute: Hashable {
     
     // Home
     case alert(uuid: String)
-    case popupDetail(Popup)
+    case popupDetail(String, Popup)
     case comingPopupDetail
     
     // profile
     case profileSetting
     case notification
-    
-    // case notice
-    // case contectUs      // 문의하기
-    // case termsOfService // 이용약관
 }
 
 enum SheetRoute: Identifiable {
@@ -48,8 +44,8 @@ extension Coordinator where T == MainRoute {
         switch route {
         case .alert(let userUuid):
             AlertView(userUuid: userUuid)
-        case .popupDetail(let popup):
-            PopupDetailView(popup: popup)
+        case .popupDetail(let userUuid, let popup):
+            PopupDetailView(userUuid: userUuid, popup: popup)
         case .comingPopupDetail:
             ComingPopupDetailView()
             

@@ -23,6 +23,10 @@ final class ViewModelFactory {
         CalendarViewModel(userUuid: userUuid)
     }
     
+    func createMapViewModel(userUuid: String) -> MapViewModel {
+        MapViewModel(userUuid: userUuid)
+    }
+    
     func createBookmark(userUuid: String) -> FavoriteViewModel {
         FavoriteViewModel(userUuid: userUuid)
     }

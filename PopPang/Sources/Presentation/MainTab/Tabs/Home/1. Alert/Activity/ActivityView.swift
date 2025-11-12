@@ -22,7 +22,7 @@ struct ActivityView: View {
                         AlertPopupCell(popup: popup)
                             .contentShape(Rectangle()) // 터치 영역을 셀 전체로 확장
                             .onTapGesture {
-                                coordinator.push(.popupDetail(popup))
+                                coordinator.push(.popupDetail(homeViewModel.userUuid, popup))
                             }
                         
                         if activityViewModel.isEditing {

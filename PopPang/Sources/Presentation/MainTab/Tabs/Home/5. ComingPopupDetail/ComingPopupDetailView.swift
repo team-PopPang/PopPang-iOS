@@ -12,7 +12,7 @@ struct ComingPopupDetailView: View {
     
     var body: some View {
         ScrollView(showsIndicators: false) {
-            GridPopupScrollView(viewModel: homeViewModel)
+            GridPopupScrollView(homeViewModel: homeViewModel)
         }
         .padding(.horizontal, .contentPadding)
     }
@@ -20,7 +20,7 @@ struct ComingPopupDetailView: View {
 
 private struct GridPopupScrollView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
-    @ObservedObject var viewModel: HomeViewModel
+    @ObservedObject var homeViewModel: HomeViewModel
     private let columns = [
         // flexible: 가로 공간이 남으면 균등하게 나눠 쓰기
         GridItem(.flexible(), spacing: 15),
@@ -29,11 +29,11 @@ private struct GridPopupScrollView: View {
     
     var body: some View {
         LazyVGrid(columns: columns, spacing: 20) {
-            ForEach(viewModel.comingPopups) { popup in
+            ForEach(homeViewModel.comingPopups) { popup in
                 VStack(alignment: .leading) {
                     GridPopupCell(popup: popup)
                         .onTapGesture {
-                            coordinator.push(.popupDetail(popup))
+                            coordinator.push(.popupDetail(homeViewModel.userUuid, popup))
                         }
                         .padding(.bottom, 0)
                 }

@@ -92,7 +92,7 @@ struct SearchView: View {
                 Spacer()
             }
             .navigationDestination(item: $selectedPopup) { popup in
-                PopupDetailView(popup: popup)
+                PopupDetailView(userUuid: userUuid, popup: popup)
             }
         }
         .task {

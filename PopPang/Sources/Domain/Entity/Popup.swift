@@ -26,8 +26,9 @@ struct Popup: Hashable, Identifiable, Encodable {
     let captionSummary: String
     let imageUrlList: [String]
     let mediaType: MediaType
-    let favoriteCount: Int?
+    var favoriteCount: Int?
     var viewCount: Int?
+    var isFavorited: Bool
     
     enum MediaType: String, Codable {
         case image = "IMAGE"
@@ -71,7 +72,8 @@ extension Popup {
                            "https://poppang.co.kr/images/20251021-165057_18386722330126645/LH_메이커스_스튜디오_팝업스토어_소문내기_이벤트_2.jpg"],
             mediaType: .image,
             favoriteCount: 0,
-            viewCount: 0
+            viewCount: 0,
+            isFavorited: true
         )
     }()
     
@@ -106,7 +108,8 @@ extension Popup {
             imageUrlList: ["img_8"],
             mediaType: .image,
             favoriteCount: 0,
-            viewCount: 0
+            viewCount: 0,
+            isFavorited: true
         )
     }()
     
@@ -141,7 +144,8 @@ extension Popup {
             imageUrlList: ["img_8"],
             mediaType: .image,
             favoriteCount: 0,
-            viewCount: 0
+            viewCount: 0,
+            isFavorited: true
         )
     }()
 
