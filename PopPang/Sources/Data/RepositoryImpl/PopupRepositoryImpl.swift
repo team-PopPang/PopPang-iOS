@@ -8,6 +8,8 @@
 import Foundation
 
 final class PopupRepositoryImpl: PopupRepositoryProtocol {
+    
+    // MARK: - Popup
     func getPopupList() async throws -> [PopupDTO] {
         try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPopupList,
                                                                                decodeTo: [PopupDTO].self)
@@ -34,6 +36,25 @@ final class PopupRepositoryImpl: PopupRepositoryProtocol {
                                                                      decodeTo: [PopupDTO].self)
     }
     
+    // MARK: - 개인화 Popup
+    func getPersonalPopupList(userUuid: String) async throws -> [PopupDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPersonalPopupList(userUuid: userUuid),
+                                                                     decodeTo: [PopupDTO].self)
+    }
+    
+    func getPersonalUpcomingPopupList(userUuid: String) async throws -> [PopupDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPersonalUpcomingPopupList(userUuid: userUuid),
+                                                                     decodeTo: [PopupDTO].self)
+    }
+    
+    func getPersonalFilteredPopupList(userUuid: String, region: String, district: String, homeSortStandard: String) async throws -> [PopupDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPersonalFilteredPopupList(userUuid: userUuid,
+                                                                                                   region: region,
+                                                                                                   district: district,
+                                                                                                   homeSortStandard: homeSortStandard), decodeTo: [PopupDTO].self)
+    }
+    
+    // MARK: - Favorite
     func increaseViewCount(popupUuid: String) async throws {
         try await NetworkProvider.shared.popupProvidder.asyncRequestVoid(.increaseViewCount(popupUuid: popupUuid))
     }
@@ -46,6 +67,7 @@ final class PopupRepositoryImpl: PopupRepositoryProtocol {
         try await NetworkProvider.shared.popupProvidder.asyncRequestVoid(.removeFavorite(userUuid: userUuid, popupUuid: popupUuid))
     }
     
+    // MARK: - 지역/구
     func getRegionList() async throws -> [RegionListDTO] {
         try await NetworkProvider.shared.popupProvidder.asyncRequest(.getRegionList, decodeTo: [RegionListDTO].self)
     }

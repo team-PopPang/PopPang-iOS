@@ -15,6 +15,7 @@ final class PopupUsecaseImpl: PopupUsecaseProtocol {
         self.popupRepository = popupRepository
     }
     
+    // MARK: - Popup
     func getPopupList() async throws -> [Popup] {
         try await popupRepository.getPopupList()
             .map { $0.toEntity() }
@@ -40,6 +41,23 @@ final class PopupUsecaseImpl: PopupUsecaseProtocol {
             .map { $0.toEntity() }
     }
     
+    // MARK: - 개인화 Popup
+    func getPersonalPopupList(userUuid: String) async throws -> [Popup] {
+        try await popupRepository.getPersonalPopupList(userUuid: userUuid)
+            .map { $0.toEntity() }
+    }
+    
+    func getPersonalUpcomingPopupList(userUuid: String) async throws -> [Popup] {
+        try await popupRepository.getPersonalUpcomingPopupList(userUuid: userUuid)
+            .map { $0.toEntity() }
+    }
+    
+    func getPersonalFilteredPopupList(userUuid: String, region: String, district: String, homeSortStandard: String) async throws -> [Popup] {
+        try await popupRepository.getPersonalFilteredPopupList(userUuid: userUuid, region: region, district: district, homeSortStandard: homeSortStandard)
+            .map { $0.toEntity() }
+    }
+    
+    // MARK: - Favorite
     func increaseViewCount(popupUuid: String) async throws {
         try await popupRepository.increaseViewCount(popupUuid: popupUuid)
     }
@@ -52,6 +70,7 @@ final class PopupUsecaseImpl: PopupUsecaseProtocol {
         try await popupRepository.removeFavorite(userUuid: userUuid, popupUuid: popupUuid)
     }
     
+    // MARK: - 지역/구
     func getRegionList() async throws -> [RegionList] {
         try await popupRepository.getRegionList()
             .map { $0.toEntity() }

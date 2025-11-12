@@ -9,6 +9,7 @@ import Foundation
 
 protocol PopupUsecaseProtocol {
     
+    // MARK: - Popup
     func getPopupList() async throws -> [Popup]
     
     func getUpcomingPopupList() async throws -> [Popup]
@@ -19,11 +20,22 @@ protocol PopupUsecaseProtocol {
     
     func searchPopupList(searchText: String) async throws -> [Popup]
     
+    
+    
+    // MARK: - 개인화 Popup
+    func getPersonalPopupList(userUuid: String) async throws -> [Popup]
+    
+    func getPersonalUpcomingPopupList(userUuid: String) async throws -> [Popup]
+    
+    func getPersonalFilteredPopupList(userUuid: String, region: String, district: String, homeSortStandard: String) async throws -> [Popup]
+    
+    // MARK: - Favorite
     func increaseViewCount(popupUuid: String) async throws
     
     func addFavorite(userUuid: String, popupUuid: String) async throws
     
     func removeFavorite(userUuid: String, popupUuid: String) async throws
     
+    // MARK: - 지역/구
     func getRegionList() async throws -> [RegionList]
 }

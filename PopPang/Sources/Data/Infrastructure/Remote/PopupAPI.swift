@@ -10,11 +10,16 @@ import Foundation
 
 enum PopupAPI {
     // popup
-    case getPopupList                         /// 전체 팝업
-    case getUpcomingPopupList                 /// 다가오는 팝업
-    case getInProgressPopupList               /// 진행 중인 팝업
+    case getPopupList                         /// 팝업 전체 조회
+    case getUpcomingPopupList                 /// 다가오는 팝업 조회
+    case getInProgressPopupList               /// 진행 중인 팝업 조회
     case searchPopupList(searchText: String)  /// 팝업 검색
     case increaseViewCount(popupUuid: String) /// 팝업 조회수 증가
+    
+    // 개인화 popup
+    case getPersonalPopupList(userUuid: String)             /// 팝업 전체 조회
+    case getPersonalUpcomingPopupList(userUuid: String)     /// 다가오는 팝업 조회/
+    case getPersonalFilteredPopupList(userUuid: String, region: String, district: String, homeSortStandard: String)            /// 홈 화면용 팝업 필터 조회
     
     // favorite
     case addFavorite(userUuid: String, popupUuid: String)
@@ -30,34 +35,55 @@ extension PopupAPI: TargetType {
     
     var path: String {
         switch self {
+        // popup
         case .getPopupList: return "/popup"
         case .getUpcomingPopupList: return "/popup/upcoming"
         case .getInProgressPopupList: return "/popup/inProgress" 
         case .searchPopupList: return "/popup/search"
         case .increaseViewCount(let popupUuid): return "/popup/\(popupUuid)/view"
+            
+        // 개인화 popup
+        case .getPersonalPopupList(let userUuid): return "/users/\(userUuid)/popups"                      /// 팝업 전체 조회
+        case .getPersonalUpcomingPopupList(let userUuid): return "/users/\(userUuid)/popups/upcoming"    /// 다가오는 팝업 조회
+        case .getPersonalFilteredPopupList(let userUuid, _, _, _): return "/users/\(userUuid)/popups/filtered/home"       /// 홈 팝업 필터 조회
+            
+        // favorite
         case .addFavorite: return "/favorite"
         case .removeFavorite: return "/favorite"
         case .getFavoriteList(let userUuid): return "/favorite/popup/\(userUuid)"
+            
+        // 지역/구 목록 조회
         case .getRegionList: return "/popup/regions/districts"
         }
     }
     
     var method: Moya.Method {
         switch self {
+        // popup
         case .getPopupList: return .get
         case .getUpcomingPopupList: return .get
         case .getInProgressPopupList: return .get
         case .searchPopupList: return .get
         case .increaseViewCount: return .post
+            
+        // 개인화 popup
+        case .getPersonalPopupList: return .get
+        case .getPersonalUpcomingPopupList: return .get
+        case .getPersonalFilteredPopupList: return .get
+            
+        // favorite
         case .addFavorite: return .post
         case .removeFavorite: return .delete
         case .getFavoriteList: return .get
+            
+        // 지역/구 목록 조회
         case .getRegionList: return .get
         }
     }
     
     var task: Moya.Task {
         switch self {
+        // popup
         case .getPopupList:
             return .requestPlain
         case .getUpcomingPopupList:
@@ -68,6 +94,21 @@ extension PopupAPI: TargetType {
             return .requestParameters(parameters: ["q": searchText],
                                       encoding: URLEncoding.queryString)
             
+        // 개인화 popup
+        case .getPersonalPopupList(let userUuid):
+            return .requestParameters(parameters: ["userUuid": userUuid],
+                                      encoding: URLEncoding.queryString)
+        case .getPersonalUpcomingPopupList(let userUuid):
+            return .requestParameters(parameters: ["userUuid": userUuid],
+                                      encoding: URLEncoding.queryString)
+        case .getPersonalFilteredPopupList(_, let region, let district, let homeSortStandard):
+            return .requestParameters(parameters: ["region": region,
+                                                   "district": district,
+                                                   "homeSortStandard": homeSortStandard
+                                                  ],
+                                      encoding: URLEncoding.queryString)
+            
+        // favorite
         case .increaseViewCount:
             return .requestPlain
             
@@ -86,6 +127,7 @@ extension PopupAPI: TargetType {
         case .getFavoriteList:
             return .requestPlain
             
+        // 지역/구 목록 조회
         case .getRegionList:
             return .requestPlain
         }

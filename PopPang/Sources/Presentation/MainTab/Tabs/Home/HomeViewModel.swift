@@ -61,9 +61,11 @@ extension HomeViewModel {
            
             // MARK: - 리턴값이 같은 팝업 관련 요청은 TaskGroup 안에서 벙렬 처리
             try await withThrowingTaskGroup(of: (Int, [Popup]).self) {  group in
+                let userUuid = self.userUuid
+                
                 // 0, 1, 2로 구분해서 요청
-                group.addTask { (0, try await self.popupUsecase.getPopupList()) }           // 첫 섹션
-                group.addTask { (1, try await self.popupUsecase.getUpcomingPopupList()) }   // 두번쨰 섹션
+                group.addTask { (0, try await self.popupUsecase.getPersonalPopupList(userUuid: userUuid)) }           // 첫 섹션
+                group.addTask { (1, try await self.popupUsecase.getPersonalUpcomingPopupList(userUuid: userUuid)) }   // 두번쨰 섹션
                 group.addTask { (2, try await self.popupUsecase.getInProgressPopupList()) } // 세번째 섹션
                 group.addTask { (3, await self.getFavoriteList()) }                         // 찜 리스트를 가져와서 uuid만 배열로 가짐
 
