@@ -150,6 +150,13 @@ extension HomeViewModel {
                 await MainActor.run {
                     if let index = self.gridPopups.firstIndex(where: { $0.popupUuid == popup.popupUuid }) {
                         self.gridPopups[index].isFavorited = false
+                        
+                        // 좋아요 수 감소
+                        if let count = self.gridPopups[index].favoriteCount {
+                            self.gridPopups[index].favoriteCount = max(0, count - 1)
+                        } else {
+                            self.gridPopups[index].favoriteCount = 0
+                        }
                     }
                 }
             } else {
@@ -159,6 +166,9 @@ extension HomeViewModel {
                 await MainActor.run {
                     if let index = self.gridPopups.firstIndex(where: { $0.popupUuid == popup.popupUuid }) {
                         self.gridPopups[index].isFavorited = true
+                        
+                        // 좋아요 수 증가
+                        self.gridPopups[index].favoriteCount = (self.gridPopups[index].favoriteCount ?? 0) + 1
                     }
                 }
             }
