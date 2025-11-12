@@ -40,7 +40,7 @@ struct SortButton: View {
             switch self {
 
             case .newest: return "최신순"
-            case .closingSoon: return "마감임박순"
+            case .closingSoon: return "마감순"
             case .mostFavorited: return "찜순"
             case .mostViewed: return "조회순"
             }

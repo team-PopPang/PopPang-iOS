@@ -78,10 +78,16 @@ struct HomeView: View {
                         
                         // MARK: - DropDownView
                         HStack {
-                            
                             Text(homeViewModel.selectedRegion?.region ?? "전체")
                                 .foregroundStyle(Color.mainBlack)
                                 .ppStyleFont(.scdream(.medium, size: 17))
+                            
+                            if let selectedDistrict = homeViewModel.selectedDistrict,
+                                selectedDistrict != "전체" {
+                                Text(selectedDistrict)
+                                    .foregroundStyle(Color.mainBlack)
+                                    .ppStyleFont(.scdream(.medium, size: 17))
+                            }
                             
                             Spacer()
                             

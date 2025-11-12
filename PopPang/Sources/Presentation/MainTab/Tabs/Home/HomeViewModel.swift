@@ -189,9 +189,17 @@ extension HomeViewModel {
     // MARK: - 지역 필터링 가져오기 비동기
     func getRegionList() async -> [RegionList] {
         do {
-            let regionListDTO = try await popupUsecase.getRegionList()
-            // Logger.d("지역 필터링 가져오기 성공")
-            return regionListDTO
+            let regionList = try await popupUsecase.getRegionList()
+                .sorted { lhs, rhs in
+                    // 전체를 1순위 서울을 2순위
+                    if lhs.region == "전체" { return true }
+                    if rhs.region == "전체" { return false }
+                    if lhs.region == "서울" { return true }
+                    if rhs.region == "서울" { return false }
+                    return false
+                }
+            
+            return regionList
         } catch {
             Logger.e("❌ 찜 목록 불러오기 오류: \(error)")
             return []
