@@ -19,7 +19,7 @@ struct MapView: View {
     @State var secondSheetPosition: BottomSheetPosition = .hidden
     
     // MARK: - 지역 필터링 선택
-    @State private var selectedOption: SortButton.SortOption = .favorite
+    @State private var selectedOption: SortButton.SortOption = .mostFavorited
     
     // MARK: - 높이
     @State private var mapSearchTextFieldFrame: CGRect = .zero

@@ -15,7 +15,6 @@ final class HomeViewModel: ObservableObject {
     @Published var comingPopups: [Popup] = []
     @Published var gridPopups: [Popup] = []
     @Published var likePostIds: Set<String> = [] // 찜 목록 popupUuid
-    // @Published var isLoaded: Bool = false
     
     // MARK: - 지역 시트 관련
     @Published var showRegionSheet: Bool = false
@@ -25,49 +24,42 @@ final class HomeViewModel: ObservableObject {
     
     // MARK: - 정렬 시트 관련
     @Published var showSortSheet: Bool = false
-    @Published var selectedOption: SortButton.SortOption = .favorite
+    @Published var selectedOption: SortButton.SortOption = .mostFavorited
     
     init(userUuid: String) {
         self.userUuid = userUuid
-        
-        Task {
-            // await getAllPopupData() /// 3개 섹션 전체 팝업 가져오기
-            /*
-            await MainActor.run {
-                self.isLoaded = true
-            }
-             */
-        }
     }
 }
 
-// MARK: - 팝업 관련 메서드
+// MARK: - 팝업 리스트 비동기 함수
 extension HomeViewModel {
     
     // MARK: - 팝업 전체 가져오기 비동기
     func getAllPopupData() async {
         do {
-            
-            // MARK: - 지역 리스트는 리턴값이 다르므로 async let으로 병렬 실행
-            async let regionTask = self.getRegionList()
-            let regionList = await regionTask
-            await MainActor.run {
-                self.regions = regionList
-                if let first = regionList.first {
-                    self.selectedRegion = first
-                    self.selectedDistrict = first.districtList.first
+            // MARK: - 지역 리스트는 리턴값이 다르므로 async let으로 병렬 실행(존재하지 않을때만 호출)
+            if regions.isEmpty {
+                async let regionTask = self.getRegionList()
+                let regionList = await regionTask
+                await MainActor.run {
+                    self.regions = regionList
+                    if let first = regionList.first {
+                        self.selectedRegion = first
+                        self.selectedDistrict = first.districtList.first
+                    }
                 }
             }
            
             // MARK: - 리턴값이 같은 팝업 관련 요청은 TaskGroup 안에서 벙렬 처리
             try await withThrowingTaskGroup(of: (Int, [Popup]).self) {  group in
-                let userUuid = self.userUuid
                 
                 // 0, 1, 2로 구분해서 요청
-                group.addTask { (0, try await self.popupUsecase.getPersonalPopupList(userUuid: userUuid)) }           // 첫 섹션
-                group.addTask { (1, try await self.popupUsecase.getPersonalUpcomingPopupList(userUuid: userUuid)) }   // 두번쨰 섹션
-                group.addTask { (2, try await self.popupUsecase.getInProgressPopupList()) } // 세번째 섹션
-                group.addTask { (3, await self.getFavoriteList()) }                         // 찜 리스트를 가져와서 uuid만 배열로 가짐
+                group.addTask { (0, await self.getPersonalPopupList()) }
+                group.addTask { (1, await self.getPersonalUpcomingPopupList()) }
+                group.addTask { (2, await self.getPersonalFilteredPopupList()) }
+                
+                // 찜 리스트를 가져와서 uuid만 배열로 가짐
+                group.addTask { (3, await self.getFavoriteList()) }
 
                 // 완료된 순서대로 결과 받기
                 for try await (index, popups) in group {
@@ -88,12 +80,66 @@ extension HomeViewModel {
                     }
                 }
             }
-             Logger.d("홈뷰 데이터 로드 완료")
+            Logger.d("홈뷰 데이터 로드 완료")
         } catch {
             Logger.e("❌ 팝업 목록 불러오기 오류: \(error)")
         }
     }
+    
+    // 첫 섹션
+    func getPersonalPopupList() async -> [Popup] {
+        do {
+            let popups =  try await popupUsecase.getPersonalPopupList(userUuid: userUuid)
+            return popups
+        } catch {
+            Logger.e("\(error)")
+            return []
+        }
+    }
+    
+    // 두번쨰 섹션
+    func getPersonalUpcomingPopupList() async -> [Popup] {
+        do {
+            let popups =  try await popupUsecase.getPersonalUpcomingPopupList(userUuid: userUuid)
+            return popups
+        } catch {
+            Logger.e("\(error)")
+            return []
+        }
+    }
+    
+    // 세번째 섹션
+    func getPersonalFilteredPopupList() async -> [Popup] {
+        do {
+            let popups =  try await popupUsecase.getPersonalFilteredPopupList(userUuid: userUuid,
+                                                                              region: selectedRegion?.region ?? "전체",
+                                                                              district: selectedDistrict ?? "전체",
+                                                                              homeSortStandard: selectedOption.rawValue)
+            return popups
+        } catch {
+            Logger.e("\(error)")
+            return []
+        }
+    }
+    
+    // 세번째 섹션 업데이트
+    func updatePersonalFilteredPopupList() async {
+        do {
+            let popups =  try await popupUsecase.getPersonalFilteredPopupList(userUuid: userUuid,
+                                                                              region: selectedRegion?.region ?? "전체",
+                                                                              district: selectedDistrict ?? "전체",
+                                                                              homeSortStandard: selectedOption.rawValue)
+            await MainActor.run {
+                self.gridPopups = popups
+            }
+        } catch {
+            Logger.e("\(error)")
+            
+        }
+    }
 }
+
+
 
 // MARK: - 찜 관련 메서드
 extension HomeViewModel {

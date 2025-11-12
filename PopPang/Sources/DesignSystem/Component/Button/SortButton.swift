@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - 프리뷰
 struct SortButtonView: View {
     @State private var showRegionSheet: Bool = false
-    @State private var selectedOption: SortButton.SortOption = .favorite
+    @State private var selectedOption: SortButton.SortOption = .mostFavorited
     
     var body: some View {
         VStack {
@@ -31,13 +31,18 @@ struct SortButtonView: View {
 // MARK: - 버튼
 struct SortButton: View {
     enum SortOption: String, CaseIterable {
-        case favorite
-        case distance
+        case newest         = "NEWEST"
+        case closingSoon    = "CLOSING_SOON"
+        case mostFavorited  = "MOST_FAVORITED"
+        case mostViewed     = "MOST_VIEWED"
         
         var title: String {
             switch self {
-            case .favorite: return "찜순"
-            case .distance: return "가까운순"
+
+            case .newest: return "최신순"
+            case .closingSoon: return "마감임박순"
+            case .mostFavorited: return "찜순"
+            case .mostViewed: return "조회순"
             }
         }
     }
@@ -135,7 +140,7 @@ struct SortButtonSheet: View {
 }
 
 #Preview {
-    @Previewable @State var selectedOption: SortButton.SortOption = .favorite
+    @Previewable @State var selectedOption: SortButton.SortOption = .mostFavorited
     
     SortButtonView()
     

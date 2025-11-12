@@ -138,6 +138,10 @@ struct HomeView: View {
                 Logger.d("선책된 지역: \(region.region)")
             }
             Logger.d("선택된 정렬: \(homeViewModel.selectedOption.rawValue)")
+            
+            Task {
+                await homeViewModel.updatePersonalFilteredPopupList()
+            }
         }) {
             RegionButtonSheet(regions: homeViewModel.regions,
                         selectedRegion: $homeViewModel.selectedRegion,
@@ -149,6 +153,9 @@ struct HomeView: View {
                 Logger.d("선책된 지역: \(region.region)")
             }
             Logger.d("선택된 정렬: \(homeViewModel.selectedOption.rawValue)")
+            Task {
+                await homeViewModel.updatePersonalFilteredPopupList()
+            }
         }) {
             SortButtonSheet(selectedOption: $homeViewModel.selectedOption)
                 .presentationDetents([.fraction(0.4)])

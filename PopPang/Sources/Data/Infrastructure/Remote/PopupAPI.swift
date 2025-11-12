@@ -19,7 +19,10 @@ enum PopupAPI {
     // 개인화 popup
     case getPersonalPopupList(userUuid: String)             /// 팝업 전체 조회
     case getPersonalUpcomingPopupList(userUuid: String)     /// 다가오는 팝업 조회/
-    case getPersonalFilteredPopupList(userUuid: String, region: String, district: String, homeSortStandard: String)            /// 홈 화면용 팝업 필터 조회
+    case getPersonalFilteredPopupList(userUuid: String,
+                                      region: String,
+                                      district: String,
+                                      homeSortStandard: String)            /// 홈 화면용 팝업 필터 조회
     
     // favorite
     case addFavorite(userUuid: String, popupUuid: String)
@@ -43,9 +46,9 @@ extension PopupAPI: TargetType {
         case .increaseViewCount(let popupUuid): return "/popup/\(popupUuid)/view"
             
         // 개인화 popup
-        case .getPersonalPopupList(let userUuid): return "/users/\(userUuid)/popups"                      /// 팝업 전체 조회
-        case .getPersonalUpcomingPopupList(let userUuid): return "/users/\(userUuid)/popups/upcoming"    /// 다가오는 팝업 조회
-        case .getPersonalFilteredPopupList(let userUuid, _, _, _): return "/users/\(userUuid)/popups/filtered/home"       /// 홈 팝업 필터 조회
+        case .getPersonalPopupList(let userUuid): return "/users/\(userUuid)/popups"                                   /// 팝업 전체 조회
+        case .getPersonalUpcomingPopupList(let userUuid): return "/users/\(userUuid)/popups/upcoming"                  /// 다가오는 팝업 조회
+        case .getPersonalFilteredPopupList(let userUuid, _, _, _): return "/users/\(userUuid)/popups/filtered/home"    /// 홈 팝업 필터 조회
             
         // favorite
         case .addFavorite: return "/favorite"
