@@ -23,11 +23,12 @@ struct FirstSheetView: View {
                     onSortTap()
                 }
             }
+            .padding(.horizontal, .contentPadding)
             
             // view
             MapListView(popups: mapViewModel.mapPopups)
+                .padding(.horizontal, .contentPadding)
         }
         .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.horizontal, .contentPadding)
     }
 }

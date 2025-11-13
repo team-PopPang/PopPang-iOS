@@ -55,6 +55,7 @@ struct ComingPopupCell: View {
             }
             .frame(width: 283, height: 138)
         }
+        .contentShape(Rectangle())
     }
     
     private func dDay(date: Date) -> String {

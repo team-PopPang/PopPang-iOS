@@ -24,6 +24,12 @@ enum PopupAPI {
                                       district: String,
                                       homeSortStandard: String)
     case getPersonalSearchPopupList(userUuid: String, searchText: String)  /// 팝업 검색
+    case getPersonalMapFilteredPopupList(userUuid: String,
+                                         region: String,
+                                         district: String,
+                                         latitude: Double?,
+                                         longitude: Double?,
+                                         mapSortStandard: String)
     
     // favorite
     case addFavorite(userUuid: String, popupUuid: String)
@@ -47,10 +53,11 @@ extension PopupAPI: TargetType {
         case .increaseViewCount(let popupUuid): return "/popup/\(popupUuid)/view"
             
         // 개인화 popup
-        case .getPersonalPopupList(let userUuid): return "/users/\(userUuid)/popups"                                   /// 팝업 전체 조회
-        case .getPersonalUpcomingPopupList(let userUuid): return "/users/\(userUuid)/popups/upcoming"                  /// 다가오는 팝업 조회
-        case .getPersonalFilteredPopupList(let userUuid, _, _, _): return "/users/\(userUuid)/popups/filtered/home"    /// 홈 팝업 필터 조회
-        case .getPersonalSearchPopupList(let userUuid, _): return "/users/\(userUuid)/popups/search"                   /// 팝업 검색
+        case .getPersonalPopupList(let userUuid): return "/users/\(userUuid)/popups"                                         /// 팝업 전체 조회
+        case .getPersonalUpcomingPopupList(let userUuid): return "/users/\(userUuid)/popups/upcoming"                        /// 다가오는 팝업 조회
+        case .getPersonalFilteredPopupList(let userUuid, _, _, _): return "/users/\(userUuid)/popups/filtered/home"          /// 홈 팝업 필터 조회
+        case .getPersonalSearchPopupList(let userUuid, _): return "/users/\(userUuid)/popups/search"                         /// 팝업 검색
+        case .getPersonalMapFilteredPopupList(let userUuid, _, _, _, _, _): return "/users/\(userUuid)/popups/filtered/map"  /// 맵 팝업 필터 조회
             
         // favorite
         case .addFavorite: return "/favorite"
@@ -76,6 +83,7 @@ extension PopupAPI: TargetType {
         case .getPersonalUpcomingPopupList: return .get
         case .getPersonalFilteredPopupList: return .get
         case .getPersonalSearchPopupList: return .get
+        case .getPersonalMapFilteredPopupList: return .get
             
         // favorite
         case .addFavorite: return .post
@@ -107,7 +115,10 @@ extension PopupAPI: TargetType {
         case .getPersonalUpcomingPopupList(let userUuid):
             return .requestParameters(parameters: ["userUuid": userUuid],
                                       encoding: URLEncoding.queryString)
-        case .getPersonalFilteredPopupList(_, let region, let district, let homeSortStandard):
+        case .getPersonalFilteredPopupList(_,
+                                           let region,
+                                           let district,
+                                           let homeSortStandard):
             return .requestParameters(parameters: ["region": region,
                                                    "district": district,
                                                    "homeSortStandard": homeSortStandard
@@ -116,6 +127,22 @@ extension PopupAPI: TargetType {
         case .getPersonalSearchPopupList(_, let searchText):
             return .requestParameters(parameters: ["q": searchText],
                                       encoding: URLEncoding.queryString)
+        case .getPersonalMapFilteredPopupList(_,
+                                              let region,
+                                              let district,
+                                              let latitude,
+                                              let longitude,
+                                              let mapSortStandard):
+            var params: [String: Any] = [
+                "region": region,
+                "district": district,
+                "mapSortStandard": mapSortStandard
+            ]
+            if let lat = latitude, let lon = longitude {
+                params["latitude"] = lat
+                params["longitude"] = lon
+            }
+            return.requestParameters(parameters: params, encoding: URLEncoding.queryString)
             
         // favorite
         case .increaseViewCount:

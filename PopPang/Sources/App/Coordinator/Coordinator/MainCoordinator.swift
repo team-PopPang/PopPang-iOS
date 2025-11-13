@@ -30,12 +30,13 @@ enum SheetRoute: Identifiable {
 }
 
 enum OverlayRoute: Identifiable {
-    case notice(title: String, content: String, isCenter: Bool = false)
-    case ad(image: String)
-    
+
     var id: String {
         String(describing: self)
     }
+    
+    case notice(title: String, content: String, isCenter: Bool = false)
+    case ad(image: String)
 }
 
 extension Coordinator where T == MainRoute {

@@ -31,6 +31,13 @@ protocol PopupUsecaseProtocol {
     
     func getPersonalSearchPopupList(userUuid: String, searchText: String) async throws -> [Popup]
     
+    func getPersonalMapFilteredPopupList(userUuid: String,
+                                         region: String,
+                                         district: String,
+                                         latitude: Double?,
+                                         longitude: Double?,
+                                         mapSortStandard: String) async throws -> [Popup]
+    
     // MARK: - Favorite
     func increaseViewCount(popupUuid: String) async throws
     

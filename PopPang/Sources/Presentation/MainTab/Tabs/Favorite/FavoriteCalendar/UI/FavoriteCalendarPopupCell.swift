@@ -63,7 +63,6 @@ struct FavoriteCalendarPopupCell: View {
                             .ppStyleFont(.scdream(.regular, size: 9))
                         
                         Button {
-                            print("좋아요 눌림")
                             Task {
                                 await favoriteViewModel.toggleLike(popup: popup)
                                 
@@ -90,5 +89,6 @@ struct FavoriteCalendarPopupCell: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .contentShape(Rectangle())
     }
 }

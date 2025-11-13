@@ -31,6 +31,9 @@ struct SecondSheeetView: View {
                     if let region = mapViewModel.selectedRegion?.region,
                        let district = mapViewModel.selectedDistrict {
                         Logger.d("선택된 지역: \(region), 구: \(district)")
+                        Task {
+                            await mapViewModel.updatePersonamMapFilteredPopupList()
+                        }
                     }
                     onDismiss()
                 }
@@ -38,6 +41,9 @@ struct SecondSheeetView: View {
             case .sort:
                 MapSortButtonSheet(selectedOption: $mapViewModel.selectedOption) {
                     Logger.d("선택된 정렬: \(mapViewModel.selectedOption)")
+                    Task {
+                        await mapViewModel.updatePersonamMapFilteredPopupList()
+                    }
                     onDismiss()
                 }
                 .padding(.bottom, 100)

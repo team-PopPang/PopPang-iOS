@@ -15,13 +15,13 @@ final class HomeViewModel: ObservableObject {
     @Published var comingPopups: [Popup] = []
     @Published var gridPopups: [Popup] = []
     
-    // MARK: - 지역 시트 관련
+    // 지역 시트 관련
     @Published var showRegionSheet: Bool = false
     @Published var regions: [RegionList] = []
     @Published var selectedRegion: RegionList?
     @Published var selectedDistrict: String?
     
-    // MARK: - 정렬 시트 관련
+    // 정렬 시트 관련
     @Published var showSortSheet: Bool = false
     @Published var selectedOption: SortButton.SortOption = .newest
     

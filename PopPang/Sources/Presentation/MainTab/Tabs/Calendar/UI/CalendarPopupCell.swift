@@ -65,7 +65,6 @@ struct CalendarPopupCell: View {
                         
                         
                         Button {
-                            print("좋아요 눌림")
                             Task {
                                 await calendarViewModel.toggleLike(popup: popup)
                                 
@@ -93,6 +92,7 @@ struct CalendarPopupCell: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .contentShape(Rectangle())
     }
 }
 #Preview {

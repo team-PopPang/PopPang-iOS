@@ -59,5 +59,6 @@ struct GridPopupCell: View {
                 .foregroundStyle(Color.mainGray)
                 .padding(.top, 5)
         }
+        .contentShape(Rectangle())
     }
 }

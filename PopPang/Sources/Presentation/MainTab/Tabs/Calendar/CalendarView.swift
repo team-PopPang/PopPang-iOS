@@ -41,22 +41,40 @@ struct CalendarView: View {
                         }
                     )
                     .padding(.top, 24)
+                    .padding(.horizontal, 15)
                     
                     // MARK: - 시트
-                    ShadowDivider()
-                        .ignoresSafeArea(edges: .horizontal)
-                        .padding(.top, 20)
-                    
                     CalendarPopupListView(
                         userUuid: calendarViewModel.userUuid,
                         date: calendarViewModel.selectedDate,
                         popups: calendarViewModel.selectedPopups
                     )
+                    .padding(.horizontal, 15)
+                    
+                    // MARK: - 그림자 시트 디자인
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(Color.white)
+                            .mask(
+                                // 위쪽 70%만 유지시키고 아래 30%는 잘라버림
+                                LinearGradient(
+                                    gradient: Gradient(colors: [.black, .clear, .clear, .clear]),
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .applyShadow(
+                                color: .black,
+                                alpha: 0.05,
+                                x: 0,
+                                y: -4,
+                                blur: 8
+                            )
+                    )
+                    .padding(.top, 20)
                     
                     Spacer()
                 }
-                .padding(.horizontal, 15)
-                
             }
             .padding(.top, 10)
             Spacer()

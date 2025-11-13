@@ -59,6 +59,20 @@ final class PopupRepositoryImpl: PopupRepositoryProtocol {
                                                                      decodeTo: [PopupDTO].self)
     }
     
+    func getPersonalMapFilteredPopupList(userUuid: String,
+                                         region: String,
+                                         district: String,
+                                         latitude: Double?,
+                                         longitude: Double?,
+                                         mapSortStandard: String) async throws -> [PopupDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPersonalMapFilteredPopupList(userUuid: userUuid,
+                                                                                                      region: region,
+                                                                                                      district: district,
+                                                                                                      latitude: latitude,
+                                                                                                      longitude: longitude,
+                                                                                                      mapSortStandard: mapSortStandard), decodeTo: [PopupDTO].self)
+    }
+    
     // MARK: - Favorite
     func increaseViewCount(popupUuid: String) async throws {
         try await NetworkProvider.shared.popupProvidder.asyncRequestVoid(.increaseViewCount(popupUuid: popupUuid))

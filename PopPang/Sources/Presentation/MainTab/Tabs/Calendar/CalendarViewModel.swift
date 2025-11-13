@@ -132,7 +132,7 @@ extension CalendarViewModel {
     
     /// 팝업이 좋아요 눌린 상태인지 체크
     func isLiked(popup: Popup) -> Bool {
-        popup.isFavorited
+        return popup.isFavorited
     }
     
     /// 좋아요 상태 바꿔주는 함수
@@ -164,7 +164,6 @@ extension CalendarViewModel {
                         // 좋아요 -1
                         let count = self.selectedPopups[index].favoriteCount
                         self.selectedPopups[index].favoriteCount = max(0, count - 1)
-                        
                     }
                 }
             } else {

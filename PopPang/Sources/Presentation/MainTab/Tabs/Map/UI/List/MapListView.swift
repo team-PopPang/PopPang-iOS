@@ -32,8 +32,10 @@ struct MapListView: View {
                         }
                     }
                 }
+                .frame(maxWidth: .infinity)
                 .padding(.bottom, 133)
             }
+            .frame(maxWidth: .infinity) 
             .padding(.top, 20)
         }
     }

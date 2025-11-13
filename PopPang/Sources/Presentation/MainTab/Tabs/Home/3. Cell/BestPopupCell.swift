@@ -58,5 +58,6 @@ struct BestPopupCell: View {
             .padding(11)
         }
         .frame(width: 194, height: 271)
+        .contentShape(Rectangle())
     }
 }

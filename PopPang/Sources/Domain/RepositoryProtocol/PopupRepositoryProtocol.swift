@@ -67,8 +67,23 @@ protocol PopupRepositoryProtocol {
     /// - Parameter searchText: searchText
     /// - Returns: [PopupDTO]
     func getPersonalSearchPopupList(userUuid: String, searchText: String) async throws -> [PopupDTO]
-
     
+    
+    /// 맵 팝업 필터 조회
+    /// - Parameters:
+    ///   - userUuid: userUuid
+    ///   - region: 선택된 지역명 (예: "서울")
+    ///   - district: 선택된 구 이름 (예: "강남구", "전체" 가능)
+    ///   - latitude: 위도
+    ///   - longitude: 경도
+    ///   - mapSortStandard: 정렬 기준(CLOSEST / NEWEST / CLOSING_SOON / MOST_FAVORITED / MOST_VIEWED)
+    func getPersonalMapFilteredPopupList(userUuid: String,
+                                         region: String,
+                                         district: String,
+                                         latitude: Double?,
+                                         longitude: Double?,
+                                         mapSortStandard: String) async throws -> [PopupDTO] 
+
     // MARK: - Favorite
     /// 팝업 조회수를 증가시킵니다
     /// - Parameter popupUuid: popupUuid

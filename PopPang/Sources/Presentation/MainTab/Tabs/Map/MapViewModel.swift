@@ -21,19 +21,22 @@ final class MapViewModel: ObservableObject {
     @Published var selectedDistrict: String?
     
     // MARK: - 정렬 시트 관련
-    @Published var selectedOption: MapSortButton.SortOption = .distance
+    @Published var selectedOption: MapSortButton.SortOption = .closest
     
     // MARK: - 로컬 검색 기능
     @Published var searchText: String = ""
     private var cancellables = Set<AnyCancellable>()
     
+    // MARK: - 지도 화면 중심 좌표 구독
+    @Published var mapCenter: CLLocationCoordinate2D?
+    
     init(userUuid: String) {
         self.userUuid = userUuid
-        
+        observeMapCenter()
+        bindDebounce()
         Task {
             await getAllPopupData()
         }
-        bindDebounce()
     }
     
     // 검색 디바운스 바인딩
@@ -46,7 +49,6 @@ final class MapViewModel: ObservableObject {
                 self.filterPopups(text: text)
             }
             .store(in: &cancellables)
-        
     }
     
     // 필터링 로직
@@ -65,42 +67,91 @@ final class MapViewModel: ObservableObject {
         
         mapPopups = filtered
     }
+    
+    // 네이버 카메라 이동 후 중심 좌표 업데이트 값 구독
+    private func observeMapCenter() {
+        MapCoordinator.shared.$centerCoordinate
+            .compactMap { $0 }
+            .receive(on: RunLoop.main)
+            .sink { [weak self] mapCenter in
+                guard let self = self else { return }
+                self.mapCenter = mapCenter
+            }
+            .store(in: &cancellables)
+    }
 }
 
 // MARK: - 비동기 함수
 extension MapViewModel {
     func getAllPopupData() async {
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask { await self.getRegionList() }
-            group.addTask { await self.getPopupList() }
-        }
-        Logger.d("지도 데이터 로드 완료")
-    }
-    
-    func getPopupList() async {
-        do {
-            let popups = try await popupUsecase.getPopupList()
+        // MARK: - 지역 리스트는 리턴값이 다르므로 async let으로 병렬 실행(존재하지 않을때만 호출)
+        if regions.isEmpty {
+            async let regionTask = self.getRegionList()
+            let regionList = await regionTask
             await MainActor.run {
-                self.mapPopups = popups
-                self.allPopups = popups
-            }
-        } catch {
-            Logger.e("\(error)")
-        }
-    }
-    
-    func getRegionList() async {
-        do {
-            let regionListDTO = try await popupUsecase.getRegionList()
-            await MainActor.run {
-                self.regions = regionListDTO
-                if let first = regionListDTO.first {
+                self.regions = regionList
+                if let first = regionList.first {
                     self.selectedRegion = first
                     self.selectedDistrict = first.districtList.first
                 }
             }
+        }
+        
+        async let getMapPopupListTask = self.getPersonamMapFilteredPopupList()
+        let popups = await getMapPopupListTask
+        await MainActor.run {
+            self.mapPopups = popups
+            self.allPopups = popups
+        }
+        Logger.d("지도 데이터 로드 완료")
+    }
+    
+    func getPersonamMapFilteredPopupList() async -> [Popup] {
+        do {
+            let popups = try await popupUsecase.getPersonalMapFilteredPopupList(userUuid: userUuid,
+                                                                                region: selectedRegion?.region ?? "전체",
+                                                                                district: selectedDistrict ?? "전체",
+                                                                                latitude: nil,
+                                                                                longitude: nil,
+                                                                                mapSortStandard: selectedOption.rawValue)
+            return popups
         } catch {
             Logger.e("\(error)")
+            return []
+        }
+    }
+    
+    func updatePersonamMapFilteredPopupList() async {
+        do {
+            let popups = try await popupUsecase.getPersonalMapFilteredPopupList(userUuid: userUuid,
+                                                                                region: selectedRegion?.region ?? "전체",
+                                                                                district: selectedDistrict ?? "전체",
+                                                                                latitude: mapCenter?.latitude,
+                                                                                longitude: mapCenter?.longitude,
+                                                                                mapSortStandard: selectedOption.rawValue)
+            await MainActor.run {
+                self.mapPopups = popups
+            }
+        } catch {
+            Logger.e("\(error)")
+        }
+    }
+    
+    func getRegionList() async -> [RegionList] {
+        do {
+            let regionList = try await popupUsecase.getRegionList()
+                .sorted { lhs, rhs in
+                    // 전체를 1순위 서울을 2순위
+                    if lhs.region == "전체" { return true }
+                    if rhs.region == "전체" { return false }
+                    if lhs.region == "서울" { return true }
+                    if rhs.region == "서울" { return false }
+                    return false
+                }
+            return regionList
+        } catch {
+            Logger.e("\(error)")
+            return []
         }
     }
 }

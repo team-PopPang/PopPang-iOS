@@ -62,6 +62,21 @@ final class PopupUsecaseImpl: PopupUsecaseProtocol {
             .map { $0.toEntity() }
     }
     
+    func getPersonalMapFilteredPopupList(userUuid: String,
+                                         region: String,
+                                         district: String,
+                                         latitude: Double?,
+                                         longitude: Double?,
+                                         mapSortStandard: String) async throws -> [Popup] {
+        try await popupRepository.getPersonalMapFilteredPopupList(userUuid: userUuid,
+                                                                  region: region,
+                                                                  district: district,
+                                                                  latitude: latitude,
+                                                                  longitude: longitude,
+                                                                  mapSortStandard: mapSortStandard)
+        .map { $0.toEntity() }
+    }
+    
     // MARK: - Favorite
     func increaseViewCount(popupUuid: String) async throws {
         try await popupRepository.increaseViewCount(popupUuid: popupUuid)

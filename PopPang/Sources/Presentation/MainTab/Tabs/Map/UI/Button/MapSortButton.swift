@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MapSortButtonPreview: View {
     @State private var showRegionSheet: Bool = false
-    @State var selectedOption: MapSortButton.SortOption = .favorite
+    @State var selectedOption: MapSortButton.SortOption = .closest
     var body: some View {
         VStack {
             MapSortButton(selectedOption: $selectedOption) {
@@ -31,15 +31,19 @@ struct MapSortButtonPreview: View {
 
 struct MapSortButton: View {
     enum SortOption: String, CaseIterable {
-        case distance
-        case favorite
-        case deadline
-       
+        case closest        = "CLOSEST"
+        case newest         = "NEWEST"
+        case closingSoon    = "CLOSING_SOON"
+        case mostFavorited  = "MOST_FAVORITED"
+        case mostViewed     = "MOST_VIEWED"
+        
         var title: String {
             switch self {
-            case .distance: return "가까운순"
-            case .favorite: return "찜순"
-            case .deadline: return "마감순"
+            case .closest: return "가까운순"
+            case .newest: return "최신순"
+            case .closingSoon: return "마감순"
+            case .mostFavorited: return "찜순"
+            case .mostViewed: return "조회순"
             }
         }
     }

@@ -10,7 +10,7 @@ import Foundation
 final class FavoriteViewModel: ObservableObject {
     let userUuid: String
     @Dependency private var popupUsecase: PopupUsecaseProtocol
-    @Published var likePostIds: Set<String> = [] // 찜 목록 popupUuid
+    // @Published var likePostIds: Set<String> = [] // 찜 목록 popupUuid
     
     // 서버에서 가져온 찜 팝업 리스트
     @Published var favoritePopups: [Popup] = []
@@ -45,7 +45,6 @@ extension FavoriteViewModel {
                 self.favoritePopups = favoritePopups
                 self.calculateEventCounts()
                 self.selectDate(self.selectedDate)
-                self.likePostIds = Set(favoritePopups.map { $0.popupUuid })
             }
             Logger.d("팝팡 데이터 로드 완료")
         } catch {
@@ -110,30 +109,27 @@ extension FavoriteViewModel {
     
     /// 팝업이 좋아요 눌린 상태인지 체크
     func isLiked(popup: Popup) -> Bool {
-        likePostIds.contains(popup.popupUuid)
+        return popup.isFavorited
     }
     
     /// 좋아요 상태 바꿔주는 함수
     func toggleLike(popup: Popup) async {
         
         do {
-            if likePostIds.contains(popup.popupUuid) {
+            // let popupUuid = popup.popupUuid
+            
+            if popup.isFavorited {
                 print("좋아요 취소")
-                try await popupUsecase.removeFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
-                _ = await MainActor.run {
-                    likePostIds.remove(popup.popupUuid)
-                }
+                try await popupUsecase.removeFavorite(userUuid: userUuid,
+                                                      popupUuid: popup.popupUuid)
                 await getFavoritePopups()
             } else {
                 print("좋아요 추가")
-                try await popupUsecase.addFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
-                _ = await MainActor.run {
-                    likePostIds.insert(popup.popupUuid)
-                }
+                try await popupUsecase.addFavorite(userUuid: userUuid,
+                                                   popupUuid: popup.popupUuid)
             }
         } catch {
             print("❌ 찜 토글 실패:", error)
         }
     }
-    
 }

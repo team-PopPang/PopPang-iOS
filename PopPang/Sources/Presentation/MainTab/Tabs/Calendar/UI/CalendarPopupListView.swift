@@ -15,7 +15,7 @@ struct CalendarPopupListView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             
-            HStack {
+            HStack(alignment: .top) {
                 Text(formattedDate(date))
                     .ppStyleFont(.scdream(.bold, size: 12))
                     .foregroundStyle(Color.mainBlack)

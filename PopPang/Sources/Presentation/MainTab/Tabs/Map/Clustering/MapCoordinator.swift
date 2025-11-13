@@ -19,6 +19,9 @@ final class MapCoordinator: NSObject,
     var popups: [Popup] = []
     var clusterer: NMCClusterer<ItemKey>?
     var onMarkerSelected: ((ItemKey, Popup) -> Void)?
+    
+    // swiftUI로 전달할 퍼블리셔(현재 중심 좌표)
+    @Published var centerCoordinate: CLLocationCoordinate2D?
 
     override init() {
         super.init()
@@ -185,26 +188,39 @@ extension MapCoordinator {
         
         // 갱신
         self.popups = newPopups
-        // makeClusterer()
+        makeClusterer()
         
 
-        // MARK: - 최적화
-        // 기존 클러스터 초기화 없이, 변경분만 반영
-        clusterer?.clear()
-        var keyTagMap: [ItemKey: NSObject] = [:]
-        for (index, popup) in newPopups.enumerated() {
-            let key = ItemKey(identifier: index,
-                              position: NMGLatLng(lat: popup.latitude ?? 0,
-                                                  lng: popup.longitude ?? 0),
-                              imageURL: popup.imageUrlList[0])
-            keyTagMap[key] = NSNull()
-        }
-        clusterer?.addAll(keyTagMap)
+//        // MARK: - 최적화
+//        // 기존 클러스터 초기화 없이, 변경분만 반영
+//        clusterer?.clear()
+//        var keyTagMap: [ItemKey: NSObject] = [:]
+//        for (index, popup) in newPopups.enumerated() {
+//            let key = ItemKey(identifier: index,
+//                              position: NMGLatLng(lat: popup.latitude ?? 0,
+//                                                  lng: popup.longitude ?? 0),
+//                              imageURL: popup.imageUrlList[0])
+//            keyTagMap[key] = NSNull()
+//        }
+//        clusterer?.addAll(keyTagMap)
+//
+//        // 클러스터러를 다시 지도에 연결
+//        clusterer?.mapView = self.view.mapView
     }
     
+    
+    /// 네이버 지도의 카메라가 멈출 때 자동으로 불리는 콜백 함수
+    /// - Parameter mapView: 인스턴스
     func mapViewCameraIdle(_ mapView: NMFMapView) {
-         let zoom = mapView.zoomLevel
+        let zoom = mapView.zoomLevel
         Logger.d("📸 현재 줌 레벨: \(zoom)")
+        
+        // 위경도 갱신
+        let center = mapView.cameraPosition.target
+        let coord = CLLocationCoordinate2D(latitude: center.lat, longitude: center.lng)
+        DispatchQueue.main.async {
+            self.centerCoordinate = coord
+        }
     }
 }
 
