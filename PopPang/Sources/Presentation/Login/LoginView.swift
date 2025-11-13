@@ -26,8 +26,6 @@ struct LoginView: View {
             VStack {
                 // MARK: - 카카오
                 SocialLoginButton(type: .kakao) {
-                    // kakaoAuthViewModel.kakaoLogin()
-                    // rootViewModel.loginSuccess(isNewUser: true)
                     rootViewModel.send(action: .kakaoLogin)
                 }
                 
