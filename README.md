@@ -7,7 +7,7 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 <br/><br/>
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/6a14754d-be05-485a-adc8-c2afd92e421a" width="100%" />
+  <img src="https://github.com/user-attachments/assets/49436331-9850-4319-b9fd-c1302d8c9375" width="100%" />
 </div>
 
 
@@ -33,7 +33,6 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 |**Kingfisher**|이미지 캐싱 처리 및 UI 성능 개선을 위함|
 
 </br><br/>
-
 
 <!-- 
 1. `키워드 알림`:등록한 키워드의 팝업이 열리면 알림으로 알려줍니다.
