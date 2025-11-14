@@ -19,6 +19,7 @@ enum MainRoute: Hashable {
     // profile
     case profileSetting
     case notification
+    case service
 }
 
 enum SheetRoute: Identifiable {
@@ -56,6 +57,9 @@ extension Coordinator where T == MainRoute {
             
         case .notification:
             NotificationView()
+            
+        case .service:
+            ServiceTermsView()
         }
     }
 }

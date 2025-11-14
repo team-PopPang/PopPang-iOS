@@ -10,6 +10,7 @@ import Foundation
 enum Constants {
     enum URL {
         static let notification = "https://deciduous-jam-49e.notion.site/29cdb9e736cf8046babdd84eb78040b3"
+        static let serviceTerms = "https://deciduous-jam-49e.notion.site/2abdb9e736cf80cdaaa0eeeb97313523?pvs=74"
     }
     
     enum PopPangAPI {

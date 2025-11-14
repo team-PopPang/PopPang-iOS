@@ -15,7 +15,7 @@ struct ProfileView: View {
     
     // MARK: - 이메일 관련
     @Environment(\.openURL) var openURL /// 다른 앱으로 연결을 위함
-    private var emai = SupportEmail(toAddress: "poppang.app@gmail.com",
+    private var email = SupportEmail(toAddress: "poppang.app@gmail.com",
                                     title: "팝팡 문의사항",
                                     messageHeader: "문의사항을 입력해주세요.")
     
@@ -81,13 +81,13 @@ struct ProfileView: View {
                 NavigationButton(title: "문의하기",
                                  buttonType: .navigation,
                 ) {
-                    emai.send(openURL: openURL)
+                    email.send(openURL: openURL)
                 }.padding(.horizontal, 24)
                 
                 NavigationButton(title: "서비스 이용약관",
                                  buttonType: .navigation,
                 ) {
-                    
+                    coordinator.push(.service)
                 }.padding(.horizontal, 24)
             }
             .padding(.top, 20)
