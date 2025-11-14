@@ -91,6 +91,7 @@ struct RegionButtonSheet: View {
                         .font(backFont)
                 }
             }
+            .padding(.top, 28)
             
             // Divider
             Rectangle()
@@ -155,6 +156,7 @@ struct RegionButtonSheet: View {
                         .listRowSeparator(.hidden) // 기본 구분선 제거
                     }
                     .listStyle(.plain)
+                    .scrollIndicators(.hidden)
                 }
             }
             .frame(height: CGFloat(regions.count) * (rowHeight))
@@ -166,7 +168,6 @@ struct RegionButtonSheet: View {
             
             Spacer()
         }
-        .padding(.top, 28)
         .padding(.horizontal, 28)
         .presentationDragIndicator(.visible)
     }

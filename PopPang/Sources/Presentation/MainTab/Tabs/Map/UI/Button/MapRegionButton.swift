@@ -126,6 +126,7 @@ struct MapRegionSheet: View {
                         .listRowSeparator(.hidden) // 기본 구분선 제거
                     }
                     .listStyle(.plain)
+                    .scrollIndicators(.hidden)
                 }
             }
             .frame(height: CGFloat(regions.count) * (rowHeight))
@@ -137,8 +138,8 @@ struct MapRegionSheet: View {
             
             Spacer()
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, .contentPadding)
+        .padding(.top, 8)
+        .padding(.horizontal, 28)
         .presentationDragIndicator(.visible)
     }
 }

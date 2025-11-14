@@ -124,7 +124,7 @@ struct MapSortButtonSheet: View {
             .padding(.top, 28)
             Spacer()
         }
-        .padding(.top, 28)
+        .padding(.top, 8)
         .padding(.horizontal, 28)
         .presentationDragIndicator(.visible)
     }

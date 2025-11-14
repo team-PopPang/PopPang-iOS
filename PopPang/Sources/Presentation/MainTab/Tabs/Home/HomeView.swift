@@ -152,7 +152,7 @@ struct HomeView: View {
             RegionButtonSheet(regions: homeViewModel.regions,
                         selectedRegion: $homeViewModel.selectedRegion,
                         selectedDistrict: $homeViewModel.selectedDistrict)
-            .presentationDetents([.fraction(0.7)])
+            .presentationDetents([.fraction(0.8)])
         }
         .sheet(isPresented: $homeViewModel.showSortSheet, onDismiss: {
             if let region = homeViewModel.selectedRegion {
