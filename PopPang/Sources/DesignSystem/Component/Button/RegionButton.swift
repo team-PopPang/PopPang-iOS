@@ -38,7 +38,7 @@ struct RegionButton: View {
         Button {
             action()
         } label: {
-            HStack(spacing: 4) {                             // 화살표 간격 -> 명시해야함
+            HStack {                             // 화살표 간격 -> 명시해야함
                 Text(text)
                     .ppStyleFont(.scdream(.light, size: 10)) // 글자 폰트 light, 글자크기 10
                     .foregroundStyle(Color.mainGray)         // 글자 색상 #777777
@@ -50,7 +50,7 @@ struct RegionButton: View {
             }
             .padding(.vertical, 8)                          // 상하 패딩 8
             .padding(.horizontal, 10)                       // 좌우 패딩 10
-            .frame(width: 80)                               // 길이 고정 가로 80
+            .frame(width: 60)                               // 길이 고정 가로 80
             .background(Color.subWhite)                     // FFFFFF
             .cornerRadius(17)                               // 모서리 라운딩
             .overlay {

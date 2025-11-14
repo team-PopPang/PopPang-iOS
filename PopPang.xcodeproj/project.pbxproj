@@ -41,6 +41,7 @@
 		DFA876622EB205220003C376 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		DFAC8E7C2E6C717100B4A917 /* PopPang.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PopPang.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		DFC42B052EBFD9F500C8B52A /* RepositoryTest.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RepositoryTest.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		DFD6F3062EC780900033B053 /* PopPang.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = PopPang.xctestplan; path = ../../../../../Downloads/PopPang.xctestplan; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -101,6 +102,7 @@
 		DFAC8E732E6C717100B4A917 = {
 			isa = PBXGroup;
 			children = (
+				DFD6F3062EC780900033B053 /* PopPang.xctestplan */,
 				DF5266172E6CAB8700FC46FD /* README.md */,
 				DFA876622EB205220003C376 /* GoogleService-Info.plist */,
 				DF0510E62E83DB65006AF8C3 /* .gitignore */,
@@ -415,7 +417,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 61;
+				CURRENT_PROJECT_VERSION = 62;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = LGX4B4WC66;
 				ENABLE_PREVIEWS = YES;
@@ -461,7 +463,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 61;
+				CURRENT_PROJECT_VERSION = 62;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = LGX4B4WC66;
 				ENABLE_PREVIEWS = YES;
@@ -502,7 +504,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 61;
+				CURRENT_PROJECT_VERSION = 62;
 				DEVELOPMENT_TEAM = LGX4B4WC66;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17;
@@ -521,7 +523,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 61;
+				CURRENT_PROJECT_VERSION = 62;
 				DEVELOPMENT_TEAM = LGX4B4WC66;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17;

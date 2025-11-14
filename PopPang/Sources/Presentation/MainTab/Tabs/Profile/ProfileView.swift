@@ -19,6 +19,9 @@ struct ProfileView: View {
                                     title: "팝팡 문의사항",
                                     messageHeader: "문의사항을 입력해주세요.")
     
+    // MARK: - 버전 정보
+    private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+    
     var body: some View {
         VStack(spacing: 0) {
             
@@ -94,6 +97,15 @@ struct ProfileView: View {
             
             
             Spacer()
+            
+            HStack {
+                Spacer()
+                Text("버전: \(appVersion)")
+                    .ppStyleFont(.scdream(.regular, size: 12))
+                    .foregroundStyle(Color.mainGray2)
+            }
+            .padding(.trailing, 24)
+            .padding(.bottom, 24)
         }
     }
     

@@ -72,19 +72,27 @@ private struct PageContentView: View {
     let step: OnboardingStep
     
     var body: some View {
-        GeometryReader { proxy in
+//        GeometryReader { proxy in
             VStack(alignment: .center) {
+                
                 Text(step.title)
-                    .font(.scdream(.extraBold, size: 20))
-                    .padding(.top, proxy.size.height * 0.3)
+                    .font(.scdream(.bold, size: 20))
+                    .padding(.top, 20)
+                   // .padding(.top, proxy.size.height * 0.1)
                 
                 Text(step.content)
-                    .font(.scdream(.medium, size: 16))
-                    .padding(.top, proxy.size.height * 0.1)
+                    .font(.scdream(.regular, size: 15))
+                    .padding(.top, 10)
+                
+                Image(step.image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .padding(.top, 30)
+                    .padding(.bottom, 20)
                 
             }
             .frame(maxWidth: .infinity)
-        }
+//        }
     }
 }
 

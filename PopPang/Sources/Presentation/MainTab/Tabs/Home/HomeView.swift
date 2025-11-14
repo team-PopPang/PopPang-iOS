@@ -42,7 +42,7 @@ struct HomeView: View {
                         coordinator.push(.alert(uuid: rootViewModel.user?.userUuid ?? ""))
                     }
                 }
-                 .padding(.bottom, 15)
+                .padding(.bottom, 15)
                 
                 ScrollView(showsIndicators: false) {
                     LazyVStack(spacing: 0) {

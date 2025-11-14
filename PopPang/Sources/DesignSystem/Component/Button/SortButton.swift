@@ -56,7 +56,7 @@ struct SortButton: View {
         Button {
              action()
         } label: {
-            HStack(spacing: 4) {
+            HStack {
                 Text(selectedOption.title)
                     .ppStyleFont(.scdream(.light, size: 10))
                     .foregroundStyle(Color.mainGray)
