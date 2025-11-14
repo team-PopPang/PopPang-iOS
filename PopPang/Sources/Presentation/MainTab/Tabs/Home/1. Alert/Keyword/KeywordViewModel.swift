@@ -10,6 +10,7 @@ import Foundation
 final class KeywordViewModel: ObservableObject {
     @Dependency private var userUsecase: UserUsecaseProtocol
     @Published var keywordList: [Keyword] = []
+    private let maxKeywordCount: Int = 5
     
     let userUuid: String
     init(userUuid: String) {
@@ -37,11 +38,19 @@ extension KeywordViewModel {
     
     // MARK: - 키워드 추가
     func addKeyword(_ newKeyword: String) {
+        
+        // 공백이면 무시한다
         let trimmed = newKeyword.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        let keyword = Keyword(keyword: trimmed)
+        
+        // 키워드는 최대 5개까지 가능하다
+        if keywordList.count >= maxKeywordCount {
+            AlertManager.shared.showKeywordLimitAlert()
+            return
+        }
                 
         // 중복 방지
+        let keyword = Keyword(keyword: trimmed)
         guard !keywordList.contains(keyword) else { return }
         keywordList.append(keyword)
         

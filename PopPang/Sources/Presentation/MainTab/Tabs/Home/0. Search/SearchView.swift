@@ -56,11 +56,19 @@ struct SearchView: View {
                     if searchViewModel.searchPopupList.isEmpty {
                         // MARK: - 글자
                         HStack(spacing: 0) {
-                            Text(rootViewModel.user?.nickname ?? "홍길동")
-                                .foregroundStyle(Color.mainOrange)
-                                .font(.scdream(.bold, size: 12))
-                            Text("님의 최근 본 검색어예요")
-                                .font(.scdream(.regular, size: 12))
+                            if !categories.isEmpty {
+                                Text(rootViewModel.user?.nickname ?? "홍길동")
+                                    .foregroundStyle(Color.mainOrange)
+                                    .font(.scdream(.bold, size: 12))
+                                Text("님의 최근 본 검색어예요")
+                                    .font(.scdream(.regular, size: 12))
+                            } else {
+                                Text(rootViewModel.user?.nickname ?? "홍길동")
+                                    .foregroundStyle(Color.mainOrange)
+                                    .font(.scdream(.bold, size: 12))
+                                Text("님의 최근 본 검색어가 없습니다")
+                                    .font(.scdream(.regular, size: 12))
+                            }
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         

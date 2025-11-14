@@ -67,4 +67,15 @@ final class AlertManager {
         alert.addAction(UIAlertAction(title: "취소", style: .cancel))
         rootVC.present(alert, animated: true)
     }
+    
+    func showKeywordLimitAlert() {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootVC = windowScene.windows.first?.rootViewController else { return }
+        
+        let alert = UIAlertController(title: "키워드 개수 제한",
+                                      message: "키워드는 최대 5개 까지만 등록 가능합니다.",
+                                      preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default))
+        rootVC.present(alert, animated: true)
+    }
 }

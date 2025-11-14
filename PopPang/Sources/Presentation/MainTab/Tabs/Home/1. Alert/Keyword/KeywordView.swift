@@ -20,6 +20,8 @@ struct KeywordView: View {
                 KeywordTextField(placeholder: "알림 받고 싶은 키워드를 입력해주세요",
                                  text: $text)
                 Button {
+                    
+                    
                     keywordViewModel.addKeyword(text)
                     text = ""
                 } label: {
@@ -61,11 +63,19 @@ struct KeywordView: View {
             
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
-                    Text(rootViewModel.user?.nickname ?? "홍길동")
-                        .foregroundStyle(Color.mainOrange)
-                        .font(.scdream(.bold, size: 12))
-                    Text("님의 최근 본 검색어예요")
-                        .font(.scdream(.regular, size: 12))
+                    if !categories.isEmpty {
+                        Text(rootViewModel.user?.nickname ?? "홍길동")
+                            .foregroundStyle(Color.mainOrange)
+                            .font(.scdream(.bold, size: 12))
+                        Text("님의 최근 본 검색어예요")
+                            .font(.scdream(.regular, size: 12))
+                    } else {
+                        Text(rootViewModel.user?.nickname ?? "홍길동")
+                            .foregroundStyle(Color.mainOrange)
+                            .font(.scdream(.bold, size: 12))
+                        Text("님의 최근 본 검색어가 없습니다")
+                            .font(.scdream(.regular, size: 12))
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 

@@ -33,16 +33,24 @@ struct KeywordSettingView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("키워드를\n입력해주세요.")
                         .font(.scdream(.bold, size: 17))
-                    Text("등록된 키워드에 맞춰 알림을 받아볼 수 있어요.")
-                        .font(.scdream(.medium, size: 12))
-                        .foregroundStyle(Color.mainGray)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("등록된 키워드에 맞춰 알림을 받아볼 수 있어요.")
+                            
+                            .foregroundStyle(Color.mainGray)
+                        Text("(최대 5개 등록 가능)")
+                    }
+                    .font(.scdream(.medium, size: 12))
+                    .foregroundStyle(Color.mainGray)
                 }
                 
                 Spacer()
                 
+                /*
                 Text("\(keywords.count)/\(maxKeywordCount)")
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(isNextEnabled ? Color.mainGreen : Color.mainRed)
+                 */
             }
             .padding(.top, 50)
             
@@ -58,45 +66,13 @@ struct KeywordSettingView: View {
                     guard !trimmed.isEmpty else { return }
                     
                     // 키워드는 최대 5개까지 가능하다
-                    if keywords.count >= maxKeywordCount { return }
-                    
-                    // 알림 권한이 없으면 알림 창을 띄우고 확인을 누르면 설정으로 이동시킨다
-                    UNUserNotificationCenter.current().getNotificationSettings { settings in
-                        switch settings.authorizationStatus {
-                            
-                        // MARK: - 권한이 거부된 경우
-                        case .denied:
-                            DispatchQueue.main.async {
-                                // 알림
-                                AlertManager.shared.showPermissionAlert()
-                            }
-                            return
-                        
-                        // MARK: - 권한 요청 아직 안됨 -> 재요청
-                        case .notDetermined:
-                            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
-                                if granted {
-                                    addKeyword(trimmed: trimmed)
-                                    rootViewModel.send(action: .setIsAlertedUser(true))
-                                } else {
-                                    DispatchQueue.main.async {
-                                        // 알림
-                                        AlertManager.shared.showPermissionAlert()
-                                    }
-                                }
-                            }
-                            
-                        // MARK: - 권한이 허용된 경우
-                        case .authorized, .provisional, .ephemeral:
-                            DispatchQueue.main.async {
-                                addKeyword(trimmed: trimmed)
-                                rootViewModel.send(action: .setIsAlertedUser(true))
-                            }
-                            
-                        @unknown default:
-                            break
-                        }
+                    if keywords.count >= maxKeywordCount {
+                        AlertManager.shared.showKeywordLimitAlert()
+                        return
                     }
+                    
+                    // 알림 권한 체크
+                    alertCheck(trimmed: trimmed)
                     
                 } label: {
                     Text("등록")
@@ -170,6 +146,46 @@ extension KeywordSettingView {
         
         keywords.append(trimmed)
         text = ""
+    }
+    
+    func alertCheck(trimmed: String) {
+        // 알림 권한이 없으면 알림 창을 띄우고 확인을 누르면 설정으로 이동시킨다
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            switch settings.authorizationStatus {
+                
+            // MARK: - 권한이 거부된 경우
+            case .denied:
+                DispatchQueue.main.async {
+                    // 알림
+                    AlertManager.shared.showPermissionAlert()
+                }
+                return
+            
+            // MARK: - 권한 요청 아직 안됨 -> 재요청
+            case .notDetermined:
+                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+                    if granted {
+                        addKeyword(trimmed: trimmed)
+                        rootViewModel.send(action: .setIsAlertedUser(true))
+                    } else {
+                        DispatchQueue.main.async {
+                            // 알림
+                            AlertManager.shared.showPermissionAlert()
+                        }
+                    }
+                }
+                
+            // MARK: - 권한이 허용된 경우
+            case .authorized, .provisional, .ephemeral:
+                DispatchQueue.main.async {
+                    addKeyword(trimmed: trimmed)
+                    rootViewModel.send(action: .setIsAlertedUser(true))
+                }
+                
+            @unknown default:
+                break
+            }
+        }
     }
 }
 
