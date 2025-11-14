@@ -97,28 +97,9 @@ extension MapViewModel {
             }
         }
         
-        async let getMapPopupListTask = self.getPersonamMapFilteredPopupList()
-        let popups = await getMapPopupListTask
-        await MainActor.run {
-            self.mapPopups = popups
-            self.allPopups = popups
-        }
+        async let getMapPopupListTask: () = self.updatePersonamMapFilteredPopupList()
+        _ = await getMapPopupListTask
         Logger.d("지도 데이터 로드 완료")
-    }
-    
-    func getPersonamMapFilteredPopupList() async -> [Popup] {
-        do {
-            let popups = try await popupUsecase.getPersonalMapFilteredPopupList(userUuid: userUuid,
-                                                                                region: selectedRegion?.region ?? "전체",
-                                                                                district: selectedDistrict ?? "전체",
-                                                                                latitude: nil,
-                                                                                longitude: nil,
-                                                                                mapSortStandard: selectedOption.rawValue)
-            return popups
-        } catch {
-            Logger.e("\(error)")
-            return []
-        }
     }
     
     func updatePersonamMapFilteredPopupList() async {
@@ -152,6 +133,52 @@ extension MapViewModel {
         } catch {
             Logger.e("\(error)")
             return []
+        }
+    }
+}
+
+// MARK: - 찜 관련 메서드
+extension MapViewModel {
+    /// 팝업이 좋아요 눌린 상태인지 체크
+    func isLiked(popup: Popup) -> Bool {
+        return popup.isFavorited
+    }
+    
+    /// 좋아요 상태 바꿔주는 함수
+    func toggleLike(popup: Popup) async {
+        do {
+            let popupUuid = popup.popupUuid
+            
+            // 좋아요 취소
+            if popup.isFavorited {
+                try await popupUsecase.removeFavorite(userUuid: userUuid, popupUuid: popupUuid)
+                
+                await MainActor.run {
+                    // 목록 갱신
+                    if let index = self.mapPopups.firstIndex(where: { $0.popupUuid == popupUuid }) {
+                        // 좋아요 취소
+                        self.mapPopups[index].isFavorited = false
+                        
+                        // 좋아요 -1
+                        let count = self.mapPopups[index].favoriteCount
+                        self.mapPopups[index].favoriteCount = max(0, count - 1)
+                    }
+                }
+            } else {
+                try await popupUsecase.addFavorite(userUuid: userUuid, popupUuid: popup.popupUuid)
+                await MainActor.run {
+                    // 목록 갱신
+                    if let index = self.mapPopups.firstIndex(where: { $0.popupUuid == popupUuid }) {
+                        // 좋아요 추가
+                        self.mapPopups[index].isFavorited = true
+                        
+                        // 좋아요 +1
+                        self.mapPopups[index].favoriteCount += 1
+                    }
+                }
+            }
+        } catch {
+            Logger.e("\(error)")
         }
     }
 }

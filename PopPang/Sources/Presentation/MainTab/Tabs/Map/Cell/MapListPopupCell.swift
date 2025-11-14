@@ -9,6 +9,7 @@ import SwiftUI
 import Kingfisher
 
 struct MapListPopupCell: View {
+    @EnvironmentObject private var mapViewModel: MapViewModel
     let popup: Popup
     
     var body: some View {
@@ -44,7 +45,7 @@ struct MapListPopupCell: View {
                     
                     Spacer()
                     
-                    // 조회수
+                    // 조회수 & 좋아요
                     HStack(spacing: 5) {
                         
                         Spacer()
@@ -57,13 +58,26 @@ struct MapListPopupCell: View {
                         Text("\(popup.viewCount)")
                             .ppStyleFont(.scdream(.regular, size: 9))
                         
-                        Image("favoriteCount")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 12, height: 12)
-                        
-                        Text("\(popup.favoriteCount)")
-                            .ppStyleFont(.scdream(.regular, size: 9))
+                        Button {
+                            Task {
+                                await mapViewModel.toggleLike(popup: popup)
+                                
+                                // MARK: - 비활성화
+                                // await calendarViewModel.getAllPopupData()
+                            }
+                        } label: {
+                            HStack(spacing: 5) {
+                                Image("favoriteCount")
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 12, height: 12)
+                                
+                                Text("\(popup.favoriteCount)")
+                                    .ppStyleFont(.scdream(.regular, size: 9))
+                            }
+                        }
+                        .foregroundStyle(mapViewModel.isLiked(popup: popup) ? Color.mainOrange : Color.mainGray)
                         
                     }
                 }

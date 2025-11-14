@@ -187,7 +187,7 @@ extension CalendarViewModel {
                 }
             }
         } catch {
-            print("❌ 찜 토글 실패:", error)
+            Logger.e("\(error)")
         }
     }
 }

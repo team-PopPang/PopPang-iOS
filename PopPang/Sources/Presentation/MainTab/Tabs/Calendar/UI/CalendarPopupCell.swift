@@ -54,7 +54,6 @@ struct CalendarPopupCell: View {
                         
                         Spacer()
                         
-                        
                         Image("viewCount")
                             .resizable()
                             .aspectRatio(contentMode: .fit)
