@@ -19,7 +19,8 @@ struct ActivityView: View {
                 ForEach(Array(activityViewModel.alertPopupList.prefix(3).enumerated()), id: \.element) { index, popup in
                     
                     HStack {
-                        AlertPopupCell(popup: popup)
+                        AlertPopupCell(activityViewModel: activityViewModel,
+                                       popup: popup)
                             .contentShape(Rectangle()) // 터치 영역을 셀 전체로 확장
                             .onTapGesture {
                                 coordinator.push(.popupDetail(homeViewModel.userUuid, popup))
@@ -36,7 +37,7 @@ struct ActivityView: View {
                     }
                     
                     // 마지막 셀 아래에는 Divider 넣지 않겠다
-                    if index != homeViewModel.gridPopups.count - 1 {
+                    if index != activityViewModel.alertPopupList.count - 1 {
                         Divider()
                             .frame(height: 1)
                             .background(Color.subWhite)
@@ -45,6 +46,11 @@ struct ActivityView: View {
             }
         }
         .padding(.horizontal, .contentPadding)
+        .onAppear {
+            Task {
+                await activityViewModel.getAlertPopupListForView()
+            }
+        }
     }
 }
 

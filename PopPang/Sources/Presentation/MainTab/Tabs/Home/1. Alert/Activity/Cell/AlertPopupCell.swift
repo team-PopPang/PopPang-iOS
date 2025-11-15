@@ -9,6 +9,7 @@ import SwiftUI
 import Kingfisher
 
 struct AlertPopupCell: View {
+    @ObservedObject var activityViewModel: ActivityViewModel
     let popup: Popup
     
     var body: some View {
@@ -56,13 +57,26 @@ struct AlertPopupCell: View {
                         
                         
                         
-                        Image("favoriteCount")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 12, height: 12)
-                        
-                        Text("\(popup.favoriteCount)")
-                            .ppStyleFont(.scdream(.regular, size: 9))
+                        Button {
+                            Task {
+                                await activityViewModel.toggleLike(popup: popup)
+                                
+                                // MARK: - 비활성화
+                                // await calendarViewModel.getAllPopupData()
+                            }
+                        } label: {
+                            HStack(spacing: 5) {
+                                Image("favoriteCount")
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 12, height: 12)
+                                
+                                Text("\(popup.favoriteCount)")
+                                    .ppStyleFont(.scdream(.regular, size: 9))
+                            }
+                        }
+                        .foregroundStyle(activityViewModel.isLiked(popup: popup) ? Color.mainOrange : Color.mainGray)
                         
                     }
                 }

@@ -45,8 +45,17 @@ struct AlertView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 
                 TrashButton(isEditing: activityViewModel.isEditing) {
+                    
                     if activityViewModel.isEditing {
-                        // 삭제 확인 알림 보내기
+                        
+                        // 선택한 팝업이 없으면 Alert 띄우지 않기
+                        if activityViewModel.selectedPopupIds.isEmpty {
+                            // 편집 종료만
+                            activityViewModel.isEditing = false
+                            return
+                        }
+                            
+                        // 삭제 체크가 1개이상 된다면 삭제 확인 알림 보내기
                         activityViewModel.showDeleteAlert = true
                         
                     } else {
@@ -83,23 +92,50 @@ struct TrashButton: View {
     var action: () -> Void
     
     var body: some View {
-        Button {
-            action()
-        } label: {
-            
-            if isEditing {
+        Button(action: action) {
+            ZStack {
+                // 완료 텍스트
                 Text("완료")
                     .ppStyleFont(.scdream(.medium, size: 15))
-            } else {
+                    .opacity(isEditing ? 1 : 0)
+
+                // 휴지통 아이콘
                 Image(systemName: "trash")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 20, height: 20)
                     .padding(10)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .contentShape(RoundedRectangle(cornerRadius: 6))
+                    .opacity(isEditing ? 0 : 1)
             }
         }
         .buttonStyle(PressableButtonStyle())
+        .animation(nil, value: isEditing) // 안전하게 무효화
     }
 }
+
+
+//struct TrashButton: View {
+//    var isEditing: Bool
+//    var action: () -> Void
+//    
+//    var body: some View {
+//        Button {
+//            action()
+//        } label: {
+//            
+//            if isEditing {
+//                Text("완료")
+//                    .ppStyleFont(.scdream(.medium, size: 15))
+//            } else {
+//                Image(systemName: "trash")
+//                    .resizable()
+//                    .aspectRatio(contentMode: .fit)
+//                    .frame(width: 20, height: 20)
+//                    .padding(10)
+//                    .clipShape(RoundedRectangle(cornerRadius: 6))
+//                    .contentShape(RoundedRectangle(cornerRadius: 6))
+//            }
+//        }
+//        .buttonStyle(PressableButtonStyle())
+//    }
+//}
