@@ -77,6 +77,17 @@ final class PopupUsecaseImpl: PopupUsecaseProtocol {
         .map { $0.toEntity() }
     }
     
+    // MARK: - 알림 Popup
+    func getAlertPopupList(userUuid: String) async throws -> [Popup] {
+        try await popupRepository.getAlertPopupList(userUuid: userUuid)
+            .map { $0.toEntity() }
+    }
+    
+    func removeAlertPopup(userUuid: String, popupUuid: String) async throws {
+        try await popupRepository.removeAlertPopup(userUuid: userUuid,
+                                                   popupUuid: popupUuid)
+    }
+    
     // MARK: - Favorite
     func increaseViewCount(popupUuid: String) async throws {
         try await popupRepository.increaseViewCount(popupUuid: popupUuid)

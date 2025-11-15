@@ -82,7 +82,20 @@ protocol PopupRepositoryProtocol {
                                          district: String,
                                          latitude: Double?,
                                          longitude: Double?,
-                                         mapSortStandard: String) async throws -> [PopupDTO] 
+                                         mapSortStandard: String) async throws -> [PopupDTO]
+    // MARK: - 알림 Popup
+    /// 알림 팝업 리스트 가져오기
+    /// - Parameter userUuid: 유저 고유값
+    /// - Returns: [PopupDTO]
+    func getAlertPopupList(userUuid: String) async throws -> [PopupDTO]
+    
+    
+    /// 알림 팝업 단건 지우기
+    /// - Parameters:
+    ///   - userUuid: 유저 고유값
+    ///   - popupUuid: 팝업 고유값
+    func removeAlertPopup(userUuid: String, popupUuid: String) async throws
+    
 
     // MARK: - Favorite
     /// 팝업 조회수를 증가시킵니다

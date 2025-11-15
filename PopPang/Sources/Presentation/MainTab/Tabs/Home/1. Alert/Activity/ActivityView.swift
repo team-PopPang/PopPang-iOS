@@ -16,7 +16,7 @@ struct ActivityView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
-                ForEach(Array(activityViewModel.avtivityPopupList.prefix(3).enumerated()), id: \.element) { index, popup in
+                ForEach(Array(activityViewModel.alertPopupList.prefix(3).enumerated()), id: \.element) { index, popup in
                     
                     HStack {
                         AlertPopupCell(popup: popup)

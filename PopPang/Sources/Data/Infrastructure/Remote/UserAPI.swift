@@ -81,9 +81,8 @@ extension UserAPI: TargetType {
         case .getRecommendList:
             return .requestPlain
             
-        case .hardDeleteUser(let userUuid):
-            return .requestParameters(parameters: ["userUuid": userUuid],
-                                      encoding: JSONEncoding.default)
+        case .hardDeleteUser:
+            return .requestPlain
             
         case .getAlertKeywordList(let userUuid):
             return .requestParameters(parameters: ["userUuid": userUuid],

@@ -31,6 +31,10 @@ enum PopupAPI {
                                          longitude: Double?,
                                          mapSortStandard: String)
     
+    // 알림 popup
+    case getAlertPopupList(userUuid: String)
+    case removeAlertPopup(userUuid: String, popupUuid: String)
+    
     // favorite
     case addFavorite(userUuid: String, popupUuid: String)
     case removeFavorite(userUuid: String, popupUuid: String)
@@ -58,6 +62,10 @@ extension PopupAPI: TargetType {
         case .getPersonalFilteredPopupList(let userUuid, _, _, _): return "/users/\(userUuid)/popups/filtered/home"          /// 홈 팝업 필터 조회
         case .getPersonalSearchPopupList(let userUuid, _): return "/users/\(userUuid)/popups/search"                         /// 팝업 검색
         case .getPersonalMapFilteredPopupList(let userUuid, _, _, _, _, _): return "/users/\(userUuid)/popups/filtered/map"  /// 맵 팝업 필터 조회
+        
+        // 알림 popup
+        case .getAlertPopupList(let userUuid): return "/users/\(userUuid)/alert/popups"
+        case .removeAlertPopup(let userUuid, _): return "/users/\(userUuid)/alert"
             
         // favorite
         case .addFavorite: return "/favorite"
@@ -84,6 +92,10 @@ extension PopupAPI: TargetType {
         case .getPersonalFilteredPopupList: return .get
         case .getPersonalSearchPopupList: return .get
         case .getPersonalMapFilteredPopupList: return .get
+            
+        // 알림 popup
+        case .getAlertPopupList: return .get
+        case .removeAlertPopup: return .delete
             
         // favorite
         case .addFavorite: return .post
@@ -143,6 +155,14 @@ extension PopupAPI: TargetType {
                 params["longitude"] = lon
             }
             return.requestParameters(parameters: params, encoding: URLEncoding.queryString)
+            
+        // 알림 popup
+        case .getAlertPopupList(_):
+            return .requestPlain
+            
+        case .removeAlertPopup(_, let popupUuid):
+            return .requestParameters(parameters: ["popupUuid": popupUuid],
+                                      encoding: JSONEncoding.default)
             
         // favorite
         case .increaseViewCount:

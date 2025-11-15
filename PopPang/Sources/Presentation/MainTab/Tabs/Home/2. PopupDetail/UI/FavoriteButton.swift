@@ -8,6 +8,34 @@
 import SwiftUI
 
 // MARK: - 찜 버튼
+//struct FavoriteButton: View {
+//    var isFavorite: Bool
+//    var buttonImage: String
+//    var buttonImage2: String
+//    var textColor: Color = .mainWhite
+//    var buttonColor: Color = .mainOrange
+//
+//    var height: CGFloat = 40
+//    var action: () -> Void
+//    
+//    var body: some View {
+//        Button {
+//          action()
+//        } label: {
+//            Image(isFavorite ? buttonImage2 : buttonImage)
+//                .renderingMode(.template)
+//                .resizable()
+//                .aspectRatio(contentMode: .fit)
+//                .frame(width: height, height: height)
+//                .foregroundStyle(Color.mainOrange)
+//        }
+//        .buttonStyle(PressableButtonStyle())
+//    }
+//}
+
+
+ 
+// MARK: - 찜 버튼 기존
 struct FavoriteButton: View {
     var isFavorite: Bool
     var buttonTitle: String
@@ -35,3 +63,4 @@ struct FavoriteButton: View {
         .buttonStyle(PressableButtonStyle())
     }
 }
+

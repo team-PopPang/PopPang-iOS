@@ -38,6 +38,11 @@ protocol PopupUsecaseProtocol {
                                          longitude: Double?,
                                          mapSortStandard: String) async throws -> [Popup]
     
+    // MARK: - 알림 Popup
+    func getAlertPopupList(userUuid: String) async throws -> [Popup]
+    
+    func removeAlertPopup(userUuid: String, popupUuid: String) async throws
+    
     // MARK: - Favorite
     func increaseViewCount(popupUuid: String) async throws
     

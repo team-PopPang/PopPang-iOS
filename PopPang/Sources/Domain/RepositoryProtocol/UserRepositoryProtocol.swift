@@ -26,6 +26,7 @@ extension UserRepositoryError: LocalizedError {
 
 protocol UserRepositoryProtocol {
     
+    // MARK: - User
     /// 닉네임 중복 여부 확인
     /// - Parameter nickname: 닉네임
     /// - Returns: 중복유무 Bool 타입
@@ -48,6 +49,7 @@ protocol UserRepositoryProtocol {
     func hardDeleteUser(userUuid: String) async throws
     
     
+    // MARK: - alert
     /// 키워드 리스트 가져오기
     /// - Returns: [KeywordDTO]
     func getAlertKeywordList(userUuid: String) async throws -> [KeywordDTO]
@@ -81,6 +83,7 @@ protocol UserRepositoryProtocol {
     func updateNickname(userUuid: String, newNickname: String) async throws
     
     
+    // MARK: - FCM
     /// FCM토큰 일치 확인
     /// - Parameter userUuid: userUuid
     /// - Parameter fcmToken: fcmToken

@@ -73,6 +73,19 @@ final class PopupRepositoryImpl: PopupRepositoryProtocol {
                                                                                                       mapSortStandard: mapSortStandard), decodeTo: [PopupDTO].self)
     }
     
+    // MARK: - 알림 Popup
+    func getAlertPopupList(userUuid: String) async throws -> [PopupDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getAlertPopupList(userUuid: userUuid),
+                                                                     decodeTo: [PopupDTO].self)
+    }
+    
+    
+    /// 알림 팝업 단건 지우기
+    func removeAlertPopup(userUuid: String, popupUuid: String) async throws {
+        try await NetworkProvider.shared.popupProvidder.asyncRequestVoid(.removeAlertPopup(userUuid: userUuid,
+                                                                                       popupUuid: popupUuid))
+    }
+    
     // MARK: - Favorite
     func increaseViewCount(popupUuid: String) async throws {
         try await NetworkProvider.shared.popupProvidder.asyncRequestVoid(.increaseViewCount(popupUuid: popupUuid))

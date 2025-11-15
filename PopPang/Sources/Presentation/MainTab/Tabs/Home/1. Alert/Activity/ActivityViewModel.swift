@@ -10,7 +10,7 @@ import Foundation
 final class ActivityViewModel: ObservableObject {
     let userUuid: String
     @Dependency private var popupUsecase: PopupUsecaseProtocol
-    @Published var avtivityPopupList: [Popup] = []
+    @Published var alertPopupList: [Popup] = []
     
     // 삭제 로직
     @Published var isEditing: Bool = false
@@ -22,19 +22,19 @@ final class ActivityViewModel: ObservableObject {
         self.userUuid = userUuid
         
         Task {
-            let activityPopupList =  await getActivityPopupList()
+            let getAlertPopupList =  await getAlertPopupList()
             await MainActor.run {
-                self.avtivityPopupList = activityPopupList
+                self.alertPopupList = getAlertPopupList
             }
         }
     }
     
-    private func getActivityPopupList() async -> [Popup] {
+    private func getAlertPopupList() async -> [Popup] {
         do {
-            let getActivityPopupList = try await popupUsecase.getFavoriteList(userUuid: userUuid)
+            let getActivityPopupList = try await popupUsecase.getAlertPopupList(userUuid: userUuid)
             return getActivityPopupList
         } catch {
-            Logger.e("알림 리스트 가져오기 실패")
+            Logger.e("알림 리스트 가져오기 실패: \(error)")
             return []
         }
     }
@@ -52,21 +52,20 @@ extension ActivityViewModel {
     
     // 선택된 팝업들만 activity 목록에서 삭제
     func deleteSelectedPopups() {
-        
         Task {
             do {
-                
                 // MARK: - 비동기 함수
-                /*
+                
                 for id in selectedPopupIds {
-                    try await popupUsecase.deleteFavorite(popupUuid: id, userUuid: userUuid)
+                    try await popupUsecase.removeAlertPopup(userUuid: userUuid,
+                                                            popupUuid: id)
                 }
-                 */
+                 
                 try await Task.sleep(nanoseconds: 1_000_000_000) 
                 
                 // MARK: - UI 삭제
                 await MainActor.run {
-                    avtivityPopupList.removeAll { popup in         // 전체 팝업 목록
+                    alertPopupList.removeAll { popup in         // 전체 팝업 목록
                         selectedPopupIds.contains(popup.popupUuid) // 체크된 팝업 목록
                     }
                     selectedPopupIds.removeAll()
