@@ -17,6 +17,7 @@ struct MapView: View {
     // MARK: - 시트 관련
     @State var firstSheetPosition: BottomSheetPosition = .relative(0.5)
     @State var secondSheetPosition: BottomSheetPosition = .hidden
+    @State private var sheetTop: CGFloat = 400
     
     // MARK: - 지역 필터링 선택
     @State private var selectedOption: SortButton.SortOption = .mostFavorited
@@ -72,6 +73,12 @@ struct MapView: View {
                         .onAppear {
                             DispatchQueue.main.async {
                                 mapSearchTextFieldFrame = geo.frame(in: .global)
+                                
+                                // 시트 위치 1번만 계산해서 저장
+                                let top = UIScreen.main.bounds.height - (mapSearchTextFieldFrame.maxY + 20)
+                                
+                                // 최소값 보정(너비 깨짐 방지)
+                                sheetTop = max(top, 200)
                             }
                             // print(mapSearchTextFieldFrame) /// x, y, width, height
                             // print("top(minY): \(Int(mapSearchTextFieldFrame.minY))")
@@ -148,7 +155,7 @@ struct MapView: View {
                      switchablePositions: [.absolute(0),   // 절댓값: 완전 화면에서 안보임(frame이 0)
                                            .relative(0.5), // 상대값: 화면의 절반 차지
                                            // 절댓값: 화면 검색바의 밑면까지의 높이 - 20만큼(frame이 20)
-                                           .absoluteTop(UIScreen.main.bounds.height - (mapSearchTextFieldFrame.maxY + 20))
+                                           .absoluteTop(sheetTop)
                      ],
                      content: {
             // view
@@ -162,6 +169,9 @@ struct MapView: View {
                                secondSheetPosition = firstSheetPosition
                            })
         })
+        // 가로 전체폭
+        .sheetWidth(.relative(1.0))
+        
         // 첫 번째 배경
         .customBackground(
             Color.subWhite
@@ -171,7 +181,7 @@ struct MapView: View {
         // MARK: - 두 번째 시트
         .bottomSheet(bottomSheetPosition: $secondSheetPosition,
                      switchablePositions: [.relative(0.5),
-                                           .absoluteTop(UIScreen.main.bounds.height - (mapSearchTextFieldFrame.maxY + 20))],
+                                           .absoluteTop(sheetTop)],
                      content: {
             // view
             SecondSheeetView(mapViewModel: mapViewModel,
@@ -183,6 +193,9 @@ struct MapView: View {
                              
 
         })
+        // 세로 전체폭
+        .sheetWidth(.relative(1.0))
+        
         // 두 번째 배경
         .customBackground(
             Color.subWhite
@@ -231,3 +244,4 @@ struct NaverMapView: UIViewRepresentable {
     .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
     .environmentObject(MapViewModel(userUuid: "1234"))
 }
+

@@ -46,8 +46,23 @@ struct HomeView: View {
                 
                 ScrollView(showsIndicators: false) {
                     LazyVStack(spacing: 0) {
-                        // MARK: - Best Popup
-                        BestPopupScrollView(homeViewModel: homeViewModel)
+                        VStack(alignment: .leading, spacing: 0) {
+                            HStack(spacing: 0) {
+                                Text("\(rootViewModel.user?.nickname ?? "닉네임")")
+                                    .foregroundStyle(Color.mainOrange)
+                                    .font(.scdream(.bold, size: 15))
+                                
+                                Text("님 맞춤형 팝업")
+                                    .font(.scdream(.bold, size: 15))
+                                    .foregroundStyle(Color.mainBlack)
+                            }
+                            
+                            // MARK: - Best Popup
+                            BestPopupScrollView(homeViewModel: homeViewModel)
+                                .padding(.top, 15)
+                            
+                            
+                        }
                         
                         // MARK: - Coming Popup
                         HStack {
@@ -280,5 +295,6 @@ private struct GridPopupScrollView: View {
 #Preview {
     HomeView()
         .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+        .environmentObject(RootViewModel())
         .environmentObject(HomeViewModel(userUuid: "1234"))
 }

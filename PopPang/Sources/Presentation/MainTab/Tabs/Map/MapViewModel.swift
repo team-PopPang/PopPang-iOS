@@ -112,6 +112,7 @@ extension MapViewModel {
                                                                                 mapSortStandard: selectedOption.rawValue)
             await MainActor.run {
                 self.mapPopups = popups
+                self.allPopups = popups
             }
         } catch {
             Logger.e("\(error)")
