@@ -19,6 +19,9 @@ struct MapView: View {
     @State var secondSheetPosition: BottomSheetPosition = .hidden
     @State private var sheetTop: CGFloat = 400
     
+    // MARK: - 두번쨰 시트 열기 위함
+    @State private var secondSheetType: SecondSheetType = .none
+    
     // MARK: - 지역 필터링 선택
     @State private var selectedOption: SortButton.SortOption = .mostFavorited
     
@@ -26,10 +29,6 @@ struct MapView: View {
     @State private var mapSearchTextFieldFrame: CGRect = .zero
     @State private var tabBarHeight: CGFloat = 0
 
-    // MARK: - 테스트
-    @State private var secondSheetType: SecondSheetType = .none
-
-    
     var body: some View {
         ZStack(alignment: .trailing) {
             NaverMapView(popups: mapViewModel.mapPopups)
@@ -115,20 +114,22 @@ struct MapView: View {
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "list.bullet")
-                                .foregroundStyle(Color.mainOrange)
+                                // .foregroundStyle(Color.mainOrange)
+                                .foregroundStyle(Color.mainBlack)
                                 .frame(width: 12, height: 12)
                                 .padding(.bottom, 3)
                             
                             Text("목록 보기")
                                 .foregroundStyle(Color.mainBlack)
-                                .font(.scdream(.light, size: 17))
-                                
+                                .font(.scdream(.regular, size: 12))
                         }
                         .padding(.vertical, 7)
                         .padding(.horizontal, 14)
                         .background(Color.subWhite)
                         .cornerRadius(20)
                     }
+                    .applyShadow(color: Color.mainBlack,
+                                 alpha: 0.5, x: 0, y: 1, blur: 3)
                 }
                 .frame(maxWidth: .infinity, alignment: .bottom)
                 .padding(.bottom, 20 + tabBarHeight)

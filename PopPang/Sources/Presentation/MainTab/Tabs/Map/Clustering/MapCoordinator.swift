@@ -20,6 +20,9 @@ final class MapCoordinator: NSObject,
     var clusterer: NMCClusterer<ItemKey>?
     var onMarkerSelected: ((ItemKey, Popup) -> Void)?
     
+    var markers: [Int: NMFMarker] = [:]
+    var leafUpdater: LeafMarkerUpdater?
+    
     // swiftUI로 전달할 퍼블리셔(현재 중심 좌표)
     @Published var centerCoordinate: CLLocationCoordinate2D?
 
@@ -135,6 +138,8 @@ extension MapCoordinator {
     /// - screenDistance: 마커가 얼마나 가까이 있을 때 클러스터로 묶일지 (픽셀 단위)
     private func makeClusterer() {
         
+        configureUpdater()
+        
         // 기존 클러스터 제거
         self.clusterer?.clear()
         self.clusterer = nil
@@ -143,6 +148,14 @@ extension MapCoordinator {
         
         // 커스텀 리프 마커 등록 (사각형이나 파란색 심볼 등)
         let leafUpdater = LeafMarkerUpdater()
+        self.leafUpdater = leafUpdater
+        
+        // 마커 생성될 때마다 markers에 저장
+        leafUpdater.onMarkerCreated = { [weak self] marker, key in
+            self?.markers[key.identifier] = marker
+        }
+        
+        // 마커 클릭 시 → zIndex 올리고, 필요하면 팝업 콜백
         leafUpdater.onMarkerSelected = { [weak self] key in
             guard let self = self else { return }
             if key.identifier < self.popups.count {
@@ -237,4 +250,36 @@ extension MapCoordinator {
         update.animation = .easeIn
         view.mapView.moveCamera(update)
     }
+}
+
+// MARK: - 마커 최상위로 올리기
+extension MapCoordinator {
+    // MARK: - LeafUpdater가 마커 생성 시 저장하도록 연결
+      private func configureUpdater() {
+          let updater = LeafMarkerUpdater()
+          self.leafUpdater = updater
+
+          // 마커 생성되면 marker 저장
+          updater.onMarkerCreated = { [weak self] marker, key in
+              self?.markers[key.identifier] = marker
+          }
+
+          // 마커 클릭되면 zIndex 올려주기
+          updater.onMarkerSelected = { [weak self] key in
+              self?.focusMarker(identifier: key.identifier)
+          }
+      }
+
+      // MARK: - 마커 최상위로 올리기
+      func focusMarker(identifier: Int) {
+          guard let marker = markers[identifier] else { return }
+
+          // 모든 마커 zIndex 초기화
+          for (_, m) in markers {
+              m.zIndex = 0
+          }
+
+          // 선택된 마커만 최상위
+          marker.zIndex = 999999
+      }
 }

@@ -88,12 +88,16 @@ import UIKit
 class LeafMarkerUpdater: NMCDefaultLeafMarkerUpdater {
     var clusterer: NMCClusterer<ItemKey>?
     var onMarkerSelected: ((ItemKey) -> Void)?
+    var onMarkerCreated: ((NMFMarker, ItemKey) -> Void)?
 
     override func updateLeafMarker(_ info: NMCLeafMarkerInfo, _ marker: NMFMarker) {
         super.updateLeafMarker(info, marker)
 
         guard let key = info.key as? ItemKey,
               let imageURL = URL(string: key.imageURL) else { return }
+        
+        // 마커 생성 직후 callback → MapCoordinator에서 저장하게 함
+        onMarkerCreated?(marker, key)
 
         Task {
             if let roundedImage = await makeRoundedMarkerImage(from: imageURL, size: CGSize(width: 60, height: 60)) {

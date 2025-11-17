@@ -23,6 +23,7 @@ struct MapListView: View {
                         MapListPopupCell(popup: popup)
                             .onTapGesture {
                                 MapCoordinator.shared.moveCamera(to: popup)
+                                MapCoordinator.shared.focusMarker(identifier: index)
                             }
                         
                         if index != popups.count - 1 {
