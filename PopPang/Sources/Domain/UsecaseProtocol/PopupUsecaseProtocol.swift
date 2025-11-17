@@ -25,6 +25,8 @@ protocol PopupUsecaseProtocol {
     // MARK: - 개인화 Popup
     func getPersonalPopupList(userUuid: String) async throws -> [Popup]
     
+    func getPersonalUseerRecommendPopupList(userUuid: String) async throws -> [Popup]
+    
     func getPersonalUpcomingPopupList(userUuid: String) async throws -> [Popup]
     
     func getPersonalFilteredPopupList(userUuid: String, region: String, district: String, homeSortStandard: String) async throws -> [Popup]

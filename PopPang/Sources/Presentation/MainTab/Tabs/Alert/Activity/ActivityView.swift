@@ -16,23 +16,22 @@ struct ActivityView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
-                ForEach(Array(activityViewModel.alertPopupList.enumerated()), id: \.element) { index, popup in
-                    
-                    HStack {
-                        if activityViewModel.isEditing {
-                            Spacer()
-                            Button {
-                                activityViewModel.deleteAllSelectedPopups()
-                            } label: {
-                                Text("전체 삭제")
-                                    .ppStyleFont(.scdream(.regular, size: 12))
-                                    .foregroundStyle(Color.mainBlack)
-                            }
-                            .padding(.vertical, 10)
-                            .padding(.horizontal, .contentPadding)
+                HStack {
+                    if activityViewModel.isEditing {
+                        Spacer()
+                        Button {
+                            activityViewModel.deleteAllSelectedPopups()
+                        } label: {
+                            Text("전체 삭제")
+                                .ppStyleFont(.scdream(.regular, size: 12))
+                                .foregroundStyle(Color.mainBlack)
                         }
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, .contentPadding)
+                        .buttonStyle(PressableButtonStyle())
                     }
- 
+                }
+                ForEach(Array(activityViewModel.alertPopupList.enumerated()), id: \.element) { index, popup in
                     AlertPopupCell(activityViewModel: activityViewModel,
                                    popup: popup)
                         .contentShape(Rectangle()) // 터치 영역을 셀 전체로 확장

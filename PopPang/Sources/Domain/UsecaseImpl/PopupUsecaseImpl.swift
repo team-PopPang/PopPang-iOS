@@ -47,6 +47,11 @@ final class PopupUsecaseImpl: PopupUsecaseProtocol {
             .map { $0.toEntity() }
     }
     
+    func getPersonalUseerRecommendPopupList(userUuid: String) async throws -> [Popup] {
+        try await popupRepository.getPersonalUseerRecommendPopupList(userUuid: userUuid)
+            .map { $0.toEntity() }
+    }
+    
     func getPersonalUpcomingPopupList(userUuid: String) async throws -> [Popup] {
         try await popupRepository.getPersonalUpcomingPopupList(userUuid: userUuid)
             .map { $0.toEntity() }

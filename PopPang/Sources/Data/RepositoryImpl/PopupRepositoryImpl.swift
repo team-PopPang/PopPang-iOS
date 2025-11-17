@@ -42,6 +42,11 @@ final class PopupRepositoryImpl: PopupRepositoryProtocol {
                                                                      decodeTo: [PopupDTO].self)
     }
     
+    func getPersonalUseerRecommendPopupList(userUuid: String) async throws -> [PopupDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPersonalUseerRecommendPopupList(userUuid: userUuid),
+                                                                     decodeTo: [PopupDTO].self)
+    }
+    
     func getPersonalUpcomingPopupList(userUuid: String) async throws -> [PopupDTO] {
         try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPersonalUpcomingPopupList(userUuid: userUuid),
                                                                      decodeTo: [PopupDTO].self)

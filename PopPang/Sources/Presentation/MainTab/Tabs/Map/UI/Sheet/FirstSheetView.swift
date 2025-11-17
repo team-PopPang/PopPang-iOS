@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import BottomSheet
 
 struct FirstSheetView: View {
     @ObservedObject var mapViewModel: MapViewModel
+    @Binding var firstSheetPosition: BottomSheetPosition
     let onRegionTap: () -> Void
     let onSortTap: () -> Void
     
@@ -26,7 +28,7 @@ struct FirstSheetView: View {
             .padding(.horizontal, .contentPadding)
             
             // view
-            MapListView(popups: mapViewModel.mapPopups)
+            MapListView(popups: mapViewModel.mapPopups, firstSheetPosition: firstSheetPosition)
                 .padding(.horizontal, .contentPadding)
         }
         .frame(maxWidth: .infinity, alignment: .center)

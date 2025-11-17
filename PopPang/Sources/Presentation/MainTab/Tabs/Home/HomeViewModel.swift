@@ -83,7 +83,7 @@ extension HomeViewModel {
     // 첫 섹션
     func getPersonalPopupList() async -> [Popup] {
         do {
-            let popups =  try await popupUsecase.getPersonalPopupList(userUuid: userUuid)
+            let popups =  try await popupUsecase.getPersonalUseerRecommendPopupList(userUuid: userUuid)
             return popups
         } catch {
             Logger.e("\(error)")

@@ -18,7 +18,8 @@ enum PopupAPI {
     
     // 개인화 popup
     case getPersonalPopupList(userUuid: String)                            /// 팝업 전체 조회
-    case getPersonalUpcomingPopupList(userUuid: String)                    /// 다가오는 팝업 조회/
+    case getPersonalUseerRecommendPopupList(userUuid: String)              /// 유저별 개인화 추천 팝업 조회
+    case getPersonalUpcomingPopupList(userUuid: String)                    /// 다가오는 팝업 조회
     case getPersonalFilteredPopupList(userUuid: String,                    /// 홈 화면용 팝업 필터 조회
                                       region: String,
                                       district: String,
@@ -58,6 +59,7 @@ extension PopupAPI: TargetType {
             
         // 개인화 popup
         case .getPersonalPopupList(let userUuid): return "/users/\(userUuid)/popups"                                         /// 팝업 전체 조회
+        case .getPersonalUseerRecommendPopupList(let userUuid): return "/users/\(userUuid)/popups/recommend"                 /// 유저별 개인화 추천 팝업 조회
         case .getPersonalUpcomingPopupList(let userUuid): return "/users/\(userUuid)/popups/upcoming"                        /// 다가오는 팝업 조회
         case .getPersonalFilteredPopupList(let userUuid, _, _, _): return "/users/\(userUuid)/popups/filtered/home"          /// 홈 팝업 필터 조회
         case .getPersonalSearchPopupList(let userUuid, _): return "/users/\(userUuid)/popups/search"                         /// 팝업 검색
@@ -88,6 +90,7 @@ extension PopupAPI: TargetType {
             
         // 개인화 popup
         case .getPersonalPopupList: return .get
+        case .getPersonalUseerRecommendPopupList: return .get
         case .getPersonalUpcomingPopupList: return .get
         case .getPersonalFilteredPopupList: return .get
         case .getPersonalSearchPopupList: return .get
@@ -122,6 +125,9 @@ extension PopupAPI: TargetType {
             
         // 개인화 popup
         case .getPersonalPopupList(let userUuid):
+            return .requestParameters(parameters: ["userUuid": userUuid],
+                                      encoding: URLEncoding.queryString)
+        case .getPersonalUseerRecommendPopupList(let userUuid):
             return .requestParameters(parameters: ["userUuid": userUuid],
                                       encoding: URLEncoding.queryString)
         case .getPersonalUpcomingPopupList(let userUuid):

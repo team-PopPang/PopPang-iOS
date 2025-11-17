@@ -44,6 +44,12 @@ protocol PopupRepositoryProtocol {
     func getPersonalPopupList(userUuid: String) async throws -> [PopupDTO]
     
     
+    /// 유저별 개인화 추천 팝업리스트를 가져옵니다
+    /// - Parameter userUuid: userUuid
+    /// - Returns: [PopupDTO]
+    func getPersonalUseerRecommendPopupList(userUuid: String) async throws -> [PopupDTO]
+    
+    
     /// 다가올 팝업 리스트를 가져옵니다
     /// - Parameter userUuid: userUuid
     /// - Returns: [PopupDTO]

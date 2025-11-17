@@ -10,7 +10,7 @@ import Foundation
 final class ActivityViewModel: ObservableObject {
     let userUuid: String
     @Dependency private var popupUsecase: PopupUsecaseProtocol
-    @Published var alertPopupList: [Popup] = [.popupMock]
+    @Published var alertPopupList: [Popup] = []
     
     // 삭제 로직
     @Published var isEditing: Bool = false

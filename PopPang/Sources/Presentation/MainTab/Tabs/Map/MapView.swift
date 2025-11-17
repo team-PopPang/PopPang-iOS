@@ -22,9 +22,6 @@ struct MapView: View {
     // MARK: - 두번쨰 시트 열기 위함
     @State private var secondSheetType: SecondSheetType = .none
     
-    // MARK: - 지역 필터링 선택
-    @State private var selectedOption: SortButton.SortOption = .mostFavorited
-    
     // MARK: - 높이
     @State private var mapSearchTextFieldFrame: CGRect = .zero
     @State private var tabBarHeight: CGFloat = 0
@@ -87,12 +84,17 @@ struct MapView: View {
                 }
             }
             .frame(maxHeight: .infinity, alignment: .top)
-            .padding(.top, 70)
+            .padding(.top, getSafeArea().top + 10)
             .padding(.horizontal, 15)
             
             // MARK: - 내위치 이동 버튼
             Button {
-                MapCoordinator.shared.moveToUserLocation()
+                // 시트가 없을때 제외하고는 항상 -300
+                if firstSheetPosition == .absolute(0)  {
+                    MapCoordinator.shared.moveToUserLocation()
+                } else {
+                    MapCoordinator.shared.moveToUserLocation(yOffset: -300)
+                }
             } label: {
                 Image("location")
                     .resizable()
@@ -124,7 +126,7 @@ struct MapView: View {
                                 .font(.scdream(.regular, size: 12))
                         }
                         .padding(.vertical, 10)
-                        .padding(.horizontal, 15)
+                        .padding(.horizontal, 20)
                         .background(Color.subWhite)
                         .cornerRadius(20)
                     }
@@ -161,6 +163,7 @@ struct MapView: View {
                      content: {
             // view
             FirstSheetView(mapViewModel: mapViewModel,
+                           firstSheetPosition: $firstSheetPosition,
                            onRegionTap: {
                                secondSheetType = .region
                                secondSheetPosition = firstSheetPosition
@@ -212,6 +215,20 @@ struct MapView: View {
         
         .ignoresSafeArea(edges: .top)
         .ignoresSafeArea(edges: .bottom)
+    }
+}
+
+extension MapView {
+    func getSafeArea() -> UIEdgeInsets {
+        guard let scene = UIApplication.shared.connectedScenes
+                .compactMap({ $0 as? UIWindowScene })
+                .first,
+              let window = scene.windows.first(where: { $0.isKeyWindow })
+        else {
+            return .zero
+        }
+        
+        return window.safeAreaInsets
     }
 }
 

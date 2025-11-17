@@ -6,10 +6,12 @@
 //
 
 import SwiftUI
+import BottomSheet
 
 struct MapListView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     let popups: [Popup]
+    let firstSheetPosition: BottomSheetPosition
     
     var body: some View {
         if popups.isEmpty {
@@ -22,7 +24,16 @@ struct MapListView: View {
                     ForEach(Array(popups.enumerated()), id: \.element) { index, popup in
                         MapListPopupCell(popup: popup)
                             .onTapGesture {
-                                MapCoordinator.shared.moveCamera(to: popup)
+       
+                                // 시트가 없을때 제외하고는 항상 -300
+                                if firstSheetPosition == .absolute(0)  {
+                                    MapCoordinator.shared.moveCamera(to: popup)
+                                } else {
+                                    MapCoordinator.shared.moveCamera(to: popup, yOffset: -300)
+                                }
+                                
+                          
+                                
                                 MapCoordinator.shared.focusMarker(identifier: index)
                             }
                         

@@ -33,7 +33,7 @@ final class MapCoordinator: NSObject,
         // ✅ 마커 표시
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.makeClusterer()
-            self.moveToUserLocation()
+            self.moveToUserLocation(yOffset: -300)
         }
     }
 
@@ -97,7 +97,14 @@ final class MapCoordinator: NSObject,
     // MARK: - 사용자 위치로 이동
     /// 현재 사용자의 위치로 카메라를 이동
     /// 위치 오버레이의 좌표를 기반으로 이동
-    func moveToUserLocation(zoomLevel: Double = 15) {
+    func moveToUserLocation(zoomLevel: Double = 15, yOffset: CGFloat = 0) {
+        
+        // 지도 자체 패딩
+        if yOffset != 0 {
+            view.mapView.contentInset = UIEdgeInsets(top: yOffset, left: 0, bottom: 0, right: 0)
+        } else {
+            view.mapView.contentInset = .zero
+        }
         
         // 위치 이동 + 줌 레벨 복구
         let coord = view.mapView.locationOverlay.location
@@ -239,8 +246,15 @@ extension MapCoordinator {
 
 // MARK: - 카메라 이동
 extension MapCoordinator {
-    func moveCamera(to popup: Popup, zoomLevel: Double = 15) {
+    func moveCamera(to popup: Popup, zoomLevel: Double = 15, yOffset: CGFloat = 0) {
         guard let lat = popup.latitude, let lng = popup.longitude else { return }
+        
+        // 지도 자체 패딩
+        if yOffset != 0 {
+            view.mapView.contentInset = UIEdgeInsets(top: yOffset, left: 0, bottom: 0, right: 0)
+        } else {
+            view.mapView.contentInset = .zero
+        }
         
         let coord = NMGLatLng(lat: lat, lng: lng)
         let update = NMFCameraUpdate(scrollTo: coord,

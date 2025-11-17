@@ -8,12 +8,15 @@
 import Foundation
 import CoreLocation
 import Combine
+import BottomSheet
 
 final class MapViewModel: ObservableObject {
     let userUuid: String
     @Dependency private var popupUsecase: PopupUsecaseProtocol
     @Published var mapPopups: [Popup] = []
-    private var allPopups: [Popup] = [] // 전체 팝럽 저장용
+    
+    // 전체 팝럽 저장용
+    private var allPopups: [Popup] = []
     
     // MARK: - 맵 지역 시트 관련
     @Published var regions: [RegionList] = []
