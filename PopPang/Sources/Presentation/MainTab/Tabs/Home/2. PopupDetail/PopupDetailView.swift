@@ -43,6 +43,22 @@ struct PopupDetailView: View {
                         // 여기서 TabView 자체에 offset 적용
                         .frame(height: 450 + (offset > 0 ? offset : 0))
                         .offset(y: (offset > 0 ? -offset : 0))
+                        .overlay(alignment: .bottomLeading) {
+                            Text("\(popupDetailViewModel.popup.viewCount)명이 봤어요")
+                                .ppStyleFont(.scdream(.regular, size: 12))
+                                .foregroundStyle(Color.mainBlack)
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 24)
+                                .background(Color.white.opacity(0.8))
+                                .cornerRadius(50)
+                                .padding(.leading, 20)
+                                .padding(.bottom, 20)
+                                .applyShadow(color: Color.subBlack,
+                                             alpha: 0.05,
+                                             x: 0,
+                                             y: 4,
+                                             blur: 4)
+                        }
                     }
                     .frame(height: 450) // 기본 높이
                     
@@ -54,6 +70,7 @@ struct PopupDetailView: View {
                             .foregroundStyle(Color.mainBlack)
                         
                         // MARK: - 임시 카운트 위치
+                        /*
                         HStack(spacing: 5) {
                             
                             Spacer()
@@ -77,6 +94,7 @@ struct PopupDetailView: View {
                             Text("\(favoriteCount)")
                                 .ppStyleFont(.scdream(.regular, size: 9))
                         }
+                         */
                         
                         Divider()
                             .background(Color.mainGray5)
@@ -120,10 +138,10 @@ struct PopupDetailView: View {
             }
             .ignoresSafeArea()
             
-            HStack {
+            HStack(spacing: 20) {
                 
                 MainOrangeButton(buttonTitle: "친구에게 공유하기",
-                                 isReversed: true,
+                                 isReversed: false,
                                  height: 40) {
                     KakaoShareManager.shared.shareAppOnly(
                                                           title: popup.name,
@@ -132,24 +150,26 @@ struct PopupDetailView: View {
                                                           popupId: popup.popupUuid)
                 }
                 
-                FavoriteButton(isFavorite: popupDetailViewModel.popup.isFavorited,
-                               buttonTitle: "찜하기",
-                               buttonTitle2: "찜 취소하기",
-                                 height: 40) {
-                    
-                    // MARK: - 좋아요 토글 및 팝팡뷰 갱신
-                    Task {
-                        await popupDetailViewModel.toggleLike()
+                VStack(spacing: 2) {
+                    FavoriteButton(isFavorite: popupDetailViewModel.popup.isFavorited,
+                                   buttonImage: "favorite",
+                                   buttonImage2: "favorite_fill",
+                                   height: 30) {
                         
-                        // MARK: - 비활성화
-                        // await homeViewModel.toggleLike(popup: popup)
-                        // await favoriteViewModel.getFavoritePopups()
-                        // await calendarViewModel.getAllPopupData()
+                        // MARK: - 좋아요 토글 및 팝팡뷰 갱신
+                        Task {
+                            await popupDetailViewModel.toggleLike()
+                        }
                     }
+                    
+                    let favoriteCount = popupDetailViewModel.popup.favoriteCount
+                    Text("\(favoriteCount)")
+                        .ppStyleFont(.scdream(.regular, size: 12))
                 }
             }
             .padding(.vertical, 10)
             .padding(.horizontal, .contentPadding)
+            .padding(.trailing, 10)
             .background(Color.mainGray4)
             
         }
@@ -215,14 +235,13 @@ private struct InfoView: View {
             }
             
             HStack(spacing: 20) {
-                Text("운영 시간")
-                    .foregroundStyle(Color.mainGray)
+                if let _ = popup.openTime, let _ = popup.closeTime {
+                    Text("운영 시간")
+                        .foregroundStyle(Color.mainGray)
+                }
                 HStack(spacing: 10) {
-                    if let openTime = popup.openTime {
+                    if let openTime = popup.openTime, let closeTime = popup.closeTime {
                         Text(openTime)
-                    }
-                    
-                    if let closeTime = popup.closeTime {
                         Text("-")
                         Text(closeTime)
                     }
@@ -234,7 +253,7 @@ private struct InfoView: View {
 }
 
 #Preview {
-    PopupDetailView(userUuid: "", popup: Popup.popupMock)
+    PopupDetailView(userUuid: "", popup: Popup.popupMock2)
         .environmentObject(HomeViewModel(userUuid: "1234"))
         .environmentObject(FavoriteViewModel(userUuid: "1234"))
 }

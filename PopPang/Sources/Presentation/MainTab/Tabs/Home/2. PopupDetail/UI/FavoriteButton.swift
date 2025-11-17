@@ -38,8 +38,8 @@ import SwiftUI
 // MARK: - 찜 버튼 기존
 struct FavoriteButton: View {
     var isFavorite: Bool
-    var buttonTitle: String
-    var buttonTitle2: String
+    var buttonImage: String  // 스트로크 이미지
+    var buttonImage2: String // 색칠된 이미지
     var textColor: Color = .mainWhite
     var buttonColor: Color = .mainOrange
 
@@ -50,15 +50,12 @@ struct FavoriteButton: View {
         Button {
           action()
         } label: {
-            Text(isFavorite ? buttonTitle2 : buttonTitle)
-                .font(.scdream(.medium, size: 12))
-                .frame(maxWidth: .infinity)
-                .frame(height: height)
-                .foregroundStyle(Color.mainWhite)
-                .background(isFavorite ?
-                            Color.mainGray6 : Color.mainOrange)
-                .clipShape(RoundedRectangle(cornerRadius: 5))
-                .contentShape(RoundedRectangle(cornerRadius: 5))
+            Image(isFavorite ? buttonImage2 : buttonImage)
+                .renderingMode(.template)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 25, height: 25)
+                .foregroundStyle(isFavorite ? Color.mainOrange : Color.black)
         }
         .buttonStyle(PressableButtonStyle())
     }

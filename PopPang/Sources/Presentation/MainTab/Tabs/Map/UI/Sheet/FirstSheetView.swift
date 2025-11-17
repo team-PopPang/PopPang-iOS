@@ -28,7 +28,7 @@ struct FirstSheetView: View {
             .padding(.horizontal, .contentPadding)
             
             // view
-            MapListView(popups: mapViewModel.mapPopups, firstSheetPosition: firstSheetPosition)
+            MapListView(popups: mapViewModel.mapPopups, firstSheetPosition: $firstSheetPosition)
                 .padding(.horizontal, .contentPadding)
         }
         .frame(maxWidth: .infinity, alignment: .center)

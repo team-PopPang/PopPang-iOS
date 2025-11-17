@@ -11,11 +11,12 @@ import BottomSheet
 struct MapListView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
     let popups: [Popup]
-    let firstSheetPosition: BottomSheetPosition
+    @Binding var firstSheetPosition: BottomSheetPosition
+    // let firstSheetPosition: BottomSheetPosition
     
     var body: some View {
         if popups.isEmpty {
-            Text("팝업 데이터 수집중")
+            Text("검색 결과가 없습니다.")
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 24)
         } else {
@@ -33,8 +34,13 @@ struct MapListView: View {
                                 }
                                 
                           
-                                
+                                // 동일 위경도일때 시트 누른 마커 최상단
                                 MapCoordinator.shared.focusMarker(identifier: index)
+                                
+                                // 시트를 절반으로
+                                if firstSheetPosition !=  .relative(0.5) {
+                                    firstSheetPosition = .relative(0.5)
+                                }
                             }
                         
                         if index != popups.count - 1 {

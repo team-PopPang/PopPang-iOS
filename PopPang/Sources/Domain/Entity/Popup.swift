@@ -109,7 +109,7 @@ extension Popup {
             mediaType: .image,
             favoriteCount: 0,
             viewCount: 0,
-            isFavorited: true
+            isFavorited: false
         )
     }()
     
