@@ -16,25 +16,42 @@ struct ActivityView: View {
     var body: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
-                ForEach(Array(activityViewModel.alertPopupList.prefix(3).enumerated()), id: \.element) { index, popup in
+                ForEach(Array(activityViewModel.alertPopupList.enumerated()), id: \.element) { index, popup in
                     
                     HStack {
-                        AlertPopupCell(activityViewModel: activityViewModel,
-                                       popup: popup)
-                            .contentShape(Rectangle()) // 터치 영역을 셀 전체로 확장
-                            .onTapGesture {
-                                coordinator.push(.popupDetail(homeViewModel.userUuid, popup))
-                            }
-                        
                         if activityViewModel.isEditing {
+                            Spacer()
                             Button {
-                                activityViewModel.checkBoxTapped(popup: popup)
+                                activityViewModel.deleteAllSelectedPopups()
                             } label: {
-                                Image(systemName: activityViewModel.selectedPopupIds.contains(popup.popupUuid) ? "checkmark.circle.fill" : "circle")
-                                    .foregroundStyle(Color.mainOrange)
+                                Text("전체 삭제")
+                                    .ppStyleFont(.scdream(.regular, size: 12))
+                                    .foregroundStyle(Color.mainBlack)
                             }
+                            .padding(.vertical, 10)
+                            .padding(.horizontal, .contentPadding)
                         }
                     }
+ 
+                    AlertPopupCell(activityViewModel: activityViewModel,
+                                   popup: popup)
+                        .contentShape(Rectangle()) // 터치 영역을 셀 전체로 확장
+                        .onTapGesture {
+                            coordinator.push(.popupDetail(homeViewModel.userUuid, popup))
+                        }
+                        .overlay(alignment: .topTrailing) {
+                            if activityViewModel.isEditing {
+                                Button {
+                                    activityViewModel.deleteSelectedPopups(popupUuid: popup.popupUuid)
+                                } label: {
+                                    Image("removeBtn")
+                                        .resizable()
+                                        .frame(width: 40, height: 40)
+                                }
+                            }
+                        }
+                    
+
                     
                     // 마지막 셀 아래에는 Divider 넣지 않겠다
                     if index != activityViewModel.alertPopupList.count - 1 {
@@ -54,7 +71,15 @@ struct ActivityView: View {
     }
 }
 
-#Preview {
-    ActivityView(activityViewModel: ActivityViewModel(userUuid: "1234"))
-}
+//#Preview {
+//    ActivityView(activityViewModel: ActivityViewModel(userUuid: "1234"))
+//}
 
+#Preview {
+    NavigationStack {
+        AlertView(userUuid: "1234")
+            .environmentObject(RootViewModel())
+            .environmentObject(HomeViewModel(userUuid: "1234"))
+            .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+    }
+}

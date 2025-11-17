@@ -10,12 +10,11 @@ import Foundation
 final class ActivityViewModel: ObservableObject {
     let userUuid: String
     @Dependency private var popupUsecase: PopupUsecaseProtocol
-    @Published var alertPopupList: [Popup] = []
+    @Published var alertPopupList: [Popup] = [.popupMock]
     
     // 삭제 로직
     @Published var isEditing: Bool = false
-    @Published var selectedPopupIds: Set<String> = []
-    @Published var showDeleteAlert: Bool = false
+    // @Published var showDeleteAlert: Bool = false
     
     
     init(userUuid: String) {
@@ -50,39 +49,43 @@ extension ActivityViewModel {
 
 // MARK: - 삭제 로직
 extension ActivityViewModel {
-    func checkBoxTapped(popup: Popup) {
-        if selectedPopupIds.contains(popup.popupUuid) {
-            selectedPopupIds.remove(popup.popupUuid)
-        } else {
-            selectedPopupIds.insert(popup.popupUuid)
-        }
-    }
     
-    // 선택된 팝업들만 activity 목록에서 삭제
-    func deleteSelectedPopups() {
+    // 단건 삭제
+    func deleteSelectedPopups(popupUuid: String) {
         Task {
             do {
                 // MARK: - 비동기 함수
-                for id in selectedPopupIds {
-                    try await popupUsecase.removeAlertPopup(userUuid: userUuid,
-                                                            popupUuid: id)
-                }
-                 
-                try await Task.sleep(nanoseconds: 1_000_000_000) 
+                try await popupUsecase.removeAlertPopup(userUuid: userUuid,
+                                                        popupUuid: popupUuid)
                 
-                // MARK: - UI 삭제
+                // MARK: - UI삭제
                 await MainActor.run {
-                    alertPopupList.removeAll { popup in         // 전체 팝업 목록
-                        selectedPopupIds.contains(popup.popupUuid) // 체크된 팝업 목록
-                    }
-                    selectedPopupIds.removeAll()
+                    alertPopupList.removeAll { $0.popupUuid == popupUuid }
                 }
             } catch {
                 Logger.e("\(error)")
             }
         }
-        
-        
+    }
+    
+    // 전체 삭제
+    func deleteAllSelectedPopups() {
+        Task {
+            
+            // MARK: - 비동기 함수
+            do {
+                for popup in alertPopupList {
+                    try await popupUsecase.removeAlertPopup(userUuid: userUuid, popupUuid: popup.popupUuid)
+                }
+                
+                // MARK: - UI 삭제
+                await MainActor.run {
+                    alertPopupList.removeAll()
+                }
+            } catch {
+                Logger.e("\(error)")
+            }
+        }
     }
 }
 

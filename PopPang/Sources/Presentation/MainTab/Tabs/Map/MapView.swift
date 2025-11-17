@@ -123,8 +123,8 @@ struct MapView: View {
                                 .foregroundStyle(Color.mainBlack)
                                 .font(.scdream(.regular, size: 12))
                         }
-                        .padding(.vertical, 7)
-                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .padding(.horizontal, 15)
                         .background(Color.subWhite)
                         .cornerRadius(20)
                     }

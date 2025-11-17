@@ -47,31 +47,11 @@ struct AlertView: View {
                 TrashButton(isEditing: activityViewModel.isEditing) {
                     
                     if activityViewModel.isEditing {
-                        
-                        // 선택한 팝업이 없으면 Alert 띄우지 않기
-                        if activityViewModel.selectedPopupIds.isEmpty {
-                            // 편집 종료만
-                            activityViewModel.isEditing = false
-                            return
-                        }
-                            
-                        // 삭제 체크가 1개이상 된다면 삭제 확인 알림 보내기
-                        activityViewModel.showDeleteAlert = true
-                        
+                        activityViewModel.isEditing = false
                     } else {
                         // 편집 모드 실행
                         activityViewModel.isEditing = true
                     }
-                }
-                .alert("정말로 삭제하시겠습니까?",
-                       isPresented: $activityViewModel.showDeleteAlert) {
-                    Button("삭제", role: .destructive) {
-                        activityViewModel.deleteSelectedPopups()
-                        activityViewModel.isEditing = false
-                    }
-                    Button("취소", role: .cancel) { }
-                } message: {
-                    Text("선택한 팝업이 삭제됩니다.")
                 }
             }
         }
@@ -99,14 +79,21 @@ struct TrashButton: View {
                 Text("완료")
                     .ppStyleFont(.scdream(.medium, size: 15))
                     .opacity(isEditing ? 1 : 0)
+                
+                // 편집 텍스트
+                Text("편집")
+                    .ppStyleFont(.scdream(.medium, size: 15))
+                    .opacity(isEditing ? 0 : 1)
 
                 // 휴지통 아이콘
+                /*
                 Image(systemName: "trash")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 20, height: 20)
                     .padding(10)
                     .opacity(isEditing ? 0 : 1)
+                 */
             }
         }
         .buttonStyle(PressableButtonStyle())
