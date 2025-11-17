@@ -164,12 +164,21 @@ struct HomeView: View {
                                 proxyHeader.scrollTo("Scroll_To_Top", anchor: .top)
                             }
                         } label: {
-                            Image(systemName: "arrow.up")
-                                .font(.system(size: 30))
-                                .foregroundColor(.black)
-                                .padding()
-                                .background(Color.white)
-                                .clipShape(Circle())
+                            Image("TopAnchor")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 20, height: 20)
+                                .foregroundStyle(Color.mainBlack)
+                                .frame(width: 52, height: 52) // 원 크기
+                                .background {
+                                    Circle()
+                                        .fill(Color.subWhite)
+                                        .applyShadow(color: Color.subBlack,
+                                                     alpha: 0.05,
+                                                     x: 0,
+                                                     y: 4,
+                                                     blur: 4)
+                                }
                         }
                         .padding(.trailing, 20)
                         .padding(.bottom, 20) /// 안전영역이 없는 기종은 12px 더주고, 홈인디케이터가 있는 기종은 패딩을 안주겠다
