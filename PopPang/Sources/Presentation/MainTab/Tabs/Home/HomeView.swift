@@ -21,6 +21,10 @@ struct HomeView: View {
     // MARK: - 광고뷰 테스트
     @State private var hasSeenPopup: Bool = false
     
+    // MARK: - 스크롤 버튼
+    @State private var startScrollOffset: CGFloat = 0
+    @State private var currentScrollOffset: CGFloat = 0
+    
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
@@ -44,88 +48,138 @@ struct HomeView: View {
                 }
                 .padding(.bottom, 15)
                 
-                ScrollView(showsIndicators: false) {
-                    LazyVStack(spacing: 0) {
-                        VStack(alignment: .leading, spacing: 0) {
-                            HStack(spacing: 0) {
-                                Text("\(rootViewModel.user?.nickname ?? "닉네임")")
-                                    .foregroundStyle(Color.mainOrange)
-                                    .font(.scdream(.bold, size: 15))
+                ScrollViewReader { proxyHeader in
+                    
+                    
+                    ScrollView(showsIndicators: false) {
+                        LazyVStack(spacing: 0) {
+                            VStack(alignment: .leading, spacing: 0) {
+                                HStack(spacing: 0) {
+                                    Text("\(rootViewModel.user?.nickname ?? "닉네임")")
+                                        .foregroundStyle(Color.mainOrange)
+                                        .font(.scdream(.bold, size: 15))
+                                    
+                                    Text("님을 위한 팝업")
+                                        .font(.scdream(.bold, size: 15))
+                                        .foregroundStyle(Color.mainBlack)
+                                }
                                 
-                                Text("님 맞춤형 팝업")
-                                    .font(.scdream(.bold, size: 15))
-                                    .foregroundStyle(Color.mainBlack)
+                                // MARK: - Best Popup
+                                BestPopupScrollView(homeViewModel: homeViewModel)
+                                    .padding(.top, 15)
                             }
                             
-                            // MARK: - Best Popup
-                            BestPopupScrollView(homeViewModel: homeViewModel)
-                                .padding(.top, 15)
-                            
-                            
-                        }
-                        
-                        // MARK: - Coming Popup
-                        HStack {
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text("COMING SOON")
-                                    .font(.scdream(.medium, size: 11))
-                                    .foregroundStyle(Color.mainOrange)
+                            // MARK: - Coming Popup
+                            HStack {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("COMING SOON")
+                                        .font(.scdream(.medium, size: 11))
+                                        .foregroundStyle(Color.mainOrange)
+                                    
+                                    Text("오픈 예정 팝업")
+                                        .font(.scdream(.bold, size: 15))
+                                        .foregroundStyle(Color.mainBlack)
+                                }
+                                Spacer()
                                 
-                                Text("곧 생기는 팝업")
-                                    .font(.scdream(.bold, size: 15))
-                                    .foregroundStyle(Color.mainBlack)
+                                Button {
+                                    coordinator.push(.comingPopupDetail)
+                                } label: {
+                                    Image("navigationButton")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 16, height: 16)
+                                }
+                                .padding(.trailing, .contentPadding)
                             }
-                            Spacer()
+                            .padding(.top, 50)
                             
-                            Button {
-                                coordinator.push(.comingPopupDetail)
-                            } label: {
-                                Image("navigationButton")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 16, height: 16)
-                            }
-                            .padding(.trailing, .contentPadding)
-                        }
-                        .padding(.top, 50)
-                        
-                        ComingPopupScrollView(homeViewModel: homeViewModel)
-                        
-                        // MARK: - DropDownView
-                        HStack {
-                            Text(homeViewModel.selectedRegion?.region ?? "전체")
-                                .foregroundStyle(Color.mainBlack)
-                                .ppStyleFont(.scdream(.medium, size: 17))
+                            ComingPopupScrollView(homeViewModel: homeViewModel)
                             
-                            if let selectedDistrict = homeViewModel.selectedDistrict,
-                                selectedDistrict != "전체" {
-                                Text(selectedDistrict)
+                            // MARK: - DropDownView
+                            HStack {
+                                Text(homeViewModel.selectedRegion?.region ?? "전체")
                                     .foregroundStyle(Color.mainBlack)
                                     .ppStyleFont(.scdream(.medium, size: 17))
+                                
+                                if let selectedDistrict = homeViewModel.selectedDistrict,
+                                   selectedDistrict != "전체" {
+                                    Text(selectedDistrict)
+                                        .foregroundStyle(Color.mainBlack)
+                                        .ppStyleFont(.scdream(.medium, size: 17))
+                                }
+                                
+                                Spacer()
+                                
+                                RegionButton(text: "지역") {
+                                    homeViewModel.showRegionSheet.toggle()
+                                }
+                                .padding(.leading, -10)
+                                
+                                SortButton(selectedOption: $homeViewModel.selectedOption) {
+                                    homeViewModel.showSortSheet.toggle()
+                                }
                             }
+                            .padding(.top, 50)
+                            .padding(.trailing, .contentPadding)
+                            // 스크롤 최상단 목적지
+                            .id("Scroll_To_Top")
                             
-                            Spacer()
-                            
-                            RegionButton(text: "지역") {
-                                homeViewModel.showRegionSheet.toggle()
-                            }
-                            .padding(.leading, -10)
-                            
-                            SortButton(selectedOption: $homeViewModel.selectedOption) {
-                                homeViewModel.showSortSheet.toggle()
-                            }
+                            // MARK: - GridView
+                            GridPopupScrollView(homeViewModel: homeViewModel)
+                                .padding(.top, 15)
+                                .padding(.trailing, .contentPadding)
+                               
                         }
-                        .padding(.top, 50)
-                        .padding(.trailing, .contentPadding)
+                        .padding(.bottom, 50)
                         
-                        // MARK: - GridView
-                        GridPopupScrollView(homeViewModel: homeViewModel)
-                        .padding(.top, 15)
-                        .padding(.trailing, .contentPadding)
+//                        // 스크롤 최상단 목적지
+//                        .id("Scroll_To_Top")
+                        
+                        // offset 구하기
+                        .overlay(
+                            GeometryReader { proxy -> Color in
+                                DispatchQueue.main.async {
+                                    if startScrollOffset == 0 {
+                                        self.startScrollOffset = proxy.frame(in: .named("scroll")).minY
+                                    }
+                                    let offset = proxy.frame(in: .named("scroll")).minY
+                                    self.currentScrollOffset = offset - startScrollOffset
+                                }
+                                return Color.clear
+                            }
+                            .frame(width: 0, height: 0)
+                            ,alignment: .top
+                        )
                     }
-                    .padding(.bottom, 50)
+                    .padding(.leading, .contentPadding)
+                    
+                    // 스크롤 전용 좌표계
+                    .coordinateSpace(name: "scroll")
+                    
+                    // 특정 offset일때 버튼 보이게 하자
+                    .overlay(
+                        Button {
+                            withAnimation(.default) {
+                                proxyHeader.scrollTo("Scroll_To_Top", anchor: .top)
+                            }
+                        } label: {
+                            Image(systemName: "arrow.up")
+                                .font(.system(size: 30))
+                                .foregroundColor(.black)
+                                .padding()
+                                .background(Color.white)
+                                .clipShape(Circle())
+                        }
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 20) /// 안전영역이 없는 기종은 12px 더주고, 홈인디케이터가 있는 기종은 패딩을 안주겠다
+                        // startOffset이 450보다 작으면 투명도 적용
+                        .opacity(currentScrollOffset < -650 ? 1 : 0)
+                        
+                        // 우측 하단 버튼 고정
+                        ,alignment: .bottomTrailing
+                    )
                 }
-                .padding(.leading, .contentPadding)
             }
         }
         .onAppear {
@@ -262,7 +316,6 @@ private struct ComingPopupScrollView: View {
             .padding(.vertical, 15)
             .padding(.trailing, .contentPadding)
         }
-        //.background(Color.blue)
     }
 }
 

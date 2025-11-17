@@ -27,7 +27,7 @@ struct AlertView: View {
             // 세그먼트 헤더
             SegmentedControlView(segments: segments,
                                  views: [ActivityView(activityViewModel: activityViewModel),
-                                         KeywordView(keywordViewModel: keywordViewModel)],
+                                         KeywordView(keywordViewModel: keywordViewModel, activityViewModel: activityViewModel)],
                                  background: .mainGray3,
                                  foreground: .mainOrange,
                                  font: .scdream(.medium, size: 12))
@@ -82,6 +82,7 @@ struct AlertView: View {
 #Preview {
     NavigationStack {
         AlertView(userUuid: "1234")
+            .environmentObject(RootViewModel())
             .environmentObject(HomeViewModel(userUuid: "1234"))
             .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
     }

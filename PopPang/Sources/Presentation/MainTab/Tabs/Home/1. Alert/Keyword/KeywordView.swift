@@ -10,6 +10,7 @@ import SwiftUI
 struct KeywordView: View {
     @EnvironmentObject private var rootViewModel: RootViewModel
     @ObservedObject var keywordViewModel: KeywordViewModel
+    @ObservedObject var activityViewModel: ActivityViewModel
     @State private var text: String = ""
     @State private var categories: [String] = UserDefaultsManager.load()
     
@@ -38,15 +39,18 @@ struct KeywordView: View {
                         Text(keyword.keyword)
                             .ppStyleFont(.scdream(.medium, size: 12))
                         Spacer()
-                        Button {
-                            keywordViewModel.removeKeyword(at: index, keyword: keyword.keyword)
-                        } label: {
-                            Image(systemName: "xmark")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 10, height: 10)
-                                .foregroundStyle(Color.mainGray)
-                            
+                        
+                        if activityViewModel.isEditing {
+                            Button {
+                                keywordViewModel.removeKeyword(at: index, keyword: keyword.keyword)
+                            } label: {
+                                Image(systemName: "xmark")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 10, height: 10)
+                                    .foregroundStyle(Color.mainGray)
+                                
+                            }
                         }
                     }
                     .padding(.top, 17)
@@ -109,7 +113,7 @@ struct KeywordView: View {
 }
 
 #Preview {
-    KeywordView(keywordViewModel: KeywordViewModel(userUuid: "1234"))
+    KeywordView(keywordViewModel: KeywordViewModel(userUuid: "1234"), activityViewModel: ActivityViewModel(userUuid: "1234"))
         .environmentObject(RootViewModel())
 }
 
