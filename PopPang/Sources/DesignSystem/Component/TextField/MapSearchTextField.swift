@@ -21,7 +21,7 @@ struct MapSearchTextField: View {
                     .font(.scdream(.medium, size: 12))
                     .frame(height: 45)
                     .keyboardType(.default)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 10)
                     .tint(.mainBlack)
                     .background(background)
                     .cornerRadius(3)
@@ -50,7 +50,7 @@ struct MapSearchTextField: View {
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainGray2)
                     .opacity(text.isEmpty ? 1 : 0)
-                    .padding(.horizontal, 24)
+                    .padding(.horizontal, 10)
             }
         }
     }
