@@ -9,9 +9,8 @@ import SwiftUI
 
 enum RegisterRoute: Int, CaseIterable, Hashable {
     case nickname = 0
-    case keyword
     case category
-    
+    case keyword
     var index: Int { rawValue }
 }
 
@@ -42,20 +41,22 @@ struct RegisterFlowView: View {
                     // MARK: - 건너띄기
                     Button {
                         withAnimation(.easeOut) {
-                            // 현재 키워드창이면 추천 항목 칸으로 이동
-                            if currentStep == .keyword {
+                            
+                            // 카테고리창이면 키워드 창으로 이동
+                            if currentStep == .category {
                                 withAnimation(.easeInOut) {
                                     isForward = true
-                                    currentStep = .category
+                                    currentStep = .keyword
                                 }
                                 return
                             }
                             
-                            // 카테고리창이면 
-                            if currentStep == .category {
+                            // 현재 키워드창이면 회원가입
+                            if currentStep == .keyword {
                                 rootViewModel.send(action: .register)
                                 return
                             }
+                            
                         }
                     } label: {
                         Text("건너뛰기")
@@ -89,26 +90,27 @@ struct RegisterFlowView: View {
                     NicknameSettingView {
                         withAnimation(.easeInOut) {
                             isForward = true
-                            currentStep = .keyword
+                            currentStep = .category
                         }
                     }
                     .frame(width: geo.size.width, height: geo.size.height)
                     .offset(x: offset(for: .nickname, in: geo.size.width))
                     
-                    KeywordSettingView {
+                    CategorySettingView {
                         withAnimation(.easeInOut) {
                             isForward = true
-                            currentStep = .category
+                            currentStep = .keyword
                         }
-                    }
-                    .frame(width: geo.size.width, height: geo.size.height)
-                    .offset(x: offset(for: .keyword, in: geo.size.width))
-                    
-                    CategorySettingView {
-                        print("회원가입 완료")
+                        
                     }
                     .frame(width: geo.size.width, height: geo.size.height)
                     .offset(x: offset(for: .category, in: geo.size.width))
+                    
+                    KeywordSettingView {
+                        print("회원가입 완료")
+                    }
+                    .frame(width: geo.size.width, height: geo.size.height)
+                    .offset(x: offset(for: .keyword, in: geo.size.width))
                 }
             }
             .clipped()
@@ -118,8 +120,8 @@ struct RegisterFlowView: View {
     private func goBack() {
         isForward = false
         switch currentStep {
-        case .keyword: currentStep = .nickname
-        case .category: currentStep = .keyword
+        case .category: currentStep = .nickname
+        case .keyword: currentStep = .category
         default: break
         }
     }

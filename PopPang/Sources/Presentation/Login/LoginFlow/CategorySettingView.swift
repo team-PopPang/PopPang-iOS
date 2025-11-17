@@ -48,10 +48,18 @@ struct CategorySettingView: View {
             
             Spacer()
             
-            MainOrangeButton(buttonTitle: "완료",
+            MainOrangeButton(buttonTitle: "다음",
                              buttonColor: isNextEnabled ? Color.mainOrange : Color.mainGray2) {
                 rootViewModel.send(action: .setRecommandList(selectedCategories))
-                rootViewModel.send(action: .register)
+                
+                UIApplication.shared.endEditing(true)
+                Task {
+                    try? await Task.sleep(nanoseconds: 700_000_000) // 0.7초
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        onNext()
+                    }
+                }
+                // rootViewModel.send(action: .register)
             }
             // MARK: - 활성화 로직
             .disabled(!isNextEnabled)

@@ -11,7 +11,6 @@ import UserNotifications
 struct KeywordSettingView: View {
     @EnvironmentObject private var rootViewModel: RootViewModel
     @State private var text: String = ""
-    @FocusState private var isFocused: Bool
     
     // 중복 검사
     @State private var keywords: [String] = []
@@ -57,7 +56,6 @@ struct KeywordSettingView: View {
             HStack(spacing: 10) {
                 KeywordTextField(placeholder: "ex) 화장품, 애니메이션",
                                  text: $text)
-                .focused($isFocused)
                 
                 Button {
                     
@@ -118,14 +116,7 @@ struct KeywordSettingView: View {
             MainOrangeButton(buttonTitle: "다음",
                              buttonColor: isNextEnabled ? Color.mainOrange : Color.mainGray2) {
                 rootViewModel.send(action: .setalertList(keywords))
-
-                UIApplication.shared.endEditing(true)
-                Task {
-                    try? await Task.sleep(nanoseconds: 700_000_000) // 0.7초
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        onNext()
-                    }
-                }
+                rootViewModel.send(action: .register)
             }
             // MARK: - 활성화 로직
             .disabled(!isNextEnabled)

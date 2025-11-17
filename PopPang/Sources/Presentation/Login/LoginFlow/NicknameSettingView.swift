@@ -108,7 +108,7 @@ struct NicknameSettingView: View {
         }
         .padding(.horizontal, .contentPadding)
         .task {
-            try? await Task.sleep(nanoseconds: 300_000_000) // 0.3초
+            try? await Task.sleep(for: .seconds(0.3))
             isFocused = true
         }
     }
