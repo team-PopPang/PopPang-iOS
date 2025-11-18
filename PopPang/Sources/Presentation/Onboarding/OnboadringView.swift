@@ -9,35 +9,58 @@ import SwiftUI
 
 struct OnboadringView: View {
     @EnvironmentObject private var coordinator: Coordinator<OnboardingRoute, SheetRoute, OverlayRoute>
-    @State private var currentStep: OnboardingStep = .welcome
+    @State private var currentStep: OnboardingStep = .keyword
     
     var body: some View {
         NavigationStack(path: $coordinator.paths) {
-            VStack(spacing: 0) {
-                Spacer()
-                PageView(currentStep: $currentStep)
-                Spacer()
+            ZStack(alignment: .topTrailing) {
                 
-                // MARK: - 인디케이터
-                pageIndicator()
-                    .frame(maxWidth: .infinity)
+                Color.subWhite3.ignoresSafeArea()
                 
-                // MARK: - 다음 버튼
-                MainOrangeButton(
-                    buttonTitle: currentStep == .favorite ? "로그인" : "다음"
-                ) {
-                    if currentStep.rawValue < OnboardingStep.allCases.count - 1 {
-                        currentStep = OnboardingStep.allCases[currentStep.rawValue + 1]
-                    } else {
-                         coordinator.push(.login)
+                VStack(spacing: 0) {
+                    
+                    // MARK: - 컨텐츠
+                    PageView(currentStep: $currentStep)
+                    
+                    // MARK: - 하단 영역
+                    VStack(spacing: 0) {
+                        // MARK: - 인디케이터
+                        pageIndicator()
+                            .frame(maxWidth: .infinity)
+                            .padding(.bottom, 20)
+                        
+                        // MARK: - 다음 버튼
+                        MainOrangeButton(
+                            buttonTitle: currentStep == .favorite ? "시작하기" : "다음"
+                        ) {
+                            if currentStep.rawValue < OnboardingStep.allCases.count - 1 {
+                                currentStep = OnboardingStep.allCases[currentStep.rawValue + 1]
+                            } else {
+                                coordinator.push(.login)
+                            }
+                        }
+                        .padding(.horizontal, 30)
+                        .padding(.vertical, 20)
                     }
+                    .padding(.top, 20)
+                    .background(Color.subWhite)
                 }
-                .padding(.horizontal, 30)
-                .padding(.vertical, 20)
+                
+                // MARK: - 건너뒤기 버튼
+                Button {
+                    coordinator.push(.login)
+                } label: {
+                    Text("건너뛰기")
+                        .font(.scdream(.regular, size: 12))
+                        .foregroundColor(Color.mainBlack)
+                }
+                .padding(.top, 16)
+                .padding(.trailing, 20)
             }
             .navigationDestination(for: OnboardingRoute.self) { route in
                 coordinator.buildView(for: route)
             }
+            
         }
     }
     
@@ -45,7 +68,7 @@ struct OnboadringView: View {
         HStack(spacing: 10) {
             ForEach(OnboardingStep.allCases, id: \.self) {
                 Capsule()
-                    .fill(currentStep == $0 ? .orange : .gray)
+                    .fill(currentStep == $0 ? Color.mainBlack : .gray)
                     .frame(width: currentStep == $0 ? 12 : 6,
                            height: 6)
             }
@@ -65,6 +88,7 @@ private struct PageView: View {
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
         .animation(.spring(duration: 0.5), value: currentStep)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 }
 
@@ -72,27 +96,32 @@ private struct PageContentView: View {
     let step: OnboardingStep
     
     var body: some View {
-//        GeometryReader { proxy in
-            VStack(alignment: .center) {
-                
-                Text(step.title)
-                    .font(.scdream(.bold, size: 20))
-                    .padding(.top, 20)
-                   // .padding(.top, proxy.size.height * 0.1)
-                
-                Text(step.content)
-                    .font(.scdream(.regular, size: 15))
-                    .padding(.top, 10)
-                
-                Image(step.image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .padding(.top, 30)
-                    .padding(.bottom, 20)
-                
-            }
-            .frame(maxWidth: .infinity)
-//        }
+        VStack(alignment: .center, spacing: 0) {
+            
+            Image(step.logo)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 30, height: 30)
+                .padding(.top, 90)
+            
+            Text(step.title)
+                .font(.scdream(.extraBold, size: 18))
+                .padding(.top, 20)
+            
+            Text(step.content)
+                .font(.scdream(.regular, size: 15))
+                .padding(.top, 5)
+            
+            Spacer()
+            
+            Image(step.image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(height: UIScreen.main.bounds.height * 0.45, alignment: .bottom)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(maxHeight: .infinity, alignment: .top)
+        // .background(.blue)
     }
 }
 
@@ -100,3 +129,9 @@ private struct PageContentView: View {
     OnboadringView()
         .environmentObject(Coordinator<OnboardingRoute, SheetRoute, OverlayRoute>())
 }
+
+
+
+
+//.frame(height: UIScreen.main.bounds.height * 0.45, alignment: .top) // 높이를 줄여 상단만 노출
+//.clipped()                // 남는 부분 잘라내기

@@ -8,52 +8,68 @@
 import SwiftUI
 
 enum OnboardingStep: Int, CaseIterable {
-    case welcome = 0
-    case keyword
+    case keyword = 0
     case map
     case favorite
     
+    var logo: String {
+        switch self {
+        case .keyword: "Logo1"
+        case .map: "Logo2"
+        case .favorite: "Logo3"
+        }
+    }
+    
     var title: String {
         switch self {
-        case .welcome:
-            "팝팡에 오신 걸 환영해요"
         case .keyword:
-            "키워드 알림"
+            "팝업스토어 알림"
         case .map:
-            "지도"
+            "위치 기반 서비스"
         case .favorite:
-            "찜등록"
+            "캘린더형 찜 리스트"
         }
     }
     
     var content: String {
         switch self {
-        case .welcome:
-            """
-            팝업 찾느라 힘들었죠?
-            이제 팝팡이 알아서 찾아줄게요.
-            """
         case .keyword:
             """
-            키워드를 등록하여
-            관련 팝업스토어를 알림 받아보세요.
+            언제 어디서 확인 가능하고
             """
         case .map:
             """
-            주변에서 열리는 팝업을
-            지도에서 바로 확인할 수 있어요.
+            언제 어디서 확인 가능하고
             """
         case .favorite:
             """
-            찜한 팝업만 캘린더로 모아
-            한눈에 일정으로 확인할 수 있어요.
+            언제 어디서 확인 가능하고
             """
         }
     }
     
+//    var content: String {
+//        switch self {
+//        case .keyword:
+//            """
+//            키워드를 등록하여
+//            관련 팝업스토어를 알림 받아보세요.
+//            """
+//        case .map:
+//            """
+//            주변에서 열리는 팝업을
+//            지도에서 바로 확인할 수 있어요.
+//            """
+//        case .favorite:
+//            """
+//            찜한 팝업만 캘린더로 모아
+//            한눈에 일정으로 확인할 수 있어요.
+//            """
+//        }
+//    }
+    
     var image: String {
         switch self {
-        case .welcome: "Onboarding0"
         case .keyword: "Onboarding1"
         case .map: "Onboarding2"
         case .favorite: "Onboarding3"

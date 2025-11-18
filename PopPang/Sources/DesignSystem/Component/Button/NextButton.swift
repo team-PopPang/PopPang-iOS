@@ -20,7 +20,7 @@ struct MainOrangeButton: View {
             action()
         } label: {
             Text(buttonTitle)
-                .font(.scdream(.medium, size: 12))
+                .font(.scdream(.bold, size: 14))
                 .frame(height: height)
                 .frame(maxWidth: .infinity)
                 .foregroundStyle(isReversed ? buttonColor : textColor)
