@@ -50,6 +50,7 @@ extension Color {
     static let subWhite3 = Color(hex: "#F2F2F2")
     static let mainBlack = Color(hex: "#333333")
     static let subBlack = Color(hex: "#000000")
+    static let subBlack2 = Color(hex: "#323232")
     
     // MARK: - BestPost
     static let bestPostTitle = Color(hex: "#FFFFFF")

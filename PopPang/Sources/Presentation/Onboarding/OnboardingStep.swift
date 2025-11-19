@@ -35,15 +35,15 @@ enum OnboardingStep: Int, CaseIterable {
         switch self {
         case .keyword:
             """
-            언제 어디서 확인 가능하고
+            키워드를 등록하여 원하는 팝업 알림을 받아보세요.
             """
         case .map:
             """
-            언제 어디서 확인 가능하고
+            내 주변에서 열리는 팝업을 바로 확인하세요.
             """
         case .favorite:
             """
-            언제 어디서 확인 가능하고
+            찜한 팝업을 날짜별로 확인할 수 있어요.
             """
         }
     }

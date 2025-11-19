@@ -21,8 +21,8 @@ struct LoginView: View {
             Image("Logo Logo")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 200, height: 200)
-                
+                .frame(width: 150, height: 150)
+            
             VStack {
                 // MARK: - 카카오
                 SocialLoginButton(type: .kakao) {
@@ -63,7 +63,7 @@ struct LoginView: View {
                 }
                 
             }
-            .padding(.top, 50)
+            .padding(.top, 120)
         }
         .padding(.horizontal, 24)
     }

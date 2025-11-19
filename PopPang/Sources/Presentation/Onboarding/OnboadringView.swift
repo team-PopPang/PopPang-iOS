@@ -110,7 +110,8 @@ private struct PageContentView: View {
             
             Text(step.content)
                 .font(.scdream(.regular, size: 15))
-                .padding(.top, 5)
+                .foregroundStyle(Color.subBlack2)
+                .padding(.top, 10)
             
             Spacer()
             

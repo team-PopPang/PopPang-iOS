@@ -17,7 +17,7 @@ final class AlertManager {
                   let rootVC = windowScene.windows.first?.rootViewController else { return }
         
         let alert = UIAlertController(title: "알림 허용",
-                                       message: "키쿼드 알림을 받으려면 알림 권한을 허용해 주세요.",
+                                       message: "팝업스토어 키워드 알림을 받으려면 알림 권한을 허용해 주세요.",
                                        preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
             if let url = URL(string: UIApplication.openSettingsURLString),
@@ -56,7 +56,7 @@ final class AlertManager {
               let rootVC = windowScene.windows.first?.rootViewController else { return }
         
         let alert = UIAlertController(title: "위치 권한이 필요합니다",
-                                      message: "내 위치로 이동하려면 위치 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
+                                      message: "주변 팝업스토어를 지도에서 보여주고 내 위치로 이동하려면 위치 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.",
                                       preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "설정으로 이동", style: .default) { _ in
             if let url = URL(string: UIApplication.openSettingsURLString),
