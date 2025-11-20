@@ -17,7 +17,7 @@ final class KakaoShareManager {
     private init() {}
 
     private let baseUniversalLink = "https://poppang.co.kr/popup/"
-    private let appStoreURL = "https://apps.apple.com/kr/app/하루한컷-하루를-하나의-컷으로-담다/id6743386583"
+    private let appStoreURL = "https://apps.apple.com/kr/app/팝팡/id6753014613"
 
     /// ✅ 유니버설 링크 + App Store fallback
     func shareAppOnly(

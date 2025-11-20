@@ -122,7 +122,7 @@ private struct ListPopupCell: View {
                 .padding(.top, 10)
             
             Text(popup.name)
-                .font(.scdream(.bold, size: 15))
+                .font(.scdream(.medium, size: 14))
                 .foregroundStyle(Color.mainBlack)
                 .lineLimit(1) // 한줄만 표시
                 .truncationMode(.tail) // 넘치면 ...으로 표시
