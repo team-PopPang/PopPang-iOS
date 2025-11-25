@@ -11,7 +11,7 @@ import Kingfisher
 struct HomeView: View {
     @EnvironmentObject private var rootViewModel: RootViewModel
     @EnvironmentObject private var homeViewModel: HomeViewModel
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @State private var searchText = ""
     
     // MARK: - 딥링크 관련
@@ -39,7 +39,7 @@ struct HomeView: View {
                     Spacer()
                     
                     IconButton(image: "SearchDark", imageSize: 25) {
-                        coordinator.presentSheet(.search(uuid: rootViewModel.user?.userUuid ?? ""))
+                        coordinator.presentFullScreen(.search(uuid: rootViewModel.user?.userUuid ?? ""))
                     }
                     
                     IconButton {
@@ -213,7 +213,7 @@ struct HomeView: View {
                 }
             }
         }
-        .fullScreenCover(item: $coordinator.sheet) { route in
+        .fullScreenCover(item: $coordinator.fullScreen) { route in
             coordinator.buildView(for: route)
         }
         .withoutAnimation()
@@ -286,7 +286,7 @@ extension HomeView {
 
 // MARK: - Best Popup
 private struct BestPopupScrollView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @ObservedObject var homeViewModel: HomeViewModel
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -307,7 +307,7 @@ private struct BestPopupScrollView: View {
 
 // MARK: - Coming Popup
 private struct ComingPopupScrollView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @ObservedObject var homeViewModel: HomeViewModel
     
     var body: some View {
@@ -330,7 +330,7 @@ private struct ComingPopupScrollView: View {
 
 // MARK: - Current Popup
 private struct GridPopupScrollView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @ObservedObject var homeViewModel: HomeViewModel
     private let columns = [
         // flexible: 가로 공간이 남으면 균등하게 나눠 쓰기
@@ -356,7 +356,7 @@ private struct GridPopupScrollView: View {
 
 #Preview {
     HomeView()
-        .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+        .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
         .environmentObject(RootViewModel())
         .environmentObject(HomeViewModel(userUuid: "1234"))
 }

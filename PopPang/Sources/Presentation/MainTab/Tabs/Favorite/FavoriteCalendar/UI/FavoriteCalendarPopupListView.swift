@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct FavoriteCalendarPopupListView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
     let date: Date
     let popups: [Popup]

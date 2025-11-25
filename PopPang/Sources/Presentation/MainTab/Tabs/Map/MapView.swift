@@ -11,7 +11,7 @@ import Kingfisher
 import BottomSheet
 
 struct MapView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @EnvironmentObject private var mapViewModel: MapViewModel
 
     // MARK: - 시트 관련
@@ -76,10 +76,6 @@ struct MapView: View {
                                 // 최소값 보정(너비 깨짐 방지)
                                 sheetTop = max(top, 200)
                             }
-                            // print(mapSearchTextFieldFrame) /// x, y, width, height
-                            // print("top(minY): \(Int(mapSearchTextFieldFrame.minY))")
-                            // print("bottom(maxY): \(Int(mapSearchTextFieldFrame.maxY))")
-                            // print("height: \(Int(mapSearchTextFieldFrame.height))")
                         }
                 }
             }
@@ -259,7 +255,7 @@ struct NaverMapView: UIViewRepresentable {
             }
             .tag(MainTabType.map)
     }
-    .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+    .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
     .environmentObject(MapViewModel(userUuid: "1234"))
 }
 

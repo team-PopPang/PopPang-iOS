@@ -205,6 +205,20 @@ struct PopupDetailView: View {
                 .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
             }
         }
+        
+        // MARK: - 상단 그림자 추가
+        .overlay(alignment: .top) {
+            LinearGradient(
+                colors: [
+                    Color.black.opacity(0.52),
+                    Color.black.opacity(0.0)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 150)       // 네비게이션바 + 상태바 높이
+            .ignoresSafeArea(edges: .top)
+        }
     }
 }
 

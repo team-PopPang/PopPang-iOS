@@ -9,7 +9,7 @@ import SwiftUI
 import Kingfisher
 
 struct CalendarView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @EnvironmentObject private var calendarViewModel: CalendarViewModel
     @EnvironmentObject private var rootViewModel: RootViewModel
     
@@ -89,6 +89,6 @@ struct CalendarView: View {
 
 #Preview {
     CalendarView()
-        .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+        .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
         .environmentObject(CalendarViewModel(userUuid: "1234"))
 }

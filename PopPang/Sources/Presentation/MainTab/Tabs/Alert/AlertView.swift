@@ -64,7 +64,7 @@ struct AlertView: View {
         AlertView(userUuid: "1234")
             .environmentObject(RootViewModel())
             .environmentObject(HomeViewModel(userUuid: "1234"))
-            .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+            .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
     }
 }
 

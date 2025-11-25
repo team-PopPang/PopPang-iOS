@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ProfileView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @EnvironmentObject private var rootViewModel: RootViewModel
     @EnvironmentObject private var profileViewModel: ProfileViewModel
     @State private var tempIsOn: Bool = false
@@ -254,7 +254,7 @@ struct NavigationButton: View {
 #Preview {
     NavigationStack {
         ProfileView()
-            .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+            .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
             .environmentObject(RootViewModel())
             .environmentObject(ProfileViewModel(userUuid: "", isAlerted: true))
     }

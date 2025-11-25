@@ -14,7 +14,7 @@ struct NicknameSettingView: View {
     
     // MARK: - nil이면 미검증, true이면 성고으 false면 실패
     // @State private var isValid: Bool? = nil
-    @EnvironmentObject var coordinator: Coordinator<RegisterRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject var coordinator: Coordinator<RegisterRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     var onNext: () -> Void
     
     var body: some View {

@@ -9,7 +9,7 @@ import SwiftUI
 import Kingfisher
 
 struct ActivityView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @EnvironmentObject private var homeViewModel: HomeViewModel
     @ObservedObject var activityViewModel: ActivityViewModel
     
@@ -79,6 +79,6 @@ struct ActivityView: View {
         AlertView(userUuid: "1234")
             .environmentObject(RootViewModel())
             .environmentObject(HomeViewModel(userUuid: "1234"))
-            .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+            .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
     }
 }

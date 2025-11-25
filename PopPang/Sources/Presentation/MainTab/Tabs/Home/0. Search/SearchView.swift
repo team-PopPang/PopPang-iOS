@@ -10,7 +10,7 @@ import Kingfisher
 
 struct SearchView: View {
     @EnvironmentObject private var rootViewModel: RootViewModel
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @Environment(\.dismiss) var dismiss
     @StateObject private var searchViewModel: SearchViewModel
     @FocusState private var isFocused: Bool
@@ -110,7 +110,7 @@ struct SearchView: View {
 }
 
 private struct SearchGridPopupScrollView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @ObservedObject var viewModel: SearchViewModel
     var onSelect: (Popup) -> Void
     private let columns = [
@@ -138,7 +138,7 @@ private struct SearchGridPopupScrollView: View {
 
 #Preview {
     SearchView(userUuid: "1234")
-        .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+        .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
         .environmentObject(SearchViewModel(userUuid: "1234"))
         .environmentObject(RootViewModel())
 }

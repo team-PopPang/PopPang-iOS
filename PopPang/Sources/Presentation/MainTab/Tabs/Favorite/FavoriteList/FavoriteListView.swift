@@ -46,7 +46,7 @@ struct FavoriteListView: View {
 }
 
 private struct ListGridPopupScrollView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @ObservedObject var favoriteViewModel: FavoriteViewModel
     private let columns = [
         // flexible: 가로 공간이 남으면 균등하게 나눠 쓰기

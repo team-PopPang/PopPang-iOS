@@ -9,7 +9,7 @@ import SwiftUI
 import BottomSheet
 
 struct MapListView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     let popups: [Popup]
     @Binding var firstSheetPosition: BottomSheetPosition
     // let firstSheetPosition: BottomSheetPosition

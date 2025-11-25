@@ -139,7 +139,7 @@ struct ProfileSettingView: View {
         ProfileSettingView()
             .navigationTitle("프로필 설정") // Preview에서만 타이틀 보이게
             .navigationBarTitleDisplayMode(.inline)
-            .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute>())
+            .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
             .environmentObject(RootViewModel())
     }
 }

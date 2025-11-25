@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CalendarPopupListView: View {
-    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     let userUuid: String
     let date: Date
     let popups: [Popup]

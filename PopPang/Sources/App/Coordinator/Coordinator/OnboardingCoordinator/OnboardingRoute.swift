@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-typealias OnboardingCoordinator = Coordinator<OnboardingRoute, SheetRoute, OverlayRoute>
+typealias OnboardingCoordinator = Coordinator<OnboardingRoute, SheetRoute, OverlayRoute, FullScreenRoute>
 
 enum OnboardingRoute: Hashable {
     case login

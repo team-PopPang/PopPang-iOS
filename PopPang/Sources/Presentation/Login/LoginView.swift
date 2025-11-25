@@ -12,7 +12,7 @@ import GoogleSignIn
 
 
 struct LoginView: View {
-    @EnvironmentObject var coordinator: Coordinator<OnboardingRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject var coordinator: Coordinator<OnboardingRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @EnvironmentObject var rootViewModel: RootViewModel
 
     var body: some View {

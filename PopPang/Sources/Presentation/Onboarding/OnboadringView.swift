@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct OnboadringView: View {
-    @EnvironmentObject private var coordinator: Coordinator<OnboardingRoute, SheetRoute, OverlayRoute>
+    @EnvironmentObject private var coordinator: Coordinator<OnboardingRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @State private var currentStep: OnboardingStep = .keyword
     
     var body: some View {
@@ -128,7 +128,7 @@ private struct PageContentView: View {
 
 #Preview {
     OnboadringView()
-        .environmentObject(Coordinator<OnboardingRoute, SheetRoute, OverlayRoute>())
+        .environmentObject(Coordinator<OnboardingRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
 }
 
 
