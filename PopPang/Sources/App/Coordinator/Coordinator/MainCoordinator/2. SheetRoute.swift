@@ -13,10 +13,13 @@ enum SheetRoute: Identifiable {
     case regionSheet(
         regions: [RegionList],
         selectedRegion: Binding<RegionList?>,
-        selectedDistrict: Binding<String?>
+        selectedDistrict: Binding<String?>,
+        onDismiss: (() -> Void)? = nil
     )
+    
     case sortSheet(
-        selectedOption: Binding<SortButton.SortOption>
+        selectedOption: Binding<SortButton.SortOption>,
+        onDismiss: (() -> Void)? = nil
     )
 }
 
@@ -24,15 +27,21 @@ extension Coordinator where R == SheetRoute {
     @ViewBuilder
     func buildView(for route: R) -> some View {
         switch route {
-        case .regionSheet(let regions, let selectedRegion, let selectedDistrict):
+        case .regionSheet(let regions, let selectedRegion, let selectedDistrict, let onDismiss):
             RegionButtonSheet(regions: regions,
                               selectedRegion: selectedRegion,
                               selectedDistrict: selectedDistrict)
                              .presentationDetents([.fraction(0.4)])
+                             .onDisappear {
+                                 onDismiss?()
+                             }
             
-        case .sortSheet(let selectedOption):
+        case .sortSheet(let selectedOption, let onDismiss):
             SortButtonSheet(selectedOption: selectedOption)
                 .presentationDetents([.fraction(0.4)])
+                .onDisappear {
+                    onDismiss?()
+                }
         }
     }
 }

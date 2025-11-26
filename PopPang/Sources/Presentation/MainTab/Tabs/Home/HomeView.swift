@@ -49,8 +49,6 @@ struct HomeView: View {
                 .padding(.bottom, 15)
                 
                 ScrollViewReader { proxyHeader in
-                    
-                    
                     ScrollView(showsIndicators: false) {
                         LazyVStack(spacing: 0) {
                             VStack(alignment: .leading, spacing: 0) {
@@ -112,12 +110,25 @@ struct HomeView: View {
                                 Spacer()
                                 
                                 RegionButton(text: "지역") {
-                                    homeViewModel.showRegionSheet.toggle()
+                                    coordinator.presentSheet(.regionSheet(regions: homeViewModel.regions,
+                                                                          selectedRegion: $homeViewModel.selectedRegion,
+                                                                          selectedDistrict: $homeViewModel.selectedDistrict,
+                                                                          onDismiss: {
+                                        print("지역 로그")
+                                        Task {
+                                            await homeViewModel.updatePersonalFilteredPopupList()
+                                        }
+                                    }))
                                 }
                                 .padding(.leading, -10)
                                 
                                 SortButton(selectedOption: $homeViewModel.selectedOption) {
-                                    homeViewModel.showSortSheet.toggle()
+                                    coordinator.presentSheet(.sortSheet(selectedOption: $homeViewModel.selectedOption,
+                                                                        onDismiss: {
+                                        Task {
+                                            await homeViewModel.updatePersonalFilteredPopupList()
+                                        }
+                                    }))
                                 }
                             }
                             .padding(.top, 50)
@@ -132,9 +143,6 @@ struct HomeView: View {
                                
                         }
                         .padding(.bottom, 50)
-                        
-//                        // 스크롤 최상단 목적지
-//                        .id("Scroll_To_Top")
                         
                         // offset 구하기
                         .overlay(
@@ -217,33 +225,6 @@ struct HomeView: View {
             coordinator.buildView(for: route)
         }
         .withoutAnimation()
-        .sheet(isPresented: $homeViewModel.showRegionSheet, onDismiss: {
-            if let region = homeViewModel.selectedRegion {
-                Logger.d("선책된 지역: \(region.region)")
-            }
-            Logger.d("선택된 정렬: \(homeViewModel.selectedOption.rawValue)")
-            
-            Task {
-                await homeViewModel.updatePersonalFilteredPopupList()
-            }
-        }) {
-            RegionButtonSheet(regions: homeViewModel.regions,
-                        selectedRegion: $homeViewModel.selectedRegion,
-                        selectedDistrict: $homeViewModel.selectedDistrict)
-            .presentationDetents([.fraction(0.4)])
-        }
-        .sheet(isPresented: $homeViewModel.showSortSheet, onDismiss: {
-            if let region = homeViewModel.selectedRegion {
-                Logger.d("선책된 지역: \(region.region)")
-            }
-            Logger.d("선택된 정렬: \(homeViewModel.selectedOption.rawValue)")
-            Task {
-                await homeViewModel.updatePersonalFilteredPopupList()
-            }
-        }) {
-            SortButtonSheet(selectedOption: $homeViewModel.selectedOption)
-                .presentationDetents([.fraction(0.4)])
-        }
     }
 }
 
