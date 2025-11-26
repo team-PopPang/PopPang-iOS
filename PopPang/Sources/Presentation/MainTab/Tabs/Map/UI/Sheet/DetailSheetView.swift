@@ -67,17 +67,3 @@ struct DetailSheetView: View {
     .environmentObject(MapViewModel(userUuid: "1234"))
 }
 
-// MARK: - Tag
-struct PopupCategoryTag: View {
-    let text: String
-    
-    var body: some View {
-        Text(text)
-            .ppStyleFont(.scdream(.regular, size: 11))
-            .foregroundStyle(Color.subOrange)
-            .padding(.vertical, 5)
-            .padding(.horizontal, 10)
-            .background(Color.subOrange2)
-            .cornerRadius(10)
-    }
-}

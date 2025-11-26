@@ -31,8 +31,8 @@ struct SocialLoginButton: View {
         
         var fgColor: Color {
             switch self {
-            case .kakao: return .mainBlack
-            case .apple: return .mainWhite
+            case .kakao: return .subBlack3
+            case .apple: return .subWhite
             case .google: return .mainBlack
             }
         }
@@ -80,7 +80,7 @@ struct SocialLoginButton: View {
                     .scaledToFit()
                     .frame(width: size, height: size)
                 Text(type.title)
-                    .font(.scdream(.bold, size: 16))
+                    .font(.scdream(.medium, size: 15))
             }
             .padding()
             .frame(maxWidth: .infinity)
