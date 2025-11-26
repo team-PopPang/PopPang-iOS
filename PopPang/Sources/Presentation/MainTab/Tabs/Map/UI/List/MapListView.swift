@@ -12,6 +12,7 @@ struct MapListView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     let popups: [Popup]
     @Binding var firstSheetPosition: BottomSheetPosition
+    let onBackgroundTap: (Popup) -> Void
     // let firstSheetPosition: BottomSheetPosition
     
     var body: some View {
@@ -41,6 +42,9 @@ struct MapListView: View {
                                 if firstSheetPosition !=  .relative(0.5) {
                                     firstSheetPosition = .relative(0.5)
                                 }
+                                
+                                // 디테일 시트 이동
+                                onBackgroundTap(popup)
                             }
                         
                         if index != popups.count - 1 {

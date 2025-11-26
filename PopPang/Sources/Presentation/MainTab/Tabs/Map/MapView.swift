@@ -32,7 +32,7 @@ struct MapView: View {
                 .onAppear {
                     MapCoordinator.shared.checkIfLocationServiceIsEnabled()
                     MapCoordinator.shared.onMarkerSelected = { key, popup in
-                        coordinator.push(.popupDetail(mapViewModel.userUuid, popup))
+                         coordinator.push(.popupDetail(mapViewModel.userUuid, popup))
                     }
                 }
             
@@ -147,9 +147,10 @@ struct MapView: View {
                 await mapViewModel.updatePersonamMapFilteredPopupList()
             }
         }
+        
         // MARK: - 첫 번째 시트
         .bottomSheet(bottomSheetPosition: $firstSheetPosition,
-                     
+                    
                      // MARK: - 시트의 높이
                      switchablePositions: [.absolute(0),   // 절댓값: 완전 화면에서 안보임(frame이 0)
                                            .relative(0.5), // 상대값: 화면의 절반 차지
@@ -160,8 +161,8 @@ struct MapView: View {
             // view
             FirstSheetView(mapViewModel: mapViewModel,
                            firstSheetPosition: $firstSheetPosition,
-                           onRegionTap: {
-                               secondSheetType = .region
+                           onBackgroundTap: { popup in
+                               secondSheetType = .detailSheet(popup: popup)
                                secondSheetPosition = firstSheetPosition
                            },
                            onSortTap: {
@@ -169,6 +170,7 @@ struct MapView: View {
                                secondSheetPosition = firstSheetPosition
                            })
         })
+        
         // 가로 전체폭
         .sheetWidth(.relative(1.0))
         
@@ -193,6 +195,7 @@ struct MapView: View {
                              
 
         })
+        
         // 세로 전체폭
         .sheetWidth(.relative(1.0))
         
@@ -258,4 +261,3 @@ struct NaverMapView: UIViewRepresentable {
     .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
     .environmentObject(MapViewModel(userUuid: "1234"))
 }
-

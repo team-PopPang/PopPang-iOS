@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import BottomSheet
 
 /// T: 화면 경로(Route)를 나타내는 타입(enum Route)
 ///     - Hashable제약 이유: NavigationStack의 path 관리에 필요
@@ -22,6 +23,8 @@ class Coordinator<T: Hashable,
     @Published var sheet: R? = nil        /// 현재 표시 중인 모달(nil이면 닫힘, 값이 있으면 표시)
     @Published var overlay: O? = nil      /// 공지사항 같은 오버레이
     @Published var fullScreen: F? = nil   /// 풀스크린 모달
+    @Published var bottomSheet: BottomSheetRoute? = nil
+    @Published var bottomSheetPosition: BottomSheetPosition = .hidden
     
     /// 초기 화면 경로 설정 생성자
     /// - initial 값이 있다면 paths 배열을 [initial]로 시작
@@ -98,5 +101,16 @@ class Coordinator<T: Hashable,
     
     func dismissOverlay() {
         self.overlay = nil
+    }
+    
+    // MARK: - BottomSheet
+    func presentBottomSheet(_ route: BottomSheetRoute) {
+        self.bottomSheet = route
+        self.bottomSheetPosition = route.position
+    }
+    
+    func dismissBottomSheet() {
+        self.bottomSheet = nil
+        self.bottomSheetPosition = .hidden
     }
 }

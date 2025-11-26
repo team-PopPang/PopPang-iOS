@@ -42,6 +42,8 @@ extension Color {
     
     // MARK: - Main
     static let mainOrange = Color(hex: "#FF7A00")
+    static let subOrange = Color(hex: "#DE5C00")
+    static let subOrange2 = Color(hex: "#FFF6ED")
     static let mainRed = Color(hex: "#DD0000")
     static let mainGreen = Color(hex: "#006813")
     static let mainWhite = Color(hex: "#F1F1F1")

@@ -9,6 +9,7 @@ import SwiftUI
 import Kingfisher
 
 struct PopupDetailView: View {
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) var openURL
     @EnvironmentObject private var homeViewModel: HomeViewModel
@@ -65,36 +66,18 @@ struct PopupDetailView: View {
                     VStack(alignment: .leading, spacing: 0) {
                         
                         // MARK: - Title
-                        Text(popup.name)
-                            .ppStyleFont(.scdream(.bold, size: 20))
-                            .foregroundStyle(Color.mainBlack)
                         
-                        // MARK: - 임시 카운트 위치
-                        /*
-                        HStack(spacing: 5) {
+                        HStack {
+                            Text(popup.name)
+                                .ppStyleFont(.scdream(.bold, size: 20))
+                                .foregroundStyle(Color.mainBlack)
                             
-                            Spacer()
-                            
-                            let viewCount = popupDetailViewModel.popup.viewCount
-                            Image("viewCount")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 12, height: 12)
-                            
-                            Text("\(viewCount)")
-                                .ppStyleFont(.scdream(.regular, size: 9))
-                            
-                            
-                            let favoriteCount = popupDetailViewModel.popup.favoriteCount
-                            Image("favoriteCount")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 12, height: 12)
-                            
-                            Text("\(favoriteCount)")
-                                .ppStyleFont(.scdream(.regular, size: 9))
+                            Button {
+                                coordinator.push(.popupDetail(popupDetailViewModel.userUuid, .popupMock))
+                            } label: {
+                                Text("이런 팝업 어때요")
+                            }
                         }
-                         */
                         
                         Divider()
                             .background(Color.mainGray5)

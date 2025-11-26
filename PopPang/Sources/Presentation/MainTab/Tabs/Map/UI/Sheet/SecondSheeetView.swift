@@ -10,6 +10,7 @@ import SwiftUI
 enum SecondSheetType {
     case region
     case sort
+    case detailSheet(popup: Popup)
     case none
 }
 
@@ -47,6 +48,12 @@ struct SecondSheeetView: View {
                     onDismiss()
                 }
                 .padding(.bottom, 100)
+                
+            case .detailSheet(let popup):
+                DetailSheetView(popup: popup) {
+                    onDismiss()
+                }
+                
             case .none:
                 EmptyView()
             }
