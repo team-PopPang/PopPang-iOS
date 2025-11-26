@@ -9,17 +9,43 @@ import SwiftUI
 
 struct CalendarPopupListView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
+    @EnvironmentObject private var calendarViewModel: CalendarViewModel
+    
     let userUuid: String
     let date: Date
-    let popups: [Popup]
     var body: some View {
+        let popups = calendarViewModel.selectedPopups
+        
         VStack(alignment: .leading, spacing: 0) {
-            
             HStack(alignment: .top) {
+                
                 Text(formattedDate(date))
                     .ppStyleFont(.scdream(.bold, size: 12))
                     .foregroundStyle(Color.mainBlack)
+                
                 Spacer()
+                
+                RegionButton(text: "지역") {
+                    coordinator.presentSheet(.regionSheet(regions: calendarViewModel.regions,
+                                                          selectedRegion: $calendarViewModel.selectedRegion,
+                                                          selectedDistrict: $calendarViewModel.selectedDistrict,
+                                                          onDismiss: {
+                        Task {
+                            await calendarViewModel.updatePersonalFilteredPopupList()
+                        }
+                    }))
+                }
+                .padding(.leading, -10)
+                
+                SortButton(selectedOption: $calendarViewModel.selectedOption) {
+                    coordinator.presentSheet(.sortSheet(selectedOption: $calendarViewModel.selectedOption,
+                                                        onDismiss: {
+                        Task {
+                            await calendarViewModel.updatePersonalFilteredPopupList()
+                        }
+                    }))
+                }
+                
             }
             .padding(.top, 20)
             
@@ -59,5 +85,7 @@ struct CalendarPopupListView: View {
 }
 
 #Preview {
-    CalendarPopupListView(userUuid: "1234", date: .now, popups: [.popupMock, .popupMock2])
+    CalendarPopupListView(userUuid: "1234", date: .now)
+        .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
+        .environmentObject(CalendarViewModel(userUuid: "1234"))
 }

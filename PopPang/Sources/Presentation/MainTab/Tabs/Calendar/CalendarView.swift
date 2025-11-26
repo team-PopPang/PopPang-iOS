@@ -46,8 +46,7 @@ struct CalendarView: View {
                     // MARK: - 시트
                     CalendarPopupListView(
                         userUuid: calendarViewModel.userUuid,
-                        date: calendarViewModel.selectedDate,
-                        popups: calendarViewModel.selectedPopups
+                        date: calendarViewModel.selectedDate
                     )
                     .padding(.horizontal, 15)
                     

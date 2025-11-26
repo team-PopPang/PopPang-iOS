@@ -23,6 +23,14 @@ final class CalendarViewModel: ObservableObject {
     // 날짜별 팝업 개수(캘린더 숫자 하단 표시용)
     @Published var popupEventCounts: [Date: Int] = [:]
     
+    // 지역 시트 관련
+    @Published var regions: [RegionList] = []
+    @Published var selectedRegion: RegionList?
+    @Published var selectedDistrict: String?
+    
+    // 정렬 시트 관련
+    @Published var selectedOption: SortButton.SortOption = .newest
+    
     init(userUuid: String) {
         self.userUuid = userUuid
         Task {
@@ -35,9 +43,22 @@ final class CalendarViewModel: ObservableObject {
 extension CalendarViewModel {
     func getAllPopupData() async {
         do {
+            // MARK: - 지역 리스트는 리턴값이 다르므로 async let으로 병렬 실행(존재하지 않을때만 호출)
+            if regions.isEmpty {
+                async let regionTask = self.getRegionList()
+                let regionList = await regionTask
+                await MainActor.run {
+                    self.regions = regionList
+                    if let first = regionList.first {
+                        self.selectedRegion = first
+                        self.selectedDistrict = first.districtList.first
+                    }
+                }
+            }
+            
             try await withThrowingTaskGroup(of: (Int, [Popup]).self) { group in
                 // 0, 1로 구분해서 요청
-                group.addTask { (0, await self.getCalendarPopupList()) }
+                group.addTask { (0, await self.getPersonalFilteredPopupList()) }
                 
                 for try await (index, popups) in group {
                     await MainActor.run {
@@ -53,6 +74,37 @@ extension CalendarViewModel {
                 }
             }
             Logger.d("캘린더 데이터 로드 완료")
+        } catch {
+            Logger.e("\(error)")
+        }
+    }
+    
+    // 필터링 초기 실행
+    func getPersonalFilteredPopupList() async -> [Popup] {
+        do {
+            let popups =  try await popupUsecase.getPersonalFilteredPopupList(userUuid: userUuid,
+                                                                              region: selectedRegion?.region ?? "전체",
+                                                                              district: selectedDistrict ?? "전체",
+                                                                              homeSortStandard: selectedOption.rawValue)
+            return popups
+        } catch {
+            Logger.e("\(error)")
+            return []
+        }
+    }
+    
+    // 필터링 업데이트
+    func updatePersonalFilteredPopupList() async {
+        do {
+            let popups =  try await popupUsecase.getPersonalFilteredPopupList(userUuid: userUuid,
+                                                                              region: selectedRegion?.region ?? "전체",
+                                                                              district: selectedDistrict ?? "전체",
+                                                                              homeSortStandard: selectedOption.rawValue)
+            await MainActor.run {
+                self.calendarPopups = popups
+                self.calculateEventCounts()
+                self.selectDate(self.selectedDate)
+            }
         } catch {
             Logger.e("\(error)")
         }
@@ -108,21 +160,6 @@ extension CalendarViewModel {
         selectedDate = date
         selectedPopups = calendarPopups.filter {
             isDate(date, between: $0.startDate, and: $0.endDate)
-        }
-    }
-}
-
-// MARK: - 팝업 리스트 비동기 호출
-extension CalendarViewModel {
-    
-    /// 서버에서 팝업 리스트 비동기 호출, 완료 후 날짜별 이벤트 개수 계산
-    func getCalendarPopupList() async -> [Popup] {
-        do {
-            let popups =  try await popupUsecase.getPersonalPopupList(userUuid: userUuid)
-            return popups
-        } catch {
-            print("❌ getPopupList Error: \(error)")
-            return []
         }
     }
 }
@@ -188,6 +225,29 @@ extension CalendarViewModel {
             }
         } catch {
             Logger.e("\(error)")
+        }
+    }
+}
+
+// MARK: - 지역 시트 관련 메서드
+extension CalendarViewModel {
+    
+    // MARK: - 지역 필터링 가져오기 비동기
+    func getRegionList() async -> [RegionList] {
+        do {
+            let regionList = try await popupUsecase.getRegionList()
+                .sorted { lhs, rhs in
+                    // 전체를 1순위 서울을 2순위
+                    if lhs.region == "전체" { return true }
+                    if rhs.region == "전체" { return false }
+                    if lhs.region == "서울" { return true }
+                    if rhs.region == "서울" { return false }
+                    return false
+                }
+            return regionList
+        } catch {
+            Logger.e("❌ 찜 목록 불러오기 오류: \(error)")
+            return []
         }
     }
 }

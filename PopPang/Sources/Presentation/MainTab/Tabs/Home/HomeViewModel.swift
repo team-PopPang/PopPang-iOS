@@ -16,13 +16,11 @@ final class HomeViewModel: ObservableObject {
     @Published var gridPopups: [Popup] = []
     
     // 지역 시트 관련
-    // @Published var showRegionSheet: Bool = false
     @Published var regions: [RegionList] = []
     @Published var selectedRegion: RegionList?
     @Published var selectedDistrict: String?
     
     // 정렬 시트 관련
-   //  @Published var showSortSheet: Bool = false
     @Published var selectedOption: SortButton.SortOption = .newest
     
     init(userUuid: String) {

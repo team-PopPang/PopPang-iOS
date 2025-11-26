@@ -114,7 +114,6 @@ struct HomeView: View {
                                                                           selectedRegion: $homeViewModel.selectedRegion,
                                                                           selectedDistrict: $homeViewModel.selectedDistrict,
                                                                           onDismiss: {
-                                        print("지역 로그")
                                         Task {
                                             await homeViewModel.updatePersonalFilteredPopupList()
                                         }

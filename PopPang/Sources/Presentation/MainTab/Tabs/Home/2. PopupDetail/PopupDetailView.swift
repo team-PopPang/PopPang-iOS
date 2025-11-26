@@ -25,7 +25,7 @@ struct PopupDetailView: View {
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            ScrollView {
+            ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading) {
                     GeometryReader { geo in
                         let offset = geo.frame(in: .global).minY
@@ -66,18 +66,22 @@ struct PopupDetailView: View {
                     VStack(alignment: .leading, spacing: 0) {
                         
                         // MARK: - Title
-                        
                         HStack {
                             Text(popup.name)
                                 .ppStyleFont(.scdream(.bold, size: 20))
                                 .foregroundStyle(Color.mainBlack)
                             
+                            /*
                             Button {
                                 coordinator.push(.popupDetail(popupDetailViewModel.userUuid, .popupMock))
                             } label: {
                                 Text("이런 팝업 어때요")
                             }
+                             */
                         }
+                        
+                        PopupCategoryTag(text: "테스트태그")
+                            .padding(.top, 5)
                         
                         Divider()
                             .background(Color.mainGray5)
@@ -88,17 +92,17 @@ struct PopupDetailView: View {
                         
                         Divider()
                             .background(Color.mainGray5)
-                            .padding(.vertical, 15)
+                            .padding(.vertical, 20)
                         
                         // MARK: - Body
                         Text(popup.captionSummary)
-                            .ppStyleFont(.scdream(.regular, size: 12),
+                            .ppStyleFont(.scdream(.regular, size: 15),
                                        lineHeight: 1.4,
                                        letterSpacing: 0.02)
                         
                         Divider()
                             .background(Color.mainGray5)
-                            .padding(.vertical, 15)
+                            .padding(.vertical, 20)
                         
                         VStack(alignment: .leading, spacing: 0) {
                             Text("SNS / 홈페이지")
@@ -111,6 +115,13 @@ struct PopupDetailView: View {
                             }
                             .padding(.top, 8)
                         }
+                        
+                        Divider()
+                            .background(Color.mainGray5)
+                            .padding(.vertical, 20)
+                        
+                        Text("이런 팝업은 어때?")
+                            .ppStyleFont(.scdream(.medium, size: 15))
                     }
                     .padding(.top, 20)
                     .padding(.horizontal, .contentPadding)
@@ -199,7 +210,7 @@ struct PopupDetailView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .frame(height: 150)       // 네비게이션바 + 상태바 높이
+            .frame(height: 100)       // 네비게이션바 + 상태바 높이
             .ignoresSafeArea(edges: .top)
         }
     }
@@ -213,27 +224,46 @@ private struct InfoView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 20) {
                 Text("운영 장소")
+                    .ppStyleFont(.scdream(.regular, size: 15))
                     .foregroundStyle(Color.mainGray)
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("\(popup.address)")
                     Text("\(popup.roadAddress)")
+                    Text("\(popup.address)")
                 }
+                .ppStyleFont(.scdream(.regular, size: 15))
+                .foregroundStyle(Color.mainBlack)
+                
+                Button {
+                    UIPasteboard.general.string = popup.roadAddress
+                } label: {
+                    Image(systemName: "document.on.document")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .foregroundStyle(Color.mainGray2)
+                        .frame(width: 20, height: 20)
+                }
+                .buttonStyle(PressableButtonStyle())
+                .padding(.leading, -15)
             }
             
             HStack(spacing: 20) {
                 Text("운영 날짜")
+                    .ppStyleFont(.scdream(.regular, size: 15))
                     .foregroundStyle(Color.mainGray)
                 HStack(spacing: 10) {
                     Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
                     Text("-")
                     Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
                 }
+                .ppStyleFont(.scdream(.regular, size: 15))
+                .foregroundStyle(Color.mainBlack)
             }
             
             HStack(spacing: 20) {
                 if let _ = popup.openTime, let _ = popup.closeTime {
                     Text("운영 시간")
+                        .ppStyleFont(.scdream(.regular, size: 15))
                         .foregroundStyle(Color.mainGray)
                 }
                 HStack(spacing: 10) {
@@ -243,6 +273,8 @@ private struct InfoView: View {
                         Text(closeTime)
                     }
                 }
+                .ppStyleFont(.scdream(.regular, size: 15))
+                .foregroundStyle(Color.mainBlack)
             }
         }
         .font(.scdream(.regular, size: 15))
