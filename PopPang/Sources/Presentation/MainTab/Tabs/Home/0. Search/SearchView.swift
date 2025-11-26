@@ -52,10 +52,12 @@ struct SearchView: View {
                 .padding(.bottom, 10)
                 
                 VStack(spacing: 0) {
-                    // MARK: - 최근 본 검색어
+                    // MARK: - 팝업배열이 비어있을 때
                     if searchViewModel.searchPopupList.isEmpty {
+                        
                         // MARK: - 글자
                         HStack(spacing: 0) {
+                            // 최근 본 로컬 검색어가 없다면
                             if !categories.isEmpty {
                                 Text(rootViewModel.user?.nickname ?? "홍길동")
                                     .foregroundStyle(Color.mainOrange)
@@ -87,6 +89,22 @@ struct SearchView: View {
                             .padding(4)
                         }
                         .padding(.top, 15) // 상단 여백만
+                        
+                        // MARK: - 만약 검색 후 검색결과가 없으면
+                        if !searchViewModel.searchText.isEmpty {
+                            VStack(spacing: 0) {
+                                Image("noResult")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 50, height: 50)
+                                
+                                Text("검색결과가 없습니다.")
+                                    .ppStyleFont(.scdream(.medium, size: 14))
+                                    .foregroundStyle(Color.mainBlack)
+                                    .padding(.top, 10)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
                     }
 
                     // MARK: - GridView
