@@ -101,12 +101,12 @@ extension PopupDetailViewModel {
     func getPersonalRelatedPopupList(userUuid: String, popupUuid: String) async {
         
         do {
-//            let popups = try await popupUsecase.getPersonalRelatedPopupList(userUuid: userUuid,
-//                                                                            popupUuid: popupUuid)
-//            
-//            await MainActor.run {
-//                self.relatedPopupList = popups
-//            }
+            let popups = try await popupUsecase.getPersonalRelatedPopupList(userUuid: userUuid,
+                                                                            popupUuid: popupUuid)
+            
+            await MainActor.run {
+                self.relatedPopupList = popups
+            }
             
         } catch {
             Logger.e("\(error)")

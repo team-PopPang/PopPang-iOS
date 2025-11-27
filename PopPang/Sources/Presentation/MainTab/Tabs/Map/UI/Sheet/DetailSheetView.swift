@@ -19,7 +19,7 @@ struct DetailSheetView: View {
         ScrollView(showsIndicators: false) {
             VStack {
                 HStack {
-                    PopupCategoryTag(text: "캐릭터")
+                    PopupCategoryTag(text: "테스트태그")
                     
                     Spacer()
                     

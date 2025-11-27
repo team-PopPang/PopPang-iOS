@@ -233,7 +233,7 @@ private struct InfoView: View {
                 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("\(popup.roadAddress)")
-                    Text("\(popup.address)")
+                    // Text("\(popup.address)")
                 }
                 .ppStyleFont(.scdream(.regular, size: 15))
                 .foregroundStyle(Color.mainBlack)
@@ -314,8 +314,8 @@ struct RecommendPopupCell: View {
         VStack(alignment: .leading, spacing: 0) {
             KFImage(URL(string: popup.imageUrlList[0]))
                 .resizable()
-                .aspectRatio(contentMode: .fit)
-                // .frame(width: cellWidth)
+                .aspectRatio(contentMode: .fill)
+                .frame(width: cellWidth, height: cellWidth)
                 .clipped()
             
             Text(popup.roadAddress.shortAddress)
@@ -324,7 +324,7 @@ struct RecommendPopupCell: View {
                 .padding(.top, 10)
             
             Text(popup.name)
-                .font(.scdream(.medium, size: 12))
+                .font(.scdream(.medium, size: 12) )
                 .foregroundStyle(Color.mainBlack)
                 .lineLimit(1)
                 .truncationMode(.tail)
