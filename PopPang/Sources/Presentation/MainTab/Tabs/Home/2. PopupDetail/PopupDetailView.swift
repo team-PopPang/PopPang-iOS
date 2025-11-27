@@ -12,9 +12,9 @@ struct PopupDetailView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) var openURL
-    @EnvironmentObject private var homeViewModel: HomeViewModel
-    @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
-    @EnvironmentObject private var calendarViewModel: CalendarViewModel
+//    @EnvironmentObject private var homeViewModel: HomeViewModel
+//    @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
+//    @EnvironmentObject private var calendarViewModel: CalendarViewModel
     @StateObject private var popupDetailViewModel: PopupDetailViewModel
     let popup: Popup
     
@@ -122,6 +122,10 @@ struct PopupDetailView: View {
                         
                         Text("이런 팝업은 어때?")
                             .ppStyleFont(.scdream(.medium, size: 15))
+                        
+                        RecommendPopupScrollView()
+                            .environmentObject(popupDetailViewModel)
+                            .padding(.top, 20)
                     }
                     .padding(.top, 20)
                     .padding(.horizontal, .contentPadding)
@@ -281,8 +285,60 @@ private struct InfoView: View {
     }
 }
 
+// MARK: - 이런 팝업은 어때
+private struct RecommendPopupScrollView: View {
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
+    @EnvironmentObject private var popupDetailViewModel: PopupDetailViewModel
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack {
+                ForEach(popupDetailViewModel.relatedPopupList, id: \.self) { popup in
+                    RecommendPopupCell(popup: popup)
+                        .onTapGesture {
+                            coordinator.push(.popupDetail(popupDetailViewModel.userUuid, popup))
+                        }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Cell
+struct RecommendPopupCell: View {
+    let popup: Popup
+    let cellWidth: CGFloat = 115
+    let cellHeight: CGFloat = 162
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            KFImage(URL(string: popup.imageUrlList[0]))
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                // .frame(width: cellWidth)
+                .clipped()
+            
+            Text(popup.roadAddress.shortAddress)
+                .font(.scdream(.regular, size: 12))
+                .foregroundStyle(Color.mainBlack)
+                .padding(.top, 10)
+            
+            Text(popup.name)
+                .font(.scdream(.medium, size: 12))
+                .foregroundStyle(Color.mainBlack)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .padding(.top, 5)
+        }
+        .frame(width: cellWidth, height: cellHeight)
+    }
+}
+
+
 #Preview {
-    PopupDetailView(userUuid: "", popup: Popup.popupMock2)
-        .environmentObject(HomeViewModel(userUuid: "1234"))
-        .environmentObject(FavoriteViewModel(userUuid: "1234"))
+    PopupDetailView(userUuid: "1234", popup: Popup.popupMock2)
+        .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
+        .environmentObject(PopupDetailViewModel(userUuid: "1234", popup: .popupMock))
+//        .environmentObject(HomeViewModel(userUuid: "1234"))
+//        .environmentObject(FavoriteViewModel(userUuid: "1234"))
 }

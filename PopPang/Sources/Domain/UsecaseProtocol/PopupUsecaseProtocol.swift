@@ -20,7 +20,7 @@ protocol PopupUsecaseProtocol {
     
     func searchPopupList(searchText: String) async throws -> [Popup]
     
-    
+    func getRandomPopupList() async throws -> [Popup]
     
     // MARK: - 개인화 Popup
     func getPersonalPopupList(userUuid: String) async throws -> [Popup]
@@ -39,6 +39,10 @@ protocol PopupUsecaseProtocol {
                                          latitude: Double?,
                                          longitude: Double?,
                                          mapSortStandard: String) async throws -> [Popup]
+    
+    func getPersonalRelatedPopupList(userUuid: String, popupUuid: String) async throws -> [Popup]
+    
+    func getPersonalRandomPopupList(userUuid: String) async throws -> [Popup]
     
     // MARK: - 알림 Popup
     func getAlertPopupList(userUuid: String) async throws -> [Popup]

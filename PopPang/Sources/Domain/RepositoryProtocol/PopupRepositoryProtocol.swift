@@ -37,6 +37,11 @@ protocol PopupRepositoryProtocol {
     func searchPopupList(searchText: String) async throws -> [PopupDTO]
     
     
+    /// 랜덤 팝업 10개 를 반환합니다
+    /// - Returns: [PopupDTO]
+    func getRandomPopupList() async throws -> [PopupDTO]
+    
+    
     // MARK: - 개인화 Popup
     /// 팝업리스트를 가져옵니다
     /// - Parameter userUuid: userUuid
@@ -73,7 +78,7 @@ protocol PopupRepositoryProtocol {
     /// - Parameter searchText: searchText
     /// - Returns: [PopupDTO]
     func getPersonalSearchPopupList(userUuid: String, searchText: String) async throws -> [PopupDTO]
-    
+
     
     /// 맵 팝업 필터 조회
     /// - Parameters:
@@ -89,6 +94,21 @@ protocol PopupRepositoryProtocol {
                                          latitude: Double?,
                                          longitude: Double?,
                                          mapSortStandard: String) async throws -> [PopupDTO]
+    
+    
+    /// 유저별 연관 팝업 추천 조회
+    /// - Parameters:
+    ///   - userUuid: userUuid
+    ///   - popupUuid: popupUuid
+    func getPersonalRelatedPopupList(userUuid: String, popupUuid: String) async throws -> [PopupDTO]
+    
+    
+    /// 랜덤 팝업 10개 를 반환합니다
+    /// - Parameter userUuid: userUuid
+    /// - Returns: [PopupDTO]
+    func getPersonalRandomPopupList(userUuid: String) async throws -> [PopupDTO]
+    
+    
     // MARK: - 알림 Popup
     /// 알림 팝업 리스트 가져오기
     /// - Parameter userUuid: 유저 고유값

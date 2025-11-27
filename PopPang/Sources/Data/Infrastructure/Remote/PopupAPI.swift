@@ -15,6 +15,7 @@ enum PopupAPI {
     case getInProgressPopupList               /// 진행 중인 팝업 조회
     case searchPopupList(searchText: String)  /// 팝업 검색
     case increaseViewCount(popupUuid: String) /// 팝업 조회수 증가
+    case getRandomPopupList                   /// 랜덤 팝업 10개 조회(홈화면 첫 섹션)
     
     // 개인화 popup
     case getPersonalPopupList(userUuid: String)                            /// 팝업 전체 조회
@@ -31,6 +32,8 @@ enum PopupAPI {
                                          latitude: Double?,
                                          longitude: Double?,
                                          mapSortStandard: String)
+    case getPersonalRelatedPopupList(userUuid: String, popupUuid: String)   /// 유저별 연관 팝업 추천 조회
+    case getPersonalRandomPopupList(userUuid: String)
     
     // 알림 popup
     case getAlertPopupList(userUuid: String)
@@ -56,15 +59,19 @@ extension PopupAPI: TargetType {
         case .getInProgressPopupList: return "/popup/inProgress" 
         case .searchPopupList: return "/popup/search"
         case .increaseViewCount(let popupUuid): return "/popup/\(popupUuid)/view"
+        case .getRandomPopupList: return "/popup/random"
+        
             
         // 개인화 popup
-        case .getPersonalPopupList(let userUuid): return "/users/\(userUuid)/popups"                                         /// 팝업 전체 조회
-        case .getPersonalUseerRecommendPopupList(let userUuid): return "/users/\(userUuid)/popups/recommend"                 /// 유저별 개인화 추천 팝업 조회
-        case .getPersonalUpcomingPopupList(let userUuid): return "/users/\(userUuid)/popups/upcoming"                        /// 다가오는 팝업 조회
-        case .getPersonalFilteredPopupList(let userUuid, _, _, _): return "/users/\(userUuid)/popups/filtered/home"          /// 홈 팝업 필터 조회
-        case .getPersonalSearchPopupList(let userUuid, _): return "/users/\(userUuid)/popups/search"                         /// 팝업 검색
-        case .getPersonalMapFilteredPopupList(let userUuid, _, _, _, _, _): return "/users/\(userUuid)/popups/filtered/map"  /// 맵 팝업 필터 조회
-        
+        case .getPersonalPopupList(let userUuid): return "/users/\(userUuid)/popups"                                            /// 팝업 전체 조회
+        case .getPersonalUseerRecommendPopupList(let userUuid): return "/users/\(userUuid)/popups/recommend"                    /// 유저별 개인화 추천 팝업 조회
+        case .getPersonalUpcomingPopupList(let userUuid): return "/users/\(userUuid)/popups/upcoming"                           /// 다가오는 팝업 조회
+        case .getPersonalFilteredPopupList(let userUuid, _, _, _): return "/users/\(userUuid)/popups/filtered/home"             /// 홈 팝업 필터 조회
+        case .getPersonalSearchPopupList(let userUuid, _): return "/users/\(userUuid)/popups/search"                            /// 팝업 검색
+        case .getPersonalMapFilteredPopupList(let userUuid, _, _, _, _, _): return "/users/\(userUuid)/popups/filtered/map"     /// 맵 팝업 필터 조회
+        case .getPersonalRelatedPopupList(let userUuid, let popupUuid): return "/users/\(userUuid)/popups/\(popupUuid)/related" /// 유저별 연관 팝업 추천 조회
+        case .getPersonalRandomPopupList(let userUuid): return "/users/\(userUuid)/popups/random"
+            
         // 알림 popup
         case .getAlertPopupList(let userUuid): return "/users/\(userUuid)/alert/popups"
         case .removeAlertPopup(let userUuid, _): return "/users/\(userUuid)/alert"
@@ -87,6 +94,7 @@ extension PopupAPI: TargetType {
         case .getInProgressPopupList: return .get
         case .searchPopupList: return .get
         case .increaseViewCount: return .post
+        case .getRandomPopupList: return .get
             
         // 개인화 popup
         case .getPersonalPopupList: return .get
@@ -95,6 +103,8 @@ extension PopupAPI: TargetType {
         case .getPersonalFilteredPopupList: return .get
         case .getPersonalSearchPopupList: return .get
         case .getPersonalMapFilteredPopupList: return .get
+        case .getPersonalRelatedPopupList: return .get
+        case .getPersonalRandomPopupList: return .get
             
         // 알림 popup
         case .getAlertPopupList: return .get
@@ -122,6 +132,8 @@ extension PopupAPI: TargetType {
         case .searchPopupList(let searchText):
             return .requestParameters(parameters: ["q": searchText],
                                       encoding: URLEncoding.queryString)
+        case .getRandomPopupList:
+            return .requestPlain
             
         // 개인화 popup
         case .getPersonalPopupList(let userUuid):
@@ -161,6 +173,13 @@ extension PopupAPI: TargetType {
                 params["longitude"] = lon
             }
             return.requestParameters(parameters: params, encoding: URLEncoding.queryString)
+        case .getPersonalRelatedPopupList(let userUuid, let popupUuid):
+            return .requestParameters(parameters: ["userUuid": userUuid,
+                                                   "popupUuid" :popupUuid],
+                                      encoding: URLEncoding.queryString)
+        case .getPersonalRandomPopupList(let userUuid):
+            return .requestParameters(parameters: ["userUuid": userUuid],
+                                      encoding: URLEncoding.queryString)
             
         // 알림 popup
         case .getAlertPopupList(_):

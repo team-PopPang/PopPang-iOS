@@ -105,7 +105,8 @@ extension Popup {
             웃음과 추억, 그리고 팬심을 동시에 충족시킬 이번 팝업스토어는 짱구 세대에게는 향수를, 새로운 세대에게는 즐거운 경험을 선사합니다.
             """,
 
-            imageUrlList: ["img_8"],
+            imageUrlList: ["https://poppang.co.kr/images/20251021-165057_18386722330126645/LH_메이커스_스튜디오_팝업스토어_소문내기_이벤트_1.jpg",
+                           "https://poppang.co.kr/images/20251021-165057_18386722330126645/LH_메이커스_스튜디오_팝업스토어_소문내기_이벤트_2.jpg"],
             mediaType: .image,
             favoriteCount: 0,
             viewCount: 0,
@@ -141,7 +142,8 @@ extension Popup {
             웃음과 추억, 그리고 팬심을 동시에 충족시킬 이번 팝업스토어는 짱구 세대에게는 향수를, 새로운 세대에게는 즐거운 경험을 선사합니다.
             """,
 
-            imageUrlList: ["img_8"],
+            imageUrlList: ["https://poppang.co.kr/images/20251021-165057_18386722330126645/LH_메이커스_스튜디오_팝업스토어_소문내기_이벤트_1.jpg",
+                           "https://poppang.co.kr/images/20251021-165057_18386722330126645/LH_메이커스_스튜디오_팝업스토어_소문내기_이벤트_2.jpg"],
             mediaType: .image,
             favoriteCount: 0,
             viewCount: 0,

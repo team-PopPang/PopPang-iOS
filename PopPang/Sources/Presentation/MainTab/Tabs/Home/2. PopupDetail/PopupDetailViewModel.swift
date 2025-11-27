@@ -12,13 +12,19 @@ final class PopupDetailViewModel: ObservableObject {
     @Dependency var popupUsecase: PopupUsecaseProtocol
     let userUuid: String
     @Published var popup: Popup
+    @Published var relatedPopupList: [Popup] = [.popupMock, .popupMock2, .popupMock3]
     
     init(userUuid: String, popup: Popup) {
         self.userUuid = userUuid
         self.popup = popup
+        
+        Task {
+            await getPersonalRelatedPopupList(userUuid: userUuid, popupUuid: popup.popupUuid)
+        }
     }
 }
 
+// MARK: - 조회수 관련
 extension PopupDetailViewModel {
     
     // 조회수 증가 요청
@@ -86,6 +92,24 @@ extension PopupDetailViewModel {
             }
         } catch {
             Logger.e("❌ 찜 토글 실패:")
+        }
+    }
+}
+
+// MARK: - 연관 팝업 추천 관련
+extension PopupDetailViewModel {
+    func getPersonalRelatedPopupList(userUuid: String, popupUuid: String) async {
+        
+        do {
+//            let popups = try await popupUsecase.getPersonalRelatedPopupList(userUuid: userUuid,
+//                                                                            popupUuid: popupUuid)
+//            
+//            await MainActor.run {
+//                self.relatedPopupList = popups
+//            }
+            
+        } catch {
+            Logger.e("\(error)")
         }
     }
 }

@@ -51,7 +51,7 @@ extension HomeViewModel {
             try await withThrowingTaskGroup(of: (Int, [Popup]).self) {  group in
                 
                 // 0, 1, 2로 구분해서 요청
-                group.addTask { (0, await self.getPersonalPopupList()) }
+                group.addTask { (0, await self.getPersonalRandomPopupList()) }
                 group.addTask { (1, await self.getPersonalUpcomingPopupList()) }
                 group.addTask { (2, await self.getPersonalFilteredPopupList()) }
                 
@@ -79,6 +79,17 @@ extension HomeViewModel {
     }
     
     // 첫 섹션
+    func getPersonalRandomPopupList() async -> [Popup] {
+        do {
+            let popups =  try await popupUsecase.getPersonalRandomPopupList(userUuid: userUuid)
+            return popups
+        } catch {
+            Logger.e("\(error)")
+            return []
+        }
+    }
+    
+    /*
     func getPersonalPopupList() async -> [Popup] {
         do {
             let popups =  try await popupUsecase.getPersonalUseerRecommendPopupList(userUuid: userUuid)
@@ -88,6 +99,7 @@ extension HomeViewModel {
             return []
         }
     }
+     */
     
     // 두번쨰 섹션
     func getPersonalUpcomingPopupList() async -> [Popup] {

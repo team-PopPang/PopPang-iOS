@@ -41,6 +41,11 @@ final class PopupUsecaseImpl: PopupUsecaseProtocol {
             .map { $0.toEntity() }
     }
     
+    func getRandomPopupList() async throws -> [Popup] {
+        try await popupRepository.getRandomPopupList()
+            .map { $0.toEntity() }
+    }
+    
     // MARK: - 개인화 Popup
     func getPersonalPopupList(userUuid: String) async throws -> [Popup] {
         try await popupRepository.getPersonalPopupList(userUuid: userUuid)
@@ -80,6 +85,17 @@ final class PopupUsecaseImpl: PopupUsecaseProtocol {
                                                                   longitude: longitude,
                                                                   mapSortStandard: mapSortStandard)
         .map { $0.toEntity() }
+    }
+    
+    func getPersonalRelatedPopupList(userUuid: String, popupUuid: String) async throws -> [Popup] {
+        try await popupRepository.getPersonalRelatedPopupList(userUuid: userUuid, popupUuid: popupUuid)
+            .map { $0.toEntity() }
+    }
+    
+    func getPersonalRandomPopupList(userUuid: String) async throws -> [Popup] {
+        try await popupRepository.getPersonalRandomPopupList(userUuid: userUuid)
+            .map { $0.toEntity() }
+        
     }
     
     // MARK: - 알림 Popup

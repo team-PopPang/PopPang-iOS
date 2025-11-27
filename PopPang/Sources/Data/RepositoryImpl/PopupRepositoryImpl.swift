@@ -36,6 +36,10 @@ final class PopupRepositoryImpl: PopupRepositoryProtocol {
                                                                      decodeTo: [PopupDTO].self)
     }
     
+    func getRandomPopupList() async throws -> [PopupDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getRandomPopupList, decodeTo: [PopupDTO].self)
+    }
+    
     // MARK: - 개인화 Popup
     func getPersonalPopupList(userUuid: String) async throws -> [PopupDTO] {
         try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPersonalPopupList(userUuid: userUuid),
@@ -75,7 +79,18 @@ final class PopupRepositoryImpl: PopupRepositoryProtocol {
                                                                                                       district: district,
                                                                                                       latitude: latitude,
                                                                                                       longitude: longitude,
-                                                                                                      mapSortStandard: mapSortStandard), decodeTo: [PopupDTO].self)
+                                                                                                      mapSortStandard: mapSortStandard),
+                                                                     decodeTo: [PopupDTO].self)
+    }
+    
+    func getPersonalRelatedPopupList(userUuid: String, popupUuid: String) async throws -> [PopupDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPersonalRelatedPopupList(userUuid: userUuid,
+                                                                                                  popupUuid: popupUuid),
+                                                                     decodeTo: [PopupDTO].self)
+    }
+    
+    func getPersonalRandomPopupList(userUuid: String) async throws -> [PopupDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPersonalRandomPopupList(userUuid: userUuid), decodeTo: [PopupDTO].self)
     }
     
     // MARK: - 알림 Popup
