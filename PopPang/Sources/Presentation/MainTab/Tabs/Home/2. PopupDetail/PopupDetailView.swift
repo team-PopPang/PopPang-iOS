@@ -7,15 +7,14 @@
 
 import SwiftUI
 import Kingfisher
+import PopupView
 
 struct PopupDetailView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) var openURL
-//    @EnvironmentObject private var homeViewModel: HomeViewModel
-//    @EnvironmentObject private var favoriteViewModel: FavoriteViewModel
-//    @EnvironmentObject private var calendarViewModel: CalendarViewModel
     @StateObject private var popupDetailViewModel: PopupDetailViewModel
+    @State var showingPopup = false
     let popup: Popup
     
     init(userUuid: String, popup: Popup) {
@@ -88,7 +87,7 @@ struct PopupDetailView: View {
                             .padding(.vertical, 15)
                         
                         // MARK: - Info
-                        InfoView(popup: popup)
+                        InfoView(showingPopup: $showingPopup, popup: popup)
                         
                         Divider()
                             .background(Color.mainGray5)
@@ -131,7 +130,7 @@ struct PopupDetailView: View {
                     .padding(.horizontal, .contentPadding)
                     
                     Spacer()
-                        .frame(height: 200)
+                        .frame(height: 130)
                 }
             }
             .ignoresSafeArea()
@@ -217,11 +216,33 @@ struct PopupDetailView: View {
             .frame(height: 100)       // 네비게이션바 + 상태바 높이
             .ignoresSafeArea(edges: .top)
         }
+        
+        // MARK: - 복사 토스트 팝업
+        .popup(isPresented: $showingPopup) {
+            Text("복사되었습니다.")
+                .frame(width: 200, height: 30)
+                .background(Color.mainWhite)
+                // .background(Color(red: 0.85, green: 0.8, blue: 0.95))
+                .cornerRadius(10.0)
+        } customize: {
+            $0
+                .type(.floater())
+                .position(.top)
+                .appearFrom(.topSlide)
+                .autohideIn(1.5)
+                // .closeOnTap(false)          // 팝업 자체 눌러도 닫히기 X
+                // .closeOnTapOutside(false)   // 팝업 주변 공간 눌러도 닫히기 X
+        }
+
+        .onChange(of: coordinator.paths) { _, _ in
+            showingPopup = false       // push/pop 이동 시
+        }
     }
 }
 
 // MARK: - 운영 정보 뷰
 private struct InfoView: View {
+    @Binding var showingPopup: Bool
     let popup: Popup
     
     var body: some View {
@@ -240,6 +261,7 @@ private struct InfoView: View {
                 
                 Button {
                     UIPasteboard.general.string = popup.roadAddress
+                    showingPopup = true
                 } label: {
                     Image(systemName: "document.on.document")
                         .resizable()

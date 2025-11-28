@@ -1,5 +1,5 @@
 {
-  "originHash" : "e6071cf8637f23bd6e1934a7fa04106c44aea169aa93f9e27b6878000a728aed",
+  "originHash" : "d776fb46e114aa56e1fe8d47849e3b55ac22976653b143f38609e3720d1ba1b8",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -182,6 +182,15 @@
       }
     },
     {
+      "identity" : "popupview",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/exyte/PopupView",
+      "state" : {
+        "revision" : "3add9a11f61a5f44931247e482a990a8ce03a8b5",
+        "version" : "4.1.15"
+      }
+    },
+    {
       "identity" : "promises",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/google/promises.git",
@@ -233,6 +242,15 @@
       "state" : {
         "revision" : "97bb244f7a575a419ebc8f3c2d33f2feb9c8f7f2",
         "version" : "1.33.1"
+      }
+    },
+    {
+      "identity" : "swiftui-introspect",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/siteline/swiftui-introspect",
+      "state" : {
+        "revision" : "a08b87f96b41055577721a6e397562b21ad52454",
+        "version" : "26.0.0"
       }
     }
   ],
