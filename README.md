@@ -81,7 +81,7 @@ func getAllPopupData() async {
 > `withCheckedThrowingContinuation` 기반 **공통 async 변환 래퍼** 구현  
 >
 > **성과**  
-> 🔸 Repository 전역에서 동일한 async 인터페이스 사용
+> 🔸 Repository 전역에서 동일한 async 인터페이스 사용.   
 > 🔸 **중복 코드 감소 + 유지보수성 향상**
 
 ```swift
@@ -117,7 +117,7 @@ let response = try await provider.asyncRequest(.getPopupList)
 >
 > **성과**  
 > 🔸 push / sheet / overlay를 **하나의 패턴으로 호출**  
-> 🔸 화면이동 관련 상태 변수 70% 감소 
+> 🔸 화면이동 관련 상태 변수 70% 감소   
 > 🔸 **일관된 네비게이션 흐름 확보 및 View 코드 간결화**
 ```swift
 class Coordinator<R: Hashable, S: Identifiable, O: Identifiable>: ObservableObject {
