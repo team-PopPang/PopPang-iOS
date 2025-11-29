@@ -89,6 +89,25 @@ extension MoyaProvider {
 > **성과**  
 > 🔸 화면 이동 로직 **한 곳에서 관리**  
 > 🔸 **확장성 높은 네비게이션 구조 확보**
+```swift
+class Coordinator<R: Hashable, S: Identifiable, O: Identifiable>: ObservableObject {
+    @Published var paths: [R] = []
+    @Published var sheet: S?
+    @Published var overlay: O?
+
+    func push(_ route: R) {
+        paths.append(route)
+    }
+
+    func present(_ sheet: S) {
+        self.sheet = sheet
+    }
+
+    func showOverlay(_ overlay: O) {
+        self.overlay = overlay
+    }
+}
+```
 
 <!--| 문제                                                        | 해결                                                         | 성과                                                         |-->
 <!--| ----------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |-->
