@@ -44,7 +44,7 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 > `TaskGroup`을 활용해 병렬 처리 구조로 전환  
 >
 > **성과**  
-> 🔸 **로딩 시간 40% 단축**
+> 🔸 **초기 로딩 시간 40% 단축**
 ```swift
 func getAllPopupData() async {
     do {
@@ -72,17 +72,17 @@ func getAllPopupData() async {
 
 ---
 
-### **2. Moya와 async/await 비호환**
+### **2. Moya를 async/await으로 사용하기 위한 공통 async 래퍼 생성**
 > **문제**  
 > Moya는 completion 기반이라 async/await과 직접 호환되지 않아  
-> API마다 변환 코드가 반복됨  
+> API마다 동일한 변환 코드가 반복됨  
 >
 > **해결**  
 > `withCheckedThrowingContinuation` 기반 **공통 async 변환 래퍼** 구현  
 >
 > **성과**  
-> 🔸 Repository 전 구간 **async 인터페이스 표준화**  
-> 🔸 **중복 코드 제거 + 유지보수성 대폭 향상**
+> 🔸 Repository 전역에서 동일한 async 인터페이스 사용
+> 🔸 **중복 코드 감소 + 유지보수성 향상**
 
 ```swift
 extension MoyaProvider {
@@ -99,20 +99,26 @@ extension MoyaProvider {
         }
     }
 }
+
+// 호출 예시
+let response = try await provider.asyncRequest(.getPopupList)
 ```
 
 ---
 
-### **3. 화면 이동 로직 분산**
+### **3. 화면 이동 로직을 통일해 일관성 있는 네비게이션 확보**
 > **문제**  
-> push / sheet / overlay 화면 전환 코드가 각 View에 흩어져 구조가 복잡함  
+> push / sheet / overlay 화면 전환 코드가 각 View에 흩어져 있어  
+> 네비게이션 흐름이 일관적이지 않고 유지보수가 어려웠음  
 >
 > **해결**  
-> Route 기반 **Generic Coordinator** 설계로 화면 이동을 중앙 집중화  
+> Route 기반 **Generic Coordinator** 도입으로  
+> 모든 화면 이동을 **동일한 호출 형태**로 사용하도록 개선  
 >
 > **성과**  
-> 🔸 화면 이동 로직 **한 곳에서 관리**  
-> 🔸 **확장성 높은 네비게이션 구조 확보**
+> 🔸 push / sheet / overlay를 **하나의 패턴으로 호출**  
+> 🔸 화면이동 관련 상태 변수 70% 감소 
+> 🔸 **일관된 네비게이션 흐름 확보 및 View 코드 간결화**
 ```swift
 class Coordinator<R: Hashable, S: Identifiable, O: Identifiable>: ObservableObject {
     @Published var paths: [R] = []
@@ -131,6 +137,11 @@ class Coordinator<R: Hashable, S: Identifiable, O: Identifiable>: ObservableObje
         self.overlay = overlay
     }
 }
+
+// 호출 예시
+coordinator.push(.detail(popup))        // 화면 이동
+coordinator.present(.regionSheet)       // 시트
+coordinator.showOverlay(.notification)  // 오버레이
 ```
 
 <!--| 문제                                                        | 해결                                                         | 성과                                                         |-->
