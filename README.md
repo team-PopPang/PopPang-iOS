@@ -50,12 +50,15 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 
 ### **2. Moya와 async/await 비호환**
 > **문제**  
-Moya는 completion 기반이라 async/await과 직접 호환되지 않아  
-API마다 변환 코드가 반복됨  
+> Moya는 completion 기반이라 async/await과 직접 호환되지 않아  
+> API마다 변환 코드가 반복됨  
 >
 > **해결**  
-`withCheckedThrowingContinuation`을 활용한  
-공통 async 변환 래퍼 구현
+> `withCheckedThrowingContinuation` 기반 **공통 async 변환 래퍼** 구현  
+>
+> **성과**  
+> 🔸 Repository 전 구간 **async 인터페이스 표준화**  
+> 🔸 **중복 코드 제거 + 유지보수성 대폭 향상**
 
 ```swift
 extension MoyaProvider {
@@ -73,10 +76,6 @@ extension MoyaProvider {
     }
 }
 ```
-
-> **성과**  
-🔸 Repo 전 영역에서 **async 인터페이스 표준화**  
-🔸 **중복 코드 제거 + 유지보수성 대폭 향상**
 
 ---
 
