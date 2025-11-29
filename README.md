@@ -45,6 +45,30 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 >
 > **성과**  
 > 🔸 **로딩 시간 40% 단축**
+```swift
+func getAllPopupData() async {
+    do {
+        try await withThrowingTaskGroup(of: (Int, [Popup]).self) { group in
+            group.addTask { (0, await self.getPersonalRandomPopupList()) }
+            group.addTask { (1, await self.getPersonalUpcomingPopupList()) }
+            group.addTask { (2, await self.getPersonalFilteredPopupList()) }
+
+            for try await (index, popups) in group {
+                await MainActor.run {
+                    switch index {
+                    case 0: self.bestPopups = popups
+                    case 1: self.comingPopups = popups
+                    case 2: self.gridPopups = popups
+                    default: break
+                    }
+                }
+            }
+        }
+    } catch {
+        Logger.e("❌ 로딩 실패: \(error)")
+    }
+}
+```
 
 ---
 
