@@ -9,7 +9,7 @@ import SwiftUI
 
 enum RegisterRoute: Int, CaseIterable, Hashable {
     case nickname = 0
-    case category
+    // case category
     case keyword
     var index: Int { rawValue }
 }
@@ -43,6 +43,7 @@ struct RegisterFlowView: View {
                         withAnimation(.easeOut) {
                             
                             // 카테고리창이면 키워드 창으로 이동
+                            /*
                             if currentStep == .category {
                                 withAnimation(.easeInOut) {
                                     isForward = true
@@ -50,6 +51,7 @@ struct RegisterFlowView: View {
                                 }
                                 return
                             }
+                             */
                             
                             // 현재 키워드창이면 회원가입
                             if currentStep == .keyword {
@@ -90,12 +92,13 @@ struct RegisterFlowView: View {
                     NicknameSettingView {
                         withAnimation(.easeInOut) {
                             isForward = true
-                            currentStep = .category
+                            currentStep = .keyword
                         }
                     }
                     .frame(width: geo.size.width, height: geo.size.height)
                     .offset(x: offset(for: .nickname, in: geo.size.width))
                     
+                    /*
                     CategorySettingView {
                         withAnimation(.easeInOut) {
                             isForward = true
@@ -105,6 +108,7 @@ struct RegisterFlowView: View {
                     }
                     .frame(width: geo.size.width, height: geo.size.height)
                     .offset(x: offset(for: .category, in: geo.size.width))
+                     */
                     
                     KeywordSettingView {
                         print("회원가입 완료")
@@ -120,8 +124,8 @@ struct RegisterFlowView: View {
     private func goBack() {
         isForward = false
         switch currentStep {
-        case .category: currentStep = .nickname
-        case .keyword: currentStep = .category
+        // case .category: currentStep = .nickname
+        case .keyword: currentStep = .nickname
         default: break
         }
     }
