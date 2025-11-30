@@ -17,31 +17,84 @@ struct DetailSheetView: View {
     
     var body: some View {
         ScrollView(showsIndicators: false) {
-            VStack {
-                HStack {
-                    PopupCategoryTag(text: "테스트태그")
+            VStack(spacing: 0) {
+                
+                // MARK: - Header
+                HStack(alignment: .firstTextBaseline) {
+                    Text(popup.name)
+                        .ppStyleFont(.scdream(.bold, size: 18))
+                        .foregroundStyle(Color.mainBlack)
+                    
+                    Text("테스트태그")
+                        .ppStyleFont(.scdream(.regular, size: 12))
+                        .foregroundStyle(Color.mainGray9)
                     
                     Spacer()
                     
                     Button {
                         onDismiss()
-                        print("눌림")
                     } label: {
                         Image(systemName: "xmark")
                             .foregroundStyle(.black)
                             .font(.system(size: 15, weight: .regular))
+                            .padding(10)
+                            .background(Color.mainGray5)
+                            .clipShape(Circle())
                     }
                 }
-                .padding(.top, 20)
+                .padding(.top, 15)
                 
-                HStack {
-                    Text(popup.name)
-                        .ppStyleFont(.scdream(.bold, size: 18))
-                        .foregroundStyle(Color.mainBlack)
+                // MARK: - Body
+                VStack(spacing: 5) {
+                    HStack(spacing: 0) {
+                        Text("운영 장소")
+                            .ppStyleFont(.scdream(.light, size: 12))
+                            .foregroundStyle(Color.mainGray)
+                        
+                        Text(popup.roadAddress)
+                            .ppStyleFont(.scdream(.regular, size: 12))
+                            .foregroundStyle(Color.mainBlack)
+                            .padding(.leading, 5)
+                        
+                        Spacer()
+                    }
                     
-                    Spacer()
+                    HStack(spacing: 5) {
+                        Text("운영 날짜")
+                            .ppStyleFont(.scdream(.light, size: 12))
+                            .foregroundStyle(Color.mainGray)
+                        
+                        HStack(spacing: 2) {
+                            Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
+                            Text("-")
+                            Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
+                        }
+                        .ppStyleFont(.scdream(.regular, size: 12))
+                        .foregroundStyle(Color.mainBlack)
+                        
+                        Spacer()
+                    }
+                    HStack(spacing: 5) {
+                        if let _ = popup.openTime, let _ = popup.closeTime {
+                            Text("운영 시간")
+                                .ppStyleFont(.scdream(.light, size: 12))
+                                .foregroundStyle(Color.mainGray)
+                        }
+                        
+                        HStack(spacing: 10) {
+                            if let openTime = popup.openTime, let closeTime = popup.closeTime {
+                                Text(openTime)
+                                Text("-")
+                                Text(closeTime)
+                            }
+                        }
+                        .ppStyleFont(.scdream(.regular, size: 12))
+                        .foregroundStyle(Color.mainBlack)
+                        
+                        Spacer()
+                    }
                 }
-                .padding(.top, 11)
+                .padding(.top, 15)
                 
                 KFImage(URL(string: popup.imageUrlList[0]))
                     .resizable()

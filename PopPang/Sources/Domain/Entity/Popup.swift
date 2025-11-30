@@ -46,7 +46,7 @@ extension Popup {
         
         return Popup(
             popupUuid: "1234",
-            name: "2025 짱구 부산 팝업스토어",
+            name: "2025 짱구 부산 팝업스토어 팝업스토어 팝업스토어",
             startDate: formatter.date(from: "2025-10-13 11:00") ?? Date(),
             endDate: formatter.date(from: "2025-10-15 20:00") ?? Date(),
             openTime: "",

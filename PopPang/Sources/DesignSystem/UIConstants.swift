@@ -69,4 +69,5 @@ extension Color {
     static let mainGray6 = Color(hex: "#999999")
     static let mainGray7 = Color(hex: "#F3F4F6")
     static let mainGray8 = Color(hex: "#DDDDDD")
+    static let mainGray9 = Color(hex: "#777777")
 }
