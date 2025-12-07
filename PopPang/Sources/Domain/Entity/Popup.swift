@@ -29,6 +29,7 @@ struct Popup: Hashable, Identifiable, Encodable {
     var favoriteCount: Int
     var viewCount: Int
     var isFavorited: Bool
+    let recommendList: [String]
     
     enum MediaType: String, Codable {
         case image = "IMAGE"
@@ -73,7 +74,8 @@ extension Popup {
             mediaType: .image,
             favoriteCount: 0,
             viewCount: 0,
-            isFavorited: true
+            isFavorited: true,
+            recommendList: ["테스트태그"]
         )
     }()
     
@@ -110,7 +112,8 @@ extension Popup {
             mediaType: .image,
             favoriteCount: 0,
             viewCount: 0,
-            isFavorited: false
+            isFavorited: false,
+            recommendList: ["테스트태그"]
         )
     }()
     
@@ -147,7 +150,8 @@ extension Popup {
             mediaType: .image,
             favoriteCount: 0,
             viewCount: 0,
-            isFavorited: true
+            isFavorited: true,
+            recommendList: ["테스트태그"]
         )
     }()
 

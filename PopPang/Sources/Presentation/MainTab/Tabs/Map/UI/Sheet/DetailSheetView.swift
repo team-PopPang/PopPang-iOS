@@ -21,11 +21,8 @@ struct DetailSheetView: View {
                 
                 // MARK: - Header
                 HStack(alignment: .firstTextBaseline) {
-                    Text(popup.name)
-                        .ppStyleFont(.scdream(.bold, size: 18))
-                        .foregroundStyle(Color.mainBlack)
                     
-                    Text("테스트태그")
+                    Text(popup.recommendList[0])
                         .ppStyleFont(.scdream(.regular, size: 12))
                         .foregroundStyle(Color.mainGray9)
                     
@@ -36,13 +33,22 @@ struct DetailSheetView: View {
                     } label: {
                         Image(systemName: "xmark")
                             .foregroundStyle(.black)
-                            .font(.system(size: 15, weight: .regular))
-                            .padding(10)
+                            .font(.system(size: 11, weight: .regular))
+                            .frame(width: 27, height: 27)
                             .background(Color.mainGray5)
                             .clipShape(Circle())
                     }
                 }
-                .padding(.top, 15)
+                .padding(.top, 10)
+                
+                // MARK: - Title
+                HStack(spacing: 0) {
+                    Text(popup.name)
+                        .ppStyleFont(.scdream(.bold, size: 18))
+                        .foregroundStyle(Color.mainBlack)
+                    
+                    Spacer()
+                }
                 
                 // MARK: - Body
                 VStack(spacing: 5) {
@@ -64,12 +70,12 @@ struct DetailSheetView: View {
                             .ppStyleFont(.scdream(.light, size: 12))
                             .foregroundStyle(Color.mainGray)
                         
-                        HStack(spacing: 2) {
+                        HStack(spacing: 3) { 
                             Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
                             Text("-")
                             Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
                         }
-                        .ppStyleFont(.scdream(.regular, size: 12))
+                        .ppStyleFontFixedSpacing(.scdream(.regular, size: 12), letterSpacingPt: -1)
                         .foregroundStyle(Color.mainBlack)
                         
                         Spacer()
@@ -81,7 +87,7 @@ struct DetailSheetView: View {
                                 .foregroundStyle(Color.mainGray)
                         }
                         
-                        HStack(spacing: 10) {
+                        HStack(spacing: 2) {
                             if let openTime = popup.openTime, let closeTime = popup.closeTime {
                                 Text(openTime)
                                 Text("-")
@@ -94,7 +100,7 @@ struct DetailSheetView: View {
                         Spacer()
                     }
                 }
-                .padding(.top, 15)
+                .padding(.top, 10)
                 
                 KFImage(URL(string: popup.imageUrlList[0]))
                     .resizable()
@@ -102,7 +108,7 @@ struct DetailSheetView: View {
                     .frame(width: imageWidth, height: 182)
                     .clipped()
                     .allowsHitTesting(false)
-                    .padding(.top, 26)
+                    .padding(.top, 20)
             }
             .padding(.horizontal, .contentPadding)
         }
@@ -118,5 +124,30 @@ struct DetailSheetView: View {
     }
     .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
     .environmentObject(MapViewModel(userUuid: "1234"))
+}
+
+
+// MARK: - 텍스트 렌더링 높이 측정용
+struct SizeReader: ViewModifier {
+    @Binding var size: CGSize
+    
+    func body(content: Content) -> some View {
+        content
+            .background(
+                GeometryReader { geo in
+                    Color.clear
+                        .onAppear { size = geo.size }
+                        .onChange(of: geo.size) { _, newValue in
+                            size = newValue
+                        }
+                }
+            )
+    }
+}
+
+extension View {
+    func readSize(_ size: Binding<CGSize>) -> some View {
+        self.modifier(SizeReader(size: size))
+    }
 }
 

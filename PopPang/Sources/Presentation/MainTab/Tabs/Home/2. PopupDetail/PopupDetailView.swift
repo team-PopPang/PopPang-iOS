@@ -79,7 +79,7 @@ struct PopupDetailView: View {
                              */
                         }
                         
-                        PopupCategoryTag(text: "테스트태그")
+                        PopupCategoryTag(text: popup.recommendList[0])
                             .padding(.top, 5)
                         
                         Divider()
@@ -96,7 +96,7 @@ struct PopupDetailView: View {
                         // MARK: - Body
                         Text(popup.captionSummary)
                             .ppStyleFont(.scdream(.regular, size: 15),
-                                       lineHeight: 1.4,
+                                       lineHeight: 1.6,
                                        letterSpacing: 0.02)
                         
                         Divider()
@@ -134,7 +134,6 @@ struct PopupDetailView: View {
                 }
             }
             .ignoresSafeArea()
-            
             HStack(spacing: 20) {
                 
                 MainOrangeButton(buttonTitle: "친구에게 공유하기",
@@ -263,7 +262,7 @@ private struct InfoView: View {
                     UIPasteboard.general.string = popup.roadAddress
                     showingPopup = true
                 } label: {
-                    Image(systemName: "document.on.document")
+                    Image("copy")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .foregroundStyle(Color.mainGray2)

@@ -25,10 +25,14 @@ struct BestPopupCell: View {
             /// startPoint -> endPoint방향으로 색이 변함
             LinearGradient(
                 gradient: Gradient(stops: [
-                    .init(color: Color.mainBlack.opacity(0.0), location: 0.0),
-                    .init(color: Color.mainBlack.opacity(0.16), location: 0.6),
-                    .init(color: Color.mainBlack.opacity(0.56), location: 1.0),
-                
+//                    .init(color: Color.mainBlack.opacity(0.0), location: 0.0),
+//                    .init(color: Color.mainBlack.opacity(0.16), location: 0.6),
+//                    .init(color: Color.mainBlack.opacity(0.56), location: 1.0),
+                    .init(color: Color.mainBlack.opacity(0.0), location: 0.00),   // 0%
+                    .init(color: Color.mainBlack.opacity(0.50), location: 0.52),  // 52%
+                    .init(color: Color.mainBlack.opacity(1.00), location: 0.83),  // 83%
+                    
+                    
                 ]),
                 startPoint: .top,
                 endPoint: .bottom

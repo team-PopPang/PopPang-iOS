@@ -13,15 +13,15 @@ enum Constants {
         static let serviceTerms = "https://deciduous-jam-49e.notion.site/2abdb9e736cf80cdaaa0eeeb97313523?pvs=74"
     }
     
-//    enum PopPangAPI {
-//        static let apiURL = "https://poppang.co.kr/api/v1"
-//        static let imageURL = "https://poppang.co.kr"
-//    }
-    
     enum PopPangAPI {
-        static let apiURL = "http://poppang.co.kr:4003/api/v1"
-        static let imageURL = "http://poppang.co.kr"
+        static let apiURL = "https://poppang.co.kr/api/v1"
+        static let imageURL = "https://poppang.co.kr"
     }
+    
+//    enum PopPangAPI {
+//        static let apiURL = "http://poppang.co.kr:4003/api/v1"
+//        static let imageURL = "http://poppang.co.kr"
+//    }
     
     enum KakaoAPI {
         // static let key = Bundle.main.infoDictionary?["KAKAO_NATIVE_APP_KEY"] as? String ?? ""

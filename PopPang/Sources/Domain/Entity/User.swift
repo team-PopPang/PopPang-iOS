@@ -36,7 +36,7 @@ extension User {
 }
 
 extension User {
-    static let adminUser = User(userUuid: "userUuid",
+    static let adminUser = User(userUuid: "4c3b9a55-f4ee-42cc-9bd2-82a5c811db13",
                                 uid: "67890",
                                 provider: "kakao",
                                 email: "john@example.com",
