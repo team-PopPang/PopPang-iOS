@@ -60,6 +60,7 @@ final class PerformanceTest: XCTestCase {
 }
 
 // MARK: - 1) 순차(Sequential) API 성능 측정
+// Time: 0.113 sec
 extension PerformanceTest {
     func testSequentialAPI() {
         measure {
@@ -90,6 +91,7 @@ extension PerformanceTest {
 }
 
 // MARK: - 2) 동시(Concurrent) API 성능 측정
+// Time: 0.048 sec
 extension PerformanceTest {
     func testConcurrentAPI() {
         measure {
