@@ -90,6 +90,9 @@ extension DIContainer {
         
         self.shared.register(PopupUsecaseImpl(popupRepository: popupRepository),
                              for: PopupUsecaseProtocol.self)
+        
+//        DIContainer.shared.register(UserSession.shared,
+//                                    for: UserSessionProtocol.self)
         Logger.d("Live UseCase registered")
     }
 }
@@ -101,3 +104,29 @@ class Dependency<T> {
         self.wrappedValue = DIContainer.shared.resolve(T.self)
     }
 }
+
+
+
+//// Domain 레이어
+//protocol UserSessionProtocol {
+//    var user: User? { get }
+//    
+//    func setUser(_ user: User)
+//    func clear()
+//}
+//
+//// data or infra
+//final class UserSession: UserSessionProtocol {
+//    static let shared = UserSession()
+//    private init() {}
+//    private(set) var user: User?
+//    
+//    func setUser(_ user: User) {
+//        self.user = user
+//        Logger.d("싱그론에 유저 저장: \(user)")
+//    }
+//    
+//    func clear() {
+//        user = nil
+//    }
+//}

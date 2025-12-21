@@ -28,6 +28,8 @@ enum NicknameValidationState {
 
 final class RootViewModel: ObservableObject {
     
+    // @Dependency private var userSession: UserSessionProtocol
+    
     // MARK: - Keychain으로 변환 예정
     @AppStorage("uuid") private var storeUID: String = ""
     
@@ -111,6 +113,7 @@ extension RootViewModel {
                         await MainActor.run {
                             self.loginSuccess(user: user)
                             Logger.d("자동로그인 성공\n")
+                            // userSession.setUser(user)
                         }
                         
                     } catch (let error) {

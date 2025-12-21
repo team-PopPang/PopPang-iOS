@@ -38,11 +38,11 @@ struct MainTabView: View {
                 ForEach(MainTabType.allCases, id: \.self) { tab in
                     Group {
                         switch tab {
-                        case .home:     HomeView()
-                        case .calendar: CalendarView()
-                        case .map:      MapView()
-                        case .favorite: FavoriteView(selectedTab: $selectedTab)
-                        case .profile:  ProfileView()
+                        case .home:     HomeView().trackScreen("HomeView")
+                        case .calendar: CalendarView().trackScreen("CalendarView")
+                        case .map:      MapView().trackScreen("MapView")
+                        case .favorite: FavoriteView(selectedTab: $selectedTab).trackScreen("FavoriteView")
+                        case .profile:  ProfileView().trackScreen("ProfileView")
                         }
                     }
                     .tabItem {

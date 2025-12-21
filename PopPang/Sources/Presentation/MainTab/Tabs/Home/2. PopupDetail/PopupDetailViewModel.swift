@@ -13,6 +13,7 @@ final class PopupDetailViewModel: ObservableObject {
     let userUuid: String
     @Published var popup: Popup
     @Published var relatedPopupList: [Popup] = [.popupMock, .popupMock2, .popupMock3]
+    // @Dependency private var userSession: UserSessionProtocol
     
     init(userUuid: String, popup: Popup) {
         self.userUuid = userUuid

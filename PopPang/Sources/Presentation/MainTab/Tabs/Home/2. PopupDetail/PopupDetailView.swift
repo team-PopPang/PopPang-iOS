@@ -17,6 +17,7 @@ struct PopupDetailView: View {
     @State var showingPopup = false
     let popup: Popup
     
+    
     init(userUuid: String, popup: Popup) {
         _popupDetailViewModel = StateObject(wrappedValue: PopupDetailViewModel(userUuid: userUuid, popup: popup))
         self.popup = popup
@@ -69,6 +70,22 @@ struct PopupDetailView: View {
                             Text(popup.name)
                                 .ppStyleFont(.scdream(.bold, size: 20))
                                 .foregroundStyle(Color.mainBlack)
+                        
+                            
+//                            if userSession.user?.role == "MEMBER" {
+//                                
+//                            }
+//                            
+//                            
+//                            Button {
+//                                
+//                            } label: {
+//                                Text("팝업 비활성화")
+//                                    .foregroundStyle(Color.mainRed)
+//                                    .ppStyleFont(.scdream(.semibold, size: 17))
+//                                
+//                                    //.foregroundStyle(.mainOrange)
+//                            }
                             
                             /*
                             Button {
