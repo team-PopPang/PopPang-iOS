@@ -10,6 +10,7 @@ import Kingfisher
 
 final class PopupDetailViewModel: ObservableObject {
     @Dependency var popupUsecase: PopupUsecaseProtocol
+    @Dependency var adminUsecase: AdminUsecaseProtocol
     let userUuid: String
     @Published var popup: Popup
     @Published var relatedPopupList: [Popup] = [.popupMock, .popupMock2, .popupMock3]
@@ -92,7 +93,7 @@ extension PopupDetailViewModel {
                 }
             }
         } catch {
-            Logger.e("❌ 찜 토글 실패:")
+            Logger.e("❌ 찜 토글 실패: \(error)")
         }
     }
 }
@@ -111,6 +112,17 @@ extension PopupDetailViewModel {
             
         } catch {
             Logger.e("\(error)")
+        }
+    }
+}
+
+// MARK: - 관리자 관련
+extension PopupDetailViewModel {
+    func deactivatePopup(userUuid: String, popupUuid: String) async {
+        do {
+            try await adminUsecase.deactivatePopup(userUuid: userUuid, popupUuid: popupUuid)
+        } catch {
+            Logger.e("❌ 관리자 팝업 비활성화 실패: \(error)")
         }
     }
 }

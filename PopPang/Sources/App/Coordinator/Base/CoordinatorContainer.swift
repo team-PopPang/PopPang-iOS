@@ -10,6 +10,7 @@ import BottomSheet
 
 struct CoordinatorContainer<Content: View>: View {
     @StateObject private var coordinator = Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>()
+    @EnvironmentObject private var rootViewModel: RootViewModel
 
     let content: () -> Content
     

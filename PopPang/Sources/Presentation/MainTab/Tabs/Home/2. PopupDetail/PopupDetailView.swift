@@ -11,12 +11,19 @@ import PopupView
 
 struct PopupDetailView: View {
     @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
+    @EnvironmentObject private var rootViewModel: RootViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) var openURL
     @StateObject private var popupDetailViewModel: PopupDetailViewModel
     @State var showingPopup = false
     let popup: Popup
     
+    // 삭제 알림
+    @State private var showDeactivateAlert = false
+    
+    private var isAdmin: Bool {
+        rootViewModel.user?.role == "ADMIN"
+    }
     
     init(userUuid: String, popup: Popup) {
         _popupDetailViewModel = StateObject(wrappedValue: PopupDetailViewModel(userUuid: userUuid, popup: popup))
@@ -60,6 +67,15 @@ struct PopupDetailView: View {
                                              y: 4,
                                              blur: 4)
                         }
+                        .overlay(alignment: .bottomTrailing) {
+                            // MARK: - 관리자 버튼
+                            AdminDisablePopupButton(isAdmin: isAdmin) {
+                                print("버튼 눌림")
+                                showDeactivateAlert = true
+                            }
+                            .padding(.trailing, 20)
+                            .padding(.bottom, 20)
+                        }
                     }
                     .frame(height: 450) // 기본 높이
                     
@@ -70,30 +86,6 @@ struct PopupDetailView: View {
                             Text(popup.name)
                                 .ppStyleFont(.scdream(.bold, size: 20))
                                 .foregroundStyle(Color.mainBlack)
-                        
-                            
-//                            if userSession.user?.role == "MEMBER" {
-//                                
-//                            }
-//                            
-//                            
-//                            Button {
-//                                
-//                            } label: {
-//                                Text("팝업 비활성화")
-//                                    .foregroundStyle(Color.mainRed)
-//                                    .ppStyleFont(.scdream(.semibold, size: 17))
-//                                
-//                                    //.foregroundStyle(.mainOrange)
-//                            }
-                            
-                            /*
-                            Button {
-                                coordinator.push(.popupDetail(popupDetailViewModel.userUuid, .popupMock))
-                            } label: {
-                                Text("이런 팝업 어때요")
-                            }
-                             */
                         }
                         
                         PopupCategoryTag(text: popup.recommendList[0])
@@ -253,6 +245,21 @@ struct PopupDetailView: View {
         .onChange(of: coordinator.paths) { _, _ in
             showingPopup = false       // push/pop 이동 시
         }
+        .alert("팝업 비활성화", isPresented: $showDeactivateAlert) {
+            Button("취소", role: .cancel) {}
+            
+            Button("비활성화", role: .destructive) {
+                Task {
+                    await popupDetailViewModel.deactivatePopup(userUuid: rootViewModel.user?.userUuid ?? "", popupUuid: popup.popupUuid)
+                    
+                    await MainActor.run {
+                        dismiss()
+                    }
+                }
+            }
+        } message: {
+            Text("정말로 이 팝업을 비활성화하시겠습니까?\n비활성화된 팝업은 사용자에게 노출되지 않습니다.")
+        }
     }
 }
 
@@ -372,11 +379,44 @@ struct RecommendPopupCell: View {
     }
 }
 
+struct AdminDisablePopupButton: View {
+    let isAdmin: Bool
+    let action: () -> Void
+
+    var body: some View {
+        if isAdmin {
+            Button(action: action) {
+                Text("팝업 비활성화")
+                    .foregroundStyle(Color.mainRed)
+                    .ppStyleFont(.scdream(.bold, size: 17))
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 15)
+                    .background(
+                        RoundedRectangle(cornerRadius: 15)
+                            .fill(Color.white.opacity(0.8))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 15)
+                            .stroke(Color.mainRed, lineWidth: 1)
+                    )
+            }
+            .buttonStyle(PressableButtonStyle())
+        }
+    }
+}
+
 
 #Preview {
-    PopupDetailView(userUuid: "1234", popup: Popup.popupMock2)
-        .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
-        .environmentObject(PopupDetailViewModel(userUuid: "1234", popup: .popupMock))
-//        .environmentObject(HomeViewModel(userUuid: "1234"))
-//        .environmentObject(FavoriteViewModel(userUuid: "1234"))
+    AdminDisablePopupButton(isAdmin: true) {
+        
+    }
+
 }
+
+
+//#Preview {
+//    PopupDetailView(userUuid: "4c3b9a55-f4ee-42cc-9bd2-82a5c811db13", popup: Popup.popupMock2)
+//        .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
+//        .environmentObject(PopupDetailViewModel(userUuid: "4c3b9a55-f4ee-42cc-9bd2-82a5c811db13", popup: .popupMock))
+//        .environmentObject(RootViewModel())
+//}
