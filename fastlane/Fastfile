@@ -27,6 +27,11 @@
 default_platform(:ios)
 
 platform :ios do
+
+  # ⏱ xcodebuild -showBuildSettings 타임아웃 확장 (SPM 많은 프로젝트 필수)
+  ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "60"
+  ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] = "6"
+  
   desc "Push a new beta build to TestFlight using Fastlane Match"
   lane :beta do
 

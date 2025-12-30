@@ -26,6 +26,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
 
         // 0. firebase 초기화
+        FirebaseConfiguration.shared.setLoggerLevel(.error)
         FirebaseApp.configure()
                 
         // 1. 알림 권한 요청
