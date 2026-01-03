@@ -76,6 +76,8 @@ struct SegmentedControlView: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .ignoresSafeArea(edges: .bottom)
+            // 탭뷰용 크기
+            // .frame(height: 500)
         }
     }
 }

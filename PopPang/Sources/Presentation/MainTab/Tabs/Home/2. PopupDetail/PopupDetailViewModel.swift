@@ -8,13 +8,28 @@
 import Foundation
 import Kingfisher
 
+struct Review: Identifiable, Hashable {
+    var id = UUID()
+    let nickname: String
+    let info: String
+    let starCount: Int
+}
+
 final class PopupDetailViewModel: ObservableObject {
     @Dependency var popupUsecase: PopupUsecaseProtocol
     @Dependency var adminUsecase: AdminUsecaseProtocol
     let userUuid: String
     @Published var popup: Popup
-    @Published var relatedPopupList: [Popup] = [.popupMock, .popupMock2, .popupMock3]
-    // @Dependency private var userSession: UserSessionProtocol
+    @Published var relatedPopupList: [Popup] = []
+    
+    let mockReview: [Review] = [
+        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 5),
+        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 4),
+        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 3),
+        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 5),
+        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 4),
+        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 3)
+    ]
     
     init(userUuid: String, popup: Popup) {
         self.userUuid = userUuid

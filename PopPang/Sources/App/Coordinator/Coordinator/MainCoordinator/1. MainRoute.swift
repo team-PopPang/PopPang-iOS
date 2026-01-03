@@ -18,6 +18,9 @@ enum MainRoute: Hashable {
     case profileSetting
     case notification
     case service
+    
+    // PopupDetail
+    case reviewDetail([Review])
 }
 
 extension Coordinator where T == MainRoute {
@@ -40,6 +43,10 @@ extension Coordinator where T == MainRoute {
             
         case .service:
             ServiceTermsView()
+            
+        // PopupDetail
+        case .reviewDetail(let reviewList):
+            ReviewDetailView(reviewList: reviewList);
         }
     }
 }

@@ -15,6 +15,7 @@ struct PopupDetailView: View {
                                                             SheetRoute,
                                                             OverlayRoute,
                                                             FullScreenRoute>
+    
     @EnvironmentObject private var rootViewModel: RootViewModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) var openURL
@@ -25,6 +26,8 @@ struct PopupDetailView: View {
     private var isAdmin: Bool {
         rootViewModel.user?.role == "ADMIN"
     }
+    private let segments: [String] = ["정보", "리뷰"]
+    @State private var selectedSegment = 0
     
     // MARK: - init
     init(userUuid: String, popup: Popup) {
@@ -49,8 +52,6 @@ struct PopupDetailView: View {
                         PopupDivider(padding: 20)
                         
                         BodyView(popupDetailViewModel: popupDetailViewModel, popup: popup)
-                        
-                        
 
                     }
                     .padding(.top, 20)
@@ -106,6 +107,7 @@ struct PopupDetailView: View {
         .onChange(of: coordinator.paths) { _, _ in
             showingPopup = false       // push/pop 이동 시
         }
+        
         .alert("팝업 비활성화", isPresented: $showDeactivateAlert) {
             Button("취소", role: .cancel) {}
             
@@ -268,10 +270,13 @@ private struct InfoView: View {
 private struct BodyView: View {
     @Environment(\.openURL) var openURL
     @ObservedObject var popupDetailViewModel: PopupDetailViewModel
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     let popup: Popup
     var body: some View {
         
         VStack(alignment: .leading, spacing: 0) {
+            
+            // MARK: - 본문
             Text(popup.captionSummary)
                 .ppStyleFont(.scdream(.regular, size: 15),
                            lineHeight: 1.6,
@@ -279,6 +284,33 @@ private struct BodyView: View {
             
             PopupDivider(padding: 20)
             
+            // MARK: - 리뷰
+            HStack {
+                Text("리뷰")
+                    .font(.scdream(.medium, size: 15))
+                
+                Spacer()
+                
+                Button {
+                    coordinator.push(.reviewDetail(popupDetailViewModel.mockReview))
+                } label: {
+                    Image("navigationButton")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 16, height: 16)
+                }
+            }
+            
+            LazyVStack {
+                ForEach(popupDetailViewModel.mockReview[0...2]) { review in
+                    ReviewCell(nickname: review.nickname, info: review.info, starCount: review.starCount)
+                }
+            }
+            .padding(.top, 10)
+            
+            PopupDivider(padding: 20)
+            
+            // MARK: - SNS/홈페이지
             Text("SNS / 홈페이지")
                 .font(.scdream(.medium, size: 15))
                 .frame(height: 21)
@@ -291,6 +323,7 @@ private struct BodyView: View {
             
             PopupDivider(padding: 20)
             
+            // MARK: - 추천 팝업
             Text("이런 팝업은 어때?")
                 .ppStyleFont(.scdream(.medium, size: 15))
             
@@ -483,10 +516,85 @@ extension View {
     }
 }
 
-
 #Preview {
     PopupDetailView(userUuid: "4c3b9a55-f4ee-42cc-9bd2-82a5c811db13", popup: Popup.popupMock2)
         .environmentObject(Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>())
         .environmentObject(PopupDetailViewModel(userUuid: "4c3b9a55-f4ee-42cc-9bd2-82a5c811db13", popup: .popupMock))
         .environmentObject(RootViewModel())
+}
+
+// MARK: - 리뷰 셀
+struct ReviewCell: View {
+    let nickname: String
+    let info: String
+    let starCount: Int
+    
+    var body: some View {
+        
+        VStack(alignment: .leading, spacing: 0) {
+            
+            // MARK: - Header(별점 + 신고)
+            HStack(spacing: 3) {
+                ForEach(0..<starCount, id: \.self) { _ in
+                    Image(systemName: "star.fill")
+                        .resizable()
+                        .frame(width: 15, height: 15)
+                }
+                
+                Spacer()
+                
+                Text("2026.01.03")
+                    .font(.scdream(.light, size: 12))
+                
+                Text("|")
+                    .font(.scdream(.light, size: 12))
+                
+                Text("신고")
+                    .font(.scdream(.light, size: 12))
+            }
+            
+            // MARK: - 닉네임
+            Text("홍길동")
+                .font(.scdream(.medium, size: 12))
+                .padding(.top, 10)
+            
+            // MARK: - 리뷰
+            Text("정말 재미있어요!")
+                .font(.scdream(.light, size: 12))
+                .padding(.top, 10)
+        }
+        .padding(10)
+        .background(.gray.opacity(0.2))
+        .cornerRadius(10)
+    }
+}
+
+// MARK: - 리뷰 상세 화면
+struct ReviewDetailView: View {
+    // @ObservedObject var popupDetailViewModel: PopupDetailViewModel
+    let reviewList: [Review]
+    var body: some View {
+        ScrollView {
+            LazyVStack {
+                ForEach(reviewList) { review in
+                    ReviewCell(nickname: review.nickname, info: review.info, starCount: review.starCount)
+                }
+            }
+            .padding(.top, 20)
+            .padding(.horizontal, .contentPadding)
+        }
+    }
+}
+
+#Preview {
+    let mockReview: [Review] = [
+        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 5),
+        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 4),
+        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 3),
+        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 5),
+        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 4),
+        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 3)
+    ]
+    ReviewDetailView(reviewList: mockReview)
+    // ReviewCell()
 }
