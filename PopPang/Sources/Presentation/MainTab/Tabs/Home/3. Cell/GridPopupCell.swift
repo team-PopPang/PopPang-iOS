@@ -24,7 +24,8 @@ struct GridPopupCell: View {
                             .fill(Color.subWhite)
                             .frame(width: cellWidth, height: 217)
                     }
-                    .resizable()
+                    // .resizable()
+                    .downSampled(.gridPopupCell)
                     .scaledToFill()
                     .frame(width: cellWidth, height: 217)
                     .clipped()

@@ -9,15 +9,16 @@ import SwiftUI
 import Kingfisher
 
 struct AlertPopupCell: View {
-    @ObservedObject var activityViewModel: ActivityViewModel
     let popup: Popup
+    let isLiked: Bool
+    let onToggleLike: () -> Void
     
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
                     // MARK: - 이미지
                     KFImage(URL(string: popup.imageUrlList[0]))
-                        .resizable()
+                        .downSampled(.medium)
                         .aspectRatio(contentMode: .fill) // 프레임을 채움
                         .frame(width: 106, height: 133)  // 포스트 사이즈
                         .clipped()                       // 넘치는 영역 제거
@@ -58,12 +59,12 @@ struct AlertPopupCell: View {
                         
                         
                         Button {
+                            onToggleLike()
+                            /*
                             Task {
                                 await activityViewModel.toggleLike(popup: popup)
-                                
-                                // MARK: - 비활성화
-                                // await calendarViewModel.getAllPopupData()
                             }
+                             */
                         } label: {
                             HStack(spacing: 5) {
                                 Image("favoriteCount")
@@ -76,7 +77,8 @@ struct AlertPopupCell: View {
                                     .ppStyleFont(.scdream(.regular, size: 9))
                             }
                         }
-                        .foregroundStyle(activityViewModel.isLiked(popup: popup) ? Color.mainOrange : Color.mainGray)
+                        .foregroundStyle(isLiked ? Color.mainOrange : Color.mainGray)
+                        // .foregroundStyle(activityViewModel.isLiked(popup: popup) ? Color.mainOrange : Color.mainGray)
                         
                     }
                 }
@@ -88,5 +90,35 @@ struct AlertPopupCell: View {
         }
         // .background(.blue)
         .padding(.vertical, 15)
+        .debugRandomBackground()
+    }
+}
+
+/*
+ AlertPopupCell(...)
+     .equatable()
+
+내부 의사 코드
+ if oldView == newView {
+     // "같으면"
+     // body를 다시 계산하지 않음 (리렌더 스킵)
+ } else {
+     // "다르면"
+     // body를 다시 계산함 (리렌더)
+ }
+ */
+
+/*
+ SwiftUI가 body를 다시 계산할 조건”을 ‘같다/다르다’로 표현해서 커스텀하는 것
+ - ==가 true를 많이 반환할수록 → 업데이트를 많이 “스킵” (더 공격적인 최적화)
+ - ==가 true를 많이 반환할수록 → 업데이트를 많이 “스킵” (더 공격적인 최적화)
+ */
+extension AlertPopupCell: Equatable {
+    // 좋아요가 상태 or 좋아요 수가 바뀌면 다른 View로 간주한다
+    static func == (lhs: AlertPopupCell, rhs: AlertPopupCell) -> Bool {
+        print("실행되는데")
+        return lhs.popup.popupUuid == rhs.popup.popupUuid
+        && lhs.isLiked == rhs.isLiked
+        && lhs.popup.favoriteCount == rhs.popup.favoriteCount
     }
 }

@@ -15,6 +15,7 @@ struct ActivityView: View {
     
     var body: some View {
         ScrollView(showsIndicators: false) {
+        
             LazyVStack(spacing: 0) {
                 HStack {
                     if activityViewModel.isEditing {
@@ -31,9 +32,15 @@ struct ActivityView: View {
                         .buttonStyle(PressableButtonStyle())
                     }
                 }
-                ForEach(Array(activityViewModel.alertPopupList.enumerated()), id: \.element) { index, popup in
-                    AlertPopupCell(activityViewModel: activityViewModel,
-                                   popup: popup)
+                ForEach(Array(activityViewModel.alertPopupList.enumerated()), id: \.element.id) { index, popup in
+                    AlertPopupCell(popup: popup, isLiked: popup.isFavorited, onToggleLike: {
+                        Task {
+                            await activityViewModel.toggleLike(popupUuid: popup.popupUuid)
+                        }
+                    })
+                    .equatable()
+                    
+//                     AlertPopupCell(activityViewModel: activityViewModel,popup: popup)
                         .contentShape(Rectangle()) // 터치 영역을 셀 전체로 확장
                         .onTapGesture {
                             coordinator.push(.popupDetail(homeViewModel.userUuid, popup))
@@ -69,6 +76,7 @@ struct ActivityView: View {
         }
     }
 }
+
 
 //#Preview {
 //    ActivityView(activityViewModel: ActivityViewModel(userUuid: "1234"))

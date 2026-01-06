@@ -16,7 +16,8 @@ struct BestPopupCell: View {
             
             // MARK: - 이미지
             KFImage(URL(string: popup.imageUrlList[0]))
-                .resizable()
+                .downSampled(.bestPopupCell)
+                // .resizable()
                 .scaledToFill()
                 .frame(width: 194, height: 271)
                 .clipped()                       // 넘치는 영역 제거

@@ -97,6 +97,7 @@ extension ActivityViewModel {
         return popup.isFavorited
     }
     
+    /*
     /// 좋아요 상태 바꿔주는 함수
     func toggleLike(popup: Popup) async {
         do {
@@ -132,6 +133,51 @@ extension ActivityViewModel {
             }
         } catch {
             Logger.e("\(error)")
+        }
+    }
+     */
+    
+    @MainActor
+    func toggleLike(popupUuid: String) async {
+        
+        guard let index = alertPopupList.firstIndex(where: { $0.popupUuid == popupUuid }) else { return }
+        
+        // 최신 상태
+        let isLiked = alertPopupList[index].isFavorited
+        
+        // 좋아요 취소
+        if isLiked {
+            
+            // 취소 로직
+            do {
+                // Optimistic Update(UI 먼저 반영)
+                alertPopupList[index].isFavorited = false
+                alertPopupList[index].favoriteCount = max(0, alertPopupList[index].favoriteCount - 1)
+                
+                try await popupUsecase.removeFavorite(userUuid: userUuid, popupUuid: popupUuid)
+                Logger.d("취소 성공")
+            } catch {
+                // 실패 시 롤백
+                alertPopupList[index].isFavorited = true
+                alertPopupList[index].favoriteCount += 1
+                Logger.e("\(error)")
+            }
+        } else {
+            // 추가 로직
+            do {
+                // Optimistic Update(UI 먼저 반영)
+                alertPopupList[index].isFavorited = true
+                alertPopupList[index].favoriteCount += 1
+                
+                try await popupUsecase.addFavorite(userUuid: userUuid, popupUuid: popupUuid)
+                Logger.d("추가 성공")
+            } catch {
+                // ❗ 실패 시 롤백
+                alertPopupList[index].isFavorited = false
+                alertPopupList[index].favoriteCount =
+                max(0, alertPopupList[index].favoriteCount - 1)
+                Logger.e("\(error)")
+            }
         }
     }
 }

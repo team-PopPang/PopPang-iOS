@@ -27,7 +27,8 @@ struct ComingPopupCell: View {
             HStack(spacing: 0) {
                 // MARK: - 이미지
                 KFImage(URL(string: popup.imageUrlList[0]))
-                    .resizable()
+                    .downSampled(.comingPopupCell)
+                    // .resizable()
                     .scaledToFill()
                     .frame(width: 94.4, height: 118)
                     .cornerRadius(5)
