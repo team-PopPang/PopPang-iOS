@@ -61,3 +61,26 @@ struct FavoriteButton: View {
     }
 }
 
+struct ImageButton: View {
+    var buttonImage: String  // 스트로크 이미지
+    var textColor: Color = .mainWhite
+    var buttonColor: Color = .mainOrange
+
+    var height: CGFloat = 40
+    var action: () -> Void
+    
+    var body: some View {
+        Button {
+          action()
+        } label: {
+            Image( buttonImage)
+                .renderingMode(.template)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 25, height: 25)
+                .foregroundStyle(Color.black)
+        }
+        .buttonStyle(PressableButtonStyle())
+    }
+}
+

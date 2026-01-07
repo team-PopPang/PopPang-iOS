@@ -15,7 +15,6 @@ struct ActivityView: View {
     
     var body: some View {
         ScrollView(showsIndicators: false) {
-        
             LazyVStack(spacing: 0) {
                 HStack {
                     if activityViewModel.isEditing {

@@ -21,6 +21,8 @@ enum SheetRoute: Identifiable {
         selectedOption: Binding<SortButton.SortOption>,
         onDismiss: (() -> Void)? = nil
     )
+    
+    case reviewSheet
 }
 
 extension Coordinator where R == SheetRoute {
@@ -42,6 +44,10 @@ extension Coordinator where R == SheetRoute {
                 .onDisappear {
                     onDismiss?()
                 }
+            
+        case .reviewSheet:
+            ReviewWriteSheet()
+                .presentationDetents([.fraction(0.4)])
         }
     }
 }

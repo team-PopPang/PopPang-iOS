@@ -102,7 +102,15 @@ struct PopupDetailView: View {
                 // .closeOnTap(false)          // 팝업 자체 눌러도 닫히기 X
                 // .closeOnTapOutside(false)   // 팝업 주변 공간 눌러도 닫히기 X
         }
-        
+        .overlay {
+            if coordinator.isPresentingSheet {
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            }
+        }
+
         // MARK: - 화면 이동시 토스트 팝업 비활성화
         .onChange(of: coordinator.paths) { _, _ in
             showingPopup = false       // push/pop 이동 시
@@ -286,7 +294,7 @@ private struct BodyView: View {
             
             // MARK: - 리뷰
             HStack {
-                Text("리뷰")
+                Text("리뷰 \(popupDetailViewModel.mockReview.count)개")
                     .font(.scdream(.medium, size: 15))
                 
                 Spacer()
@@ -303,10 +311,10 @@ private struct BodyView: View {
             
             LazyVStack {
                 ForEach(popupDetailViewModel.mockReview[0...2]) { review in
-                    ReviewCell(nickname: review.nickname, info: review.info, starCount: review.starCount)
+                    ReviewCell(nickname: review.nickname, review: review.info, starCount: review.starCount)
                 }
             }
-            .padding(.top, 10)
+            .padding(.top, 20)
             
             PopupDivider(padding: 20)
             
@@ -336,19 +344,26 @@ private struct BodyView: View {
 
 // MARK: - BottomTabBar
 private struct BottomTabBarView: View {
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute,
+                                                            SheetRoute,
+                                                            OverlayRoute,
+                                                            FullScreenRoute>
     @ObservedObject var popupDetailViewModel: PopupDetailViewModel
     let popup: Popup
     var body: some View {
         HStack(spacing: 20) {
-            
-            MainOrangeButton(buttonTitle: "친구에게 공유하기",
+            MainOrangeButton(buttonTitle: "리뷰 남기기",
                              isReversed: false,
                              height: 40) {
+                coordinator.presentSheet(.reviewSheet)
+            }
+            
+            ImageButton(buttonImage: "share") {
                 KakaoShareManager.shared.shareAppOnly(
-                                                      title: popup.name,
-                                                      description: popup.captionSummary,
-                                                      imageUrl: popup.imageUrlList[0],
-                                                      popupId: popup.popupUuid)
+                    title: popup.name,
+                    description: popup.captionSummary,
+                    imageUrl: popup.imageUrlList[0],
+                    popupId: popup.popupUuid)
             }
             
             VStack(spacing: 2) {
@@ -525,8 +540,9 @@ extension View {
 
 // MARK: - 리뷰 셀
 struct ReviewCell: View {
+    let date = Date()
     let nickname: String
-    let info: String
+    let review: String
     let starCount: Int
     
     var body: some View {
@@ -538,7 +554,8 @@ struct ReviewCell: View {
                 ForEach(0..<starCount, id: \.self) { _ in
                     Image(systemName: "star.fill")
                         .resizable()
-                        .frame(width: 15, height: 15)
+                        .frame(width: 12, height: 12)
+                        .foregroundStyle(Color.mainOrange)
                 }
                 
                 Spacer()
@@ -554,17 +571,17 @@ struct ReviewCell: View {
             }
             
             // MARK: - 닉네임
-            Text("홍길동")
+            Text(nickname)
                 .font(.scdream(.medium, size: 12))
                 .padding(.top, 10)
             
             // MARK: - 리뷰
-            Text("정말 재미있어요!")
+            Text(review)
                 .font(.scdream(.light, size: 12))
                 .padding(.top, 10)
         }
         .padding(10)
-        .background(.gray.opacity(0.2))
+        .background(.gray.opacity(0.1))
         .cornerRadius(10)
     }
 }
@@ -572,29 +589,133 @@ struct ReviewCell: View {
 // MARK: - 리뷰 상세 화면
 struct ReviewDetailView: View {
     // @ObservedObject var popupDetailViewModel: PopupDetailViewModel
+    @EnvironmentObject private var coordinator: Coordinator<MainRoute, SheetRoute, OverlayRoute, FullScreenRoute>
     let reviewList: [Review]
     var body: some View {
-        ScrollView {
-            LazyVStack {
-                ForEach(reviewList) { review in
-                    ReviewCell(nickname: review.nickname, info: review.info, starCount: review.starCount)
+        VStack {
+            ScrollView {
+                LazyVStack {
+                    ForEach(reviewList) { review in
+                        ReviewCell(nickname: review.nickname, review: review.info, starCount: review.starCount)
+                    }
+                }
+                .padding(.top, 20)
+                .padding(.horizontal, .contentPadding)
+            }
+            
+            MainOrangeButton(buttonTitle: "리뷰 남기기",
+                             isReversed: false,
+                             height: 80) {
+                coordinator.presentSheet(.reviewSheet)
+            }
+        }
+        .ignoresSafeArea(edges: .bottom)
+    }
+}
+//
+//#Preview {
+//    let mockReview: [Review] = [
+//        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 5),
+//        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 4),
+//        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 3),
+//        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 5),
+//        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 4),
+//        Review(nickname: "홍길동", info: "정말 재미있어요! 정말 재미있어요! 정말 재미있어요! 정말 재미있어요!", starCount: 3)
+//    ]
+//    ReviewDetailView(reviewList: mockReview)
+//    // ReviewCell()
+//}
+
+struct ReviewWriteSheet: View {
+    
+    @Environment(\.dismiss) private var dismiss
+    
+    // ⭐️ 별점 (0 ~ 5)
+    @State private var rating: Int = 0
+    
+    // 📝 리뷰 내용
+    @State private var reviewText: String = ""
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            
+            // MARK: - 타이틀
+            HStack {
+                Text("이 팝업을 추천하시나요?")
+                    .ppStyleFont(.scdream(.bold, size: 20))
+                    .foregroundStyle(Color.mainBlack)
+                
+                Spacer()
+                
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .foregroundStyle(.black)
+                        .font(.system(size: 11, weight: .regular))
+                        .frame(width: 27, height: 27)
+                        .background(Color.mainGray5)
+                        .clipShape(Circle())
                 }
             }
-            .padding(.top, 20)
-            .padding(.horizontal, .contentPadding)
+            
+            // MARK: - 별점
+            HStack(spacing: 12) {
+                ForEach(1...5, id: \.self) { index in
+                    Image(systemName: "star.fill")
+                        .resizable()
+                        .frame(width: 25, height: 25)
+                        .foregroundStyle(
+                            index <= rating ? Color.mainOrange : Color.gray.opacity(0.4)
+                        )
+                        .onTapGesture {
+                            rating = index
+                        }
+                }
+            }
+            
+            // MARK: - 리뷰 입력
+            ZStack(alignment: .topLeading) {
+                if reviewText.isEmpty {
+                    Text("리뷰를 남겨주세요")
+                        .foregroundStyle(Color.gray.opacity(0.8))
+                        .padding(.top, 10)
+                        .padding(.leading, 10)
+                }
+                
+                TextEditor(text: $reviewText)
+                    .frame(height: 120)
+                    .padding(4)
+                    .scrollContentBackground(.hidden)
+                    .background(Color.clear)
+            }
+            .background(Color.gray.opacity(0.1))
+            .cornerRadius(10)
+            
+            // MARK: - 리뷰 쓰기 버튼
+            Button {
+                print("별점:", rating)
+                print("리뷰:", reviewText)
+                dismiss()
+            } label: {
+                Text("리뷰 쓰기")
+                    .ppStyleFont(.scdream(.bold, size: 16))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+                    .background(
+                        rating == 0
+                        ? Color.gray.opacity(0.3)
+                        : Color.mainOrange
+                    )
+                    .foregroundStyle(Color.white)
+                    .cornerRadius(10)
+            }
+            .disabled(rating == 0)
         }
+        .padding()
     }
 }
 
 #Preview {
-    let mockReview: [Review] = [
-        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 5),
-        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 4),
-        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 3),
-        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 5),
-        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 4),
-        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 3)
-    ]
-    ReviewDetailView(reviewList: mockReview)
-    // ReviewCell()
+    ReviewWriteSheet()
 }

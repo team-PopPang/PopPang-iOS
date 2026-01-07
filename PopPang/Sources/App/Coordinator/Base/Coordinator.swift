@@ -114,3 +114,10 @@ class Coordinator<T: Hashable,
         self.bottomSheetPosition = .hidden
     }
 }
+
+extension Coordinator {
+    /// 현재 SwiftUI sheet가 떠 있는지 여부
+    var isPresentingSheet: Bool {
+        sheet != nil
+    }
+}

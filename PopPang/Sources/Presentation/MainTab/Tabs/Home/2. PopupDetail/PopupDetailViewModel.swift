@@ -23,12 +23,12 @@ final class PopupDetailViewModel: ObservableObject {
     @Published var relatedPopupList: [Popup] = []
     
     let mockReview: [Review] = [
-        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 5),
+        Review(nickname: "홍길동", info: "정말 재미있어요!정말 재미있어요!정말 재미있어요!정말 재미있어요!정말 재미있어요!정말 재미있어요!정말 재미있어요!", starCount: 5),
         Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 4),
         Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 3),
         Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 5),
         Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 4),
-        Review(nickname: "홍길동", info: "정말 재미있어요!", starCount: 3)
+        Review(nickname: "홍길동", info: "정말 재미있어요! 정말 재미있어요! 정말 재미있어요! 정말 재미있어요!", starCount: 3)
     ]
     
     init(userUuid: String, popup: Popup) {

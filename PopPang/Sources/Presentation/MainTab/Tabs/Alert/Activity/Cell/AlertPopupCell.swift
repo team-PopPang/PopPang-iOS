@@ -88,11 +88,22 @@ struct AlertPopupCell: View {
                 Spacer()
             }
         }
-        // .background(.blue)
         .padding(.vertical, 15)
-        .debugRandomBackground()
+        .debugBodyRandomBackground()
+//        .debugDiffRandomBackground(
+//            popup.popupUuid,
+//            isLiked,
+//            popup.favoriteCount
+//        )
     }
 }
+
+private struct DiffKey: Equatable {
+    let id: String
+    let isLiked: Bool
+    let favoriteCount: Int
+}
+
 
 /*
  AlertPopupCell(...)

@@ -33,7 +33,7 @@ struct CoordinatorContainer<Content: View>: View {
         
         // MARK: - Sheet
         .sheet(item: $coordinator.sheet) { item in
-            coordinator.buildView(for: item)
+            coordinator.buildView(for: item) 
                 // .presentationDetents(item.detents)
                 // .presentationDragIndicator(item.showIndicator ? .visible : .hidden)
         }
