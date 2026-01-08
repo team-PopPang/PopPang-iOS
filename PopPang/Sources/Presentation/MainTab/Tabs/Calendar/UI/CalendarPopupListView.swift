@@ -56,8 +56,13 @@ struct CalendarPopupListView: View {
             } else {
                 ScrollView(showsIndicators: false) {
                     LazyVStack(spacing: 10) {
-                        ForEach(Array(popups.enumerated()), id: \.element) { index, popup in
-                            CalendarPopupCell(popup: popup)
+                        ForEach(Array(popups.enumerated()), id: \.element.id) { index, popup in
+                            CalendarPopupCell(popup: popup, isLiked: popup.isFavorited, onToggleLike: {
+                                Task {
+                                     await calendarViewModel.toggleLike(popup: popup)
+                                }
+                            })
+                                .equatable()
                                 .onTapGesture {
                                     coordinator.push(.popupDetail(userUuid, popup))
                                 }

@@ -7,10 +7,15 @@
 
 import SwiftUI
 import Kingfisher
+import AutoEquatable
 
+@AutoEquatable
 struct CalendarPopupCell: View {
-    @EnvironmentObject private var calendarViewModel: CalendarViewModel
+    
+    @AutoRequiredChild(\Popup.popupUuid)
     let popup: Popup
+    let isLiked: Bool
+    let onToggleLike: () -> Void
     
     var body: some View {
         VStack(spacing: 0) {
@@ -21,7 +26,7 @@ struct CalendarPopupCell: View {
                             .fill(Color.mainGray3)
                             .frame(width: 106, height: 133)
                     }
-                    .resizable()
+                    .downSampled(.calendarPopupCell)
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 106, height: 133, alignment: .center)
                     .clipped()
@@ -64,12 +69,7 @@ struct CalendarPopupCell: View {
                         
                         
                         Button {
-                            Task {
-                                await calendarViewModel.toggleLike(popup: popup)
-                                
-                                // MARK: - 비활성화
-                                // await calendarViewModel.getAllPopupData()
-                            }
+                            onToggleLike()
                         } label: {
                             HStack(spacing: 5) {
                                 Image("favoriteCount")
@@ -82,7 +82,8 @@ struct CalendarPopupCell: View {
                                     .ppStyleFont(.scdream(.regular, size: 9))
                             }
                         }
-                        .foregroundStyle(calendarViewModel.isLiked(popup: popup) ? Color.mainOrange : Color.mainGray)
+                        .foregroundStyle(isLiked ? Color.mainOrange : Color.mainGray)
+                        //.foregroundStyle(calendarViewModel.isLiked(popup: popup) ? Color.mainOrange : Color.mainGray)
                     }
                 
                 }
@@ -92,9 +93,11 @@ struct CalendarPopupCell: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .contentShape(Rectangle())
+        .debugBodyRandomBackground()
     }
 }
-#Preview {
-    CalendarPopupCell(popup: .popupMock)
-        .frame(height: 133) // 이미지 높이에 맞게 고정
-}
+
+//#Preview {
+//    CalendarPopupCell(popup: .popupMock)
+//        .frame(height: 133) // 이미지 높이에 맞게 고정
+//}

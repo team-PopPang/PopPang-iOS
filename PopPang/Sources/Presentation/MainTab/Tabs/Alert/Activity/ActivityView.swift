@@ -39,22 +39,21 @@ struct ActivityView: View {
                     })
                     .equatable()
                     
-//                     AlertPopupCell(activityViewModel: activityViewModel,popup: popup)
-                        .contentShape(Rectangle()) // 터치 영역을 셀 전체로 확장
-                        .onTapGesture {
-                            coordinator.push(.popupDetail(homeViewModel.userUuid, popup))
-                        }
-                        .overlay(alignment: .topTrailing) {
-                            if activityViewModel.isEditing {
-                                Button {
-                                    activityViewModel.deleteSelectedPopups(popupUuid: popup.popupUuid)
-                                } label: {
-                                    Image("removeBtn")
-                                        .resizable()
-                                        .frame(width: 40, height: 40)
-                                }
+                    .contentShape(Rectangle()) // 터치 영역을 셀 전체로 확장
+                    .onTapGesture {
+                        coordinator.push(.popupDetail(homeViewModel.userUuid, popup))
+                    }
+                    .overlay(alignment: .topTrailing) {
+                        if activityViewModel.isEditing {
+                            Button {
+                                activityViewModel.deleteSelectedPopups(popupUuid: popup.popupUuid)
+                            } label: {
+                                Image("removeBtn")
+                                    .resizable()
+                                    .frame(width: 40, height: 40)
                             }
                         }
+                    }
                     
 
                     
@@ -75,11 +74,6 @@ struct ActivityView: View {
         }
     }
 }
-
-
-//#Preview {
-//    ActivityView(activityViewModel: ActivityViewModel(userUuid: "1234"))
-//}
 
 #Preview {
     NavigationStack {

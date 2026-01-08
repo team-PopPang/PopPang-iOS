@@ -13,6 +13,8 @@
 		DF0510E72E83DB65006AF8C3 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = DF0510E62E83DB65006AF8C3 /* .gitignore */; };
 		DF0510F72E83DB9B006AF8C3 /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = DF0510F62E83DB9B006AF8C3 /* Config.xcconfig */; };
 		DF2A93ED2EA5324E00241E9E /* BottomSheet in Frameworks */ = {isa = PBXBuildFile; productRef = DF2A93EC2EA5324E00241E9E /* BottomSheet */; };
+		DF464E452F0EC97600D314AD /* AutoEquatable in Frameworks */ = {isa = PBXBuildFile; productRef = DF464E442F0EC97600D314AD /* AutoEquatable */; };
+		DF4688FE2F10019B002BA4EA /* AutoEquatable in Frameworks */ = {isa = PBXBuildFile; productRef = DF4688FD2F10019B002BA4EA /* AutoEquatable */; };
 		DF5266182E6CAB8700FC46FD /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = DF5266172E6CAB8700FC46FD /* README.md */; };
 		DF71E2582EDA276500A3B499 /* PopupView in Frameworks */ = {isa = PBXBuildFile; productRef = DF71E2572EDA276500A3B499 /* PopupView */; };
 		DFA5E27F2E969C8F002921C1 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = DFA5E27E2E969C8F002921C1 /* Kingfisher */; };
@@ -77,7 +79,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DF464E452F0EC97600D314AD /* AutoEquatable in Frameworks */,
 				DF71E2582EDA276500A3B499 /* PopupView in Frameworks */,
+				DF4688FE2F10019B002BA4EA /* AutoEquatable in Frameworks */,
 				DFA5E27F2E969C8F002921C1 /* Kingfisher in Frameworks */,
 				DF2A93ED2EA5324E00241E9E /* BottomSheet in Frameworks */,
 				DFD430FB2E8FFB3D00B886F9 /* GoogleSignIn in Frameworks */,
@@ -167,6 +171,8 @@
 				DFFD93782EB137BB00B5B4A7 /* FirebaseMessaging */,
 				DF71E2572EDA276500A3B499 /* PopupView */,
 				DFE1094E2EF7BBB8008F0527 /* FirebaseAnalytics */,
+				DF464E442F0EC97600D314AD /* AutoEquatable */,
+				DF4688FD2F10019B002BA4EA /* AutoEquatable */,
 			);
 			productName = PopPang;
 			productReference = DFAC8E7C2E6C717100B4A917 /* PopPang.app */;
@@ -232,6 +238,7 @@
 				DF2A93EB2EA5324E00241E9E /* XCRemoteSwiftPackageReference "BottomSheet" */,
 				DFFD93752EB137BB00B5B4A7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				DF71E2562EDA276500A3B499 /* XCRemoteSwiftPackageReference "PopupView" */,
+				DF4688FC2F10019B002BA4EA /* XCRemoteSwiftPackageReference "AutoEquatable" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DFAC8E7D2E6C717100B4A917 /* Products */;
@@ -593,6 +600,14 @@
 				minimumVersion = 3.1.1;
 			};
 		};
+		DF4688FC2F10019B002BA4EA /* XCRemoteSwiftPackageReference "AutoEquatable" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/indextrown/AutoEquatable";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		DF71E2562EDA276500A3B499 /* XCRemoteSwiftPackageReference "PopupView" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/exyte/PopupView";
@@ -663,6 +678,15 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DF2A93EB2EA5324E00241E9E /* XCRemoteSwiftPackageReference "BottomSheet" */;
 			productName = BottomSheet;
+		};
+		DF464E442F0EC97600D314AD /* AutoEquatable */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AutoEquatable;
+		};
+		DF4688FD2F10019B002BA4EA /* AutoEquatable */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF4688FC2F10019B002BA4EA /* XCRemoteSwiftPackageReference "AutoEquatable" */;
+			productName = AutoEquatable;
 		};
 		DF71E2572EDA276500A3B499 /* PopupView */ = {
 			isa = XCSwiftPackageProductDependency;

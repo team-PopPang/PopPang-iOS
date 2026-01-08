@@ -15,6 +15,7 @@ enum ImagePresent {
     case bestPopupCell
     case comingPopupCell
     case gridPopupCell
+    case calendarPopupCell
 }
 
 extension ImagePresent {
@@ -26,6 +27,7 @@ extension ImagePresent {
         case .bestPopupCell:  return CGSize(width: 194, height: 271)
         case .comingPopupCell:  return CGSize(width: 283, height: 138)
         case .gridPopupCell: return CGSize(width: (UIScreen.main.bounds.width - 15 * 3) / 2, height: 217)
+        case .calendarPopupCell:  return CGSize(width: 106, height: 133)
         }
     }
 }

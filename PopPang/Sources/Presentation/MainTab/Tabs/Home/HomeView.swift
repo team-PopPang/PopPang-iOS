@@ -324,6 +324,7 @@ private struct GridPopupScrollView: View {
                 
                 VStack(alignment: .leading) {
                     GridPopupCell(popup: popup)
+                        .equatable()
                         .onTapGesture {
                             coordinator.push(.popupDetail(homeViewModel.userUuid, popup))
                         }

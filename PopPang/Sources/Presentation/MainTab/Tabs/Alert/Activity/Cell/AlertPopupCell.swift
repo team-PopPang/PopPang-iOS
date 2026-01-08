@@ -7,8 +7,12 @@
 
 import SwiftUI
 import Kingfisher
+import AutoEquatable
 
+@AutoEquatable
 struct AlertPopupCell: View {
+    
+    @AutoRequiredChild(\Popup.popupUuid)
     let popup: Popup
     let isLiked: Bool
     let onToggleLike: () -> Void
@@ -98,11 +102,6 @@ struct AlertPopupCell: View {
     }
 }
 
-private struct DiffKey: Equatable {
-    let id: String
-    let isLiked: Bool
-    let favoriteCount: Int
-}
 
 
 /*
@@ -124,12 +123,12 @@ private struct DiffKey: Equatable {
  - ==가 true를 많이 반환할수록 → 업데이트를 많이 “스킵” (더 공격적인 최적화)
  - ==가 true를 많이 반환할수록 → 업데이트를 많이 “스킵” (더 공격적인 최적화)
  */
-extension AlertPopupCell: Equatable {
-    // 좋아요가 상태 or 좋아요 수가 바뀌면 다른 View로 간주한다
-    static func == (lhs: AlertPopupCell, rhs: AlertPopupCell) -> Bool {
-        print("실행되는데")
-        return lhs.popup.popupUuid == rhs.popup.popupUuid
-        && lhs.isLiked == rhs.isLiked
-        && lhs.popup.favoriteCount == rhs.popup.favoriteCount
-    }
-}
+//extension AlertPopupCell: Equatable {
+//    // 좋아요가 상태 or 좋아요 수가 바뀌면 다른 View로 간주한다
+//    static func == (lhs: AlertPopupCell, rhs: AlertPopupCell) -> Bool {
+//        print("실행되는데")
+//        return lhs.popup.popupUuid == rhs.popup.popupUuid
+//        && lhs.isLiked == rhs.isLiked
+//        && lhs.popup.favoriteCount == rhs.popup.favoriteCount
+//    }
+//}
