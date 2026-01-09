@@ -48,7 +48,7 @@ private struct DebugDiffRandomBackgroundModifier<Key: Equatable>: ViewModifier {
     }
 }
 
-// MARK: - body가 다시 계산되었는지를 보여주고,
+// MARK: - body가 다시 계산되었는지를 보여줌
 extension View  {
     /// body가 재평가될 때마다 색이 바뀌는 디버그용 배경
     /// - 목적: "body가 다시 계산됐는지" 확인

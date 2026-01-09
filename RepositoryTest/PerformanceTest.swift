@@ -5,27 +5,6 @@
 //  Created by 김동현 on 11/30/25.
 //
 
-//import Testing
-//@testable import PopPang
-//import Foundation
-//
-//@Test
-//func testRepositoryPerformance() async throws {
-//    let repository = PopupRepositoryImpl()
-//    
-//    let start = CFAbsoluteTimeGetCurrent()
-//
-//    let list = try await repository.getPersonalPopupList(
-//        userUuid: "4c3b9a55-f4ee-42cc-9bd2-82a5c811db13"
-//    )
-//
-//    let end = CFAbsoluteTimeGetCurrent()
-//    let duration = end - start
-//    
-//    #expect(!list.isEmpty)
-//    print("⏱ API Time:", duration, "seconds")
-//}
-
 import XCTest
 @testable import PopPang
 

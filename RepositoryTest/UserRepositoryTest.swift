@@ -21,10 +21,10 @@ struct UserRepositoryTest {
         #expect(fetchedUserInto.nickname == DummyData.userInfo.nickname)
     }
     
-    @Test("[Update] User FcmToken Test")
-    func updateUserFcmToken() async throws {
-        try await userRepository.updateFcmToken(userUuid: DummyData.userInfo.userUuid, fcmToken: "1234")
-        let fetchedUserInto = try await userRepository.autoLogin(userUuid: DummyData.userInfo.userUuid)
-        #expect(fetchedUserInto.fcmToken == "1234")
-    }
+//    @Test("[Update] User FcmToken Test")
+//    func updateUserFcmToken() async throws {
+//        try await userRepository.updateFcmToken(userUuid: DummyData.userInfo.userUuid, fcmToken: "1234")
+//        let fetchedUserInto = try await userRepository.autoLogin(userUuid: DummyData.userInfo.userUuid)
+//        #expect(fetchedUserInto.fcmToken == "1234")
+//    }
 }

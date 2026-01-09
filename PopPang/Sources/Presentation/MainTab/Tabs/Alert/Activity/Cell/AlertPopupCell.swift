@@ -132,3 +132,9 @@ struct AlertPopupCell: View {
 //        && lhs.popup.favoriteCount == rhs.popup.favoriteCount
 //    }
 //}
+
+
+
+
+
+

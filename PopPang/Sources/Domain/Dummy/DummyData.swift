@@ -10,11 +10,11 @@ import Foundation
 public enum DummyData { }
 
 extension DummyData {
-    static let userInfo = User(userUuid: "8b9777ae-c073-11f0-a84f-8e458ccf4968",
+    static let userInfo = User(userUuid: "4c3b9a55-f4ee-42cc-9bd2-82a5c811db13",
                                 uid: "testUser_uid",
                                 provider: "kakao",
                                 email: "testUser@gmail.com",
-                                nickname: "테스터",
+                                nickname: "김동현",
                                 role: "MEMBER",
                                 isAlerted: false,
                                 fcmToken: "testUser_fcm",
