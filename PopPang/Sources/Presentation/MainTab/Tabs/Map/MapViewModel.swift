@@ -15,6 +15,12 @@ final class MapViewModel: ObservableObject {
     @Dependency private var popupUsecase: PopupUsecaseProtocol
     @Published var mapPopups: [Popup] = []
     
+    // 서버에서 내려오는 트렌드 카테고리(목업)
+    @Published var categories: [TrendingCategory] = []
+    
+    // 선택된 카테고리
+    @Published var selectedCategory: TrendingCategory? = nil
+    
     // 전체 팝럽 저장용
     private var allPopups: [Popup] = []
     
@@ -97,6 +103,14 @@ extension MapViewModel {
                     self.selectedRegion = first
                     self.selectedDistrict = first.districtList.first
                 }
+            }
+        }
+        
+        if categories.isEmpty {
+            async let categoryTask = self.getTrendingCategories()
+            let categoryList = await categoryTask
+            await MainActor.run {
+                self.categories = categoryList
             }
         }
         
@@ -243,4 +257,132 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
     }
 }
 
+// MARK: - 트렌드 카테고리
+extension MapViewModel {
+    // Mock API
+    func getTrendingCategories() async -> [TrendingCategory] {
+        return TrendingCategory.allCases
+    }
+    
+    // 선택 처리
+    func selectCategory(_ category: TrendingCategory) {
+        
+        if selectedCategory == category {
+            // 다시 누르면 카테고리 해제
+            selectedCategory = nil
+            
+            // 원래 데이터로 복구
+            mapPopups = allPopups
+        } else {
+            // 새 카테고리 선택
+            selectedCategory = category
+            
+            // 🎯 임시 목업 분기
+            if category.title == "🍪 두바이쫀득쿠키" {
+                applyDubaiCookieMock()
+            }
+        }
+    }
+    
+    private func applyDubaiCookieMock() {
+        guard let center = mapCenter else {
+            Logger.w("mapCenter 없음 → mock 생성 불가")
+            return
+        }
 
+        let mockPopups: [Popup] = [
+            makeDubaiMockPopup(
+                uuid: "mock-1",
+                name: "두바이 쫀득 쿠키 팝업",
+                lat: center.latitude + 0.0006,
+                lon: center.longitude + 0.0004,
+                isFavorited: false
+            ),
+            makeDubaiMockPopup2(
+                uuid: "mock-2",
+                name: "두바이 쫀득 쿠키 팝업 2호점",
+                lat: center.latitude - 0.0005,
+                lon: center.longitude + 0.0003,
+                isFavorited: true
+            )
+        ]
+
+        mapPopups = mockPopups
+    }
+
+    
+    private func makeDubaiMockPopup(
+        uuid: String,
+        name: String,
+        lat: Double,
+        lon: Double,
+        isFavorited: Bool
+    ) -> Popup {
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+
+        return Popup(
+            popupUuid: uuid,
+            name: name,
+            startDate: formatter.date(from: "2026-01-12 10:00") ?? Date(),
+            endDate: formatter.date(from: "2026-01-20 20:00") ?? Date(),
+            openTime: "10:00",
+            closeTime: "20:00",
+            address: "내 위치 근처",
+            roadAddress: "부산 어딘가",
+            region: selectedRegion?.region ?? "서울",
+            latitude: lat,
+            longitude: lon,
+            instaPostId: "mock_instagram_id",
+            instaPostUrl: "https://instagram.com/p/mock",
+            captionSummary: "두바이에서 온 쫀득한 쿠키를 맛볼 수 있는 팝업입니다.",
+            imageUrlList: [
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR7IzdHpF6x63l_saPO19GCgW2XExqTM1j2lg&s"
+            ],
+            mediaType: .image,
+            favoriteCount: Int.random(in: 0...50),
+            viewCount: Int.random(in: 0...300),
+            isFavorited: isFavorited,
+            recommendList: ["두바이", "쿠키", "디저트"]
+        )
+    }
+
+    private func makeDubaiMockPopup2(
+        uuid: String,
+        name: String,
+        lat: Double,
+        lon: Double,
+        isFavorited: Bool
+    ) -> Popup {
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+
+        return Popup(
+            popupUuid: uuid,
+            name: name,
+            startDate: formatter.date(from: "2026-01-12 10:00") ?? Date(),
+            endDate: formatter.date(from: "2026-01-20 20:00") ?? Date(),
+            openTime: "10:00",
+            closeTime: "20:00",
+            address: "내 위치 근처",
+            roadAddress: "부산 어딘가",
+            region: selectedRegion?.region ?? "서울",
+            latitude: lat,
+            longitude: lon,
+            instaPostId: "mock_instagram_id",
+            instaPostUrl: "https://instagram.com/p/mock",
+            captionSummary: "두바이에서 온 쫀득한 쿠키를 맛볼 수 있는 팝업입니다.",
+            imageUrlList: [
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEhU_BLUf008eonOsq0WBrpPjk1w8AH96USQ&s"
+            ],
+            mediaType: .image,
+            favoriteCount: Int.random(in: 0...50),
+            viewCount: Int.random(in: 0...300),
+            isFavorited: isFavorited,
+            recommendList: ["두바이", "쿠키", "디저트"]
+        )
+    }
+
+}

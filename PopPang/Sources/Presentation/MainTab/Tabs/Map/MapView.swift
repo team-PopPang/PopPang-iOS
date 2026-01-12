@@ -36,48 +36,55 @@ struct MapView: View {
                     }
                 }
             
-            // MARK: - 지역필터링 & 검색 텍스트필드
-            HStack(spacing: 0) {
+            // MARK: - 상단바
+            VStack(spacing: 12) {
                 
-                // MARK: - 지역 필터링 버튼
-                MapRegionButton(text: mapViewModel.selectedRegion?.region ?? "전체") {
+                // MARK: - 지역필터링 & 검색 텍스트필드
+                HStack(spacing: 0) {
                     
-                    // MARK: - 첫 시트가 닫혀 있다면 열기
-                    if firstSheetPosition == .absolute(0) {
-                        firstSheetPosition = .relative(0.5)
+                    // MARK: - 지역 필터링 버튼
+                    MapRegionButton(text: mapViewModel.selectedRegion?.region ?? "전체") {
+                        
+                        // MARK: - 첫 시트가 닫혀 있다면 열기
+                        if firstSheetPosition == .absolute(0) {
+                            firstSheetPosition = .relative(0.5)
+                        }
+                        
+                        // MARK: - 두번째 시트 열기
+                        secondSheetType = .region
+                        secondSheetPosition = firstSheetPosition
                     }
                     
-                    // MARK: - 두번째 시트 열기
-                    secondSheetType = .region
-                    secondSheetPosition = firstSheetPosition
+                    Divider()
+                        .frame(width: 1, height: 20)
+                        .background(Color.mainGray8)
+                    
+                    // MARK: - 검색 텍스트필드
+                    MapSearchTextField(placeholder: "궁금한 팝업을 검색해보세요",
+                                       text: $mapViewModel.searchText) {
+                    }
+                    
                 }
-                
-                Divider()
-                    .frame(width: 1, height: 20)
-                    .background(Color.mainGray8)
-                
-                // MARK: - 검색 텍스트필드
-                MapSearchTextField(placeholder: "궁금한 팝업을 검색해보세요",
-                                   text: $mapViewModel.searchText) {
-                }
-                
-            }
-            .background {
-                GeometryReader { geo in
-                    Color.subWhite
-                        .cornerRadius(3)
-                        .onAppear {
-                            DispatchQueue.main.async {
-                                mapSearchTextFieldFrame = geo.frame(in: .global)
-                                
-                                // 시트 위치 1번만 계산해서 저장
-                                let top = UIScreen.main.bounds.height - (mapSearchTextFieldFrame.maxY + 20)
-                                
-                                // 최소값 보정(너비 깨짐 방지)
-                                sheetTop = max(top, 200)
+                .background {
+                    GeometryReader { geo in
+                        Color.subWhite
+                            .cornerRadius(3)
+                            .onAppear {
+                                DispatchQueue.main.async {
+                                    mapSearchTextFieldFrame = geo.frame(in: .global)
+                                    
+                                    // 시트 위치 1번만 계산해서 저장
+                                    let top = UIScreen.main.bounds.height - (mapSearchTextFieldFrame.maxY + 20)
+                                    
+                                    // 최소값 보정(너비 깨짐 방지)
+                                    sheetTop = max(top, 200)
+                                }
                             }
-                        }
+                    }
                 }
+                
+                // MARK: - 카테고리
+                TrendingCategoryScrollView(mapViewModel: mapViewModel)
             }
             .frame(maxHeight: .infinity, alignment: .top)
             .padding(.top, getSafeArea().top + 10)
@@ -133,13 +140,13 @@ struct MapView: View {
                 .padding(.bottom, 20 + tabBarHeight)
             }
         }
-        .background(
+        .background {
             // TabBar 높이 추적
             TabBarProxy { _, tabBar in
                 let contentHeight = tabBar.bounds.height
                 self.tabBarHeight = contentHeight
             }
-        )
+        }
         .onAppear {
             LocationPermissionManager.shared.requestPermission()
             Task {
