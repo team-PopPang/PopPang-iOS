@@ -7,15 +7,15 @@
 
 import Foundation
 
-enum TrendingCategory: CaseIterable, Identifiable {
-    var id: Self { self }
-    // case all
-    case dubaiStickyCookie
-    
-    var title: String {
-        switch self {
-        // case .all: return "전체"
-        case .dubaiStickyCookie: return "🍪 두바이쫀득쿠키"
-        }
-    }
-}
+//enum TrendingCategory: CaseIterable, Identifiable {
+//    var id: Self { self }
+//    // case all
+//    case dubaiStickyCookie
+//    
+//    var title: String {
+//        switch self {
+//        // case .all: return "전체"
+//        case .dubaiStickyCookie: return "🍪 두바이쫀득쿠키"
+//        }
+//    }
+//}

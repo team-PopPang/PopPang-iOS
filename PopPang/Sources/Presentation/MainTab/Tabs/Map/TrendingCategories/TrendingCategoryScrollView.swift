@@ -16,7 +16,7 @@ struct TrendingCategoryScrollView: View {
                 ForEach(mapViewModel.categories) { category in
                     TrendingCategoryChip(
                         category: category,
-                        isSelected: mapViewModel.selectedCategory == category,
+                        isSelected: mapViewModel.selectedCategoryId == category.id,
                     ) {
                         mapViewModel.selectCategory(category)
                     }

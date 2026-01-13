@@ -127,4 +127,15 @@ final class PopupUsecaseImpl: PopupUsecaseProtocol {
         try await popupRepository.getRegionList()
             .map { $0.toEntity() }
     }
+    
+    // MARK: - 추천
+    func getPopularRecommendList() async throws -> [Recommend] {
+        try await popupRepository.getPopularRecommendList()
+            .map { $0.toModel() }
+    }
+    
+    func getPopularRecommendPopupList(userUuid: String, recommendId: Int) async throws -> [Popup] {
+        try await popupRepository.getPopularRecommendPopupList(userUuid: userUuid, recommendId: recommendId)
+            .map { $0.toEntity() }
+    }
 }

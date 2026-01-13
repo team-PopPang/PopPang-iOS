@@ -58,4 +58,8 @@ protocol PopupUsecaseProtocol {
     
     // MARK: - 지역/구
     func getRegionList() async throws -> [RegionList]
+    
+    func getPopularRecommendList() async throws -> [Recommend]
+    
+    func getPopularRecommendPopupList(userUuid: String, recommendId: Int) async throws -> [Popup]
 }

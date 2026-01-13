@@ -93,7 +93,6 @@ struct CalendarPopupCell: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .contentShape(Rectangle())
-        .debugBodyRandomBackground()
     }
 }
 

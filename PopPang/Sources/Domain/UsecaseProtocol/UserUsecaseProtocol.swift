@@ -22,7 +22,7 @@ protocol UserUsecaseProtocol {
     
     /// 추첰 카테고리 리스트 가져오기
     /// - Returns: [Recommand]
-    func getRecommandList() async throws -> [RecommendList]
+    func getRecommandList() async throws -> [Recommend]
     
     
     /// 유저 삭제

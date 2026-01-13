@@ -46,6 +46,12 @@ enum PopupAPI {
     
     // 지역/구 목록 조회
     case getRegionList
+    
+    // 지도 인기 카테고리
+    case getPopularRecommendList
+    
+    // 특정 카테고리 팝업 목록 조회
+    case getPopularRecommendPopupList(userUuid: String, recommendId: Int)
 }
 
 extension PopupAPI: TargetType {
@@ -83,6 +89,13 @@ extension PopupAPI: TargetType {
             
         // 지역/구 목록 조회
         case .getRegionList: return "/popup/regions/districts"
+            
+        // 지도 인기 카테고리
+        case .getPopularRecommendList: return "recommend/featured"
+            
+        // 특정 카테고리 팝업 목록 조회
+        case .getPopularRecommendPopupList(let userUuid, let recommendId):
+            return "/users/\(userUuid)/popups/recommendations/\(recommendId)"
         }
     }
     
@@ -117,6 +130,12 @@ extension PopupAPI: TargetType {
             
         // 지역/구 목록 조회
         case .getRegionList: return .get
+            
+        // 지도 인기 카테고리
+        case .getPopularRecommendList: return .get
+            
+            // 특정 카테고리 팝업 목록 조회
+        case .getPopularRecommendPopupList: return .get
         }
     }
     
@@ -210,6 +229,14 @@ extension PopupAPI: TargetType {
             
         // 지역/구 목록 조회
         case .getRegionList:
+            return .requestPlain
+            
+        // 지도 인기 카테고리
+        case .getPopularRecommendList:
+            return .requestPlain
+            
+        // 특정 카테고리 팝업 목록 조회(path parameter: O, query Parameter x이므로)
+        case .getPopularRecommendPopupList:
             return .requestPlain
         }
     }

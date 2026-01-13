@@ -23,7 +23,7 @@ final class UserUsecaseImpl: UserUsecaseProtocol {
         try await userRepository.autoLogin(userUuid: userUuid).toModel()
     }
     
-    func getRecommandList() async throws -> [RecommendList] {
+    func getRecommandList() async throws -> [Recommend] {
         try await userRepository.getRecommandList()
             .map { $0.toModel() }
     }
@@ -73,8 +73,8 @@ final class StubUserUsecaseImpl: UserUsecaseProtocol {
         return User.adminUser
     }
     
-    func getRecommandList() async throws -> [RecommendList] {
-        return [RecommendList(id: 1, recommendName: "123")]
+    func getRecommandList() async throws -> [Recommend] {
+        return [Recommend(id: 1, recommendName: "123")]
     }
     
     func hardDeleteUser(userUuid: String) async throws {}

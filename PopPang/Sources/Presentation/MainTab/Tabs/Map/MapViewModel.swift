@@ -16,10 +16,10 @@ final class MapViewModel: ObservableObject {
     @Published var mapPopups: [Popup] = []
     
     // 서버에서 내려오는 트렌드 카테고리(목업)
-    @Published var categories: [TrendingCategory] = []
+    @Published var categories: [Recommend] = []
     
     // 선택된 카테고리
-    @Published var selectedCategory: TrendingCategory? = nil
+    @Published var selectedCategoryId: Int? = nil
     
     // 전체 팝럽 저장용
     private var allPopups: [Popup] = []
@@ -260,30 +260,45 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
 // MARK: - 트렌드 카테고리
 extension MapViewModel {
     // Mock API
-    func getTrendingCategories() async -> [TrendingCategory] {
-        return TrendingCategory.allCases
+    func getTrendingCategories() async -> [Recommend] {
+        do {
+            let categories = try await popupUsecase.getPopularRecommendList()
+            return categories
+        } catch {
+            Logger.e("\(error)")
+            return []
+        }
     }
     
+    
     // 선택 처리
-    func selectCategory(_ category: TrendingCategory) {
+    func selectCategory(_ category: Recommend) {
         
-        if selectedCategory == category {
+        if selectedCategoryId == category.id {
+            
             // 다시 누르면 카테고리 해제
-            selectedCategory = nil
+            selectedCategoryId = nil
             
             // 원래 데이터로 복구
             mapPopups = allPopups
         } else {
             // 새 카테고리 선택
-            selectedCategory = category
+            selectedCategoryId = category.id
             
-            // 🎯 임시 목업 분기
-            if category.title == "🍪 두바이쫀득쿠키" {
-                applyDubaiCookieMock()
+            Task {
+                await getPopularRecommendPopupList(userUuid: userUuid, recommendId: category.id)
             }
+            
+            /*
+            // 🎯 임시 목업 분기
+            if category.recommendName == "🍪 두바이쫀득쿠키" {
+                // applyDubaiCookieMock()
+            }
+             */
         }
     }
     
+    /*
     private func applyDubaiCookieMock() {
         guard let center = mapCenter else {
             Logger.w("mapCenter 없음 → mock 생성 불가")
@@ -309,7 +324,6 @@ extension MapViewModel {
 
         mapPopups = mockPopups
     }
-
     
     private func makeDubaiMockPopup(
         uuid: String,
@@ -385,4 +399,17 @@ extension MapViewModel {
         )
     }
 
+     */
+    
+    func getPopularRecommendPopupList(userUuid: String, recommendId: Int) async {
+        do {
+            let popupList = try await popupUsecase.getPopularRecommendPopupList(userUuid: userUuid, recommendId: recommendId)
+            await MainActor.run {
+                mapPopups = popupList
+                print("여기: \(popupList)")
+            }
+        } catch {
+            Logger.e("\(error)")
+        }
+    }
 }

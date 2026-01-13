@@ -123,4 +123,14 @@ final class PopupRepositoryImpl: PopupRepositoryProtocol {
     func getRegionList() async throws -> [RegionListDTO] {
         try await NetworkProvider.shared.popupProvidder.asyncRequest(.getRegionList, decodeTo: [RegionListDTO].self)
     }
+    
+    // MARK: - 추천
+    func getPopularRecommendList() async throws -> [RecommendListDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPopularRecommendList, decodeTo: [RecommendListDTO].self)
+    }
+    
+    func getPopularRecommendPopupList(userUuid: String, recommendId: Int) async throws -> [PopupDTO] {
+        try await NetworkProvider.shared.popupProvidder.asyncRequest(.getPopularRecommendPopupList(userUuid: userUuid,
+                                                                                                   recommendId: recommendId), decodeTo: [PopupDTO].self)
+    }
 }

@@ -13,8 +13,8 @@ struct RecommendListDTO: Decodable, Identifiable {
 }
 
 extension RecommendListDTO {
-    func toModel() -> RecommendList {
-        RecommendList(id: id,
+    func toModel() -> Recommend {
+        Recommend(id: id,
                   recommendName: recommendName)
     }
 }

@@ -53,4 +53,17 @@ struct PopupRepositoryTest {
                                                                                   mapSortStandard: "NEWEST")
         #expect(popupList.count > 0)
     }
+    
+    @Test("[Get] getPopularRecommendList Test")
+    func getPopularRecommendList() async throws {
+        let popupList = try await popupRepository.getPopularRecommendList()
+        #expect(popupList.count > 0)
+    }
+    
+    @Test("[Get] getPopularRecommendPopupList Test")
+    func getPopularRecommendPopupList() async throws {
+        let popupList = try await popupRepository.getPopularRecommendPopupList(userUuid: DummyData.userInfo.userUuid,
+                                                                               recommendId: 21)
+        #expect(popupList.count > 0)
+    }
 }

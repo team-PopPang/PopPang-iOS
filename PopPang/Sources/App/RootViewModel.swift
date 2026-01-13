@@ -72,7 +72,7 @@ final class RootViewModel: ObservableObject {
     }
     
     // MARK: - RecommandList
-    @Published var recommandList: [RecommendList] = []
+    @Published var recommandList: [Recommend] = []
     
     private var cancellables = Set<AnyCancellable>()
     

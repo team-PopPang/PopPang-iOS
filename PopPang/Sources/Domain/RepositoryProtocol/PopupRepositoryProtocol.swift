@@ -147,4 +147,13 @@ protocol PopupRepositoryProtocol {
     /// 지역/구 목록을 가져옵니다
     /// - Returns: [RegionListDTO]
     func getRegionList() async throws -> [RegionListDTO]
+    
+    // MARK: - 추천
+    /// 인기 카테고리를 가져옵니다
+    /// - Returns: [RecommendListDTO]
+    func getPopularRecommendList() async throws -> [RecommendListDTO]
+    
+    /// 특정 카테고리 팝업 목록을 가져옵니다
+    /// - Returns: [PopupDTO]
+    func getPopularRecommendPopupList(userUuid: String, recommendId: Int) async throws -> [PopupDTO]
 }
