@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Kingfisher
+import AutoEquatable
 
 struct CustomCalendar: View {
     @StateObject private var viewModel = CustomCalendarViewModel()
@@ -44,8 +45,7 @@ private struct MonthHeaderView: View {
     var body: some View {
         HStack {
             Button {
-                viewModel.currentMonth -= 1
-                viewModel.currentDate = viewModel.getCurrentMonth()
+                viewModel.moveMonth(by: -1)
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 20))
@@ -65,8 +65,7 @@ private struct MonthHeaderView: View {
             Spacer()
             
             Button {
-                viewModel.currentMonth += 1
-                viewModel.currentDate = viewModel.getCurrentMonth()
+                viewModel.moveMonth(by: +1)
             } label: {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 20))
@@ -100,42 +99,48 @@ private struct DateGridView: View {
     let columns = Array(repeating: GridItem(.flexible()), count: 7)
     var body: some View {
         LazyVGrid(columns: columns, spacing: 15) {
-            ForEach(viewModel.extractDate()) { value in
-                let count = eventCounts[value.date.stripTime()] ?? 0
-                DateCardView(viewModel: viewModel, value: value,
-                             eventCount: count)
-                    .onTapGesture {
-                        viewModel.currentDate = value.date
-                        if value.day != -1 {
-                            onSelect(value.date)   // 날짜 클릭 시 콜백 전달
-                        }
+            ForEach(viewModel.dates, id: \.id) { value in
+                
+                let isSelected = viewModel.isSameDay(date1: value.date, date2: viewModel.currentDate)
+                let eventCount = eventCounts[value.date.stripTime()] ?? 0
+                DateCardView(day: value.day,
+                             isSelected: isSelected,
+                             eventCount: eventCount) {
+                    viewModel.currentDate = value.date
+                    if value.day != -1 {
+                        onSelect(value.date)   // 날짜 클릭 시 콜백 전달
                     }
+                }
+                .equatable()
             }
         }
     }
 }
 
 // MARK: - 날짜 카드
+@AutoEquatable
 private struct DateCardView: View {
-    @ObservedObject var viewModel: CustomCalendarViewModel
-    var value: DateValue
-    var eventCount: Int
+
+    let day: Int
+    let isSelected: Bool
+    let eventCount: Int
+    
+    @AutoIgnored
+    let onTapped: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 5) {
-            if value.day != -1 {
+            if day != -1 {
                 ZStack {
                     Circle()
-                        .fill(viewModel.isSameDay(date1: value.date,
-                                                  date2: viewModel.currentDate)
+                        .fill(isSelected
                               ? Color.mainOrange    // 오늘 날짜
                               : Color.clear)
                         .frame(width: 28, height: 28)
                     
-                    Text("\(value.day)")
+                    Text("\(day)")
                         .ppStyleFont(.scdream(.bold, size: 12))
-                        .foregroundStyle(viewModel.isSameDay(date1: value.date,
-                                                             date2: viewModel.currentDate)
+                        .foregroundStyle(isSelected
                                          ? Color.mainWhite    // 오늘 날짜
                                          : Color.mainBlack)
                 }
@@ -155,6 +160,8 @@ private struct DateCardView: View {
             }
         }
         .frame(height: 43)
+        .onTapGesture { onTapped?() }
+        .debugBodyRandomBackground()
     }
 }
 
@@ -190,11 +197,18 @@ extension Date {
 // MARK: - ViewModel
 final class CustomCalendarViewModel: ObservableObject {
     
+    // MARK: - 캘린더에 그릴 날짜 배열(월 변경시에마 바뀜)
+    @Published private(set) var dates: [DateValue] = []
+    
     // MARK: - 캘린더 헤더 날짜(2025년 10월)
     @Published var currentDate: Date = Date()
     
     // MARK: - 달력을 그릴 때 쓰는 기준 달(화살표 버튼 클릭 시 월 업데이트)
     @Published var currentMonth: Int = 0
+    
+    init() {
+        extractDate()
+    }
     
     /// 년도와 월 추출
     /// - Returns: [String]]
@@ -226,7 +240,7 @@ final class CustomCalendarViewModel: ObservableObject {
     /// 해당 월의 모든 날짜들을 DateValue 배열로 만들어주는 함수
     /// Grid로 보여주기 위함
     /// - Returns: [DateValue]]
-    func extractDate() -> [DateValue] {
+    func extractDate() {
         // 현재 날짜의 캘린더
         let calendar = Calendar.current
         
@@ -251,7 +265,7 @@ final class CustomCalendarViewModel: ObservableObject {
             days.insert(DateValue(day: -1, date: Date()), at: 0)
         }
         
-        return days
+        self.dates = days
     }
     
     /// 두 날짜가 같은지 여부
@@ -262,6 +276,12 @@ final class CustomCalendarViewModel: ObservableObject {
     func isSameDay(date1: Date, date2: Date) -> Bool {
         let calendar = Calendar.current
         return calendar.isDate(date1, inSameDayAs: date2)
+    }
+    
+    func moveMonth(by offset: Int) {
+        self.currentMonth += offset
+        currentDate = getCurrentMonth()
+        extractDate()
     }
 }
 

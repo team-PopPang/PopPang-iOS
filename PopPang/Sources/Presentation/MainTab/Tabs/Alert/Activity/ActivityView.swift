@@ -31,6 +31,7 @@ struct ActivityView: View {
                         .buttonStyle(PressableButtonStyle())
                     }
                 }
+                
                 ForEach(Array(activityViewModel.alertPopupList.enumerated()), id: \.element.id) { index, popup in
                     AlertPopupCell(popup: popup, isLiked: popup.isFavorited, onToggleLike: {
                         Task {
@@ -54,8 +55,6 @@ struct ActivityView: View {
                             }
                         }
                     }
-                    
-
                     
                     // 마지막 셀 아래에는 Divider 넣지 않겠다
                     if index != activityViewModel.alertPopupList.count - 1 {
