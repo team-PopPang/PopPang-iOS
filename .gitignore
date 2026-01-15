@@ -1,3 +1,21 @@
 *.xcconfig
 .env
 GoogleService-Info.plist
+
+# macOS
+.DS_Store
+._*
+
+# SwiftPM
+.spm/
+.build/
+.swiftpm/
+
+# Xcode
+DerivedData/
+*.xcuserstate
+
+# Build artifacts
+*.ipa
+*.dSYM
+*.dSYM.zip

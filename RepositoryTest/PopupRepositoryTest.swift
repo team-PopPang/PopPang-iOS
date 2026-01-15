@@ -54,6 +54,24 @@ struct PopupRepositoryTest {
         #expect(popupList.count > 0)
     }
     
+    @Test("[Get] PersonalRandomPopupList Test")
+    func getPersonalRandomPopupList() async throws {
+        let popupList = try await popupRepository.getPersonalRandomPopupList(userUuid: DummyData.userInfo.userUuid)
+        #expect(popupList.count > 0)
+    }
+    
+    @Test("[Get] AlertPopupList Test")
+    func getAlertPopupList() async throws {
+        let popupList = try await popupRepository.getAlertPopupList(userUuid: DummyData.userInfo.userUuid)
+        #expect(popupList.count > 0)
+    }
+    
+    @Test("[Get] RegionList Test")
+    func getRegionList() async throws {
+        let regionList = try await popupRepository.getRegionList()
+        #expect(regionList.count > 0)
+    }
+    
     @Test("[Get] getPopularRecommendList Test")
     func getPopularRecommendList() async throws {
         let popupList = try await popupRepository.getPopularRecommendList()

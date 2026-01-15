@@ -96,7 +96,7 @@ protocol PopupRepositoryProtocol {
                                          mapSortStandard: String) async throws -> [PopupDTO]
     
     
-    /// 유저별 연관 팝업 추천 조회
+    /// 유저별 연관 팝업 추천 조회 - depreceated
     /// - Parameters:
     ///   - userUuid: userUuid
     ///   - popupUuid: popupUuid

@@ -47,6 +47,9 @@ platform :ios do
     # 🏗️ 앱 빌드 및 서명
     build_app(
       scheme: "PopPang",
+      clean: true,
+      disable_package_automatic_updates: true,
+      xcargs: "-clonedSourcePackagesDirPath .spm",
       export_options: {
         provisioningProfiles: {
           "kr.co.poppang.PopPang" => "match AppStore kr.co.poppang.PopPang 1762797101"
