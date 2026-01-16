@@ -1,0 +1,91 @@
+name: PopPang iOS CI
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main ]
+
+jobs:
+  ios-ci:
+    name: iOS Build & Test
+    runs-on: macos-14
+    timeout-minutes: 30
+
+    steps:
+      # 1️⃣ Checkout
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2️⃣ Select Xcode
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.3.app
+
+      # 3️⃣ Swift Version
+      - name: Swift Version
+        run: swift --version
+
+      # 4️⃣ Cache SPM + DerivedData
+      - name: Cache Xcode & SPM
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Developer/Xcode/DerivedData
+            ~/.swiftpm
+          key: ${{ runner.os }}-xcode-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-xcode-
+
+      # ======================
+      # 1️⃣ Build
+      # ======================
+      - name: Build
+        run: |
+          xcodebuild \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0' \
+            -configuration Debug \
+            CODE_SIGNING_ALLOWED=NO \
+            -parallelizeTargets \
+            build \
+            | xcpretty
+
+      # ======================
+      # 2️⃣ Smoke Tests
+      # ======================
+      - name: Smoke Tests
+        run: |
+          xcodebuild test \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0' \
+            CODE_SIGNING_ALLOWED=NO \
+            -only-testing:PopPangUITests/SmokeTests \
+            | xcpretty
+
+      # ======================
+      # 3️⃣ Unit Tests
+      # ======================
+      - name: Unit Tests
+        run: |
+          xcodebuild test \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0' \
+            CODE_SIGNING_ALLOWED=NO \
+            -only-testing:RepositoryTest \
+            | xcpretty
+
+      # ======================
+      # 4️⃣ UI Tests
+      # ======================
+#      - name: UI Tests
+#        run: |
+#          xcodebuild test \
+#            -project PopPang.xcodeproj \
+#            -scheme PopPang \
+#            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0' \
+#            CODE_SIGNING_ALLOWED=NO \
+#            -only-testing:PopPangUITests \
+#            | xcpretty

@@ -41,6 +41,17 @@
                ReferencedContainer = "container:PopPang.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "DF7C5BEB2F194E8E00B5B934"
+               BuildableName = "PopPangUITests.xctest"
+               BlueprintName = "PopPangUITests"
+               ReferencedContainer = "container:PopPang.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction

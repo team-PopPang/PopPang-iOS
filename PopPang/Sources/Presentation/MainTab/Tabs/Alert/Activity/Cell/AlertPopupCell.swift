@@ -9,6 +9,16 @@ import SwiftUI
 import Kingfisher
 import AutoEquatable
 
+//enum RenderCounter {
+//    static var cellBodyCount = 0
+//}
+//
+//private func countBody() {
+//    RenderCounter.cellBodyCount += 1
+//    
+//    print(RenderCounter.cellBodyCount)
+//}
+
 @AutoEquatable
 struct AlertPopupCell: View {
     
@@ -18,6 +28,7 @@ struct AlertPopupCell: View {
     let onToggleLike: () -> Void
     
     var body: some View {
+        // let _ = countBody()
         VStack(spacing: 0) {
             HStack(spacing: 0) {
                     // MARK: - 이미지

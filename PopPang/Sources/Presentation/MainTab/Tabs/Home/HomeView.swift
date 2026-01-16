@@ -41,6 +41,7 @@ struct HomeView: View {
                     IconButton(image: "SearchDark", imageSize: 25) {
                         coordinator.presentFullScreen(.search(uuid: rootViewModel.user?.userUuid ?? ""))
                     }
+                    .accessibilityIdentifier("home_search_button")
                     
                     IconButton {
                         coordinator.push(.alert(uuid: rootViewModel.user?.userUuid ?? ""))
