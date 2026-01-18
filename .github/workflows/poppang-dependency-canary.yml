@@ -28,21 +28,13 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_15.3.app
 
       # ======================
-      # ⚠️ Xcode FileSystem Sync Group 강제 활성화 (Canary hack)
-      # ======================
-      - name: Enable Xcode FileSystem Synchronized Groups
-        run: |
-          echo "⚠️ Enabling IDEFileSystemSynchronizedGroupsAreEnabled"
-          defaults write com.apple.dt.Xcode IDEFileSystemSynchronizedGroupsAreEnabled -bool YES
-
-      # ======================
       # 3️⃣ Swift 버전 확인
       # ======================
       - name: Swift Version
         run: swift --version
 
       # ======================
-      # 4️⃣ Package.resolved 제거
+      # 4️⃣ Package.resolved 제거 (고정 해제)
       # ======================
       - name: Remove Package.resolved
         run: |
@@ -50,22 +42,11 @@ jobs:
           rm -f **/Package.resolved
 
       # ======================
-      # 5️⃣ 최신 의존성 Resolve (project 기반)
+      # 5️⃣ Build (SPM resolve 포함)
       # ======================
-      - name: Resolve Latest Dependencies
+      - name: Build with Latest Dependencies (Canary)
         run: |
-          echo "📦 Resolving latest SPM dependencies (project-based)"
-          xcodebuild \
-            -resolvePackageDependencies \
-            -project PopPang.xcodeproj \
-            -scheme PopPang
-
-      # ======================
-      # 6️⃣ 최신 의존성으로 Build
-      # ======================
-      - name: Build with Latest Dependencies
-        run: |
-          echo "🚧 Building with latest dependencies"
+          echo "🚧 Build triggers SPM resolve automatically"
           xcodebuild \
             -project PopPang.xcodeproj \
             -scheme PopPang \
@@ -76,11 +57,11 @@ jobs:
             | xcpretty
 
       # ======================
-      # 7️⃣ Smoke Tests (선택)
+      # 6️⃣ Smoke Tests (선택)
       # ======================
       - name: Smoke Tests (Optional)
         run: |
-          echo "🧪 Running smoke tests with latest dependencies"
+          echo "🧪 Running smoke tests"
           xcodebuild test \
             -project PopPang.xcodeproj \
             -scheme PopPang \
