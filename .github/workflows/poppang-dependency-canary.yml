@@ -49,7 +49,8 @@ jobs:
           echo "📦 Resolving latest SPM dependencies"
           xcodebuild \
             -resolvePackageDependencies \
-            -project PopPang.xcodeproj
+            -workspace PopPang.xcworkspace \
+            -scheme PopPang
 
       # ======================
       # 6️⃣ 최신 의존성으로 Build
