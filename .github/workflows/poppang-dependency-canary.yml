@@ -69,3 +69,16 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             -only-testing:PopPangUITests/SmokeTests \
             | xcpretty
+            
+      # ======================
+      # 📦 Resolved Dependency Versions 출력
+      # ======================
+      - name: Print Resolved SPM Versions
+        run: |
+          echo "📦 Resolved Swift Package Versions"
+          for file in $(find . -name Package.resolved); do
+            echo "----- $file -----"
+            cat "$file" \
+              | jq -r '.pins[] | "\(.identity): \(.state.version)"'
+          done
+
