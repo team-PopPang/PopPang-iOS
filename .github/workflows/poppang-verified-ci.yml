@@ -98,6 +98,7 @@ jobs:
             -xcconfig Config.xcconfig \
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
             -configuration Debug \
+            -enableCodeCoverage NO \
             CODE_SIGNING_ALLOWED=NO \
             build
 
@@ -112,6 +113,7 @@ jobs:
             -scheme PopPang \
             -xcconfig Config.xcconfig \
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            -enableCodeCoverage NO \
             CODE_SIGNING_ALLOWED=NO \
             -only-testing:PopPangUITests/SmokeTests \
             | xcpretty
@@ -127,6 +129,7 @@ jobs:
             -scheme PopPang \
             -xcconfig Config.xcconfig \
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            -enableCodeCoverage NO \
             CODE_SIGNING_ALLOWED=NO \
             -only-testing:RepositoryTest \
             | xcpretty
@@ -142,6 +145,7 @@ jobs:
             -scheme PopPang \
             -xcconfig Config.xcconfig \
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            -enableCodeCoverage NO \
             CODE_SIGNING_ALLOWED=NO \
             -only-testing:PopPangUITests \
             | xcpretty
