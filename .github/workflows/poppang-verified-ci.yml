@@ -1,4 +1,4 @@
-name: PopPang iOS CI
+name: 팝팡 앱타겟 iOS17 빌드 테스트
 
 on:
   pull_request:
@@ -48,7 +48,7 @@ jobs:
           xcodebuild \
             -project PopPang.xcodeproj \
             -scheme PopPang \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
             -configuration Debug \
             CODE_SIGNING_ALLOWED=NO \
             -parallelizeTargets \
@@ -64,7 +64,7 @@ jobs:
           xcodebuild test \
             -project PopPang.xcodeproj \
             -scheme PopPang \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
             CODE_SIGNING_ALLOWED=NO \
             -only-testing:PopPangUITests/SmokeTests \
             | xcpretty
@@ -78,7 +78,7 @@ jobs:
           xcodebuild test \
             -project PopPang.xcodeproj \
             -scheme PopPang \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
             CODE_SIGNING_ALLOWED=NO \
             -only-testing:RepositoryTest \
             | xcpretty
@@ -92,7 +92,7 @@ jobs:
           xcodebuild test \
             -project PopPang.xcodeproj \
             -scheme PopPang \
-            -destination 'platform=iOS Simulator,name=iPhone 15' \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
             CODE_SIGNING_ALLOWED=NO \
             -only-testing:PopPangUITests \
             | xcpretty
