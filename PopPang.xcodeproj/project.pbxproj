@@ -12,10 +12,10 @@
 		DF0510E52E83D9E1006AF8C3 /* KakaoSDKUser in Frameworks */ = {isa = PBXBuildFile; productRef = DF0510E42E83D9E1006AF8C3 /* KakaoSDKUser */; };
 		DF0510E72E83DB65006AF8C3 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = DF0510E62E83DB65006AF8C3 /* .gitignore */; };
 		DF0510F72E83DB9B006AF8C3 /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = DF0510F62E83DB9B006AF8C3 /* Config.xcconfig */; };
+		DF1646DC2F1E2C4F005EA6DF /* AutoEquatable in Frameworks */ = {isa = PBXBuildFile; productRef = DF1646DB2F1E2C4F005EA6DF /* AutoEquatable */; };
 		DF2A93ED2EA5324E00241E9E /* BottomSheet in Frameworks */ = {isa = PBXBuildFile; productRef = DF2A93EC2EA5324E00241E9E /* BottomSheet */; };
 		DF5266182E6CAB8700FC46FD /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = DF5266172E6CAB8700FC46FD /* README.md */; };
 		DF71E2582EDA276500A3B499 /* PopupView in Frameworks */ = {isa = PBXBuildFile; productRef = DF71E2572EDA276500A3B499 /* PopupView */; };
-		DF830FBD2F18A72200F1D725 /* AutoEquatable in Frameworks */ = {isa = PBXBuildFile; productRef = DF830FBC2F18A72200F1D725 /* AutoEquatable */; };
 		DF83117A2F18AAC400F1D725 /* AutoEquatable in Frameworks */ = {isa = PBXBuildFile; productRef = DF464E442F0EC97600D314AD /* AutoEquatable */; };
 		DFA5E27F2E969C8F002921C1 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = DFA5E27E2E969C8F002921C1 /* Kingfisher */; };
 		DFA876632EB205220003C376 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = DFA876622EB205220003C376 /* GoogleService-Info.plist */; };
@@ -105,8 +105,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				DF83117A2F18AAC400F1D725 /* AutoEquatable in Frameworks */,
-				DF830FBD2F18A72200F1D725 /* AutoEquatable in Frameworks */,
 				DF71E2582EDA276500A3B499 /* PopupView in Frameworks */,
+				DF1646DC2F1E2C4F005EA6DF /* AutoEquatable in Frameworks */,
 				DFA5E27F2E969C8F002921C1 /* Kingfisher in Frameworks */,
 				DF2A93ED2EA5324E00241E9E /* BottomSheet in Frameworks */,
 				DFD430FB2E8FFB3D00B886F9 /* GoogleSignIn in Frameworks */,
@@ -224,7 +224,7 @@
 				DF71E2572EDA276500A3B499 /* PopupView */,
 				DFE1094E2EF7BBB8008F0527 /* FirebaseAnalytics */,
 				DF464E442F0EC97600D314AD /* AutoEquatable */,
-				DF830FBC2F18A72200F1D725 /* AutoEquatable */,
+				DF1646DB2F1E2C4F005EA6DF /* AutoEquatable */,
 			);
 			productName = PopPang;
 			productReference = DFAC8E7C2E6C717100B4A917 /* PopPang.app */;
@@ -294,7 +294,7 @@
 				DF2A93EB2EA5324E00241E9E /* XCRemoteSwiftPackageReference "BottomSheet" */,
 				DFFD93752EB137BB00B5B4A7 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				DF71E2562EDA276500A3B499 /* XCRemoteSwiftPackageReference "PopupView" */,
-				DF830FBB2F18A72200F1D725 /* XCRemoteSwiftPackageReference "AutoEquatable" */,
+				DF1646DA2F1E2C4F005EA6DF /* XCRemoteSwiftPackageReference "AutoEquatable" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = DFAC8E7D2E6C717100B4A917 /* Products */;
@@ -719,6 +719,14 @@
 				minimumVersion = 2.24.6;
 			};
 		};
+		DF1646DA2F1E2C4F005EA6DF /* XCRemoteSwiftPackageReference "AutoEquatable" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/indextrown/AutoEquatable";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		DF2A93EB2EA5324E00241E9E /* XCRemoteSwiftPackageReference "BottomSheet" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/lucaszischka/BottomSheet";
@@ -733,14 +741,6 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 4.1.15;
-			};
-		};
-		DF830FBB2F18A72200F1D725 /* XCRemoteSwiftPackageReference "AutoEquatable" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/indextrown/AutoEquatable";
-			requirement = {
-				branch = main;
-				kind = branch;
 			};
 		};
 		DFA5E27D2E969C8F002921C1 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
@@ -801,6 +801,11 @@
 			package = DF0510DF2E83D9E1006AF8C3 /* XCRemoteSwiftPackageReference "kakao-ios-sdk" */;
 			productName = KakaoSDKUser;
 		};
+		DF1646DB2F1E2C4F005EA6DF /* AutoEquatable */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = DF1646DA2F1E2C4F005EA6DF /* XCRemoteSwiftPackageReference "AutoEquatable" */;
+			productName = AutoEquatable;
+		};
 		DF2A93EC2EA5324E00241E9E /* BottomSheet */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = DF2A93EB2EA5324E00241E9E /* XCRemoteSwiftPackageReference "BottomSheet" */;
@@ -814,11 +819,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = DF71E2562EDA276500A3B499 /* XCRemoteSwiftPackageReference "PopupView" */;
 			productName = PopupView;
-		};
-		DF830FBC2F18A72200F1D725 /* AutoEquatable */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = DF830FBB2F18A72200F1D725 /* XCRemoteSwiftPackageReference "AutoEquatable" */;
-			productName = AutoEquatable;
 		};
 		DFA5E27E2E969C8F002921C1 /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;
