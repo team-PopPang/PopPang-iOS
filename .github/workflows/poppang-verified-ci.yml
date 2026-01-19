@@ -80,12 +80,12 @@ jobs:
       # ======================
       # 4️⃣ UI Tests
       # ======================
-#      - name: UI Tests
-#        run: |
-#          xcodebuild test \
-#            -project PopPang.xcodeproj \
-#            -scheme PopPang \
-#            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0' \
-#            CODE_SIGNING_ALLOWED=NO \
-#            -only-testing:PopPangUITests \
-#            | xcpretty
+      - name: UI Tests
+        run: |
+          xcodebuild test \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.0' \
+            CODE_SIGNING_ALLOWED=NO \
+            -only-testing:PopPangUITests \
+            | xcpretty

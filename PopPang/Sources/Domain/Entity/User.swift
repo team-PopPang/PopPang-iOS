@@ -40,7 +40,7 @@ extension User {
                                 uid: "67890",
                                 provider: "kakao",
                                 email: "john@example.com",
-                                nickname: "김동현",
+                                nickname: "UI테스터",
                                 role: "admin",
                                 isAlerted: false,
                                 fcmToken: "",

@@ -161,7 +161,7 @@ private struct DateCardView: View {
         }
         .frame(height: 43)
         .onTapGesture { onTapped?() }
-        .debugBodyRandomBackground()
+        // .debugBodyRandomBackground()
     }
 }
 

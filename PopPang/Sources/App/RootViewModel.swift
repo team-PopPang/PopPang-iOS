@@ -10,6 +10,11 @@ import AuthenticationServices
 import GoogleSignIn
 import Combine
 
+enum AppLaunchOption {
+    static let isUITest = ProcessInfo.processInfo.arguments.contains("-UITestMode")
+    static let skipLogin = ProcessInfo.processInfo.arguments.contains("-SkipLogin")
+}
+
 enum RootScene {
     case launch
     case unauthenticated   // 온보딩/로그인
@@ -27,8 +32,6 @@ enum NicknameValidationState {
 }
 
 final class RootViewModel: ObservableObject {
-    
-    // @Dependency private var userSession: UserSessionProtocol
     
     // MARK: - Keychain으로 변환 예정
     @AppStorage("uuid") private var storeUID: String = ""
@@ -77,6 +80,14 @@ final class RootViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     init() {
+        
+        // UI Test 로그인 우회
+        if AppLaunchOption.skipLogin {
+            Logger.d("UI Test: 로그인 과정 생략합니다.")
+            self.user = User.adminUser
+            self.scene = .authenticated
+            return
+        }
         
         Task {
             await boot()
