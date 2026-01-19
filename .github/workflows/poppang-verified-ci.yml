@@ -105,8 +105,8 @@ jobs:
             build \
             | tee build.log
             
-      echo "================ BUILD ERRORS ================"
-      grep -E "error:|fatal error:" build.log || echo "❌ No explicit error lines found"
+          echo "================ BUILD ERRORS ================"
+          grep -E "error:|fatal error:" build.log || echo "❌ No explicit error lines found"
 
       # ======================
       # 8️⃣ Smoke Tests
