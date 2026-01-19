@@ -53,7 +53,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             -parallelizeTargets \
             build \
-            | xcpretty
+            
 
       # ======================
       # 2️⃣ Smoke Tests
