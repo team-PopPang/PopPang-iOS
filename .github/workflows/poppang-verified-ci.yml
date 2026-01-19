@@ -16,6 +16,9 @@ jobs:
       # 1️⃣ Checkout
       - name: Checkout
         uses: actions/checkout@v4
+        
+      - name: List installed Xcodes
+        run: ls /Applications | grep Xcode
 
       # 2️⃣ Select Xcode
       - name: Select Xcode
