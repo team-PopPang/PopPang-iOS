@@ -16,6 +16,7 @@ struct GridPopupCell: View {
     
     let popup: Popup
 
+    
     @AutoIgnored
     // 셀 너비를 미리 계산해서 전달받거나 상수로 지정
     let cellWidth: CGFloat = (UIScreen.main.bounds.width - 15 * 3) / 2  // 2열 기준
