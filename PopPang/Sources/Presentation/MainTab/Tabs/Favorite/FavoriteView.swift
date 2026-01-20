@@ -40,7 +40,7 @@ struct FavoriteView: View {
                                     FavoriteCalendarView()
                                 ],
                                  background: .mainGray3,
-                                 foreground: .mainOrange,
+                                 foreground: .mainOrange
             )
             Spacer()
         }
