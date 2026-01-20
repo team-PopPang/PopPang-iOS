@@ -1,4 +1,4 @@
-name: PopPang Dependency Canary CI
+name: 팝팡 최신 의존성 호환성 점검
 
 on:
   # 🔁 매주 1회 자동 실행 (월요일 새벽 3시)
