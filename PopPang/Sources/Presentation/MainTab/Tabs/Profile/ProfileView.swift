@@ -170,7 +170,7 @@ struct NavigationButton: View {
          font: UIFont.SCDream = .regular,
          size: CGFloat = 12,
          color: Color = .subBlack,
-         action: @escaping () -> Void,
+         action: @escaping () -> Void
     ) {
         self.title = title
         self.subTitle = subTitle
