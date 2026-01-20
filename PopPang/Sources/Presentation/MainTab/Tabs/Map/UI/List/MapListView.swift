@@ -34,7 +34,6 @@ struct MapListView: View {
                                     MapCoordinator.shared.moveCamera(to: popup, yOffset: -300)
                                 }
                                 
-                          
                                 // 동일 위경도일때 시트 누른 마커 최상단
                                 MapCoordinator.shared.focusMarker(identifier: index)
                                 

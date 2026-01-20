@@ -104,12 +104,7 @@ struct AlertPopupCell: View {
             }
         }
         .padding(.vertical, 15)
-        .debugBodyRandomBackground()
-//        .debugDiffRandomBackground(
-//            popup.popupUuid,
-//            isLiked,
-//            popup.favoriteCount
-//        )
+        // .debugBodyRandomBackground()
     }
 }
 
