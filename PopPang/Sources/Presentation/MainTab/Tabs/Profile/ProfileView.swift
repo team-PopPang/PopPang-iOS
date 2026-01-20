@@ -43,8 +43,7 @@ struct ProfileView: View {
                 NavigationButton(title: rootViewModel.user?.nickname ?? "홍길동",
                                  buttonType: .navigation,
                                  font: .bold,
-                                 size: 15,
-                               
+                                 size: 15
                 ) {
                     coordinator.push(.profileSetting)
                 }.padding(.horizontal, 24)
@@ -76,19 +75,19 @@ struct ProfileView: View {
                 .padding(.horizontal, 24)
                 
                 NavigationButton(title: "공지사항",
-                                 buttonType: .navigation,
+                                 buttonType: .navigation
                 ) {
                     coordinator.push(.notification)
                 }.padding(.horizontal, 24)
                 
                 NavigationButton(title: "문의하기",
-                                 buttonType: .navigation,
+                                 buttonType: .navigation
                 ) {
                     email.send(openURL: openURL)
                 }.padding(.horizontal, 24)
                 
                 NavigationButton(title: "서비스 이용약관",
-                                 buttonType: .navigation,
+                                 buttonType: .navigation
                 ) {
                     coordinator.push(.service)
                 }.padding(.horizontal, 24)
