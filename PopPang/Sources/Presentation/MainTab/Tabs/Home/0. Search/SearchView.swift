@@ -41,10 +41,12 @@ struct SearchView: View {
                             .foregroundStyle(Color.subBlack)
                     }
                     .padding(.trailing, 10)
+                    .accessibilityIdentifier("home_search_backbutton")
                     
                     SearchTextField(placeholder: "궁금한 장소를 검색해보세요",
                                     text: $searchViewModel.searchText)
                     .focused($isFocused)
+                    .accessibilityIdentifier("home_search_textfield")
                 }
                 .padding(.top, 10)
                 .padding(.leading, .contentPadding)
@@ -147,6 +149,8 @@ private struct SearchGridPopupScrollView: View {
                             .onTapGesture {
                                 onSelect(popup)
                             }
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityIdentifier("home_search_cell")
                     }
                 }
             }

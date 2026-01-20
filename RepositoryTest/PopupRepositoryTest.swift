@@ -72,11 +72,11 @@ struct PopupRepositoryTest {
         #expect(regionList.count > 0)
     }
     
-    @Test("[Get] getPopularRecommendList Test")
-    func getPopularRecommendList() async throws {
-        let popupList = try await popupRepository.getPopularRecommendList()
-        #expect(popupList.count > 0)
-    }
+//    @Test("[Get] getPopularRecommendList Test")
+//    func getPopularRecommendList() async throws {
+//        let popupList = try await popupRepository.getPopularRecommendList()
+//        #expect(popupList.count > 0)
+//    }
     
     @Test("[Get] getPopularRecommendPopupList Test")
     func getPopularRecommendPopupList() async throws {

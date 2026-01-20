@@ -36,6 +36,8 @@ private struct GridPopupScrollView: View {
                             coordinator.push(.popupDetail(homeViewModel.userUuid, popup))
                         }
                         .padding(.bottom, 0)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityIdentifier("home_comming_cell")
                 }
             }
         }

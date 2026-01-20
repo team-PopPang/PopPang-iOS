@@ -90,10 +90,9 @@ struct HomeView: View {
                                         .frame(width: 16, height: 16)
                                 }
                                 .padding(.trailing, .contentPadding)
+                                .accessibilityIdentifier("home_comming_button")
                             }
                             .padding(.top, 50)
-                            
-                            ComingPopupScrollView(homeViewModel: homeViewModel)
                             
                             // MARK: - DropDownView
                             HStack {

@@ -19,7 +19,7 @@ extension Coordinator where F == FullScreenRoute {
         switch route {
         case .search(let userUuid):
             SearchView(userUuid: userUuid)
-                .accessibilityIdentifier("search_root")
+                .accessibilityIdentifier("home_search")
         }
     }
 }
