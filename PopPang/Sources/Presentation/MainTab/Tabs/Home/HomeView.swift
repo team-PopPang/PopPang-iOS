@@ -94,6 +94,8 @@ struct HomeView: View {
                             }
                             .padding(.top, 50)
                             
+                            ComingPopupScrollView(homeViewModel: homeViewModel)
+                            
                             // MARK: - DropDownView
                             HStack {
                                 Text(homeViewModel.selectedRegion?.region ?? "전체")
