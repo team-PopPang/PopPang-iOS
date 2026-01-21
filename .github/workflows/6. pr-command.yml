@@ -27,6 +27,7 @@ jobs:
             echo "workflow=2. poppang-test.yml" >> $GITHUB_ENV
           elif [[ "$BODY" == "/팝팡 빌드하고테스트"* ]]; then
             echo "workflow=3. poppang-build-and-test.yml" >> $GITHUB_ENV
+            echo "ci_message=🔨 iOS 17.5 iPhone 15 에서 빌드 및 테스트를 실행합니다." >> $GITHUB_ENV
           else
             echo "workflow=none" >> $GITHUB_ENV
           fi
