@@ -23,18 +23,35 @@ jobs:
           BODY="$(echo "${{ github.event.comment.body }}" | xargs)"  # trim
 
           if [[ "$BODY" == "/팝팡 빌드" ]]; then
-            echo "workflow=poppang-build.yml" >> $GITHUB_ENV
+            echo "workflow=1. poppang-build.yml" >> $GITHUB_ENV
+            echo "ci_message=🔨 iOS 17.5 iPhone 15 에서 팝팡 패키지를 빌드합니다." >> $GITHUB_ENV
           elif [[ "$BODY" == "/팝팡 테스트" ]]; then
-            echo "workflow=poppang-test.yml" >> $GITHUB_ENV
+            echo "workflow=2. poppang-test.yml" >> $GITHUB_ENV
+            echo "ci_message=🔨 iOS 17.5 iPhone 15 에서 팝팡 패키지를 테스트합니다." >> $GITHUB_ENV
           elif [[ "$BODY" == "/팝팡 빌드하고테스트" ]]; then
-            echo "workflow=poppang-build-and-test.yml" >> $GITHUB_ENV
+            echo "workflow=3. poppang-build-and-test.yml" >> $GITHUB_ENV
+            echo "ci_message=🔨 iOS 17.5 iPhone 15 에서 빌드 및 테스트를 실행합니다." >> $GITHUB_ENV
           else
             echo "workflow=none" >> $GITHUB_ENV
           fi
 
       - name: Stop if no command
         if: env.workflow == 'none'
-        run: echo "No command detected"
+        run: |
+          echo "No command detected"
+          exit 0
+        
+      - name: Comment acknowledge
+        if: env.workflow != 'none'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ${{ env.ci_message }}
+#          body: |
+#            🤖 **PopPang CI**
+#            명령을 인식했어요: **`${{ github.event.comment.body }}`**
+#            실행 중입니다 ⏳
 
       - name: Trigger workflow
         if: env.workflow != 'none'
@@ -64,14 +81,4 @@ jobs:
                 pr_number: String(prNumber),
               },
             });
-
-      - name: Comment acknowledge
-        if: env.workflow != 'none'
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          issue-number: ${{ github.event.issue.number }}
-          body: |
-            🤖 **PopPang CI**
-            명령을 인식했어요: **`${{ github.event.comment.body }}`**
-            실행 중입니다 ⏳
 
