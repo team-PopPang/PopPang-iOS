@@ -32,7 +32,9 @@ jobs:
       # ======================
       - name: Checkout
         uses: actions/checkout@v4
-        
+        with:
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+      
       # 시작 댓글: 명령어 트리거일 때만
       - name: Comment start
         if: github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
