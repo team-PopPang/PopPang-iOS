@@ -105,3 +105,4 @@ fetch-certificates:
 	bundle exec fastlane match development --readonly --app_identifier kr.co.poppang.PopPang && \
 	bundle exec fastlane match appstore --readonly --app_identifier kr.co.poppang.PopPang
 	@echo ""
+
