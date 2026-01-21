@@ -57,6 +57,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		DF033DD02F20CA8100C62F65 /* Exceptions for ".github" folder in "PopPang" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				ISSUE_TEMPLATE/issue.md,
+			);
+			target = DFAC8E7B2E6C717100B4A917 /* PopPang */;
+		};
 		DF0693F52E6D850F00F9AE41 /* Exceptions for "PopPang" folder in "PopPang" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -69,6 +76,9 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		DF3562612F1A97FC0087E6CB /* .github */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				DF033DD02F20CA8100C62F65 /* Exceptions for ".github" folder in "PopPang" target */,
+			);
 			path = .github;
 			sourceTree = "<group>";
 		};
