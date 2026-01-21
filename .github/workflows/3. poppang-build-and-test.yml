@@ -32,6 +32,15 @@ jobs:
       # ======================
       - name: Checkout
         uses: actions/checkout@v4
+        
+      # 시작 댓글: 명령어 트리거일 때만
+      - name: Comment start
+        if: github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            🔨 iOS 17.5 iPhone 15 에서 빌드 및 테스트를 실행합니다.
 
       # ======================
       # 2️⃣ Xcode 선택
