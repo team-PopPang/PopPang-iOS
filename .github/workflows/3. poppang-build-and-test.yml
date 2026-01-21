@@ -111,9 +111,7 @@ jobs:
         with:
           issue-number: ${{ github.event.inputs.pr_number }}
           body: |
-            🤖 **PopPang CI**
-            빌드 & 테스트 상태: ✅ 성공
-            워크플로우: `${{ github.workflow }}`
+            ✅ **팝팡 패키지를 성공적으로 빌드하고 테스트했습니다.**
 
       - name: Comment failure
         if: failure() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
@@ -121,7 +119,5 @@ jobs:
         with:
           issue-number: ${{ github.event.inputs.pr_number }}
           body: |
-            🤖 **PopPang CI**
-            빌드 & 테스트 상태: ❌ 실패
-            워크플로우: `${{ github.workflow }}`
-            👉 Actions 탭에서 로그를 확인하세요.
+            ❌ **팝팡 패키지 빌드 또는 테스트에 실패했습니다.**
+            👉 Actions 탭에서 로그를 확인해주세요.
