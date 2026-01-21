@@ -86,7 +86,7 @@ jobs:
           xcodebuild test \
             -project PopPang.xcodeproj \
             -scheme PopPang \
-            -xcconfig Config.xcconfig \ 
+            -xcconfig Config.xcconfig \
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
             -enableCodeCoverage YES \
             CODE_SIGNING_ALLOWED=NO \
