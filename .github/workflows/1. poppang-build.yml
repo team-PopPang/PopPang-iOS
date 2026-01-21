@@ -67,9 +67,10 @@ jobs:
         with:
           issue-number: ${{ github.event.inputs.pr_number }}
           body: |
-            🤖 **PopPang CI**
-            상태: ✅ 성공
-            워크플로우: `${{ github.workflow }}`
+          ✅ **팝팡 패키지를 성공적으로 빌드했습니다.**
+#            🤖 **PopPang CI**
+#            상태: ✅ 성공
+#            워크플로우: `${{ github.workflow }}`
 
       # ❌ 실패 댓글 (PR 명령어 실행일 때만)
       - name: Comment failure
@@ -78,7 +79,9 @@ jobs:
         with:
           issue-number: ${{ github.event.inputs.pr_number }}
           body: |
-            🤖 **PopPang CI**
-            상태: ❌ 실패
-            워크플로우: `${{ github.workflow }}`
-            👉 Actions 탭에서 로그를 확인하세요.
+          ❌ **팝팡 패키지 빌드에 실패했습니다.**
+          👉 Actions 탭에서 로그를 확인해주세요.
+#            🤖 **PopPang CI**
+#            상태: ❌ 실패
+#            워크플로우: `${{ github.workflow }}`
+#            👉 Actions 탭에서 로그를 확인하세요.
