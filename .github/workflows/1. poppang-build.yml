@@ -24,6 +24,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        
+      - name: Comment build start
+        if: github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            🔨 iOS 17.5 iPhone 15 에서 팝팡 패키지를 빌드합니다.
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
