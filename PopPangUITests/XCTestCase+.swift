@@ -109,4 +109,49 @@ extension XCTestCase {
         )
         backButton.tap()
     }
+    
+    // 화면 스크롤
+    func scroll(app: XCUIApplication,
+                direction: ScrollDirection,
+                times: Int = 1) {
+        for _ in 0..<times {
+            switch direction {
+            case .up:
+                app.swipeUp()
+            case .down:
+                app.swipeDown()
+            case .left:
+                app.swipeLeft()
+            case .right:
+                app.swipeRight()
+            }
+        }
+    }
+
+    enum ScrollDirection {
+        case up, down, left, right
+    }
+
+    // 특정 요소가 보일 때까지 스크롤
+    func scrollUntilVisibleAndTap(app: XCUIApplication,
+                         element: XCUIElement,
+                         maxScrolls: Int = 5,
+                         file: StaticString = #file,
+                         line: UInt = #line) {
+        var attempts = 0
+
+        while !element.exists && attempts < maxScrolls {
+            app.swipeUp()
+            attempts += 1
+        }
+
+        XCTAssertTrue(
+            element.exists,
+            "스크롤 후에도 요소를 찾을 수 없음",
+            file: file,
+            line: line
+        )
+        
+        element.tap()
+    }
 }

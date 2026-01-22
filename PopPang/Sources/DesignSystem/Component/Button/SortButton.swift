@@ -106,6 +106,7 @@ struct SortButtonSheet: View {
                         .foregroundStyle(.black)
                         .font(backFont)
                 }
+                .accessibilityIdentifier("home_sheet_close_button")
             }
             
             // MARK: - body
@@ -127,6 +128,7 @@ struct SortButtonSheet: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .frame(height: 40)
                     }
+                    .accessibilityIdentifier("home_sort_option_\(option.rawValue)")
                 }
             }
             .padding(.top, 28)
