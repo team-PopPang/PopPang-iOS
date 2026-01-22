@@ -30,10 +30,17 @@ jobs:
       # ======================
       # 1️⃣ Checkout
       # ======================
-      - name: Checkout
+      # PR 명령어 실행일 때
+      - name: Checkout PR branch
+        if: github.event.inputs.pr_number != ''
         uses: actions/checkout@v4
         with:
           ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+      
+      # 수동 실행일 때
+      - name: Checkout default branch
+        if: github.event.inputs.pr_number == ''
+        uses: actions/checkout@v4
       
       # 시작 댓글: 명령어 트리거일 때만
       - name: Comment start
