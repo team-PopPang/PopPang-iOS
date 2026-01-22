@@ -13,6 +13,7 @@
 		DF0510E72E83DB65006AF8C3 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = DF0510E62E83DB65006AF8C3 /* .gitignore */; };
 		DF0510F72E83DB9B006AF8C3 /* Config.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = DF0510F62E83DB9B006AF8C3 /* Config.xcconfig */; };
 		DF2A93ED2EA5324E00241E9E /* BottomSheet in Frameworks */ = {isa = PBXBuildFile; productRef = DF2A93EC2EA5324E00241E9E /* BottomSheet */; };
+		DF3CC58F2F223E1800204825 /* ..coderabbit.yaml in Resources */ = {isa = PBXBuildFile; fileRef = DF3CC58E2F223E1800204825 /* ..coderabbit.yaml */; };
 		DF5266182E6CAB8700FC46FD /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = DF5266172E6CAB8700FC46FD /* README.md */; };
 		DF71E2582EDA276500A3B499 /* PopupView in Frameworks */ = {isa = PBXBuildFile; productRef = DF71E2572EDA276500A3B499 /* PopupView */; };
 		DF83117A2F18AAC400F1D725 /* AutoEquatable in Frameworks */ = {isa = PBXBuildFile; productRef = DF464E442F0EC97600D314AD /* AutoEquatable */; };
@@ -48,6 +49,7 @@
 /* Begin PBXFileReference section */
 		DF0510E62E83DB65006AF8C3 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 		DF0510F62E83DB9B006AF8C3 /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
+		DF3CC58E2F223E1800204825 /* ..coderabbit.yaml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = ..coderabbit.yaml; sourceTree = "<group>"; };
 		DF5266172E6CAB8700FC46FD /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		DF7C5BEC2F194E8E00B5B934 /* PopPangUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PopPangUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		DFA876622EB205220003C376 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 		DFAC8E732E6C717100B4A917 = {
 			isa = PBXGroup;
 			children = (
+				DF3CC58E2F223E1800204825 /* ..coderabbit.yaml */,
 				DF3562612F1A97FC0087E6CB /* .github */,
 				DFD6F3062EC780900033B053 /* PopPang.xctestplan */,
 				DF5266172E6CAB8700FC46FD /* README.md */,
@@ -333,6 +336,7 @@
 				DFA876632EB205220003C376 /* GoogleService-Info.plist in Resources */,
 				DF5266182E6CAB8700FC46FD /* README.md in Resources */,
 				DF0510E72E83DB65006AF8C3 /* .gitignore in Resources */,
+				DF3CC58F2F223E1800204825 /* ..coderabbit.yaml in Resources */,
 				DF0510F72E83DB9B006AF8C3 /* Config.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
