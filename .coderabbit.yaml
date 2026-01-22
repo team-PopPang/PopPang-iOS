@@ -18,6 +18,9 @@ reviews:
   # 리뷰의 전반적인 스타일을 설정합니다. 'chill'은 비교적 덜 엄격하고 부드러운 톤을 의미합니다.
   profile: "chill"
   
+  # 리뷰 시작했다는 확인 메시지 제거
+  show_in_progress_messages: false
+  
   # CodeRabbit의 코멘트를 모두 `resolve`하면, 자동으로 Approve를 하는 기능입니다.
   # PR은 2명의 리뷰어의 Approve 후 가능하다는 팀 컨벤션이 있기 때문에 false로 설정했습니다.
   request_changes_workflow: false
