@@ -9,8 +9,9 @@
 # 📧 이메일 알림을 위한 GitHub Actions
 
 name: 개발 이벤트 메일 알림
-#
-#on:
+
+on:
+  workflow_dispatch: # 전체 주석 해제시 이줄 지우기
 #  issues:
 #    types: [opened]  # ✅ 이슈 생성 시
 #  pull_request:
