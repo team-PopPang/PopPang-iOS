@@ -1,8 +1,8 @@
 name: 팝팡 앱타겟 iOS17 빌드 & 테스트
 
 on:
-#  pull_request:
-#    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
 #  push:
 #    branches: [ main ]
   workflow_dispatch:
