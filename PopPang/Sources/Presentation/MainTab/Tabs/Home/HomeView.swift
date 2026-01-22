@@ -122,6 +122,7 @@ struct HomeView: View {
                                     }))
                                 }
                                 .padding(.leading, -10)
+                                .accessibilityIdentifier("home_region_dropdown")
                                 
                                 SortButton(selectedOption: $homeViewModel.selectedOption) {
                                     coordinator.presentSheet(.sortSheet(selectedOption: $homeViewModel.selectedOption,
@@ -131,6 +132,7 @@ struct HomeView: View {
                                         }
                                     }))
                                 }
+                                .accessibilityIdentifier("home_sort_dropdown")
                             }
                             .padding(.top, 50)
                             .padding(.trailing, .contentPadding)

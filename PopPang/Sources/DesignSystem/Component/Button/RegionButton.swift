@@ -91,6 +91,7 @@ struct RegionButtonSheet: View {
                             .foregroundStyle(.black)
                             .font(backFont)
                     }
+                    .accessibilityIdentifier("home_sheet_close_button")
                 }
                 .padding(.top, 28)
                 
@@ -119,6 +120,7 @@ struct RegionButtonSheet: View {
                                 }
                             }
                             .frame(height: rowHeight) // 각 요소 높이
+                            .accessibilityIdentifier("home_region_\(region.region)")
                         }
                         .listRowBackground(selectedRegion == region ? Color.subWhite : Color.mainGray4)
                         .listRowInsets(EdgeInsets())
@@ -148,6 +150,7 @@ struct RegionButtonSheet: View {
                                     }
                                 }
                                 .frame(height: 46)
+                                .accessibilityIdentifier("home_district_\(district)")
                                 
                                 // Divider
                                 Divider()

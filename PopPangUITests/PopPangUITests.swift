@@ -89,6 +89,25 @@ extension PopPangUITests {
         
         // 뒤로가기 버튼 탭
         tapNavigationBackButton(app: app)
+        
+        // 드롭다운 버튼
+        let regionButton = app.buttons["home_region_dropdown"]
+        let sortButton = app.buttons["home_sort_dropdown"]
+        
+        scrollUntilVisibleAndTap(
+                app: app,
+                element: regionButton
+            )
+        
+        tapButton(app: app, id: "home_region_서울")
+        tapButton(app: app, id: "home_district_전체")
+
+        scrollUntilVisibleAndTap(
+            app: app,
+            element: sortButton
+        )
+        
+        tapButton(app: app, id: "home_sort_option_MOST_VIEWED")
     }
     
     /*
