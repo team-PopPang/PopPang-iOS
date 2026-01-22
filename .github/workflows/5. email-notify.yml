@@ -109,3 +109,4 @@ jobs:
           body: ${{ steps.set_event_name.outputs.body }}
           to: indextrown@gmail.com
           from: GitHub Notifier <${{ secrets.MAIL_USERNAME }}>
+
