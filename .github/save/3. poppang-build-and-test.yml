@@ -42,7 +42,7 @@ jobs:
         if: github.event.inputs.pr_number == ''
         uses: actions/checkout@v4
       
-      # PR 시작 댓글: 명령어 트리거일 때만
+      # 시작 댓글: 명령어 트리거일 때만
       - name: Comment start
         if: github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
         uses: peter-evans/create-or-update-comment@v4
@@ -50,50 +50,28 @@ jobs:
           issue-number: ${{ github.event.inputs.pr_number }}
           body: |
             🔨 iOS 17.5 iPhone 15 에서 빌드 및 테스트를 실행합니다.
-            
-      # ======================
-      # 2️⃣ Cache (DerivedData / SwiftPM)
-      # ======================
-      # 빌드 / 테스트 속도
-      - name: Cache DerivedData
-        uses: actions/cache@v4
-        with:
-          path: DerivedData
-          key: deriveddata-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
-          restore-keys: |
-            deriveddata-${{ runner.os }}-
-            
-      # 외부 의존성 재빌드 제거
-      - name: Cache SwiftPM
-        uses: actions/cache@v4
-        with:
-          path: ~/Library/Caches/org.swift.swiftpm
-          key: spm-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
-          restore-keys: |
-            spm-${{ runner.os }}-
-
 
       # ======================
-      # 3️⃣ Xcode 선택
+      # 2️⃣ Xcode 선택
       # ======================
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
 
       # ======================
-      # 4️⃣ Swift Macro 검증 해제
+      # 3️⃣ Swift Macro 검증 해제
       # ======================
       - name: Disable Swift Macro fingerprint validation
         run: |
           defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
 
       # ======================
-      # 5️⃣ Swift Version
+      # 4️⃣ Swift Version
       # ======================
       - name: Swift Version
         run: swift --version
 
       # ======================
-      # 6️⃣ Config.xcconfig 생성
+      # 5️⃣ Config.xcconfig 생성
       # ======================
       - name: Create Config.xcconfig from Secrets
         run: |
@@ -105,53 +83,36 @@ jobs:
           EOF
 
       # ======================
-      # 7️⃣ Build
+      # 6️⃣ Build
       # ======================
       - name: Build
         run: |
           set -o pipefail
-          xcodebuild build-for-testing \
+          xcodebuild clean build \
             -project PopPang.xcodeproj \
             -scheme PopPang \
             -xcconfig Config.xcconfig \
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
-            -derivedDataPath DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             | xcpretty
 
       # ======================
-      # 8️⃣ Unit Test
+      # 7️⃣ Test
       # ======================
-      - name: Run Unit Tests
+      - name: Run Unit & UI Tests
         run: |
           set -o pipefail
-          xcodebuild test-without-building \
+          xcodebuild test \
             -project PopPang.xcodeproj \
             -scheme PopPang \
             -xcconfig Config.xcconfig \
             -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
-            -derivedDataPath DerivedData \
-            -only-testing:RepositoryTest \
             -enableCodeCoverage YES \
-            | xcpretty
-            
-      # ======================
-      # 9️⃣ UI Test
-      # ======================
-      - name: Run UI Tests
-        run: |
-          set -o pipefail
-          xcodebuild test-without-building \
-            -project PopPang.xcodeproj \
-            -scheme PopPang \
-            -xcconfig Config.xcconfig \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
-            -derivedDataPath DerivedData \
-            -only-testing:PopPangUITests \
+            CODE_SIGNING_ALLOWED=NO \
             | xcpretty
 
       # ======================
-      # 🔟 PR 댓글 (명령어 트리거일 때만)
+      # 8️⃣ PR 댓글 (명령어 트리거일 때만)
       # ======================
       - name: Comment success
         if: success() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
