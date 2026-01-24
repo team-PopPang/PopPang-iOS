@@ -65,12 +65,15 @@ extension PopPangUITests {
 
         // 검색 화면 확인
         assertExists(app.otherElements["home_search"], message: "검색 화면 없음")
+        
+        // 5초 대기
+        sleep(seconds: 5)
 
         // 검색어 입력
         typeTextField(app: app, id: "home_search_textfield", text: "팝업")
         
-        // 2초 대기
-        sleep(seconds: 2)
+        // 5초 대기
+        sleep(seconds: 5)
         
         // 검색 결과가 1개 이상인지
         XCTAssertTrue(searchResultCount(app: app) > 0, "검색 결과 없음")
