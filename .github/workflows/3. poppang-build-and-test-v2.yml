@@ -1,0 +1,154 @@
+name: 팝팡 앱타겟 iOS17 빌드 & 테스트 v2
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR 번호(명령어 트리거일 때만 입력)"
+        required: false
+        default: ""
+      triggered_by_command:
+        description: "PR 명령어로 실행되면 true"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  ios-ci:
+    name: iOS Build & Test
+    runs-on: macos-14
+
+    steps:
+      # ======================
+      # 1️⃣ Checkout
+      # ======================
+      - name: Checkout PR branch
+        if: github.event.inputs.pr_number != ''
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+
+      - name: Checkout default branch
+        if: github.event.inputs.pr_number == ''
+        uses: actions/checkout@v4
+
+      # ======================
+      # 2️⃣ Cache
+      # ======================
+      - name: Cache DerivedData
+        uses: actions/cache@v4
+        with:
+          path: DerivedData
+          key: deriveddata-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            deriveddata-${{ runner.os }}-
+
+      - name: Cache SwiftPM
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm
+          key: spm-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            spm-${{ runner.os }}-
+
+      # ======================
+      # 3️⃣ Xcode 선택
+      # ======================
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+
+      # ======================
+      # 4️⃣ Simulator Prepare (🔥 핵심 최적화)
+      # ======================
+      - name: Prepare iOS Simulator
+        run: |
+          DEVICE_NAME="CI-iPhone-15"
+          RUNTIME_ID=$(xcrun simctl list runtimes | grep "iOS 17.5" | awk -F '[()]' '{print $2}')
+
+          DEVICE_ID=$(xcrun simctl list devices | grep "$DEVICE_NAME" | awk -F '[()]' '{print $2}')
+
+          if [ -z "$DEVICE_ID" ]; then
+            DEVICE_ID=$(xcrun simctl create "$DEVICE_NAME" "iPhone 15" "$RUNTIME_ID")
+          fi
+
+          echo "SIMULATOR_ID=$DEVICE_ID" >> $GITHUB_ENV
+
+          xcrun simctl boot "$DEVICE_ID" || true
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+
+      # ======================
+      # 5️⃣ Config.xcconfig
+      # ======================
+      - name: Create Config.xcconfig from Secrets
+        run: |
+          cat <<EOF > Config.xcconfig
+          KAKAO_NATIVE_APP_KEY = ${{ secrets.KAKAO_NATIVE_APP_KEY }}
+          GIDClientID = ${{ secrets.GIDClientID }}
+          GoogleURLScheme = ${{ secrets.GoogleURLScheme }}
+          NMFClientID = ${{ secrets.NMFClientID }}
+          EOF
+
+      # ======================
+      # 6️⃣ Build (for testing)
+      # ======================
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
+            -xcconfig Config.xcconfig \
+            -destination "id=$SIMULATOR_ID" \
+            -derivedDataPath DerivedData \
+            CODE_SIGNING_ALLOWED=NO
+
+      # ======================
+      # 7️⃣ Unit Test
+      # ======================
+      - name: Run Unit Tests
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
+            -xcconfig Config.xcconfig \
+            -destination "id=$SIMULATOR_ID" \
+            -derivedDataPath DerivedData \
+            -only-testing:RepositoryTest
+
+      # ======================
+      # 8️⃣ UI Test (⚡ 즉시 실행)
+      # ======================
+      - name: Run UI Tests
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
+            -xcconfig Config.xcconfig \
+            -destination "id=$SIMULATOR_ID" \
+            -derivedDataPath DerivedData \
+            -only-testing:PopPangUITests
+
+      # ======================
+      # 9️⃣ PR 댓글
+      # ======================
+      - name: Comment success
+        if: success() && github.event.inputs.triggered_by_command == 'true'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            ✅ **팝팡 iOS 빌드 & 테스트 성공**
+
+      - name: Comment failure
+        if: failure() && github.event.inputs.triggered_by_command == 'true'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            ❌ **팝팡 iOS 빌드 또는 테스트 실패**

@@ -68,6 +68,7 @@
 				"workflows/0. poppang-dependency-canary.yml",
 				"workflows/1. poppang-build.yml",
 				"workflows/2. poppang-test.yml",
+				"workflows/3. poppang-build-and-test-v2.yml",
 				"workflows/3. poppang-build-and-test.yml",
 				"workflows/4. issue-auto-branch.yml",
 				"workflows/6. pr-command.yml",
