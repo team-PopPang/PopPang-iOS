@@ -85,9 +85,20 @@ jobs:
           set -e
 
           DEVICE_NAME="CI-iPhone-15"
-          RUNTIME_ID=$(xcrun simctl list runtimes | grep "iOS 17.5" | awk -F '[()]' '{print $2}')
 
-          DEVICE_ID=$(xcrun simctl list devices | grep "$DEVICE_NAME" | awk -F '[()]' '{print $2}')
+          RUNTIME_ID=$(xcrun simctl list runtimes \
+            | grep "iOS 17.5" \
+            | grep -v unavailable \
+            | awk '{print $NF}')
+
+          if [ -z "$RUNTIME_ID" ]; then
+            echo "❌ iOS 17.5 runtime not found"
+            exit 1
+          fi
+
+          DEVICE_ID=$(xcrun simctl list devices \
+            | grep "$DEVICE_NAME" \
+            | awk -F '[()]' '{print $2}')
 
           if [ -z "$DEVICE_ID" ]; then
             DEVICE_ID=$(xcrun simctl create "$DEVICE_NAME" "iPhone 15" "$RUNTIME_ID")
@@ -95,8 +106,14 @@ jobs:
 
           echo "SIMULATOR_ID=$DEVICE_ID" >> $GITHUB_ENV
 
+          # ✅ 이전 상태 정리 (핵심)
+          xcrun simctl shutdown "$DEVICE_ID" || true
+
+          # ✅ 다시 부팅
           xcrun simctl boot "$DEVICE_ID" || true
           xcrun simctl bootstatus "$DEVICE_ID" -b
+
+
 
       # ======================
       # 5️⃣ Swift Version
