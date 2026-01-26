@@ -19,32 +19,44 @@ permissions:
 
 jobs:
   ios-ci:
+    name: iOS Build & Test (xcodebuild warm-up + UDID)
     runs-on: macos-14
-    name: iOS Build & Test (xcodebuild warm-up)
 
     steps:
       # ======================
       # 1️⃣ Checkout
       # ======================
-      - uses: actions/checkout@v4
+      - name: Checkout PR branch
+        if: github.event.inputs.pr_number != ''
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+
+      - name: Checkout default branch
+        if: github.event.inputs.pr_number == ''
+        uses: actions/checkout@v4
 
       # ======================
       # 2️⃣ Cache
       # ======================
-      - uses: actions/cache@v4
+      - name: Cache DerivedData
+        uses: actions/cache@v4
         with:
           path: DerivedData
           key: deriveddata-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
-          restore-keys: deriveddata-${{ runner.os }}-
+          restore-keys: |
+            deriveddata-${{ runner.os }}-
 
-      - uses: actions/cache@v4
+      - name: Cache SwiftPM
+        uses: actions/cache@v4
         with:
           path: ~/Library/Caches/org.swift.swiftpm
           key: spm-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
-          restore-keys: spm-${{ runner.os }}-
+          restore-keys: |
+            spm-${{ runner.os }}-
 
       # ======================
-      # 3️⃣ Xcode
+      # 3️⃣ Xcode 선택
       # ======================
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
@@ -52,7 +64,7 @@ jobs:
       # ======================
       # 🔥 4️⃣ Simulator Warm-up (xcodebuild)
       # ======================
-      - name: Warm up iOS 17.5 simulator
+      - name: Warm up simulator (iPhone 15 / iOS 17.5)
         run: |
           set -e
           echo "🔥 Warm-up iPhone 15 (iOS 17.5)"
@@ -64,9 +76,40 @@ jobs:
             > /dev/null
 
       # ======================
-      # 5️⃣ Config
+      # 🔒 5️⃣ UDID 고정
       # ======================
-      - name: Create Config.xcconfig
+      - name: Resolve simulator UDID
+        run: |
+          SIMULATOR_NAME="iPhone 15"
+
+          UDID=$(xcrun simctl list devices available | \
+            grep "$SIMULATOR_NAME (" | head -n 1 | \
+            sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+
+          if [ -z "$UDID" ]; then
+            echo "❌ Simulator UDID not found"
+            exit 1
+          fi
+
+          echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
+          echo "✅ Using simulator UDID: $UDID"
+
+      # ======================
+      # 6️⃣ Swift Macro 검증 해제
+      # ======================
+      - name: Disable Swift Macro fingerprint validation
+        run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+
+      # ======================
+      # 7️⃣ Swift Version
+      # ======================
+      - name: Swift Version
+        run: swift --version
+
+      # ======================
+      # 8️⃣ Config.xcconfig 생성
+      # ======================
+      - name: Create Config.xcconfig from Secrets
         run: |
           cat <<EOF > Config.xcconfig
           KAKAO_NATIVE_APP_KEY = ${{ secrets.KAKAO_NATIVE_APP_KEY }}
@@ -76,7 +119,7 @@ jobs:
           EOF
 
       # ======================
-      # 6️⃣ Build
+      # 9️⃣ Build
       # ======================
       - name: Build
         run: |
@@ -85,13 +128,13 @@ jobs:
             -project PopPang.xcodeproj \
             -scheme PopPang \
             -xcconfig Config.xcconfig \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             | xcpretty
 
       # ======================
-      # 7️⃣ Unit Test
+      # 🔟 Unit Test
       # ======================
       - name: Run Unit Tests
         run: |
@@ -100,13 +143,13 @@ jobs:
             -project PopPang.xcodeproj \
             -scheme PopPang \
             -xcconfig Config.xcconfig \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
             -only-testing:RepositoryTest \
             | xcpretty
 
       # ======================
-      # 8️⃣ UI Test
+      # 1️⃣1️⃣ UI Test
       # ======================
       - name: Run UI Tests
         run: |
@@ -115,7 +158,7 @@ jobs:
             -project PopPang.xcodeproj \
             -scheme PopPang \
             -xcconfig Config.xcconfig \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
             -only-testing:PopPangUITests \
             | xcpretty
