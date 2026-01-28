@@ -2,6 +2,15 @@ name: 팝팡 앱타겟 iOS17 빌드 & 테스트 v3
 
 on:
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR 번호(명령어 트리거일 때만 입력)"
+        required: false
+        default: ""
+      triggered_by_command:
+        description: "PR 명령어 트리거 여부"
+        required: false
+        default: "false"
 
 permissions:
   contents: read
@@ -10,14 +19,22 @@ permissions:
 
 jobs:
   ios-ci:
-    name: iOS Build & Test (warm-up + UDID + UI reset)
+    name: iOS Build & Test (xcodebuild warm-up + UDID)
     runs-on: macos-14
 
     steps:
       # ======================
       # 1️⃣ Checkout
       # ======================
-      - uses: actions/checkout@v4
+      - name: Checkout PR branch
+        if: github.event.inputs.pr_number != ''
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+
+      - name: Checkout default branch
+        if: github.event.inputs.pr_number == ''
+        uses: actions/checkout@v4
 
       # ======================
       # 2️⃣ Cache
@@ -59,7 +76,7 @@ jobs:
             > /dev/null
 
       # ======================
-      # 🔒 5️⃣ Resolve Simulator UDID
+      # 🔒 5️⃣ UDID 고정
       # ======================
       - name: Resolve simulator UDID
         run: |
@@ -78,9 +95,21 @@ jobs:
           echo "✅ Using simulator UDID: $UDID"
 
       # ======================
-      # 6️⃣ Config.xcconfig
+      # 6️⃣ Swift Macro 검증 해제
       # ======================
-      - name: Create Config.xcconfig
+      - name: Disable Swift Macro fingerprint validation
+        run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+
+      # ======================
+      # 7️⃣ Swift Version
+      # ======================
+      - name: Swift Version
+        run: swift --version
+
+      # ======================
+      # 8️⃣ Config.xcconfig 생성
+      # ======================
+      - name: Create Config.xcconfig from Secrets
         run: |
           cat <<EOF > Config.xcconfig
           KAKAO_NATIVE_APP_KEY = ${{ secrets.KAKAO_NATIVE_APP_KEY }}
@@ -90,7 +119,7 @@ jobs:
           EOF
 
       # ======================
-      # 7️⃣ Build
+      # 9️⃣ Build
       # ======================
       - name: Build
         run: |
@@ -105,7 +134,7 @@ jobs:
             | xcpretty
 
       # ======================
-      # 8️⃣ Unit Tests
+      # 🔟 Unit Test
       # ======================
       - name: Run Unit Tests
         run: |
@@ -120,18 +149,7 @@ jobs:
             | xcpretty
 
       # ======================
-      # 🧹 9️⃣ Reset Simulator before UI Tests
-      # ======================
-      - name: Reset simulator before UI Tests
-        run: |
-          echo "🧹 Reset simulator before UI Tests"
-          xcrun simctl shutdown "$SIMULATOR_UDID" || true
-          xcrun simctl erase "$SIMULATOR_UDID"
-          xcrun simctl boot "$SIMULATOR_UDID"
-          xcrun simctl bootstatus "$SIMULATOR_UDID" -b
-
-      # ======================
-      # 🔟 UI Tests
+      # 1️⃣1️⃣ UI Test
       # ======================
       - name: Run UI Tests
         run: |
