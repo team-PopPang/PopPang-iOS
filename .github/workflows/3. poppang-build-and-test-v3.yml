@@ -123,7 +123,6 @@ jobs:
             -xcconfig Config.xcconfig \
             -destination "id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
-            CODE_SIGNING_ALLOWED=NO \
             | xcpretty
 
       # (빌드된 결과를 사용해)유닛 테스트를 수행합니다.
