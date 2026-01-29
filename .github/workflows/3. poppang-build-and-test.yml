@@ -2,6 +2,10 @@
 name: 팝팡 앱타겟 iOS17 빌드 & 테스트
 
 on:
+  # UTC 00:00 = KST 09:00 매일 한번 자동 실행
+  schedule:
+    - cron: '0 0 * * *'
+
   workflow_dispatch:
     inputs:
       pr_number:
