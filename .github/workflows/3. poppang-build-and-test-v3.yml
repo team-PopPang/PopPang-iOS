@@ -87,6 +87,11 @@ jobs:
 
           echo "✅ Using simulator UDID: $UDID"
           echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
+          
+      # 시뮬레이터가 완전히 켜질 때까지 기다립니다
+      - name: Boot simulator fully
+        run: |
+          xcrun simctl bootstatus "$SIMULATOR_UDID" -b
 
       # 살제 테스트 전에 시뮬레이터를 미리 깨워 초기 지연을 방지합니다.
       - name: Warm up simulator
