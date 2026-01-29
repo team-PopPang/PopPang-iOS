@@ -19,8 +19,11 @@ permissions:
 
 jobs:
   ios-ci:
-    name: iOS Build & Test (xcodebuild warm-up + UDID)
+    name: iOS Build & Test
     runs-on: macos-14
+
+    env:
+      SIMULATOR_DESTINATION: "platform=iOS Simulator,name=iPhone 15,OS=17.5"
 
     steps:
       # ======================
@@ -44,16 +47,14 @@ jobs:
         with:
           path: DerivedData
           key: deriveddata-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
-          restore-keys: |
-            deriveddata-${{ runner.os }}-
+          restore-keys: deriveddata-${{ runner.os }}-
 
       - name: Cache SwiftPM
         uses: actions/cache@v4
         with:
           path: ~/Library/Caches/org.swift.swiftpm
           key: spm-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
-          restore-keys: |
-            spm-${{ runner.os }}-
+          restore-keys: spm-${{ runner.os }}-
 
       # ======================
       # 3️⃣ Xcode 선택
@@ -62,56 +63,28 @@ jobs:
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
 
       # ======================
-      # 🔥 4️⃣ Simulator Warm-up (xcodebuild)
+      # 🔥 4️⃣ Simulator Warm-up
       # ======================
-      - name: Warm up simulator (iPhone 15 / iOS 17.5)
+      - name: Warm up simulator
         run: |
-          set -e
-          echo "🔥 Warm-up iPhone 15 (iOS 17.5)"
+          echo "🔥 Warm-up: $SIMULATOR_DESTINATION"
           xcodebuild \
             -project PopPang.xcodeproj \
             -scheme PopPang \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            -destination "$SIMULATOR_DESTINATION" \
             -showdestinations \
             > /dev/null
 
       # ======================
-      # 🔒 5️⃣ UDID 고정
-      # ======================
-      - name: Resolve simulator UDID
-        run: |
-          SIMULATOR_NAME="iPhone 15"
-          SIMULATOR_OS="17.5"
-
-          UDID=$(xcrun simctl list devices available | \
-            grep "$SIMULATOR_NAME ($SIMULATOR_OS)" | head -n 1 | \
-            sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
-
-          if [ -z "$UDID" ]; then
-            echo "❌ Simulator UDID not found for $SIMULATOR_NAME ($SIMULATOR_OS)"
-            xcrun simctl list devices available
-            exit 1
-          fi
-
-          echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
-          echo "✅ Using simulator UDID: $UDID"
-
-      # ======================
-      # 6️⃣ Swift Macro 검증 해제
+      # 5️⃣ Swift Macro 검증 해제
       # ======================
       - name: Disable Swift Macro fingerprint validation
         run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
 
       # ======================
-      # 7️⃣ Swift Version
+      # 6️⃣ Config.xcconfig 생성
       # ======================
-      - name: Swift Version
-        run: swift --version
-
-      # ======================
-      # 8️⃣ Config.xcconfig 생성
-      # ======================
-      - name: Create Config.xcconfig from Secrets
+      - name: Create Config.xcconfig
         run: |
           cat <<EOF > Config.xcconfig
           KAKAO_NATIVE_APP_KEY = ${{ secrets.KAKAO_NATIVE_APP_KEY }}
@@ -121,22 +94,22 @@ jobs:
           EOF
 
       # ======================
-      # 9️⃣ Build
+      # 7️⃣ Build
       # ======================
-      - name: Build
+      - name: Build for testing
         run: |
           set -o pipefail
           xcodebuild build-for-testing \
             -project PopPang.xcodeproj \
             -scheme PopPang \
             -xcconfig Config.xcconfig \
-            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+            -destination "$SIMULATOR_DESTINATION" \
             -derivedDataPath DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             | xcpretty
 
       # ======================
-      # 🔟 Unit Test
+      # 8️⃣ Unit Test
       # ======================
       - name: Run Unit Tests
         run: |
@@ -145,13 +118,13 @@ jobs:
             -project PopPang.xcodeproj \
             -scheme PopPang \
             -xcconfig Config.xcconfig \
-            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+            -destination "$SIMULATOR_DESTINATION" \
             -derivedDataPath DerivedData \
             -only-testing:RepositoryTest \
             | xcpretty
 
       # ======================
-      # UI Test
+      # 9️⃣ UI Test
       # ======================
       - name: Run UI Tests
         run: |
@@ -160,68 +133,8 @@ jobs:
             -project PopPang.xcodeproj \
             -scheme PopPang \
             -xcconfig Config.xcconfig \
-            -destination "platform=iOS Simulator,id=$SIMULATOR_UDID" \
+            -destination "$SIMULATOR_DESTINATION" \
             -derivedDataPath DerivedData \
             -only-testing:PopPangUITests \
             | xcpretty
 
-      # ======================
-      # PR 댓글 (명령어 트리거일 때만)
-      # ======================
-      - name: Comment success
-        if: success() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          issue-number: ${{ github.event.inputs.pr_number }}
-          body: |
-            ✅ **팝팡 패키지를 성공적으로 빌드하고 테스트했습니다.**
-
-      - name: Comment failure
-        if: failure() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          issue-number: ${{ github.event.inputs.pr_number }}
-          body: |
-            ❌ **팝팡 패키지 빌드 또는 테스트에 실패했습니다.**
-            👉 Actions 탭에서 로그를 확인해주세요.
-
-      # ======================
-      # 📧 Email 알림
-      # ======================
-      - name: Send email on success
-        if: success()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: ✅ PopPang iOS 빌드 & 테스트 성공
-          body: |
-            ✅ **팝팡 패키지를 성공적으로 빌드하고 테스트했습니다.**
-
-            📦 Repository: ${{ github.repository }}
-            🌿 Branch: ${{ github.ref_name }}
-            👤 Triggered by: ${{ github.actor }}
-            🔗 Action URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          to: indextrown@gmail.com
-          from: GitHub CI <${{ secrets.MAIL_USERNAME }}>
-
-      - name: Send email on failure
-        if: failure()
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.MAIL_USERNAME }}
-          password: ${{ secrets.MAIL_PASSWORD }}
-          subject: ❌ PopPang iOS 빌드 실패
-          body: |
-            ❌ **팝팡 패키지 빌드 또는 테스트에 실패했습니다.**
-
-            📦 Repository: ${{ github.repository }}
-            🌿 Branch: ${{ github.ref_name }}
-            👤 Triggered by: ${{ github.actor }}
-            🔗 Action URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          to: indextrown@gmail.com
-          from: GitHub CI <${{ secrets.MAIL_USERNAME }}>
