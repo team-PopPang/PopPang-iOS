@@ -136,7 +136,7 @@ jobs:
             -xcconfig Config.xcconfig \
             -destination "id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
-            -only-testing:RepositoryTests \
+            -only-testing:RepositoryTest \
             | xcpretty
 
       # (빌드된 결과를 사용해)UI 테스트를 실행합니다.
@@ -149,7 +149,7 @@ jobs:
             -xcconfig Config.xcconfig \
             -destination "id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
-            -only-testing:cicd_baseUITests \
+            -only-testing:PopPangUITests \
             | xcpretty
 
       # CI가 명령어 트리거로 실행된 경우, 성공 시 PR에 성공 코멘트를 남깁니다.
