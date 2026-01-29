@@ -1,10 +1,7 @@
+# workflow 이름
 name: 팝팡 앱타겟 iOS17 빌드 & 테스트
 
 on:
-#  pull_request:
-#    branches: [ main, develop ]
-#  push:
-#    branches: [ main ]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -12,7 +9,7 @@ on:
         required: false
         default: ""
       triggered_by_command:
-        description: "PR 명령어로 실행되면 true"
+        description: "PR 명령어 트리거 여부"
         required: false
         default: "false"
 
@@ -27,34 +24,18 @@ jobs:
     runs-on: macos-14
 
     steps:
-      # ======================
-      # 1️⃣ Checkout
-      # ======================
-      # PR 명령어 실행일 때
+      # PR 번호가 있으면 해당 PR 브랜치로, 없으면 기본 브랜치로 체크아웃합니다.
       - name: Checkout PR branch
         if: github.event.inputs.pr_number != ''
         uses: actions/checkout@v4
         with:
           ref: refs/pull/${{ github.event.inputs.pr_number }}/head
-      
-      # 수동 실행일 때
+
       - name: Checkout default branch
         if: github.event.inputs.pr_number == ''
         uses: actions/checkout@v4
-      
-      # PR 시작 댓글: 명령어 트리거일 때만
-      - name: Comment start
-        if: github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          issue-number: ${{ github.event.inputs.pr_number }}
-          body: |
-            🔨 iOS 17.5 iPhone 15 에서 빌드 및 테스트를 실행합니다.
-            
-      # ======================
-      # 2️⃣ Cache (DerivedData / SwiftPM)
-      # ======================
-      # 빌드 / 테스트 속도
+
+      # Xcode 컴파일 결과를 재사용하기 위해 DerivedData 캐시합니다.
       - name: Cache DerivedData
         uses: actions/cache@v4
         with:
@@ -62,8 +43,8 @@ jobs:
           key: deriveddata-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
           restore-keys: |
             deriveddata-${{ runner.os }}-
-            
-      # 외부 의존성 재빌드 제거
+
+      # Swift Package Manaer 의존성 다운로드 결과를 캐시합니다.
       - name: Cache SwiftPM
         uses: actions/cache@v4
         with:
@@ -72,30 +53,63 @@ jobs:
           restore-keys: |
             spm-${{ runner.os }}-
 
-
-      # ======================
-      # 3️⃣ Xcode 선택
-      # ======================
+      # CI에서 사용할 Xcode 버전을 고정합니다.
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
-
-      # ======================
-      # 4️⃣ Swift Macro 검증 해제
-      # ======================
-      - name: Disable Swift Macro fingerprint validation
+        
+      # 현재 CI 환경에 설치된 iOS 시뮬레이터 목록을 출력합니다.
+      - name: List available iOS simulators
         run: |
-          defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+          echo "📱 Available iOS Simulators"
+          xcrun simctl list devices available
 
-      # ======================
-      # 5️⃣ Swift Version
-      # ======================
-      - name: Swift Version
-        run: swift --version
+      # 지정한 이름 / iOS 버전에 맞는 시뮬레이터의 UDID를 찾아 환경변수로 설정합니다.
+      - name: Resolve simulator UDID
+        run: |
+          set -euo pipefail
 
-      # ======================
-      # 6️⃣ Config.xcconfig 생성
-      # ======================
-      - name: Create Config.xcconfig from Secrets
+          SIMULATOR_NAME="iPhone 15"
+          SIMULATOR_OS="17.0"
+
+          echo "🔍 Resolving simulator: ${SIMULATOR_NAME} (iOS ${SIMULATOR_OS})"
+
+          UDID=$(xcrun simctl list devices available | \
+            grep "iOS ${SIMULATOR_OS}" -A 20 | \
+            grep "^ *${SIMULATOR_NAME} (" | \
+            head -n 1 | \
+            sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+
+          if [ -z "$UDID" ]; then
+            echo "❌ Simulator not found"
+            xcrun simctl list devices available
+            exit 1
+          fi
+
+          echo "✅ Using simulator UDID: $UDID"
+          echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
+          
+      # 시뮬레이터가 완전히 켜질 때까지 기다립니다
+      - name: Boot simulator fully
+        run: |
+          xcrun simctl bootstatus "$SIMULATOR_UDID" -b
+
+      # 살제 테스트 전에 시뮬레이터를 미리 깨워 초기 지연을 방지합니다.
+      - name: Warm up simulator
+        run: |
+          echo "🔥 Warm-up simulator (UDID: $SIMULATOR_UDID)"
+          xcodebuild \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
+            -destination "id=$SIMULATOR_UDID" \
+            -showdestinations \
+            > /dev/null
+
+      # CI에서 Swift Macro 신뢰 단계 확인을 건너뜁니다.
+      - name: Disable Swift Macro fingerprint validation
+        run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+
+      # CI에만 사용하는 설정 파일을 만들고 시크릿 키들을 주입합니다.
+      - name: Create Config.xcconfig
         run: |
           cat <<EOF > Config.xcconfig
           KAKAO_NATIVE_APP_KEY = ${{ secrets.KAKAO_NATIVE_APP_KEY }}
@@ -104,24 +118,19 @@ jobs:
           NMFClientID = ${{ secrets.NMFClientID }}
           EOF
 
-      # ======================
-      # 7️⃣ Build
-      # ======================
-      - name: Build
+      # 빌드를 수행합니다.
+      - name: Build for testing
         run: |
           set -o pipefail
           xcodebuild build-for-testing \
             -project PopPang.xcodeproj \
             -scheme PopPang \
             -xcconfig Config.xcconfig \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            -destination "id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
-            CODE_SIGNING_ALLOWED=NO \
             | xcpretty
 
-      # ======================
-      # 8️⃣ Unit Test
-      # ======================
+      # (빌드된 결과를 사용해)유닛 테스트를 수행합니다.
       - name: Run Unit Tests
         run: |
           set -o pipefail
@@ -129,14 +138,12 @@ jobs:
             -project PopPang.xcodeproj \
             -scheme PopPang \
             -xcconfig Config.xcconfig \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            -destination "id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
             -only-testing:RepositoryTest \
             | xcpretty
-            
-      # ======================
-      # 9️⃣ UI Test
-      # ======================
+
+      # (빌드된 결과를 사용해)UI 테스트를 실행합니다.
       - name: Run UI Tests
         run: |
           set -o pipefail
@@ -144,14 +151,12 @@ jobs:
             -project PopPang.xcodeproj \
             -scheme PopPang \
             -xcconfig Config.xcconfig \
-            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            -destination "id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
             -only-testing:PopPangUITests \
             | xcpretty
 
-      # ======================
-      # 🔟 PR 댓글 (명령어 트리거일 때만)
-      # ======================
+      # CI가 명령어 트리거로 실행된 경우, 성공 시 PR에 성공 코멘트를 남깁니다.
       - name: Comment success
         if: success() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
         uses: peter-evans/create-or-update-comment@v4
@@ -160,6 +165,7 @@ jobs:
           body: |
             ✅ **팝팡 패키지를 성공적으로 빌드하고 테스트했습니다.**
 
+      # CI가 명령어 트리거로 실행된 경우, 실패 시 PR에 실패 코멘트를 남깁니다.
       - name: Comment failure
         if: failure() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
         uses: peter-evans/create-or-update-comment@v4
@@ -169,7 +175,7 @@ jobs:
             ❌ **팝팡 패키지 빌드 또는 테스트에 실패했습니다.**
             👉 Actions 탭에서 로그를 확인해주세요.
 
-      # 여기부터 메일
+      # CI 전체가 성공했을 경우, 빌드 성공 알림 메일을 전송합니다.
       - name: Send email on success
         if: success()
         uses: dawidd6/action-send-mail@v3
@@ -189,6 +195,7 @@ jobs:
           to: indextrown@gmail.com
           from: GitHub CI <${{ secrets.MAIL_USERNAME }}>
 
+      # CI 실행 중 하나라도 실패했을 경우, 실패 알림 메일을 전송합니다.
       - name: Send email on failure
         if: failure()
         uses: dawidd6/action-send-mail@v3
