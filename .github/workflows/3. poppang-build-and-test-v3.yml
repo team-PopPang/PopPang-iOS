@@ -93,8 +93,8 @@ jobs:
         run: |
           echo "🔥 Warm-up simulator (UDID: $SIMULATOR_UDID)"
           xcodebuild \
-            -project Poppang.xcodeproj \
-            -scheme Poppang \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
             -destination "id=$SIMULATOR_UDID" \
             -showdestinations \
             > /dev/null
@@ -118,8 +118,8 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild build-for-testing \
-            -project Poppang.xcodeproj \
-            -scheme Poppang \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
             -xcconfig Config.xcconfig \
             -destination "id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
@@ -131,8 +131,8 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild test-without-building \
-            -project Poppang.xcodeproj \
-            -scheme Poppang \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
             -xcconfig Config.xcconfig \
             -destination "id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
@@ -144,8 +144,8 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild test-without-building \
-            -project Poppang.xcodeproj \
-            -scheme Poppang \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
             -xcconfig Config.xcconfig \
             -destination "id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
