@@ -1,3 +1,4 @@
+# workflow 이름
 name: 팝팡 앱타겟 iOS17 빌드 & 테스트 v3
 
 on:
@@ -22,13 +23,8 @@ jobs:
     name: iOS Build & Test
     runs-on: macos-14
 
-    env:
-      SIMULATOR_DESTINATION: "platform=iOS Simulator,name=iPhone 15,OS=17.5"
-
     steps:
-      # ======================
-      # 1️⃣ Checkout
-      # ======================
+      # PR 번호가 있으면 해당 PR 브랜치로, 없으면 기본 브랜치로 체크아웃합니다.
       - name: Checkout PR branch
         if: github.event.inputs.pr_number != ''
         uses: actions/checkout@v4
@@ -39,51 +35,75 @@ jobs:
         if: github.event.inputs.pr_number == ''
         uses: actions/checkout@v4
 
-      # ======================
-      # 2️⃣ Cache
-      # ======================
+      # Xcode 컴파일 결과를 재사용하기 위해 DerivedData 캐시합니다.
       - name: Cache DerivedData
         uses: actions/cache@v4
         with:
           path: DerivedData
           key: deriveddata-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
-          restore-keys: deriveddata-${{ runner.os }}-
+          restore-keys: |
+            deriveddata-${{ runner.os }}-
 
+      # Swift Package Manaer 의존성 다운로드 결과를 캐시합니다.
       - name: Cache SwiftPM
         uses: actions/cache@v4
         with:
           path: ~/Library/Caches/org.swift.swiftpm
           key: spm-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
-          restore-keys: spm-${{ runner.os }}-
+          restore-keys: |
+            spm-${{ runner.os }}-
 
-      # ======================
-      # 3️⃣ Xcode 선택
-      # ======================
+      # CI에서 사용할 Xcode 버전을 고정합니다.
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
+        
+      # 현재 CI 환경에 설치된 iOS 시뮬레이터 목록을 출력합니다.
+      - name: List available iOS simulators
+        run: |
+          echo "📱 Available iOS Simulators"
+          xcrun simctl list devices available
 
-      # ======================
-      # 🔥 4️⃣ Simulator Warm-up
-      # ======================
+      # 지정한 이름 / iOS 버전에 맞는 시뮬레이터의 UDID를 찾아 환경변수로 설정합니다.
+      - name: Resolve simulator UDID
+        run: |
+          set -euo pipefail
+
+          SIMULATOR_NAME="iPhone 15"
+          SIMULATOR_OS="17.0"
+
+          echo "🔍 Resolving simulator: ${SIMULATOR_NAME} (iOS ${SIMULATOR_OS})"
+
+          UDID=$(xcrun simctl list devices available | \
+            grep "iOS ${SIMULATOR_OS}" -A 20 | \
+            grep "^ *${SIMULATOR_NAME} (" | \
+            head -n 1 | \
+            sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+
+          if [ -z "$UDID" ]; then
+            echo "❌ Simulator not found"
+            xcrun simctl list devices available
+            exit 1
+          fi
+
+          echo "✅ Using simulator UDID: $UDID"
+          echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
+
+      # 살제 테스트 전에 시뮬레이터를 미리 깨워 초기 지연을 방지합니다.
       - name: Warm up simulator
         run: |
-          echo "🔥 Warm-up: $SIMULATOR_DESTINATION"
+          echo "🔥 Warm-up simulator (UDID: $SIMULATOR_UDID)"
           xcodebuild \
-            -project PopPang.xcodeproj \
-            -scheme PopPang \
-            -destination "$SIMULATOR_DESTINATION" \
+            -project cicd_base.xcodeproj \
+            -scheme cicd_base \
+            -destination "id=$SIMULATOR_UDID" \
             -showdestinations \
             > /dev/null
 
-      # ======================
-      # 5️⃣ Swift Macro 검증 해제
-      # ======================
+      # CI에서 Swift Macro 신뢰 단계 확인을 건너뜁니다.
       - name: Disable Swift Macro fingerprint validation
         run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
 
-      # ======================
-      # 6️⃣ Config.xcconfig 생성
-      # ======================
+      # CI에만 사용하는 설정 파일을 만들고 시크릿 키들을 주입합니다.
       - name: Create Config.xcconfig
         run: |
           cat <<EOF > Config.xcconfig
@@ -93,48 +113,100 @@ jobs:
           NMFClientID = ${{ secrets.NMFClientID }}
           EOF
 
-      # ======================
-      # 7️⃣ Build
-      # ======================
+      # 빌드를 수행합니다.
       - name: Build for testing
         run: |
           set -o pipefail
           xcodebuild build-for-testing \
-            -project PopPang.xcodeproj \
-            -scheme PopPang \
+            -project cicd_base.xcodeproj \
+            -scheme cicd_base \
             -xcconfig Config.xcconfig \
-            -destination "$SIMULATOR_DESTINATION" \
+            -destination "id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
             CODE_SIGNING_ALLOWED=NO \
             | xcpretty
 
-      # ======================
-      # 8️⃣ Unit Test
-      # ======================
+      # (빌드된 결과를 사용해)유닛 테스트를 수행합니다.
       - name: Run Unit Tests
         run: |
           set -o pipefail
           xcodebuild test-without-building \
-            -project PopPang.xcodeproj \
-            -scheme PopPang \
+            -project cicd_base.xcodeproj \
+            -scheme cicd_base \
             -xcconfig Config.xcconfig \
-            -destination "$SIMULATOR_DESTINATION" \
+            -destination "id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
-            -only-testing:RepositoryTest \
+            -only-testing:cicd_baseUnitTests \
             | xcpretty
 
-      # ======================
-      # 9️⃣ UI Test
-      # ======================
+      # (빌드된 결과를 사용해)UI 테스트를 실행합니다.
       - name: Run UI Tests
         run: |
           set -o pipefail
           xcodebuild test-without-building \
-            -project PopPang.xcodeproj \
-            -scheme PopPang \
+            -project cicd_base.xcodeproj \
+            -scheme cicd_base \
             -xcconfig Config.xcconfig \
-            -destination "$SIMULATOR_DESTINATION" \
+            -destination "id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
-            -only-testing:PopPangUITests \
+            -only-testing:cicd_baseUITests \
             | xcpretty
 
+      # CI가 명령어 트리거로 실행된 경우, 성공 시 PR에 성공 코멘트를 남깁니다.
+      - name: Comment success
+        if: success() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            ✅ **팝팡 패키지를 성공적으로 빌드하고 테스트했습니다.**
+
+      # CI가 명령어 트리거로 실행된 경우, 실패 시 PR에 실패 코멘트를 남깁니다.
+      - name: Comment failure
+        if: failure() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            ❌ **팝팡 패키지 빌드 또는 테스트에 실패했습니다.**
+            👉 Actions 탭에서 로그를 확인해주세요.
+
+      # CI 전체가 성공했을 경우, 빌드 성공 알림 메일을 전송합니다.
+      - name: Send email on success
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: ✅ PopPang iOS 빌드 & 테스트 성공
+          body: |
+            ✅ **팝팡 패키지를 성공적으로 빌드하고 테스트했습니다.**
+
+            📦 Repository: ${{ github.repository }}
+            🌿 Branch: ${{ github.ref_name }}
+            👤 Triggered by: ${{ github.actor }}
+            🔗 Action URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: indextrown@gmail.com
+          from: GitHub CI <${{ secrets.MAIL_USERNAME }}>
+
+      # CI 실행 중 하나라도 실패했을 경우, 실패 알림 메일을 전송합니다.
+      - name: Send email on failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: ❌ PopPang iOS 빌드 실패
+          body: |
+            ❌ **팝팡 패키지 빌드 또는 테스트에 실패했습니다.**
+
+            📦 Repository: ${{ github.repository }}
+            🌿 Branch: ${{ github.ref_name }}
+            👤 Triggered by: ${{ github.actor }}
+            🔗 Action URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: indextrown@gmail.com
+          from: GitHub CI <${{ secrets.MAIL_USERNAME }}>
