@@ -136,7 +136,7 @@ jobs:
             -xcconfig Config.xcconfig \
             -destination "id=$SIMULATOR_UDID" \
             -derivedDataPath DerivedData \
-            -only-testing:cicd_baseUnitTests \
+            -only-testing:RepositoryTests \
             | xcpretty
 
       # (빌드된 결과를 사용해)UI 테스트를 실행합니다.
