@@ -81,13 +81,15 @@ jobs:
       - name: Resolve simulator UDID
         run: |
           SIMULATOR_NAME="iPhone 15"
+          SIMULATOR_OS="17.5"
 
           UDID=$(xcrun simctl list devices available | \
-            grep "$SIMULATOR_NAME (" | head -n 1 | \
+            grep "$SIMULATOR_NAME ($SIMULATOR_OS)" | head -n 1 | \
             sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
 
           if [ -z "$UDID" ]; then
-            echo "❌ Simulator UDID not found"
+            echo "❌ Simulator UDID not found for $SIMULATOR_NAME ($SIMULATOR_OS)"
+            xcrun simctl list devices available
             exit 1
           fi
 

@@ -51,6 +51,7 @@ extension XCTestCase {
 }
 
 extension PopPangUITests {
+    /*
     @MainActor
     func testHome() throws {
         
@@ -113,54 +114,135 @@ extension PopPangUITests {
         tapButton(app: app, id: "home_sort_option_MOST_VIEWED")
         
     }
+     */
     
-    /*
     @MainActor
-    func testHome2() throws {
-        
+    func testHome() throws {
+
         let app = XCUIApplication()
         app.launchArguments = ["-UITestMode", "-SkipLogin"]
         app.launchEnvironment = ["mockNetwork": "true"]
         app.launch()
-        
-        // MARK: - 홈탭 존재 유무
+
+        // 1️⃣ 홈 탭 존재
         let homeTab = app.tabBars.buttons["홈"]
-        XCTAssertTrue(homeTab.waitForExistence(timeout: 5),"홈 탭이 존재하지 않음")
-        
-        // MARK: - 검색 버튼
+        XCTAssertTrue(
+            homeTab.waitForExistence(timeout: 10),
+            "홈 탭이 존재하지 않음"
+        )
+
+        // 2️⃣ 검색 버튼 탭
         let searchButton = app.buttons["home_search_button"]
-        XCTAssertTrue(searchButton.waitForExistence(timeout: 5))
+        XCTAssertTrue(
+            searchButton.waitForExistence(timeout: 10),
+            "검색 버튼 없음"
+        )
         searchButton.tap()
 
-        // MARK: - 검색 창 띄우기
+        // 3️⃣ 검색 화면 확인
         let searchView = app.otherElements["home_search"]
-        XCTAssertTrue(searchView.waitForExistence(timeout: 5))
+        XCTAssertTrue(
+            searchView.waitForExistence(timeout: 10),
+            "검색 화면 없음"
+        )
 
-        // MARK: - 검색 텍스트 필드 터치
+        // 4️⃣ 검색어 입력
         let searchTextField = app.textFields["home_search_textfield"]
-        // searchTextField.exists // 바로 체크는 지양
-        XCTAssertTrue(searchTextField.waitForExistence(timeout: 5))
+        XCTAssertTrue(
+            searchTextField.waitForExistence(timeout: 10),
+            "검색 텍스트필드 없음"
+        )
         searchTextField.tap()
         searchTextField.typeText("팝업")
-        
-        // MARK: - 2초 대기
-        let expectation = XCTestExpectation(description: "Wait after typing")
-        let result = XCTWaiter.wait(for: [expectation], timeout: 2.0)
-        XCTAssertEqual(result, .timedOut)
-        
-        // MARK: - 검색 결과가 1개 이상인지
-        let results = app.otherElements.matching(identifier: "home_search_cell")
-        XCTAssertTrue(results.count > 0, "검색 결과 없음")
-        print("🔍 검색 결과 개수:", results.count)
-        
-        // MARK: - 뒤로가기 버튼 탭
-        let backButton = app.buttons["home_search_backbutton"]
-        XCTAssertTrue(backButton.waitForExistence(timeout: 5), "뒤로가기 버튼 없음")
-        backButton.tap()
-        
-        // MARK: - 홈 화면으로 복귀했는지 확인
-        XCTAssertTrue(homeTab.waitForExistence(timeout: 5), "뒤로가기 후 홈 화면으로 돌아오지 않음")
+
+        // 5️⃣ 검색 결과 나타날 때까지 기다림
+        let searchResults = app.otherElements.matching(identifier: "home_search_cell")
+        XCTAssertTrue(
+            searchResults.firstMatch.waitForExistence(timeout: 15),
+            "검색 결과가 나타나지 않음"
+        )
+        XCTAssertTrue(
+            searchResults.count > 0,
+            "검색 결과 없음"
+        )
+
+        // 6️⃣ 뒤로가기
+        let searchBackButton = app.buttons["home_search_backbutton"]
+        XCTAssertTrue(
+            searchBackButton.waitForExistence(timeout: 10),
+            "검색 뒤로가기 버튼 없음"
+        )
+        searchBackButton.tap()
+
+        // 7️⃣ 홈 화면 복귀 확인
+        XCTAssertTrue(
+            homeTab.waitForExistence(timeout: 10),
+            "홈 화면으로 돌아오지 않음"
+        )
+
+        // 8️⃣ 오픈 예정 팝업 탭
+        let comingButton = app.buttons["home_comming_button"]
+        XCTAssertTrue(
+            comingButton.waitForExistence(timeout: 10),
+            "오픈 예정 버튼 없음"
+        )
+        comingButton.tap()
+
+        let comingResults = app.otherElements.matching(identifier: "home_comming_cell")
+        XCTAssertTrue(
+            comingResults.firstMatch.waitForExistence(timeout: 15),
+            "오픈 예정 목록 없음"
+        )
+        XCTAssertTrue(
+            comingResults.count > 0,
+            "오픈 예정 결과 없음"
+        )
+
+        // 9️⃣ 네비게이션 뒤로가기
+        let navBackButton = app.navigationBars.buttons.element(boundBy: 0)
+        XCTAssertTrue(
+            navBackButton.waitForExistence(timeout: 10),
+            "네비게이션 뒤로가기 버튼 없음"
+        )
+        navBackButton.tap()
+
+        // 🔟 지역 드롭다운
+        let regionButton = app.buttons["home_region_dropdown"]
+        XCTAssertTrue(
+            regionButton.waitForExistence(timeout: 10),
+            "지역 드롭다운 버튼 없음"
+        )
+        regionButton.tap()
+
+        let seoulButton = app.buttons["home_region_서울"]
+        XCTAssertTrue(
+            seoulButton.waitForExistence(timeout: 10),
+            "서울 버튼 없음"
+        )
+        seoulButton.tap()
+
+        let allDistrictButton = app.buttons["home_district_전체"]
+        XCTAssertTrue(
+            allDistrictButton.waitForExistence(timeout: 10),
+            "전체 지역 버튼 없음"
+        )
+        allDistrictButton.tap()
+
+        // 1️⃣1️⃣ 정렬 드롭다운
+        let sortButton = app.buttons["home_sort_dropdown"]
+        XCTAssertTrue(
+            sortButton.waitForExistence(timeout: 10),
+            "정렬 드롭다운 버튼 없음"
+        )
+        sortButton.tap()
+
+        let mostViewedOption = app.buttons["home_sort_option_MOST_VIEWED"]
+        XCTAssertTrue(
+            mostViewedOption.waitForExistence(timeout: 10),
+            "정렬 옵션 없음"
+        )
+        mostViewedOption.tap()
     }
-     */
+
 }
 

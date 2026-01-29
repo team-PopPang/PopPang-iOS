@@ -75,6 +75,55 @@ final class PopPangUITestsSave: XCTestCase {
         XCTAssertTrue(searchView.waitForExistence(timeout: 5))
 
     }
+ 
+ /*
+ @MainActor
+ func testHome2() throws {
+     
+     let app = XCUIApplication()
+     app.launchArguments = ["-UITestMode", "-SkipLogin"]
+     app.launchEnvironment = ["mockNetwork": "true"]
+     app.launch()
+     
+     // MARK: - 홈탭 존재 유무
+     let homeTab = app.tabBars.buttons["홈"]
+     XCTAssertTrue(homeTab.waitForExistence(timeout: 5),"홈 탭이 존재하지 않음")
+     
+     // MARK: - 검색 버튼
+     let searchButton = app.buttons["home_search_button"]
+     XCTAssertTrue(searchButton.waitForExistence(timeout: 5))
+     searchButton.tap()
+
+     // MARK: - 검색 창 띄우기
+     let searchView = app.otherElements["home_search"]
+     XCTAssertTrue(searchView.waitForExistence(timeout: 5))
+
+     // MARK: - 검색 텍스트 필드 터치
+     let searchTextField = app.textFields["home_search_textfield"]
+     // searchTextField.exists // 바로 체크는 지양
+     XCTAssertTrue(searchTextField.waitForExistence(timeout: 5))
+     searchTextField.tap()
+     searchTextField.typeText("팝업")
+     
+     // MARK: - 2초 대기
+     let expectation = XCTestExpectation(description: "Wait after typing")
+     let result = XCTWaiter.wait(for: [expectation], timeout: 2.0)
+     XCTAssertEqual(result, .timedOut)
+     
+     // MARK: - 검색 결과가 1개 이상인지
+     let results = app.otherElements.matching(identifier: "home_search_cell")
+     XCTAssertTrue(results.count > 0, "검색 결과 없음")
+     print("🔍 검색 결과 개수:", results.count)
+     
+     // MARK: - 뒤로가기 버튼 탭
+     let backButton = app.buttons["home_search_backbutton"]
+     XCTAssertTrue(backButton.waitForExistence(timeout: 5), "뒤로가기 버튼 없음")
+     backButton.tap()
+     
+     // MARK: - 홈 화면으로 복귀했는지 확인
+     XCTAssertTrue(homeTab.waitForExistence(timeout: 5), "뒤로가기 후 홈 화면으로 돌아오지 않음")
+ }
+  */
 
 //    @MainActor
 //    func testLaunchPerformance() throws {
