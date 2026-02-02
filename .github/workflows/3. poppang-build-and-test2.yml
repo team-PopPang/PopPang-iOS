@@ -1,0 +1,226 @@
+# workflow 이름
+name: 팝팡 앱타겟 iOS17 빌드 & 테스트v2
+
+on:
+  # UTC 00:00 = KST 09:00 매일 한번 자동 실행
+  schedule:
+    - cron: '0 0 * * *'
+
+  # 수동 실행 (PR 번호 기반)
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR 번호(명령어 트리거일 때만 입력)"
+        required: false
+        default: ""
+      triggered_by_command:
+        description: "PR 명령어 트리거 여부"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  # =====================================================
+  # 1️⃣ CI 공통 준비 단계
+  # =====================================================
+  prepare:
+    name: CI / 환경 준비
+    runs-on: macos-14
+
+    steps:
+      # PR 번호가 있으면 해당 PR 브랜치로, 없으면 기본 브랜치로 체크아웃합니다.
+      - name: Checkout PR branch
+        if: github.event.inputs.pr_number != ''
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+
+      - name: Checkout default branch
+        if: github.event.inputs.pr_number == ''
+        uses: actions/checkout@v4
+
+      # Xcode 컴파일 결과를 재사용하기 위해 DerivedData 캐시합니다.
+      - name: Cache DerivedData
+        uses: actions/cache@v4
+        with:
+          path: DerivedData
+          key: deriveddata-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            deriveddata-${{ runner.os }}-
+
+      # Swift Package Manager 의존성 다운로드 결과를 캐시합니다.
+      - name: Cache SwiftPM
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Caches/org.swift.swiftpm
+          key: spm-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            spm-${{ runner.os }}-
+
+      # CI에서 사용할 Xcode 버전을 고정합니다.
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+
+      # 지정한 이름 / iOS 버전에 맞는 시뮬레이터의 UDID를 찾아 환경변수로 설정합니다.
+      - name: Resolve simulator UDID
+        run: |
+          set -euo pipefail
+
+          SIMULATOR_NAME="iPhone 15"
+          SIMULATOR_OS="17.0"
+
+          UDID=$(xcrun simctl list devices available | \
+            grep "iOS ${SIMULATOR_OS}" -A 20 | \
+            grep "^ *${SIMULATOR_NAME} (" | \
+            head -n 1 | \
+            sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+
+          if [ -z "$UDID" ]; then
+            echo "❌ Simulator not found"
+            exit 1
+          fi
+
+          echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
+
+      # 시뮬레이터가 완전히 켜질 때까지 기다립니다
+      - name: Boot simulator fully
+        run: xcrun simctl bootstatus "$SIMULATOR_UDID" -b
+
+      # CI에서 Swift Macro 신뢰 단계 확인을 건너뜁니다.
+      - name: Disable Swift Macro fingerprint validation
+        run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+
+      # CI에만 사용하는 설정 파일을 만들고 시크릿 키들을 주입합니다.
+      - name: Create Config.xcconfig
+        run: |
+          cat <<EOF > Config.xcconfig
+          KAKAO_NATIVE_APP_KEY = ${{ secrets.KAKAO_NATIVE_APP_KEY }}
+          GIDClientID = ${{ secrets.GIDClientID }}
+          GoogleURLScheme = ${{ secrets.GoogleURLScheme }}
+          NMFClientID = ${{ secrets.NMFClientID }}
+          EOF
+
+  # =====================================================
+  # 2️⃣ Build for testing
+  # =====================================================
+  build:
+    name: CI / Build for testing
+    runs-on: macos-14
+    needs: prepare
+
+    steps:
+      # 빌드를 수행합니다.
+      - name: Build for testing
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
+            -xcconfig Config.xcconfig \
+            -destination "id=$SIMULATOR_UDID" \
+            -derivedDataPath DerivedData \
+            | xcpretty
+
+  # =====================================================
+  # 3️⃣ Unit Test
+  # =====================================================
+  unit-test:
+    name: CI / Run Unit Tests
+    runs-on: macos-14
+    needs: build
+
+    steps:
+      # (빌드된 결과를 사용해) 유닛 테스트를 수행합니다.
+      - name: Run Unit Tests
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
+            -xcconfig Config.xcconfig \
+            -destination "id=$SIMULATOR_UDID" \
+            -derivedDataPath DerivedData \
+            -only-testing:RepositoryTest \
+            | xcpretty
+
+  # =====================================================
+  # 4️⃣ UI Test
+  # =====================================================
+  ui-test:
+    name: CI / Run UI Tests
+    runs-on: macos-14
+    needs: unit-test
+
+    steps:
+      # (빌드된 결과를 사용해) UI 테스트를 실행합니다.
+      - name: Run UI Tests
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
+            -xcconfig Config.xcconfig \
+            -destination "id=$SIMULATOR_UDID" \
+            -derivedDataPath DerivedData \
+            -only-testing:PopPangUITests \
+            | xcpretty
+
+  # =====================================================
+  # 5️⃣ PR 코멘트
+  # =====================================================
+  comment:
+    name: CI / PR Comment
+    runs-on: ubuntu-latest
+    needs: ui-test
+    if: github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
+
+    steps:
+      # CI 성공 시 PR에 성공 코멘트를 남깁니다.
+      - name: Comment success
+        if: success()
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            ✅ **팝팡 패키지를 성공적으로 빌드하고 테스트했습니다.**
+
+      # CI 실패 시 PR에 실패 코멘트를 남깁니다.
+      - name: Comment failure
+        if: failure()
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            ❌ **팝팡 패키지 빌드 또는 테스트에 실패했습니다.**
+            👉 Actions 탭에서 로그를 확인해주세요.
+
+  # =====================================================
+  # 6️⃣ 메일 알림
+  # =====================================================
+  mail:
+    name: CI / Mail Notification
+    runs-on: ubuntu-latest
+    needs: comment
+    if: always()
+
+    steps:
+      # CI 결과 메일을 전송합니다.
+      - name: Send email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: PopPang iOS CI 결과
+          body: |
+            📦 Repository: ${{ github.repository }}
+            🌿 Branch: ${{ github.ref_name }}
+            👤 Triggered by: ${{ github.actor }}
+            🔗 Action URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: indextrown@gmail.com
+          from: GitHub CI <${{ secrets.MAIL_USERNAME }}>
