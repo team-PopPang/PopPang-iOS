@@ -5,6 +5,7 @@ on:
   # UTC 00:00 = KST 09:00 매일 한번 자동 실행
   # schedule:
   #   - cron: '0 0 * * *'
+  
   # UTC 22:00 = KST 07:00 (매일)
   schedule:
     - cron: "0 22 * * *"
