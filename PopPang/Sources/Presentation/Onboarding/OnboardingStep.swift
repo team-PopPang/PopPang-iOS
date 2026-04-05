@@ -23,28 +23,22 @@ enum OnboardingStep: Int, CaseIterable {
     var title: String {
         switch self {
         case .keyword:
-            "팝업스토어 알림"
+            NSLocalizedString("onboarding.keyword.title", comment: "Onboarding title for keyword notifications")
         case .map:
-            "위치 기반 서비스"
+            NSLocalizedString("onboarding.map.title", comment: "Onboarding title for map-based service")
         case .favorite:
-            "캘린더형 찜 리스트"
+            NSLocalizedString("onboarding.favorite.title", comment: "Onboarding title for favorites calendar")
         }
     }
     
     var content: String {
         switch self {
         case .keyword:
-            """
-            키워드를 등록하여 원하는 팝업 알림을 받아보세요.
-            """
+            NSLocalizedString("onboarding.keyword.content", comment: "Onboarding body for keyword notifications")
         case .map:
-            """
-            내 주변에서 열리는 팝업을 바로 확인하세요.
-            """
+            NSLocalizedString("onboarding.map.content", comment: "Onboarding body for nearby popup map")
         case .favorite:
-            """
-            찜한 팝업을 날짜별로 확인할 수 있어요.
-            """
+            NSLocalizedString("onboarding.favorite.content", comment: "Onboarding body for favorites calendar")
         }
     }
     

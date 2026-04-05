@@ -31,7 +31,9 @@ struct OnboadringView: View {
                         
                         // MARK: - 다음 버튼
                         MainOrangeButton(
-                            buttonTitle: currentStep == .favorite ? "시작하기" : "다음"
+                            buttonTitle: currentStep == .favorite
+                            ? NSLocalizedString("common.start", comment: "Primary CTA to start the app")
+                            : NSLocalizedString("common.next", comment: "Primary CTA to continue to the next step")
                         ) {
                             if currentStep.rawValue < OnboardingStep.allCases.count - 1 {
                                 currentStep = OnboardingStep.allCases[currentStep.rawValue + 1]
@@ -50,7 +52,7 @@ struct OnboadringView: View {
                 Button {
                     coordinator.push(.login)
                 } label: {
-                    Text("건너뛰기")
+                    Text(NSLocalizedString("common.skip", comment: "Action to skip onboarding"))
                         .font(.scdream(.regular, size: 12))
                         .foregroundColor(Color.mainBlack)
                 }
