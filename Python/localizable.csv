@@ -1,0 +1,16 @@
+key,en,ko,ja
+common.next,Next,다음,次へ
+common.skip,Skip,건너뛰기,スキップ
+common.start,Get Started,시작하기,始める
+onboarding.keyword.title,Popup Store Alerts,팝업스토어 알림,ポップアップストア通知
+onboarding.keyword.content,"Add keywords to receive alerts for the popups you want.",키워드를 등록하여 원하는 팝업 알림을 받아보세요。,キーワードを登録して、見たいポップアップの通知を受け取りましょう。
+onboarding.map.title,Location-Based Service,위치 기반 서비스,位置情報ベースのサービス
+onboarding.map.content,"See popups happening near you right away.",내 주변에서 열리는 팝업을 바로 확인하세요。,近くで開催中のポップアップをすぐに確認できます。
+onboarding.favorite.title,Calendar Favorites,캘린더형 찜 리스트,カレンダーお気に入り
+onboarding.favorite.content,Check your saved popups by date.,찜한 팝업을 날짜별로 확인할 수 있어요。,保存したポップアップを日付ごとに確認できます。
+login.social.kakao,Continue with Kakao,카카오 로그인,Kakaoでログイン
+login.social.apple,Continue with Apple,Apple 로그인,Appleでログイン
+login.social.google,Continue with Google,Google 로그인,Googleでログイン
+greeting_message,Hello,안녕하세요,こんにちは
+home_description,Your day becomes a warm memory,당신의 하루가 따뜻한 기억이 됩니다,あなたの一日は温かい思い出になります
+login_button,Login,로그인,ログイン

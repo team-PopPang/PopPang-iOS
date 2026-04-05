@@ -23,22 +23,22 @@ enum OnboardingStep: Int, CaseIterable {
     var title: String {
         switch self {
         case .keyword:
-            NSLocalizedString("onboarding.keyword.title", comment: "Onboarding title for keyword notifications")
+            LocalizationKey.onboardingKeywordTitle.localized(comment: "Onboarding title for keyword notifications")
         case .map:
-            NSLocalizedString("onboarding.map.title", comment: "Onboarding title for map-based service")
+            LocalizationKey.onboardingMapTitle.localized(comment: "Onboarding title for map-based service")
         case .favorite:
-            NSLocalizedString("onboarding.favorite.title", comment: "Onboarding title for favorites calendar")
+            LocalizationKey.onboardingFavoriteTitle.localized(comment: "Onboarding title for favorites calendar")
         }
     }
     
     var content: String {
         switch self {
         case .keyword:
-            NSLocalizedString("onboarding.keyword.content", comment: "Onboarding body for keyword notifications")
+            LocalizationKey.onboardingKeywordContent.localized(comment: "Onboarding body for keyword notifications")
         case .map:
-            NSLocalizedString("onboarding.map.content", comment: "Onboarding body for nearby popup map")
+            LocalizationKey.onboardingMapContent.localized(comment: "Onboarding body for nearby popup map")
         case .favorite:
-            NSLocalizedString("onboarding.favorite.content", comment: "Onboarding body for favorites calendar")
+            LocalizationKey.onboardingFavoriteContent.localized(comment: "Onboarding body for favorites calendar")
         }
     }
     

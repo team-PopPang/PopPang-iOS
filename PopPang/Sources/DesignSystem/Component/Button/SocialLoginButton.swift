@@ -24,11 +24,11 @@ struct SocialLoginButton: View {
         var title: String {
             switch self {
             case .kakao:
-                return NSLocalizedString("login.social.kakao", comment: "Login button title for Kakao")
+                return LocalizationKey.loginSocialKakao.localized(comment: "Login button title for Kakao")
             case .apple:
-                return NSLocalizedString("login.social.apple", comment: "Login button title for Apple")
+                return LocalizationKey.loginSocialApple.localized(comment: "Login button title for Apple")
             case .google:
-                return NSLocalizedString("login.social.google", comment: "Login button title for Google")
+                return LocalizationKey.loginSocialGoogle.localized(comment: "Login button title for Google")
             }
         }
         
