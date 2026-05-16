@@ -118,7 +118,7 @@ module-help:
 	@echo "  make module LAYER=feature NAME=Home"
 	@echo ""
 	@echo "Available layers:"
-	@echo "  app, coordinator, feature, domain, data, thirdparty, core, shared"
+	@echo "  app, coordinator, feature, domain, data, thirdparty, core, dskit, shared"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make module LAYER=app NAME=AppSession"
@@ -128,6 +128,7 @@ module-help:
 	@echo "  make module LAYER=data NAME=Popup"
 	@echo "  make module LAYER=thirdparty NAME=Firebase"
 	@echo "  make module LAYER=core NAME=HTTPClient"
+	@echo "  make module LAYER=dskit NAME=DSKit"
 	@echo "  make module LAYER=shared NAME=UIComponents"
 
 module:
@@ -145,6 +146,7 @@ module:
 		data) TEMPLATE="data-module" ;; \
 		thirdparty) TEMPLATE="third-party-module" ;; \
 		core) TEMPLATE="core-module" ;; \
+		dskit) TEMPLATE="dskit-module" ;; \
 		shared) TEMPLATE="shared-module" ;; \
 		*) \
 			echo "❌ Unsupported layer: $(LAYER)"; \
