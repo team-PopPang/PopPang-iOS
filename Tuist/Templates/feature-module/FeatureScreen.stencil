@@ -1,0 +1,11 @@
+import SwiftUI
+
+public struct {{ name }}FeatureScreen: View {
+    public init() {}
+
+    public var body: some View {
+        {{ name }}FeatureView(
+            store: {{ name }}FeatureStore()
+        )
+    }
+}

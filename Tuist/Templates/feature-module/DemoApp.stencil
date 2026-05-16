@@ -1,0 +1,10 @@
+import SwiftUI
+
+@main
+struct {{ name }}FeatureDemoApp: App {
+    var body: some Scene {
+        WindowGroup {
+            {{ name }}FeatureScreen()
+        }
+    }
+}

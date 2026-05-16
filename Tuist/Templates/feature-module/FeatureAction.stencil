@@ -1,0 +1,6 @@
+import Foundation
+
+public enum {{ name }}FeatureAction: Sendable {
+    case onAppear
+    case refresh
+}

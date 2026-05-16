@@ -106,3 +106,52 @@ fetch-certificates:
 	bundle exec fastlane match appstore --readonly --app_identifier kr.co.poppang.PopPang
 	@echo ""
 
+
+# -----------------------------
+# 🧱 Tuist Module Scaffold
+# -----------------------------
+LAYER ?=
+NAME ?=
+
+module-help:
+	@echo "Usage:"
+	@echo "  make module LAYER=feature NAME=Home"
+	@echo ""
+	@echo "Available layers:"
+	@echo "  app, coordinator, feature, domain, data, thirdparty, core, shared"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make module LAYER=app NAME=AppSession"
+	@echo "  make module LAYER=coordinator NAME=Root"
+	@echo "  make module LAYER=feature NAME=Home"
+	@echo "  make module LAYER=domain NAME=Popup"
+	@echo "  make module LAYER=data NAME=Popup"
+	@echo "  make module LAYER=thirdparty NAME=Firebase"
+	@echo "  make module LAYER=core NAME=HTTPClient"
+	@echo "  make module LAYER=shared NAME=UIComponents"
+
+module:
+	@if [ -z "$(LAYER)" ] || [ -z "$(NAME)" ]; then \
+		echo "❌ LAYER and NAME are required."; \
+		echo ""; \
+		$(MAKE) module-help; \
+		exit 1; \
+	fi
+	@case "$(LAYER)" in \
+		app) TEMPLATE="app-module" ;; \
+		coordinator) TEMPLATE="coordinator-module" ;; \
+		feature) TEMPLATE="feature-module" ;; \
+		domain) TEMPLATE="domain-module" ;; \
+		data) TEMPLATE="data-module" ;; \
+		thirdparty) TEMPLATE="third-party-module" ;; \
+		core) TEMPLATE="core-module" ;; \
+		shared) TEMPLATE="shared-module" ;; \
+		*) \
+			echo "❌ Unsupported layer: $(LAYER)"; \
+			echo ""; \
+			$(MAKE) module-help; \
+			exit 1; \
+			;; \
+	esac; \
+	echo "🧱 Scaffolding $$TEMPLATE with NAME=$(NAME)"; \
+	tuist scaffold $$TEMPLATE --name $(NAME)

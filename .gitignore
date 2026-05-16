@@ -1,6 +1,8 @@
 *.xcconfig
 .env
 GoogleService-Info.plist
+AGENTS.md
+scripts/
 
 # macOS
 .DS_Store
