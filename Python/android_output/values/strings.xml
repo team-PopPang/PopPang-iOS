@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_next">Next</string>
+    <string name="common_skip">Skip</string>
+    <string name="common_start">Get Started</string>
+    <string name="onboarding_keyword_title">Popup Store Alerts</string>
+    <string name="onboarding_keyword_content">Add keywords to receive alerts for the popups you want.</string>
+    <string name="onboarding_map_title">Location-Based Service</string>
+    <string name="onboarding_map_content">See popups happening near you right away.</string>
+    <string name="onboarding_favorite_title">Calendar Favorites</string>
+    <string name="onboarding_favorite_content">Check your saved popups by date.</string>
+    <string name="login_social_kakao">Continue with Kakao</string>
+    <string name="login_social_apple">Continue with Apple</string>
+    <string name="login_social_google">Continue with Google</string>
+    <string name="greeting_message">Hello</string>
+    <string name="home_description">Your day becomes a warm memory</string>
+    <string name="login_button">Login</string>
+</resources>

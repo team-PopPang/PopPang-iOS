@@ -70,6 +70,23 @@ cd Python
 python3 localization.py
 ```
 
+안드로이드용 `strings.xml` 출력도 만들 수 있습니다.
+
+```bash
+# 루트에서 실행
+python3 Python/localizationkotlin.py
+
+# 또는 Python 폴더에서 실행
+cd Python
+python3 localizationkotlin.py
+```
+
+생성 위치:
+
+- `Python/android_output/values/strings.xml`
+- `Python/android_output/values-ko/strings.xml`
+- `Python/android_output/values-ja/strings.xml`
+
 # 동작 방식
 
 1. `Python/localizable.csv`를 읽습니다.

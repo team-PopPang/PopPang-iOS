@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_next">次へ</string>
+    <string name="common_skip">スキップ</string>
+    <string name="common_start">始める</string>
+    <string name="onboarding_keyword_title">ポップアップストア通知</string>
+    <string name="onboarding_keyword_content">キーワードを登録して、見たいポップアップの通知を受け取りましょう。</string>
+    <string name="onboarding_map_title">位置情報ベースのサービス</string>
+    <string name="onboarding_map_content">近くで開催中のポップアップをすぐに確認できます。</string>
+    <string name="onboarding_favorite_title">カレンダーお気に入り</string>
+    <string name="onboarding_favorite_content">保存したポップアップを日付ごとに確認できます。</string>
+    <string name="login_social_kakao">Kakaoでログイン</string>
+    <string name="login_social_apple">Appleでログイン</string>
+    <string name="login_social_google">Googleでログイン</string>
+    <string name="greeting_message">こんにちは</string>
+    <string name="home_description">あなたの一日は温かい思い出になります</string>
+    <string name="login_button">ログイン</string>
+</resources>

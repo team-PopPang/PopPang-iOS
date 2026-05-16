@@ -145,6 +145,28 @@ coordinator.present(.regionSheet)       // 시트
 coordinator.showOverlay(.notification)  // 오버레이
 ```
 
+---
+
+### **4. CSV 기반 로컬라이제이션 자동화로 다국어 관리 비용 절감**
+> **문제**  
+> `Localizable.strings`를 언어별로 직접 관리하면  
+> 키 누락, 오타, 언어별 불일치가 생기기 쉽고  
+> 문자열 키를 하드코딩할 때 디버깅 비용도 커졌음  
+>
+> **해결**  
+> `Python/localizable.csv`를 기준으로  
+> `en/ko/ja Localizable.strings`와 `LocalizationKeys.swift`를 자동 생성하는  
+> **CSV 기반 로컬라이제이션 생성 스크립트** 구축  
+>
+> **성과**  
+> 🔸 번역 데이터를 CSV 한 곳에서 일괄 관리  
+> 🔸 `LocalizationKey` enum 자동 생성으로 문자열 오타 위험 감소  
+> 🔸 번역 작업자, 기획자, 개발자가 같은 포맷으로 협업 가능
+
+```swift
+Text(LocalizationKey.commonNext.localized(comment: "Next button"))
+```
+
 <!--| 문제                                                        | 해결                                                         | 성과                                                         |-->
 <!--| ----------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |-->
 <!--| 여러 API 순차 호출로 로딩 지연                              | TaskGroup 병렬 처리                                          | 로딩 시간 40% 단축                                           |-->
