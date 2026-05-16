@@ -4,7 +4,11 @@ import SwiftUI
 struct {{ name }}FeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            {{ name }}FeatureScreen()
+            {% if includeInterface %}
+            {{ name }}FeatureEntryView()
+            {% else %}
+            {{ name }}FeatureRootView()
+            {% endif %}
         }
     }
 }

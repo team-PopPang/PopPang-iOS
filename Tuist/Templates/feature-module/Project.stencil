@@ -10,12 +10,21 @@ let project = Project(
             bundleId: "{{ bundleIdPrefix }}.features.{{ name | lowercase }}",
             deploymentTargets: .iOS("{{ deploymentTarget }}"),
             infoPlist: .default,
-            sources: [
-                "Interface/**",
-                "Sources/**",
-            ],
+            sources: ["Sources/**"],
             dependencies: []
         ),
+        {% if includeInterface %}
+        .target(
+            name: "{{ name }}FeatureInterface",
+            destinations: .iOS,
+            product: .framework,
+            bundleId: "{{ bundleIdPrefix }}.features.{{ name | lowercase }}.interface",
+            deploymentTargets: .iOS("{{ deploymentTarget }}"),
+            infoPlist: .default,
+            sources: ["Interface/Sources/**"],
+            dependencies: [.target(name: "{{ name }}Feature")]
+        ),
+        {% endif %}
         .target(
             name: "{{ name }}FeatureDemo",
             destinations: .iOS,
@@ -31,7 +40,11 @@ let project = Project(
                 ]
             ),
             sources: ["Demo/Sources/**"],
+            {% if includeInterface %}
+            dependencies: [.target(name: "{{ name }}FeatureInterface")]
+            {% else %}
             dependencies: [.target(name: "{{ name }}Feature")]
+            {% endif %}
         ),
         .target(
             name: "{{ name }}FeatureTests",

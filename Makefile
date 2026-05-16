@@ -112,10 +112,12 @@ fetch-certificates:
 # -----------------------------
 LAYER ?=
 NAME ?=
+INTERFACE ?= false
 
 module-help:
 	@echo "Usage:"
 	@echo "  make module LAYER=feature NAME=Home"
+	@echo "  make module LAYER=feature NAME=PopupDetail INTERFACE=true"
 	@echo ""
 	@echo "Available layers:"
 	@echo "  app, coordinator, feature, domain, data, thirdparty, core, dskit, shared"
@@ -124,6 +126,7 @@ module-help:
 	@echo "  make module LAYER=app NAME=AppSession"
 	@echo "  make module LAYER=coordinator NAME=Root"
 	@echo "  make module LAYER=feature NAME=Home"
+	@echo "  make module LAYER=feature NAME=PopupDetail INTERFACE=true"
 	@echo "  make module LAYER=domain NAME=Popup"
 	@echo "  make module LAYER=data NAME=Popup"
 	@echo "  make module LAYER=thirdparty NAME=Firebase"
@@ -156,4 +159,8 @@ module:
 			;; \
 	esac; \
 	echo "🧱 Scaffolding $$TEMPLATE with NAME=$(NAME)"; \
-	tuist scaffold $$TEMPLATE --name $(NAME)
+	if [ "$(LAYER)" = "feature" ]; then \
+		tuist scaffold $$TEMPLATE --name $(NAME) --include-interface $(INTERFACE); \
+	else \
+		tuist scaffold $$TEMPLATE --name $(NAME); \
+	fi

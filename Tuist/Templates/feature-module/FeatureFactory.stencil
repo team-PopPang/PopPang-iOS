@@ -1,7 +1,0 @@
-import SwiftUI
-
-@MainActor
-public protocol {{ name }}FeatureBuilding {
-    associatedtype Screen: View
-    func make{{ name }}Feature() -> Screen
-}

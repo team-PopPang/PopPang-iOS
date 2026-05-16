@@ -8,6 +8,7 @@ let template = Template(
         name,
         .optional("bundleIdPrefix", default: "com.poppang"),
         .optional("deploymentTarget", default: "16.0"),
+        .optional("includeInterface", default: .boolean(false)),
     ],
     items: [
         .file(
@@ -15,15 +16,15 @@ let template = Template(
             templatePath: "Project.stencil"
         ),
         .file(
-            path: "Projects/Features/\(name)Feature/Interface/\(name)FeatureScreen.swift",
-            templatePath: "FeatureScreen.stencil"
+            path: "Projects/Features/\(name)Feature/Interface/Sources/\(name)FeatureEntryView.swift",
+            templatePath: "FeatureEntryView.stencil"
         ),
         .file(
-            path: "Projects/Features/\(name)Feature/Interface/\(name)FeatureFactory.swift",
-            templatePath: "FeatureFactory.stencil"
+            path: "Projects/Features/\(name)Feature/Sources/Presentation/\(name)FeatureRootView.swift",
+            templatePath: "FeatureRootView.stencil"
         ),
         .file(
-            path: "Projects/Features/\(name)Feature/Interface/\(name)FeatureNavigator.swift",
+            path: "Projects/Features/\(name)Feature/Sources/Navigation/\(name)FeatureNavigator.swift",
             templatePath: "FeatureNavigator.stencil"
         ),
         .file(

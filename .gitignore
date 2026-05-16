@@ -16,11 +16,15 @@ scripts/
 # Xcode
 DerivedData/
 *.xcuserstate
+*.xcodeproj/
+*.xcworkspace/
+**/Derived/
 
 # Build artifacts
 *.ipa
 *.dSYM
 *.dSYM.zip
+graph.png
 
 # fastlane
 fastlane/metadata/
