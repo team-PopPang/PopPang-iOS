@@ -8,9 +8,6 @@ let workspace = Workspace(
         "Projects/Features/**",
         "Projects/Domain/**",
         "Projects/Data/**",
-        "Projects/ThirdParty/**",
-        "Projects/Core/**",
-        "Projects/DSKit/**",
         "Projects/Shared/**",
     ]
 )

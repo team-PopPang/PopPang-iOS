@@ -19,15 +19,21 @@ let project = Project(
             ),
             sources: ["Sources/**"],
             resources: ["Resources/**"],
+            entitlements: "PopPangApp.entitlements",
             dependencies: [
                 .project(target: "Coordinator", path: "../Coordinator"),
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "Data", path: "../Data"),
-                .project(target: "ThirdParty", path: "../ThirdParty"),
-                .project(target: "Core", path: "../Core"),
-                .project(target: "DSKit", path: "../DSKit"),
-                .project(target: "Shared", path: "../Shared"),
-            ]
+                .project(target: "ThirdParty", path: "../Shared/ThirdParty"),
+                .project(target: "Core", path: "../Shared/Core"),
+                .project(target: "DSKit", path: "../Shared/DSKit"),
+            ],
+            settings: .settings(
+                base: [
+                    "CODE_SIGN_STYLE": "Automatic",
+                    "DEVELOPMENT_TEAM": "LGX4B4WC66",
+                ]
+            )
         ),
         .target(
             name: "PopPangAppTests",

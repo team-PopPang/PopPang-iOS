@@ -1,4 +1,5 @@
 import SwiftUI
+import AlertFeature
 
 @main
 struct AlertFeatureDemoApp: App {

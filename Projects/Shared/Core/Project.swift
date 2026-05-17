@@ -1,31 +1,29 @@
 import ProjectDescription
 
 let project = Project(
-    name: "Data",
+    name: "Core",
     targets: [
         .target(
-            name: "Data",
+            name: "Core",
             destinations: .iOS,
             product: .framework,
-            bundleId: "com.poppang.data",
+            bundleId: "com.poppang.core",
             deploymentTargets: .iOS("16.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: [
-                .project(target: "Domain", path: "../Domain"),
-                .project(target: "ThirdParty", path: "../Shared/ThirdParty"),
-                .project(target: "Core", path: "../Shared/Core"),
+                .project(target: "ThirdParty", path: "../ThirdParty")
             ]
         ),
         .target(
-            name: "DataTests",
+            name: "CoreTests",
             destinations: .iOS,
             product: .unitTests,
-            bundleId: "com.poppang.data.tests",
+            bundleId: "com.poppang.core.tests",
             deploymentTargets: .iOS("16.0"),
             infoPlist: .default,
             sources: ["Tests/**"],
-            dependencies: [.target(name: "Data")]
+            dependencies: [.target(name: "Core")]
         ),
     ]
 )

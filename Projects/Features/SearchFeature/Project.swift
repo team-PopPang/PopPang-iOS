@@ -13,8 +13,7 @@ let project = Project(
             sources: ["Sources/**"],
             dependencies: [
                 .project(target: "Domain", path: "../../Domain"),
-                .project(target: "DSKit", path: "../../DSKit"),
-                .project(target: "Shared", path: "../../Shared"),
+                .project(target: "DSKit", path: "../../Shared/DSKit"),
             ]
         ),
         .target(

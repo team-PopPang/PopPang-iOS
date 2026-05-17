@@ -118,6 +118,7 @@ module-help:
 	@echo "Usage:"
 	@echo "  make module LAYER=feature NAME=Home"
 	@echo "  make module LAYER=feature NAME=PopupDetail INTERFACE=true"
+	@echo "  make regen"
 	@echo ""
 	@echo "Available layers:"
 	@echo "  app, coordinator, feature, domain, data, thirdparty, core, dskit, shared"
@@ -133,6 +134,7 @@ module-help:
 	@echo "  make module LAYER=core NAME=HTTPClient"
 	@echo "  make module LAYER=dskit NAME=DSKit"
 	@echo "  make module LAYER=shared NAME=UIComponents"
+	@echo "  make regen"
 
 module:
 	@if [ -z "$(LAYER)" ] || [ -z "$(NAME)" ]; then \
@@ -164,3 +166,13 @@ module:
 	else \
 		tuist scaffold $$TEMPLATE --name $(NAME); \
 	fi
+
+# -----------------------------
+# ♻️ Regenerate Tuist Projects
+# -----------------------------
+regen:
+	@echo "♻️ Removing generated xcodeproj/Derived artifacts..."
+	@find Projects -name '*.xcodeproj' -type d -prune -exec rm -rf {} +
+	@find Projects -name 'Derived' -type d -prune -exec rm -rf {} +
+	@echo "🧱 Running tuist generate..."
+	@tuist generate
