@@ -5,33 +5,34 @@ let project = Project(
     targets: [
         .target(
             name: "PopupDetailFeature",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .framework,
             bundleId: "com.poppang.features.popupdetail",
-            deploymentTargets: .iOS("16.0"),
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: [
+                .external(name: "Compound"),
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
             ]
         ),
         .target(
             name: "PopupDetailFeatureInterface",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .framework,
             bundleId: "com.poppang.features.popupdetail.interface",
-            deploymentTargets: .iOS("16.0"),
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Interface/Sources/**"],
             dependencies: [.target(name: "PopupDetailFeature")]
         ),
         .target(
             name: "PopupDetailFeatureDemo",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .app,
             bundleId: "com.poppang.demo.popupdetail",
-            deploymentTargets: .iOS("16.0"),
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .extendingDefault(
                 with: [
                     "UILaunchScreen": [
@@ -45,10 +46,10 @@ let project = Project(
         ),
         .target(
             name: "PopupDetailFeatureTests",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .unitTests,
             bundleId: "com.poppang.features.popupdetail.tests",
-            deploymentTargets: .iOS("16.0"),
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Tests/**"],
             dependencies: [.target(name: "PopupDetailFeature")]

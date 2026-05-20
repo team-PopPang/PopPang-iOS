@@ -1,10 +1,10 @@
 import SwiftUI
 
-public struct CalendarFeatureView: View {
-    @StateObject private var store: CalendarFeatureStore
+struct CalendarFeatureView: View {
+    private let compound: CalendarFeatureCompound
 
-    public init(store: CalendarFeatureStore) {
-        _store = StateObject(wrappedValue: store)
+    init(compound: CalendarFeatureCompound) {
+        self.compound = compound
     }
 
     public var body: some View {
@@ -12,17 +12,17 @@ public struct CalendarFeatureView: View {
             Text("CalendarFeature")
                 .font(.title2)
 
-            if store.state.isLoading {
+            if compound.state.isLoading {
                 ProgressView()
             }
 
             Button("새로고침") {
-                store.send(.refresh)
+                compound.send(.refresh)
             }
         }
         .padding()
         .task {
-            store.send(.onAppear)
+            compound.send(.onAppear)
         }
     }
 }

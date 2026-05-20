@@ -5,10 +5,10 @@ let project = Project(
     targets: [
         .target(
             name: "ThirdParty",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .framework,
             bundleId: "com.poppang.thirdparty",
-            deploymentTargets: .iOS("16.0"),
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: [
@@ -24,14 +24,15 @@ let project = Project(
                 .external(name: "Kingfisher"),
                 .external(name: "Moya"),
                 .external(name: "NMapsMap"),
+                .external(name: "Compound"),
             ]
         ),
         .target(
             name: "ThirdPartyTests",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .unitTests,
             bundleId: "com.poppang.thirdparty.tests",
-            deploymentTargets: .iOS("16.0"),
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Tests/**"],
             dependencies: [.target(name: "ThirdParty")]

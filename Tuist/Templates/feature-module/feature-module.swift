@@ -7,7 +7,7 @@ let template = Template(
     attributes: [
         name,
         .optional("bundleIdPrefix", default: "com.poppang"),
-        .optional("deploymentTarget", default: "16.0"),
+        .optional("deploymentTarget", default: "17.0"),
         .optional("includeInterface", default: .boolean(false)),
     ],
     items: [
@@ -32,20 +32,8 @@ let template = Template(
             templatePath: "FeatureView.stencil"
         ),
         .file(
-            path: "Projects/Features/\(name)Feature/Sources/Presentation/\(name)FeatureStore.swift",
-            templatePath: "FeatureStore.stencil"
-        ),
-        .file(
-            path: "Projects/Features/\(name)Feature/Sources/Presentation/\(name)FeatureAction.swift",
-            templatePath: "FeatureAction.stencil"
-        ),
-        .file(
-            path: "Projects/Features/\(name)Feature/Sources/Presentation/\(name)FeatureMutation.swift",
-            templatePath: "FeatureMutation.stencil"
-        ),
-        .file(
-            path: "Projects/Features/\(name)Feature/Sources/Presentation/\(name)FeatureState.swift",
-            templatePath: "FeatureState.stencil"
+            path: "Projects/Features/\(name)Feature/Sources/Presentation/\(name)FeatureCompound.swift",
+            templatePath: "FeatureCompound.stencil"
         ),
         .file(
             path: "Projects/Features/\(name)Feature/Sources/Navigation/\(name)FeatureRoute.swift",

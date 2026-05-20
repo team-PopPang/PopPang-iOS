@@ -1,10 +1,10 @@
 import SwiftUI
 
-public struct PopupDetailFeatureView: View {
-    @StateObject private var store: PopupDetailFeatureStore
+struct PopupDetailFeatureView: View {
+    private let compound: PopupDetailFeatureCompound
 
-    public init(store: PopupDetailFeatureStore) {
-        _store = StateObject(wrappedValue: store)
+    init(compound: PopupDetailFeatureCompound) {
+        self.compound = compound
     }
 
     public var body: some View {
@@ -12,17 +12,17 @@ public struct PopupDetailFeatureView: View {
             Text("PopupDetailFeature")
                 .font(.title2)
 
-            if store.state.isLoading {
+            if compound.state.isLoading {
                 ProgressView()
             }
 
             Button("새로고침") {
-                store.send(.refresh)
+                compound.send(.refresh)
             }
         }
         .padding()
         .task {
-            store.send(.onAppear)
+            compound.send(.onAppear)
         }
     }
 }

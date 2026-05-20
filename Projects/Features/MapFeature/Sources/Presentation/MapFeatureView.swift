@@ -1,10 +1,10 @@
 import SwiftUI
 
-public struct MapFeatureView: View {
-    @StateObject private var store: MapFeatureStore
+struct MapFeatureView: View {
+    private let compound: MapFeatureCompound
 
-    public init(store: MapFeatureStore) {
-        _store = StateObject(wrappedValue: store)
+    init(compound: MapFeatureCompound) {
+        self.compound = compound
     }
 
     public var body: some View {
@@ -12,17 +12,17 @@ public struct MapFeatureView: View {
             Text("MapFeature")
                 .font(.title2)
 
-            if store.state.isLoading {
+            if compound.state.isLoading {
                 ProgressView()
             }
 
             Button("새로고침") {
-                store.send(.refresh)
+                compound.send(.refresh)
             }
         }
         .padding()
         .task {
-            store.send(.onAppear)
+            compound.send(.onAppear)
         }
     }
 }

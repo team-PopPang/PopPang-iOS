@@ -1,5 +1,0 @@
-import Foundation
-
-public enum {{ name }}FeatureMutation: Sendable {
-    case setLoading(Bool)
-}

@@ -94,5 +94,6 @@ let package = Package(
         .package(url: "https://github.com/onevcat/Kingfisher", exact: "8.6.2"),
         .package(url: "https://github.com/Moya/Moya.git", exact: "15.0.3"),
         .package(url: "https://github.com/navermaps/SPM-NMapsMap", exact: "3.23.0"),
+        .package(url: "https://github.com/indextrown/Compound", exact: "1.0.3"),
     ]
 )

@@ -5,25 +5,26 @@ let project = Project(
     targets: [
         .target(
             name: "FavoritesFeature",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .framework,
             bundleId: "com.poppang.features.favorites",
-            deploymentTargets: .iOS("16.0"),
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: [
                 "Sources/**",
             ],
             dependencies: [
+                .external(name: "Compound"),
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
             ]
         ),
         .target(
             name: "FavoritesFeatureDemo",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .app,
             bundleId: "com.poppang.demo.favorites",
-            deploymentTargets: .iOS("16.0"),
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .extendingDefault(
                 with: [
                     "UILaunchScreen": [
@@ -37,10 +38,10 @@ let project = Project(
         ),
         .target(
             name: "FavoritesFeatureTests",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .unitTests,
             bundleId: "com.poppang.features.favorites.tests",
-            deploymentTargets: .iOS("16.0"),
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Tests/**"],
             dependencies: [.target(name: "FavoritesFeature")]

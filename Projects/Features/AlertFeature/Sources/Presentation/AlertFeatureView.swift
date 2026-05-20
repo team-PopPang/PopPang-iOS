@@ -1,10 +1,10 @@
 import SwiftUI
 
-public struct AlertFeatureView: View {
-    @StateObject private var store: AlertFeatureStore
+struct AlertFeatureView: View {
+    private let compound: AlertFeatureCompound
 
-    public init(store: AlertFeatureStore) {
-        _store = StateObject(wrappedValue: store)
+    init(compound: AlertFeatureCompound) {
+        self.compound = compound
     }
 
     public var body: some View {
@@ -12,17 +12,17 @@ public struct AlertFeatureView: View {
             Text("AlertFeature")
                 .font(.title2)
 
-            if store.state.isLoading {
+            if compound.state.isLoading {
                 ProgressView()
             }
 
             Button("새로고침") {
-                store.send(.refresh)
+                compound.send(.refresh)
             }
         }
         .padding()
         .task {
-            store.send(.onAppear)
+            compound.send(.onAppear)
         }
     }
 }
