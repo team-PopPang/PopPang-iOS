@@ -12,6 +12,7 @@ let project = Project(
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: [
+                .external(name: "Compound"),
                 .external(name: "FirebaseAnalytics"),
                 .external(name: "FirebaseCore"),
                 .external(name: "FirebaseMessaging"),
@@ -24,7 +25,6 @@ let project = Project(
                 .external(name: "Kingfisher"),
                 .external(name: "Moya"),
                 .external(name: "NMapsMap"),
-                .external(name: "Compound"),
             ]
         ),
         .target(

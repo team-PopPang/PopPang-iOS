@@ -14,9 +14,9 @@ let project = Project(
                 "Sources/**",
             ],
             dependencies: [
-                .external(name: "Compound"),
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
+                .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]
         ),
         .target(
