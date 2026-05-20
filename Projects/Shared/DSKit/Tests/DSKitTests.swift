@@ -3,6 +3,7 @@ import Testing
 
 struct DSKitTests {
     @Test
-    func example() async throws {
+    func example() {
+        #expect(true)
     }
 }

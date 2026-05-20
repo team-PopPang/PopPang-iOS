@@ -5,22 +5,46 @@ let project = Project(
     targets: [
         .target(
             name: "DSKit",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .framework,
             bundleId: "com.poppang.dskit",
-            deploymentTargets: .iOS("16.0"),
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
+            resources: ["Resources/**"],
             dependencies: [
                 .project(target: "Core", path: "../Core"),
             ]
         ),
         .target(
+            name: "DSKitDemo",
+            destinations: [.iPhone],
+            product: .app,
+            bundleId: "com.poppang.demo.dskit",
+            deploymentTargets: .iOS("17.0"),
+            infoPlist: .extendingDefault(
+                with: [
+                    "UILaunchScreen": [
+                        "UIColorName": "",
+                        "UIImageName": "",
+                    ],
+                ]
+            ),
+            sources: ["Demo/Sources/**"],
+            dependencies: [.target(name: "DSKit")],
+            settings: .settings(
+                base: [
+                    "CODE_SIGN_STYLE": "Automatic",
+                    "DEVELOPMENT_TEAM": "LGX4B4WC66",
+                ]
+            )
+        ),
+        .target(
             name: "DSKitTests",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .unitTests,
             bundleId: "com.poppang.dskit.tests",
-            deploymentTargets: .iOS("16.0"),
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Tests/**"],
             dependencies: [.target(name: "DSKit")]
