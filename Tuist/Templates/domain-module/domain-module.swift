@@ -7,7 +7,7 @@ let template = Template(
     attributes: [
         name,
         .optional("bundleIdPrefix", default: "com.poppang"),
-        .optional("deploymentTarget", default: "16.0"),
+        .optional("deploymentTarget", default: "17.0"),
     ],
     items: [
         .file(

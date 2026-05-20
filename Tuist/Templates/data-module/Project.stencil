@@ -5,7 +5,7 @@ let project = Project(
     targets: [
         .target(
             name: "{{ name }}Data",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .framework,
             bundleId: "{{ bundleIdPrefix }}.data.{{ name | lowercase }}",
             deploymentTargets: .iOS("{{ deploymentTarget }}"),
@@ -15,7 +15,7 @@ let project = Project(
         ),
         .target(
             name: "{{ name }}DataTests",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .unitTests,
             bundleId: "{{ bundleIdPrefix }}.data.{{ name | lowercase }}.tests",
             deploymentTargets: .iOS("{{ deploymentTarget }}"),

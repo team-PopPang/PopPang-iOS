@@ -119,6 +119,8 @@ module-help:
 	@echo "  make module LAYER=feature NAME=Home"
 	@echo "  make module LAYER=feature NAME=PopupDetail INTERFACE=true"
 	@echo "  make regen"
+	@echo "  make clean"
+	@echo "  make reinstall"
 	@echo ""
 	@echo "Available layers:"
 	@echo "  app, coordinator, feature, domain, data, thirdparty, core, dskit, shared"
@@ -135,6 +137,8 @@ module-help:
 	@echo "  make module LAYER=dskit NAME=DSKit"
 	@echo "  make module LAYER=shared NAME=UIComponents"
 	@echo "  make regen"
+	@echo "  make clean"
+	@echo "  make reinstall"
 
 module:
 	@if [ -z "$(LAYER)" ] || [ -z "$(NAME)" ]; then \
@@ -176,3 +180,28 @@ regen:
 	@find Projects -name 'Derived' -type d -prune -exec rm -rf {} +
 	@echo "🧱 Running tuist generate..."
 	@tuist generate
+
+# -----------------------------
+# 🧹 Clean Local Build Artifacts
+# -----------------------------
+clean:
+	@echo "🧹 Removing generated workspace/project artifacts..."
+	@rm -rf PopPang.xcworkspace
+	@find Projects -name '*.xcodeproj' -type d -prune -exec rm -rf {} +
+	@find Projects -name 'Derived' -type d -prune -exec rm -rf {} +
+	@find Projects -name 'build' -type d -prune -exec rm -rf {} +
+	@echo "🧹 Removing local Xcode DerivedData for PopPang..."
+	@find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -name 'PopPang-*' -type d -prune -exec rm -rf {} +
+	@echo "🧹 Cleaning Tuist local cache..."
+	@tuist clean
+	@echo "✅ Local build artifacts and Tuist caches removed."
+
+# -----------------------------
+# 🔄 Reinstall Tuist Dependencies and Regenerate
+# -----------------------------
+reinstall: clean
+	@echo "📦 Reinstalling Tuist dependencies..."
+	@tuist install
+	@echo "🧱 Running tuist generate..."
+	@tuist generate
+	@echo "✅ Tuist dependencies reinstalled and workspace regenerated."
