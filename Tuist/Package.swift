@@ -80,6 +80,7 @@ import PackageDescription
     let packageSettings = PackageSettings(
         productTypes: [
             "Alamofire": .framework,
+            "Compound": .framework,
             "Moya": .framework,
         ]
     )
