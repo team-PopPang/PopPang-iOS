@@ -81,6 +81,7 @@ import PackageDescription
         productTypes: [
             "Alamofire": .framework,
             "Compound": .framework,
+            "CompoundCore": .framework,
             "Moya": .framework,
         ]
     )
