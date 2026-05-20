@@ -19,10 +19,10 @@ let project = Project(
     targets: [
         .target(
             name: "Coordinator",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .framework,
             bundleId: "com.poppang.coordinator",
-            deploymentTargets: .iOS("16.0"),
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: featureDependencies + [
@@ -32,10 +32,10 @@ let project = Project(
         ),
         .target(
             name: "CoordinatorTests",
-            destinations: .iOS,
+            destinations: [.iPhone],
             product: .unitTests,
             bundleId: "com.poppang.coordinator.tests",
-            deploymentTargets: .iOS("16.0"),
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Tests/**"],
             dependencies: [.target(name: "Coordinator")]
