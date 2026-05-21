@@ -6,13 +6,12 @@ let project = Project(
         .target(
             name: "SearchFeature",
             destinations: [.iPhone],
-            product: .framework,
+            product: .staticFramework,
             bundleId: "com.poppang.features.search",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: [
-                .external(name: "Compound"),
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),

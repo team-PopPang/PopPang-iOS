@@ -6,7 +6,7 @@ let project = Project(
         .target(
             name: "ReviewFeature",
             destinations: [.iPhone],
-            product: .framework,
+            product: .staticFramework,
             bundleId: "com.poppang.features.review",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
@@ -14,7 +14,6 @@ let project = Project(
                 "Sources/**",
             ],
             dependencies: [
-                .external(name: "Compound"),
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
