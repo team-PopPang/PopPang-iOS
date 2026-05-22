@@ -13,14 +13,14 @@ public final class OnboardingCoordinator: Coordinator<
     public weak var parent: (any RootCoordinating)?
 
     public func makeRootView() -> some View {
-        VStack(spacing: 20) {
-            OnboardingFeatureView()
-
-            Button("인증 플로우로 이동") {
-                self.parent?.showAuthFlow()
+        OnboardingFeatureView(
+            onSkip: { [weak self] in
+                self?.parent?.completeOnboarding()
+            },
+            onComplete: { [weak self] in
+                self?.parent?.completeOnboarding()
             }
-            .buttonStyle(.borderedProminent)
-        }
+        )
         .navigationTitle("Onboarding")
     }
 

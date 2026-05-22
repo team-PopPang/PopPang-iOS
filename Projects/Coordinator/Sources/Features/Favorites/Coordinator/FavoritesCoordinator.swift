@@ -1,10 +1,11 @@
+import AlertFeature
 import Core
 import FavoritesFeature
 import SwiftUI
 
 @MainActor
 public final class FavoritesCoordinator: Coordinator<
-    EmptyRoute,
+    FavoritesFeatureRoute,
     EmptySheetRoute,
     EmptyOverlayRoute,
     EmptyFullScreenRoute,
@@ -16,7 +17,10 @@ public final class FavoritesCoordinator: Coordinator<
     }
 
     @ViewBuilder
-    public func buildView(for route: EmptyRoute) -> some View {
-        EmptyView()
+    public func buildView(for route: FavoritesFeatureRoute) -> some View {
+        switch route {
+        case .alert:
+            AlertFeatureView()
+        }
     }
 }

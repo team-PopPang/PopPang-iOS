@@ -43,7 +43,10 @@ let project = Project(
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Tests/**"],
-            dependencies: [.target(name: "PopPangApp")]
+            dependencies: [
+                .target(name: "PopPangApp"),
+                .project(target: "Domain", path: "../Domain"),
+            ]
         ),
     ]
 )

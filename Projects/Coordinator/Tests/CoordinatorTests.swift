@@ -23,6 +23,65 @@ struct CoordinatorTests {
 
     @Test
     @MainActor
+    func rootCoordinatorBeginsWithResolvedDestinationAfterLaunch() {
+        let store = RootCoordinator(
+            destination: .launch,
+            nextDestination: .auth
+        )
+
+        store.begin()
+
+        #expect(store.destination == .auth)
+    }
+
+    @Test
+    @MainActor
+    func rootCoordinatorCompletesOnboardingAuthenticationAndLogout() {
+        var completedOnboarding = false
+        var authenticatedUserID: String?
+        var didLogout = false
+
+        let store = RootCoordinator(
+            actions: RootCoordinatorActions(
+                completeOnboarding: {
+                    completedOnboarding = true
+                },
+                authenticate: { userID in
+                    authenticatedUserID = userID
+                },
+                logout: {
+                    didLogout = true
+                }
+            )
+        )
+
+        store.completeOnboarding()
+        #expect(completedOnboarding)
+        #expect(store.destination == .auth)
+
+        store.completeAuthentication(userID: "demo-user")
+        #expect(authenticatedUserID == "demo-user")
+        #expect(store.destination == .main)
+
+        store.logout()
+        #expect(didLogout)
+        #expect(store.destination == .auth)
+    }
+
+    @Test
+    @MainActor
+    func mainTabCoordinatorRoutesLogoutToRootCoordinator() {
+        let root = RootCoordinator(destination: .main)
+        let coordinator = MainTabCoordinator()
+        coordinator.rootCoordinator = root
+
+        coordinator.logout()
+
+        #expect(root.destination == .auth)
+    }
+
+    @Test
+    @MainActor
     func coordinatorSupportsPushAndPop() {
         let store = Coordinator<
             Int,

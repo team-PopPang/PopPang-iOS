@@ -10,6 +10,14 @@ public final class MapCoordinator: Coordinator<
     EmptyFullScreenRoute,
     MapBottomSheetRoute
 > {
+    public func showPopupListSheet() {
+        presentBottomSheet(.popupList)
+    }
+
+    public func showPopupDetailSheet() {
+        presentBottomSheet(.popupDetail)
+    }
+
     public func makeRootView() -> some View {
         MapFeatureView()
             .navigationTitle("Map")

@@ -77,11 +77,10 @@ import PackageDescription
     //   - 그래서 GoogleSignIn은 "공식적으로 `.framework`로 바꾸라"는 근거가 없고, 이 프로젝트에서는 실제 빌드 재현 결과를 우선해 기본값 유지로 둔다.
     // - Moya, Alamofire: `.framework` 유지
     //   - 이유: 기본값으로 둘 때 `Moya` 쪽에서 `Alamofire`를 못 찾는 모듈 해석 문제가 실제로 재현됐다.
+    //   - `Compound`는 feature에서 직접 들고 가지 않고 `ThirdParty` 허브를 통해 제공한다.
     let packageSettings = PackageSettings(
         productTypes: [
             "Alamofire": .framework,
-            "Compound": .framework,
-            "CompoundCore": .framework,
             "Moya": .framework,
         ]
     )

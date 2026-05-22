@@ -25,6 +25,7 @@ let project = Project(
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
+            resources: ["Resources/**"],
             dependencies: featureDependencies + [
                 .project(target: "Core", path: "../Shared/Core"),
                 .project(target: "Domain", path: "../Domain"),

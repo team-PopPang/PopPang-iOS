@@ -2,6 +2,7 @@ import Foundation
 
 public enum MainTab: Hashable, CaseIterable, Sendable {
     case home
+    case calendar
     case map
     case favorites
     case profile
@@ -10,25 +11,33 @@ public enum MainTab: Hashable, CaseIterable, Sendable {
         switch self {
         case .home:
             "홈"
+        case .calendar:
+            "캘린더"
         case .map:
-            "지도"
+            "팝팡지도"
         case .favorites:
-            "찜"
+            "팝팡"
         case .profile:
-            "프로필"
+            "마이"
         }
     }
 
-    var systemImage: String {
+    var rawImageName: String {
         switch self {
         case .home:
-            "house"
+            "home"
+        case .calendar:
+            "calendar"
         case .map:
             "map"
         case .favorites:
-            "heart"
+            "favorite"
         case .profile:
-            "person"
+            "profile"
         }
+    }
+
+    func tabImage(selected: Bool) -> String {
+        selected ? "\(rawImageName)_fill" : rawImageName
     }
 }

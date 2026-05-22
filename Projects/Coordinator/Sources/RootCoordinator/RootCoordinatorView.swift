@@ -20,12 +20,14 @@ public struct RootCoordinatorView: View {
             switch coordinator.destination {
             case .launch:
                 LaunchScene(
-                    onContinue: coordinator.showOnboarding
+                    onContinue: coordinator.begin
                 )
             case .onboarding:
                 OnboardingCoordinatorView(coordinator: coordinator.onboardingCoordinator)
             case .auth:
                 AuthFlowCoordinatorView(coordinator: coordinator.authFlowCoordinator)
+            case .register:
+                RegisterFlowCoordinatorView(coordinator: coordinator.authFlowCoordinator)
             case .main:
                 MainTabCoordinatorView(coordinator: coordinator.mainTabCoordinator)
             }
@@ -41,15 +43,15 @@ private struct LaunchScene: View {
             Text("PopPang")
                 .font(.largeTitle.bold())
 
-            Text("루트 코디네이터 시작 화면")
+            Text("세션과 온보딩 상태를 확인하고 있습니다")
                 .foregroundStyle(.secondary)
 
-            Button("온보딩으로 이동") {
-                onContinue()
-            }
-            .buttonStyle(.borderedProminent)
+            ProgressView()
         }
         .padding(24)
+        .task {
+            onContinue()
+        }
     }
 }
 
@@ -77,6 +79,24 @@ private struct AuthFlowCoordinatorView: View {
     var body: some View {
         CoordinatorContainer(coordinator: coordinator) {
             coordinator.makeRootView()
+        } destination: { route in
+            coordinator.buildView(for: route)
+        } sheetView: { route in
+            EmptyView()
+        } overlayView: { route in
+            EmptyView()
+        } fullScreenView: { route in
+            EmptyView()
+        }
+    }
+}
+
+private struct RegisterFlowCoordinatorView: View {
+    let coordinator: AuthFlowCoordinator
+
+    var body: some View {
+        CoordinatorContainer(coordinator: coordinator) {
+            coordinator.makeRegisterView()
         } destination: { route in
             coordinator.buildView(for: route)
         } sheetView: { route in

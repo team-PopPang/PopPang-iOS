@@ -22,7 +22,11 @@ public struct MainTabCoordinatorView: View {
             ForEach(coordinator.tabs, id: \.self) { tab in
                 tabView(for: tab)
                     .tabItem {
-                        Label(tab.title, systemImage: tab.systemImage)
+                        Image(tab.tabImage(selected: coordinator.selectedTab == tab))
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 25, height: 25)
+                        Text(tab.title)
                     }
                     .tag(tab)
             }
@@ -36,6 +40,8 @@ private extension MainTabCoordinatorView {
         switch tab {
         case .home:
             HomeCoordinatorView(coordinator: coordinator.homeCoordinator)
+        case .calendar:
+            CalendarCoordinatorView(coordinator: coordinator.calendarCoordinator)
         case .map:
             MapCoordinatorView(coordinator: coordinator.mapCoordinator)
         case .favorites:
@@ -48,6 +54,24 @@ private extension MainTabCoordinatorView {
 
 private struct HomeCoordinatorView: View {
     let coordinator: HomeCoordinator
+
+    var body: some View {
+        CoordinatorContainer(coordinator: coordinator) {
+            coordinator.makeRootView()
+        } destination: { route in
+            coordinator.buildView(for: route)
+        } sheetView: { route in
+            EmptyView()
+        } overlayView: { route in
+            EmptyView()
+        } fullScreenView: { route in
+            EmptyView()
+        }
+    }
+}
+
+private struct CalendarCoordinatorView: View {
+    let coordinator: CalendarCoordinator
 
     var body: some View {
         CoordinatorContainer(coordinator: coordinator) {
