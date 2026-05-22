@@ -4,8 +4,8 @@ let featureDependencies: [TargetDependency] = [
     .project(target: "AuthFeature", path: "../Features/AuthFeature"),
     .project(target: "OnboardingFeature", path: "../Features/OnboardingFeature"),
     .project(target: "HomeFeature", path: "../Features/HomeFeature"),
-    .project(target: "SearchFeatureInterface", path: "../Features/SearchFeature"),
-    .project(target: "PopupDetailFeatureInterface", path: "../Features/PopupDetailFeature"),
+    .project(target: "SearchFeature", path: "../Features/SearchFeature"),
+    .project(target: "PopupDetailFeature", path: "../Features/PopupDetailFeature"),
     .project(target: "MapFeature", path: "../Features/MapFeature"),
     .project(target: "CalendarFeature", path: "../Features/CalendarFeature"),
     .project(target: "FavoritesFeature", path: "../Features/FavoritesFeature"),
@@ -26,6 +26,7 @@ let project = Project(
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: featureDependencies + [
+                .project(target: "Core", path: "../Shared/Core"),
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "DSKit", path: "../Shared/DSKit"),
             ]

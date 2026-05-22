@@ -23,9 +23,9 @@ public struct RootCoordinatorView: View {
                     onContinue: coordinator.showOnboarding
                 )
             case .onboarding:
-                CoordinatedView(coordinator.onboardingCoordinator)
+                OnboardingCoordinatorView(coordinator: coordinator.onboardingCoordinator)
             case .auth:
-                CoordinatedView(coordinator.authFlowCoordinator)
+                AuthFlowCoordinatorView(coordinator: coordinator.authFlowCoordinator)
             case .main:
                 MainTabCoordinatorView(coordinator: coordinator.mainTabCoordinator)
             }
@@ -50,5 +50,41 @@ private struct LaunchScene: View {
             .buttonStyle(.borderedProminent)
         }
         .padding(24)
+    }
+}
+
+private struct OnboardingCoordinatorView: View {
+    let coordinator: OnboardingCoordinator
+
+    var body: some View {
+        CoordinatorContainer(coordinator: coordinator) {
+            coordinator.makeRootView()
+        } destination: { route in
+            coordinator.buildView(for: route)
+        } sheetView: { route in
+            EmptyView()
+        } overlayView: { route in
+            EmptyView()
+        } fullScreenView: { route in
+            EmptyView()
+        }
+    }
+}
+
+private struct AuthFlowCoordinatorView: View {
+    let coordinator: AuthFlowCoordinator
+
+    var body: some View {
+        CoordinatorContainer(coordinator: coordinator) {
+            coordinator.makeRootView()
+        } destination: { route in
+            coordinator.buildView(for: route)
+        } sheetView: { route in
+            EmptyView()
+        } overlayView: { route in
+            EmptyView()
+        } fullScreenView: { route in
+            EmptyView()
+        }
     }
 }

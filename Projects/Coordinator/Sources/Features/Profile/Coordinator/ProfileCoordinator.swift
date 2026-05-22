@@ -1,27 +1,32 @@
 import Core
-import OnboardingFeature
+import ProfileFeature
 import SwiftUI
 
 @MainActor
-public final class OnboardingCoordinator: Coordinator<
+public protocol ProfileCoordinatorParent: AnyObject {
+    func showAuthFlow()
+}
+
+@MainActor
+public final class ProfileCoordinator: Coordinator<
     EmptyRoute,
     EmptySheetRoute,
     EmptyOverlayRoute,
     EmptyFullScreenRoute,
     EmptyBottomSheetRoute
 > {
-    public weak var parent: (any RootCoordinating)?
+    public weak var parent: (any ProfileCoordinatorParent)?
 
     public func makeRootView() -> some View {
         VStack(spacing: 20) {
-            OnboardingFeatureView()
+            ProfileFeatureView()
 
-            Button("인증 플로우로 이동") {
+            Button("로그아웃") {
                 self.parent?.showAuthFlow()
             }
-            .buttonStyle(.borderedProminent)
+            .buttonStyle(.bordered)
         }
-        .navigationTitle("Onboarding")
+        .navigationTitle("Profile")
     }
 
     @ViewBuilder

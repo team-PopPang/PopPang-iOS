@@ -1,17 +1,91 @@
+import Core
 import SwiftUI
 
-public struct CoordinatedView<C: Coordinator>: View {
-    private let coordinator: C
+public struct CoordinatorContainer<
+    Route: Hashable,
+    Sheet: Identifiable,
+    Overlay: Identifiable,
+    FullScreen: Identifiable,
+    BottomSheet: BottomSheetPresentingRoute,
+    Content: View,
+    Destination: View,
+    SheetContent: View,
+    OverlayContent: View,
+    FullScreenContent: View,
+    BottomSheetContent: View
+>: View {
+    @Bindable private var coordinator: Coordinator<Route, Sheet, Overlay, FullScreen, BottomSheet>
+    private let content: () -> Content
+    private let destination: (Route) -> Destination
+    private let sheetView: (Sheet) -> SheetContent
+    private let overlayView: (Overlay) -> OverlayContent
+    private let fullScreenView: (FullScreen) -> FullScreenContent
+    private let bottomSheetView: ((BottomSheet) -> BottomSheetContent)?
 
-    public init(_ coordinator: C) {
+    public init(
+        coordinator: Coordinator<Route, Sheet, Overlay, FullScreen, BottomSheet>,
+        @ViewBuilder content: @escaping () -> Content,
+        @ViewBuilder destination: @escaping (Route) -> Destination,
+        @ViewBuilder sheetView: @escaping (Sheet) -> SheetContent,
+        @ViewBuilder overlayView: @escaping (Overlay) -> OverlayContent,
+        @ViewBuilder fullScreenView: @escaping (FullScreen) -> FullScreenContent,
+        @ViewBuilder bottomSheetView: @escaping (BottomSheet) -> BottomSheetContent
+    ) {
         self.coordinator = coordinator
+        self.content = content
+        self.destination = destination
+        self.sheetView = sheetView
+        self.overlayView = overlayView
+        self.fullScreenView = fullScreenView
+        self.bottomSheetView = bottomSheetView
     }
 
     public var body: some View {
-        @Bindable var navigationController = coordinator.navigationController
-
-        NavigationStack(path: $navigationController.navigationPath) {
-            coordinator.rootView
+        NavigationStack(path: $coordinator.paths) {
+            content()
+                .navigationDestination(for: Route.self) { route in
+                    destination(route)
+                }
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    if let route = coordinator.bottomSheet,
+                       let bottomSheetView {
+                        bottomSheetView(route)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                }
         }
+        .environment(coordinator)
+        .sheet(item: $coordinator.sheet) { route in
+            sheetView(route)
+        }
+        .fullScreenCover(item: $coordinator.fullScreen) { route in
+            fullScreenView(route)
+        }
+        .overlay {
+            if let route = coordinator.overlay {
+                overlayView(route)
+            }
+        }
+        .animation(.snappy, value: coordinator.bottomSheet?.id)
+        .animation(.snappy, value: coordinator.bottomSheetPosition)
+    }
+}
+
+public extension CoordinatorContainer where BottomSheetContent == EmptyView {
+    init(
+        coordinator: Coordinator<Route, Sheet, Overlay, FullScreen, BottomSheet>,
+        @ViewBuilder content: @escaping () -> Content,
+        @ViewBuilder destination: @escaping (Route) -> Destination,
+        @ViewBuilder sheetView: @escaping (Sheet) -> SheetContent,
+        @ViewBuilder overlayView: @escaping (Overlay) -> OverlayContent,
+        @ViewBuilder fullScreenView: @escaping (FullScreen) -> FullScreenContent
+    ) {
+        self.coordinator = coordinator
+        self.content = content
+        self.destination = destination
+        self.sheetView = sheetView
+        self.overlayView = overlayView
+        self.fullScreenView = fullScreenView
+        self.bottomSheetView = nil
     }
 }

@@ -1,3 +1,5 @@
+import Core
+import MapFeature
 import Testing
 @testable import Coordinator
 
@@ -21,18 +23,60 @@ struct CoordinatorTests {
 
     @Test
     @MainActor
-    func stackNavigationStoreSupportsPushAndPop() {
-        let store = StackNavigationStore<Int>()
+    func coordinatorSupportsPushAndPop() {
+        let store = Coordinator<
+            Int,
+            EmptySheetRoute,
+            EmptyOverlayRoute,
+            EmptyFullScreenRoute,
+            EmptyBottomSheetRoute
+        >()
 
         store.push(1)
         store.push(1)
         store.push(2)
-        #expect(store.path == [1, 2])
+        #expect(store.paths == [1, 2])
 
         store.pop()
-        #expect(store.path == [1])
+        #expect(store.paths == [1])
 
         store.popToRoot()
-        #expect(store.path.isEmpty)
+        #expect(store.paths.isEmpty)
+    }
+
+    @Test
+    @MainActor
+    func coordinatorResetsBottomSheetDetentOnDismiss() {
+        let coordinator = Coordinator<
+            EmptyRoute,
+            EmptySheetRoute,
+            EmptyOverlayRoute,
+            EmptyFullScreenRoute,
+            MapBottomSheetRoute
+        >()
+
+        coordinator.presentBottomSheet(.popupList)
+        #expect(coordinator.bottomSheet == .popupList)
+        #expect(coordinator.bottomSheetPosition == .fraction(0.4))
+
+        coordinator.updateBottomSheetPosition(.fraction(0.7))
+        #expect(coordinator.bottomSheetPosition == .fraction(0.7))
+
+        coordinator.dismissBottomSheet()
+        #expect(coordinator.bottomSheet == nil)
+        #expect(coordinator.bottomSheetPosition == .hidden)
+    }
+
+    @Test
+    @MainActor
+    func mapCoordinatorOwnsFeatureLocalBottomSheetState() {
+        let coordinator = MapCoordinator()
+
+        coordinator.showPopupDetailSheet()
+        #expect(coordinator.bottomSheet == .popupDetail)
+
+        coordinator.dismissBottomSheet()
+        #expect(coordinator.bottomSheet == nil)
+        #expect(coordinator.bottomSheetPosition == .hidden)
     }
 }

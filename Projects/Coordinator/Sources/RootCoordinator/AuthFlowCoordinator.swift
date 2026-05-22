@@ -1,22 +1,20 @@
 import AuthFeature
+import Core
 import SwiftUI
 
 @MainActor
-public final class AuthFlowCoordinator: Coordinator {
+public final class AuthFlowCoordinator: Coordinator<
+    EmptyRoute,
+    EmptySheetRoute,
+    EmptyOverlayRoute,
+    EmptyFullScreenRoute,
+    EmptyBottomSheetRoute
+> {
     public weak var parent: (any RootCoordinating)?
-    public let navigationController: NavigationController
 
-    public init() {
-        self.navigationController = NavigationController()
-    }
-
-    public init(navigationController: NavigationController) {
-        self.navigationController = navigationController
-    }
-
-    public var rootView: some View {
+    public func makeRootView() -> some View {
         VStack(spacing: 20) {
-            AuthFeatureRootView()
+            AuthFeatureView()
 
             Button("메인 플로우로 이동") {
                 self.parent?.showMainFlow()
@@ -24,14 +22,10 @@ public final class AuthFlowCoordinator: Coordinator {
             .buttonStyle(.borderedProminent)
         }
         .navigationTitle("Auth")
-        .navigationDestination(for: PlaceholderRoute.self, destination: coordinate(_:))
     }
 
     @ViewBuilder
-    public func coordinate(_ route: PlaceholderRoute) -> some View {
-        switch route {
-        case .placeholder:
-            EmptyView()
-        }
+    public func buildView(for route: EmptyRoute) -> some View {
+        EmptyView()
     }
 }

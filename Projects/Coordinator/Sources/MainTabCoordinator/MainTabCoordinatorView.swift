@@ -35,13 +35,87 @@ private extension MainTabCoordinatorView {
     func tabView(for tab: MainTab) -> some View {
         switch tab {
         case .home:
-            CoordinatedView(coordinator.homeCoordinator)
+            HomeCoordinatorView(coordinator: coordinator.homeCoordinator)
         case .map:
-            CoordinatedView(coordinator.mapCoordinator)
+            MapCoordinatorView(coordinator: coordinator.mapCoordinator)
         case .favorites:
-            CoordinatedView(coordinator.favoritesCoordinator)
+            FavoritesCoordinatorView(coordinator: coordinator.favoritesCoordinator)
         case .profile:
-            CoordinatedView(coordinator.profileCoordinator)
+            ProfileCoordinatorView(coordinator: coordinator.profileCoordinator)
+        }
+    }
+}
+
+private struct HomeCoordinatorView: View {
+    let coordinator: HomeCoordinator
+
+    var body: some View {
+        CoordinatorContainer(coordinator: coordinator) {
+            coordinator.makeRootView()
+        } destination: { route in
+            coordinator.buildView(for: route)
+        } sheetView: { route in
+            EmptyView()
+        } overlayView: { route in
+            EmptyView()
+        } fullScreenView: { route in
+            EmptyView()
+        }
+    }
+}
+
+private struct MapCoordinatorView: View {
+    let coordinator: MapCoordinator
+
+    var body: some View {
+        CoordinatorContainer(coordinator: coordinator) {
+            coordinator.makeRootView()
+        } destination: { route in
+            coordinator.buildView(for: route)
+        } sheetView: { route in
+            EmptyView()
+        } overlayView: { route in
+            EmptyView()
+        } fullScreenView: { route in
+            EmptyView()
+        } bottomSheetView: { route in
+            coordinator.buildBottomSheet(for: route)
+        }
+    }
+}
+
+private struct FavoritesCoordinatorView: View {
+    let coordinator: FavoritesCoordinator
+
+    var body: some View {
+        CoordinatorContainer(coordinator: coordinator) {
+            coordinator.makeRootView()
+        } destination: { route in
+            coordinator.buildView(for: route)
+        } sheetView: { route in
+            EmptyView()
+        } overlayView: { route in
+            EmptyView()
+        } fullScreenView: { route in
+            EmptyView()
+        }
+    }
+}
+
+private struct ProfileCoordinatorView: View {
+    let coordinator: ProfileCoordinator
+
+    var body: some View {
+        CoordinatorContainer(coordinator: coordinator) {
+            coordinator.makeRootView()
+        } destination: { route in
+            coordinator.buildView(for: route)
+        } sheetView: { route in
+            EmptyView()
+        } overlayView: { route in
+            EmptyView()
+        } fullScreenView: { route in
+            EmptyView()
         }
     }
 }
