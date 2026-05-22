@@ -13,8 +13,12 @@ let project = Project(
             sources: ["Sources/**"],
             dependencies: [
                 .project(target: "Domain", path: "../Domain"),
-                .project(target: "ThirdParty", path: "../Shared/ThirdParty"),
                 .project(target: "Core", path: "../Shared/Core"),
+                .external(name: "GoogleSignIn"),
+                .external(name: "KakaoSDKAuth"),
+                .external(name: "KakaoSDKCommon"),
+                .external(name: "KakaoSDKUser"),
+                .external(name: "Moya"),
             ]
         ),
         .target(

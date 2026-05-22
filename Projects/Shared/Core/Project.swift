@@ -12,7 +12,7 @@ let project = Project(
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: [
-                .project(target: "ThirdParty", path: "../ThirdParty")
+                .external(name: "Moya")
             ]
         ),
         .target(
