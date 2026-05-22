@@ -18,16 +18,6 @@ let project = Project(
             ]
         ),
         .target(
-            name: "SearchFeatureInterface",
-            destinations: [.iPhone],
-            product: .framework,
-            bundleId: "com.poppang.features.search.interface",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .default,
-            sources: ["Interface/Sources/**"],
-            dependencies: [.target(name: "SearchFeature")]
-        ),
-        .target(
             name: "SearchFeatureDemo",
             destinations: [.iPhone],
             product: .app,
@@ -42,7 +32,7 @@ let project = Project(
                 ]
             ),
             sources: ["Demo/Sources/**"],
-            dependencies: [.target(name: "SearchFeatureInterface")]
+            dependencies: [.target(name: "SearchFeature")]
         ),
         .target(
             name: "SearchFeatureTests",

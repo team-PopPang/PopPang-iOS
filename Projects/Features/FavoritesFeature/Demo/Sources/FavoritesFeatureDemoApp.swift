@@ -4,7 +4,7 @@ import SwiftUI
 struct FavoritesFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            FavoritesFeatureRootView()
+            FavoritesFeatureView()
         }
     }
 }

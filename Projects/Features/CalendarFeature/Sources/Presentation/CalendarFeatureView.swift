@@ -1,11 +1,9 @@
 import SwiftUI
 
-struct CalendarFeatureView: View {
-    private let compound: CalendarFeatureCompound
+public struct CalendarFeatureView: View {
+    @State private var compound = CalendarFeatureCompound()
 
-    init(compound: CalendarFeatureCompound) {
-        self.compound = compound
-    }
+    public init() {}
 
     public var body: some View {
         VStack(spacing: 12) {

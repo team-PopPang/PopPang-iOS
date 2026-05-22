@@ -1,11 +1,11 @@
+import Core
 import SwiftUI
 
-struct HomeFeatureView: View {
-    private let compound: HomeFeatureCompound
+public struct HomeFeatureView: View {
+    @Environment(HomeFeatureCoordinator.self) private var coordinator
+    @State private var compound = HomeFeatureCompound()
 
-    init(compound: HomeFeatureCompound) {
-        self.compound = compound
-    }
+    public init() {}
 
     public var body: some View {
         VStack(spacing: 12) {
@@ -21,11 +21,11 @@ struct HomeFeatureView: View {
             }
 
             Button("검색으로 이동") {
-                compound.send(.searchButtonTapped)
+                coordinator.push(.search)
             }
 
             Button("팝업 상세로 이동") {
-                compound.send(.popupDetailButtonTapped)
+                coordinator.push(.popupDetail)
             }
         }
         .padding()

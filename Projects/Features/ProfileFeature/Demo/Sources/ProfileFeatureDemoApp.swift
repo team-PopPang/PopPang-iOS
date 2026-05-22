@@ -4,7 +4,7 @@ import SwiftUI
 struct ProfileFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            ProfileFeatureRootView()
+            ProfileFeatureView()
         }
     }
 }

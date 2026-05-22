@@ -4,7 +4,7 @@ import SwiftUI
 struct ReviewFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            ReviewFeatureRootView()
+            ReviewFeatureView()
         }
     }
 }

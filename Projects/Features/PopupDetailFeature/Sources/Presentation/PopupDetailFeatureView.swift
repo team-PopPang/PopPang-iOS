@@ -1,11 +1,9 @@
 import SwiftUI
 
-struct PopupDetailFeatureView: View {
-    private let compound: PopupDetailFeatureCompound
+public struct PopupDetailFeatureView: View {
+    @State private var compound = PopupDetailFeatureCompound()
 
-    init(compound: PopupDetailFeatureCompound) {
-        self.compound = compound
-    }
+    public init() {}
 
     public var body: some View {
         VStack(spacing: 12) {

@@ -1,11 +1,9 @@
 import SwiftUI
 
-struct FavoritesFeatureView: View {
-    private let compound: FavoritesFeatureCompound
+public struct FavoritesFeatureView: View {
+    @State private var compound = FavoritesFeatureCompound()
 
-    init(compound: FavoritesFeatureCompound) {
-        self.compound = compound
-    }
+    public init() {}
 
     public var body: some View {
         VStack(spacing: 12) {

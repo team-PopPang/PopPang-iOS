@@ -1,11 +1,9 @@
 import SwiftUI
 
-struct OnboardingFeatureView: View {
-    private let compound: OnboardingFeatureCompound
+public struct OnboardingFeatureView: View {
+    @State private var compound = OnboardingFeatureCompound()
 
-    init(compound: OnboardingFeatureCompound) {
-        self.compound = compound
-    }
+    public init() {}
 
     public var body: some View {
         VStack(spacing: 12) {

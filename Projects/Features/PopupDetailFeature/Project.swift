@@ -18,16 +18,6 @@ let project = Project(
             ]
         ),
         .target(
-            name: "PopupDetailFeatureInterface",
-            destinations: [.iPhone],
-            product: .framework,
-            bundleId: "com.poppang.features.popupdetail.interface",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .default,
-            sources: ["Interface/Sources/**"],
-            dependencies: [.target(name: "PopupDetailFeature")]
-        ),
-        .target(
             name: "PopupDetailFeatureDemo",
             destinations: [.iPhone],
             product: .app,
@@ -42,7 +32,7 @@ let project = Project(
                 ]
             ),
             sources: ["Demo/Sources/**"],
-            dependencies: [.target(name: "PopupDetailFeatureInterface")]
+            dependencies: [.target(name: "PopupDetailFeature")]
         ),
         .target(
             name: "PopupDetailFeatureTests",

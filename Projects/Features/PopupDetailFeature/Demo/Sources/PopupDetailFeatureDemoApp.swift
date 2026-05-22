@@ -1,11 +1,11 @@
 import SwiftUI
-import PopupDetailFeatureInterface
+import PopupDetailFeature
 
 @main
 struct PopupDetailFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            PopupDetailFeatureEntryView()
+            PopupDetailFeatureView()
         }
     }
 }

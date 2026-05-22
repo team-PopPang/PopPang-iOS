@@ -1,11 +1,9 @@
 import SwiftUI
 
-struct AuthFeatureView: View {
-    private let compound: AuthFeatureCompound
+public struct AuthFeatureView: View {
+    @State private var compound = AuthFeatureCompound()
 
-    init(compound: AuthFeatureCompound) {
-        self.compound = compound
-    }
+    public init() {}
 
     public var body: some View {
         VStack(spacing: 12) {

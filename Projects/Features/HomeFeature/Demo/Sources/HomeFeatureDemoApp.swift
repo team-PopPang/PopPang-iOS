@@ -4,7 +4,7 @@ import SwiftUI
 struct HomeFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            HomeFeatureRootView()
+            HomeFeatureView()
         }
     }
 }

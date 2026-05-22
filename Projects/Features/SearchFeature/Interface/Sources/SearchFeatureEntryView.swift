@@ -5,6 +5,6 @@ public struct SearchFeatureEntryView: View {
     public init() {}
 
     public var body: some View {
-        SearchFeatureRootView()
+        SearchFeatureView()
     }
 }

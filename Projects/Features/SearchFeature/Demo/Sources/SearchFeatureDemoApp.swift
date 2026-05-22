@@ -1,11 +1,11 @@
 import SwiftUI
-import SearchFeatureInterface
+import SearchFeature
 
 @main
 struct SearchFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            SearchFeatureEntryView()
+            SearchFeatureView()
         }
     }
 }

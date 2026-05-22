@@ -4,7 +4,7 @@ import SwiftUI
 struct CalendarFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            CalendarFeatureRootView()
+            CalendarFeatureView()
         }
     }
 }

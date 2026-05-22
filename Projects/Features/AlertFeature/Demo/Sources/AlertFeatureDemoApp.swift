@@ -5,7 +5,7 @@ import AlertFeature
 struct AlertFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            AlertFeatureRootView()
+            AlertFeatureView()
         }
     }
 }

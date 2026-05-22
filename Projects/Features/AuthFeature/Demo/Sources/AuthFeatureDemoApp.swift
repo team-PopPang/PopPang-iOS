@@ -4,7 +4,7 @@ import SwiftUI
 struct AuthFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            AuthFeatureRootView()
+            AuthFeatureView()
         }
     }
 }
