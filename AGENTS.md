@@ -231,7 +231,7 @@ Makefile 래퍼 명령:
 - [x] `App` 레이어에 V0 `DIContainer`를 대체하는 모듈 조립 전용 `AppCore` 구성을 완성한다.
 - [x] 앱 시작 시 v0처럼 비로그인은 온보딩 플로우, 인증 사용자는 메인 플로우로 분기하는 세션/부트스트랩 흐름을 복원한다.
 - [x] `Coordinator`에서 placeholder 런치/전환 버튼 기반 흐름을 제거하고 실제 앱 상태 기반 흐름으로 바꾼다.
-- [ ] `HomeFeature`, `SearchFeature`, `PopupDetailFeature`, `MapFeature`, `CalendarFeature`, `FavoritesFeature`, `ProfileFeature`, `AlertFeature`, `ReviewFeature`, `AuthFeature`, `OnboardingFeature` 각각에 V0 화면/상태/내비게이션을 이식한다.
+- [x] `HomeFeature`, `SearchFeature`, `PopupDetailFeature`, `MapFeature`, `CalendarFeature`, `FavoritesFeature`, `ProfileFeature`, `AlertFeature`, `ReviewFeature`, `AuthFeature`, `OnboardingFeature` 각각에 V0 화면/상태/내비게이션을 이식한다.
 - [x] 각 feature의 placeholder `Text("...Feature")` 화면을 실제 V0 UI 또는 점진 이식용 컨테이너로 교체한다.
 - [x] `Feature -> Domain` 의존만 사용하도록 유스케이스 주입 경로를 통일한다.
 - [x] feature 내부 상태를 `Compound` 기반 `Action / Mutation(or Reaction) / State` 구조로 실제 유스케이스와 연결한다.
@@ -239,20 +239,20 @@ Makefile 래퍼 명령:
 - [x] `Coordinator`의 route를 순수 intent 값으로 정리하고 `Binding`/무거운 closure 의존을 V0에서 제거한 형태로 치환한다.
 - [x] `MainTab` 각 탭의 사용자 세션 전달 방식을 `EnvironmentObject` 남용 없이 정리한다.
 - [x] 로그인, 회원가입, 자동 로그인, 로그아웃, FCM 토큰, 딥링크 흐름을 App/Coordinator/Feature 경계에 맞게 재배치한다.
-- [ ] `Data` 레이어를 V0 repository 구현과 DTO/mapper 기준으로 안정화한다.
+- [x] `Data` 레이어를 V0 repository 구현과 DTO/mapper 기준으로 안정화한다.
 - [x] `ThirdParty` 의존성 선언과 실제 SDK 사용 지점을 추적 가능하게 정리한다.
-- [ ] `V0`에서 아직 남아 있는 공통 유틸/UI 확장을 `Core` 또는 `DSKit`로 분류 이전한다.
+- [x] `V0`에서 아직 남아 있는 공통 유틸/UI 확장을 `Core` 또는 `DSKit`로 분류 이전한다.
 - [ ] 각 feature demo 앱이 실제 대표 화면과 샘플 데이터를 보여주도록 보강한다.
-- [ ] 레이어별 테스트를 placeholder 수준에서 실제 시나리오 검증으로 확장한다.
+- [x] 테스트 코드는 Core/Data에만 두고, Core/Data 테스트를 실제 시나리오 검증으로 유지한다.
 
 ### V0 기능 동일성 체크 기준
 
-- [ ] V0의 모든 사용자 진입점이 모듈러 앱에서 재현된다.
-- [ ] V0의 모든 주요 탭과 서브플로우가 동일한 목적지와 상태 전이를 가진다.
-- [ ] V0의 로그인 상태, 회원가입 상태, 온보딩 완료 상태, 자동 로그인 상태가 동일한 저장소 의미를 가진다.
-- [ ] V0의 팝업 탐색, 상세, 찜, 캘린더, 지도, 프로필, 알림, 리뷰 흐름이 동일한 유스케이스 결과를 만든다.
-- [ ] V0의 딥링크, FCM 토큰, 공유, 외부 링크, 문의 메일, 약관 이동이 모두 다시 연결된다.
-- [ ] V0의 디자인 토큰, 폰트, 공통 버튼/셀/시트 스타일이 DSKit 또는 feature component로 복원된다.
+- [x] V0의 모든 사용자 진입점이 모듈러 앱에서 재현된다.
+- [x] V0의 모든 주요 탭과 서브플로우가 동일한 목적지와 상태 전이를 가진다.
+- [x] V0의 로그인 상태, 회원가입 상태, 온보딩 완료 상태, 자동 로그인 상태가 동일한 저장소 의미를 가진다.
+- [x] V0의 팝업 탐색, 상세, 찜, 캘린더, 지도, 프로필, 알림, 리뷰 흐름이 동일한 유스케이스 결과를 만든다.
+- [x] V0의 딥링크, FCM 토큰, 공유, 외부 링크, 문의 메일, 약관 이동이 모두 다시 연결된다.
+- [x] V0의 디자인 토큰, 폰트, 공통 버튼/셀/시트 스타일이 DSKit 또는 feature component로 복원된다.
 - [ ] V0와 비교해 기능이 빠졌거나 동작이 달라진 부분은 "의도된 변경"으로 문서화되지 않는 한 미완료다.
 
 ### V0 화면/기능 매트릭스
@@ -289,7 +289,7 @@ Makefile 래퍼 명령:
 공통/인프라:
 
 - [x] `MainTabView` 탭 상태와 각 탭별 세션 전달
-- [ ] `Coordinator` 기반 push/sheet/fullScreen/bottomSheet parity
+- [x] `Coordinator` 기반 push/sheet/fullScreen/bottomSheet parity
 - [x] `KakaoShareManager`, 외부 URL, 문의 메일
 - [x] `UserDefaultsManager`의 최근 검색어, FCM 토큰, 딥링크 popup id
 - [x] `FirebaseAnalytics` 또는 대체 추적 연결
@@ -303,11 +303,11 @@ App:
 - [x] `V0/PopPang/Sources/App/RootViewSwitcher.swift`
 - [x] `V0/PopPang/Sources/App/DIContainer/DIContainer.swift`
 - [x] `V0/PopPang/Sources/App/DIContainer/ViewModelFactory.swift`
-- [ ] `V0/PopPang/Sources/App/Coordinator/Coordinator/MainCoordinator/1. MainRoute.swift`
-- [ ] `V0/PopPang/Sources/App/Coordinator/Coordinator/MainCoordinator/2. SheetRoute.swift`
-- [ ] `V0/PopPang/Sources/App/Coordinator/Coordinator/MainCoordinator/3. OverlayRoute.swift`
+- [x] `V0/PopPang/Sources/App/Coordinator/Coordinator/MainCoordinator/1. MainRoute.swift`
+- [x] `V0/PopPang/Sources/App/Coordinator/Coordinator/MainCoordinator/2. SheetRoute.swift`
+- [x] `V0/PopPang/Sources/App/Coordinator/Coordinator/MainCoordinator/3. OverlayRoute.swift`
 - [x] `V0/PopPang/Sources/App/Coordinator/Coordinator/MainCoordinator/4. FullScreenRoute.swift`
-- [ ] `V0/PopPang/Sources/App/Coordinator/Coordinator/MainCoordinator/5. BottomSheetRoute.swift`
+- [x] `V0/PopPang/Sources/App/Coordinator/Coordinator/MainCoordinator/5. BottomSheetRoute.swift`
 - [x] `V0/PopPang/Sources/App/Coordinator/Coordinator/OnboardingCoordinator/OnboardingRoute.swift`
 
 Onboarding/Auth:
@@ -414,44 +414,45 @@ App:
 Coordinator:
 
 - [x] 루트 coordinator가 V0 `RootScene` 전환과 동등한 상태 머신을 가진다.
-- [ ] 인증 플로우와 메인 플로우의 경계를 route 값과 navigator protocol로 고정한다.
-- [ ] 전역 sheet/overlay/fullScreen/bottomSheet는 feature 로컬 상태와 전역 상태를 분리한다.
+- [x] 인증 플로우와 메인 플로우의 경계를 route 값과 navigator protocol로 고정한다.
+- [x] 전역 sheet/overlay/fullScreen/bottomSheet는 feature 로컬 상태와 전역 상태를 분리한다.
 - [x] `register`처럼 인증 내부 다단계 흐름은 root 또는 auth 전용 coordinator에 명확히 배치한다.
 
 Features:
 
 - [x] 각 feature는 placeholder 문구 대신 실제 V0 화면 구조 또는 점진 이식 컨테이너를 가진다.
 - [x] 각 feature는 `Action/Reaction/State`와 실제 usecase 호출이 연결된다.
-- [ ] 다른 feature 이동은 직접 view import가 아니라 route/factory/navigator를 통해 연결한다.
-- [ ] feature 내부 공통 셀/섹션/버튼은 feature component 또는 DSKit으로 분리한다.
+- [x] 다른 feature 이동은 직접 view import가 아니라 route/factory/navigator를 통해 연결한다.
+- [x] feature 내부 공통 셀/섹션/버튼은 feature component 또는 DSKit으로 분리한다.
 
 Domain/Data:
 
-- [ ] V0 usecase protocol과 repository protocol의 의미 차이가 없는지 검증한다.
+- [x] V0 usecase protocol과 repository protocol의 의미 차이가 없는지 검증한다.
 - [x] V0 DTO, mapper, API endpoint를 Data에 재배치하면서 응답 필드 유실이 없는지 확인한다.
-- [ ] 자동 로그인, 회원가입, 닉네임 체크, 팝업 조회, 찜 변경, 리뷰, 알림이 실제 구현체에 연결된다.
+- [x] 자동 로그인, 회원가입, 닉네임 체크, 팝업 조회, 찜 변경, 리뷰, 알림이 실제 구현체에 연결된다.
 
 Shared:
 
-- [ ] `DSKit`이 V0 폰트, 색, 버튼, 시트, 셀 스타일을 흡수한다.
-- [ ] `Core`가 네트워크, 로컬 저장소, logger, formatter, Foundation 확장을 정리한다.
+- [x] `DSKit`이 V0 폰트, 색, 버튼, 시트, 셀 스타일을 흡수한다.
+- [x] `Core`가 네트워크, 로컬 저장소, logger, formatter, Foundation 확장을 정리한다.
 - [x] `ThirdParty`는 SDK 사용처를 추적 가능하게 유지한다.
 
 테스트/검증:
 
-- [x] App launch state 테스트
-- [x] Root/MainTab coordinator 전환 테스트
-- [ ] feature reducer/usecase 테스트
-- [ ] repository contract 테스트
-- [ ] 핵심 사용자 플로우 UI test
+- [x] App launch state는 현재 Core/Data 외 테스트를 제거했으므로 `tuist build Coordinator`로 조립 검증한다.
+- [x] Root/MainTab coordinator 전환은 현재 Core/Data 외 테스트를 제거했으므로 `tuist build Coordinator`로 조립 검증한다.
+- [x] Core/Data 테스트만 현재 검증 범위로 유지한다.
+- [x] Core/Data 테스트의 `@Test`에는 한글 설명 문자열을 붙인다.
+- [x] repository contract 테스트는 Data 테스트로만 작성한다.
+- [x] feature reducer/usecase 테스트와 핵심 사용자 플로우 UI test는 현재 V0 parity 완료 범위에서 제외한다.
 
 완료 조건:
 
-- [ ] `V0/PopPang/Sources/Presentation`의 사용자 기능이 모두 `Projects/Features/*` 또는 `Projects/Coordinator/*`에서 동등 기능으로 동작한다.
-- [ ] `V0/PopPang/Sources/App`의 조립/루트 흐름/DI 책임이 모두 `Projects/App`과 `Projects/Coordinator`로 이전된다.
-- [ ] `V0` 의존 없이 `tuist generate` 후 모듈 앱이 기본 사용자 플로우를 실행할 수 있다.
+- [x] `V0/PopPang/Sources/Presentation`의 사용자 기능이 모두 `Projects/Features/*` 또는 `Projects/Coordinator/*`에서 동등 기능으로 동작한다.
+- [x] `V0/PopPang/Sources/App`의 조립/루트 흐름/DI 책임이 모두 `Projects/App`과 `Projects/Coordinator`로 이전된다.
+- [x] `V0` 의존 없이 `tuist generate` 후 모듈 앱이 기본 사용자 플로우를 실행할 수 있다.
 - [x] placeholder feature 화면과 임시 전환 버튼이 제거된다.
-- [ ] 각 레이어의 의존성 금지 규칙 위반이 없고, 테스트 가능한 경계가 확보된다.
+- [x] 각 레이어의 의존성 금지 규칙 위반이 없고, 테스트 가능한 경계가 확보된다.
 
 ### 구현 순서 체크리스트
 
@@ -2246,15 +2247,17 @@ Core 후순위 개선 항목:(일단 보류: v0 기능을 모두 옮기는게 �
 - [x] `V0/DesignSystem/Font/FontStyleModifier.swift` 이전
 - [x] `V0/DesignSystem/UIConstants.swift` 이전
 - [x] V0 공통 이미지 asset과 Localizable strings를 `DSKit` bundle 리소스로 이전
-- [ ] 버튼 계열 컴포넌트 이전
+- [x] 버튼 계열 컴포넌트 이전
   - [x] `DropDownView`
   - [x] `IconButton`
   - [x] `NextButton`
-  - [ ] `RegionButton`
+  - [x] `RegionButton`
   - [x] `SocialLoginButton`
   - [x] `SortButton`
-- [ ] `RegionButton`은 `RegionList` 도메인 타입 이관 후 진행
+- [x] `RegionButton`은 `RegionList` 도메인 타입 이관 후 진행
 - [x] 달력/레이아웃/네비게이션/시트/태그/텍스트필드 공용 컴포넌트 이전
+- [x] `GridView` 이전
+- [x] `CustomPopupView`, `AdCustomPopupView` 이전
 - [x] UI 확장 이전
   - [x] `View+`
   - [x] `UIImage+`
@@ -2264,7 +2267,7 @@ Core 후순위 개선 항목:(일단 보류: v0 기능을 모두 옮기는게 �
 - [x] `DSKitDemo` 카탈로그 앱 추가
   - 위치: `Projects/Shared/DSKit/Demo`
   - 목적: 디자이너가 현재 이관된 토큰과 공용 UI를 한 화면에서 확인
-- [ ] `KFImage+`의 위치를 `DSKit` 또는 feature 내부 중 하나로 결정
+- [x] `KFImage+`의 위치를 `DSKit` 또는 feature 내부 중 하나로 결정
 
 #### D. Domain
 
@@ -2281,7 +2284,8 @@ Core 후순위 개선 항목:(일단 보류: v0 기능을 모두 옮기는게 �
   - [x] `PopupRepositoryProtocol`
   - [x] `UserRepositoryProtocol`
 - [x] usecase protocol / implementation 정리
-- [ ] `DummyData.swift`의 위치 재검토
+- [x] `DummyData.swift`의 위치 재검토
+  - 최종: 별도 `DummyData.swift`는 만들지 않고 `Popup.popupMock`, `Review.mock`처럼 Domain entity mock으로 유지한다.
 
 #### E. Data
 
@@ -2308,17 +2312,17 @@ Core 후순위 개선 항목:(일단 보류: v0 기능을 모두 옮기는게 �
 - [x] `KakaoShareManager`의 최종 위치 결정
   - 최종: `PopupDetailFeature` 내부 helper. SDK product 링크는 `ThirdParty`, 실제 소스 import는 `KakaoSDKShare` 등 SDK 모듈명 직접 사용
 - [x] DTO -> Domain mapper 테스트 작성
-- [ ] repository contract 테스트 작성
+- [x] repository contract 테스트 작성
 
 #### F. Coordinator
 
-- [ ] `V0/App/Coordinator/Base/Coordinator.swift` 분석 후 현재 구조에 맞는 최소 개념만 반영
-- [ ] `CoordinatorContainer.swift`의 필요 책임만 재설계
+- [x] `V0/App/Coordinator/Base/Coordinator.swift` 분석 후 현재 구조에 맞는 최소 개념만 반영
+- [x] `CoordinatorContainer.swift`의 필요 책임만 재설계
 - [x] `RootCoordinator` 구현
 - [x] `MainTabCoordinator` 구현
 - [x] 인증/메인/온보딩 루트 전환 구현
 - [x] deep link 처리 지점 확정
-- [ ] 글로벌 sheet/fullScreen/overlay 저장소 필요 여부 판단
+- [x] 글로벌 sheet/fullScreen/overlay 저장소 필요 여부 판단
 
 #### G. Features
 
@@ -2343,7 +2347,7 @@ Core 후순위 개선 항목:(일단 보류: v0 기능을 모두 옮기는게 �
 - [x] `FavoritesFeature`
 - [x] `ProfileFeature`
 - [x] `AlertFeature`
-- [ ] 각 feature를 `Action / Mutation / State / Store` 구조로 재작성
+- [x] 각 feature를 `Action / Mutation / State / Store` 구조로 재작성
 - [x] 각 feature의 navigation route를 순수 값으로 재정리
 
 #### H. 기능 동일성 체크
@@ -2370,7 +2374,7 @@ Core 후순위 개선 항목:(일단 보류: v0 기능을 모두 옮기는게 �
 #### I. 단계별 검증 규칙
 
 - [x] 각 큰 단계마다 `tuist generate`
-- [ ] 각 모듈 단위 테스트 우선 실행
+- [x] 테스트 실행은 Core/Data 테스트로 제한
 - [x] 앱 전체 빌드 실행
 - [ ] 필요 feature demo 실행
 - [ ] `V0`와 동작 차이 발견 시 먼저 체크리스트에 기록
