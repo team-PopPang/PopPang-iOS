@@ -3,7 +3,7 @@ import Testing
 @testable import Core
 
 struct LocalStorageTests {
-    @Test
+    @Test("UserDefaultsStore가 값을 저장하고 삭제한다")
     func storesAndRemovesValueInUserDefaultsStore() {
         let suiteName = "CoreTests.UserDefaultsStore"
         let userDefaults = UserDefaults(suiteName: suiteName)!
@@ -19,7 +19,7 @@ struct LocalStorageTests {
         #expect(store.object(forKey: "greeting") == nil)
     }
 
-    @Test
+    @Test("최근 검색어 저장소가 중복을 제거하고 최신 다섯 개만 유지한다")
     func recentSearchStorageDeduplicatesAndKeepsLatestFiveKeywords() {
         let suiteName = "CoreTests.RecentSearchStorage"
         let userDefaults = UserDefaults(suiteName: suiteName)!
@@ -45,7 +45,7 @@ struct LocalStorageTests {
         #expect(recentSearchStorage.load() == ["부산", "성수", "여의도", "연남"])
     }
 
-    @Test
+    @Test("푸시 토큰과 딥링크 값을 저장하고 삭제한다")
     func storesAndRemovesPushTokenAndDeepLinkValues() {
         let suiteName = "CoreTests.StorageValues"
         let userDefaults = UserDefaults(suiteName: suiteName)!
