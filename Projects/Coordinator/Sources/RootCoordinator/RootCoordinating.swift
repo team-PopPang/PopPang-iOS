@@ -7,6 +7,7 @@ public protocol RootCoordinating: AnyObject {
     func showOnboarding()
     func showAuthFlow()
     func showMainFlow()
+    func markOnboardingCompleted()
     func completeOnboarding()
     func completeAuthentication(userID: String)
     func completeAuthentication(user: User)
