@@ -2,10 +2,10 @@ import DSKit
 import SwiftUI
 
 public struct OnboardingFeatureView: View {
+    @State private var compound = OnboardingFeatureCompound()
+
     private let onSkip: () -> Void
     private let onComplete: () -> Void
-
-    @State private var currentStep: OnboardingStep = .keyword
 
     public init(
         onSkip: @escaping () -> Void = {},
@@ -20,7 +20,12 @@ public struct OnboardingFeatureView: View {
             Color.subWhite3.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                PageView(currentStep: $currentStep)
+                PageView(
+                    currentStep: Binding(
+                        get: { compound.state.currentStep },
+                        set: { compound.send(.stepChanged($0)) }
+                    )
+                )
 
                 VStack(spacing: 0) {
                     pageIndicator()
@@ -28,12 +33,14 @@ public struct OnboardingFeatureView: View {
                         .padding(.bottom, 20)
 
                     MainOrangeButton(
-                        buttonTitle: currentStep == .favorite ? "시작하기" : "다음"
+                        buttonTitle: compound.state.currentStep == .favorite
+                            ? LocalizationKey.commonStart.localized(comment: "Primary CTA to start the app")
+                            : LocalizationKey.commonNext.localized(comment: "Primary CTA to continue to the next step")
                     ) {
-                        if currentStep.rawValue < OnboardingStep.allCases.count - 1 {
-                            currentStep = OnboardingStep.allCases[currentStep.rawValue + 1]
-                        } else {
+                        if compound.state.currentStep == .favorite {
                             onComplete()
+                        } else {
+                            compound.send(.nextButtonTapped(compound.state.currentStep))
                         }
                     }
                     .padding(.horizontal, 30)
@@ -46,7 +53,7 @@ public struct OnboardingFeatureView: View {
             Button {
                 onSkip()
             } label: {
-                Text("건너뛰기")
+                Text(LocalizationKey.commonSkip.localized(comment: "Action to skip onboarding"))
                     .font(.scdream(.regular, size: 12))
                     .foregroundColor(Color.mainBlack)
             }
@@ -59,14 +66,14 @@ public struct OnboardingFeatureView: View {
         HStack(spacing: 10) {
             ForEach(OnboardingStep.allCases, id: \.self) { step in
                 Capsule()
-                    .fill(currentStep == step ? Color.mainBlack : .gray)
+                    .fill(compound.state.currentStep == step ? Color.mainBlack : .gray)
                     .frame(
-                        width: currentStep == step ? 12 : 6,
+                        width: compound.state.currentStep == step ? 12 : 6,
                         height: 6
                     )
             }
         }
-        .animation(.easeInOut(duration: 0.5), value: currentStep)
+        .animation(.easeInOut(duration: 0.5), value: compound.state.currentStep)
     }
 }
 
@@ -90,7 +97,7 @@ private struct PageContentView: View {
 
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
-            Image(step.logo)
+            DSKitResource.image(step.logo)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 30, height: 30)
@@ -107,7 +114,7 @@ private struct PageContentView: View {
 
             Spacer()
 
-            Image(step.image)
+            DSKitResource.image(step.image)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(height: UIScreen.main.bounds.height * 0.45, alignment: .bottom)
@@ -117,10 +124,15 @@ private struct PageContentView: View {
     }
 }
 
-private enum OnboardingStep: Int, CaseIterable {
+enum OnboardingStep: Int, CaseIterable, Sendable {
     case keyword = 0
     case map
     case favorite
+
+    var next: OnboardingStep? {
+        guard rawValue < Self.allCases.count - 1 else { return nil }
+        return Self.allCases[rawValue + 1]
+    }
 
     var logo: String {
         switch self {
@@ -136,22 +148,22 @@ private enum OnboardingStep: Int, CaseIterable {
     var title: String {
         switch self {
         case .keyword:
-            "팝업스토어 알림"
+            LocalizationKey.onboardingKeywordTitle.localized(comment: "Onboarding title for keyword notifications")
         case .map:
-            "위치 기반 서비스"
+            LocalizationKey.onboardingMapTitle.localized(comment: "Onboarding title for map-based service")
         case .favorite:
-            "캘린더형 찜 리스트"
+            LocalizationKey.onboardingFavoriteTitle.localized(comment: "Onboarding title for favorites calendar")
         }
     }
 
     var content: String {
         switch self {
         case .keyword:
-            "키워드를 등록하여 원하는 팝업 알림을 받아보세요。"
+            LocalizationKey.onboardingKeywordContent.localized(comment: "Onboarding body for keyword notifications")
         case .map:
-            "내 주변에서 열리는 팝업을 바로 확인하세요。"
+            LocalizationKey.onboardingMapContent.localized(comment: "Onboarding body for nearby popup map")
         case .favorite:
-            "찜한 팝업을 날짜별로 확인할 수 있어요。"
+            LocalizationKey.onboardingFavoriteContent.localized(comment: "Onboarding body for favorites calendar")
         }
     }
 
@@ -164,5 +176,21 @@ private enum OnboardingStep: Int, CaseIterable {
         case .favorite:
             "Onboarding3"
         }
+    }
+}
+
+private enum LocalizationKey: String {
+    case commonNext = "common.next"
+    case commonSkip = "common.skip"
+    case commonStart = "common.start"
+    case onboardingKeywordTitle = "onboarding.keyword.title"
+    case onboardingKeywordContent = "onboarding.keyword.content"
+    case onboardingMapTitle = "onboarding.map.title"
+    case onboardingMapContent = "onboarding.map.content"
+    case onboardingFavoriteTitle = "onboarding.favorite.title"
+    case onboardingFavoriteContent = "onboarding.favorite.content"
+
+    func localized(comment: String) -> String {
+        DSKitLocalization.localized(rawValue, comment: comment)
     }
 }
