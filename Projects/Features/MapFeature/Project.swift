@@ -35,17 +35,11 @@ let project = Project(
                 ]
             ),
             sources: ["Demo/Sources/**"],
-            dependencies: [.target(name: "MapFeature")]
-        ),
-        .target(
-            name: "MapFeatureTests",
-            destinations: [.iPhone],
-            product: .unitTests,
-            bundleId: "com.poppang.features.map.tests",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .default,
-            sources: ["Tests/**"],
-            dependencies: [.target(name: "MapFeature")]
+            dependencies: [
+                .target(name: "MapFeature"),
+                .project(target: "Domain", path: "../../Domain"),
+                .project(target: "Data", path: "../../Data"),
+            ]
         ),
     ]
 )
