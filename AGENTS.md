@@ -2266,19 +2266,19 @@ Core 후순위 개선 항목:(일단 보류: v0 기능을 모두 옮기는게 �
 
 #### D. Domain
 
-- [ ] `Keyword`
-- [ ] `Popup`
-- [ ] `Recommend`
-- [ ] `RegionList`
-- [ ] `User`
-- [ ] repository protocol 분리
-  - [ ] `AdminRepositoryProtocol`
-  - [ ] `AppleAuthRepositoryProtocol`
-  - [ ] `GoogleAuthRepositoryProtocol`
-  - [ ] `KakaoAuthRepositoryProtocol`
-  - [ ] `PopupRepositoryProtocol`
-  - [ ] `UserRepositoryProtocol`
-- [ ] usecase protocol / implementation 정리
+- [x] `Keyword`
+- [x] `Popup`
+- [x] `Recommend`
+- [x] `RegionList`
+- [x] `User`
+- [x] repository protocol 분리
+  - [x] `AdminRepositoryProtocol`
+  - [x] `AppleAuthRepositoryProtocol`
+  - [x] `GoogleAuthRepositoryProtocol`
+  - [x] `KakaoAuthRepositoryProtocol`
+  - [x] `PopupRepositoryProtocol`
+  - [x] `UserRepositoryProtocol`
+- [x] usecase protocol / implementation 정리
 - [ ] `DummyData.swift`의 위치 재검토
 
 #### E. Data
@@ -2296,13 +2296,13 @@ Core 후순위 개선 항목:(일단 보류: v0 기능을 모두 옮기는게 �
   - [x] `KakaoAuthAPI`
   - [x] `PopupAPI`
   - [x] `UserAPI`
-- [ ] repository implementation 이전
-  - [ ] `AdminRepositoryImpl`
-  - [ ] `AppleAuthRepositoryImpl`
-  - [ ] `GoogleAuthRepositoryImpl`
-  - [ ] `KakaoAuthRepositoryImpl`
-  - [ ] `PopupRepositoryImpl`
-  - [ ] `UserRepositoryImpl`
+- [x] repository implementation 이전
+  - [x] `AdminRepositoryImpl`
+  - [x] `AppleAuthRepositoryImpl`
+  - [x] `GoogleAuthRepositoryImpl`
+  - [x] `KakaoAuthRepositoryImpl`
+  - [x] `PopupRepositoryImpl`
+  - [x] `UserRepositoryImpl`
 - [x] `KakaoShareManager`의 최종 위치 결정
   - 최종: `PopupDetailFeature` 내부 helper. SDK product 링크는 `ThirdParty`, 실제 소스 import는 `KakaoSDKShare` 등 SDK 모듈명 직접 사용
 - [x] DTO -> Domain mapper 테스트 작성
