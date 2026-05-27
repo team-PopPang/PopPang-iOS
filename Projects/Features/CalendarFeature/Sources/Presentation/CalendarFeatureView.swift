@@ -17,9 +17,13 @@ public struct CalendarFeatureView: View {
         onShowAlert: @escaping (String) -> Void = { _ in },
         onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in }
     ) {
-        _compound = State(wrappedValue: CalendarFeatureCompound(userUuid: userUuid))
+        let compound = CalendarFeatureCompound(userUuid: userUuid)
+        _compound = State(wrappedValue: compound)
         self.onShowAlert = onShowAlert
         self.onSelectPopup = onSelectPopup
+        Task { @MainActor in
+            compound.preload()
+        }
     }
 
     public var body: some View {
@@ -99,7 +103,7 @@ public struct CalendarFeatureView: View {
             Spacer()
         }
         .task {
-            compound.send(.onAppear)
+            compound.preload()
         }
         .trigger(of: compound, \.$presentedSheet) { route in
             sheetRoute = route
@@ -107,13 +111,17 @@ public struct CalendarFeatureView: View {
         .sheet(item: $sheetRoute) { route in
             switch route {
             case .region:
-                CalendarRegionSheet(
+                RegionButtonSheet(
                     regions: compound.state.regions,
                     selectedRegion: selectedRegionBinding,
-                    selectedDistrict: selectedDistrictBinding
+                    selectedDistrict: selectedDistrictBinding,
+                    regionTitle: { $0.region },
+                    districts: { $0.districtList }
                 )
+                .presentationDetents([.fraction(0.4)])
             case .sort:
                 SortButtonSheet(selectedOption: selectedOptionBinding)
+                    .presentationDetents([.fraction(0.4)])
             }
         }
     }
@@ -183,12 +191,6 @@ private struct CalendarPopupListView: View {
                 )
             }
             .padding(.top, 20)
-
-            if isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 24)
-            }
 
             if let errorMessage {
                 Text(errorMessage)
@@ -310,145 +312,5 @@ private struct CalendarPopupCell: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .contentShape(Rectangle())
-    }
-}
-
-private struct RegionButton: View {
-    let text: String
-    let action: () -> Void
-
-    var body: some View {
-        Button {
-            action()
-        } label: {
-            HStack {
-                Text(text)
-                    .ppStyleFont(.scdream(.light, size: 10))
-                    .foregroundStyle(Color.mainGray)
-                Image(systemName: "chevron.down")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 10, height: 10)
-                    .foregroundStyle(Color.mainGray)
-            }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 10)
-            .frame(width: 60)
-            .background(Color.subWhite)
-            .cornerRadius(17)
-            .overlay {
-                RoundedRectangle(cornerRadius: 17)
-                    .stroke(lineWidth: 1)
-                    .foregroundColor(Color.mainGray5)
-            }
-        }
-    }
-}
-
-private struct CalendarRegionSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    let regions: [RegionList]
-    @Binding var selectedRegion: RegionList?
-    @Binding var selectedDistrict: String?
-
-    private let backFont: Font = .system(size: 17, weight: .bold)
-    private let buttonFont: Font = .scdream(.regular, size: 12)
-    private let rowHeight: CGFloat = 46
-    private let dividerHeight: CGFloat = 1.5
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                HStack(spacing: 0) {
-                    Text("지역")
-                        .foregroundStyle(Color.mainBlack)
-                        .ppStyleFont(.scdream(.bold, size: 17))
-                    Spacer()
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .foregroundStyle(.black)
-                            .font(backFont)
-                    }
-                }
-                .padding(.top, 28)
-
-                Rectangle()
-                    .frame(height: dividerHeight)
-                    .foregroundStyle(Color.mainGray3)
-                    .padding(.top, 30)
-
-                HStack(spacing: 0) {
-                    List(regions) { region in
-                        VStack(spacing: 0) {
-                            Button {
-                                selectedRegion = region
-                                selectedDistrict = region.districtList.first
-                            } label: {
-                                HStack(spacing: 0) {
-                                    Spacer()
-                                    Text(region.region)
-                                        .foregroundStyle(selectedRegion == region ? Color.mainOrange : Color.mainGray)
-                                        .font(buttonFont)
-                                    Spacer()
-                                }
-                            }
-                            .frame(height: rowHeight)
-                        }
-                        .listRowBackground(selectedRegion == region ? Color.subWhite : Color.mainGray4)
-                        .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.hidden)
-                    }
-                    .frame(width: 65)
-                    .scrollContentBackground(.hidden)
-                    .listStyle(.plain)
-
-                    if let selectedRegion {
-                        List(selectedRegion.districtList, id: \.self) { district in
-                            Button {
-                                selectedDistrict = district
-                                dismiss()
-                            } label: {
-                                HStack(spacing: 0) {
-                                    Text(district)
-                                        .foregroundStyle(selectedDistrict == district ? Color.mainOrange : Color.mainGray)
-                                        .font(buttonFont)
-                                    Spacer()
-                                }
-                            }
-                            .frame(height: rowHeight)
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                        }
-                        .scrollContentBackground(.hidden)
-                        .listStyle(.plain)
-                    }
-                }
-                .frame(height: 300)
-            }
-            .padding(.horizontal, 28)
-        }
-        .presentationDragIndicator(.visible)
-    }
-}
-
-private enum ImagePresent {
-    case calendarPopupCell
-
-    var size: CGSize {
-        switch self {
-        case .calendarPopupCell:
-            CGSize(width: 106, height: 133)
-        }
-    }
-}
-
-private extension KFImage {
-    func downSampled(_ present: ImagePresent, scale: CGFloat = UIScreen.main.scale) -> some View {
-        setProcessor(DownsamplingImageProcessor(size: present.size))
-            .scaleFactor(scale)
-            .cacheOriginalImage()
-            .resizable()
     }
 }
