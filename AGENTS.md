@@ -425,7 +425,7 @@ Features:
 Domain/Data:
 
 - [ ] V0 usecase protocol과 repository protocol의 의미 차이가 없는지 검증한다.
-- [ ] V0 DTO, mapper, API endpoint를 Data에 재배치하면서 응답 필드 유실이 없는지 확인한다.
+- [x] V0 DTO, mapper, API endpoint를 Data에 재배치하면서 응답 필드 유실이 없는지 확인한다.
 - [ ] 자동 로그인, 회원가입, 닉네임 체크, 팝업 조회, 찜 변경, 리뷰, 알림이 실제 구현체에 연결된다.
 
 Shared:
@@ -2279,19 +2279,19 @@ Core 후순위 개선 항목:(일단 보류: v0 기능을 모두 옮기는게 �
 
 #### E. Data
 
-- [ ] DTO 이전
-  - [ ] `KeywordDTO`
-  - [ ] `PopupDTO`
-  - [ ] `RecommendDTO`
-  - [ ] `RegionListDTO`
-  - [ ] `UserDTO`
-- [ ] API 이전
-  - [ ] `AdminAPI`
-  - [ ] `AppleAuthAPI`
-  - [ ] `GoogleAuthAPI`
-  - [ ] `KakaoAuthAPI`
-  - [ ] `PopupAPI`
-  - [ ] `UserAPI`
+- [x] DTO 이전
+  - [x] `KeywordDTO`
+  - [x] `PopupDTO`
+  - [x] `RecommendDTO`
+  - [x] `RegionListDTO`
+  - [x] `UserDTO`
+- [x] API 이전
+  - [x] `AdminAPI`
+  - [x] `AppleAuthAPI`
+  - [x] `GoogleAuthAPI`
+  - [x] `KakaoAuthAPI`
+  - [x] `PopupAPI`
+  - [x] `UserAPI`
 - [ ] repository implementation 이전
   - [ ] `AdminRepositoryImpl`
   - [ ] `AppleAuthRepositoryImpl`
@@ -2301,7 +2301,7 @@ Core 후순위 개선 항목:(일단 보류: v0 기능을 모두 옮기는게 �
   - [ ] `UserRepositoryImpl`
 - [x] `KakaoShareManager`의 최종 위치 결정
   - 최종: `PopupDetailFeature` 내부 helper. SDK product 링크는 `ThirdParty`, 실제 소스 import는 `KakaoSDKShare` 등 SDK 모듈명 직접 사용
-- [ ] DTO -> Domain mapper 테스트 작성
+- [x] DTO -> Domain mapper 테스트 작성
 - [ ] repository contract 테스트 작성
 
 #### F. Coordinator
