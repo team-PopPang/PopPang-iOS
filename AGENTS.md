@@ -169,7 +169,8 @@ Makefile 래퍼 명령:
 15. 구조 개선보다 V0 기능 동일성을 우선한다. V0 코드가 이미 동작하는 기준이므로 먼저 그대로 옮기고, 이후 컴파일/의존성/상태 관리에 필요한 최소 변경만 한다.
 16. `Projects/App/Project.swift`의 App 타깃은 항상 다크모드를 지원하지 않도록 `UIUserInterfaceStyle`을 `Light`로 둔다.
 17. App 타깃은 로컬라이징 fallback이 영어로 고정되지 않도록 `CFBundleDevelopmentRegion=ko`, `CFBundleLocalizations=[ko,en,ja]`, `CFBundleAllowMixedLocalizations=true`를 유지한다.
-18. 변경 사항이 이 문서와 충돌하면, 문서를 함께 갱신하거나 왜 다르게 가야 하는지 명시한다.
+18. feature 단위 타입에는 `@MainActor`를 습관적으로 붙이지 않는다. SwiftUI가 관찰하는 state/store, UIKit/SwiftUI API 접근, 메인 스레드 UI 갱신처럼 실제 메인 액터 격리가 필요한 경우에만 붙인다.
+19. 변경 사항이 이 문서와 충돌하면, 문서를 함께 갱신하거나 왜 다르게 가야 하는지 명시한다.
 
 저장소 방향:
 
@@ -1988,6 +1989,9 @@ final class HomeStore: Compound {
 - 네트워크 로딩은 `loading start -> result/error -> loading end` 순서가 보이도록 mutation stream으로 표현한다.
 - 여러 비동기 작업의 순서 보장이 중요하면 `concat`을 우선한다.
 - 입력 순서보다 완료 순서가 중요할 때만 `merge`를 검토한다.
+- `@MainActor`는 feature 전체 기본값으로 두지 않는다.
+- `@Published` state를 SwiftUI가 직접 관찰하는 store, UIKit/SwiftUI 타입 접근, coordinator UI 전환처럼 메인 액터가 필요한 경계에만 `@MainActor`를 붙인다.
+- DTO 변환, 순수 reducer, formatter, mapper, route value, 테스트 fixture에는 `@MainActor`를 붙이지 않는다.
 
 ## 10. PopPang 실제 모듈 제안
 
