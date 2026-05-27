@@ -13,9 +13,6 @@ let project = Project(
             sources: [
                 "Sources/**",
             ],
-            resources: [
-                "Resources/**",
-            ],
             dependencies: [
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
@@ -37,16 +34,6 @@ let project = Project(
                 ]
             ),
             sources: ["Demo/Sources/**"],
-            dependencies: [.target(name: "OnboardingFeature")]
-        ),
-        .target(
-            name: "OnboardingFeatureTests",
-            destinations: [.iPhone],
-            product: .unitTests,
-            bundleId: "com.poppang.features.onboarding.tests",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .default,
-            sources: ["Tests/**"],
             dependencies: [.target(name: "OnboardingFeature")]
         ),
     ]
