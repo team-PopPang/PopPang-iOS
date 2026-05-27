@@ -174,6 +174,7 @@ private struct ImageSliderView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
+                .offset(y: offset > 0 ? -offset : 0)
             }
             .frame(width: geo.size.width, height: 450, alignment: .top)
         }
