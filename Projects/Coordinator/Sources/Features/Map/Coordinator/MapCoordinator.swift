@@ -1,31 +1,70 @@
 import Core
 import MapFeature
+import PopupDetailFeature
+import ReviewFeature
 import SwiftUI
 
 @MainActor
 public final class MapCoordinator: Coordinator<
-    EmptyRoute,
+    MapFeatureRoute,
     EmptySheetRoute,
     EmptyOverlayRoute,
     EmptyFullScreenRoute,
     MapBottomSheetRoute
 > {
+    private var session: MainTabSession
+    private var rootView: MapFeatureView!
+
+    public init(session: MainTabSession = MainTabSession(userUuid: "demo-user")) {
+        self.session = session
+        super.init()
+        self.rootView = makeMapRootView(session: session)
+    }
+
+    public func updateSession(_ session: MainTabSession) {
+        self.session = session
+        self.rootView = makeMapRootView(session: session)
+    }
+
     public func showPopupListSheet() {
         presentBottomSheet(.popupList)
     }
 
     public func showPopupDetailSheet() {
-        presentBottomSheet(.popupDetail)
+        presentBottomSheet(.popupDetailSheet)
     }
 
     public func makeRootView() -> some View {
-        MapFeatureView()
-            .navigationTitle("Map")
+        rootView
+    }
+
+    private func makeMapRootView(session: MainTabSession) -> MapFeatureView {
+        MapFeatureView(
+            userUuid: session.userUuid,
+            onSelectPopup: { [weak self] userUuid, popup in
+                self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+            }
+        )
     }
 
     @ViewBuilder
-    public func buildView(for route: EmptyRoute) -> some View {
-        EmptyView()
+    public func buildView(for route: MapFeatureRoute) -> some View {
+        switch route {
+        case .popupDetail(let userUuid, let popup):
+            PopupDetailFeatureView(
+                userUuid: userUuid,
+                popup: popup,
+                isAdmin: session.isAdmin,
+                onSelectRelatedPopup: { [weak self] userUuid, popup in
+                    self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                },
+                onShowReviews: { [weak self] reviews in
+                    self?.push(.reviewDetail(reviews))
+                }
+            )
+        case .reviewDetail(let reviews):
+            ReviewFeatureView(reviews: reviews)
+        }
     }
 
     @ViewBuilder
@@ -95,7 +134,7 @@ private struct MapBottomSheetHost: View {
         switch route {
         case .popupList:
             "맵 결과 목록 시트"
-        case .popupDetail:
+        case .popupDetailSheet:
             "맵 팝업 상세 시트"
         }
     }
@@ -104,7 +143,7 @@ private struct MapBottomSheetHost: View {
         switch route {
         case .popupList:
             "목록 탐색처럼 맵 안에서 끝나는 흐름은 MapCoordinator가 상태를 직접 소유합니다."
-        case .popupDetail:
+        case .popupDetailSheet:
             "상세 바텀시트도 route 값만 전달하고, 실제 표시 상태는 coordinator가 직접 관리합니다."
         }
     }
