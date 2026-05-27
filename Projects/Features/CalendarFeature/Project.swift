@@ -15,6 +15,7 @@ let project = Project(
             ],
             dependencies: [
                 .project(target: "Domain", path: "../../Domain"),
+                .project(target: "Core", path: "../../Shared/Core"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]
@@ -34,7 +35,11 @@ let project = Project(
                 ]
             ),
             sources: ["Demo/Sources/**"],
-            dependencies: [.target(name: "CalendarFeature")]
+            dependencies: [
+                .target(name: "CalendarFeature"),
+                .project(target: "Domain", path: "../../Domain"),
+                .project(target: "Data", path: "../../Data"),
+            ]
         ),
         .target(
             name: "CalendarFeatureTests",
