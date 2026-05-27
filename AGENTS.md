@@ -99,6 +99,7 @@ Tuist 버전은 `4.115.0`으로 고정한다.
 - 사용 가능한 템플릿 확인: `tuist scaffold list`
 - 프로젝트 생성: `tuist generate`
 - stale generated project 정리 후 재생성: `make regen`
+- 빌드 산출물만 빠르게 정리: `make trash`
 - 로컬 빌드 산출물, Xcode DerivedData, Tuist 캐시 정리: `make clean`
 - `clean` 후 `tuist install`, `tuist generate`까지 다시 수행: `make reinstall`
 - Makefile 도움말: `make module-help`
@@ -138,6 +139,7 @@ Makefile 래퍼 명령:
 - `make module LAYER=dskit NAME=DSKit`
 - `make module LAYER=shared NAME=UIComponents`
 - `make regen`
+- `make trash`
 - `make clean`
 - `make reinstall`
 

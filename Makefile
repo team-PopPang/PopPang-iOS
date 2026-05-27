@@ -119,6 +119,7 @@ module-help:
 	@echo "  make module LAYER=feature NAME=Home"
 	@echo "  make module LAYER=feature NAME=PopupDetail INTERFACE=true"
 	@echo "  make regen"
+	@echo "  make trash"
 	@echo "  make clean"
 	@echo "  make reinstall"
 	@echo ""
@@ -137,6 +138,7 @@ module-help:
 	@echo "  make module LAYER=dskit NAME=DSKit"
 	@echo "  make module LAYER=shared NAME=UIComponents"
 	@echo "  make regen"
+	@echo "  make trash"
 	@echo "  make clean"
 	@echo "  make reinstall"
 
@@ -180,6 +182,18 @@ regen:
 	@find Projects -name 'Derived' -type d -prune -exec rm -rf {} +
 	@echo "🧱 Running tuist generate..."
 	@tuist generate
+
+# -----------------------------
+# 🗑 Remove Build Outputs Only
+# -----------------------------
+trash:
+	@echo "🗑 Removing local build outputs..."
+	@rm -rf build
+	@rm -rf /tmp/poppang-*-dd
+	@find Projects -name 'Derived' -type d -prune -exec rm -rf {} +
+	@find Projects -name 'build' -type d -prune -exec rm -rf {} +
+	@find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -name 'PopPang-*' -type d -prune -exec rm -rf {} +
+	@echo "✅ Local build outputs removed."
 
 # -----------------------------
 # 🧹 Clean Local Build Artifacts
