@@ -36,15 +36,5 @@ let project = Project(
             sources: ["Demo/Sources/**"],
             dependencies: [.target(name: "ReviewFeature")]
         ),
-        .target(
-            name: "ReviewFeatureTests",
-            destinations: [.iPhone],
-            product: .unitTests,
-            bundleId: "com.poppang.features.review.tests",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .default,
-            sources: ["Tests/**"],
-            dependencies: [.target(name: "ReviewFeature")]
-        ),
     ]
 )
