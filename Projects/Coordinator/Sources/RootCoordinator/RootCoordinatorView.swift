@@ -1,3 +1,4 @@
+import DSKit
 import SwiftUI
 
 public struct RootCoordinatorView: View {
@@ -20,7 +21,9 @@ public struct RootCoordinatorView: View {
             switch coordinator.destination {
             case .launch:
                 LaunchScene(
-                    onContinue: coordinator.begin
+                    onContinue: {
+                        await coordinator.begin()
+                    }
                 )
             case .onboarding:
                 OnboardingCoordinatorView(coordinator: coordinator.onboardingCoordinator)
@@ -29,28 +32,26 @@ public struct RootCoordinatorView: View {
             case .register:
                 RegisterFlowCoordinatorView(coordinator: coordinator.authFlowCoordinator)
             case .main:
-                MainTabCoordinatorView(coordinator: coordinator.mainTabCoordinator)
+                if let mainTabCoordinator = coordinator.mainTabCoordinator {
+                    MainTabCoordinatorView(coordinator: mainTabCoordinator)
+                }
             }
         }
     }
 }
 
 private struct LaunchScene: View {
-    let onContinue: @MainActor () -> Void
+    let onContinue: @MainActor () async -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("PopPang")
-                .font(.largeTitle.bold())
-
-            Text("세션과 온보딩 상태를 확인하고 있습니다")
-                .foregroundStyle(.secondary)
-
-            ProgressView()
+        ZStack {
+            DSKitResource.image("Launch")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
         }
-        .padding(24)
         .task {
-            onContinue()
+            await onContinue()
         }
     }
 }
@@ -63,12 +64,6 @@ private struct OnboardingCoordinatorView: View {
             coordinator.makeRootView()
         } destination: { route in
             coordinator.buildView(for: route)
-        } sheetView: { route in
-            EmptyView()
-        } overlayView: { route in
-            EmptyView()
-        } fullScreenView: { route in
-            EmptyView()
         }
     }
 }
@@ -77,17 +72,7 @@ private struct AuthFlowCoordinatorView: View {
     let coordinator: AuthFlowCoordinator
 
     var body: some View {
-        CoordinatorContainer(coordinator: coordinator) {
-            coordinator.makeRootView()
-        } destination: { route in
-            coordinator.buildView(for: route)
-        } sheetView: { route in
-            EmptyView()
-        } overlayView: { route in
-            EmptyView()
-        } fullScreenView: { route in
-            EmptyView()
-        }
+        coordinator.makeRootView()
     }
 }
 
@@ -95,16 +80,6 @@ private struct RegisterFlowCoordinatorView: View {
     let coordinator: AuthFlowCoordinator
 
     var body: some View {
-        CoordinatorContainer(coordinator: coordinator) {
-            coordinator.makeRegisterView()
-        } destination: { route in
-            coordinator.buildView(for: route)
-        } sheetView: { route in
-            EmptyView()
-        } overlayView: { route in
-            EmptyView()
-        } fullScreenView: { route in
-            EmptyView()
-        }
+        coordinator.makeRegisterView()
     }
 }
