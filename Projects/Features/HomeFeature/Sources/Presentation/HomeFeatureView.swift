@@ -6,12 +6,28 @@ import SwiftUI
 
 public struct HomeFeatureView: View {
     @Environment(HomeFeatureCoordinator.self) private var coordinator
-    @State private var viewState = HomeViewState()
+    @State private var compound: HomeFeatureCompound
     @State private var hasSeenPopup = false
     @State private var startScrollOffset: CGFloat = 0
     @State private var currentScrollOffset: CGFloat = 0
+    @State private var lastHandledPopupId: String?
+    @State private var sheetRoute: HomeSheetRoute?
+    @Environment(\.scenePhase) private var scenePhase
 
-    public init() {}
+    private let deepLinkStorage: DeepLinkStorage
+
+    public init(
+        userUuid: String = "demo-user",
+        nickname: String = "닉네임",
+        deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore())
+    ) {
+        let compound = HomeFeatureCompound(userUuid: userUuid, nickname: nickname)
+        _compound = State(wrappedValue: compound)
+        self.deepLinkStorage = deepLinkStorage
+        Task { @MainActor in
+            compound.preload()
+        }
+    }
 
     public var body: some View {
         ZStack {
@@ -24,12 +40,12 @@ public struct HomeFeatureView: View {
                     Spacer()
 
                     IconButton(image: "SearchDark", imageSize: 25) {
-                        coordinator.push(.search)
+                        coordinator.presentFullScreen(.search(uuid: compound.state.userUuid))
                     }
                     .accessibilityIdentifier("home_search_button")
 
                     IconButton {
-                        coordinator.push(.alert)
+                        coordinator.push(.alert(userUuid: compound.state.userUuid))
                     }
                 }
                 .padding(.bottom, 15)
@@ -39,7 +55,7 @@ public struct HomeFeatureView: View {
                         LazyVStack(spacing: 0) {
                             VStack(alignment: .leading, spacing: 0) {
                                 HStack(spacing: 0) {
-                                    Text(viewState.nickname)
+                                    Text(compound.state.nickname)
                                         .foregroundStyle(Color.mainOrange)
                                         .font(.scdream(.bold, size: 15))
 
@@ -49,8 +65,8 @@ public struct HomeFeatureView: View {
                                 }
 
                                 BestPopupScrollView(
-                                    popups: viewState.bestPopups,
-                                    onSelect: { _ in coordinator.push(.popupDetail) }
+                                    popups: compound.state.bestPopups,
+                                    onSelect: { popup in coordinator.push(.popupDetail(userUuid: compound.state.userUuid, popup: popup)) }
                                 )
                                 .padding(.top, 15)
                             }
@@ -68,9 +84,12 @@ public struct HomeFeatureView: View {
                                 Spacer()
 
                                 Button {
-                                    coordinator.push(.comingSoon)
+                                    coordinator.push(.comingPopupDetail(
+                                        userUuid: compound.state.userUuid,
+                                        popups: compound.state.comingPopups
+                                    ))
                                 } label: {
-                                    Image("navigationButton")
+                                    DSKitResource.image("navigationButton")
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
                                         .frame(width: 16, height: 16)
@@ -81,16 +100,16 @@ public struct HomeFeatureView: View {
                             .padding(.top, 50)
 
                             ComingPopupScrollView(
-                                popups: viewState.comingPopups,
-                                onSelect: { _ in coordinator.push(.popupDetail) }
+                                popups: compound.state.comingPopups,
+                                onSelect: { popup in coordinator.push(.popupDetail(userUuid: compound.state.userUuid, popup: popup)) }
                             )
 
                             HStack {
-                                Text(viewState.selectedRegion?.region ?? "전체")
+                                Text(compound.state.selectedRegion?.region ?? "전체")
                                     .foregroundStyle(Color.mainBlack)
                                     .ppStyleFont(.scdream(.medium, size: 17))
 
-                                if let selectedDistrict = viewState.selectedDistrict,
+                                if let selectedDistrict = compound.state.selectedDistrict,
                                    selectedDistrict != "전체" {
                                     Text(selectedDistrict)
                                         .foregroundStyle(Color.mainBlack)
@@ -100,13 +119,13 @@ public struct HomeFeatureView: View {
                                 Spacer()
 
                                 RegionButton(text: "지역") {
-                                    viewState.showRegionSheet = true
+                                    sheetRoute = .regionSheet
                                 }
                                 .padding(.leading, -10)
                                 .accessibilityIdentifier("home_region_dropdown")
 
-                                SortButton(selectedOption: $viewState.selectedOption) {
-                                    viewState.showSortSheet = true
+                                SortButton(selectedOption: selectedOptionBinding) {
+                                    sheetRoute = .sortSheet
                                 }
                                 .accessibilityIdentifier("home_sort_dropdown")
                             }
@@ -115,10 +134,10 @@ public struct HomeFeatureView: View {
                             .id("Scroll_To_Top")
 
                             GridPopupScrollView(
-                                popups: viewState.gridPopups,
-                                isLiked: { popup in viewState.isLiked(popup: popup) },
-                                toggleLike: { popup in viewState.toggleLike(popup: popup) },
-                                onSelect: { _ in coordinator.push(.popupDetail) }
+                                popups: compound.state.gridPopups,
+                                isLiked: { popup in isLiked(popup: popup) },
+                                toggleLike: { popup in compound.send(.toggleLike(popup)) },
+                                onSelect: { popup in coordinator.push(.popupDetail(userUuid: compound.state.userUuid, popup: popup)) }
                             )
                             .padding(.top, 15)
                             .padding(.trailing, .contentPadding)
@@ -147,7 +166,7 @@ public struct HomeFeatureView: View {
                                 proxyHeader.scrollTo("Scroll_To_Top", anchor: .top)
                             }
                         } label: {
-                            Image("TopAnchor")
+                            DSKitResource.image("TopAnchor")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 20, height: 20)
@@ -173,24 +192,159 @@ public struct HomeFeatureView: View {
                 }
             }
         }
-        .sheet(isPresented: $viewState.showRegionSheet) {
-            HomeRegionSheet(
-                regions: viewState.regions,
-                selectedRegion: $viewState.selectedRegion,
-                selectedDistrict: $viewState.selectedDistrict
-            )
-            .presentationDetents([.medium])
-        }
-        .sheet(isPresented: $viewState.showSortSheet) {
-            SortButtonSheet(selectedOption: $viewState.selectedOption)
-                .presentationDetents([.height(270)])
+        .withoutAnimation()
+        .sheet(item: $sheetRoute) { route in
+            switch route {
+            case .regionSheet:
+                RegionButtonSheet(
+                    regions: compound.state.regions,
+                    selectedRegion: selectedRegionBinding,
+                    selectedDistrict: selectedDistrictBinding,
+                    regionTitle: { $0.region },
+                    districts: { $0.districtList }
+                )
+                .presentationDetents([.medium])
+            case .sortSheet:
+                SortButtonSheet(selectedOption: selectedOptionBinding)
+                    .presentationDetents([.height(270)])
+            }
         }
         .onAppear {
+            compound.preload()
+
             if !hasSeenPopup {
                 hasSeenPopup = true
             }
         }
-        .withoutAnimation()
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    handleDeeplinkIfNeeded()
+                }
+            }
+        }
+    }
+}
+
+private extension HomeFeatureView {
+    var selectedRegionBinding: Binding<RegionList?> {
+        Binding(
+            get: { compound.state.selectedRegion },
+            set: { region in
+                guard let region else { return }
+                compound.send(.regionSelected(region))
+            }
+        )
+    }
+
+    var selectedDistrictBinding: Binding<String?> {
+        Binding(
+            get: { compound.state.selectedDistrict },
+            set: { district in
+                guard let district else { return }
+                compound.send(.districtSelected(district))
+                sheetRoute = nil
+            }
+        )
+    }
+
+    var selectedOptionBinding: Binding<SortButton.SortOption> {
+        Binding(
+            get: { compound.state.selectedOption },
+            set: { option in
+                compound.send(.sortOptionSelected(option))
+                sheetRoute = nil
+            }
+        )
+    }
+
+    func isLiked(popup: Popup) -> Bool {
+        compound.state.gridPopups.first { $0.popupUuid == popup.popupUuid }?.isFavorited ?? popup.isFavorited
+    }
+}
+
+private extension HomeFeatureView {
+    func handleDeeplinkIfNeeded() {
+        Task {
+            guard let popupId = deepLinkStorage.loadPopupID(),
+                  lastHandledPopupId != popupId
+            else {
+                return
+            }
+
+            while compound.state.bestPopups.isEmpty &&
+                compound.state.comingPopups.isEmpty &&
+                compound.state.gridPopups.isEmpty {
+                try? await Task.sleep(nanoseconds: 200_000_000)
+            }
+
+            await MainActor.run {
+                moveToPopupDetailIfExists(popupId: popupId)
+                deepLinkStorage.removePopupID()
+                lastHandledPopupId = popupId
+            }
+        }
+    }
+
+    func moveToPopupDetailIfExists(popupId: String) {
+        let allPopups = compound.state.bestPopups
+            + compound.state.comingPopups
+            + compound.state.gridPopups
+
+        if let targetPopup = allPopups.first(where: { $0.popupUuid == popupId }) {
+            coordinator.push(.popupDetail(userUuid: compound.state.userUuid, popup: targetPopup))
+        }
+    }
+}
+
+public struct ComingPopupDetailFeatureView: View {
+    @State private var compound: ComingPopupDetailCompound
+    private let onSelectPopup: (String, Popup) -> Void
+
+    public init(
+        userUuid: String,
+        popups: [Popup],
+        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in }
+    ) {
+        _compound = State(
+            wrappedValue: ComingPopupDetailCompound(
+                userUuid: userUuid,
+                popups: popups
+            )
+        )
+        self.onSelectPopup = onSelectPopup
+    }
+
+    public var body: some View {
+        ScrollView(showsIndicators: false) {
+            LazyVGrid(columns: columns, spacing: 20) {
+                ForEach(compound.state.popups) { popup in
+                    VStack(alignment: .leading) {
+                        GridPopupCell(
+                            popup: popup,
+                            isLiked: popup.isFavorited,
+                            toggleLike: {
+                                compound.send(.toggleLike(popup))
+                            }
+                        )
+                        .onTapGesture {
+                            onSelectPopup(compound.state.userUuid, popup)
+                        }
+                        .padding(.bottom, 0)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityIdentifier("home_comming_cell")
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, .contentPadding)
+    }
+
+    private var columns: [GridItem] {
+        [
+            GridItem(.flexible(), spacing: 15),
+            GridItem(.flexible(), spacing: 15),
+        ]
     }
 }
 
@@ -293,7 +447,7 @@ private struct BestPopupCell: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                 HStack(spacing: 2) {
-                    Image("Address")
+                    DSKitResource.image("Address")
                         .resizable()
                         .renderingMode(.template)
                         .aspectRatio(contentMode: .fit)
@@ -441,204 +595,17 @@ private struct BookmarkButton: View {
         } label: {
             switch info {
             case .fill:
-                Image(isLiked ? "favorite_fill" : "favorite")
+                DSKitResource.image(isLiked ? "favorite_fill" : "favorite")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 20, height: 20)
             case .stroke:
-                Image(isLiked ? "favorite_fill" : "favorite")
+                DSKitResource.image(isLiked ? "favorite_fill" : "favorite")
                     .renderingMode(.template)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 25, height: 25)
                     .foregroundStyle(isLiked ? Color.mainOrange : Color.subWhite)
-            }
-        }
-    }
-}
-
-private struct RegionButton: View {
-    let text: String
-    let action: () -> Void
-
-    var body: some View {
-        Button {
-            action()
-        } label: {
-            HStack {
-                Text(text)
-                    .ppStyleFont(.scdream(.light, size: 10))
-                    .foregroundStyle(Color.mainGray)
-                Image(systemName: "chevron.down")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 10, height: 10)
-                    .foregroundStyle(Color.mainGray)
-            }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 10)
-            .frame(width: 60)
-            .background(Color.subWhite)
-            .cornerRadius(17)
-            .overlay {
-                RoundedRectangle(cornerRadius: 17)
-                    .stroke(lineWidth: 1)
-                    .foregroundColor(Color.mainGray5)
-            }
-        }
-    }
-}
-
-private struct HomeRegionSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    let regions: [RegionList]
-    @Binding var selectedRegion: RegionList?
-    @Binding var selectedDistrict: String?
-
-    private let backFont: Font = .system(size: 17, weight: .bold)
-    private let buttonFont: Font = .scdream(.regular, size: 12)
-    private let rowHeight: CGFloat = 46
-    private let dividerHeight: CGFloat = 1.5
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                HStack(spacing: 0) {
-                    Text("지역")
-                        .foregroundStyle(Color.mainBlack)
-                        .ppStyleFont(.scdream(.bold, size: 17))
-                    Spacer()
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .foregroundStyle(.black)
-                            .font(backFont)
-                    }
-                    .accessibilityIdentifier("home_sheet_close_button")
-                }
-                .padding(.top, 28)
-
-                Rectangle()
-                    .frame(height: dividerHeight)
-                    .foregroundStyle(Color.mainGray3)
-                    .padding(.top, 30)
-
-                HStack(spacing: 0) {
-                    List(regions) { region in
-                        VStack(spacing: 0) {
-                            Button {
-                                selectedRegion = region
-                                selectedDistrict = region.districtList.first
-                            } label: {
-                                HStack(spacing: 0) {
-                                    Spacer()
-                                    Text(region.region)
-                                        .foregroundStyle(selectedRegion == region ? Color.mainOrange : Color.mainGray)
-                                        .font(buttonFont)
-                                    Spacer()
-                                }
-                            }
-                            .frame(height: rowHeight)
-                            .accessibilityIdentifier("home_region_\(region.region)")
-                        }
-                        .listRowBackground(selectedRegion == region ? Color.subWhite : Color.mainGray4)
-                        .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.hidden)
-                    }
-                    .frame(width: 65)
-                    .scrollContentBackground(.hidden)
-                    .listStyle(.plain)
-
-                    if let selectedRegion {
-                        List(selectedRegion.districtList, id: \.self) { district in
-                            Button {
-                                selectedDistrict = district
-                                dismiss()
-                            } label: {
-                                HStack(spacing: 0) {
-                                    Text(district)
-                                        .foregroundStyle(selectedDistrict == district ? Color.mainOrange : Color.mainGray)
-                                        .font(buttonFont)
-                                    Spacer()
-                                }
-                            }
-                            .frame(height: rowHeight)
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                            .accessibilityIdentifier("home_district_\(district)")
-                        }
-                        .scrollContentBackground(.hidden)
-                        .listStyle(.plain)
-                    }
-                }
-                .frame(height: 300)
-            }
-            .padding(.horizontal, 28)
-        }
-        .presentationDragIndicator(.visible)
-    }
-}
-
-private enum ImagePresent {
-    case bestPopupCell
-    case comingPopupCell
-    case gridPopupCell
-
-    var size: CGSize {
-        switch self {
-        case .bestPopupCell:
-            CGSize(width: 194, height: 271)
-        case .comingPopupCell:
-            CGSize(width: 283, height: 138)
-        case .gridPopupCell:
-            CGSize(width: (UIScreen.main.bounds.width - 15 * 3) / 2, height: 217)
-        }
-    }
-}
-
-private extension KFImage {
-    func downSampled(_ present: ImagePresent, scale: CGFloat = UIScreen.main.scale) -> some View {
-        setProcessor(DownsamplingImageProcessor(size: present.size))
-            .scaleFactor(scale)
-            .cacheOriginalImage()
-            .resizable()
-    }
-}
-
-@Observable
-private final class HomeViewState {
-    var nickname = "닉네임"
-    var bestPopups: [Popup] = [.popupMock, .popupMock2]
-    var comingPopups: [Popup] = [.popupMock2, .popupMock]
-    var gridPopups: [Popup] = [.popupMock, .popupMock2, .popupMock, .popupMock2]
-    var regions: [RegionList] = [
-        RegionList(region: "전체", districtList: ["전체"]),
-        RegionList(region: "서울", districtList: ["전체", "성동구", "강남구", "마포구"]),
-        RegionList(region: "부산", districtList: ["전체", "해운대구", "수영구"]),
-    ]
-    var selectedRegion: RegionList?
-    var selectedDistrict: String?
-    var selectedOption: SortButton.SortOption = .newest
-    var showRegionSheet = false
-    var showSortSheet = false
-
-    init() {
-        selectedRegion = regions.first
-        selectedDistrict = regions.first?.districtList.first
-    }
-
-    func isLiked(popup: Popup) -> Bool {
-        gridPopups.first(where: { $0.popupUuid == popup.popupUuid })?.isFavorited ?? popup.isFavorited
-    }
-
-    func toggleLike(popup: Popup) {
-        for index in gridPopups.indices where gridPopups[index].popupUuid == popup.popupUuid {
-            gridPopups[index].isFavorited.toggle()
-            if gridPopups[index].isFavorited {
-                gridPopups[index].favoriteCount += 1
-            } else {
-                gridPopups[index].favoriteCount = max(0, gridPopups[index].favoriteCount - 1)
             }
         }
     }
