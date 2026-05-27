@@ -235,7 +235,7 @@ Makefile 래퍼 명령:
 - [x] `MapFeature`에 NMapsMap 브리지를 선언형 modifier/DSL 중심 구조로 정리해 이식한다.
 - [x] `Coordinator`의 route를 순수 intent 값으로 정리하고 `Binding`/무거운 closure 의존을 V0에서 제거한 형태로 치환한다.
 - [x] `MainTab` 각 탭의 사용자 세션 전달 방식을 `EnvironmentObject` 남용 없이 정리한다.
-- [ ] 로그인, 회원가입, 자동 로그인, 로그아웃, FCM 토큰, 딥링크 흐름을 App/Coordinator/Feature 경계에 맞게 재배치한다.
+- [x] 로그인, 회원가입, 자동 로그인, 로그아웃, FCM 토큰, 딥링크 흐름을 App/Coordinator/Feature 경계에 맞게 재배치한다.
 - [ ] `Data` 레이어를 V0 repository 구현과 DTO/mapper 기준으로 안정화한다.
 - [x] `ThirdParty` 의존성 선언과 실제 SDK 사용 지점을 추적 가능하게 정리한다.
 - [ ] `V0`에서 아직 남아 있는 공통 유틸/UI 확장을 `Core` 또는 `DSKit`로 분류 이전한다.
@@ -295,11 +295,11 @@ Makefile 래퍼 명령:
 
 App:
 
-- [ ] `V0/PopPang/Sources/App/PopPangApp.swift`
-- [ ] `V0/PopPang/Sources/App/RootViewModel.swift`
-- [ ] `V0/PopPang/Sources/App/RootViewSwitcher.swift`
-- [ ] `V0/PopPang/Sources/App/DIContainer/DIContainer.swift`
-- [ ] `V0/PopPang/Sources/App/DIContainer/ViewModelFactory.swift`
+- [x] `V0/PopPang/Sources/App/PopPangApp.swift`
+- [x] `V0/PopPang/Sources/App/RootViewModel.swift`
+- [x] `V0/PopPang/Sources/App/RootViewSwitcher.swift`
+- [x] `V0/PopPang/Sources/App/DIContainer/DIContainer.swift`
+- [x] `V0/PopPang/Sources/App/DIContainer/ViewModelFactory.swift`
 - [ ] `V0/PopPang/Sources/App/Coordinator/Coordinator/MainCoordinator/1. MainRoute.swift`
 - [ ] `V0/PopPang/Sources/App/Coordinator/Coordinator/MainCoordinator/2. SheetRoute.swift`
 - [ ] `V0/PopPang/Sources/App/Coordinator/Coordinator/MainCoordinator/3. OverlayRoute.swift`
@@ -2197,14 +2197,14 @@ final class HomeStore: Compound {
 
 #### A. App / 전역 부트스트랩
 
-- [ ] `V0/App/PopPangApp.swift`의 앱 시작 흐름 반영
+- [x] `V0/App/PopPangApp.swift`의 앱 시작 흐름 반영
 - [x] `V0/App/Delegate/AppDelegate.swift`의 SDK 초기화, push 연결점 반영
 - [x] `V0/App/Delegate/SceneDelegate.swift`에서 필요한 흐름만 추출
-- [ ] `V0/App/RootViewModel.swift`의 루트 상태 분해
-- [ ] `V0/App/RootViewSwitcher.swift`의 루트 화면 전환 분해
-- [ ] `V0/App/DIContainer/DIContainer.swift` 역할을 `Projects/App` 조립 코드로 이전
-- [ ] `V0/App/DIContainer/ViewModelFactory.swift` 역할을 feature factory 또는 app assembly로 이전
-- [ ] 앱 entitlements, team, URL scheme, associated domains 유지 확인
+- [x] `V0/App/RootViewModel.swift`의 루트 상태 분해
+- [x] `V0/App/RootViewSwitcher.swift`의 루트 화면 전환 분해
+- [x] `V0/App/DIContainer/DIContainer.swift` 역할을 `Projects/App` 조립 코드로 이전
+- [x] `V0/App/DIContainer/ViewModelFactory.swift` 역할을 feature factory 또는 app assembly로 이전
+- [x] 앱 entitlements, team, URL scheme, associated domains 유지 확인
 - [x] `tuist generate` 후 앱 시뮬레이터 빌드 통과
 
 #### B. Core
