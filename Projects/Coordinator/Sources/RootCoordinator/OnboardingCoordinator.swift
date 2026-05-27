@@ -1,10 +1,15 @@
+import AuthFeature
 import Core
 import OnboardingFeature
 import SwiftUI
 
+public enum OnboardingRoute: Hashable {
+    case login
+}
+
 @MainActor
 public final class OnboardingCoordinator: Coordinator<
-    EmptyRoute,
+    OnboardingRoute,
     EmptySheetRoute,
     EmptyOverlayRoute,
     EmptyFullScreenRoute,
@@ -15,17 +20,28 @@ public final class OnboardingCoordinator: Coordinator<
     public func makeRootView() -> some View {
         OnboardingFeatureView(
             onSkip: { [weak self] in
-                self?.parent?.completeOnboarding()
+                self?.showLogin()
             },
             onComplete: { [weak self] in
-                self?.parent?.completeOnboarding()
+                self?.showLogin()
             }
         )
-        .navigationTitle("Onboarding")
+    }
+
+    public func showLogin() {
+        parent?.markOnboardingCompleted()
+        push(.login)
     }
 
     @ViewBuilder
-    public func buildView(for route: EmptyRoute) -> some View {
-        EmptyView()
+    public func buildView(for route: OnboardingRoute) -> some View {
+        switch route {
+        case .login:
+            AuthFeatureView(
+                onLoginSuccess: { [weak self] user in
+                    self?.parent?.completeAuthentication(user: user)
+                }
+            )
+        }
     }
 }
