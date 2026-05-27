@@ -67,21 +67,42 @@ import PackageDescription
     // - 실제로 이 프로젝트에서는 Firebase/GoogleSignIn을 `.framework`로 강제했을 때 위 문제가 재현됐다.
     //
     // 현재 정책
-    // - Firebase, GoogleSignIn: override하지 않고 기본값 유지
-    //   - 이유: 이 둘을 `.framework`로 강제했을 때 `swiftCompatibility*`, `UIUtilities` 같은 auto-link 관련 링크 에러가 실제로 재현됐다.
+    // - Firebase: override하지 않고 기본값 유지
+    //   - 이유: Firebase 계열을 `.framework`로 강제했을 때 `swiftCompatibility*`, `UIUtilities` 같은 auto-link 관련 링크 에러가 실제로 재현됐다.
     //   - 즉 SDK가 기대한 기본 링크 구성을 깨지 않는 쪽이 더 안전했다.
     //   - Firebase 공식 문서도 SPM 배포는 static only라고 안내한다:
     //     https://firebase.google.com/docs/ios/link-firebase-static-dynamic
-    //   - GoogleSignIn 공식 설치 문서는 SPM 사용법만 안내하고 static/dynamic override 지침은 명시하지 않았다:
-    //     https://developers.google.com/identity/sign-in/ios/start-integrating
-    //   - 그래서 GoogleSignIn은 "공식적으로 `.framework`로 바꾸라"는 근거가 없고, 이 프로젝트에서는 실제 빌드 재현 결과를 우선해 기본값 유지로 둔다.
+    // - GoogleSignIn과 직접 전이 product: `.framework` 유지
+    //   - 이유: `ThirdParty` 허브에만 SPM product를 모으고 Data가 `import GoogleSignIn`을 직접 쓰는 구조에서,
+    //     기본 static product로 두면 Data 링크 단계가 AppAuth/AppCheck/GTM/GoogleUtilities 심볼을 찾지 못한다.
+    // - KakaoSDK 직접 사용 product: `.framework` 유지
+    //   - 이유: Data는 KakaoSDKAuth/User를, PopupDetailFeature는 KakaoSDKShare/Template을 직접 import한다.
+    //     기본 static product로 두면 KakaoSDKCommon 코드가 Data.framework와 Coordinator.framework에 각각 포함되어 런타임 duplicate class 경고가 난다.
     // - Moya, Alamofire: `.framework` 유지
     //   - 이유: 기본값으로 둘 때 `Moya` 쪽에서 `Alamofire`를 못 찾는 모듈 해석 문제가 실제로 재현됐다.
     //   - `Compound`는 feature에서 직접 들고 가지 않고 `ThirdParty` 허브를 통해 제공한다.
     let packageSettings = PackageSettings(
         productTypes: [
             "Alamofire": .framework,
+            "AppAuth": .framework,
+            "AppAuthCore": .framework,
+            "AppCheckCore": .framework,
+            "FBLPromises": .framework,
+            "GoogleSignIn": .framework,
+            "GTMAppAuth": .framework,
+            "GTMSessionFetcherCore": .framework,
+            "GoogleUtilities-Environment": .framework,
+            "GoogleUtilities-Logger": .framework,
+            "GoogleUtilities-UserDefaults": .framework,
+            "GULEnvironment": .framework,
+            "GULUserDefaults": .framework,
+            "KakaoSDKAuth": .framework,
+            "KakaoSDKCommon": .framework,
+            "KakaoSDKShare": .framework,
+            "KakaoSDKTemplate": .framework,
+            "KakaoSDKUser": .framework,
             "Moya": .framework,
+            "third-party-IsAppEncrypted": .framework,
         ]
     )
 #endif
@@ -95,6 +116,6 @@ let package = Package(
         .package(url: "https://github.com/onevcat/Kingfisher", exact: "8.6.2"),
         .package(url: "https://github.com/Moya/Moya.git", exact: "15.0.3"),
         .package(url: "https://github.com/navermaps/SPM-NMapsMap", exact: "3.23.0"),
-        .package(url: "https://github.com/indextrown/Compound", exact: "1.0.3"),
+        .package(url: "https://github.com/indextrown/Compound", exact: "1.0.4"),
     ]
 )
