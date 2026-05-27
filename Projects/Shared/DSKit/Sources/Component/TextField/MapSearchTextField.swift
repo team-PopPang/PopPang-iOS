@@ -38,7 +38,7 @@ public struct MapSearchTextField: View {
                     .overlay {
                         HStack {
                             Spacer()
-                            Image("Search")
+                            DSKitResource.image("Search")
                                 .renderingMode(.template)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)

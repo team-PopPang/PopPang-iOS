@@ -42,7 +42,7 @@ public struct SortButton: View {
         }
     }
 
-    public enum SortOption: String, CaseIterable {
+    public enum SortOption: String, CaseIterable, Sendable {
         case newest = "NEWEST"
         case closingSoon = "CLOSING_SOON"
         case mostFavorited = "MOST_FAVORITED"
@@ -97,7 +97,7 @@ public struct SortButtonSheet: View {
                         dismiss()
                     } label: {
                         HStack(spacing: 15) {
-                            Image(selectedOption == option ? "circle_filled" : "circle")
+                            DSKitResource.image(selectedOption == option ? "circle_filled" : "circle")
                                 .resizable()
                                 .frame(width: 15, height: 15)
                                 .foregroundColor(selectedOption == option ? .orange : .gray)

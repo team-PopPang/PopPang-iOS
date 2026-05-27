@@ -23,7 +23,7 @@ public struct SearchFlowButton: View {
                     .foregroundStyle(Color.mainBlack)
 
                 Button(action: onRemove) {
-                    Image("removeBtn")
+                    DSKitResource.image("removeBtn")
                         .resizable()
                         .frame(width: 25, height: 25)
                         .foregroundStyle(Color.mainBlack)

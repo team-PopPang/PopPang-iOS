@@ -1,7 +1,10 @@
 import SwiftUI
 
 public struct CustomCalendar: View {
-    @StateObject private var viewModel = CustomCalendarViewModel()
+    @State private var dates: [DateValue] = []
+    @State private var currentDate: Date = .init()
+    @State private var currentMonth: Int = 0
+
     let eventCounts: [Date: Int]
     let onDateSelected: (Date) -> Void
 
@@ -16,28 +19,45 @@ public struct CustomCalendar: View {
     public var body: some View {
         VStack(spacing: 0) {
             VStack {
-                MonthHeaderView(viewModel: viewModel)
+                MonthHeaderView(
+                    currentDate: currentDate,
+                    onPreviousTapped: {
+                        moveMonth(by: -1)
+                    },
+                    onNextTapped: {
+                        moveMonth(by: 1)
+                    }
+                )
                     .padding(.horizontal, 10)
                 WeekHeaderView()
                     .padding(.top, 20)
                 DateGridView(
-                    viewModel: viewModel,
+                    dates: dates,
+                    currentDate: currentDate,
                     eventCounts: eventCounts,
-                    onSelect: onDateSelected
+                    onSelect: { date in
+                        currentDate = date
+                        onDateSelected(date)
+                    }
                 )
             }
             .padding(.horizontal, .contentPadding)
+        }
+        .onAppear {
+            extractDate()
         }
     }
 }
 
 private struct MonthHeaderView: View {
-    @ObservedObject var viewModel: CustomCalendarViewModel
+    let currentDate: Date
+    let onPreviousTapped: () -> Void
+    let onNextTapped: () -> Void
 
     var body: some View {
         HStack {
             Button {
-                viewModel.moveMonth(by: -1)
+                onPreviousTapped()
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 20))
@@ -46,7 +66,7 @@ private struct MonthHeaderView: View {
 
             Spacer()
 
-            let parts = viewModel.extractYearAndMonth()
+            let parts = extractYearAndMonth()
             HStack(spacing: 5) {
                 Text("\(parts[0])년")
                 Text(parts[1])
@@ -57,13 +77,20 @@ private struct MonthHeaderView: View {
             Spacer()
 
             Button {
-                viewModel.moveMonth(by: 1)
+                onNextTapped()
             } label: {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 20))
                     .foregroundStyle(Color.mainBlack)
             }
         }
+    }
+
+    private func extractYearAndMonth() -> [String] {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "yyyy MMMM"
+        return formatter.string(from: currentDate).components(separatedBy: " ")
     }
 }
 
@@ -83,7 +110,8 @@ private struct WeekHeaderView: View {
 }
 
 private struct DateGridView: View {
-    @ObservedObject var viewModel: CustomCalendarViewModel
+    let dates: [DateValue]
+    let currentDate: Date
     let eventCounts: [Date: Int]
     let onSelect: (Date) -> Void
 
@@ -91,8 +119,8 @@ private struct DateGridView: View {
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: 15) {
-            ForEach(viewModel.dates) { value in
-                let isSelected = viewModel.isSameDay(date1: value.date, date2: viewModel.currentDate)
+            ForEach(dates) { value in
+                let isSelected = Calendar.current.isDate(value.date, inSameDayAs: currentDate)
                 let eventCount = eventCounts[value.date.stripTime()] ?? 0
 
                 DateCardView(
@@ -100,13 +128,43 @@ private struct DateGridView: View {
                     isSelected: isSelected,
                     eventCount: eventCount
                 ) {
-                    viewModel.currentDate = value.date
                     if value.day != -1 {
                         onSelect(value.date)
                     }
                 }
             }
         }
+    }
+}
+
+private extension CustomCalendar {
+    func getCurrentMonth() -> Date {
+        let calendar = Calendar.current
+        return calendar.date(byAdding: .month, value: currentMonth, to: Date()) ?? Date()
+    }
+
+    func extractDate() {
+        let calendar = Calendar.current
+        let currentMonth = getCurrentMonth()
+
+        var days = currentMonth.getAllDates().compactMap { date in
+            let day = calendar.component(.day, from: date)
+            return DateValue(day: day, date: date)
+        }
+
+        let firstWeekDay = calendar.component(.weekday, from: days.first?.date ?? Date())
+
+        for _ in 0 ..< firstWeekDay - 1 {
+            days.insert(DateValue(day: -1, date: Date()), at: 0)
+        }
+
+        dates = days
+    }
+
+    func moveMonth(by value: Int) {
+        currentMonth += value
+        currentDate = getCurrentMonth()
+        extractDate()
     }
 }
 
@@ -165,55 +223,5 @@ extension Date {
 
     func stripTime() -> Date {
         Calendar.current.startOfDay(for: self)
-    }
-}
-
-final class CustomCalendarViewModel: ObservableObject {
-    @Published private(set) var dates: [DateValue] = []
-    @Published var currentDate: Date = .init()
-    @Published var currentMonth: Int = 0
-
-    init() {
-        extractDate()
-    }
-
-    func extractYearAndMonth() -> [String] {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
-        formatter.dateFormat = "yyyy MMMM"
-        return formatter.string(from: currentDate).components(separatedBy: " ")
-    }
-
-    func getCurrentMonth() -> Date {
-        let calendar = Calendar.current
-        return calendar.date(byAdding: .month, value: currentMonth, to: Date()) ?? Date()
-    }
-
-    func extractDate() {
-        let calendar = Calendar.current
-        let currentMonth = getCurrentMonth()
-
-        var days = currentMonth.getAllDates().compactMap { date in
-            let day = calendar.component(.day, from: date)
-            return DateValue(day: day, date: date)
-        }
-
-        let firstWeekDay = calendar.component(.weekday, from: days.first?.date ?? Date())
-
-        for _ in 0 ..< firstWeekDay - 1 {
-            days.insert(DateValue(day: -1, date: Date()), at: 0)
-        }
-
-        dates = days
-    }
-
-    func isSameDay(date1: Date, date2: Date) -> Bool {
-        Calendar.current.isDate(date1, inSameDayAs: date2)
-    }
-
-    func moveMonth(by value: Int) {
-        currentMonth += value
-        currentDate = getCurrentMonth()
-        extractDate()
     }
 }

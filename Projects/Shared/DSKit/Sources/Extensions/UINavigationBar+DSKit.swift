@@ -17,7 +17,7 @@ public extension UINavigationBar {
             .foregroundColor: UIColor.black,
         ]
 
-        if let chevronImage = UIImage(named: "backButton")?.withRenderingMode(.alwaysTemplate) {
+        if let chevronImage = DSKitResource.uiImage(named: "backButton")?.withRenderingMode(.alwaysTemplate) {
             let resized = chevronImage.preparingThumbnail(of: CGSize(width: 18, height: 18))
             let tinted = resized?.withTintColor(UIColor(Color.subBlack), renderingMode: .alwaysOriginal)
             let adjusted = tinted?.withAlignmentRectInsets(

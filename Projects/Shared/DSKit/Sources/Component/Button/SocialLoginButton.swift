@@ -20,11 +20,11 @@ public struct SocialLoginButton: View {
         var title: String {
             switch self {
             case .kakao:
-                return NSLocalizedString("login.social.kakao", comment: "Login button title for Kakao")
+                return DSKitLocalization.localized("login.social.kakao", comment: "Login button title for Kakao")
             case .apple:
-                return NSLocalizedString("login.social.apple", comment: "Login button title for Apple")
+                return DSKitLocalization.localized("login.social.apple", comment: "Login button title for Apple")
             case .google:
-                return NSLocalizedString("login.social.google", comment: "Login button title for Google")
+                return DSKitLocalization.localized("login.social.google", comment: "Login button title for Google")
             }
         }
 
@@ -82,7 +82,7 @@ public struct SocialLoginButton: View {
     public var body: some View {
         Button(action: action) {
             HStack {
-                Image(type.imageName)
+                DSKitResource.image(type.imageName)
                     .resizable()
                     .renderingMode(type == .google ? .original : .template)
                     .foregroundColor(type.iconColor)

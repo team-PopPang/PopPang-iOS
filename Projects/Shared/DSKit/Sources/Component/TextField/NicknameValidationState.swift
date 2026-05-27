@@ -1,6 +1,6 @@
 import Foundation
 
-public enum NicknameValidationState {
+public enum NicknameValidationState: Equatable, Sendable {
     case none
     case success
     case duplicate

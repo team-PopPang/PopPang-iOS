@@ -29,7 +29,7 @@ public struct IconButton: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .contentShape(RoundedRectangle(cornerRadius: 6))
             } else {
-                Image(image)
+                DSKitResource.image(image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: imageSize, height: imageSize)
