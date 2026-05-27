@@ -11,62 +11,79 @@ public final class HomeCoordinator: Coordinator<
     HomeFeatureRoute,
     EmptySheetRoute,
     EmptyOverlayRoute,
-    EmptyFullScreenRoute,
+    HomeFullScreenRoute,
     EmptyBottomSheetRoute
 > {
+    private var session: MainTabSession
+    private var rootView: HomeFeatureView
+
+    public init(session: MainTabSession = MainTabSession(userUuid: "demo-user")) {
+        self.session = session
+        self.rootView = HomeFeatureView(userUuid: session.userUuid, nickname: session.nickname)
+        super.init()
+    }
+
+    public func updateSession(_ session: MainTabSession) {
+        self.session = session
+        self.rootView = HomeFeatureView(userUuid: session.userUuid, nickname: session.nickname)
+    }
+
     public func makeRootView() -> some View {
-        HomeFeatureView()
-            .navigationTitle("Home")
+        rootView
     }
 
     @ViewBuilder
     public func buildView(for route: HomeFeatureRoute) -> some View {
         switch route {
-        case .search:
-            SearchFeatureView()
-        case .popupDetail:
-            PopupDetailFeatureView {
-                self.push(.review)
-            }
-        case .comingSoon:
-            ComingSoonFeatureView()
-        case .alert:
-            AlertFeatureView()
-        case .review:
-            ReviewFeatureView()
+        case .popupDetail(let userUuid, let popup):
+            PopupDetailFeatureView(
+                userUuid: userUuid,
+                popup: popup,
+                isAdmin: session.isAdmin,
+                onSelectRelatedPopup: { [weak self] userUuid, popup in
+                    self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                },
+                onShowReviews: { [weak self] reviews in
+                    self?.push(.reviewDetail(reviews))
+                }
+            )
+        case let .comingPopupDetail(userUuid, popups):
+            ComingPopupDetailFeatureView(
+                userUuid: userUuid,
+                popups: popups,
+                onSelectPopup: { [weak self] userUuid, popup in
+                    self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                }
+            )
+        case .alert(let userUuid):
+            AlertFeatureView(
+                userUuid: userUuid,
+                onSelectPopup: { [weak self] userUuid, popup in
+                    self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                }
+            )
+        case .reviewDetail(let reviews):
+            ReviewFeatureView(reviews: reviews)
         }
     }
-}
 
-private struct ComingSoonFeatureView: View {
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color.orange.opacity(0.18))
-                    .frame(height: 220)
-                    .overlay(alignment: .bottomLeading) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("오픈 예정 팝업")
-                                .font(.title2.weight(.bold))
-                            Text("V0 ComingPopupDetailView 이식 대상")
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(24)
-                    }
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("준비 중 정보")
-                        .font(.headline)
-                    Text("오픈 예정 상세는 홈의 coming soon 카드에서 진입하고, 일정/브랜드/알림 연결을 함께 제공해야 합니다.")
-                        .foregroundStyle(.secondary)
-                    Text("현재는 모듈러 라우트와 상세 골격을 먼저 고정한 상태입니다.")
-                        .foregroundStyle(.secondary)
+    @ViewBuilder
+    public func buildFullScreen(for route: HomeFullScreenRoute) -> some View {
+        switch route {
+        case .search(let userUuid):
+            SearchFeatureView(
+                userUuid: userUuid,
+                nickname: session.nickname,
+                onDismiss: { [weak self] in
+                    self?.dismissFullScreen()
+                },
+                onSelectPopup: { [weak self] popup in
+                    guard let self else { return }
+                    dismissFullScreen()
+                    push(.popupDetail(userUuid: userUuid, popup: popup))
                 }
-            }
-            .padding(24)
+            )
+            .accessibilityIdentifier("home_search")
         }
-        .navigationTitle("Coming Soon")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
