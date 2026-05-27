@@ -17,6 +17,7 @@ final class ProfileFeatureCompound {
     }
 
     enum Reaction {
+        case setDidPreload(Bool)
         case setLoading(Bool)
         case setNickname(String)
         case setNewNickname(String)
@@ -37,6 +38,7 @@ final class ProfileFeatureCompound {
         var errorMessage: String?
         var didDeleteUser = false
         var didUpdateNickname = false
+        var didPreload = false
     }
 
     var state: State
@@ -55,10 +57,20 @@ final class ProfileFeatureCompound {
         )
     }
 
+    @MainActor
+    func preload() {
+        send(.onAppear)
+    }
+
     func react(action: Action) -> AsyncStream<Reaction> {
         switch action {
         case .onAppear:
-            return .just(.setLoading(false))
+            guard !state.didPreload else { return Self.emptyReactionStream() }
+
+            return .concat(
+                .just(.setDidPreload(true)),
+                .just(.setLoading(false))
+            )
 
         case .nicknameChanged(let nickname):
             return .concat(
@@ -100,6 +112,8 @@ final class ProfileFeatureCompound {
         var newState = state
 
         switch reaction {
+        case .setDidPreload(let didPreload):
+            newState.didPreload = didPreload
         case .setLoading(let isLoading):
             newState.isLoading = isLoading
         case .setNickname(let nickname):
