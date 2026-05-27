@@ -3,7 +3,7 @@ import Foundation
 
 public enum MapBottomSheetRoute: String, BottomSheetPresentingRoute {
     case popupList
-    case popupDetail
+    case popupDetailSheet
 
     public var id: String {
         rawValue
@@ -13,7 +13,7 @@ public enum MapBottomSheetRoute: String, BottomSheetPresentingRoute {
         switch self {
         case .popupList:
             .fraction(0.4)
-        case .popupDetail:
+        case .popupDetailSheet:
             .fraction(0.6)
         }
     }
@@ -22,7 +22,7 @@ public enum MapBottomSheetRoute: String, BottomSheetPresentingRoute {
         switch self {
         case .popupList:
             [.fraction(0.25), .fraction(0.4), .fraction(0.7)]
-        case .popupDetail:
+        case .popupDetailSheet:
             [.fraction(0.4), .fraction(0.6), .fraction(0.85)]
         }
     }
