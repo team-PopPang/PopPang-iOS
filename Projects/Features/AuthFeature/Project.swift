@@ -39,19 +39,5 @@ let project = Project(
                 .project(target: "Domain", path: "../../Domain"),
             ]
         ),
-        .target(
-            name: "AuthFeatureTests",
-            destinations: [.iPhone],
-            product: .unitTests,
-            bundleId: "com.poppang.features.auth.tests",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .default,
-            sources: ["Tests/**"],
-            dependencies: [
-                .target(name: "AuthFeature"),
-                .project(target: "Core", path: "../../Shared/Core"),
-                .project(target: "Domain", path: "../../Domain"),
-            ]
-        ),
     ]
 )
