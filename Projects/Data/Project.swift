@@ -14,11 +14,7 @@ let project = Project(
             dependencies: [
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "Core", path: "../Shared/Core"),
-                .external(name: "GoogleSignIn"),
-                .external(name: "KakaoSDKAuth"),
-                .external(name: "KakaoSDKCommon"),
-                .external(name: "KakaoSDKUser"),
-                .external(name: "Moya"),
+                .project(target: "ThirdParty", path: "../Shared/ThirdParty"),
             ]
         ),
         .target(
