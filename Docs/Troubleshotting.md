@@ -2,6 +2,8 @@
 
 이 문서는 Tuist + SPM + 모듈러 구조에서 외부 라이브러리 링크 문제가 다시 생겼을 때 확인할 기준이다.
 
+static/dynamic product type 선택 기준은 `Docs/static-dynamic-linking.md`를 먼저 본다.
+
 ## ThirdParty 링크 원칙
 
 PopPang은 Haruhancut-V2 방식처럼 외부 라이브러리 SPM product를 `ThirdParty` 타깃에 모은다.
