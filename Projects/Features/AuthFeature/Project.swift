@@ -13,9 +13,6 @@ let project = Project(
             sources: [
                 "Sources/**",
             ],
-            resources: [
-                "Resources/**",
-            ],
             dependencies: [
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
@@ -37,7 +34,10 @@ let project = Project(
                 ]
             ),
             sources: ["Demo/Sources/**"],
-            dependencies: [.target(name: "AuthFeature")]
+            dependencies: [
+                .target(name: "AuthFeature"),
+                .project(target: "Domain", path: "../../Domain"),
+            ]
         ),
         .target(
             name: "AuthFeatureTests",
@@ -47,7 +47,11 @@ let project = Project(
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Tests/**"],
-            dependencies: [.target(name: "AuthFeature")]
+            dependencies: [
+                .target(name: "AuthFeature"),
+                .project(target: "Core", path: "../../Shared/Core"),
+                .project(target: "Domain", path: "../../Domain"),
+            ]
         ),
     ]
 )
