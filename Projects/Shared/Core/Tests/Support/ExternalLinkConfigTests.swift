@@ -2,7 +2,7 @@ import Testing
 @testable import Core
 
 struct ExternalLinkConfigTests {
-    @Test
+    @Test("레거시 Constants 기준 외부 링크를 제공한다")
     func providesExternalLinksFromLegacyConstants() {
         #expect(
             ExternalLinkConfig.notificationURL.absoluteString
@@ -18,7 +18,7 @@ struct ExternalLinkConfigTests {
         )
     }
 
-    @Test
+    @Test("레거시 기본 URL로 팝업 유니버설 링크를 만든다")
     func buildsPopupUniversalLinkFromLegacyBaseURL() {
         let popupUniversalLink = ExternalLinkConfig.popupUniversalLink(popupID: "abcd-1234")
 
