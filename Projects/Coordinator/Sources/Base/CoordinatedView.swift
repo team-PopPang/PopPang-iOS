@@ -89,3 +89,66 @@ public extension CoordinatorContainer where BottomSheetContent == EmptyView {
         self.bottomSheetView = nil
     }
 }
+
+public extension CoordinatorContainer where
+    SheetContent == EmptyView,
+    OverlayContent == EmptyView,
+    FullScreenContent == EmptyView,
+    BottomSheetContent == EmptyView
+{
+    init(
+        coordinator: Coordinator<Route, Sheet, Overlay, FullScreen, BottomSheet>,
+        @ViewBuilder content: @escaping () -> Content,
+        @ViewBuilder destination: @escaping (Route) -> Destination
+    ) {
+        self.coordinator = coordinator
+        self.content = content
+        self.destination = destination
+        self.sheetView = { _ in EmptyView() }
+        self.overlayView = { _ in EmptyView() }
+        self.fullScreenView = { _ in EmptyView() }
+        self.bottomSheetView = nil
+    }
+}
+
+public extension CoordinatorContainer where
+    SheetContent == EmptyView,
+    OverlayContent == EmptyView,
+    BottomSheetContent == EmptyView
+{
+    init(
+        coordinator: Coordinator<Route, Sheet, Overlay, FullScreen, BottomSheet>,
+        @ViewBuilder content: @escaping () -> Content,
+        @ViewBuilder destination: @escaping (Route) -> Destination,
+        @ViewBuilder fullScreenView: @escaping (FullScreen) -> FullScreenContent
+    ) {
+        self.coordinator = coordinator
+        self.content = content
+        self.destination = destination
+        self.sheetView = { _ in EmptyView() }
+        self.overlayView = { _ in EmptyView() }
+        self.fullScreenView = fullScreenView
+        self.bottomSheetView = nil
+    }
+}
+
+public extension CoordinatorContainer where
+    SheetContent == EmptyView,
+    OverlayContent == EmptyView,
+    FullScreenContent == EmptyView
+{
+    init(
+        coordinator: Coordinator<Route, Sheet, Overlay, FullScreen, BottomSheet>,
+        @ViewBuilder content: @escaping () -> Content,
+        @ViewBuilder destination: @escaping (Route) -> Destination,
+        @ViewBuilder bottomSheetView: @escaping (BottomSheet) -> BottomSheetContent
+    ) {
+        self.coordinator = coordinator
+        self.content = content
+        self.destination = destination
+        self.sheetView = { _ in EmptyView() }
+        self.overlayView = { _ in EmptyView() }
+        self.fullScreenView = { _ in EmptyView() }
+        self.bottomSheetView = bottomSheetView
+    }
+}
