@@ -2224,7 +2224,7 @@ final class HomeStore: Compound {
 - [x] `V0/Util/Logger/TTT.swift`는 실험용 파일이라 제외 결정
 - [ ] `Core` 테스트 계속 보강
 
-Core 후순위 개선 항목:
+Core 후순위 개선 항목:(일단 보류: v0 기능을 모두 옮기는게 우선)
 
 - [ ] `AppConfig` 도입 여부 결정
 - [ ] `DateProvider` 도입 여부 결정
@@ -2239,6 +2239,7 @@ Core 후순위 개선 항목:
 - [x] `V0/DesignSystem/Font/UIFont.swift` 이전
 - [x] `V0/DesignSystem/Font/FontStyleModifier.swift` 이전
 - [x] `V0/DesignSystem/UIConstants.swift` 이전
+- [x] V0 공통 이미지 asset과 Localizable strings를 `DSKit` bundle 리소스로 이전
 - [ ] 버튼 계열 컴포넌트 이전
   - [x] `DropDownView`
   - [x] `IconButton`
