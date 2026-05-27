@@ -40,4 +40,38 @@ public enum MainTab: Hashable, CaseIterable, Sendable {
     func tabImage(selected: Bool) -> String {
         selected ? "\(rawImageName)_fill" : rawImageName
     }
+
+    var image: CoordinatorImages {
+        switch self {
+        case .home:
+            CoordinatorAsset.home
+        case .calendar:
+            CoordinatorAsset.calendar
+        case .map:
+            CoordinatorAsset.map
+        case .favorites:
+            CoordinatorAsset.favorite
+        case .profile:
+            CoordinatorAsset.profile
+        }
+    }
+
+    var selectedImage: CoordinatorImages {
+        switch self {
+        case .home:
+            CoordinatorAsset.homeFill
+        case .calendar:
+            CoordinatorAsset.calendarFill
+        case .map:
+            CoordinatorAsset.mapFill
+        case .favorites:
+            CoordinatorAsset.favoriteFill
+        case .profile:
+            CoordinatorAsset.profileFill
+        }
+    }
+
+    func tabAsset(selected: Bool) -> CoordinatorImages {
+        selected ? selectedImage : image
+    }
 }
