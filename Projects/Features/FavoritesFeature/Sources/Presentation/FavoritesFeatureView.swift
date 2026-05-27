@@ -1,76 +1,462 @@
+import Core
+import Domain
+import DSKit
+import Kingfisher
 import SwiftUI
 
 public struct FavoritesFeatureView: View {
-    @Environment(FavoritesFeatureCoordinator.self) private var coordinator
-    @State private var selectedMode: FavoriteMode = .list
+    @State private var compound: FavoritesFeatureCompound
 
-    public init() {}
+    private let segments: [String] = ["찜리스트", "찜캘린더"]
+    private let onShowAlert: (String) -> Void
+    private let onSelectPopup: (String, Popup) -> Void
+    private let onBrowsePopups: () -> Void
+
+    public init(
+        userUuid: String = "demo-user",
+        onShowAlert: @escaping (String) -> Void = { _ in },
+        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in },
+        onBrowsePopups: @escaping () -> Void = {}
+    ) {
+        let compound = FavoritesFeatureCompound(userUuid: userUuid)
+        _compound = State(wrappedValue: compound)
+        self.onShowAlert = onShowAlert
+        self.onSelectPopup = onSelectPopup
+        self.onBrowsePopups = onBrowsePopups
+        Task { @MainActor in
+            compound.preload()
+        }
+    }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack {
+        VStack(spacing: 0) {
+            CustomNavigationBar {
                 Text("찜")
-                    .font(.system(size: 28, weight: .bold))
+                    .ppStyleFont(.scdream(.medium, size: 18))
+                    .foregroundStyle(Color.mainBlack)
+                    .frame(height: 45)
+
                 Spacer()
-                Button("알림센터") {
-                    coordinator.push(.alert)
-                }
-                .buttonStyle(.bordered)
-            }
 
-            Picker("모드", selection: $selectedMode) {
-                ForEach(FavoriteMode.allCases, id: \.self) { mode in
-                    Text(mode.title).tag(mode)
+                IconButton {
+                    onShowAlert(compound.state.userUuid)
                 }
             }
-            .pickerStyle(.segmented)
 
-            ScrollView {
-                VStack(spacing: 12) {
-                    ForEach(selectedMode.items, id: \.title) { item in
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(item.title)
-                                .font(.headline)
-                            Text(item.description)
-                                .foregroundStyle(.secondary)
+            SegmentedControlView(
+                segments: segments,
+                views: [
+                    FavoriteListView(
+                        userUuid: compound.state.userUuid,
+                        popups: compound.state.favoritePopups,
+                        isLoading: compound.state.isLoading,
+                        errorMessage: compound.state.errorMessage,
+                        onBrowsePopups: onBrowsePopups,
+                        onSelectPopup: { popup in
+                            onSelectPopup(compound.state.userUuid, popup)
+                        },
+                        onToggleLike: { popup in
+                            compound.send(.toggleLike(popup))
+                        },
+                        onRefresh: {
+                            compound.send(.refresh)
                         }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(18)
-                        .background(Color(.secondarySystemBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    ),
+                    FavoriteCalendarView(
+                        userUuid: compound.state.userUuid,
+                        selectedDate: compound.state.selectedDate,
+                        selectedPopups: compound.state.selectedPopups,
+                        popupEventCounts: compound.state.popupEventCounts,
+                        isLoading: compound.state.isLoading,
+                        errorMessage: compound.state.errorMessage,
+                        onDateSelected: { date in
+                            compound.send(.dateSelected(date))
+                        },
+                        onSelectPopup: { popup in
+                            onSelectPopup(compound.state.userUuid, popup)
+                        },
+                        onToggleLike: { popup in
+                            compound.send(.toggleLike(popup))
+                        },
+                        onRefresh: {
+                            compound.send(.refresh)
+                        }
+                    )
+                ],
+                background: .mainGray3,
+                foreground: .mainOrange
+            )
+
+            Spacer()
+        }
+        .task {
+            compound.preload()
+        }
+    }
+}
+
+private struct FavoriteListView: View {
+    let userUuid: String
+    let popups: [Popup]
+    let isLoading: Bool
+    let errorMessage: String?
+    let onBrowsePopups: () -> Void
+    let onSelectPopup: (Popup) -> Void
+    let onToggleLike: (Popup) -> Void
+    let onRefresh: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            if let errorMessage {
+                Text(errorMessage)
+                    .ppStyleFont(.scdream(.regular, size: 12))
+                    .foregroundStyle(Color.mainRed)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 12)
+            }
+
+            if !popups.isEmpty {
+                ListGridPopupScrollView(
+                    popups: popups,
+                    onSelectPopup: onSelectPopup,
+                    onToggleLike: onToggleLike
+                )
+                .padding(.top, 24)
+            } else if !isLoading {
+                VStack {
+                    Text("찜한 팝업스토어가 없어요")
+                        .ppStyleFont(.scdream(.medium, size: 15))
+
+                    Button {
+                        onBrowsePopups()
+                    } label: {
+                        Text("팝업스토어 구경가기")
+                            .ppStyleFont(.scdream(.medium, size: 12))
+                            .frame(width: 206, height: 32)
+                            .foregroundStyle(Color.subWhite)
+                            .background(Color.mainOrange)
+                            .cornerRadius(5)
+                    }
+                    .buttonStyle(PressableButtonStyle())
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .padding(.horizontal, .contentPadding)
+        .onAppear(perform: onRefresh)
+    }
+}
+
+private struct ListGridPopupScrollView: View {
+    let popups: [Popup]
+    let onSelectPopup: (Popup) -> Void
+    let onToggleLike: (Popup) -> Void
+
+    private let columns = [
+        GridItem(.flexible(), spacing: 15),
+        GridItem(.flexible(), spacing: 15),
+    ]
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            LazyVGrid(columns: columns, spacing: 20) {
+                ForEach(popups) { popup in
+                    VStack(alignment: .leading) {
+                        ListPopupCell(
+                            popup: popup,
+                            onToggleLike: {
+                                onToggleLike(popup)
+                            }
+                        )
+                        .onTapGesture {
+                            onSelectPopup(popup)
+                        }
                     }
                 }
             }
         }
-        .padding()
     }
 }
 
-private enum FavoriteMode: CaseIterable {
-    case list
-    case calendar
+private struct ListPopupCell: View {
+    let popup: Popup
+    let onToggleLike: () -> Void
 
-    var title: String {
-        switch self {
-        case .list:
-            "리스트"
-        case .calendar:
-            "캘린더"
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack {
+                Rectangle()
+                    .fill(Color.blue)
+                    .frame(height: 217, alignment: .center)
+
+                GeometryReader { geo in
+                    KFImage(URL(string: popup.imageUrlList.first ?? ""))
+                        .placeholder {
+                            Rectangle()
+                                .fill(Color.mainGray3)
+                                .frame(height: 217)
+                        }
+                        .downSampled(.favoriteListCell)
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geo.size.width, height: 217, alignment: .center)
+                        .clipped()
+                }
+                .overlay(alignment: .topTrailing) {
+                    BookmarkButton(isLiked: popup.isFavorited, info: .stroke) {
+                        onToggleLike()
+                    }
+                    .padding(10)
+                    .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
+                }
+            }
+            .frame(height: 217)
+
+            Text(popup.roadAddress.shortAddress)
+                .font(.scdream(.regular, size: 12))
+                .foregroundStyle(Color.mainBlack)
+                .padding(.top, 10)
+
+            Text(popup.name)
+                .font(.scdream(.medium, size: 14))
+                .foregroundStyle(Color.mainBlack)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .padding(.top, 5)
+
+            Text("\(popup.startDate, formatter: DateFormatter.popupDateFormat) - \(popup.endDate, formatter: DateFormatter.popupDateFormat)")
+                .ppStyleFontFixedSpacing(.scdream(.regular, size: 12), letterSpacingPt: -1)
+                .foregroundStyle(Color.mainGray)
+                .padding(.top, 5)
+        }
+        .contentShape(Rectangle())
+    }
+}
+
+private struct FavoriteCalendarView: View {
+    let userUuid: String
+    let selectedDate: Date
+    let selectedPopups: [Popup]
+    let popupEventCounts: [Date: Int]
+    let isLoading: Bool
+    let errorMessage: String?
+    let onDateSelected: (Date) -> Void
+    let onSelectPopup: (Popup) -> Void
+    let onToggleLike: (Popup) -> Void
+    let onRefresh: () -> Void
+
+    var body: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 0) {
+                CustomCalendar(
+                    eventCounts: popupEventCounts,
+                    onDateSelected: onDateSelected
+                )
+                .padding(.top, 24)
+                .padding(.horizontal, 15)
+
+                FavoriteCalendarPopupListView(
+                    date: selectedDate,
+                    popups: selectedPopups,
+                    isLoading: isLoading,
+                    errorMessage: errorMessage,
+                    onSelectPopup: onSelectPopup,
+                    onToggleLike: onToggleLike
+                )
+                .padding(.horizontal, 15)
+                .background(
+                    RoundedRectangle(cornerRadius: 15)
+                        .fill(Color.white)
+                        .mask(
+                            LinearGradient(
+                                gradient: Gradient(colors: [.black, .clear, .clear, .clear]),
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .applyShadow(
+                            color: .black,
+                            alpha: 0.05,
+                            x: 0,
+                            y: -4,
+                            blur: 8
+                        )
+                )
+                .padding(.top, 20)
+
+                Spacer()
+            }
+        }
+        .onAppear(perform: onRefresh)
+    }
+}
+
+private struct FavoriteCalendarPopupListView: View {
+    let date: Date
+    let popups: [Popup]
+    let isLoading: Bool
+    let errorMessage: String?
+    let onSelectPopup: (Popup) -> Void
+    let onToggleLike: (Popup) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text(formattedDate(date))
+                    .ppStyleFont(.scdream(.bold, size: 12))
+                    .foregroundStyle(Color.mainBlack)
+                Spacer()
+            }
+            .padding(.top, 20)
+
+            if let errorMessage {
+                Text(errorMessage)
+                    .ppStyleFont(.scdream(.regular, size: 12))
+                    .foregroundStyle(Color.mainRed)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 12)
+            }
+
+            if popups.isEmpty && !isLoading {
+                Text("선택한 날짜에 팝업이 없습니다")
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, 24)
+            } else {
+                ScrollView(showsIndicators: false) {
+                    LazyVStack(spacing: 10) {
+                        ForEach(Array(popups.enumerated()), id: \.element.id) { index, popup in
+                            FavoriteCalendarPopupCell(
+                                popup: popup,
+                                onToggleLike: {
+                                    onToggleLike(popup)
+                                }
+                            )
+                            .onTapGesture {
+                                onSelectPopup(popup)
+                            }
+
+                            if index != popups.count - 1 {
+                                Divider()
+                                    .frame(height: 1)
+                                    .background(Color.subWhite)
+                            }
+                        }
+                    }
+                }
+                .padding(.top, 20)
+            }
         }
     }
 
-    var items: [(title: String, description: String)] {
-        switch self {
-        case .list:
-            [
-                ("성수 라이프스타일 팝업", "리스트 기반 찜 보기 화면 이식 대상"),
-                ("한남 리빙 브랜드 팝업", "팝업 상세와 동일한 찜 상태 공유 필요"),
-            ]
-        case .calendar:
-            [
-                ("5월 4주차", "찜한 팝업 일정을 달력 셀과 연결"),
-                ("6월 1주차", "V0 FavoriteCalendarView 흐름 이식 대상"),
-            ]
+    private func formattedDate(_ date: Date) -> String {
+        let dayFormatter = DateFormatter()
+        dayFormatter.locale = Locale(identifier: "ko_KR")
+        dayFormatter.dateFormat = "d일 (E)"
+        return dayFormatter.string(from: date)
+    }
+}
+
+private struct FavoriteCalendarPopupCell: View {
+    let popup: Popup
+    let onToggleLike: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(alignment: .top, spacing: 0) {
+                KFImage(URL(string: popup.imageUrlList.first ?? ""))
+                    .placeholder {
+                        Rectangle()
+                            .fill(Color.mainGray3)
+                            .frame(width: 106, height: 133)
+                    }
+                    .downSampled(.favoriteCalendarCell)
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 106, height: 133, alignment: .center)
+                    .clipped()
+
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(popup.roadAddress.shortAddress)
+                        .font(.scdream(.regular, size: 12))
+                        .foregroundStyle(Color.mainBlack)
+
+                    Text(popup.name)
+                        .font(.scdream(.medium, size: 14))
+                        .foregroundStyle(Color.mainBlack)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .padding(.top, 5)
+
+                    Text("\(popup.startDate, formatter: DateFormatter.popupDateFormat) - \(popup.endDate, formatter: DateFormatter.popupDateFormat)")
+                        .ppStyleFontFixedSpacing(.scdream(.regular, size: 12), letterSpacingPt: -1)
+                        .foregroundStyle(Color.mainGray)
+                        .padding(.top, 5)
+
+                    Spacer()
+
+                    HStack(spacing: 5) {
+                        Spacer()
+
+                        DSKitResource.image("viewCount")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 12, height: 12)
+
+                        Text("\(popup.viewCount)")
+                            .ppStyleFont(.scdream(.regular, size: 9))
+
+                        Button {
+                            onToggleLike()
+                        } label: {
+                            HStack(spacing: 5) {
+                                DSKitResource.image("favoriteCount")
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 12, height: 12)
+
+                                Text("\(popup.favoriteCount)")
+                                    .ppStyleFont(.scdream(.regular, size: 9))
+                            }
+                        }
+                        .foregroundStyle(popup.isFavorited ? Color.mainOrange : Color.mainGray)
+                    }
+                }
+                .padding(.leading, 18)
+                .padding(.vertical, 10)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .contentShape(Rectangle())
+    }
+}
+
+private struct BookmarkButton: View {
+    enum Info {
+        case fill
+        case stroke
+    }
+
+    var isLiked: Bool
+    var info: Info
+    var action: () -> Void
+
+    var body: some View {
+        Button {
+            action()
+        } label: {
+            switch info {
+            case .fill:
+                DSKitResource.image(isLiked ? "favorite_fill" : "favorite")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 20, height: 20)
+            case .stroke:
+                DSKitResource.image(isLiked ? "favorite_fill" : "favorite")
+                    .renderingMode(.template)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 25, height: 25)
+                    .foregroundStyle(isLiked ? Color.mainOrange : Color.subWhite)
+            }
         }
     }
 }
