@@ -210,29 +210,3 @@ private struct SearchGridPopupCell: View {
         }
     }
 }
-
-private extension KFImage {
-    enum DownSamplePreset {
-        case searchGridPopupCell
-
-        var size: CGSize {
-            switch self {
-            case .searchGridPopupCell:
-                CGSize(width: (UIScreen.main.bounds.width - 15 * 3) / 2, height: 217)
-            }
-        }
-    }
-
-    func downSampled(_ preset: DownSamplePreset) -> KFImage {
-        let scale = UIScreen.main.scale
-        return setProcessor(
-            DownsamplingImageProcessor(
-                size: CGSize(
-                    width: preset.size.width * scale,
-                    height: preset.size.height * scale
-                )
-            )
-        )
-        .cacheOriginalImage()
-    }
-}
