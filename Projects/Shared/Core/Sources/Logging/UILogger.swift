@@ -25,7 +25,7 @@ private struct DebugDiffRandomBackgroundModifier<Key: Equatable>: ViewModifier {
                 RoundedRectangle(cornerRadius: 0)
                     .stroke(color, lineWidth: 1)
             }
-            .onChange(of: diffKey) { _ in
+            .onChange(of: diffKey) { _, _ in
                 color = .random
             }
     }
