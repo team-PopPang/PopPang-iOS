@@ -1,10 +1,35 @@
 import Foundation
+import Domain
 import Moya
 import Testing
 @testable import Data
 
 struct DataTests {
-    @Test
+    @Test("Data repository 구현체가 Domain repository contract와 usecase 주입 계약을 만족한다")
+    func repositoryImplementationsSatisfyDomainContracts() {
+        let popupRepository: PopupRepositoryProtocol = PopupRepositoryImpl()
+        let userRepository: UserRepositoryProtocol = UserRepositoryImpl()
+        let adminRepository: AdminRepositoryProtocol = AdminRepositoryImpl()
+        let appleRepository: AppleAuthRepositoryProtocol = AppleAuthRepositoryImpl()
+        let googleRepository: GoogleAuthRepositoryProtocol = GoogleAuthRepositoryImpl()
+        let kakaoRepository: KakaoAuthRepositoryProtocol = KakaoAuthRepositoryImpl()
+
+        let popupUsecase: PopupUsecaseProtocol = PopupUsecaseImpl(popupRepository: popupRepository)
+        let userUsecase: UserUsecaseProtocol = UserUsecaseImpl(userRepository: userRepository)
+        let adminUsecase: AdminUsecaseProtocol = AdminUsecaseImpl(adminRepository: adminRepository)
+        let appleUsecase: AppleAuthUsecaseProtocol = AppleAuthUsecaseImpl(appleAuthRepository: appleRepository)
+        let googleUsecase: GoogleAuthUsecaseProtocol = GoogleAuthUsecaseImpl(googleAuthRepository: googleRepository)
+        let kakaoUsecase: KakaoAuthUsecaseProtocol = KakaoAuthUsecaseImpl(kakaoAuthRepository: kakaoRepository)
+
+        #expect(contractTypeName(of: popupUsecase) == "PopupUsecaseImpl")
+        #expect(contractTypeName(of: userUsecase) == "UserUsecaseImpl")
+        #expect(contractTypeName(of: adminUsecase) == "AdminUsecaseImpl")
+        #expect(contractTypeName(of: appleUsecase) == "AppleAuthUsecaseImpl")
+        #expect(contractTypeName(of: googleUsecase) == "GoogleAuthUsecaseImpl")
+        #expect(contractTypeName(of: kakaoUsecase) == "KakaoAuthUsecaseImpl")
+    }
+
+    @Test("팝업 DTO가 V0 필드와 이미지 URL을 도메인 모델로 변환한다")
     func popupDTOMapsLegacyFieldsAndImageURLsToDomainModel() throws {
         let json = """
         {
@@ -53,7 +78,7 @@ struct DataTests {
         #expect(Calendar.current.component(.day, from: popup.startDate) == 1)
     }
 
-    @Test
+    @Test("단순 DTO들이 V0와 같은 도메인 모델 값으로 변환된다")
     func simpleDTOsMapToDomainModelsLikeV0() {
         let keyword = KeywordDTO(keyword: "팝업스토어").toModel()
         let recommend = RecommendListDTO(id: 7, recommendName: "캐릭터").toModel()
@@ -87,7 +112,7 @@ struct DataTests {
         #expect(user.recommendList == [7])
     }
 
-    @Test
+    @Test("API 경로가 V0 엔드포인트 정의와 일치한다")
     func apiPathsMatchV0EndpointDefinitions() {
         #expect(AdminAPI.deactivatePopup(userUuid: "user-1", popupUuid: "popup-1").path == "/admin/user/user-1/popup/popup-1/deactivate")
 
@@ -134,7 +159,7 @@ struct DataTests {
         #expect(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").path == "/user/user-1/fcm-token/update")
     }
 
-    @Test
+    @Test("API 메서드가 V0 엔드포인트 정의와 일치한다")
     func apiMethodsMatchV0EndpointDefinitions() {
         #expect(AdminAPI.deactivatePopup(userUuid: "user-1", popupUuid: "popup-1").method == .patch)
 
@@ -182,7 +207,7 @@ struct DataTests {
         #expect(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").method == .put)
     }
 
-    @Test
+    @Test("API 요청 파라미터가 V0 엔드포인트 정의와 일치한다")
     func apiRequestParametersMatchV0EndpointDefinitions() {
         #expect(stringParameter(PopupAPI.searchPopupList(searchText: "성수").task, key: "q") == "성수")
         #expect(stringParameter(PopupAPI.getPersonalPopupList(userUuid: "user-1").task, key: "userUuid") == "user-1")
@@ -235,5 +260,9 @@ struct DataTests {
             return nil
         }
         return parameters[key]
+    }
+
+    private func contractTypeName(of value: Any) -> String {
+        String(describing: type(of: value))
     }
 }
