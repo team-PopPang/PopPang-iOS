@@ -12,4 +12,5 @@ public typealias CalendarFeatureCoordinator = Coordinator<
 public enum CalendarFeatureRoute: Hashable, Sendable {
     case alert(userUuid: String)
     case popupDetail(userUuid: String, popup: Popup)
+    case reviewDetail([Review])
 }
