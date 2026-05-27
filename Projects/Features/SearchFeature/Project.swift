@@ -14,6 +14,7 @@ let project = Project(
             dependencies: [
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
+                .project(target: "Core", path: "../../Shared/Core"),
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]
         ),
@@ -32,7 +33,11 @@ let project = Project(
                 ]
             ),
             sources: ["Demo/Sources/**"],
-            dependencies: [.target(name: "SearchFeature")]
+            dependencies: [
+                .target(name: "SearchFeature"),
+                .project(target: "Domain", path: "../../Domain"),
+                .project(target: "Data", path: "../../Data"),
+            ]
         ),
         .target(
             name: "SearchFeatureTests",
@@ -42,7 +47,11 @@ let project = Project(
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Tests/**"],
-            dependencies: [.target(name: "SearchFeature")]
+            dependencies: [
+                .target(name: "SearchFeature"),
+                .project(target: "Core", path: "../../Shared/Core"),
+                .project(target: "Domain", path: "../../Domain"),
+            ]
         ),
     ]
 )
