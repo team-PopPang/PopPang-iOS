@@ -27,5 +27,15 @@ let project = Project(
             sources: ["Tests/**"],
             dependencies: [.target(name: "Data")]
         ),
+    ],
+    schemes: [
+        .scheme(
+            name: "Data",
+            shared: true,
+            buildAction: .buildAction(targets: ["Data", "DataTests"]),
+            testAction: .targets([
+                .testableTarget(target: .target("DataTests"))
+            ])
+        ),
     ]
 )
