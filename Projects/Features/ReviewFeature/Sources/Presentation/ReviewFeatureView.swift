@@ -1,116 +1,249 @@
+import Domain
+import DSKit
 import SwiftUI
 
 public struct ReviewFeatureView: View {
-    @State private var reviews = ReviewItem.mock
-    @State private var selectedReview: ReviewItem?
-    @State private var draftText = ""
-    @State private var isPresentingComposer = false
+    @State private var compound: ReviewFeatureCompound
 
-    public init() {}
+    public init(reviews: [Review] = Review.mock) {
+        _compound = State(wrappedValue: ReviewFeatureCompound(reviews: reviews))
+    }
 
     public var body: some View {
-        List {
-            Section {
-                Button("리뷰 작성") {
-                    isPresentingComposer = true
+        VStack {
+            ScrollView {
+                LazyVStack {
+                    ForEach(compound.state.reviews) { review in
+                        ReviewCell(
+                            nickname: review.nickname,
+                            review: review.info,
+                            starCount: review.starCount
+                        )
+                    }
                 }
+                .padding(.top, 20)
+                .padding(.horizontal, .contentPadding)
             }
 
-            Section("리뷰 목록") {
-                ForEach(reviews) { review in
-                    Button {
-                        selectedReview = review
-                    } label: {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text(review.author)
-                                    .font(.headline)
-                                Spacer()
-                                Text(review.date)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Text(review.summary)
-                                .foregroundStyle(.primary)
-                            HStack {
-                                Label("\(review.likes)", systemImage: "heart")
-                                Label("\(review.rating).0", systemImage: "star.fill")
-                            }
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        }
-                        .padding(.vertical, 4)
-                    }
-                    .buttonStyle(.plain)
-                }
+            MainOrangeButton(
+                buttonTitle: "리뷰 남기기",
+                isReversed: false,
+                height: 80
+            ) {
+                compound.send(.reviewWriteButtonTapped)
             }
         }
-        .navigationTitle("리뷰")
-        .sheet(isPresented: $isPresentingComposer) {
-            NavigationStack {
-                Form {
-                    Section("내용") {
-                        TextField("팝업 후기를 남겨주세요", text: $draftText, axis: .vertical)
-                            .lineLimit(5...8)
-                    }
+        .ignoresSafeArea(edges: .bottom)
+        .sheet(isPresented: reviewSheetPresentedBinding) {
+            ReviewWriteSheet(
+                rating: ratingBinding,
+                reviewText: reviewTextBinding,
+                onSubmit: {
+                    compound.send(.submitReview)
                 }
-                .navigationTitle("리뷰 작성")
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("닫기") {
-                            isPresentingComposer = false
-                        }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button("등록") {
-                            guard draftText.isEmpty == false else { return }
-                            reviews.insert(
-                                ReviewItem(author: "나", summary: draftText, date: "방금", likes: 0, rating: 5),
-                                at: 0
-                            )
-                            draftText = ""
-                            isPresentingComposer = false
-                        }
-                    }
-                }
-            }
-        }
-        .sheet(item: $selectedReview) { review in
-            NavigationStack {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text(review.author)
-                            .font(.title2.weight(.bold))
-                        Text(review.date)
-                            .foregroundStyle(.secondary)
-                        Text(review.summary)
-                            .font(.body)
-                        HStack {
-                            Label("\(review.likes)", systemImage: "heart")
-                            Label("\(review.rating).0", systemImage: "star.fill")
-                        }
-                        .foregroundStyle(.secondary)
-                    }
-                    .padding(24)
-                }
-                .navigationTitle("리뷰 상세")
-                .navigationBarTitleDisplayMode(.inline)
-            }
+            )
+            .presentationDetents([.height(320)])
         }
     }
 }
 
-private struct ReviewItem: Identifiable, Equatable {
-    let id = UUID()
-    let author: String
-    let summary: String
-    let date: String
-    let likes: Int
-    let rating: Int
+private extension ReviewFeatureView {
+    var reviewSheetPresentedBinding: Binding<Bool> {
+        Binding(
+            get: { compound.state.isPresentingReviewSheet },
+            set: { compound.send(.reviewSheetPresented($0)) }
+        )
+    }
 
-    static let mock: [ReviewItem] = [
-        .init(author: "팝업러버", summary: "굿즈 구성이 좋고 동선이 깔끔했습니다. 주말엔 대기가 조금 있습니다.", date: "5월 21일", likes: 12, rating: 5),
-        .init(author: "성수탐험가", summary: "포토존이 많고 직원 안내가 친절했어요.", date: "5월 19일", likes: 7, rating: 4),
-        .init(author: "디저트수집가", summary: "브랜드 설명 섹션이 인상적이었습니다.", date: "5월 17일", likes: 4, rating: 4),
-    ]
+    var ratingBinding: Binding<Int> {
+        Binding(
+            get: { compound.state.rating },
+            set: { compound.send(.ratingSelected($0)) }
+        )
+    }
+
+    var reviewTextBinding: Binding<String> {
+        Binding(
+            get: { compound.state.reviewText },
+            set: { compound.send(.reviewTextChanged($0)) }
+        )
+    }
+}
+
+public struct ReviewPreviewSection: View {
+    let reviews: [Review]
+    let onShowAllReviews: () -> Void
+
+    public init(
+        reviews: [Review] = Review.mock,
+        onShowAllReviews: @escaping () -> Void
+    ) {
+        self.reviews = reviews
+        self.onShowAllReviews = onShowAllReviews
+    }
+
+    public var body: some View {
+        HStack {
+            Text("리뷰 \(reviews.count)개")
+                .font(.scdream(.medium, size: 15))
+
+            Spacer()
+
+            Button {
+                onShowAllReviews()
+            } label: {
+                DSKitResource.image("navigationButton")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 16, height: 16)
+            }
+        }
+
+        LazyVStack {
+            ForEach(Array(reviews.prefix(3))) { review in
+                ReviewCell(
+                    nickname: review.nickname,
+                    review: review.info,
+                    starCount: review.starCount
+                )
+            }
+        }
+        .padding(.top, 20)
+    }
+}
+
+public struct ReviewCell: View {
+    let nickname: String
+    let review: String
+    let starCount: Int
+
+    public init(
+        nickname: String,
+        review: String,
+        starCount: Int
+    ) {
+        self.nickname = nickname
+        self.review = review
+        self.starCount = starCount
+    }
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 3) {
+                ForEach(0..<starCount, id: \.self) { _ in
+                    Image(systemName: "star.fill")
+                        .resizable()
+                        .frame(width: 12, height: 12)
+                        .foregroundStyle(Color.mainOrange)
+                }
+
+                Spacer()
+
+                Text("2026.01.03")
+                    .font(.scdream(.light, size: 12))
+
+                Text("|")
+                    .font(.scdream(.light, size: 12))
+
+                Text("신고")
+                    .font(.scdream(.light, size: 12))
+            }
+
+            Text(nickname)
+                .font(.scdream(.medium, size: 12))
+                .padding(.top, 10)
+
+            Text(review)
+                .font(.scdream(.light, size: 12))
+                .padding(.top, 10)
+        }
+        .padding(10)
+        .background(.gray.opacity(0.1))
+        .cornerRadius(10)
+    }
+}
+
+public struct ReviewWriteSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    @Binding var rating: Int
+    @Binding var reviewText: String
+    let onSubmit: () -> Void
+
+    public init(
+        rating: Binding<Int>,
+        reviewText: Binding<String>,
+        onSubmit: @escaping () -> Void
+    ) {
+        self._rating = rating
+        self._reviewText = reviewText
+        self.onSubmit = onSubmit
+    }
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: 15) {
+            HStack {
+                Text("이 팝업을 추천하시나요?")
+                    .ppStyleFont(.scdream(.bold, size: 20))
+                    .foregroundStyle(Color.mainBlack)
+
+                Spacer()
+
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .foregroundStyle(.black)
+                        .font(.system(size: 11, weight: .regular))
+                        .frame(width: 27, height: 27)
+                        .background(Color.mainGray5)
+                        .clipShape(Circle())
+                }
+            }
+
+            HStack(spacing: 12) {
+                ForEach(1...5, id: \.self) { index in
+                    Image(systemName: "star.fill")
+                        .resizable()
+                        .frame(width: 25, height: 25)
+                        .foregroundStyle(index <= rating ? Color.mainOrange : Color.gray.opacity(0.4))
+                        .onTapGesture {
+                            rating = index
+                        }
+                }
+            }
+
+            ZStack(alignment: .topLeading) {
+                if reviewText.isEmpty {
+                    Text("리뷰를 남겨주세요")
+                        .foregroundStyle(Color.gray.opacity(0.8))
+                        .padding(.top, 10)
+                        .padding(.leading, 10)
+                }
+
+                TextEditor(text: $reviewText)
+                    .frame(height: 120)
+                    .padding(4)
+                    .scrollContentBackground(.hidden)
+                    .background(Color.clear)
+            }
+            .background(Color.gray.opacity(0.1))
+            .cornerRadius(10)
+
+            Button {
+                onSubmit()
+                dismiss()
+            } label: {
+                Text("리뷰 쓰기")
+                    .ppStyleFont(.scdream(.bold, size: 16))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 44)
+                    .background(rating == 0 ? Color.gray.opacity(0.3) : Color.mainOrange)
+                    .foregroundStyle(Color.white)
+                    .cornerRadius(10)
+            }
+            .disabled(rating == 0)
+        }
+        .padding()
+    }
 }
