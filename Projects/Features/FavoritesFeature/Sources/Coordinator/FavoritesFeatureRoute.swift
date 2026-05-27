@@ -1,4 +1,5 @@
 import Core
+import Domain
 
 public typealias FavoritesFeatureCoordinator = Coordinator<
     FavoritesFeatureRoute,
@@ -9,5 +10,7 @@ public typealias FavoritesFeatureCoordinator = Coordinator<
 >
 
 public enum FavoritesFeatureRoute: Hashable, Sendable {
-    case alert
+    case alert(userUuid: String)
+    case popupDetail(userUuid: String, popup: Popup)
+    case reviewDetail([Review])
 }
