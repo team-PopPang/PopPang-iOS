@@ -2,183 +2,181 @@ import Domain
 import DSKit
 import SwiftUI
 import UIKit
+import UserNotifications
 
 public struct RegisterFlowFeatureView: View {
-    private let initialUser: User?
-    private let checkNickname: (@MainActor (String) async throws -> Bool)?
-    private let register: (@MainActor (User) async throws -> User)?
-    private let onComplete: (User) -> Void
-
-    @State private var currentStep: RegisterRoute = .nickname
-    @State private var isForward = true
-    @State private var nickname = ""
-    @State private var validationState: NicknameValidationState = .none
-    @State private var keywords: [String] = []
-    @State private var isSubmitting = false
-    @State private var errorMessage: String?
+    @State private var compound: RegisterFlowFeatureCompound
 
     public init(
         user: User?,
-        checkNickname: (@MainActor (String) async throws -> Bool)? = nil,
-        register: (@MainActor (User) async throws -> User)? = nil,
-        onComplete: @escaping (User) -> Void = { _ in }
+        onComplete: @escaping @MainActor (User) -> Void = { _ in }
     ) {
-        self.initialUser = user
-        self.checkNickname = checkNickname
-        self.register = register
-        self.onComplete = onComplete
+        self._compound = State(
+            initialValue: RegisterFlowFeatureCompound(
+                user: user,
+                onComplete: onComplete
+            )
+        )
     }
 
     public var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                if currentStep != .nickname {
-                    Button {
-                        withAnimation(.easeInOut) {
-                            goBack()
-                        }
-                    } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 20))
-                            .foregroundStyle(Color.black)
-                            .padding()
-                    }
-
-                    Spacer()
-
-                    Button {
-                        withAnimation(.easeOut) {
-                            if currentStep == .keyword {
-                                completeRegistration()
-                            }
-                        }
-                    } label: {
-                        Text("건너뛰기")
-                            .ppStyleFont(.scdream(.regular, size: 13))
-                            .foregroundStyle(Color.mainGray)
-                            .padding()
-                    }
-                } else {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 20))
-                        .opacity(0)
-                        .padding()
-                    Spacer()
-                }
-            }
-            .frame(height: 44)
-            .background(Color.white)
-
-            ProgressView(
-                value: Double(currentStep.index + 1),
-                total: Double(RegisterRoute.allCases.count)
-            )
-            .progressViewStyle(.linear)
-            .tint(.orange)
-            .frame(height: 4)
-            .animation(.easeInOut(duration: 0.3), value: currentStep)
-
-            GeometryReader { geo in
-                ZStack {
-                    NicknameSettingStepView(
-                        nickname: $nickname,
-                        validationState: $validationState,
-                        errorMessage: $errorMessage,
-                        isSubmitting: $isSubmitting,
-                        checkNickname: checkNickname,
-                        onNext: {
-                            withAnimation(.easeInOut) {
-                                isForward = true
-                                currentStep = .keyword
-                            }
-                        }
-                    )
-                    .frame(width: geo.size.width, height: geo.size.height)
-                    .offset(x: offset(for: .nickname, in: geo.size.width))
-
-                    KeywordSettingStepView(
-                        keywords: $keywords,
-                        isSubmitting: $isSubmitting,
-                        errorMessage: $errorMessage,
-                        onNext: completeRegistration
-                    )
-                    .frame(width: geo.size.width, height: geo.size.height)
-                    .offset(x: offset(for: .keyword, in: geo.size.width))
-                }
-            }
-            .clipped()
+            header
+            progress
+            stepPages
+        }
+        .onAppear {
+            compound.send(.onAppear)
         }
     }
 
+    private var header: some View {
+        HStack {
+            if compound.state.currentStep != .nickname {
+                Button {
+                    withAnimation(.easeInOut) {
+                        goBack()
+                    }
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 20))
+                        .foregroundStyle(Color.black)
+                        .padding()
+                }
+
+                Spacer()
+
+                Button {
+                    withAnimation(.easeOut) {
+                        skip()
+                    }
+                } label: {
+                    Text("건너뛰기")
+                        .ppStyleFont(.scdream(.regular, size: 13))
+                        .foregroundStyle(Color.mainGray)
+                        .padding()
+                }
+            } else {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 20))
+                    .opacity(0)
+                    .padding()
+                Spacer()
+            }
+        }
+        .frame(height: 44)
+        .background(Color.white)
+    }
+
+    private var progress: some View {
+        ProgressView(
+            value: Double(compound.state.currentStep.index + 1),
+            total: Double(RegisterRoute.allCases.count)
+        )
+        .progressViewStyle(.linear)
+        .tint(.orange)
+        .frame(height: 4)
+        .animation(.easeInOut(duration: 0.3), value: compound.state.currentStep)
+    }
+
+    private var stepPages: some View {
+        GeometryReader { geo in
+            ZStack {
+                NicknameSettingStepView(
+                    nickname: Binding(
+                        get: { compound.state.nickname },
+                        set: { compound.send(.nicknameChanged($0)) }
+                    ),
+                    validationState: compound.state.validationState,
+                    errorMessage: compound.state.errorMessage,
+                    isSubmitting: compound.state.isSubmitting,
+                    onValidate: {
+                        compound.send(.validateNickname(compound.state.nickname))
+                    },
+                    onNext: {
+                        withAnimation(.easeInOut) {
+                            compound.send(.setStep(.category, isForward: true))
+                        }
+                    }
+                )
+                .frame(width: geo.size.width, height: geo.size.height)
+                .offset(x: offset(for: .nickname, in: geo.size.width))
+
+                CategorySettingStepView(
+                    recommendList: compound.state.recommendList,
+                    selectedCategories: compound.state.selectedCategories,
+                    onToggle: { compound.send(.categoryToggled($0)) },
+                    onNext: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            compound.send(.setStep(.keyword, isForward: true))
+                        }
+                    }
+                )
+                .frame(width: geo.size.width, height: geo.size.height)
+                .offset(x: offset(for: .category, in: geo.size.width))
+
+                KeywordSettingStepView(
+                    keywords: compound.state.keywords,
+                    isSubmitting: compound.state.isSubmitting,
+                    errorMessage: compound.state.errorMessage,
+                    onAddKeyword: { compound.send(.keywordAdded($0)) },
+                    onRemoveKeyword: { compound.send(.keywordRemoved($0)) },
+                    onNext: completeRegistration
+                )
+                .frame(width: geo.size.width, height: geo.size.height)
+                .offset(x: offset(for: .keyword, in: geo.size.width))
+            }
+        }
+        .clipped()
+    }
+
     private func goBack() {
-        isForward = false
-        switch currentStep {
+        switch compound.state.currentStep {
         case .keyword:
-            currentStep = .nickname
-        default:
+            compound.send(.setStep(.category, isForward: false))
+        case .category:
+            compound.send(.setStep(.nickname, isForward: false))
+        case .nickname:
+            break
+        }
+    }
+
+    private func skip() {
+        switch compound.state.currentStep {
+        case .category:
+            compound.send(.setStep(.keyword, isForward: true))
+        case .keyword:
+            completeRegistration()
+        case .nickname:
             break
         }
     }
 
     private func offset(for route: RegisterRoute, in width: CGFloat) -> CGFloat {
-        let diff = route.index - currentStep.index
+        let diff = route.index - compound.state.currentStep.index
         return CGFloat(diff) * width
     }
 
     private func completeRegistration() {
-        guard !isSubmitting else { return }
+        guard !compound.state.isSubmitting else { return }
 
-        var user = initialUser ?? User(
-            userUuid: UUID().uuidString,
-            uid: UUID().uuidString,
-            provider: "KAKAO",
-            email: nil,
-            nickname: nil,
-            role: "USER",
-            isAlerted: false,
-            fcmToken: nil,
-            alertKeywordList: nil,
-            recommendList: nil
+        compound.send(
+            .completeRegistration(
+                nickname: compound.state.nickname,
+                keywords: compound.state.keywords,
+                selectedCategories: compound.state.selectedCategories
+            )
         )
-        user.nickname = nickname
-        user.alertKeywordList = keywords
-        user.isAlerted = !keywords.isEmpty
-
-        isSubmitting = true
-        errorMessage = nil
-
-        Task { @MainActor in
-            do {
-                let registeredUser: User
-                if let register {
-                    registeredUser = try await register(user)
-                } else {
-                    registeredUser = user
-                }
-                isSubmitting = false
-                onComplete(registeredUser)
-            } catch {
-                isSubmitting = false
-                errorMessage = error.localizedDescription
-            }
-        }
     }
-}
-
-private enum RegisterRoute: Int, CaseIterable, Hashable {
-    case nickname = 0
-    case keyword
-
-    var index: Int { rawValue }
 }
 
 private struct NicknameSettingStepView: View {
     @Binding var nickname: String
-    @Binding var validationState: NicknameValidationState
-    @Binding var errorMessage: String?
-    @Binding var isSubmitting: Bool
 
-    let checkNickname: (@MainActor (String) async throws -> Bool)?
+    let validationState: NicknameValidationState
+    let errorMessage: String?
+    let isSubmitting: Bool
+    let onValidate: () -> Void
     let onNext: () -> Void
 
     @FocusState private var isFocused: Bool
@@ -204,18 +202,9 @@ private struct NicknameSettingStepView: View {
                     validationState: validationState
                 )
                 .focused($isFocused)
-                .onChange(of: nickname) { _, newValue in
-                    if newValue.contains(" ") {
-                        validationState = .invalidSpace
-                    } else if newValue.count <= 2 {
-                        validationState = newValue.isEmpty ? .none : .tooShort
-                    } else {
-                        validationState = .none
-                    }
-                }
 
                 Button {
-                    validateNickname()
+                    onValidate()
                 } label: {
                     Text("중복확인")
                         .font(.scdream(.medium, size: 12))
@@ -288,7 +277,7 @@ private struct NicknameSettingStepView: View {
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainGray)
                     .padding(.top, 5)
-            default:
+            case .none:
                 EmptyView()
             }
         }
@@ -300,49 +289,75 @@ private struct NicknameSettingStepView: View {
                 .padding(.top, 5)
         }
     }
+}
 
-    private func validateNickname() {
-        guard !nickname.contains(" ") else {
-            validationState = .invalidSpace
-            return
-        }
-        guard nickname.count > 2 else {
-            validationState = .tooShort
-            return
-        }
+private struct CategorySettingStepView: View {
+    let recommendList: [Recommend]
+    let selectedCategories: [Int]
+    let onToggle: (Int) -> Void
+    let onNext: () -> Void
 
-        isSubmitting = true
-        validationState = .checking
-        errorMessage = nil
+    private var isNextEnabled: Bool {
+        !selectedCategories.isEmpty
+    }
 
-        Task { @MainActor in
-            do {
-                let isDuplicated: Bool
-                if let checkNickname {
-                    isDuplicated = try await checkNickname(nickname)
-                } else {
-                    isDuplicated = false
+    var body: some View {
+        VStack(alignment: .leading) {
+            HStack {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("추천 받고 싶은 항목을\n선택해주세요.")
+                        .font(.scdream(.bold, size: 17))
+                    Text("선택하신 항목에 맞게 추천해드려요")
+                        .font(.scdream(.medium, size: 12))
+                        .foregroundStyle(Color.mainGray)
                 }
-                validationState = isDuplicated ? .duplicate : .success
-                isSubmitting = false
-            } catch {
-                validationState = .none
-                errorMessage = error.localizedDescription
-                isSubmitting = false
+                Spacer()
             }
+            .padding(.top, 50)
+
+            FlowLayout(recommendList, id: \.id) { category in
+                CategoryButton(
+                    title: category.recommendName,
+                    isSelected: selectedCategories.contains(category.id)
+                ) {
+                    onToggle(category.id)
+                }
+            }
+            .padding(.top, 30)
+
+            Spacer()
+
+            MainOrangeButton(
+                buttonTitle: "다음",
+                buttonColor: isNextEnabled ? Color.mainOrange : Color.mainGray2
+            ) {
+                UIApplication.shared.endEditing()
+                Task {
+                    try? await Task.sleep(nanoseconds: 700_000_000)
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        onNext()
+                    }
+                }
+            }
+            .disabled(!isNextEnabled)
+            .opacity(isNextEnabled ? 1.0 : 0.8)
+            .padding(.bottom, 20)
         }
+        .padding(.horizontal, .contentPadding)
     }
 }
 
 private struct KeywordSettingStepView: View {
-    @Binding var keywords: [String]
-    @Binding var isSubmitting: Bool
-    @Binding var errorMessage: String?
-
+    let keywords: [String]
+    let isSubmitting: Bool
+    let errorMessage: String?
+    let onAddKeyword: (String) -> Void
+    let onRemoveKeyword: (Int) -> Void
     let onNext: () -> Void
 
     @State private var text = ""
-    private let maxKeywordCount = 5
+    @State private var showPermissionAlert = false
+    @State private var showKeywordLimitAlert = false
     private var isNextEnabled: Bool { !keywords.isEmpty }
 
     var body: some View {
@@ -372,7 +387,7 @@ private struct KeywordSettingStepView: View {
                 )
 
                 Button {
-                    addKeyword()
+                    addKeywordIfAllowed()
                 } label: {
                     Text("등록")
                         .font(.scdream(.medium, size: 12))
@@ -392,7 +407,7 @@ private struct KeywordSettingStepView: View {
                         Text(keyword)
                         Spacer()
                         Button {
-                            keywords.remove(at: index)
+                            onRemoveKeyword(index)
                         } label: {
                             Image(systemName: "xmark")
                                 .resizable()
@@ -433,16 +448,59 @@ private struct KeywordSettingStepView: View {
             .padding(.bottom, 20)
         }
         .padding(.horizontal, .contentPadding)
+        .alert("알림 허용", isPresented: $showPermissionAlert) {
+            Button("설정으로 이동") {
+                guard let url = URL(string: UIApplication.openSettingsURLString),
+                      UIApplication.shared.canOpenURL(url)
+                else { return }
+                UIApplication.shared.open(url)
+            }
+            Button("다음에 하기", role: .cancel) {}
+        } message: {
+            Text("팝업스토어 키워드 알림을 받으려면 알림 권한을 허용해 주세요.")
+        }
+        .alert("키워드 개수 제한", isPresented: $showKeywordLimitAlert) {
+            Button("확인", role: .cancel) {}
+        } message: {
+            Text("키워드는 최대 5개 까지만 등록 가능합니다.")
+        }
     }
 
-    private func addKeyword() {
+    private func addKeywordIfAllowed() {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-        guard keywords.count < maxKeywordCount else { return }
-        guard !keywords.contains(trimmed) else { return }
 
-        keywords.append(trimmed)
-        text = ""
+        guard keywords.count < 5 else {
+            showKeywordLimitAlert = true
+            return
+        }
+
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            switch settings.authorizationStatus {
+            case .denied:
+                DispatchQueue.main.async {
+                    showPermissionAlert = true
+                }
+            case .notDetermined:
+                UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
+                    DispatchQueue.main.async {
+                        if granted {
+                            onAddKeyword(trimmed)
+                            text = ""
+                        } else {
+                            showPermissionAlert = true
+                        }
+                    }
+                }
+            case .authorized, .provisional, .ephemeral:
+                DispatchQueue.main.async {
+                    onAddKeyword(trimmed)
+                    text = ""
+                }
+            @unknown default:
+                break
+            }
+        }
     }
 }
 
