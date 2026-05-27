@@ -2,7 +2,6 @@ import AlertFeature
 import Core
 import ProfileFeature
 import SwiftUI
-import WebKit
 
 @MainActor
 public protocol ProfileCoordinatorParent: AnyObject {
@@ -18,75 +17,58 @@ public final class ProfileCoordinator: Coordinator<
     EmptyBottomSheetRoute
 > {
     public weak var parent: (any ProfileCoordinatorParent)?
+    private var session: MainTabSession
+
+    public init(session: MainTabSession = MainTabSession(userUuid: "demo-user")) {
+        self.session = session
+        super.init()
+    }
+
+    public func updateSession(_ session: MainTabSession) {
+        self.session = session
+    }
 
     public func makeRootView() -> some View {
-        ProfileFeatureView(onLogout: { [weak self] in
-            self?.parent?.logout()
-        })
+        ProfileFeatureView(
+            userUuid: session.userUuid,
+            nickname: session.nickname,
+            isAlerted: session.isAlerted,
+            onShowAlert: { [weak self] userUuid in
+                self?.push(.alert(userUuid: userUuid))
+            },
+            onProfileSetting: { [weak self] userUuid, nickname, isAlerted in
+                self?.push(.profileSetting(userUuid: userUuid, nickname: nickname, isAlerted: isAlerted))
+            },
+            onNotification: { [weak self] in
+                self?.push(.notifications)
+            },
+            onServiceTerms: { [weak self] in
+                self?.push(.serviceTerms)
+            }
+        )
         .navigationTitle("Profile")
     }
 
     @ViewBuilder
     public func buildView(for route: ProfileFeatureRoute) -> some View {
         switch route {
-        case .alert:
-            AlertFeatureView()
-        case .profileSetting:
-            ProfileSettingScreen()
+        case .alert(let userUuid):
+            AlertFeatureView(userUuid: userUuid)
+        case let .profileSetting(userUuid, nickname, isAlerted):
+            ProfileSettingFeatureView(
+                userUuid: userUuid,
+                nickname: nickname,
+                isAlerted: isAlerted,
+                onLogout: { [weak self] in
+                    self?.parent?.logout()
+                }
+            )
         case .notifications:
-            NotificationsScreen()
+            NotificationFeatureView()
+                .navigationTitle("공지사항")
         case .serviceTerms:
-            ServiceTermsScreen()
+            ServiceTermsFeatureView()
+                .navigationTitle("서비스 이용약관")
         }
     }
-}
-
-private struct ProfileSettingScreen: View {
-    var body: some View {
-        Form {
-            Section("프로필 설정") {
-                LabeledContent("닉네임", value: "modular-user")
-                LabeledContent("계정 상태", value: "정상")
-            }
-        }
-        .navigationTitle("프로필 설정")
-    }
-}
-
-private struct NotificationsScreen: View {
-    var body: some View {
-        WebContentView(url: ExternalLinkConfig.notificationURL)
-        .navigationTitle("공지사항")
-    }
-}
-
-private struct ServiceTermsScreen: View {
-    var body: some View {
-        WebContentView(url: ExternalLinkConfig.serviceTermsURL)
-        .navigationTitle("서비스 이용약관")
-    }
-}
-
-private struct WebContentView: UIViewRepresentable {
-    let url: URL
-
-    func makeUIView(context: Context) -> WKWebView {
-        let webView = WKWebView()
-        webView.backgroundColor = .white
-        webView.scrollView.isScrollEnabled = true
-        webView.navigationDelegate = context.coordinator
-        webView.load(URLRequest(url: url))
-        return webView
-    }
-
-    func updateUIView(_ webView: WKWebView, context: Context) {
-        guard webView.url != url else { return }
-        webView.load(URLRequest(url: url))
-    }
-
-    func makeCoordinator() -> WebCoordinator {
-        WebCoordinator()
-    }
-
-    final class WebCoordinator: NSObject, WKNavigationDelegate {}
 }
