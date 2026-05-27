@@ -139,40 +139,43 @@ private struct ImageSliderView: View {
         GeometryReader { geo in
             let offset = geo.frame(in: .global).minY
 
-            TabView {
-                ForEach(popup.imageUrlList, id: \.self) { imageUrl in
-                    KFImage(URL(string: imageUrl))
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(
-                            width: geo.size.width,
-                            height: 450 + (offset > 0 ? offset : 0)
-                        )
-                        .clipped()
+            ZStack(alignment: .bottom) {
+                TabView {
+                    ForEach(popup.imageUrlList, id: \.self) { imageUrl in
+                        KFImage(URL(string: imageUrl))
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(
+                                width: geo.size.width,
+                                height: 450 + (offset > 0 ? offset : 0)
+                            )
+                            .clipped()
+                    }
                 }
-            }
-            .tabViewStyle(.page)
-            .frame(height: 450 + (offset > 0 ? offset : 0))
-            .offset(y: (offset > 0 ? -offset : 0))
-            .overlay(alignment: .bottomLeading) {
-                Text("\(popup.viewCount)명이 봤어요")
-                    .ppStyleFont(.scdream(.regular, size: 12))
-                    .foregroundStyle(Color.mainBlack)
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 24)
-                    .background(Color.white.opacity(0.8))
-                    .cornerRadius(50)
-                    .padding(.leading, 20)
-                    .padding(.bottom, 20)
-                    .applyShadow(color: Color.subBlack, alpha: 0.05, x: 0, y: 4, blur: 4)
-            }
-            .overlay(alignment: .bottomTrailing) {
-                AdminDisablePopupButton(isAdmin: isAdmin) {
-                    showDeactivateAlert = true
+                .tabViewStyle(.page)
+                .frame(height: 450 + (offset > 0 ? offset : 0))
+                .offset(y: (offset > 0 ? -offset : 0))
+
+                HStack(alignment: .bottom) {
+                    Text("\(popup.viewCount)명이 봤어요")
+                        .ppStyleFont(.scdream(.regular, size: 12))
+                        .foregroundStyle(Color.mainBlack)
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 24)
+                        .background(Color.white.opacity(0.8))
+                        .cornerRadius(50)
+                        .applyShadow(color: Color.subBlack, alpha: 0.05, x: 0, y: 4, blur: 4)
+
+                    Spacer()
+
+                    AdminDisablePopupButton(isAdmin: isAdmin) {
+                        showDeactivateAlert = true
+                    }
                 }
-                .padding(.trailing, 20)
+                .padding(.horizontal, 20)
                 .padding(.bottom, 20)
             }
+            .frame(width: geo.size.width, height: 450, alignment: .top)
         }
         .frame(height: 450)
     }
@@ -282,11 +285,11 @@ private struct BodyView: View {
 
             PopupDivider(padding: 20)
 
-            ReviewPreviewSection(reviews: reviews) {
-                onShowReviews(reviews)
-            }
-
-            PopupDivider(padding: 20)
+            // ReviewPreviewSection(reviews: reviews) {
+            //     onShowReviews(reviews)
+            // }
+            //
+            // PopupDivider(padding: 20)
 
             Text("SNS / 홈페이지")
                 .font(.scdream(.medium, size: 15))
@@ -300,17 +303,21 @@ private struct BodyView: View {
                 openURL(url)
             }
             .padding(.top, 8)
+            .padding(.bottom, relatedPopupList.isEmpty ? 40 : 0)
 
-            PopupDivider(padding: 20)
+            if !relatedPopupList.isEmpty {
+                PopupDivider(padding: 20)
 
-            Text("이런 팝업은 어때?")
-                .ppStyleFont(.scdream(.medium, size: 15))
+                Text("이런 팝업은 어때?")
+                    .ppStyleFont(.scdream(.medium, size: 15))
 
-            RecommendPopupScrollView(
-                relatedPopupList: relatedPopupList,
-                onSelectRelatedPopup: onSelectRelatedPopup
-            )
-            .padding(.top, 20)
+                RecommendPopupScrollView(
+                    relatedPopupList: relatedPopupList,
+                    onSelectRelatedPopup: onSelectRelatedPopup
+                )
+                .padding(.top, 20)
+                .padding(.bottom, 20)
+            }
         }
     }
 }
@@ -436,7 +443,7 @@ private struct RecommendPopupScrollView: View {
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            LazyHStack {
+            LazyHStack(alignment: .top) {
                 ForEach(relatedPopupList, id: \.self) { popup in
                     RecommendPopupCell(popup: popup)
                         .onTapGesture {
@@ -445,13 +452,14 @@ private struct RecommendPopupScrollView: View {
                 }
             }
         }
+        .frame(height: RecommendPopupCell.cellHeight)
     }
 }
 
 private struct RecommendPopupCell: View {
     let popup: Popup
-    let cellWidth: CGFloat = 115
-    let cellHeight: CGFloat = 162
+    static let cellHeight: CGFloat = 182
+    private let cellWidth: CGFloat = 115
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -464,6 +472,8 @@ private struct RecommendPopupCell: View {
             Text(popup.roadAddress.shortAddress)
                 .font(.scdream(.regular, size: 12))
                 .foregroundStyle(Color.mainBlack)
+                .lineLimit(1)
+                .truncationMode(.tail)
                 .padding(.top, 10)
 
             Text(popup.name)
@@ -473,7 +483,7 @@ private struct RecommendPopupCell: View {
                 .truncationMode(.tail)
                 .padding(.top, 5)
         }
-        .frame(width: cellWidth, height: cellHeight)
+        .frame(width: cellWidth, height: Self.cellHeight, alignment: .top)
     }
 }
 
@@ -573,6 +583,7 @@ private struct PopupDetailNavigationBackModifier: ViewModifier {
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 18, height: 18)
                             .foregroundStyle(Color.subWhite)
+                            // .foregroundStyle(Color.mainBlack)
                     }
                     .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
                 }
