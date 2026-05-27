@@ -12,7 +12,7 @@ let project = Project(
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: [
-                .external(name: "Moya")
+                .project(target: "ThirdParty", path: "../ThirdParty")
             ]
         ),
         .target(
@@ -23,7 +23,20 @@ let project = Project(
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Tests/**"],
-            dependencies: [.target(name: "Core")]
+            dependencies: [
+                .target(name: "Core"),
+                .project(target: "ThirdParty", path: "../ThirdParty"),
+            ]
+        ),
+    ],
+    schemes: [
+        .scheme(
+            name: "Core",
+            shared: true,
+            buildAction: .buildAction(targets: ["Core", "CoreTests"]),
+            testAction: .targets([
+                .testableTarget(target: .target("CoreTests"))
+            ])
         ),
     ]
 )
