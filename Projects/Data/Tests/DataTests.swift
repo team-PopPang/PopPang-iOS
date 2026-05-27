@@ -1,4 +1,5 @@
 import Foundation
+import Moya
 import Testing
 @testable import Data
 
@@ -131,5 +132,108 @@ struct DataTests {
         #expect(UserAPI.alertStatus(userUuid: "user-1", isAlerted: true).path == "/user/user-1/alert-status")
         #expect(UserAPI.checkFcmToken(userUuid: "user-1", fcmToken: "fcm").path == "/user/user-1/fcm-token/duplicate-check")
         #expect(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").path == "/user/user-1/fcm-token/update")
+    }
+
+    @Test
+    func apiMethodsMatchV0EndpointDefinitions() {
+        #expect(AdminAPI.deactivatePopup(userUuid: "user-1", popupUuid: "popup-1").method == .patch)
+
+        #expect(AppleAuthAPI.login(authCode: "auth").method == .post)
+        #expect(AppleAuthAPI.loginWithEmail(authCode: "auth", email: "index@example.com").method == .post)
+        #expect(AppleAuthAPI.signup(userDto: UserDTO.adminUser).method == .post)
+        #expect(GoogleAuthAPI.login(idToken: "id-token").method == .post)
+        #expect(GoogleAuthAPI.signup(userDTO: UserDTO.adminUser).method == .post)
+        #expect(KakaoAuthAPI.login(accessToken: "token").method == .post)
+        #expect(KakaoAuthAPI.signup(userDTO: UserDTO.adminUser).method == .post)
+
+        #expect(PopupAPI.getPopupList.method == .get)
+        #expect(PopupAPI.getUpcomingPopupList.method == .get)
+        #expect(PopupAPI.getInProgressPopupList.method == .get)
+        #expect(PopupAPI.searchPopupList(searchText: "성수").method == .get)
+        #expect(PopupAPI.increaseViewCount(popupUuid: "popup-1").method == .post)
+        #expect(PopupAPI.getRandomPopupList.method == .get)
+        #expect(PopupAPI.getPersonalPopupList(userUuid: "user-1").method == .get)
+        #expect(PopupAPI.getPersonalUseerRecommendPopupList(userUuid: "user-1").method == .get)
+        #expect(PopupAPI.getPersonalUpcomingPopupList(userUuid: "user-1").method == .get)
+        #expect(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").method == .get)
+        #expect(PopupAPI.getPersonalSearchPopupList(userUuid: "user-1", searchText: "성수").method == .get)
+        #expect(PopupAPI.getPersonalMapFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", latitude: 37.5, longitude: 127.0, mapSortStandard: "DISTANCE").method == .get)
+        #expect(PopupAPI.getPersonalRelatedPopupList(userUuid: "user-1", popupUuid: "popup-1").method == .get)
+        #expect(PopupAPI.getPersonalRandomPopupList(userUuid: "user-1").method == .get)
+        #expect(PopupAPI.getAlertPopupList(userUuid: "user-1").method == .get)
+        #expect(PopupAPI.removeAlertPopup(userUuid: "user-1", popupUuid: "popup-1").method == .delete)
+        #expect(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").method == .post)
+        #expect(PopupAPI.removeFavorite(userUuid: "user-1", popupUuid: "popup-1").method == .delete)
+        #expect(PopupAPI.getFavoriteList(userUuid: "user-1").method == .get)
+        #expect(PopupAPI.getRegionList.method == .get)
+        #expect(PopupAPI.getPopularRecommendList.method == .get)
+        #expect(PopupAPI.getPopularRecommendPopupList(userUuid: "user-1", recommendId: 7).method == .get)
+
+        #expect(UserAPI.checkNickname(nickname: "팝팡").method == .get)
+        #expect(UserAPI.updateNickname(userUuid: "user-1", newNickname: "새팝팡").method == .patch)
+        #expect(UserAPI.autoLogin(userUuid: "user-1").method == .post)
+        #expect(UserAPI.getRecommendList.method == .get)
+        #expect(UserAPI.hardDeleteUser(userUuid: "user-1").method == .delete)
+        #expect(UserAPI.getAlertKeywordList(userUuid: "user-1").method == .get)
+        #expect(UserAPI.addAlertKeyword(userUuid: "user-1", newAlertKeyword: "성수").method == .post)
+        #expect(UserAPI.removeAlertKeyword(userUuid: "user-1", deleteAlertKeyword: "성수").method == .delete)
+        #expect(UserAPI.alertStatus(userUuid: "user-1", isAlerted: true).method == .patch)
+        #expect(UserAPI.checkFcmToken(userUuid: "user-1", fcmToken: "fcm").method == .get)
+        #expect(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").method == .put)
+    }
+
+    @Test
+    func apiRequestParametersMatchV0EndpointDefinitions() {
+        #expect(stringParameter(PopupAPI.searchPopupList(searchText: "성수").task, key: "q") == "성수")
+        #expect(stringParameter(PopupAPI.getPersonalPopupList(userUuid: "user-1").task, key: "userUuid") == "user-1")
+        #expect(stringParameter(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").task, key: "region") == "서울")
+        #expect(stringParameter(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").task, key: "district") == "성동구")
+        #expect(stringParameter(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").task, key: "homeSortStandard") == "NEWEST")
+
+        let mapTask = PopupAPI.getPersonalMapFilteredPopupList(
+            userUuid: "user-1",
+            region: "서울",
+            district: "성동구",
+            latitude: 37.5,
+            longitude: 127.0,
+            mapSortStandard: "DISTANCE"
+        ).task
+        #expect(stringParameter(mapTask, key: "region") == "서울")
+        #expect(stringParameter(mapTask, key: "district") == "성동구")
+        #expect(doubleParameter(mapTask, key: "latitude") == 37.5)
+        #expect(doubleParameter(mapTask, key: "longitude") == 127.0)
+        #expect(stringParameter(mapTask, key: "mapSortStandard") == "DISTANCE")
+
+        #expect(stringParameter(PopupAPI.removeAlertPopup(userUuid: "user-1", popupUuid: "popup-1").task, key: "popupUuid") == "popup-1")
+        #expect(stringParameter(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").task, key: "userUuid") == "user-1")
+        #expect(stringParameter(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").task, key: "popupUuid") == "popup-1")
+
+        #expect(stringParameter(UserAPI.checkNickname(nickname: "팝팡").task, key: "nickname") == "팝팡")
+        #expect(stringParameter(UserAPI.updateNickname(userUuid: "user-1", newNickname: "새팝팡").task, key: "nickname") == "새팝팡")
+        #expect(stringParameter(UserAPI.getAlertKeywordList(userUuid: "user-1").task, key: "userUuid") == "user-1")
+        #expect(stringParameter(UserAPI.addAlertKeyword(userUuid: "user-1", newAlertKeyword: "성수").task, key: "newAlertKeyword") == "성수")
+        #expect(stringParameter(UserAPI.removeAlertKeyword(userUuid: "user-1", deleteAlertKeyword: "성수").task, key: "deleteAlertKeyword") == "성수")
+        #expect(boolParameter(UserAPI.alertStatus(userUuid: "user-1", isAlerted: true).task, key: "isAlerted") == true)
+        #expect(stringParameter(UserAPI.checkFcmToken(userUuid: "user-1", fcmToken: "fcm").task, key: "fcmToken") == "fcm")
+        #expect(stringParameter(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").task, key: "fcmToken") == "fcm")
+    }
+
+    private func stringParameter(_ task: Moya.Task, key: String) -> String? {
+        parameter(task, key: key) as? String
+    }
+
+    private func doubleParameter(_ task: Moya.Task, key: String) -> Double? {
+        parameter(task, key: key) as? Double
+    }
+
+    private func boolParameter(_ task: Moya.Task, key: String) -> Bool? {
+        parameter(task, key: key) as? Bool
+    }
+
+    private func parameter(_ task: Moya.Task, key: String) -> Any? {
+        guard case let .requestParameters(parameters, _) = task else {
+            return nil
+        }
+        return parameters[key]
     }
 }
