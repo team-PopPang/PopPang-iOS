@@ -1,7 +1,7 @@
 import Foundation
 
 // Dependency hub for external SDKs.
-// Modules declare third-party package dependencies through `ThirdParty`, but
-// each source file imports the concrete library module it actually uses.
+// Modules depend on this target for third-party package linkage, while source
+// files import the concrete library modules they use.
 public enum ThirdPartyModule {
 }
