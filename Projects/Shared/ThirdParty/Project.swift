@@ -25,17 +25,8 @@ let project = Project(
                 .external(name: "Kingfisher"),
                 .external(name: "Moya"),
                 .external(name: "NMapsMap"),
+                .external(name: "BottomSheet"),
             ]
-        ),
-        .target(
-            name: "ThirdPartyTests",
-            destinations: [.iPhone],
-            product: .unitTests,
-            bundleId: "com.poppang.thirdparty.tests",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .default,
-            sources: ["Tests/**"],
-            dependencies: [.target(name: "ThirdParty")]
         ),
     ]
 )
