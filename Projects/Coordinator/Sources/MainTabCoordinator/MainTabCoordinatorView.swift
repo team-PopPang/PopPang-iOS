@@ -22,7 +22,7 @@ public struct MainTabCoordinatorView: View {
             ForEach(coordinator.tabs, id: \.self) { tab in
                 tabView(for: tab)
                     .tabItem {
-                        Image(tab.tabImage(selected: coordinator.selectedTab == tab))
+                        tab.tabAsset(selected: coordinator.selectedTab == tab).swiftUIImage
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(width: 25, height: 25)
@@ -60,12 +60,8 @@ private struct HomeCoordinatorView: View {
             coordinator.makeRootView()
         } destination: { route in
             coordinator.buildView(for: route)
-        } sheetView: { route in
-            EmptyView()
-        } overlayView: { route in
-            EmptyView()
         } fullScreenView: { route in
-            EmptyView()
+            coordinator.buildFullScreen(for: route)
         }
     }
 }
@@ -78,12 +74,6 @@ private struct CalendarCoordinatorView: View {
             coordinator.makeRootView()
         } destination: { route in
             coordinator.buildView(for: route)
-        } sheetView: { route in
-            EmptyView()
-        } overlayView: { route in
-            EmptyView()
-        } fullScreenView: { route in
-            EmptyView()
         }
     }
 }
@@ -96,12 +86,6 @@ private struct MapCoordinatorView: View {
             coordinator.makeRootView()
         } destination: { route in
             coordinator.buildView(for: route)
-        } sheetView: { route in
-            EmptyView()
-        } overlayView: { route in
-            EmptyView()
-        } fullScreenView: { route in
-            EmptyView()
         } bottomSheetView: { route in
             coordinator.buildBottomSheet(for: route)
         }
@@ -116,12 +100,6 @@ private struct FavoritesCoordinatorView: View {
             coordinator.makeRootView()
         } destination: { route in
             coordinator.buildView(for: route)
-        } sheetView: { route in
-            EmptyView()
-        } overlayView: { route in
-            EmptyView()
-        } fullScreenView: { route in
-            EmptyView()
         }
     }
 }
@@ -134,12 +112,6 @@ private struct ProfileCoordinatorView: View {
             coordinator.makeRootView()
         } destination: { route in
             coordinator.buildView(for: route)
-        } sheetView: { route in
-            EmptyView()
-        } overlayView: { route in
-            EmptyView()
-        } fullScreenView: { route in
-            EmptyView()
         }
     }
 }
