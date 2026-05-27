@@ -1,3 +1,4 @@
+import ReviewFeature
 import SwiftUI
 
 @main
