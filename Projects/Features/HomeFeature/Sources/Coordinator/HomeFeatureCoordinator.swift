@@ -4,6 +4,6 @@ public typealias HomeFeatureCoordinator = Coordinator<
     HomeFeatureRoute,
     EmptySheetRoute,
     EmptyOverlayRoute,
-    EmptyFullScreenRoute,
+    HomeFullScreenRoute,
     EmptyBottomSheetRoute
 >
