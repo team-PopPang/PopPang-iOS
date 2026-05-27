@@ -3,17 +3,17 @@ import Foundation
 
 @Compound
 final class OnboardingFeatureCompound {
-    enum Action: Sendable {
-        case onAppear
-        case refresh
+    enum Action {
+        case stepChanged(OnboardingStep)
+        case nextButtonTapped(OnboardingStep)
     }
 
-    enum Reaction: Sendable {
-        case setLoading(Bool)
+    enum Reaction {
+        case setStep(OnboardingStep)
     }
 
-    struct State: Equatable, Sendable {
-        var isLoading = false
+    struct State: Equatable {
+        var currentStep: OnboardingStep = .keyword
     }
 
     var state = State()
@@ -22,8 +22,13 @@ final class OnboardingFeatureCompound {
 
     func react(action: Action) -> AsyncStream<Reaction> {
         switch action {
-        case .onAppear, .refresh:
-            return .concat(.just(.setLoading(true)), .just(.setLoading(false)))
+        case .stepChanged(let step):
+            return .just(.setStep(step))
+        case .nextButtonTapped(let currentStep):
+            guard let nextStep = currentStep.next else {
+                return .just(.setStep(currentStep))
+            }
+            return .just(.setStep(nextStep))
         }
     }
 
@@ -31,8 +36,8 @@ final class OnboardingFeatureCompound {
         var newState = state
 
         switch reaction {
-        case .setLoading(let isLoading):
-            newState.isLoading = isLoading
+        case .setStep(let step):
+            newState.currentStep = step
         }
 
         return newState
