@@ -1,5 +1,5 @@
 {
-  "originHash" : "00c0bb7d2a77f69158530dbcbe94d405e3f9817966776ba4326fe7245e9175e2",
+  "originHash" : "9410c05a4be85ff639bd3898bccdb3cd6cfc592e740387aaa9b22b91fc80c972",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -35,6 +35,15 @@
       "state" : {
         "revision" : "145104f5ea9d58ae21b60add007c33c1cc0c948e",
         "version" : "2.0.0"
+      }
+    },
+    {
+      "identity" : "bottomsheet",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/lucaszischka/BottomSheet",
+      "state" : {
+        "revision" : "720ddbd1371fef2a09cc1ab65fc503df37767f9c",
+        "version" : "3.1.1"
       }
     },
     {
@@ -222,8 +231,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/navermaps/SPM-NMapsMap",
       "state" : {
-        "revision" : "fb4eef37db9904c0a0dcdf7a828c892e13782cfa",
-        "version" : "3.23.0"
+        "revision" : "d527147b0bf31260166a7063e3ed854a03f8239c",
+        "version" : "3.23.2"
       }
     },
     {
