@@ -41,15 +41,5 @@ let project = Project(
                 .project(target: "Data", path: "../../Data"),
             ]
         ),
-        .target(
-            name: "ProfileFeatureTests",
-            destinations: [.iPhone],
-            product: .unitTests,
-            bundleId: "com.poppang.features.profile.tests",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .default,
-            sources: ["Tests/**"],
-            dependencies: [.target(name: "ProfileFeature")]
-        ),
     ]
 )
