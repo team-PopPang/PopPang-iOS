@@ -1,4 +1,5 @@
 import SwiftUI
+import OnboardingFeature
 
 @main
 struct OnboardingFeatureDemoApp: App {
