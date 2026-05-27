@@ -1,10 +1,13 @@
 import Core
+import DSKit
 import KakaoSDKCommon
 import NMapsMap
 import UIKit
 
 enum AppSDKInitializer {
     static func configure() {
+        UITabBar.configureAppearance()
+        UINavigationBar.configureAppearance()
         FirebaseCoreBridge.configureIfNeeded()
         KakaoSDK.initSDK(appKey: Constants.KakaoAPI.key)
         NMFAuthManager.shared().ncpKeyId = Constants.NaverAPI.key
