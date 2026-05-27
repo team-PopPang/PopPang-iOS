@@ -14,6 +14,7 @@ let project = Project(
             resources: ["Resources/**"],
             dependencies: [
                 .project(target: "Core", path: "../Core"),
+                .project(target: "ThirdParty", path: "../ThirdParty"),
             ]
         ),
         .target(
@@ -38,16 +39,6 @@ let project = Project(
                     "DEVELOPMENT_TEAM": "LGX4B4WC66",
                 ]
             )
-        ),
-        .target(
-            name: "DSKitTests",
-            destinations: [.iPhone],
-            product: .unitTests,
-            bundleId: "com.poppang.dskit.tests",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .default,
-            sources: ["Tests/**"],
-            dependencies: [.target(name: "DSKit")]
         ),
     ]
 )
