@@ -15,6 +15,7 @@ let project = Project(
             ],
             dependencies: [
                 .project(target: "Domain", path: "../../Domain"),
+                .project(target: "Core", path: "../../Shared/Core"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]
@@ -34,7 +35,11 @@ let project = Project(
                 ]
             ),
             sources: ["Demo/Sources/**"],
-            dependencies: [.target(name: "AlertFeature")]
+            dependencies: [
+                .target(name: "AlertFeature"),
+                .project(target: "Domain", path: "../../Domain"),
+                .project(target: "Data", path: "../../Data"),
+            ]
         ),
         .target(
             name: "AlertFeatureTests",
@@ -44,7 +49,12 @@ let project = Project(
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Tests/**"],
-            dependencies: [.target(name: "AlertFeature")]
+            dependencies: [
+                .target(name: "AlertFeature"),
+                .project(target: "Core", path: "../../Shared/Core"),
+                .project(target: "Domain", path: "../../Domain"),
+                .project(target: "DSKit", path: "../../Shared/DSKit"),
+            ]
         ),
     ]
 )
