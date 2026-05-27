@@ -2,6 +2,7 @@ import CalendarFeature
 import Core
 import AlertFeature
 import PopupDetailFeature
+import ReviewFeature
 import SwiftUI
 
 @MainActor
@@ -13,17 +14,24 @@ public final class CalendarCoordinator: Coordinator<
     EmptyBottomSheetRoute
 > {
     private var session: MainTabSession
+    private var rootView: CalendarFeatureView!
 
     public init(session: MainTabSession = MainTabSession(userUuid: "demo-user")) {
         self.session = session
         super.init()
+        self.rootView = makeCalendarRootView(session: session)
     }
 
     public func updateSession(_ session: MainTabSession) {
         self.session = session
+        self.rootView = makeCalendarRootView(session: session)
     }
 
     public func makeRootView() -> some View {
+        rootView
+    }
+
+    private func makeCalendarRootView(session: MainTabSession) -> CalendarFeatureView {
         CalendarFeatureView(
             userUuid: session.userUuid,
             onShowAlert: { [weak self] userUuid in
@@ -33,7 +41,6 @@ public final class CalendarCoordinator: Coordinator<
                 self?.push(.popupDetail(userUuid: userUuid, popup: popup))
             }
         )
-            .navigationTitle("Calendar")
     }
 
     @ViewBuilder
@@ -50,11 +57,16 @@ public final class CalendarCoordinator: Coordinator<
             PopupDetailFeatureView(
                 userUuid: userUuid,
                 popup: popup,
+                isAdmin: session.isAdmin,
                 onSelectRelatedPopup: { [weak self] userUuid, popup in
                     self?.push(.popupDetail(userUuid: userUuid, popup: popup))
                 },
-                onShowReviews: { _ in }
+                onShowReviews: { [weak self] reviews in
+                    self?.push(.reviewDetail(reviews))
+                }
             )
+        case .reviewDetail(let reviews):
+            ReviewFeatureView(reviews: reviews)
         }
     }
 }
