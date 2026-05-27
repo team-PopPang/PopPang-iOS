@@ -34,18 +34,20 @@ public struct ProfileFeatureView: View {
         onNotification: @escaping () -> Void = {},
         onServiceTerms: @escaping () -> Void = {}
     ) {
-        _compound = State(
-            wrappedValue: ProfileFeatureCompound(
-                userUuid: userUuid,
-                nickname: nickname,
-                isAlerted: isAlerted
-            )
+        let compound = ProfileFeatureCompound(
+            userUuid: userUuid,
+            nickname: nickname,
+            isAlerted: isAlerted
         )
-        _tempIsOn = State(wrappedValue: isAlerted)
+        _compound = State(wrappedValue: compound)
+        _tempIsOn = State(wrappedValue: compound.state.isAlerted)
         self.onShowAlert = onShowAlert
         self.onProfileSetting = onProfileSetting
         self.onNotification = onNotification
         self.onServiceTerms = onServiceTerms
+        Task { @MainActor in
+            compound.preload()
+        }
     }
 
     public var body: some View {
@@ -136,6 +138,7 @@ public struct ProfileFeatureView: View {
             .padding(.bottom, 24)
         }
         .onAppear {
+            compound.preload()
             tempIsOn = compound.state.isAlerted
         }
         .alert("알림 허용", isPresented: $showPermissionAlert) {
@@ -188,14 +191,14 @@ public struct ProfileSettingFeatureView: View {
     @Environment(\.dismiss) private var dismiss
 
     private let onLogout: () -> Void
-    private let onNicknameUpdated: () -> Void
+    private let onNicknameUpdated: (String) -> Void
 
     public init(
         userUuid: String,
         nickname: String,
         isAlerted: Bool,
         onLogout: @escaping () -> Void = {},
-        onNicknameUpdated: @escaping () -> Void = {}
+        onNicknameUpdated: @escaping (String) -> Void = { _ in }
     ) {
         _compound = State(
             wrappedValue: ProfileFeatureCompound(
@@ -290,7 +293,7 @@ public struct ProfileSettingFeatureView: View {
         }
         .onChange(of: compound.state.didUpdateNickname) { _, didUpdate in
             guard didUpdate else { return }
-            onNicknameUpdated()
+            onNicknameUpdated(compound.state.nickname)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 dismiss()
             }
