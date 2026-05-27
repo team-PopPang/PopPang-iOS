@@ -32,5 +32,7 @@ public extension UINavigationBar {
         let navigationBar = UINavigationBar.appearance()
         navigationBar.standardAppearance = defaultAppearance
         navigationBar.compactAppearance = defaultAppearance
+        navigationBar.scrollEdgeAppearance = defaultAppearance
+        navigationBar.compactScrollEdgeAppearance = defaultAppearance
     }
 }
