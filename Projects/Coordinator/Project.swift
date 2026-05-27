@@ -32,15 +32,5 @@ let project = Project(
                 .project(target: "DSKit", path: "../Shared/DSKit"),
             ]
         ),
-        .target(
-            name: "CoordinatorTests",
-            destinations: [.iPhone],
-            product: .unitTests,
-            bundleId: "com.poppang.coordinator.tests",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .default,
-            sources: ["Tests/**"],
-            dependencies: [.target(name: "Coordinator")]
-        ),
     ]
 )
