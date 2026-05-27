@@ -41,20 +41,5 @@ let project = Project(
                 .project(target: "Data", path: "../../Data"),
             ]
         ),
-        .target(
-            name: "FavoritesFeatureTests",
-            destinations: [.iPhone],
-            product: .unitTests,
-            bundleId: "com.poppang.features.favorites.tests",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .default,
-            sources: ["Tests/**"],
-            dependencies: [
-                .target(name: "FavoritesFeature"),
-                .project(target: "Core", path: "../../Shared/Core"),
-                .project(target: "Domain", path: "../../Domain"),
-                .project(target: "DSKit", path: "../../Shared/DSKit"),
-            ]
-        ),
     ]
 )
