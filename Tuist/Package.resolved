@@ -1,5 +1,5 @@
 {
-  "originHash" : "ec9ebeb21d3ab5154b6ac1b2ea71b2934f368433fb7cc65db43c43836ece1b97",
+  "originHash" : "00c0bb7d2a77f69158530dbcbe94d405e3f9817966776ba4326fe7245e9175e2",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/indextrown/Compound",
       "state" : {
-        "revision" : "263667c8e6521921173eecccc29be8ff3075d553",
-        "version" : "1.0.3"
+        "revision" : "eef0706abecbcdcb5c3494f5f4d557a717565fd8",
+        "version" : "1.0.4"
       }
     },
     {
