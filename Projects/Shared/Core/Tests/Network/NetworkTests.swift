@@ -4,7 +4,7 @@ import Testing
 @testable import Core
 
 struct NetworkTests {
-    @Test
+    @Test("BaseAPI가 기본 API URL과 JSON 헤더를 사용한다")
     func baseAPIUsesDefaultBaseURLAndHeaders() {
         let target = TestAPI.sample
 
@@ -14,7 +14,7 @@ struct NetworkTests {
         #expect(target.headers?["accept"] == "application/json")
     }
 
-    @Test
+    @Test("비동기 요청이 스텁 응답을 디코딩한다")
     func asyncRequestDecodesStubbedResponse() async throws {
         let provider = NetworkProvider(
             stubClosure: MoyaProvider.immediatelyStub,
@@ -26,7 +26,7 @@ struct NetworkTests {
         #expect(response.message == "ok")
     }
 
-    @Test
+    @Test("비동기 요청이 실패 상태 코드에서 네트워크 에러를 던진다")
     func asyncRequestThrowsNetworkErrorForInvalidStatusCode() async {
         let provider = NetworkProvider(
             stubClosure: MoyaProvider.immediatelyStub
