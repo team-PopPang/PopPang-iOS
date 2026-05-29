@@ -340,7 +340,8 @@ private extension HomeFeatureView {
 
     var topAnchorButton: some View {
         Button {
-            scrollToTop()
+            // listProxy.scrollToTop(animated: true) 하면 최상단으로 이동
+            listProxy.scrollToSection(id: "grid", position: .top, animated: true)
         } label: {
             DSKitResource.image("TopAnchor")
                 .resizable()
@@ -363,10 +364,6 @@ private extension HomeFeatureView {
         .padding(.trailing, 20)
         .padding(.bottom, 20)
         .opacity(currentScrollOffset > 650 ? 1 : 0)
-    }
-
-    func scrollToTop() {
-        listProxy.scrollToTop(animated: true)
     }
 }
 
