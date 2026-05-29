@@ -1,15 +1,8 @@
-# workflow 이름
-name: 팝팡 앱타겟 iOS17 빌드 & 테스트
+name: 팝팡 모듈러 빌드 & 테스트
 
 on:
-  # UTC 00:00 = KST 09:00 매일 한번 자동 실행
-  # schedule:
-  #   - cron: '0 0 * * *'
-  
-  # UTC 22:00 = KST 07:00 (매일)
   schedule:
     - cron: "0 22 * * *"
-
   workflow_dispatch:
     inputs:
       pr_number:
@@ -28,11 +21,11 @@ permissions:
 
 jobs:
   ios-ci:
-    name: iOS Build & Test
+    name: Tuist Build & Core/Data Tests
     runs-on: macos-14
+    timeout-minutes: 60
 
     steps:
-      # PR 번호가 있으면 해당 PR 브랜치로, 없으면 기본 브랜치로 체크아웃합니다.
       - name: Checkout PR branch
         if: github.event.inputs.pr_number != ''
         uses: actions/checkout@v4
@@ -43,147 +36,101 @@ jobs:
         if: github.event.inputs.pr_number == ''
         uses: actions/checkout@v4
 
-      # Xcode 컴파일 결과를 재사용하기 위해 DerivedData 캐시합니다.
+      - name: Cache Tuist and SwiftPM
+        uses: actions/cache@v4
+        with:
+          path: |
+            Tuist/.build
+            ~/Library/Caches/org.swift.swiftpm
+          key: tuist-spm-${{ runner.os }}-${{ hashFiles('Tuist/Package.resolved') }}
+          restore-keys: |
+            tuist-spm-${{ runner.os }}-
+
       - name: Cache DerivedData
         uses: actions/cache@v4
         with:
           path: DerivedData
-          key: deriveddata-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
+          key: deriveddata-${{ runner.os }}-${{ hashFiles('Tuist/Package.resolved', 'Projects/**/*.swift') }}
           restore-keys: |
             deriveddata-${{ runner.os }}-
 
-      # Swift Package Manaer 의존성 다운로드 결과를 캐시합니다.
-      - name: Cache SwiftPM
-        uses: actions/cache@v4
-        with:
-          path: ~/Library/Caches/org.swift.swiftpm
-          key: spm-${{ runner.os }}-${{ hashFiles('**/Package.resolved') }}
-          restore-keys: |
-            spm-${{ runner.os }}-
-
-      # CI에서 사용할 Xcode 버전을 고정합니다.
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.2.app
-        
-      # 현재 CI 환경에 설치된 iOS 시뮬레이터 목록을 출력합니다.
-      - name: List available iOS simulators
+
+      - name: Install CI tools
         run: |
-          echo "📱 Available iOS Simulators"
-          xcrun simctl list devices available
+          gem install xcpretty --no-document
+          curl https://mise.run | sh
+          "$HOME/.local/bin/mise" install tuist@$(cat .tuist-version)
 
-      # 지정한 이름 / iOS 버전에 맞는 시뮬레이터의 UDID를 찾아 환경변수로 설정합니다.
-      - name: Resolve simulator UDID
-        run: |
-          set -euo pipefail
-
-          SIMULATOR_NAME="iPhone 15"
-          SIMULATOR_OS="17.0"
-
-          echo "🔍 Resolving simulator: ${SIMULATOR_NAME} (iOS ${SIMULATOR_OS})"
-
-          UDID=$(xcrun simctl list devices available | \
-            grep "iOS ${SIMULATOR_OS}" -A 20 | \
-            grep "^ *${SIMULATOR_NAME} (" | \
-            head -n 1 | \
-            sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
-
-          if [ -z "$UDID" ]; then
-            echo "❌ Simulator not found"
-            xcrun simctl list devices available
-            exit 1
-          fi
-
-          echo "✅ Using simulator UDID: $UDID"
-          echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
-          
-      # 시뮬레이터가 완전히 켜질 때까지 기다립니다
-      - name: Boot simulator fully
-        run: |
-          xcrun simctl bootstatus "$SIMULATOR_UDID" -b
-
-      # 살제 테스트 전에 시뮬레이터를 미리 깨워 초기 지연을 방지합니다.
-      - name: Warm up simulator
-        run: |
-          echo "🔥 Warm-up simulator (UDID: $SIMULATOR_UDID)"
-          xcodebuild \
-            -project PopPang.xcodeproj \
-            -scheme PopPang \
-            -destination "id=$SIMULATOR_UDID" \
-            -showdestinations \
-            > /dev/null
-
-      # CI에서 Swift Macro 신뢰 단계 확인을 건너뜁니다.
       - name: Disable Swift Macro fingerprint validation
         run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
 
-      # CI에만 사용하는 설정 파일을 만들고 시크릿 키들을 주입합니다.
-      - name: Create Config.xcconfig
+      - name: Generate Tuist workspace
         run: |
-          cat <<EOF > Config.xcconfig
-          KAKAO_NATIVE_APP_KEY = ${{ secrets.KAKAO_NATIVE_APP_KEY }}
-          GIDClientID = ${{ secrets.GIDClientID }}
-          GoogleURLScheme = ${{ secrets.GoogleURLScheme }}
-          NMFClientID = ${{ secrets.NMFClientID }}
-          EOF
+          "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist install
+          "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist generate
 
-      # 빌드를 수행합니다.
-      - name: Build for testing
+      - name: Build PopPangApp
         run: |
           set -o pipefail
-          xcodebuild build-for-testing \
-            -project PopPang.xcodeproj \
-            -scheme PopPang \
-            -xcconfig Config.xcconfig \
-            -destination "id=$SIMULATOR_UDID" \
+          xcodebuild build \
+            -workspace PopPang.xcworkspace \
+            -scheme PopPangApp \
+            -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
             | xcpretty
 
-      # (빌드된 결과를 사용해)유닛 테스트를 수행합니다.
-      - name: Run Unit Tests
+      - name: Build Coordinator assembly
         run: |
           set -o pipefail
-          xcodebuild test-without-building \
-            -project PopPang.xcodeproj \
-            -scheme PopPang \
-            -xcconfig Config.xcconfig \
-            -destination "id=$SIMULATOR_UDID" \
+          xcodebuild build \
+            -workspace PopPang.xcworkspace \
+            -scheme Coordinator \
+            -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath DerivedData \
-            -only-testing:RepositoryTest \
+            CODE_SIGNING_ALLOWED=NO \
             | xcpretty
 
-      # (빌드된 결과를 사용해)UI 테스트를 실행합니다.
-      - name: Run UI Tests
+      - name: Run Core tests
         run: |
           set -o pipefail
-          xcodebuild test-without-building \
-            -project PopPang.xcodeproj \
-            -scheme PopPang \
-            -xcconfig Config.xcconfig \
-            -destination "id=$SIMULATOR_UDID" \
+          xcodebuild test \
+            -workspace PopPang.xcworkspace \
+            -scheme Core \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
             -derivedDataPath DerivedData \
-            -only-testing:PopPangUITests \
+            CODE_SIGNING_ALLOWED=NO \
             | xcpretty
 
-      # CI가 명령어 트리거로 실행된 경우, 성공 시 PR에 성공 코멘트를 남깁니다.
+      - name: Run Data tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -workspace PopPang.xcworkspace \
+            -scheme Data \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            -derivedDataPath DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty
+
       - name: Comment success
         if: success() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.inputs.pr_number }}
           body: |
-            ✅ **팝팡 패키지를 성공적으로 빌드하고 테스트했습니다.**
+            PopPangApp 빌드와 Core/Data 테스트가 성공했습니다.
 
-      # CI가 명령어 트리거로 실행된 경우, 실패 시 PR에 실패 코멘트를 남깁니다.
       - name: Comment failure
         if: failure() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.inputs.pr_number }}
           body: |
-            ❌ **팝팡 패키지 빌드 또는 테스트에 실패했습니다.**
-            👉 Actions 탭에서 로그를 확인해주세요.
+            PopPangApp 빌드 또는 Core/Data 테스트가 실패했습니다. Actions 로그를 확인해주세요.
 
-      # CI 전체가 성공했을 경우, 빌드 성공 알림 메일을 전송합니다.
       - name: Send email on success
         if: success()
         uses: dawidd6/action-send-mail@v3
@@ -192,18 +139,17 @@ jobs:
           server_port: 465
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: ✅ PopPang iOS 빌드 & 테스트 성공
+          subject: PopPang 모듈러 빌드 & 테스트 성공
           body: |
-            ✅ **팝팡 패키지를 성공적으로 빌드하고 테스트했습니다.**
+            PopPangApp 빌드와 Core/Data 테스트가 성공했습니다.
 
-            📦 Repository: ${{ github.repository }}
-            🌿 Branch: ${{ github.ref_name }}
-            👤 Triggered by: ${{ github.actor }}
-            🔗 Action URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Triggered by: ${{ github.actor }}
+            Action URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
           to: indextrown@gmail.com
           from: GitHub CI <${{ secrets.MAIL_USERNAME }}>
 
-      # CI 실행 중 하나라도 실패했을 경우, 실패 알림 메일을 전송합니다.
       - name: Send email on failure
         if: failure()
         uses: dawidd6/action-send-mail@v3
@@ -212,13 +158,13 @@ jobs:
           server_port: 465
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: ❌ PopPang iOS 빌드 실패
+          subject: PopPang 모듈러 빌드 또는 테스트 실패
           body: |
-            ❌ **팝팡 패키지 빌드 또는 테스트에 실패했습니다.**
+            PopPangApp 빌드 또는 Core/Data 테스트가 실패했습니다.
 
-            📦 Repository: ${{ github.repository }}
-            🌿 Branch: ${{ github.ref_name }}
-            👤 Triggered by: ${{ github.actor }}
-            🔗 Action URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Triggered by: ${{ github.actor }}
+            Action URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
           to: indextrown@gmail.com
           from: GitHub CI <${{ secrets.MAIL_USERNAME }}>

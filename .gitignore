@@ -29,3 +29,4 @@ graph.png
 # fastlane
 fastlane/metadata/
 fastlane/Preview.html
+fastlane/report.xml

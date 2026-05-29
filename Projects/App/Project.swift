@@ -76,14 +76,19 @@ let project = Project(
             settings: .settings(
                 base: [
                     "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
-                    "CODE_SIGN_STYLE": "Automatic",
-                    "DEVELOPMENT_TEAM": "LGX4B4WC66",
+                    "CODE_SIGN_IDENTITY": "Apple Development",
+                    "CODE_SIGN_IDENTITY[sdk=iphoneos*]": "iPhone Developer",
+                    "CODE_SIGN_STYLE": "Manual",
+                    "DEVELOPMENT_TEAM": "",
+                    "DEVELOPMENT_TEAM[sdk=iphoneos*]": "LGX4B4WC66",
                     "GIDClientID": "771597909483-rq71itsts83mbjludspkr5b0btp2fek6.apps.googleusercontent.com",
                     "GoogleURLScheme": "com.googleusercontent.apps.771597909483-rq71itsts83mbjludspkr5b0btp2fek6",
                     "KAKAO_NATIVE_APP_KEY": "858c83c7bde7fec2bc6a0e0c8c023ec9",
                     "CURRENT_PROJECT_VERSION": "6",
                     "MARKETING_VERSION": "1.1.3",
                     "NMFClientID": "e4y23un5to",
+                    "PROVISIONING_PROFILE_SPECIFIER": "",
+                    "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]": "match Development kr.co.poppang.PopPang 1762797005",
                 ]
             )
         ),
