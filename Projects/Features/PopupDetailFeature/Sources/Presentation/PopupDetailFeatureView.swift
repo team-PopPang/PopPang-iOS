@@ -93,6 +93,7 @@ public struct PopupDetailFeatureView: View {
             .padding(.trailing, 10)
             .background(Color.mainGray4)
         }
+        .toolbar(.hidden, for: .tabBar)
         .onAppear {
             compound.send(.onAppear)
         }
