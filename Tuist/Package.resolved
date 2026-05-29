@@ -1,5 +1,5 @@
 {
-  "originHash" : "0025a93063ed9698d42222001f3bcad16e60051ee8a833ecdc67a07b00ee2bd2",
+  "originHash" : "4e64e88c3cf0f65ed14a16745b07bb539bda580e91ada45652d4ab51afe9cff0",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -186,8 +186,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/indextrown/Listkit.git",
       "state" : {
-        "revision" : "c0c2dfc4e9d3242e25923cb5cc30be6cc65f419f",
-        "version" : "1.0.3"
+        "revision" : "a4c9270236135a65d2fd0917b16767de5e2d355e",
+        "version" : "1.0.4"
       }
     },
     {

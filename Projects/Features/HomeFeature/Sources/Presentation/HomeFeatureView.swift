@@ -84,6 +84,7 @@ public struct HomeFeatureView: View {
                     }
                     .sectionLayout(.custom(Self.horizontalSectionLayout(width: 283, height: 138, spacing: 15, bottomInset: 65)))
                     .scrollAxis(.horizontal)
+                    .orthogonalScrollingBehavior(.groupPaging)
                     .pinnedHeader(background: Color.subWhite)
 
                     LKSection(id: "grid") {
