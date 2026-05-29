@@ -61,6 +61,7 @@ public struct HomeFeatureView: View {
                     }
                     .sectionLayout(.custom(Self.horizontalSectionLayout(width: 194, height: 271, spacing: 15, bottomInset: 50)))
                     .scrollAxis(.horizontal)
+                    .orthogonalScrollingBehavior(.continuousGroupLeadingBoundary)
                     .pinnedHeader(background: Color.subWhite)
 
                     LKSection(id: "coming") {
