@@ -73,6 +73,7 @@ let project = Project(
             ],
             settings: .settings(
                 base: [
+                    "ASSETCATALOG_COMPILER_APPICON_NAME": "AppIcon",
                     "CODE_SIGN_STYLE": "Automatic",
                     "DEVELOPMENT_TEAM": "LGX4B4WC66",
                     "GIDClientID": "771597909483-rq71itsts83mbjludspkr5b0btp2fek6.apps.googleusercontent.com",
