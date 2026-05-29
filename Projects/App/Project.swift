@@ -14,6 +14,8 @@ let project = Project(
                     "CFBundleAllowMixedLocalizations": true,
                     "CFBundleDevelopmentRegion": "ko",
                     "CFBundleDisplayName": "팝팡",
+                    "CFBundleShortVersionString": "$(MARKETING_VERSION)",
+                    "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
                     "CFBundleLocalizations": [
                         "ko",
                         "en",
@@ -79,6 +81,8 @@ let project = Project(
                     "GIDClientID": "771597909483-rq71itsts83mbjludspkr5b0btp2fek6.apps.googleusercontent.com",
                     "GoogleURLScheme": "com.googleusercontent.apps.771597909483-rq71itsts83mbjludspkr5b0btp2fek6",
                     "KAKAO_NATIVE_APP_KEY": "858c83c7bde7fec2bc6a0e0c8c023ec9",
+                    "CURRENT_PROJECT_VERSION": "6",
+                    "MARKETING_VERSION": "1.1.3",
                     "NMFClientID": "e4y23un5to",
                 ]
             )
