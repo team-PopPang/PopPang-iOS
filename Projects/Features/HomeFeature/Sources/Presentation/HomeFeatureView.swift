@@ -56,7 +56,7 @@ public struct HomeFeatureView: View {
                         }
                     } header: {
                         bestHeader
-                            .padding(.bottom, 15)
+                            .padding(.bottom, 10)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .sectionLayout(.custom(Self.horizontalSectionLayout(width: 194, height: 271, spacing: 15, bottomInset: 50)))
@@ -79,7 +79,7 @@ public struct HomeFeatureView: View {
                         }
                     } header: {
                         comingHeader
-                            .padding(.bottom, 15)
+                            .padding(.bottom, 10)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .sectionLayout(.custom(Self.horizontalSectionLayout(width: 283, height: 138, spacing: 15, bottomInset: 65)))
@@ -107,7 +107,7 @@ public struct HomeFeatureView: View {
                         }
                     } header: {
                         filterHeader
-                            .padding(.bottom, 15)
+                            .padding(.bottom, 10)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .sectionLayout(.custom(Self.gridSectionLayout(columns: 2, itemHeight: 302, columnSpacing: 15, rowSpacing: 20)))
