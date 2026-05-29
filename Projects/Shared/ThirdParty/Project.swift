@@ -23,6 +23,7 @@ let project = Project(
                 .external(name: "KakaoSDKTemplate"),
                 .external(name: "KakaoSDKUser"),
                 .external(name: "Kingfisher"),
+                .external(name: "ListKit"),
                 .external(name: "Moya"),
                 .external(name: "NMapsMap"),
                 .external(name: "BottomSheet"),
