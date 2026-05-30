@@ -49,6 +49,11 @@ final class NaverMapCoordinator: NSObject, CLLocationManagerDelegate, NMFMapView
         view
     }
 
+    func currentCenter() -> MapCoordinate {
+        let center = view.mapView.cameraPosition.target
+        return MapCoordinate(latitude: center.lat, longitude: center.lng)
+    }
+
     func checkIfLocationServiceIsEnabled() {
         DispatchQueue.global().async {
             guard CLLocationManager.locationServicesEnabled() else {
@@ -186,14 +191,26 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
     private var hasMovedToUserLocation = false
     var onPermissionDenied: (() -> Void)?
+    var onLocationUpdated: ((MapCoordinate) -> Void)?
 
     private override init() {
         super.init()
         locationManager.delegate = self
+        locationManager.desiredAccuracy = kCLLocationAccuracyBest
     }
 
     func requestPermission() {
-        locationManager.requestWhenInUseAuthorization()
+        switch locationManager.authorizationStatus {
+        case .authorizedWhenInUse, .authorizedAlways:
+            locationManager.startUpdatingLocation()
+            NaverMapCoordinator.shared.enableUserLocationOverlay()
+        case .notDetermined:
+            locationManager.requestWhenInUseAuthorization()
+        case .denied, .restricted:
+            onPermissionDenied?()
+        @unknown default:
+            break
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
@@ -217,7 +234,17 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last, hasMovedToUserLocation == false else { return }
         hasMovedToUserLocation = true
+
+        let coordinate = MapCoordinate(
+            latitude: location.coordinate.latitude,
+            longitude: location.coordinate.longitude
+        )
+        DispatchQueue.main.async {
+            self.onLocationUpdated?(coordinate)
+        }
+
         NaverMapCoordinator.shared.moveToUserLocation(to: location.coordinate)
+        manager.stopUpdatingLocation()
     }
 }
 

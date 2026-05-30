@@ -21,9 +21,6 @@ public struct CalendarFeatureView: View {
         _compound = State(wrappedValue: compound)
         self.onShowAlert = onShowAlert
         self.onSelectPopup = onSelectPopup
-        Task { @MainActor in
-            compound.preload()
-        }
     }
 
     public var body: some View {
@@ -102,9 +99,7 @@ public struct CalendarFeatureView: View {
 
             Spacer()
         }
-        .task {
-            compound.preload()
-        }
+        .compoundOnLoad(compound, .onAppear)
         .trigger(of: compound, \.$presentedSheet) { route in
             sheetRoute = route
         }

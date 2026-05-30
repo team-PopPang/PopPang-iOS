@@ -1,5 +1,6 @@
 import AlertFeature
 import Core
+import Domain
 import PopupDetailFeature
 import ProfileFeature
 import ReviewFeature
@@ -20,6 +21,8 @@ public final class ProfileCoordinator: Coordinator<
     EmptyBottomSheetRoute
 > {
     public weak var parent: (any ProfileCoordinatorParent)?
+    public var onSelectPopup: ((String, Popup) -> Void)?
+
     private var session: MainTabSession
     private var rootView: ProfileFeatureView!
 
@@ -65,7 +68,7 @@ public final class ProfileCoordinator: Coordinator<
             AlertFeatureView(
                 userUuid: userUuid,
                 onSelectPopup: { [weak self] userUuid, popup in
-                    self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                    self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
                 }
             )
         case .popupDetail(let userUuid, let popup):
@@ -74,7 +77,7 @@ public final class ProfileCoordinator: Coordinator<
                 popup: popup,
                 isAdmin: session.isAdmin,
                 onSelectRelatedPopup: { [weak self] userUuid, popup in
-                    self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                    self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
                 },
                 onShowReviews: { [weak self] reviews in
                     self?.push(.reviewDetail(reviews))
@@ -102,6 +105,14 @@ public final class ProfileCoordinator: Coordinator<
             ServiceTermsFeatureView()
         case .reviewDetail(let reviews):
             ReviewFeatureView(reviews: reviews)
+        }
+    }
+
+    private func routeToPopupDetail(userUuid: String, popup: Popup) {
+        if let onSelectPopup {
+            onSelectPopup(userUuid, popup)
+        } else {
+            push(.popupDetail(userUuid: userUuid, popup: popup))
         }
     }
 }

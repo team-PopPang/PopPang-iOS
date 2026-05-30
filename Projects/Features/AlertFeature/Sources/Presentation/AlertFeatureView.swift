@@ -1,4 +1,5 @@
 import Core
+import Compound
 import Domain
 import DSKit
 import Kingfisher
@@ -115,9 +116,7 @@ public struct AlertFeatureView: View {
             }
         }
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            compound.send(.onAppear)
-        }
+        .compoundOnLoad(compound, .onAppear)
         .alert("키워드 개수 제한", isPresented: $showKeywordLimitAlert) {
             Button("확인", role: .cancel) {}
         } message: {

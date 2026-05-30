@@ -1,4 +1,5 @@
 import Core
+import Compound
 import Domain
 import DSKit
 import Kingfisher
@@ -14,12 +15,14 @@ public struct PopupDetailFeatureView: View {
     @State private var showingPopup = false
 
     private let isAdmin: Bool
+    private let hidesSystemTabBar: Bool
     private let onShowReviews: ([Review]) -> Void
 
     public init(
         userUuid: String = "demo-user",
         popup: Popup = .popupMock,
         isAdmin: Bool = false,
+        hidesSystemTabBar: Bool = true,
         onSelectRelatedPopup: @escaping (String, Popup) -> Void = { _, _ in },
         onDeactivateComplete: @escaping () -> Void = {},
         onShowReviews: @escaping ([Review]) -> Void = { _ in }
@@ -33,6 +36,7 @@ public struct PopupDetailFeatureView: View {
             )
         )
         self.isAdmin = isAdmin
+        self.hidesSystemTabBar = hidesSystemTabBar
         self.onShowReviews = onShowReviews
     }
 
@@ -93,10 +97,10 @@ public struct PopupDetailFeatureView: View {
             .padding(.trailing, 10)
             .background(Color.mainGray4)
         }
-        .toolbar(.hidden, for: .tabBar)
-        .onAppear {
-            compound.send(.onAppear)
+        .if(hidesSystemTabBar) {
+            $0.toolbar(.hidden, for: .tabBar)
         }
+        .compoundOnLoad(compound, .onAppear)
         .popupDetailNavigationBack {
             dismiss()
         }

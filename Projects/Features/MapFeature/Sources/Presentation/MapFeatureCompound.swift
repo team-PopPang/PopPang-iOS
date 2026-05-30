@@ -46,6 +46,7 @@ final class MapFeatureCompound {
         case refreshFilteredPopupList
         case searchTextChanged(String)
         case mapCenterChanged(MapCoordinate)
+        case userLocationChanged(MapCoordinate)
         case categoryTapped(Recommend)
         case regionButtonTapped
         case sortButtonTapped
@@ -64,6 +65,7 @@ final class MapFeatureCompound {
     enum Reaction {
         case setDidPreload(Bool)
         case setLoading(Bool)
+        case setWaitingForUserLocation(Bool)
         case setMapPopups([Popup])
         case setAllPopups([Popup])
         case setCategories([Recommend])
@@ -74,6 +76,7 @@ final class MapFeatureCompound {
         case setSelectedOption(MapSortOption)
         case setSearchText(String)
         case setMapCenter(MapCoordinate?)
+        case setHasUserLocation(Bool)
         case setFirstSheetPosition(BottomSheetPosition)
         case setSecondSheetPosition(BottomSheetPosition)
         case setSecondSheetType(MapSecondSheetType)
@@ -93,11 +96,13 @@ final class MapFeatureCompound {
         var selectedOption: MapSortOption = .closest
         var searchText = ""
         var mapCenter: MapCoordinate?
+        var hasUserLocation = false
         var firstSheetPosition: BottomSheetPosition = .relative(0.5)
         var secondSheetPosition: BottomSheetPosition = .hidden
         var secondSheetType: MapSecondSheetType = .none
         var didPreload = false
         var isLoading = false
+        var isWaitingForUserLocation = false
         var errorMessage: String?
     }
 
@@ -107,11 +112,6 @@ final class MapFeatureCompound {
 
     init(userUuid: String) {
         self.state = State(userUuid: userUuid)
-    }
-
-    @MainActor
-    func preload() {
-        send(.onAppear)
     }
 
     func react(action: Action) -> AsyncStream<Reaction> {
@@ -139,7 +139,41 @@ final class MapFeatureCompound {
             )
 
         case .mapCenterChanged(let coordinate):
-            return .just(.setMapCenter(coordinate))
+            guard state.hasUserLocation || state.selectedOption != .closest else {
+                return Self.emptyReactionStream()
+            }
+
+            let shouldRefreshEmptyInitialList = state.didPreload && state.allPopups.isEmpty
+
+            return .concat(
+                .just(.setMapCenter(coordinate)),
+                shouldRefreshEmptyInitialList
+                    ? updatePersonalMapFilteredPopupList(
+                        region: state.selectedRegion?.region ?? "전체",
+                        district: state.selectedDistrict ?? "전체",
+                        mapCenter: coordinate,
+                        sortOption: state.selectedOption
+                    )
+                    : Self.emptyReactionStream()
+            )
+
+        case .userLocationChanged(let coordinate):
+            let shouldRefreshFromLocation = state.didPreload &&
+                (state.selectedOption == .closest || state.allPopups.isEmpty)
+
+            return .concat(
+                .just(.setHasUserLocation(true)),
+                .just(.setWaitingForUserLocation(false)),
+                .just(.setMapCenter(coordinate)),
+                shouldRefreshFromLocation
+                    ? updatePersonalMapFilteredPopupList(
+                        region: state.selectedRegion?.region ?? "전체",
+                        district: state.selectedDistrict ?? "전체",
+                        mapCenter: coordinate,
+                        sortOption: state.selectedOption
+                    )
+                    : Self.emptyReactionStream()
+            )
 
         case .categoryTapped(let category):
             if state.selectedCategoryId == category.id {
@@ -175,7 +209,7 @@ final class MapFeatureCompound {
         case .popupSelected(let popup):
             let firstPosition = Self.visibleFirstSheetPosition(from: state.firstSheetPosition)
             return .concat(
-                .just(.setFirstSheetPosition(.relative(0.5))),
+                .just(.setFirstSheetPosition(firstPosition)),
                 .just(.setSecondSheetType(.detail(popup))),
                 .just(.setSecondSheetPosition(firstPosition))
             )
@@ -255,6 +289,8 @@ final class MapFeatureCompound {
             newState.didPreload = didPreload
         case .setLoading(let isLoading):
             newState.isLoading = isLoading
+        case .setWaitingForUserLocation(let isWaitingForUserLocation):
+            newState.isWaitingForUserLocation = isWaitingForUserLocation
         case .setMapPopups(let popups):
             newState.mapPopups = popups
         case .setAllPopups(let popups):
@@ -275,6 +311,8 @@ final class MapFeatureCompound {
             newState.searchText = text
         case .setMapCenter(let coordinate):
             newState.mapCenter = coordinate
+        case .setHasUserLocation(let hasUserLocation):
+            newState.hasUserLocation = hasUserLocation
         case .setFirstSheetPosition(let position):
             newState.firstSheetPosition = position
         case .setSecondSheetPosition(let position):
@@ -327,13 +365,18 @@ private extension MapFeatureCompound {
                     await send(.setSelectedDistrict(selectedDistrict))
                     await send(.setCategories(try await categoryTask))
 
-                    let popups = try await popupUsecase.getPersonalMapFilteredPopupList(
+                    if state.selectedOption == .closest && state.mapCenter == nil {
+                        await send(.setWaitingForUserLocation(true))
+                        return
+                    }
+
+                    let popups = try await Self.fetchMapPopups(
+                        popupUsecase: popupUsecase,
                         userUuid: state.userUuid,
                         region: selectedRegion?.region ?? "전체",
                         district: selectedDistrict ?? "전체",
-                        latitude: state.mapCenter?.latitude,
-                        longitude: state.mapCenter?.longitude,
-                        mapSortStandard: state.selectedOption.rawValue
+                        mapCenter: state.mapCenter,
+                        sortOption: state.selectedOption
                     )
 
                     await send(.setAllPopups(popups))
@@ -343,7 +386,9 @@ private extension MapFeatureCompound {
                     await send(.setErrorMessage(error.localizedDescription))
                 }
 
-                await send(.setLoading(false))
+                if state.selectedOption != .closest || state.mapCenter != nil {
+                    await send(.setLoading(false))
+                }
             }
         )
     }
@@ -362,13 +407,13 @@ private extension MapFeatureCompound {
             .just(.setSelectedCategoryId(nil)),
             .run { [state, popupUsecase] send in
                 do {
-                    let popups = try await popupUsecase.getPersonalMapFilteredPopupList(
+                    let popups = try await Self.fetchMapPopups(
+                        popupUsecase: popupUsecase,
                         userUuid: state.userUuid,
                         region: region,
                         district: district,
-                        latitude: mapCenter?.latitude,
-                        longitude: mapCenter?.longitude,
-                        mapSortStandard: sortOption.rawValue
+                        mapCenter: mapCenter,
+                        sortOption: sortOption
                     )
 
                     await send(.setAllPopups(popups))
@@ -449,6 +494,63 @@ private extension MapFeatureCompound {
 
     static func visibleFirstSheetPosition(from position: BottomSheetPosition) -> BottomSheetPosition {
         isFirstSheetHidden(position) ? .relative(0.5) : position
+    }
+
+    static func fetchMapPopups(
+        popupUsecase: PopupUsecaseProtocol,
+        userUuid: String,
+        region: String,
+        district: String,
+        mapCenter: MapCoordinate?,
+        sortOption: MapSortOption
+    ) async throws -> [Popup] {
+        do {
+            let popups = try await popupUsecase.getPersonalMapFilteredPopupList(
+                userUuid: userUuid,
+                region: region,
+                district: district,
+                latitude: mapCenter?.latitude,
+                longitude: mapCenter?.longitude,
+                mapSortStandard: sortOption.rawValue
+            )
+
+            guard popups.isEmpty, sortOption == .closest else { return popups }
+
+            return try await fetchFallbackMapPopups(
+                popupUsecase: popupUsecase,
+                userUuid: userUuid,
+                region: region,
+                district: district,
+                mapCenter: mapCenter
+            )
+        } catch {
+            guard sortOption == .closest else { throw error }
+
+            return try await fetchFallbackMapPopups(
+                popupUsecase: popupUsecase,
+                userUuid: userUuid,
+                region: region,
+                district: district,
+                mapCenter: mapCenter
+            )
+        }
+    }
+
+    static func fetchFallbackMapPopups(
+        popupUsecase: PopupUsecaseProtocol,
+        userUuid: String,
+        region: String,
+        district: String,
+        mapCenter: MapCoordinate?
+    ) async throws -> [Popup] {
+        try await popupUsecase.getPersonalMapFilteredPopupList(
+            userUuid: userUuid,
+            region: region,
+            district: district,
+            latitude: mapCenter?.latitude,
+            longitude: mapCenter?.longitude,
+            mapSortStandard: MapSortOption.newest.rawValue
+        )
     }
 
     static func isFirstSheetHidden(_ position: BottomSheetPosition) -> Bool {

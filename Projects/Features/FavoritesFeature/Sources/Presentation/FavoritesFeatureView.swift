@@ -1,3 +1,4 @@
+import Compound
 import Core
 import Domain
 import DSKit
@@ -23,9 +24,6 @@ public struct FavoritesFeatureView: View {
         self.onShowAlert = onShowAlert
         self.onSelectPopup = onSelectPopup
         self.onBrowsePopups = onBrowsePopups
-        Task { @MainActor in
-            compound.preload()
-        }
     }
 
     public var body: some View {
@@ -89,9 +87,7 @@ public struct FavoritesFeatureView: View {
 
             Spacer()
         }
-        .task {
-            compound.preload()
-        }
+        .compoundOnLoad(compound, .onAppear)
     }
 }
 

@@ -4,6 +4,130 @@
 
 static/dynamic product type 선택 기준은 `Docs/static-dynamic-linking.md`를 먼저 본다.
 
+## 탭바가 숨겨진 상세 화면에서 뒤로가기 시 탭바가 늦게 복귀하는 문제
+
+증상:
+
+- 홈, 캘린더, 지도, 찜, 프로필/알림 등 탭 플로우에서 팝업 셀을 눌러 `PopupDetailFeatureView`로 이동한다.
+- 상세 화면에서는 탭바가 없어야 한다.
+- 뒤로가기 시 탭바가 즉시 돌아오지 않고 잠깐 텀이 생기거나, 탭바 hide/show 애니메이션이 어색하게 보인다.
+
+원인:
+
+- V0는 `NavigationStack { TabView { ... } }` 구조였다.
+- 따라서 `popupDetail` route는 `TabView` 내부가 아니라 `TabView` 전체 위로 push되었고, 상세 화면에는 애초에 부모 탭바가 존재하지 않았다.
+- 모듈러 구조에서는 `TabView { 각 탭별 CoordinatorContainer/NavigationStack }` 형태였고, 팝업 상세가 각 탭 내부 `NavigationStack`에 push되었다.
+- 이 상태에서 `PopupDetailFeatureView`가 `.toolbar(.hidden, for: .tabBar)`로 시스템 탭바를 숨기면, pop 시점에 탭바 복구 타이밍이 SwiftUI toolbar 처리에 묶여 텀이 생긴다.
+
+해결:
+
+- 각 탭의 팝업 선택은 탭 내부 route로 직접 push하지 않는다.
+- `HomeFeatureView`, `CalendarFeatureView`, `MapFeatureView`, `FavoritesFeatureView`, `AlertFeatureView` 등은 `onSelectPopup` 콜백만 호출한다.
+- 각 탭 coordinator는 해당 콜백을 `MainTabCoordinator`로 전달한다.
+- `MainTabCoordinatorView`가 `NavigationStack`으로 `TabView`를 감싸고, `MainTabRoute.popupDetail`을 `navigationDestination(item:)` 상위 destination으로 push한다.
+- 상위 destination으로 열린 `PopupDetailFeatureView`는 `hidesSystemTabBar: false`로 생성한다. 이 화면은 이미 `TabView` 바깥 destination이라 숨길 탭바가 없다.
+
+주의:
+
+- 탭 내부 route로 상세를 push하는 fallback 경로는 아직 있을 수 있으므로 `PopupDetailFeatureView`의 기본값은 `hidesSystemTabBar: true`로 유지한다.
+- V0와 같은 체감을 원하면 사용자 플로우의 팝업 상세 진입점은 가능한 상위 route로 모아야 한다.
+- 상위 `NavigationStack`에 typed path 배열을 두고, 탭 내부에도 각기 다른 typed path의 `NavigationStack`을 중첩하면 SwiftUI가 내부 path 비교 중 `AnyNavigationPath.Error.comparisonTypeMismatch`로 크래시할 수 있다. 그래서 상위 팝업 상세 route는 단일 optional item route로 둔다.
+
+## BottomSheet 안의 지도 목록이 데이터 변경을 바로 반영하지 않는 문제
+
+증상:
+
+- 팝팡지도 탭 첫 진입 시 첫 번째 시트에 `검색 결과가 없습니다.`가 표시된다.
+- 같은 화면에서 가까운순/최신순 정렬 버튼을 한 번 누르면 갑자기 목록 데이터가 나타난다.
+- 서버 요청은 이미 성공했거나 이후 state에는 데이터가 들어왔는데, BottomSheet 내부 목록만 늦게 갱신되는 것처럼 보인다.
+
+원인:
+
+- `BottomSheet` 라이브러리는 `content` closure를 매 렌더링 때 다시 실행하는 구조가 아니라, `mainContent`를 값으로 보관한다.
+- 첫 번째 시트에 `popups`, `isLoading` 같은 state 값을 복사해서 넘기면, parent view의 compound state 변경만으로 BottomSheet 내부 content가 기대한 타이밍에 다시 구성되지 않을 수 있다.
+- 반면 정렬 버튼을 누르면 local sheet position/type state가 바뀌면서 parent body가 다시 평가되고, 그때 최신 데이터가 BottomSheet content에 반영되어 갑자기 목록이 나타난다.
+
+해결:
+
+- BottomSheet의 content에 state snapshot만 넘기지 않는다.
+- 첫 번째 시트가 `MapFeatureCompound`를 직접 받아 내부에서 `compound.state.mapPopups`, `compound.state.isLoading`, `compound.state.didPreload`를 읽게 한다.
+- 최초 로드 전에는 빈 배열을 곧바로 `검색 결과가 없습니다.`로 해석하지 않고 `ProgressView`를 보여준다.
+
+예시:
+
+```swift
+FirstSheetView(
+    compound: compound,
+    selectedOption: selectedOptionBinding,
+    firstSheetPosition: $firstSheetPosition,
+    ...
+)
+```
+
+```swift
+private struct MapListView: View {
+    let popups: [Popup]
+    let isLoading: Bool
+    let didPreload: Bool
+
+    var body: some View {
+        if !didPreload || isLoading {
+            ProgressView()
+        } else if popups.isEmpty {
+            Text("검색 결과가 없습니다.")
+        } else {
+            // list
+        }
+    }
+}
+```
+
+주의:
+
+- BottomSheet 안에 들어가는 view는 가능하면 값 snapshot보다 관찰 대상이나 binding을 직접 전달한다.
+- 정렬 버튼을 눌렀을 때만 목록이 나타나는 현상은 API 문제가 아니라 BottomSheet content 갱신 문제일 가능성이 높다.
+- 다만 API 로그에 500이 같이 보이면 별도 문제다. V0 기준 지도 가까운순은 클라이언트 정렬이 아니라 `mapSortStandard=CLOSEST` 서버 필터링이다.
+
+## 팝팡지도 첫 진입 시 첫 번째 BottomSheet 높이가 고정되는 문제
+
+증상:
+
+- 팝팡지도 탭에 처음 진입하면 첫 번째 시트가 위아래로 움직이지 않는다.
+- 팝업 셀을 눌러 두 번째 시트가 한 번 올라온 뒤에는 시트 높이 변경이 다시 동작한다.
+
+원인:
+
+- `sheetTop` 갱신에 맞춰 첫 번째 시트에 `.id(...)`를 주면 검색바 frame 계산 직후 시트 view가 재생성된다.
+- 이 재생성 타이밍이 `BottomSheet` 내부 gesture/layout 상태와 겹치면 첫 진입 시 첫 번째 시트 drag가 먹지 않는 것처럼 보일 수 있다.
+- V0처럼 두 시트의 position 동기화는 유지하되, 모듈러 화면에서 두 번째 시트를 첫 번째 시트와 같은 modifier 체인에 붙이면 hidden wrapper가 첫 번째 시트 drag에 간섭할 수 있다.
+
+해결:
+
+- 첫 번째 시트는 `sheetTop` 변경 때문에 `.id(...)`로 강제 재생성하지 않는다.
+- 두 번째 시트는 첫 번째 시트 modifier 체인에 이어 붙이지 않고, 같은 `ZStack` 안의 별도 overlay sibling으로 분리한다.
+- 두 번째 시트 overlay는 항상 트리에 두되, `secondSheetPosition == .hidden`일 때는 `.allowsHitTesting(false)`로 첫 번째 시트 제스처를 막지 않게 한다.
+- 첫 번째/두 번째 시트 높이 동기화는 `secondSheetPosition`이 visible 상태일 때만 유지한다.
+
+예시:
+
+```swift
+.bottomSheet(
+    bottomSheetPosition: $firstSheetPosition,
+    switchablePositions: [.absolute(0), .relative(0.5), .absoluteTop(sheetTop)]
+) {
+    FirstSheetView(...)
+}
+
+Color.clear
+    .bottomSheet(
+        bottomSheetPosition: $secondSheetPosition,
+        switchablePositions: [.relative(0.5), .absoluteTop(sheetTop)]
+    ) {
+        SecondSheetView(...)
+    }
+    .allowsHitTesting(secondSheetPosition != .hidden)
+```
+
 ## ThirdParty 링크 원칙
 
 PopPang은 Haruhancut-V2 방식처럼 외부 라이브러리 SPM product를 `ThirdParty` 타깃에 모은다.

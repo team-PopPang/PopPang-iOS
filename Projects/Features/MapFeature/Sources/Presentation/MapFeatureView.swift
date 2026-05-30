@@ -1,4 +1,5 @@
 import BottomSheet
+import Compound
 import Core
 import Domain
 import DSKit
@@ -11,6 +12,9 @@ public struct MapFeatureView: View {
     @State private var tabBarHeight: CGFloat = 0
     @State private var searchBarFrame: CGRect = .zero
     @State private var sheetTop: CGFloat = 400
+    @State private var firstSheetPosition: BottomSheetPosition = .relative(0.5)
+    @State private var secondSheetPosition: BottomSheetPosition = .hidden
+    @State private var secondSheetType: MapSecondSheetType = .none
     @State private var showLocationPermissionAlert = false
 
     private let onSelectPopup: (String, Popup) -> Void
@@ -22,127 +26,148 @@ public struct MapFeatureView: View {
         let compound = MapFeatureCompound(userUuid: userUuid)
         _compound = State(wrappedValue: compound)
         self.onSelectPopup = onSelectPopup
-        Task { @MainActor in
-            compound.preload()
-        }
     }
 
     public var body: some View {
         GeometryReader { _ in
-            ZStack(alignment: .trailing) {
-                NaverMapView(popups: compound.state.mapPopups)
-                    .ignoresSafeArea()
-                    .onAppear {
-                        NaverMapCoordinator.shared.checkIfLocationServiceIsEnabled()
-                        NaverMapCoordinator.shared.onMarkerSelected = { _, popup in
-                            onSelectPopup(compound.state.userUuid, popup)
+            ZStack {
+                ZStack(alignment: .trailing) {
+                    NaverMapView(popups: compound.state.mapPopups)
+                        .ignoresSafeArea()
+                        .onAppear {
+                            NaverMapCoordinator.shared.checkIfLocationServiceIsEnabled()
+                            NaverMapCoordinator.shared.onMarkerSelected = { _, popup in
+                                onSelectPopup(compound.state.userUuid, popup)
+                            }
+                            NaverMapCoordinator.shared.onCenterChanged = { coordinate in
+                                compound.send(.mapCenterChanged(coordinate))
+                            }
+                            LocationPermissionManager.shared.onLocationUpdated = { coordinate in
+                                compound.send(.userLocationChanged(coordinate))
+                            }
                         }
-                        NaverMapCoordinator.shared.onCenterChanged = { coordinate in
-                            compound.send(.mapCenterChanged(coordinate))
-                        }
+
+                    topControls
+                        .frame(maxHeight: .infinity, alignment: .top)
+                        .padding(.top, safeAreaInsets.top + 10)
+                        .padding(.horizontal, 15)
+
+                    currentLocationButton
+                        .padding(.trailing, 20)
+                        .padding(.bottom, 50)
+
+                    if isFirstSheetHidden(firstSheetPosition) {
+                        listButton
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                            .padding(.bottom, 20 + tabBarHeight)
                     }
+                }
+                .background {
+                    TabBarProxy { _, tabBar in
+                        tabBarHeight = tabBar.bounds.height
+                    }
+                }
+                .onAppear {
+                    LocationPermissionManager.shared.onPermissionDenied = {
+                        showLocationPermissionAlert = true
+                    }
+                    LocationPermissionManager.shared.onLocationUpdated = { coordinate in
+                        compound.send(.userLocationChanged(coordinate))
+                    }
+                    LocationPermissionManager.shared.requestPermission()
+                }
+                .alert("위치 권한이 필요합니다", isPresented: $showLocationPermissionAlert) {
+                    Button("설정으로 이동") {
+                        guard let url = URL(string: UIApplication.openSettingsURLString),
+                              UIApplication.shared.canOpenURL(url)
+                        else { return }
+                        UIApplication.shared.open(url)
+                    }
+                    Button("취소", role: .cancel) {}
+                } message: {
+                    Text("주변 팝업스토어를 지도에서 보여주고 내 위치로 이동하려면 위치 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.")
+                }
+                .bottomSheet(
+                    bottomSheetPosition: $firstSheetPosition,
+                    switchablePositions: [
+                        .absolute(0),
+                        .relative(0.5),
+                        .absoluteTop(sheetTop),
+                    ],
+                    content: {
+                        FirstSheetView(
+                            compound: compound,
+                            selectedOption: selectedOptionBinding,
+                            firstSheetPosition: $firstSheetPosition,
+                            onSortTap: {
+                                presentSortSheet()
+                            },
+                            onPopupTap: { index, popup in
+                                moveCamera(to: popup, markerIndex: index)
+                                presentPopupDetailSheet(popup)
+                            },
+                            onToggleLike: { popup in
+                                compound.send(.toggleLike(popup))
+                            }
+                        )
+                    }
+                )
+                .sheetWidth(.relative(1.0))
+                .customBackground(
+                    Color.subWhite
+                        .cornerRadius(30)
+                )
 
-                topControls
-                    .frame(maxHeight: .infinity, alignment: .top)
-                    .padding(.top, safeAreaInsets.top + 10)
-                    .padding(.horizontal, 15)
-
-                currentLocationButton
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 50)
-
-                if isFirstSheetHidden(compound.state.firstSheetPosition) {
-                    listButton
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                        .padding(.bottom, 20 + tabBarHeight)
-                }
-            }
-            .background {
-                TabBarProxy { _, tabBar in
-                    tabBarHeight = tabBar.bounds.height
-                }
-            }
-            .onAppear {
-                LocationPermissionManager.shared.onPermissionDenied = {
-                    showLocationPermissionAlert = true
-                }
-                LocationPermissionManager.shared.requestPermission()
-                compound.preload()
-            }
-            .alert("위치 권한이 필요합니다", isPresented: $showLocationPermissionAlert) {
-                Button("설정으로 이동") {
-                    guard let url = URL(string: UIApplication.openSettingsURLString),
-                          UIApplication.shared.canOpenURL(url)
-                    else { return }
-                    UIApplication.shared.open(url)
-                }
-                Button("취소", role: .cancel) {}
-            } message: {
-                Text("주변 팝업스토어를 지도에서 보여주고 내 위치로 이동하려면 위치 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.")
-            }
-            .bottomSheet(
-                bottomSheetPosition: firstSheetPositionBinding,
-                switchablePositions: [
-                    .absolute(0),
-                    .relative(0.5),
-                    .absoluteTop(sheetTop),
-                ],
-                content: {
-                    FirstSheetView(
-                        popups: compound.state.mapPopups,
-                        selectedOption: selectedOptionBinding,
-                        firstSheetPosition: compound.state.firstSheetPosition,
-                        onSortTap: {
-                            compound.send(.sortButtonTapped)
-                        },
-                        onPopupTap: { index, popup in
-                            moveCamera(to: popup, markerIndex: index)
-                            compound.send(.popupSelected(popup))
-                        },
-                        onToggleLike: { popup in
-                            compound.send(.toggleLike(popup))
+                Color.clear
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .bottomSheet(
+                        bottomSheetPosition: $secondSheetPosition,
+                        switchablePositions: [
+                            .relative(0.5),
+                            .absoluteTop(sheetTop),
+                        ],
+                        content: {
+                            SecondSheetView(
+                                state: compound.state,
+                                type: secondSheetType,
+                                selectedOption: selectedOptionBinding,
+                                onDismiss: {
+                                    dismissSecondSheet()
+                                },
+                                onRegionSelected: { region in
+                                    compound.send(.regionSelected(region))
+                                },
+                                onDistrictSelected: { district in
+                                    secondSheetPosition = .hidden
+                                    compound.send(.districtSelected(district))
+                                },
+                                onSortSelected: { option in
+                                    secondSheetPosition = .hidden
+                                    compound.send(.sortOptionSelected(option))
+                                },
+                                onPopupDetailTap: { popup in
+                                    onSelectPopup(compound.state.userUuid, popup)
+                                }
+                            )
                         }
                     )
-                }
-            )
-            .sheetWidth(.relative(1.0))
-            .customBackground(
-                Color.subWhite
-                    .cornerRadius(30)
-            )
-            .bottomSheet(
-                bottomSheetPosition: secondSheetPositionBinding,
-                switchablePositions: [
-                    .relative(0.5),
-                    .absoluteTop(sheetTop),
-                ],
-                content: {
-                    SecondSheetView(
-                        state: compound.state,
-                        selectedOption: selectedOptionBinding,
-                        onDismiss: {
-                            compound.send(.dismissSecondSheet)
-                        },
-                        onRegionSelected: { region in
-                            compound.send(.regionSelected(region))
-                        },
-                        onDistrictSelected: { district in
-                            compound.send(.districtSelected(district))
-                        },
-                        onSortSelected: { option in
-                            compound.send(.sortOptionSelected(option))
-                        },
-                        onPopupDetailTap: { popup in
-                            onSelectPopup(compound.state.userUuid, popup)
-                        }
+                    .sheetWidth(.relative(1.0))
+                    .customBackground(
+                        Color.subWhite
+                            .cornerRadius(30)
                     )
+                    .allowsHitTesting(secondSheetPosition != .hidden)
+                    .zIndex(1)
+            }
+            .onChange(of: secondSheetPosition) { _, newValue in
+                if newValue != .hidden {
+                    firstSheetPosition = newValue
                 }
-            )
-            .sheetWidth(.relative(1.0))
-            .customBackground(
-                Color.subWhite
-                    .cornerRadius(30)
-            )
+            }
+            .onChange(of: firstSheetPosition) { _, newValue in
+                compound.send(.firstSheetPositionChanged(newValue))
+            }
+            .compoundOnLoad(compound, .onAppear)
             .ignoresSafeArea(edges: [.top, .bottom])
         }
     }
@@ -153,7 +178,7 @@ private extension MapFeatureView {
         VStack(spacing: 12) {
             HStack(spacing: 0) {
                 MapRegionButton(text: compound.state.selectedRegion?.region ?? "전체") {
-                    compound.send(.regionButtonTapped)
+                    presentRegionSheet()
                 }
 
                 Divider()
@@ -189,7 +214,7 @@ private extension MapFeatureView {
 
     var currentLocationButton: some View {
         Button {
-            if isFirstSheetHidden(compound.state.firstSheetPosition) {
+            if isFirstSheetHidden(firstSheetPosition) {
                 NaverMapCoordinator.shared.moveToUserLocation()
             } else {
                 NaverMapCoordinator.shared.moveToUserLocation(yOffset: -300)
@@ -208,6 +233,7 @@ private extension MapFeatureView {
 
     var listButton: some View {
         Button {
+            firstSheetPosition = .relative(0.5)
             compound.send(.listButtonTapped)
         } label: {
             HStack(spacing: 10) {
@@ -243,20 +269,6 @@ private extension MapFeatureView {
         )
     }
 
-    var firstSheetPositionBinding: Binding<BottomSheetPosition> {
-        Binding(
-            get: { compound.state.firstSheetPosition },
-            set: { compound.send(.firstSheetPositionChanged($0)) }
-        )
-    }
-
-    var secondSheetPositionBinding: Binding<BottomSheetPosition> {
-        Binding(
-            get: { compound.state.secondSheetPosition },
-            set: { compound.send(.secondSheetPositionChanged($0)) }
-        )
-    }
-
     var safeAreaInsets: UIEdgeInsets {
         guard let scene = UIApplication.shared.connectedScenes
             .compactMap({ $0 as? UIWindowScene })
@@ -270,7 +282,7 @@ private extension MapFeatureView {
     }
 
     func moveCamera(to popup: Popup, markerIndex: Int) {
-        if isFirstSheetHidden(compound.state.firstSheetPosition) {
+        if isFirstSheetHidden(firstSheetPosition) {
             NaverMapCoordinator.shared.moveCamera(to: popup)
         } else {
             NaverMapCoordinator.shared.moveCamera(to: popup, yOffset: -300)
@@ -280,9 +292,46 @@ private extension MapFeatureView {
     }
 
     func updateSearchBarFrame(_ frame: CGRect) {
-        searchBarFrame = frame
-        let top = UIScreen.main.bounds.height - (frame.maxY + 20)
-        sheetTop = max(top, 200)
+        DispatchQueue.main.async {
+            searchBarFrame = frame
+            let top = UIScreen.main.bounds.height - (frame.maxY + 20)
+            let nextSheetTop = max(top, 200)
+            if abs(sheetTop - nextSheetTop) > 0.5 {
+                sheetTop = nextSheetTop
+            }
+        }
+    }
+
+    func presentRegionSheet() {
+        let visiblePosition = visibleFirstSheetPosition(from: firstSheetPosition)
+        firstSheetPosition = visiblePosition
+        secondSheetType = .region
+        secondSheetPosition = visiblePosition
+        compound.send(.regionButtonTapped)
+    }
+
+    func presentSortSheet() {
+        let visiblePosition = visibleFirstSheetPosition(from: firstSheetPosition)
+        secondSheetType = .sort
+        secondSheetPosition = visiblePosition
+        compound.send(.sortButtonTapped)
+    }
+
+    func presentPopupDetailSheet(_ popup: Popup) {
+        let visiblePosition = visibleFirstSheetPosition(from: firstSheetPosition)
+        firstSheetPosition = visiblePosition
+        secondSheetType = .detail(popup)
+        secondSheetPosition = visiblePosition
+        compound.send(.popupSelected(popup))
+    }
+
+    func dismissSecondSheet() {
+        secondSheetPosition = .hidden
+        compound.send(.dismissSecondSheet)
+    }
+
+    func visibleFirstSheetPosition(from position: BottomSheetPosition) -> BottomSheetPosition {
+        isFirstSheetHidden(position) ? .relative(0.5) : position
     }
 
     func isFirstSheetHidden(_ position: BottomSheetPosition) -> Bool {
@@ -298,9 +347,9 @@ private extension MapFeatureView {
 }
 
 private struct FirstSheetView: View {
-    let popups: [Popup]
+    let compound: MapFeatureCompound
     @Binding var selectedOption: MapSortOption
-    let firstSheetPosition: BottomSheetPosition
+    @Binding var firstSheetPosition: BottomSheetPosition
     let onSortTap: () -> Void
     let onPopupTap: (Int, Popup) -> Void
     let onToggleLike: (Popup) -> Void
@@ -317,8 +366,11 @@ private struct FirstSheetView: View {
             .padding(.horizontal, .contentPadding)
 
             MapListView(
-                popups: popups,
-                firstSheetPosition: firstSheetPosition,
+                popups: compound.state.mapPopups,
+                isLoading: compound.state.isLoading,
+                isWaitingForUserLocation: compound.state.isWaitingForUserLocation,
+                didPreload: compound.state.didPreload,
+                firstSheetPosition: $firstSheetPosition,
                 onPopupTap: onPopupTap,
                 onToggleLike: onToggleLike
             )
@@ -330,12 +382,19 @@ private struct FirstSheetView: View {
 
 private struct MapListView: View {
     let popups: [Popup]
-    let firstSheetPosition: BottomSheetPosition
+    let isLoading: Bool
+    let isWaitingForUserLocation: Bool
+    let didPreload: Bool
+    @Binding var firstSheetPosition: BottomSheetPosition
     let onPopupTap: (Int, Popup) -> Void
     let onToggleLike: (Popup) -> Void
 
     var body: some View {
-        if popups.isEmpty {
+        if !didPreload || isLoading || isWaitingForUserLocation {
+            ProgressView()
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 24)
+        } else if popups.isEmpty {
             Text("검색 결과가 없습니다.")
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 24)
@@ -371,6 +430,7 @@ private struct MapListView: View {
 
 private struct SecondSheetView: View {
     let state: MapFeatureCompound.State
+    let type: MapSecondSheetType
     @Binding var selectedOption: MapSortOption
     let onDismiss: () -> Void
     let onRegionSelected: (RegionList) -> Void
@@ -380,7 +440,7 @@ private struct SecondSheetView: View {
 
     var body: some View {
         ScrollView {
-            switch state.secondSheetType {
+            switch type {
             case .region:
                 MapRegionSheet(
                     regions: state.regions,

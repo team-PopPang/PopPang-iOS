@@ -130,9 +130,9 @@ public struct SearchFeatureView: View {
                 Spacer()
             }
         }
+        .compoundOnLoad(compound, .onAppear)
         .task {
             isFocused = true
-            compound.send(.onAppear)
         }
     }
 

@@ -1,3 +1,4 @@
+import Compound
 import Domain
 import DSKit
 import SwiftUI
@@ -25,9 +26,7 @@ public struct RegisterFlowFeatureView: View {
             progress
             stepPages
         }
-        .onAppear {
-            compound.send(.onAppear)
-        }
+        .compoundOnLoad(compound, .onAppear)
     }
 
     private var header: some View {

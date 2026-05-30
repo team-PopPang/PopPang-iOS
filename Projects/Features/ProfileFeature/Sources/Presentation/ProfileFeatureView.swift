@@ -1,3 +1,4 @@
+import Compound
 import Core
 import Domain
 import DSKit
@@ -45,9 +46,6 @@ public struct ProfileFeatureView: View {
         self.onProfileSetting = onProfileSetting
         self.onNotification = onNotification
         self.onServiceTerms = onServiceTerms
-        Task { @MainActor in
-            compound.preload()
-        }
     }
 
     public var body: some View {
@@ -137,8 +135,8 @@ public struct ProfileFeatureView: View {
             .padding(.trailing, 24)
             .padding(.bottom, 24)
         }
+        .compoundOnLoad(compound, .onAppear)
         .onAppear {
-            compound.preload()
             tempIsOn = compound.state.isAlerted
         }
         .alert("알림 허용", isPresented: $showPermissionAlert) {

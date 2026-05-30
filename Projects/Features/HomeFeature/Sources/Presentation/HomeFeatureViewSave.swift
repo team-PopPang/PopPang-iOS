@@ -1,3 +1,4 @@
+import Compound
 import Core
 import Domain
 import DSKit
@@ -25,9 +26,6 @@ public struct HomeFeatureViewSave: View {
         let compound = HomeFeatureCompound(userUuid: userUuid, nickname: nickname)
         _compound = State(wrappedValue: compound)
         self.deepLinkStorage = deepLinkStorage
-        Task { @MainActor in
-            compound.preload()
-        }
     }
 
     public var body: some View {
@@ -194,6 +192,7 @@ public struct HomeFeatureViewSave: View {
             }
         }
         .withoutAnimation()
+        .compoundOnLoad(compound, .onAppear)
         .sheet(item: $sheetRoute) { route in
             switch route {
             case .regionSheet:
@@ -211,8 +210,6 @@ public struct HomeFeatureViewSave: View {
             }
         }
         .onAppear {
-            compound.preload()
-
             if !hasSeenPopup {
                 hasSeenPopup = true
             }

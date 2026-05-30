@@ -1,4 +1,19 @@
+import Domain
 import Observation
+
+public enum MainTabRoute: Identifiable, Hashable, Sendable {
+    case popupDetail(userUuid: String, popup: Popup)
+    case reviewDetail([Review])
+
+    public var id: String {
+        switch self {
+        case .popupDetail(let userUuid, let popup):
+            "popupDetail-\(userUuid)-\(popup.popupUuid)"
+        case .reviewDetail(let reviews):
+            "reviewDetail-\(reviews.map(\.id.uuidString).joined(separator: "-"))"
+        }
+    }
+}
 
 public struct MainTabSession: Equatable, Sendable {
     public var userUuid: String
@@ -33,6 +48,7 @@ public final class MainTabCoordinator: ProfileCoordinatorParent {
     public let favoritesCoordinator: FavoritesCoordinator
     public let profileCoordinator: ProfileCoordinator
     public let tabs: [MainTab]
+    public var route: MainTabRoute?
     public var selectedTab: MainTab
     public private(set) var session: MainTabSession
 
@@ -47,16 +63,41 @@ public final class MainTabCoordinator: ProfileCoordinatorParent {
         self.favoritesCoordinator = FavoritesCoordinator(session: session)
         self.profileCoordinator = ProfileCoordinator(session: session)
         self.tabs = MainTab.allCases
+        self.route = nil
         self.selectedTab = selectedTab
 
         profileCoordinator.parent = self
         favoritesCoordinator.onBrowsePopups = { [weak self] in
             self?.select(.home)
         }
+        homeCoordinator.onSelectPopup = { [weak self] userUuid, popup in
+            self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+        }
+        calendarCoordinator.onSelectPopup = { [weak self] userUuid, popup in
+            self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+        }
+        mapCoordinator.onSelectPopup = { [weak self] userUuid, popup in
+            self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+        }
+        favoritesCoordinator.onSelectPopup = { [weak self] userUuid, popup in
+            self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+        }
+        profileCoordinator.onSelectPopup = { [weak self] userUuid, popup in
+            self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+        }
     }
 
     public func select(_ tab: MainTab) {
         selectedTab = tab
+    }
+
+    public func push(_ route: MainTabRoute) {
+        guard self.route != route else { return }
+        self.route = route
+    }
+
+    public func pop() {
+        route = nil
     }
 
     public func updateSession(_ session: MainTabSession) {

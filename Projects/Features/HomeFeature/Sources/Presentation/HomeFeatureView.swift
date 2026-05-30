@@ -1,3 +1,4 @@
+import Compound
 import Core
 import Domain
 import DSKit
@@ -17,18 +18,18 @@ public struct HomeFeatureView: View {
     @State private var sheetRoute: HomeSheetRoute?
 
     private let deepLinkStorage: DeepLinkStorage
+    private let onSelectPopup: (String, Popup) -> Void
 
     public init(
         userUuid: String = "demo-user",
         nickname: String = "닉네임",
-        deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore())
+        deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore()),
+        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in }
     ) {
         let compound = HomeFeatureCompound(userUuid: userUuid, nickname: nickname)
         _compound = State(wrappedValue: compound)
         self.deepLinkStorage = deepLinkStorage
-        Task { @MainActor in
-            compound.preload()
-        }
+        self.onSelectPopup = onSelectPopup
     }
 
     public var body: some View {
@@ -37,7 +38,15 @@ public struct HomeFeatureView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                navigationBar
+                HomeNavigationBar(
+                    userUuid: compound.state.userUuid,
+                    onSearch: { userUuid in
+                        coordinator.presentFullScreen(.search(uuid: userUuid))
+                    },
+                    onAlert: { userUuid in
+                        coordinator.push(.alert(userUuid: userUuid))
+                    }
+                )
 
                 LKList {
                     LKSection(id: "best") {
@@ -51,11 +60,11 @@ public struct HomeFeatureView: View {
                                     .frame(width: 194, height: 271)
                             }
                             .onSelect { _ in
-                                coordinator.push(.popupDetail(userUuid: compound.state.userUuid, popup: popup))
+                                onSelectPopup(compound.state.userUuid, popup)
                             }
                         }
                     } header: {
-                        bestHeader
+                        HomeBestHeader(nickname: compound.state.nickname)
                             .padding(.bottom, 10)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -75,11 +84,20 @@ public struct HomeFeatureView: View {
                                     .frame(width: 283, height: 138)
                             }
                             .onSelect { _ in
-                                coordinator.push(.popupDetail(userUuid: compound.state.userUuid, popup: popup))
+                                onSelectPopup(compound.state.userUuid, popup)
                             }
                         }
                     } header: {
-                        comingHeader
+                        HomeComingHeader(
+                            userUuid: compound.state.userUuid,
+                            popups: compound.state.comingPopups,
+                            onTap: { userUuid, popups in
+                                coordinator.push(.comingPopupDetail(
+                                    userUuid: userUuid,
+                                    popups: popups
+                                ))
+                            }
+                        )
                             .padding(.bottom, 10)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -104,11 +122,21 @@ public struct HomeFeatureView: View {
                             }
                             .equatableToken("\(popup.popupUuid)-\(isLiked(popup: popup))")
                             .onSelect { _ in
-                                coordinator.push(.popupDetail(userUuid: compound.state.userUuid, popup: popup))
+                                onSelectPopup(compound.state.userUuid, popup)
                             }
                         }
                     } header: {
-                        filterHeader
+                        HomeFilterHeader(
+                            selectedRegion: compound.state.selectedRegion,
+                            selectedDistrict: compound.state.selectedDistrict,
+                            selectedOption: selectedOptionBinding,
+                            onRegionTap: {
+                                sheetRoute = .regionSheet
+                            },
+                            onSortTap: {
+                                sheetRoute = .sortSheet
+                            }
+                        )
                             .padding(.bottom, 10)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -123,10 +151,15 @@ public struct HomeFeatureView: View {
                 .onScroll { context in
                     currentScrollOffset = context.contentOffset.y
                 }
-                .overlay(topAnchorButton, alignment: Alignment.bottomTrailing)
+                .overlay(alignment: Alignment.bottomTrailing) {
+                    HomeTopAnchorButton(isVisible: currentScrollOffset > 650) {
+                        listProxy.scrollToSection(id: "grid", position: .top, animated: true)
+                    }
+                }
             }
         }
         .withoutAnimation()
+        .compoundOnLoad(compound, .onAppear)
         .sheet(item: $sheetRoute) { route in
             switch route {
             case .regionSheet:
@@ -144,8 +177,6 @@ public struct HomeFeatureView: View {
             }
         }
         .onAppear {
-            compound.preload()
-
             if !hasSeenPopup {
                 hasSeenPopup = true
             }
@@ -248,8 +279,12 @@ private extension HomeFeatureView {
     }
 }
 
-private extension HomeFeatureView {
-    var navigationBar: some View {
+private struct HomeNavigationBar: View {
+    let userUuid: String
+    let onSearch: (String) -> Void
+    let onAlert: (String) -> Void
+
+    var body: some View {
         CustomNavigationBar {
             Text("POP PANG")
                 .ppStyleFont(.scdream(.black, size: 20))
@@ -258,20 +293,24 @@ private extension HomeFeatureView {
             Spacer()
 
             IconButton(image: "SearchDark", imageSize: 25) {
-                coordinator.presentFullScreen(.search(uuid: compound.state.userUuid))
+                onSearch(userUuid)
             }
             .accessibilityIdentifier("home_search_button")
 
             IconButton {
-                coordinator.push(.alert(userUuid: compound.state.userUuid))
+                onAlert(userUuid)
             }
         }
         .padding(.bottom, 15)
     }
+}
 
-    var bestHeader: some View {
+private struct HomeBestHeader: View {
+    let nickname: String
+
+    var body: some View {
         HStack(spacing: 0) {
-            Text(compound.state.nickname)
+            Text(nickname)
                 .foregroundStyle(Color.mainOrange)
                 .font(.scdream(.bold, size: 15))
 
@@ -282,8 +321,14 @@ private extension HomeFeatureView {
             Spacer()
         }
     }
+}
 
-    var comingHeader: some View {
+private struct HomeComingHeader: View {
+    let userUuid: String
+    let popups: [Popup]
+    let onTap: (String, [Popup]) -> Void
+
+    var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 3) {
                 Text("COMING SOON")
@@ -298,10 +343,7 @@ private extension HomeFeatureView {
             Spacer()
 
             Button {
-                coordinator.push(.comingPopupDetail(
-                    userUuid: compound.state.userUuid,
-                    popups: compound.state.comingPopups
-                ))
+                onTap(userUuid, popups)
             } label: {
                 DSKitResource.image("navigationButton")
                     .resizable()
@@ -311,15 +353,22 @@ private extension HomeFeatureView {
             .accessibilityIdentifier("home_comming_button")
         }
     }
+}
 
-    var filterHeader: some View {
+private struct HomeFilterHeader: View {
+    let selectedRegion: RegionList?
+    let selectedDistrict: String?
+    @Binding var selectedOption: SortButton.SortOption
+    let onRegionTap: () -> Void
+    let onSortTap: () -> Void
+
+    var body: some View {
         HStack {
-            Text(compound.state.selectedRegion?.region ?? "전체")
+            Text(selectedRegion?.region ?? "전체")
                 .foregroundStyle(Color.mainBlack)
                 .ppStyleFont(.scdream(.medium, size: 17))
 
-            if let selectedDistrict = compound.state.selectedDistrict,
-               selectedDistrict != "전체" {
+            if let selectedDistrict, selectedDistrict != "전체" {
                 Text(selectedDistrict)
                     .foregroundStyle(Color.mainBlack)
                     .ppStyleFont(.scdream(.medium, size: 17))
@@ -327,24 +376,22 @@ private extension HomeFeatureView {
 
             Spacer()
 
-            RegionButton(text: "지역") {
-                sheetRoute = .regionSheet
-            }
-            .padding(.leading, -10)
-            .accessibilityIdentifier("home_region_dropdown")
+            RegionButton(text: "지역", action: onRegionTap)
+                .padding(.leading, -10)
+                .accessibilityIdentifier("home_region_dropdown")
 
-            SortButton(selectedOption: selectedOptionBinding) {
-                sheetRoute = .sortSheet
-            }
-            .accessibilityIdentifier("home_sort_dropdown")
+            SortButton(selectedOption: $selectedOption, action: onSortTap)
+                .accessibilityIdentifier("home_sort_dropdown")
         }
     }
+}
 
-    var topAnchorButton: some View {
-        Button {
-            // listProxy.scrollToTop(animated: true) 하면 최상단으로 이동
-            listProxy.scrollToSection(id: "grid", position: .top, animated: true)
-        } label: {
+private struct HomeTopAnchorButton: View {
+    let isVisible: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        Button(action: onTap) {
             DSKitResource.image("TopAnchor")
                 .resizable()
                 .scaledToFit()
@@ -365,7 +412,7 @@ private extension HomeFeatureView {
         }
         .padding(.trailing, 20)
         .padding(.bottom, 20)
-        .opacity(currentScrollOffset > 650 ? 1 : 0)
+        .opacity(isVisible ? 1 : 0)
     }
 }
 
@@ -604,7 +651,7 @@ private extension HomeFeatureView {
             + compound.state.gridPopups
 
         if let targetPopup = allPopups.first(where: { $0.popupUuid == popupId }) {
-            coordinator.push(.popupDetail(userUuid: compound.state.userUuid, popup: targetPopup))
+            onSelectPopup(compound.state.userUuid, targetPopup)
         }
     }
 }

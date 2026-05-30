@@ -41,11 +41,6 @@ final class FavoritesFeatureCompound {
         self.state = State(userUuid: userUuid)
     }
 
-    @MainActor
-    func preload() {
-        send(.onAppear)
-    }
-
     func react(action: Action) -> AsyncStream<Reaction> {
         switch action {
         case .onAppear:

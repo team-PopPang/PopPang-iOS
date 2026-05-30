@@ -1,3 +1,5 @@
+import PopupDetailFeature
+import ReviewFeature
 import SwiftUI
 
 public struct MainTabCoordinatorView: View {
@@ -18,17 +20,22 @@ public struct MainTabCoordinatorView: View {
     public var body: some View {
         @Bindable var coordinator = coordinator
 
-        TabView(selection: $coordinator.selectedTab) {
-            ForEach(coordinator.tabs, id: \.self) { tab in
-                tabView(for: tab)
-                    .tabItem {
-                        tab.tabAsset(selected: coordinator.selectedTab == tab).swiftUIImage
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 25, height: 25)
-                        Text(tab.title)
+        NavigationStack {
+            TabView(selection: $coordinator.selectedTab) {
+                ForEach(coordinator.tabs, id: \.self) { tab in
+                    tabView(for: tab)
+                        .tabItem {
+                            tab.tabAsset(selected: coordinator.selectedTab == tab).swiftUIImage
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 25, height: 25)
+                            Text(tab.title)
                     }
                     .tag(tab)
+                }
+            }
+            .navigationDestination(item: $coordinator.route) { route in
+                destination(for: route)
             }
         }
     }
@@ -48,6 +55,27 @@ private extension MainTabCoordinatorView {
             FavoritesCoordinatorView(coordinator: coordinator.favoritesCoordinator)
         case .profile:
             ProfileCoordinatorView(coordinator: coordinator.profileCoordinator)
+        }
+    }
+
+    @ViewBuilder
+    func destination(for route: MainTabRoute) -> some View {
+        switch route {
+        case .popupDetail(let userUuid, let popup):
+            PopupDetailFeatureView(
+                userUuid: userUuid,
+                popup: popup,
+                isAdmin: coordinator.session.isAdmin,
+                hidesSystemTabBar: false,
+                onSelectRelatedPopup: { userUuid, popup in
+                    coordinator.push(.popupDetail(userUuid: userUuid, popup: popup))
+                },
+                onShowReviews: { reviews in
+                    coordinator.push(.reviewDetail(reviews))
+                }
+            )
+        case .reviewDetail(let reviews):
+            ReviewFeatureView(reviews: reviews)
         }
     }
 }

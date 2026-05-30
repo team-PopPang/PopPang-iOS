@@ -54,11 +54,6 @@ final class HomeFeatureCompound {
         self.state = State(userUuid: userUuid, nickname: nickname)
     }
 
-    @MainActor
-    func preload() {
-        send(.onAppear)
-    }
-
     func react(action: Action) -> AsyncStream<Reaction> {
         switch action {
         case .onAppear:

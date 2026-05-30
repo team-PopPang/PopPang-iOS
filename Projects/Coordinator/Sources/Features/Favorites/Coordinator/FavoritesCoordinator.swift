@@ -1,5 +1,6 @@
 import AlertFeature
 import Core
+import Domain
 import FavoritesFeature
 import PopupDetailFeature
 import ReviewFeature
@@ -13,6 +14,8 @@ public final class FavoritesCoordinator: Coordinator<
     EmptyFullScreenRoute,
     EmptyBottomSheetRoute
 > {
+    public var onSelectPopup: ((String, Popup) -> Void)?
+
     private var session: MainTabSession
     private var rootView: FavoritesFeatureView!
     public var onBrowsePopups: (() -> Void)?
@@ -39,7 +42,7 @@ public final class FavoritesCoordinator: Coordinator<
                 self?.push(.alert(userUuid: userUuid))
             },
             onSelectPopup: { [weak self] userUuid, popup in
-                self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
             },
             onBrowsePopups: { [weak self] in
                 self?.onBrowsePopups?()
@@ -54,7 +57,7 @@ public final class FavoritesCoordinator: Coordinator<
             AlertFeatureView(
                 userUuid: userUuid,
                 onSelectPopup: { [weak self] userUuid, popup in
-                    self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                    self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
                 }
             )
         case .popupDetail(let userUuid, let popup):
@@ -63,7 +66,7 @@ public final class FavoritesCoordinator: Coordinator<
                 popup: popup,
                 isAdmin: session.isAdmin,
                 onSelectRelatedPopup: { [weak self] userUuid, popup in
-                    self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                    self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
                 },
                 onShowReviews: { [weak self] reviews in
                     self?.push(.reviewDetail(reviews))
@@ -71,6 +74,14 @@ public final class FavoritesCoordinator: Coordinator<
             )
         case .reviewDetail(let reviews):
             ReviewFeatureView(reviews: reviews)
+        }
+    }
+
+    private func routeToPopupDetail(userUuid: String, popup: Popup) {
+        if let onSelectPopup {
+            onSelectPopup(userUuid, popup)
+        } else {
+            push(.popupDetail(userUuid: userUuid, popup: popup))
         }
     }
 }

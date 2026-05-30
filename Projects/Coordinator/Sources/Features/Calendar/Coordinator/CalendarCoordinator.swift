@@ -1,6 +1,7 @@
 import CalendarFeature
 import Core
 import AlertFeature
+import Domain
 import PopupDetailFeature
 import ReviewFeature
 import SwiftUI
@@ -13,6 +14,8 @@ public final class CalendarCoordinator: Coordinator<
     EmptyFullScreenRoute,
     EmptyBottomSheetRoute
 > {
+    public var onSelectPopup: ((String, Popup) -> Void)?
+
     private var session: MainTabSession
     private var rootView: CalendarFeatureView!
 
@@ -38,7 +41,7 @@ public final class CalendarCoordinator: Coordinator<
                 self?.push(.alert(userUuid: userUuid))
             },
             onSelectPopup: { [weak self] userUuid, popup in
-                self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
             }
         )
     }
@@ -50,7 +53,7 @@ public final class CalendarCoordinator: Coordinator<
             AlertFeatureView(
                 userUuid: userUuid,
                 onSelectPopup: { [weak self] userUuid, popup in
-                    self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                    self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
                 }
             )
         case .popupDetail(let userUuid, let popup):
@@ -59,7 +62,7 @@ public final class CalendarCoordinator: Coordinator<
                 popup: popup,
                 isAdmin: session.isAdmin,
                 onSelectRelatedPopup: { [weak self] userUuid, popup in
-                    self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                    self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
                 },
                 onShowReviews: { [weak self] reviews in
                     self?.push(.reviewDetail(reviews))
@@ -67,6 +70,14 @@ public final class CalendarCoordinator: Coordinator<
             )
         case .reviewDetail(let reviews):
             ReviewFeatureView(reviews: reviews)
+        }
+    }
+
+    private func routeToPopupDetail(userUuid: String, popup: Popup) {
+        if let onSelectPopup {
+            onSelectPopup(userUuid, popup)
+        } else {
+            push(.popupDetail(userUuid: userUuid, popup: popup))
         }
     }
 }

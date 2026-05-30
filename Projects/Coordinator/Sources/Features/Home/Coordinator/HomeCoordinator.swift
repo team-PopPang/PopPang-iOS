@@ -1,5 +1,6 @@
 import AlertFeature
 import Core
+import Domain
 import HomeFeature
 import PopupDetailFeature
 import ReviewFeature
@@ -14,6 +15,8 @@ public final class HomeCoordinator: Coordinator<
     HomeFullScreenRoute,
     EmptyBottomSheetRoute
 > {
+    public var onSelectPopup: ((String, Popup) -> Void)?
+
     private var session: MainTabSession
     private var rootView: HomeFeatureView
 
@@ -21,11 +24,12 @@ public final class HomeCoordinator: Coordinator<
         self.session = session
         self.rootView = HomeFeatureView(userUuid: session.userUuid, nickname: session.nickname)
         super.init()
+        self.rootView = makeHomeRootView(session: session)
     }
 
     public func updateSession(_ session: MainTabSession) {
         self.session = session
-        self.rootView = HomeFeatureView(userUuid: session.userUuid, nickname: session.nickname)
+        self.rootView = makeHomeRootView(session: session)
     }
 
     public func makeRootView() -> some View {
@@ -41,7 +45,7 @@ public final class HomeCoordinator: Coordinator<
                 popup: popup,
                 isAdmin: session.isAdmin,
                 onSelectRelatedPopup: { [weak self] userUuid, popup in
-                    self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                    self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
                 },
                 onShowReviews: { [weak self] reviews in
                     self?.push(.reviewDetail(reviews))
@@ -52,14 +56,14 @@ public final class HomeCoordinator: Coordinator<
                 userUuid: userUuid,
                 popups: popups,
                 onSelectPopup: { [weak self] userUuid, popup in
-                    self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                    self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
                 }
             )
         case .alert(let userUuid):
             AlertFeatureView(
                 userUuid: userUuid,
                 onSelectPopup: { [weak self] userUuid, popup in
-                    self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+                    self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
                 }
             )
         case .reviewDetail(let reviews):
@@ -80,10 +84,28 @@ public final class HomeCoordinator: Coordinator<
                 onSelectPopup: { [weak self] popup in
                     guard let self else { return }
                     dismissFullScreen()
-                    push(.popupDetail(userUuid: userUuid, popup: popup))
+                    routeToPopupDetail(userUuid: userUuid, popup: popup)
                 }
             )
             .accessibilityIdentifier("home_search")
+        }
+    }
+
+    private func makeHomeRootView(session: MainTabSession) -> HomeFeatureView {
+        HomeFeatureView(
+            userUuid: session.userUuid,
+            nickname: session.nickname,
+            onSelectPopup: { [weak self] userUuid, popup in
+                self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
+            }
+        )
+    }
+
+    private func routeToPopupDetail(userUuid: String, popup: Popup) {
+        if let onSelectPopup {
+            onSelectPopup(userUuid, popup)
+        } else {
+            push(.popupDetail(userUuid: userUuid, popup: popup))
         }
     }
 }
