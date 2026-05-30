@@ -22,6 +22,7 @@ public final class ProfileCoordinator: Coordinator<
 > {
     public weak var parent: (any ProfileCoordinatorParent)?
     public var onSelectPopup: ((String, Popup) -> Void)?
+    public var onShowAlert: ((String) -> Void)?
 
     private var session: MainTabSession
     private var rootView: ProfileFeatureView!
@@ -47,7 +48,7 @@ public final class ProfileCoordinator: Coordinator<
             nickname: session.nickname,
             isAlerted: session.isAlerted,
             onShowAlert: { [weak self] userUuid in
-                self?.push(.alert(userUuid: userUuid))
+                self?.routeToAlert(userUuid: userUuid)
             },
             onProfileSetting: { [weak self] userUuid, nickname, isAlerted in
                 self?.push(.profileSetting(userUuid: userUuid, nickname: nickname, isAlerted: isAlerted))
@@ -105,6 +106,14 @@ public final class ProfileCoordinator: Coordinator<
             ServiceTermsFeatureView()
         case .reviewDetail(let reviews):
             ReviewFeatureView(reviews: reviews)
+        }
+    }
+
+    private func routeToAlert(userUuid: String) {
+        if let onShowAlert {
+            onShowAlert(userUuid)
+        } else {
+            push(.alert(userUuid: userUuid))
         }
     }
 

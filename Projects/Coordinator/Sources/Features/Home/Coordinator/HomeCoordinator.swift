@@ -16,6 +16,7 @@ public final class HomeCoordinator: Coordinator<
     EmptyBottomSheetRoute
 > {
     public var onSelectPopup: ((String, Popup) -> Void)?
+    public var onShowAlert: ((String) -> Void)?
 
     private var session: MainTabSession
     private var rootView: HomeFeatureView
@@ -97,8 +98,19 @@ public final class HomeCoordinator: Coordinator<
             nickname: session.nickname,
             onSelectPopup: { [weak self] userUuid, popup in
                 self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
+            },
+            onShowAlert: { [weak self] userUuid in
+                self?.routeToAlert(userUuid: userUuid)
             }
         )
+    }
+
+    private func routeToAlert(userUuid: String) {
+        if let onShowAlert {
+            onShowAlert(userUuid)
+        } else {
+            push(.alert(userUuid: userUuid))
+        }
     }
 
     private func routeToPopupDetail(userUuid: String, popup: Popup) {

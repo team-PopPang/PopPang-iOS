@@ -4,6 +4,7 @@ import Observation
 public enum MainTabRoute: Identifiable, Hashable, Sendable {
     case popupDetail(userUuid: String, popup: Popup)
     case reviewDetail([Review])
+    case alert(userUuid: String)
 
     public var id: String {
         switch self {
@@ -11,6 +12,8 @@ public enum MainTabRoute: Identifiable, Hashable, Sendable {
             "popupDetail-\(userUuid)-\(popup.popupUuid)"
         case .reviewDetail(let reviews):
             "reviewDetail-\(reviews.map(\.id.uuidString).joined(separator: "-"))"
+        case .alert(let userUuid):
+            "alert-\(userUuid)"
         }
     }
 }
@@ -84,6 +87,18 @@ public final class MainTabCoordinator: ProfileCoordinatorParent {
         }
         profileCoordinator.onSelectPopup = { [weak self] userUuid, popup in
             self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+        }
+        homeCoordinator.onShowAlert = { [weak self] userUuid in
+            self?.push(.alert(userUuid: userUuid))
+        }
+        calendarCoordinator.onShowAlert = { [weak self] userUuid in
+            self?.push(.alert(userUuid: userUuid))
+        }
+        favoritesCoordinator.onShowAlert = { [weak self] userUuid in
+            self?.push(.alert(userUuid: userUuid))
+        }
+        profileCoordinator.onShowAlert = { [weak self] userUuid in
+            self?.push(.alert(userUuid: userUuid))
         }
     }
 

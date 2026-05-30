@@ -5,6 +5,8 @@ import SwiftUI
 
 @main
 struct HomeFeatureDemoApp: App {
+    @State private var coordinator = HomeFeatureCoordinator()
+
     init() {
         let popupRepository = PopupRepositoryImpl()
         let popupUsecase = PopupUsecaseImpl(popupRepository: popupRepository)
@@ -14,6 +16,7 @@ struct HomeFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
             HomeFeatureView()
+                .environment(coordinator)
         }
     }
 }

@@ -15,6 +15,7 @@ public final class CalendarCoordinator: Coordinator<
     EmptyBottomSheetRoute
 > {
     public var onSelectPopup: ((String, Popup) -> Void)?
+    public var onShowAlert: ((String) -> Void)?
 
     private var session: MainTabSession
     private var rootView: CalendarFeatureView!
@@ -38,7 +39,7 @@ public final class CalendarCoordinator: Coordinator<
         CalendarFeatureView(
             userUuid: session.userUuid,
             onShowAlert: { [weak self] userUuid in
-                self?.push(.alert(userUuid: userUuid))
+                self?.routeToAlert(userUuid: userUuid)
             },
             onSelectPopup: { [weak self] userUuid, popup in
                 self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
@@ -70,6 +71,14 @@ public final class CalendarCoordinator: Coordinator<
             )
         case .reviewDetail(let reviews):
             ReviewFeatureView(reviews: reviews)
+        }
+    }
+
+    private func routeToAlert(userUuid: String) {
+        if let onShowAlert {
+            onShowAlert(userUuid)
+        } else {
+            push(.alert(userUuid: userUuid))
         }
     }
 

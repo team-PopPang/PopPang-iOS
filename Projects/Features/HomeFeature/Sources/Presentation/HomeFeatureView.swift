@@ -19,17 +19,20 @@ public struct HomeFeatureView: View {
 
     private let deepLinkStorage: DeepLinkStorage
     private let onSelectPopup: (String, Popup) -> Void
+    private let onShowAlert: (String) -> Void
 
     public init(
         userUuid: String = "demo-user",
         nickname: String = "닉네임",
         deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore()),
-        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in }
+        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in },
+        onShowAlert: @escaping (String) -> Void = { _ in }
     ) {
         let compound = HomeFeatureCompound(userUuid: userUuid, nickname: nickname)
         _compound = State(wrappedValue: compound)
         self.deepLinkStorage = deepLinkStorage
         self.onSelectPopup = onSelectPopup
+        self.onShowAlert = onShowAlert
     }
 
     public var body: some View {
@@ -44,7 +47,7 @@ public struct HomeFeatureView: View {
                         coordinator.presentFullScreen(.search(uuid: userUuid))
                     },
                     onAlert: { userUuid in
-                        coordinator.push(.alert(userUuid: userUuid))
+                        onShowAlert(userUuid)
                     }
                 )
 
@@ -68,9 +71,16 @@ public struct HomeFeatureView: View {
                             .padding(.bottom, 10)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .sectionLayout(.custom(Self.horizontalSectionLayout(width: 194, height: 271, spacing: 15, bottomInset: 50)))
+                    .sectionLayout(.horizontal(width: 194, height: 271))
                     .scrollAxis(.horizontal)
                     .orthogonalScrollingBehavior(.continuousGroupLeadingBoundary)
+                    .itemSpacing(15)
+                    .sectionContentInsets(LKEdgeInsets(
+                        top: 0,
+                        left: .contentPadding,
+                        bottom: 50,
+                        right: .contentPadding
+                    ))
                     .pinnedHeader(background: Color.subWhite)
 
                     LKSection(id: "coming") {
@@ -101,9 +111,16 @@ public struct HomeFeatureView: View {
                             .padding(.bottom, 10)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .sectionLayout(.custom(Self.horizontalSectionLayout(width: 283, height: 138, spacing: 15, bottomInset: 65)))
+                    .sectionLayout(.horizontal(width: 283, height: 138))
                     .scrollAxis(.horizontal)
                     .orthogonalScrollingBehavior(.groupPaging)
+                    .itemSpacing(15)
+                    .sectionContentInsets(LKEdgeInsets(
+                        top: 0,
+                        left: .contentPadding,
+                        bottom: 65,
+                        right: .contentPadding
+                    ))
                     .pinnedHeader(background: Color.subWhite)
 
                     LKSection(id: "grid") {
@@ -140,7 +157,13 @@ public struct HomeFeatureView: View {
                             .padding(.bottom, 10)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .sectionLayout(.custom(Self.gridSectionLayout(columns: 2, itemHeight: 302, columnSpacing: 15, rowSpacing: 20)))
+                    .sectionLayout(.grid(columns: 2, itemHeight: 302, columnSpacing: 15, rowSpacing: 20))
+                    .sectionContentInsets(LKEdgeInsets(
+                        top: 0,
+                        left: .contentPadding,
+                        bottom: 0,
+                        right: .contentPadding
+                    ))
                     .pinnedHeader(background: Color.subWhite)
                 }
                 .listKitStyle(.plain)
@@ -192,88 +215,6 @@ public struct HomeFeatureView: View {
 }
 
 private extension HomeFeatureView {
-    static func horizontalSectionLayout(
-        width: CGFloat,
-        height: CGFloat,
-        spacing: CGFloat,
-        bottomInset: CGFloat = 0
-    ) -> LKCustomSectionLayoutProvider {
-        { _, _ in
-            let itemSize = NSCollectionLayoutSize(
-                widthDimension: .absolute(width),
-                heightDimension: .absolute(height)
-            )
-            let item = NSCollectionLayoutItem(layoutSize: itemSize)
-
-            let group = NSCollectionLayoutGroup.horizontal(
-                layoutSize: itemSize,
-                subitems: [item]
-            )
-
-            let section = NSCollectionLayoutSection(group: group)
-            section.interGroupSpacing = spacing
-            section.contentInsets = NSDirectionalEdgeInsets(
-                top: 0,
-                leading: .contentPadding,
-                bottom: bottomInset,
-                trailing: .contentPadding
-            )
-            section.boundarySupplementaryItems = [headerItem()]
-            return section
-        }
-    }
-
-    static func gridSectionLayout(
-        columns: Int,
-        itemHeight: CGFloat,
-        columnSpacing: CGFloat,
-        rowSpacing: CGFloat
-    ) -> LKCustomSectionLayoutProvider {
-        { _, environment in
-            let safeColumns = max(columns, 1)
-            let groupWidth = max(
-                environment.container.effectiveContentSize.width - CGFloat.contentPadding * 2,
-                0
-            )
-            let totalColumnSpacing = columnSpacing * CGFloat(safeColumns - 1)
-            let itemWidth = max((groupWidth - totalColumnSpacing) / CGFloat(safeColumns), 0)
-            let groupSize = NSCollectionLayoutSize(
-                widthDimension: .absolute(groupWidth),
-                heightDimension: .absolute(itemHeight)
-            )
-            let group = NSCollectionLayoutGroup.custom(layoutSize: groupSize) { _ in
-                (0..<safeColumns).map { column in
-                    let x = CGFloat(column) * (itemWidth + columnSpacing)
-                    return NSCollectionLayoutGroupCustomItem(
-                        frame: CGRect(x: x, y: 0, width: itemWidth, height: itemHeight)
-                    )
-                }
-            }
-
-            let section = NSCollectionLayoutSection(group: group)
-            section.interGroupSpacing = rowSpacing
-            section.contentInsets = NSDirectionalEdgeInsets(
-                top: 0,
-                leading: .contentPadding,
-                bottom: 0,
-                trailing: .contentPadding
-            )
-            section.boundarySupplementaryItems = [headerItem()]
-            return section
-        }
-    }
-
-    static func headerItem() -> NSCollectionLayoutBoundarySupplementaryItem {
-        NSCollectionLayoutBoundarySupplementaryItem(
-            layoutSize: NSCollectionLayoutSize(
-                widthDimension: .fractionalWidth(1),
-                heightDimension: .estimated(44)
-            ),
-            elementKind: UICollectionView.elementKindSectionHeader,
-            alignment: .top
-        )
-    }
-
     static var gridCellWidth: CGFloat {
         (UIScreen.main.bounds.width - CGFloat.contentPadding * 2 - 15) / 2
     }
@@ -700,7 +641,13 @@ public struct ComingPopupDetailFeatureView: View {
                     }
                 }
             }
-            .sectionLayout(.custom(HomeFeatureView.gridSectionLayout(columns: 2, itemHeight: 302, columnSpacing: 15, rowSpacing: 20)))
+            .sectionLayout(.grid(columns: 2, itemHeight: 302, columnSpacing: 15, rowSpacing: 20))
+            .sectionContentInsets(LKEdgeInsets(
+                top: 0,
+                left: .contentPadding,
+                bottom: 0,
+                right: .contentPadding
+            ))
             .pinnedHeader(background: Color.subWhite)
         }
         .listKitStyle(.plain)
