@@ -1,0 +1,15 @@
+"common.next" = "次へ";
+"common.skip" = "スキップ";
+"common.start" = "始める";
+"onboarding.keyword.title" = "ポップアップストア通知";
+"onboarding.keyword.content" = "キーワードを登録して、見たいポップアップの通知を受け取りましょう。";
+"onboarding.map.title" = "位置情報ベースのサービス";
+"onboarding.map.content" = "近くで開催中のポップアップをすぐに確認できます。";
+"onboarding.favorite.title" = "カレンダーお気に入り";
+"onboarding.favorite.content" = "保存したポップアップを日付ごとに確認できます。";
+"login.social.kakao" = "Kakaoでログイン";
+"login.social.apple" = "Appleでログイン";
+"login.social.google" = "Googleでログイン";
+"greeting_message" = "こんにちは";
+"home_description" = "あなたの一日は温かい思い出になります";
+"login_button" = "ログイン";

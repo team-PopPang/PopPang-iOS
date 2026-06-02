@@ -15,13 +15,37 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 ## iOS
 
+### ios build
+
+```sh
+[bundle exec] fastlane ios build
+```
+
+Build the modular PopPang app
+
+### ios test
+
+```sh
+[bundle exec] fastlane ios test
+```
+
+Run the maintained modular test schemes
+
+### ios ci
+
+```sh
+[bundle exec] fastlane ios ci
+```
+
+Build PopPangApp and run Core/Data tests
+
 ### ios beta
 
 ```sh
 [bundle exec] fastlane ios beta
 ```
 
-Push a new beta build to TestFlight using Fastlane Match
+Archive and upload the modular app to TestFlight
 
 ### ios release
 
@@ -29,7 +53,7 @@ Push a new beta build to TestFlight using Fastlane Match
 [bundle exec] fastlane ios release
 ```
 
-Release a new version to the App Store
+Release a new modular app version to the App Store
 
 ----
 

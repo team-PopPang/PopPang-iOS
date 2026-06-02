@@ -1,0 +1,14 @@
+import SwiftUI
+import {{ name }}Feature
+
+{% if includeInterface %}
+public struct {{ name }}FeatureEntryView: View {
+    public init() {}
+
+    public var body: some View {
+        {{ name }}FeatureRootView()
+    }
+}
+{% else %}
+// `includeInterface`가 `true`일 때만 Interface 타깃을 사용합니다.
+{% endif %}

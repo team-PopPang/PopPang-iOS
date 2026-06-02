@@ -1,66 +1,113 @@
-# This file contains the fastlane.tools configuration
-# You can find the documentation at https://docs.fastlane.tools
-#
-# For a list of all available actions, check out
-#
-#     https://docs.fastlane.tools/actions
-#
-# For a list of all available plugins, check out
-#
-#     https://docs.fastlane.tools/plugins/available-plugins
-#
-
-# Uncomment the line if you want fastlane to automatically update itself
-# update_fastlane
-
-# default_platform(:ios)
-
-# platform :ios do
-#   desc "Push a new release build to the App Store"
-#   lane :release do
-#     increment_build_number(xcodeproj: "PopPang.xcodeproj")
-#     build_app(scheme: "PopPang")
-#     upload_to_app_store
-#   end
-# end
+require "shellwords"
 
 default_platform(:ios)
 
-platform :ios do
+ROOT_DIR = File.expand_path("..", __dir__)
+WORKSPACE = File.join(ROOT_DIR, "PopPang.xcworkspace")
+APP_SCHEME = "PopPangApp"
+CORE_SCHEME = "Core"
+DATA_SCHEME = "Data"
+APP_PROJECT = File.join(ROOT_DIR, "Projects/App/App.xcodeproj")
+APP_IDENTIFIER = "kr.co.poppang.PopPang"
+SIMULATOR_DESTINATION = "generic/platform=iOS Simulator"
+TEST_DEVICE = "iPhone 16"
 
-  # ⏱ xcodebuild -showBuildSettings 타임아웃 확장 (SPM 많은 프로젝트 필수)
+platform :ios do
   ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "60"
   ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] = "6"
-  
-  # =========================
-  # 🚀 TestFlight
-  # =========================
-  desc "Push a new beta build to TestFlight using Fastlane Match"
-  lane :beta do
 
-    # 🔐 Match를 사용하여 코드 서명 정보 가져오기
-    match(
-      type: "appstore", # App Store용 프로비저닝 프로파일
-      readonly: true     # 읽기 전용으로 사용 (이미 설정된 인증서를 활용)
+  desc "Install Tuist dependencies and generate the modular workspace"
+  private_lane :prepare_tuist do
+    sh("cd #{ROOT_DIR.shellescape} && tuist install")
+    sh("cd #{ROOT_DIR.shellescape} && tuist generate --no-open")
+  end
+
+  desc "Build the modular PopPang app"
+  lane :build do
+    prepare_tuist
+
+    build_app(
+      workspace: WORKSPACE,
+      scheme: APP_SCHEME,
+      clean: true,
+      skip_archive: true,
+      destination: SIMULATOR_DESTINATION,
+      xcargs: "CODE_SIGNING_ALLOWED=NO"
+    )
+  end
+
+  desc "Run the maintained modular test schemes"
+  lane :test do
+    prepare_tuist
+
+    scan(
+      workspace: WORKSPACE,
+      scheme: CORE_SCHEME,
+      device: TEST_DEVICE,
+      clean: true,
+      code_coverage: true
     )
 
-    # 📈 빌드 넘버 증가
-    increment_build_number(xcodeproj: "PopPang.xcodeproj")
+    scan(
+      workspace: WORKSPACE,
+      scheme: DATA_SCHEME,
+      device: TEST_DEVICE,
+      clean: false,
+      code_coverage: true
+    )
+  end
 
-    # 🏗️ 앱 빌드 및 서명
+  desc "Build PopPangApp and run Core/Data tests"
+  lane :ci do
+    build
+    test
+  end
+
+  desc "Archive and upload the modular app to TestFlight"
+  lane :beta do |options|
+    prepare_tuist unless options[:skip_prepare]
+    increment_build_number(xcodeproj: APP_PROJECT)
+    archive_and_upload
+  end
+
+  desc "Release a new modular app version to the App Store"
+  lane :release do |options|
+    version = options[:version]
+    UI.user_error!("version 파라미터가 필요합니다. 예: fastlane release version:1.1.3") if version.nil?
+
+    prepare_tuist
+    increment_version_number(version_number: version, xcodeproj: APP_PROJECT)
+    beta(skip_prepare: true)
+
+    deliver(
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      submit_for_review: true,
+      force: true,
+      run_precheck_before_submit: false
+    )
+  end
+
+  private_lane :archive_and_upload do
+    match(
+      type: "appstore",
+      readonly: true
+    )
+
     build_app(
-      scheme: "PopPang",
+      workspace: WORKSPACE,
+      scheme: APP_SCHEME,
       clean: true,
+      export_method: "app-store",
       disable_package_automatic_updates: true,
-      xcargs: "-clonedSourcePackagesDirPath .spm",
+      xcargs: "-skipPackagePluginValidation -skipMacroValidation",
       export_options: {
         provisioningProfiles: {
-          "kr.co.poppang.PopPang" => "match AppStore kr.co.poppang.PopPang 1762797101"
+          APP_IDENTIFIER => "match AppStore kr.co.poppang.PopPang 1762797101"
         }
       }
     )
 
-    # App Store Connect API 키 생성 (환경변수로부터 값 불러오기)
     api_key = app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
       issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
@@ -68,55 +115,6 @@ platform :ios do
       in_house: false
     )
 
-    # 🚀 TestFlight 업로드
     upload_to_testflight(api_key: api_key)
-  end  
-
-  # =========================
-  # 🏁 App Store Release
-  # =========================
-  desc "Release a new version to the App Store"
-  lane :release do |options|
-
-    # ---------
-    # 🛑 안전 가드
-    # ---------
-    # ensure_git_status_clean
-    # ensure_git_branch(branch: "main")
-
-    # UI.confirm("⚠️ App Store에 실제로 제출합니다. 계속할까요?")
-
-    version = options[:version]
-    # UI.user_error!("version 파라미터가 필요합니다. 예: fastlane release version:1.1.3") if version.nil?
-
-    # ---------
-    # 1️⃣ 마케팅 버전 설정 (CFBundleShortVersionString)
-    # ---------
-    increment_version_number(
-      version_number: version,
-      xcodeproj: "PopPang.xcodeproj"
-    )
-
-    # ---------
-    # 2️⃣ 빌드 + TestFlight 업로드
-    # ---------
-    beta
-
-    # ---------
-    # 3️⃣ 메타데이터 + 스크린샷 업로드
-    # ---------
-    deliver(
-      skip_binary_upload: true,          # 이미 TestFlight로 바이너리를 올렸으니 IPA 재업로드는 건너뜀
-      skip_screenshots: true,            # 기존 App Store Connect 스크린샷 그대로 사용
-      submit_for_review: true,           # 메타데이터 업로드 후 즉시 App Store 심사 제출
-      force: true,                       # Preview.html 확인(y/n) 질문 없이 자동 진행
-      run_precheck_before_submit: false  # fastlane 사전 점검(precheck) 비활성화,
-      # skip_metadata: false
-    )
-
   end
 end
-
-# bundle exec fastlane release version:1.1.3
-
-# fastlane deliver --verify_only -> 심사 제출 가능 상태인지 점검

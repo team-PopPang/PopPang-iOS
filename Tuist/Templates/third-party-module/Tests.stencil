@@ -1,0 +1,8 @@
+import Testing
+@testable import {{ name }}SDK
+
+struct {{ name }}SDKTests {
+    @Test
+    func example() async throws {
+    }
+}

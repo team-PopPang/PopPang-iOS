@@ -28,6 +28,8 @@ jobs:
             echo "workflow=2. poppang-test.yml" >> $GITHUB_ENV
           elif [[ "$BODY" == "/팝팡 빌드하고테스트" ]]; then
             echo "workflow=3. poppang-build-and-test.yml" >> $GITHUB_ENV
+          elif [[ "$BODY" == "/팝팡 버전점검" || "$BODY" == "/팝팡 의존성점검" ]]; then
+            echo "workflow=0. poppang-dependency-canary.yml" >> $GITHUB_ENV
           else
             echo "workflow=none" >> $GITHUB_ENV
           fi
@@ -78,4 +80,3 @@ jobs:
                 pr_number: String(prNumber),
               },
             });
-

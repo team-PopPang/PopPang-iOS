@@ -1,8 +1,5 @@
-app_identifier("kr.co.poppang.PopPang") # The bundle identifier of your app
-apple_id("indextrown@gmail.com") # Your Apple Developer Portal username
+app_identifier("kr.co.poppang.PopPang")
+apple_id("indextrown@gmail.com")
 
-itc_team_id("127315153") # App Store Connect Team ID
-team_id("LGX4B4WC66") # Developer Portal Team ID
-
-# For more information about the Appfile, see:
-#     https://docs.fastlane.tools/advanced/#appfile
+itc_team_id("127315153")
+team_id("LGX4B4WC66")

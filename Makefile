@@ -106,3 +106,116 @@ fetch-certificates:
 	bundle exec fastlane match appstore --readonly --app_identifier kr.co.poppang.PopPang
 	@echo ""
 
+
+# -----------------------------
+# 🧱 Tuist Module Scaffold
+# -----------------------------
+LAYER ?=
+NAME ?=
+INTERFACE ?= false
+
+module-help:
+	@echo "Usage:"
+	@echo "  make module LAYER=feature NAME=Home"
+	@echo "  make module LAYER=feature NAME=PopupDetail INTERFACE=true"
+	@echo "  make regen"
+	@echo "  make trash"
+	@echo "  make clean"
+	@echo "  make reinstall"
+	@echo ""
+	@echo "Available layers:"
+	@echo "  app, coordinator, feature, domain, data, thirdparty, core, dskit, shared"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make module LAYER=app NAME=AppSession"
+	@echo "  make module LAYER=coordinator NAME=Root"
+	@echo "  make module LAYER=feature NAME=Home"
+	@echo "  make module LAYER=feature NAME=PopupDetail INTERFACE=true"
+	@echo "  make module LAYER=domain NAME=Popup"
+	@echo "  make module LAYER=data NAME=Popup"
+	@echo "  make module LAYER=thirdparty NAME=Firebase"
+	@echo "  make module LAYER=core NAME=HTTPClient"
+	@echo "  make module LAYER=dskit NAME=DSKit"
+	@echo "  make module LAYER=shared NAME=UIComponents"
+	@echo "  make regen"
+	@echo "  make trash"
+	@echo "  make clean"
+	@echo "  make reinstall"
+
+module:
+	@if [ -z "$(LAYER)" ] || [ -z "$(NAME)" ]; then \
+		echo "❌ LAYER and NAME are required."; \
+		echo ""; \
+		$(MAKE) module-help; \
+		exit 1; \
+	fi
+	@case "$(LAYER)" in \
+		app) TEMPLATE="app-module" ;; \
+		coordinator) TEMPLATE="coordinator-module" ;; \
+		feature) TEMPLATE="feature-module" ;; \
+		domain) TEMPLATE="domain-module" ;; \
+		data) TEMPLATE="data-module" ;; \
+		thirdparty) TEMPLATE="third-party-module" ;; \
+		core) TEMPLATE="core-module" ;; \
+		dskit) TEMPLATE="dskit-module" ;; \
+		shared) TEMPLATE="shared-module" ;; \
+		*) \
+			echo "❌ Unsupported layer: $(LAYER)"; \
+			echo ""; \
+			$(MAKE) module-help; \
+			exit 1; \
+			;; \
+	esac; \
+	echo "🧱 Scaffolding $$TEMPLATE with NAME=$(NAME)"; \
+	if [ "$(LAYER)" = "feature" ]; then \
+		tuist scaffold $$TEMPLATE --name $(NAME) --include-interface $(INTERFACE); \
+	else \
+		tuist scaffold $$TEMPLATE --name $(NAME); \
+	fi
+
+# -----------------------------
+# ♻️ Regenerate Tuist Projects
+# -----------------------------
+regen:
+	@echo "♻️ Removing generated xcodeproj/Derived artifacts..."
+	@find Projects -name '*.xcodeproj' -type d -prune -exec rm -rf {} +
+	@find Projects -name 'Derived' -type d -prune -exec rm -rf {} +
+	@echo "🧱 Running tuist generate..."
+	@tuist generate
+
+# -----------------------------
+# 🗑 Remove Build Outputs Only
+# -----------------------------
+trash:
+	@echo "🗑 Removing local build outputs..."
+	@rm -rf build
+	@rm -rf /tmp/poppang-*-dd
+	@find Projects -name 'Derived' -type d -prune -exec rm -rf {} +
+	@find Projects -name 'build' -type d -prune -exec rm -rf {} +
+	@find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -name 'PopPang-*' -type d -prune -exec rm -rf {} +
+	@echo "✅ Local build outputs removed."
+
+# -----------------------------
+# 🧹 Clean Local Build Artifacts
+# -----------------------------
+clean:
+	@echo "🧹 Removing generated workspace/project artifacts..."
+	@rm -rf PopPang.xcworkspace
+	@find Projects -name '*.xcodeproj' -type d -prune -exec rm -rf {} +
+	@find Projects -name 'Derived' -type d -prune -exec rm -rf {} +
+	@find Projects -name 'build' -type d -prune -exec rm -rf {} +
+	@echo "🧹 Removing local Xcode DerivedData for PopPang..."
+	@find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -name 'PopPang-*' -type d -prune -exec rm -rf {} +
+	@echo "🧹 Cleaning Tuist local cache..."
+	@tuist clean
+	@echo "✅ Local build artifacts and Tuist caches removed."
+
+# -----------------------------
+# 🔄 Reinstall Tuist Dependencies and Regenerate
+# -----------------------------
+reinstall: clean
+	@echo "📦 Reinstalling Tuist dependencies..."
+	@tuist install
+	@echo "🧱 Running tuist generate..."
+	@tuist generate
+	@echo "✅ Tuist dependencies reinstalled and workspace regenerated."

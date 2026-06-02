@@ -1,0 +1,14 @@
+import SwiftUI
+
+@main
+struct {{ name }}FeatureDemoApp: App {
+    var body: some Scene {
+        WindowGroup {
+            {% if includeInterface %}
+            {{ name }}FeatureEntryView()
+            {% else %}
+            {{ name }}FeatureRootView()
+            {% endif %}
+        }
+    }
+}
