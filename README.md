@@ -50,7 +50,138 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 
 # 4. 핵심 성과
 
-### **1. 단일 타깃 구조를 Tuist 기반 Micro Feature Architecture로 전환**
+### **1. 로딩 지연 문제 개선**
+> **문제**  
+> 여러 API가 순차적으로 호출되며 전체 로딩이 길어졌음  
+>
+> **해결**  
+> `TaskGroup`을 활용해 병렬 처리 구조로 전환  
+>
+> **성과**  
+> 🔸 **초기 로딩 시간 40% 단축**
+
+```swift
+func getAllPopupData() async {
+    do {
+        try await withThrowingTaskGroup(of: (Int, [Popup]).self) { group in
+            group.addTask { (0, await self.getPersonalRandomPopupList()) }
+            group.addTask { (1, await self.getPersonalUpcomingPopupList()) }
+            group.addTask { (2, await self.getPersonalFilteredPopupList()) }
+
+            for try await (index, popups) in group {
+                await MainActor.run {
+                    switch index {
+                    case 0: self.bestPopups = popups
+                    case 1: self.comingPopups = popups
+                    case 2: self.gridPopups = popups
+                    default: break
+                    }
+                }
+            }
+        }
+    } catch {
+        Logger.e("❌ 로딩 실패: \(error)")
+    }
+}
+```
+
+---
+
+### **2. Moya를 async/await으로 사용하기 위한 공통 async 래퍼 생성**
+> **문제**  
+> Moya는 completion 기반이라 async/await과 직접 호환되지 않아  
+> API마다 동일한 변환 코드가 반복됨  
+>
+> **해결**  
+> `withCheckedThrowingContinuation` 기반 **공통 async 변환 래퍼** 구현  
+>
+> **성과**  
+> 🔸 Repository 전역에서 동일한 async 인터페이스 사용  
+> 🔸 **중복 코드 감소 + 유지보수성 향상**
+
+```swift
+extension MoyaProvider {
+    func asyncRequest(_ target: Target) async throws -> Response {
+        try await withCheckedThrowingContinuation { continuation in
+            self.request(target) { result in
+                switch result {
+                case .success(let response):
+                    continuation.resume(returning: response)
+                case .failure(let error):
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+}
+
+let response = try await provider.asyncRequest(.getPopupList)
+```
+
+---
+
+### **3. 화면 이동 로직을 통일해 일관성 있는 네비게이션 확보**
+> **문제**  
+> push / sheet / overlay 화면 전환 코드가 각 View에 흩어져 있어  
+> 네비게이션 흐름이 일관적이지 않고 유지보수가 어려웠음  
+>
+> **해결**  
+> Route 기반 **Generic Coordinator** 도입으로  
+> 모든 화면 이동을 **동일한 호출 형태**로 사용하도록 개선  
+>
+> **성과**  
+> 🔸 push / sheet / overlay를 **하나의 패턴으로 호출**  
+> 🔸 화면이동 관련 상태 변수 70% 감소  
+> 🔸 **일관된 네비게이션 흐름 확보 및 View 코드 간결화**
+
+```swift
+class Coordinator<R: Hashable, S: Identifiable, O: Identifiable>: ObservableObject {
+    @Published var paths: [R] = []
+    @Published var sheet: S?
+    @Published var overlay: O?
+
+    func push(_ route: R) {
+        paths.append(route)
+    }
+
+    func present(_ sheet: S) {
+        self.sheet = sheet
+    }
+
+    func showOverlay(_ overlay: O) {
+        self.overlay = overlay
+    }
+}
+
+coordinator.push(.detail(popup))
+coordinator.present(.regionSheet)
+coordinator.showOverlay(.notification)
+```
+
+---
+
+### **4. CSV 기반 로컬라이제이션 자동화로 다국어 관리 비용 절감**
+> **문제**  
+> `Localizable.strings`를 언어별로 직접 관리하면  
+> 키 누락, 오타, 언어별 불일치가 생기기 쉽고 문자열 키를 하드코딩할 때 디버깅 비용도 커졌음  
+>
+> **해결**  
+> `Python/localizable.csv`를 기준으로  
+> `en/ko/ja Localizable.strings`와 `LocalizationKeys.swift`를 자동 생성하는  
+> CSV 기반 로컬라이제이션 생성 스크립트 구축  
+>
+> **성과**  
+> 🔸 번역 데이터를 CSV 한 곳에서 일괄 관리  
+> 🔸 `LocalizationKey` enum 자동 생성으로 문자열 오타 위험 감소  
+> 🔸 번역 작업자, 기획자, 개발자가 같은 포맷으로 협업 가능
+
+```swift
+Text(LocalizationKey.commonNext.localized(comment: "Next button"))
+```
+
+---
+
+### **5. 단일 타깃 구조를 Tuist 기반 Micro Feature Architecture로 전환**
 > **문제**  
 > 기존 `V0` 앱은 `App`, `Presentation`, `Util`, `DesignSystem`이 단일 타깃에 섞여 있어  
 > 기능이 늘어날수록 변경 영향 범위가 커지고, 독립 개발과 빌드 검증이 어려웠음  
@@ -62,7 +193,23 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 > **성과**  
 > 🔸 기능별 독립 모듈 개발 기반 확보  
 > 🔸 App 조립, 화면 흐름, UI 기능, 도메인 규칙, 데이터 구현 책임 분리  
-> 🔸 Demo app과 Core/Data 테스트를 통한 모듈 단위 검증 기반 확보
+> 🔸 Demo app과 Core/Data 테스트를 통한 모듈 단위 검증 기반 확보  
+> 🔸 클린빌드 평균 **129.447초 → 46.884초**로 개선, 모듈화 프로젝트가 약 **2.76배 빠름**  
+> 🔸 증분빌드 평균 **6.415초 → 4.184초**로 개선, 모듈화 프로젝트가 약 **1.53배 빠름**
+
+| 구분 | V0 | 모듈화 프로젝트 | 차이 |
+|:---:|:---:|:---:|:---:|
+| 클린빌드 평균 | 129.447초 | 46.884초 | 모듈화가 약 2.76배 빠름 |
+| 증분빌드 평균 | 6.415초 | 4.184초 | 모듈화가 약 1.53배 빠름 |
+
+| 측정 조건 | 값 |
+|:---:|:---:|
+| 반복 횟수 | 5회 |
+| Destination | `generic/platform=iOS Simulator` |
+| Configuration | `Debug` |
+| V0 기준 | `V0/PopPang.xcodeproj`, scheme `PopPang` |
+| 모듈화 기준 | `PopPang.xcworkspace`, scheme `PopPangApp` |
+| 증분빌드 기준 | 파일 수정 없는 no-op 증분빌드 |
 
 ```text
 Projects
@@ -90,61 +237,7 @@ Projects
 
 ---
 
-### **2. V0 기능 동일성을 유지하면서 화면 책임을 Feature 단위로 분리**
-> **문제**  
-> 모듈화 과정에서 화면을 새로 해석해 구현하면 기존 앱의 진입 경로, 상태 변화, 외부 연동이 유실될 위험이 있었음  
->
-> **해결**  
-> `V0/` 코드를 기준으로 사용자 기능을 먼저 동일하게 이식하고,  
-> 이후 모듈 경계와 `Compound` 기반 `Action / Reaction / State` 구조에 맞게 최소 변경  
->
-> **성과**  
-> 🔸 온보딩, 로그인, 홈, 검색, 상세, 지도, 찜, 캘린더, 프로필, 알림, 리뷰 흐름 복원  
-> 🔸 placeholder feature 화면 제거  
-> 🔸 Feature는 `Domain` 계약에 의존하고 `Data` 구현체와 분리
-
-```swift
-public struct HomeFeatureState: Equatable {
-    var bestPopups: [Popup]
-    var comingPopups: [Popup]
-    var gridPopups: [Popup]
-    var isLoading: Bool
-}
-
-public enum HomeFeatureAction {
-    case onAppear
-    case searchTapped
-    case popupTapped(Popup)
-}
-```
-
----
-
-### **3. 화면 이동 로직을 Coordinator 중심으로 정리**
-> **문제**  
-> 기존 구조는 push, sheet, overlay, fullScreen, bottomSheet 흐름이 화면과 coordinator에 넓게 퍼져 있어  
-> feature 간 이동이 늘어날수록 route와 view 생성 책임이 무거워졌음  
->
-> **해결**  
-> `RootCoordinator`, `MainTabCoordinator`, feature coordinator로 흐름을 나누고,  
-> feature는 직접 화면을 생성하지 않고 navigator intent만 전달하도록 구성  
->
-> **성과**  
-> 🔸 앱 루트 전환과 feature local navigation 책임 분리  
-> 🔸 route를 가벼운 intent 값으로 유지  
-> 🔸 로그아웃, 딥링크, 검색, 상세, 지도 바텀시트 등 주요 전환 흐름을 일관된 방식으로 처리
-
-```swift
-public protocol HomeFeatureNavigator {
-    func showSearch()
-    func showPopupDetail(_ popup: Popup)
-    func showAlert()
-}
-```
-
----
-
-### **4. 외부 SDK 의존성을 ThirdParty 링크 허브로 추적 가능하게 정리**
+### **6. 외부 SDK 의존성을 ThirdParty 링크 허브로 추적 가능하게 정리**
 > **문제**  
 > 외부 SDK가 여러 레이어에 직접 흩어지면 어떤 모듈이 어떤 SDK product를 링크하는지 파악하기 어렵고,  
 > SPM product type 문제로 빌드와 런타임 경고가 발생할 수 있었음  
@@ -172,27 +265,6 @@ public protocol HomeFeatureNavigator {
         .external(name: "NMapsMap"),
     ]
 )
-```
-
----
-
-### **5. CSV 기반 로컬라이제이션 자동화로 다국어 관리 비용 절감**
-> **문제**  
-> `Localizable.strings`를 언어별로 직접 관리하면  
-> 키 누락, 오타, 언어별 불일치가 생기기 쉽고 문자열 키를 하드코딩할 때 디버깅 비용도 커졌음  
->
-> **해결**  
-> `Python/localizable.csv`를 기준으로  
-> `en/ko/ja Localizable.strings`와 `LocalizationKeys.swift`를 자동 생성하는  
-> CSV 기반 로컬라이제이션 생성 스크립트 구축  
->
-> **성과**  
-> 🔸 번역 데이터를 CSV 한 곳에서 일괄 관리  
-> 🔸 `LocalizationKey` enum 자동 생성으로 문자열 오타 위험 감소  
-> 🔸 번역 작업자, 기획자, 개발자가 같은 포맷으로 협업 가능
-
-```swift
-Text(LocalizationKey.commonNext.localized(comment: "Next button"))
 ```
 
 <br/><br/>
