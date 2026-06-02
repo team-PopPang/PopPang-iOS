@@ -336,6 +336,9 @@ public struct ComingPopupDetailFeatureViewSave: View {
             }
         }
         .padding(.horizontal, .contentPadding)
+        .onAppear {
+            compound.send(.onAppear)
+        }
     }
 
     private var columns: [GridItem] {

@@ -46,7 +46,7 @@ public final class HomeCoordinator: Coordinator<
                 popup: popup,
                 isAdmin: session.isAdmin,
                 onSelectRelatedPopup: { [weak self] userUuid, popup in
-                    self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
+                    self?.pushPopupDetail(userUuid: userUuid, popup: popup)
                 },
                 onShowReviews: { [weak self] reviews in
                     self?.push(.reviewDetail(reviews))
@@ -57,7 +57,7 @@ public final class HomeCoordinator: Coordinator<
                 userUuid: userUuid,
                 popups: popups,
                 onSelectPopup: { [weak self] userUuid, popup in
-                    self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
+                    self?.pushPopupDetail(userUuid: userUuid, popup: popup)
                 }
             )
         case .alert(let userUuid):
@@ -117,7 +117,11 @@ public final class HomeCoordinator: Coordinator<
         if let onSelectPopup {
             onSelectPopup(userUuid, popup)
         } else {
-            push(.popupDetail(userUuid: userUuid, popup: popup))
+            pushPopupDetail(userUuid: userUuid, popup: popup)
         }
+    }
+
+    private func pushPopupDetail(userUuid: String, popup: Popup) {
+        push(.popupDetail(userUuid: userUuid, popup: popup))
     }
 }

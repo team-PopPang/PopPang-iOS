@@ -5,10 +5,12 @@ import Foundation
 @Compound
 final class ComingPopupDetailCompound {
     enum Action {
+        case onAppear
         case toggleLike(Popup)
     }
 
     enum Reaction {
+        case setPopups([Popup])
         case setFavorite(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
         case setErrorMessage(String?)
     }
@@ -35,6 +37,8 @@ final class ComingPopupDetailCompound {
 
     func react(action: Action) -> AsyncStream<Reaction> {
         switch action {
+        case .onAppear:
+            return updateComingPopups()
         case .toggleLike(let popup):
             return toggleLike(popup: popup)
         }
@@ -44,6 +48,8 @@ final class ComingPopupDetailCompound {
         var newState = state
 
         switch reaction {
+        case .setPopups(let popups):
+            newState.popups = popups.sorted { $0.startDate < $1.startDate }
         case let .setFavorite(popupUuid, isFavorited, favoriteCount):
             guard let index = newState.popups.firstIndex(where: { $0.popupUuid == popupUuid }) else { break }
             newState.popups[index].isFavorited = isFavorited
@@ -57,6 +63,20 @@ final class ComingPopupDetailCompound {
 }
 
 private extension ComingPopupDetailCompound {
+    func updateComingPopups() -> AsyncStream<Reaction> {
+        let popupUsecase = popupUsecase
+
+        return .run { [state, popupUsecase] send in
+            do {
+                let popups = try await popupUsecase.getPersonalUpcomingPopupList(userUuid: state.userUuid)
+                await send(.setPopups(popups))
+                await send(.setErrorMessage(nil))
+            } catch {
+                await send(.setErrorMessage(error.localizedDescription))
+            }
+        }
+    }
+
     func toggleLike(popup: Popup) -> AsyncStream<Reaction> {
         let popupUsecase = popupUsecase
         let nextIsFavorited = !popup.isFavorited

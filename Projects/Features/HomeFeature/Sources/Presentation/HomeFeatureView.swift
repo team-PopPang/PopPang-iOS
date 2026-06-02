@@ -650,5 +650,8 @@ public struct ComingPopupDetailFeatureView: View {
         .updateEngine(.reloadData)
         .scrollIndicators(.hidden)
         .contentInsets(LKEdgeInsets(top: 0, left: 0, bottom: 0, right: 0))
+        .onAppear {
+            compound.send(.onAppear)
+        }
     }
 }
