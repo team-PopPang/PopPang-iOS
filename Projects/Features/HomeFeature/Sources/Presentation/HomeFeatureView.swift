@@ -15,23 +15,27 @@ public struct HomeFeatureView: View {
     @State private var listProxy = LKListProxy()
     @State private var lastHandledPopupId: String?
     @State private var sheetRoute: HomeSheetRoute?
+    @State private var isComingPopupDetailPresented = false
 
     private let deepLinkStorage: DeepLinkStorage
     private let onSelectPopup: (String, Popup) -> Void
     private let onShowAlert: (String) -> Void
+    private let popupDetailDestination: ((String, Popup) -> AnyView)?
 
     public init(
         userUuid: String = "demo-user",
         nickname: String = "닉네임",
         deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore()),
         onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in },
-        onShowAlert: @escaping (String) -> Void = { _ in }
+        onShowAlert: @escaping (String) -> Void = { _ in },
+        popupDetailDestination: ((String, Popup) -> AnyView)? = nil
     ) {
         let compound = HomeFeatureCompound(userUuid: userUuid, nickname: nickname)
         _compound = State(wrappedValue: compound)
         self.deepLinkStorage = deepLinkStorage
         self.onSelectPopup = onSelectPopup
         self.onShowAlert = onShowAlert
+        self.popupDetailDestination = popupDetailDestination
     }
 
     public var body: some View {
@@ -100,11 +104,8 @@ public struct HomeFeatureView: View {
                         HomeComingHeader(
                             userUuid: compound.state.userUuid,
                             popups: compound.state.comingPopups,
-                            onTap: { userUuid, popups in
-                                coordinator.push(.comingPopupDetail(
-                                    userUuid: userUuid,
-                                    popups: popups
-                                ))
+                            onTap: { _, _ in
+                                isComingPopupDetailPresented = true
                             }
                         )
                             .padding(.bottom, 10)
@@ -196,6 +197,16 @@ public struct HomeFeatureView: View {
                 SortButtonSheet(selectedOption: selectedOptionBinding)
                     .presentationDetents([.height(270)])
             }
+        }
+        .navigationDestination(isPresented: $isComingPopupDetailPresented) {
+            ComingPopupDetailFeatureView(
+                userUuid: compound.state.userUuid,
+                popups: compound.state.comingPopups,
+                onSelectPopup: { userUuid, popup in
+                    coordinator.push(.popupDetail(userUuid: userUuid, popup: popup))
+                },
+                popupDetailDestination: popupDetailDestination
+            )
         }
         .onAppear {
             compound.send(.onAppear)
@@ -595,12 +606,15 @@ private extension HomeFeatureView {
 
 public struct ComingPopupDetailFeatureView: View {
     @State private var compound: ComingPopupDetailCompound
+    @State private var selectedPopup: Popup?
     private let onSelectPopup: (String, Popup) -> Void
+    private let popupDetailDestination: ((String, Popup) -> AnyView)?
 
     public init(
         userUuid: String,
         popups: [Popup],
-        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in }
+        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in },
+        popupDetailDestination: ((String, Popup) -> AnyView)? = nil
     ) {
         _compound = State(
             wrappedValue: ComingPopupDetailCompound(
@@ -609,6 +623,7 @@ public struct ComingPopupDetailFeatureView: View {
             )
         )
         self.onSelectPopup = onSelectPopup
+        self.popupDetailDestination = popupDetailDestination
     }
 
     public var body: some View {
@@ -633,7 +648,11 @@ public struct ComingPopupDetailFeatureView: View {
                     }
                     .equatableToken("\(popup.popupUuid)-\(popup.isFavorited)")
                     .onSelect { _ in
-                        onSelectPopup(compound.state.userUuid, popup)
+                        if popupDetailDestination == nil {
+                            onSelectPopup(compound.state.userUuid, popup)
+                        } else {
+                            selectedPopup = popup
+                        }
                     }
                 }
             }
@@ -652,6 +671,11 @@ public struct ComingPopupDetailFeatureView: View {
         .contentInsets(LKEdgeInsets(top: 0, left: 0, bottom: 0, right: 0))
         .onAppear {
             compound.send(.onAppear)
+        }
+        .navigationDestination(item: $selectedPopup) { popup in
+            if let popupDetailDestination {
+                popupDetailDestination(compound.state.userUuid, popup)
+            }
         }
     }
 }

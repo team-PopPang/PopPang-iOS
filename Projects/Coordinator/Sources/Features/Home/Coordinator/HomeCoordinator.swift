@@ -41,23 +41,16 @@ public final class HomeCoordinator: Coordinator<
     public func buildView(for route: HomeFeatureRoute) -> some View {
         switch route {
         case .popupDetail(let userUuid, let popup):
-            PopupDetailFeatureView(
-                userUuid: userUuid,
-                popup: popup,
-                isAdmin: session.isAdmin,
-                onSelectRelatedPopup: { [weak self] userUuid, popup in
-                    self?.pushPopupDetail(userUuid: userUuid, popup: popup)
-                },
-                onShowReviews: { [weak self] reviews in
-                    self?.push(.reviewDetail(reviews))
-                }
-            )
+            makePopupDetailDestination(userUuid: userUuid, popup: popup)
         case let .comingPopupDetail(userUuid, popups):
             ComingPopupDetailFeatureView(
                 userUuid: userUuid,
                 popups: popups,
                 onSelectPopup: { [weak self] userUuid, popup in
                     self?.pushPopupDetail(userUuid: userUuid, popup: popup)
+                },
+                popupDetailDestination: { [weak self] userUuid, popup in
+                    self?.makePopupDetailDestination(userUuid: userUuid, popup: popup) ?? AnyView(EmptyView())
                 }
             )
         case .alert(let userUuid):
@@ -101,6 +94,9 @@ public final class HomeCoordinator: Coordinator<
             },
             onShowAlert: { [weak self] userUuid in
                 self?.routeToAlert(userUuid: userUuid)
+            },
+            popupDetailDestination: { [weak self] userUuid, popup in
+                self?.makePopupDetailDestination(userUuid: userUuid, popup: popup) ?? AnyView(EmptyView())
             }
         )
     }
@@ -123,5 +119,21 @@ public final class HomeCoordinator: Coordinator<
 
     private func pushPopupDetail(userUuid: String, popup: Popup) {
         push(.popupDetail(userUuid: userUuid, popup: popup))
+    }
+
+    private func makePopupDetailDestination(userUuid: String, popup: Popup) -> AnyView {
+        AnyView(
+            PopupDetailFeatureView(
+                userUuid: userUuid,
+                popup: popup,
+                isAdmin: session.isAdmin,
+                onSelectRelatedPopup: { [weak self] userUuid, popup in
+                    self?.pushPopupDetail(userUuid: userUuid, popup: popup)
+                },
+                onShowReviews: { [weak self] reviews in
+                    self?.push(.reviewDetail(reviews))
+                }
+            )
+        )
     }
 }
