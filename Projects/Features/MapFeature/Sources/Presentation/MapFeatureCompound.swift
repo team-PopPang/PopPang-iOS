@@ -63,7 +63,6 @@ final class MapFeatureCompound {
     }
 
     enum Reaction {
-        case setDidPreload(Bool)
         case setLoading(Bool)
         case setWaitingForUserLocation(Bool)
         case setMapPopups([Popup])
@@ -100,7 +99,6 @@ final class MapFeatureCompound {
         var firstSheetPosition: BottomSheetPosition = .relative(0.5)
         var secondSheetPosition: BottomSheetPosition = .hidden
         var secondSheetType: MapSecondSheetType = .none
-        var didPreload = false
         var isLoading = false
         var isWaitingForUserLocation = false
         var errorMessage: String?
@@ -117,12 +115,7 @@ final class MapFeatureCompound {
     func react(action: Action) -> AsyncStream<Reaction> {
         switch action {
         case .onAppear:
-            guard !state.didPreload else { return Self.emptyReactionStream() }
-
-            return .concat(
-                .just(.setDidPreload(true)),
-                getAllPopupData()
-            )
+            return getAllPopupData()
 
         case .refreshFilteredPopupList:
             return updatePersonalMapFilteredPopupList(
@@ -143,7 +136,7 @@ final class MapFeatureCompound {
                 return Self.emptyReactionStream()
             }
 
-            let shouldRefreshEmptyInitialList = state.didPreload && state.allPopups.isEmpty
+            let shouldRefreshEmptyInitialList = state.allPopups.isEmpty
 
             return .concat(
                 .just(.setMapCenter(coordinate)),
@@ -158,8 +151,7 @@ final class MapFeatureCompound {
             )
 
         case .userLocationChanged(let coordinate):
-            let shouldRefreshFromLocation = state.didPreload &&
-                (state.selectedOption == .closest || state.allPopups.isEmpty)
+            let shouldRefreshFromLocation = state.selectedOption == .closest || state.allPopups.isEmpty
 
             return .concat(
                 .just(.setHasUserLocation(true)),
@@ -285,8 +277,6 @@ final class MapFeatureCompound {
         var newState = state
 
         switch reaction {
-        case .setDidPreload(let didPreload):
-            newState.didPreload = didPreload
         case .setLoading(let isLoading):
             newState.isLoading = isLoading
         case .setWaitingForUserLocation(let isWaitingForUserLocation):

@@ -99,7 +99,9 @@ public struct CalendarFeatureView: View {
 
             Spacer()
         }
-        .compoundOnLoad(compound, .onAppear)
+        .onAppear {
+            compound.send(.onAppear)
+        }
         .trigger(of: compound, \.$presentedSheet) { route in
             sheetRoute = route
         }

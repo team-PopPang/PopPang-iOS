@@ -6,14 +6,12 @@ import Foundation
 final class FavoritesFeatureCompound {
     enum Action {
         case onAppear
-        case refresh
         case dateSelected(Date)
         case toggleLike(Popup)
         case setErrorMessage(String?)
     }
 
     enum Reaction {
-        case setDidPreload(Bool)
         case setLoading(Bool)
         case setFavoritePopups([Popup])
         case setSelectedDate(Date)
@@ -28,7 +26,6 @@ final class FavoritesFeatureCompound {
         var selectedPopups: [Popup] = []
         var selectedDate: Date = Date()
         var popupEventCounts: [Date: Int] = [:]
-        var didPreload = false
         var isLoading = false
         var errorMessage: String?
     }
@@ -44,14 +41,6 @@ final class FavoritesFeatureCompound {
     func react(action: Action) -> AsyncStream<Reaction> {
         switch action {
         case .onAppear:
-            guard !state.didPreload else { return Self.emptyReactionStream() }
-
-            return .concat(
-                .just(.setDidPreload(true)),
-                getFavoritePopups()
-            )
-
-        case .refresh:
             return getFavoritePopups()
 
         case .dateSelected(let date):
@@ -72,8 +61,6 @@ final class FavoritesFeatureCompound {
         var newState = state
 
         switch reaction {
-        case .setDidPreload(let didPreload):
-            newState.didPreload = didPreload
         case .setLoading(let isLoading):
             newState.isLoading = isLoading
         case .setFavoritePopups(let popups):
@@ -93,12 +80,6 @@ final class FavoritesFeatureCompound {
 }
 
 private extension FavoritesFeatureCompound {
-    static func emptyReactionStream() -> AsyncStream<Reaction> {
-        AsyncStream { continuation in
-            continuation.finish()
-        }
-    }
-
     func getFavoritePopups() -> AsyncStream<Reaction> {
         let popupUsecase = popupUsecase
 

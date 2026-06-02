@@ -15,7 +15,6 @@ final class HomeFeatureCompound {
     }
 
     enum Reaction {
-        case setDidPreload(Bool)
         case setLoading(Bool)
         case setErrorMessage(String?)
         case setBestPopups([Popup])
@@ -38,7 +37,6 @@ final class HomeFeatureCompound {
         var selectedRegion: RegionList?
         var selectedDistrict: String?
         var selectedOption: SortButton.SortOption = .newest
-        var didPreload = false
         var isLoading = false
         var errorMessage: String?
     }
@@ -57,12 +55,7 @@ final class HomeFeatureCompound {
     func react(action: Action) -> AsyncStream<Reaction> {
         switch action {
         case .onAppear:
-            guard !state.didPreload else { return Self.emptyReactionStream() }
-
-            return .concat(
-                .just(.setDidPreload(true)),
-                getAllPopupData()
-            )
+            return getAllPopupData()
 
         case .regionSelected(let region):
             return .concat(
@@ -110,9 +103,6 @@ final class HomeFeatureCompound {
         var newState = state
 
         switch reaction {
-        case .setDidPreload(let didPreload):
-            newState.didPreload = didPreload
-
         case .setLoading(let isLoading):
             newState.isLoading = isLoading
 
@@ -152,12 +142,6 @@ final class HomeFeatureCompound {
 }
 
 private extension HomeFeatureCompound {
-    static func emptyReactionStream() -> AsyncStream<Reaction> {
-        AsyncStream { continuation in
-            continuation.finish()
-        }
-    }
-
     func getAllPopupData() -> AsyncStream<Reaction> {
         let popupUsecase = popupUsecase
 

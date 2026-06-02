@@ -11,7 +11,6 @@ public struct HomeFeatureView: View {
     @Environment(HomeFeatureCoordinator.self) private var coordinator
     @Environment(\.scenePhase) private var scenePhase
     @State private var compound: HomeFeatureCompound
-    @State private var hasSeenPopup = false
     @State private var currentScrollOffset: CGFloat = 0
     @State private var listProxy = LKListProxy()
     @State private var lastHandledPopupId: String?
@@ -182,7 +181,6 @@ public struct HomeFeatureView: View {
             }
         }
         .withoutAnimation()
-        .compoundOnLoad(compound, .onAppear)
         .sheet(item: $sheetRoute) { route in
             switch route {
             case .regionSheet:
@@ -200,9 +198,7 @@ public struct HomeFeatureView: View {
             }
         }
         .onAppear {
-            if !hasSeenPopup {
-                hasSeenPopup = true
-            }
+            compound.send(.onAppear)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {

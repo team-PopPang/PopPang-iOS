@@ -26,7 +26,6 @@ final class CalendarFeatureCompound {
     }
 
     enum Reaction {
-        case setDidPreload(Bool)
         case setLoading(Bool)
         case setCalendarPopups([Popup])
         case setSelectedDate(Date)
@@ -52,7 +51,6 @@ final class CalendarFeatureCompound {
         var selectedDistrict: String?
         var selectedOption: SortButton.SortOption = .newest
         @Trigger var presentedSheet: SheetRoute?
-        var didPreload = false
         var isLoading = false
         var errorMessage: String?
     }
@@ -68,12 +66,7 @@ final class CalendarFeatureCompound {
     func react(action: Action) -> AsyncStream<Reaction> {
         switch action {
         case .onAppear:
-            guard !state.didPreload else { return Self.emptyReactionStream() }
-
-            return .concat(
-                .just(.setDidPreload(true)),
-                getAllPopupData()
-            )
+            return getAllPopupData()
 
         case .dateSelected(let date):
             return .concat(
@@ -136,8 +129,6 @@ final class CalendarFeatureCompound {
         var newState = state
 
         switch reaction {
-        case .setDidPreload(let didPreload):
-            newState.didPreload = didPreload
         case .setLoading(let isLoading):
             newState.isLoading = isLoading
         case .setCalendarPopups(let popups):

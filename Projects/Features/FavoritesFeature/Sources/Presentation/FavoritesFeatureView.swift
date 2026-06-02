@@ -55,9 +55,6 @@ public struct FavoritesFeatureView: View {
                         },
                         onToggleLike: { popup in
                             compound.send(.toggleLike(popup))
-                        },
-                        onRefresh: {
-                            compound.send(.refresh)
                         }
                     ),
                     FavoriteCalendarView(
@@ -75,9 +72,6 @@ public struct FavoritesFeatureView: View {
                         },
                         onToggleLike: { popup in
                             compound.send(.toggleLike(popup))
-                        },
-                        onRefresh: {
-                            compound.send(.refresh)
                         }
                     )
                 ],
@@ -87,7 +81,9 @@ public struct FavoritesFeatureView: View {
 
             Spacer()
         }
-        .compoundOnLoad(compound, .onAppear)
+        .onAppear {
+            compound.send(.onAppear)
+        }
     }
 }
 
@@ -99,7 +95,6 @@ private struct FavoriteListView: View {
     let onBrowsePopups: () -> Void
     let onSelectPopup: (Popup) -> Void
     let onToggleLike: (Popup) -> Void
-    let onRefresh: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -139,7 +134,6 @@ private struct FavoriteListView: View {
             }
         }
         .padding(.horizontal, .contentPadding)
-        .onAppear(perform: onRefresh)
     }
 }
 
@@ -238,7 +232,6 @@ private struct FavoriteCalendarView: View {
     let onDateSelected: (Date) -> Void
     let onSelectPopup: (Popup) -> Void
     let onToggleLike: (Popup) -> Void
-    let onRefresh: () -> Void
 
     var body: some View {
         ScrollView(showsIndicators: false) {
@@ -282,7 +275,6 @@ private struct FavoriteCalendarView: View {
                 Spacer()
             }
         }
-        .onAppear(perform: onRefresh)
     }
 }
 

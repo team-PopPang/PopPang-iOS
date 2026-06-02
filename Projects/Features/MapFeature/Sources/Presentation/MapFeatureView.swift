@@ -167,7 +167,9 @@ public struct MapFeatureView: View {
             .onChange(of: firstSheetPosition) { _, newValue in
                 compound.send(.firstSheetPositionChanged(newValue))
             }
-            .compoundOnLoad(compound, .onAppear)
+            .onAppear {
+                compound.send(.onAppear)
+            }
             .ignoresSafeArea(edges: [.top, .bottom])
         }
     }
@@ -369,7 +371,6 @@ private struct FirstSheetView: View {
                 popups: compound.state.mapPopups,
                 isLoading: compound.state.isLoading,
                 isWaitingForUserLocation: compound.state.isWaitingForUserLocation,
-                didPreload: compound.state.didPreload,
                 firstSheetPosition: $firstSheetPosition,
                 onPopupTap: onPopupTap,
                 onToggleLike: onToggleLike
@@ -384,13 +385,12 @@ private struct MapListView: View {
     let popups: [Popup]
     let isLoading: Bool
     let isWaitingForUserLocation: Bool
-    let didPreload: Bool
     @Binding var firstSheetPosition: BottomSheetPosition
     let onPopupTap: (Int, Popup) -> Void
     let onToggleLike: (Popup) -> Void
 
     var body: some View {
-        if !didPreload || isLoading || isWaitingForUserLocation {
+        if isLoading || isWaitingForUserLocation {
             ProgressView()
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 24)
