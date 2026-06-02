@@ -114,6 +114,11 @@ struct DataTests {
 
     @Test("API 경로가 V0 엔드포인트 정의와 일치한다")
     func apiPathsMatchV0EndpointDefinitions() {
+        #expect(AdminAPI.getPopupValidationList.path == "/admin/popup-validation")
+        #expect(AdminAPI.validatePopup(parameters: [:]).path == "/admin/popup-validation")
+        #expect(AdminAPI.registerPopup(parameters: [:]).path == "/admin/popup")
+        #expect(AdminAPI.uploadPopupImages(popupUuid: "popup-1", multipartFormData: []).path == "/admin/popup/popup-1/images")
+        #expect(AdminAPI.registerPopupRecommendations(popupUuid: "popup-1", recommendIds: [1, 2]).path == "/admin/popup/popup-1/recommendations")
         #expect(AdminAPI.deactivatePopup(userUuid: "user-1", popupUuid: "popup-1").path == "/admin/user/user-1/popup/popup-1/deactivate")
 
         #expect(AppleAuthAPI.login(authCode: "auth").path == "/auth/apple/mobile/login")
@@ -161,6 +166,11 @@ struct DataTests {
 
     @Test("API 메서드가 V0 엔드포인트 정의와 일치한다")
     func apiMethodsMatchV0EndpointDefinitions() {
+        #expect(AdminAPI.getPopupValidationList.method == .get)
+        #expect(AdminAPI.validatePopup(parameters: [:]).method == .post)
+        #expect(AdminAPI.registerPopup(parameters: [:]).method == .post)
+        #expect(AdminAPI.uploadPopupImages(popupUuid: "popup-1", multipartFormData: []).method == .post)
+        #expect(AdminAPI.registerPopupRecommendations(popupUuid: "popup-1", recommendIds: [1, 2]).method == .post)
         #expect(AdminAPI.deactivatePopup(userUuid: "user-1", popupUuid: "popup-1").method == .patch)
 
         #expect(AppleAuthAPI.login(authCode: "auth").method == .post)
@@ -209,6 +219,10 @@ struct DataTests {
 
     @Test("API 요청 파라미터가 V0 엔드포인트 정의와 일치한다")
     func apiRequestParametersMatchV0EndpointDefinitions() {
+        #expect(stringParameter(AdminAPI.validatePopup(parameters: ["instagramUrl": "https://instagram.com/popup"]).task, key: "instagramUrl") == "https://instagram.com/popup")
+        #expect(stringParameter(AdminAPI.registerPopup(parameters: ["name": "성수 팝업"]).task, key: "name") == "성수 팝업")
+        #expect(intArrayParameter(AdminAPI.registerPopupRecommendations(popupUuid: "popup-1", recommendIds: [1, 2]).task, key: "recommendIds") == [1, 2])
+
         #expect(stringParameter(PopupAPI.searchPopupList(searchText: "성수").task, key: "q") == "성수")
         #expect(stringParameter(PopupAPI.getPersonalPopupList(userUuid: "user-1").task, key: "userUuid") == "user-1")
         #expect(stringParameter(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").task, key: "region") == "서울")
@@ -253,6 +267,10 @@ struct DataTests {
 
     private func boolParameter(_ task: Moya.Task, key: String) -> Bool? {
         parameter(task, key: key) as? Bool
+    }
+
+    private func intArrayParameter(_ task: Moya.Task, key: String) -> [Int]? {
+        parameter(task, key: key) as? [Int]
     }
 
     private func parameter(_ task: Moya.Task, key: String) -> Any? {
