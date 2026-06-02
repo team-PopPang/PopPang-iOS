@@ -19,14 +19,7 @@ public final class AdminRepositoryImpl: AdminRepositoryProtocol {
     }
 
     public func uploadPopupImages(popupUuid: String, images: [AdminPopupImageUploadItem]) async throws {
-        let multipartFormData = images.map {
-            MultipartFormData(
-                provider: .data($0.data),
-                name: $0.formName,
-                fileName: $0.fileName,
-                mimeType: $0.mimeType
-            )
-        }
+        let multipartFormData = images.map { $0.toDTO().toMultipartFormData() }
         try await adminProvider.asyncRequestVoid(
             .uploadPopupImages(popupUuid: popupUuid, multipartFormData: multipartFormData)
         )
