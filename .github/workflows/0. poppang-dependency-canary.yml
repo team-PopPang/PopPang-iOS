@@ -4,6 +4,20 @@ on:
   schedule:
     - cron: "0 3 * * 1"
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR 번호(명령어 트리거일 때만 입력)"
+        required: false
+        default: ""
+      triggered_by_command:
+        description: "PR 명령어 트리거 여부"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   dependency-canary:
@@ -47,3 +61,19 @@ jobs:
         run: |
           echo "Resolved Swift package versions"
           find Tuist -name Package.resolved -print -exec cat {} \;
+
+      - name: Comment success
+        if: success() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            최신 허용 라이브러리 버전 기준 의존성 점검이 성공했습니다.
+
+      - name: Comment failure
+        if: failure() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            최신 허용 라이브러리 버전 기준 의존성 점검이 실패했습니다. Actions 로그를 확인해주세요.
