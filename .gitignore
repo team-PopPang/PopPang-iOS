@@ -13,12 +13,18 @@ scripts/
 .build/
 .swiftpm/
 
-# Xcode
-DerivedData/
-*.xcuserstate
+# Tuist generated files
+.tuist/
+Tuist/.build/
 *.xcodeproj/
 *.xcworkspace/
 **/Derived/
+**/DerivedData/
+
+# Xcode
+DerivedData/
+*.xcuserstate
+*.xcuserdata/
 
 # Build artifacts
 *.ipa
