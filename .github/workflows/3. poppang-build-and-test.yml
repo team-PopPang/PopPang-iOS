@@ -28,10 +28,34 @@ permissions:
   pull-requests: write
 
 jobs:
-  ios-ci:
-    name: Tuist Build & Core/Data Tests
+  module_ci:
+    name: ${{ matrix.job_name }} (${{ matrix.scheme }})
     runs-on: macos-15
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - job_name: app-build
+            scheme: PopPangApp
+            xcode_action: build
+            destination: generic/platform=iOS Simulator
+          - job_name: core-test
+            scheme: Core
+            xcode_action: test
+            destination: platform=iOS Simulator,name=iPhone 16,OS=latest
+          - job_name: data-test
+            scheme: Data
+            xcode_action: test
+            destination: platform=iOS Simulator,name=iPhone 16,OS=latest
+          - job_name: domain-build
+            scheme: Domain
+            xcode_action: build
+            destination: generic/platform=iOS Simulator
+          - job_name: dskit-build
+            scheme: DSKit
+            xcode_action: build
+            destination: generic/platform=iOS Simulator
 
     steps:
       - name: Checkout PR branch
@@ -57,10 +81,10 @@ jobs:
       - name: Cache DerivedData
         uses: actions/cache@v4
         with:
-          path: DerivedData
-          key: deriveddata-${{ runner.os }}-${{ hashFiles('Tuist/Package.resolved', 'Projects/**/*.swift') }}
+          path: DerivedData/${{ matrix.scheme }}
+          key: deriveddata-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('Tuist/Package.resolved', 'Projects/**/*.swift') }}
           restore-keys: |
-            deriveddata-${{ runner.os }}-
+            deriveddata-${{ runner.os }}-${{ matrix.scheme }}-
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_26.2.app
@@ -79,68 +103,52 @@ jobs:
           "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist install
           "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist generate
 
-      - name: Build PopPangApp
+      - name: Run ${{ matrix.job_name }}
+        env:
+          XCODE_ACTION: ${{ matrix.xcode_action }}
+          XCODE_DESTINATION: ${{ matrix.destination }}
+          XCODE_SCHEME: ${{ matrix.scheme }}
         run: |
           set -o pipefail
-          xcodebuild build \
+          xcodebuild "$XCODE_ACTION" \
             -workspace PopPang.xcworkspace \
-            -scheme PopPangApp \
-            -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath DerivedData \
+            -scheme "$XCODE_SCHEME" \
+            -destination "$XCODE_DESTINATION" \
+            -derivedDataPath "DerivedData/$XCODE_SCHEME" \
             CODE_SIGNING_ALLOWED=NO \
             | xcpretty
 
-      - name: Build Coordinator assembly
-        run: |
-          set -o pipefail
-          xcodebuild build \
-            -workspace PopPang.xcworkspace \
-            -scheme Coordinator \
-            -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath DerivedData \
-            CODE_SIGNING_ALLOWED=NO \
-            | xcpretty
+  notify:
+    name: Notify CI result
+    runs-on: ubuntu-latest
+    needs: module_ci
+    if: always()
 
-      - name: Run Core tests
-        run: |
-          set -o pipefail
-          xcodebuild test \
-            -workspace PopPang.xcworkspace \
-            -scheme Core \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            -derivedDataPath DerivedData \
-            CODE_SIGNING_ALLOWED=NO \
-            | xcpretty
-
-      - name: Run Data tests
-        run: |
-          set -o pipefail
-          xcodebuild test \
-            -workspace PopPang.xcworkspace \
-            -scheme Data \
-            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
-            -derivedDataPath DerivedData \
-            CODE_SIGNING_ALLOWED=NO \
-            | xcpretty
-
+    steps:
       - name: Comment success
-        if: success() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
+        if: needs.module_ci.result == 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.inputs.pr_number }}
           body: |
-            PopPangApp 빌드와 Core/Data 테스트가 성공했습니다.
+            모듈러 병렬 CI가 성공했습니다.
+
+            - app-build: PopPangApp
+            - core-test: Core
+            - data-test: Data
+            - domain-build: Domain
+            - dskit-build: DSKit
 
       - name: Comment failure
-        if: failure() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
+        if: needs.module_ci.result != 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.inputs.pr_number }}
           body: |
-            PopPangApp 빌드 또는 Core/Data 테스트가 실패했습니다. Actions 로그를 확인해주세요.
+            모듈러 병렬 CI가 실패했습니다. Actions 로그를 확인해주세요.
 
       - name: Send email on success
-        if: success()
+        if: needs.module_ci.result == 'success'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -149,7 +157,13 @@ jobs:
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: PopPang 모듈러 빌드 & 테스트 성공
           body: |
-            PopPangApp 빌드와 Core/Data 테스트가 성공했습니다.
+            모듈러 병렬 CI가 성공했습니다.
+
+            - app-build: PopPangApp
+            - core-test: Core
+            - data-test: Data
+            - domain-build: Domain
+            - dskit-build: DSKit
 
             Repository: ${{ github.repository }}
             Branch: ${{ github.ref_name }}
@@ -159,7 +173,7 @@ jobs:
           from: GitHub CI <${{ secrets.MAIL_USERNAME }}>
 
       - name: Send email on failure
-        if: failure()
+        if: needs.module_ci.result != 'success'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
@@ -168,7 +182,7 @@ jobs:
           password: ${{ secrets.MAIL_PASSWORD }}
           subject: PopPang 모듈러 빌드 또는 테스트 실패
           body: |
-            PopPangApp 빌드 또는 Core/Data 테스트가 실패했습니다.
+            모듈러 병렬 CI가 실패했습니다.
 
             Repository: ${{ github.repository }}
             Branch: ${{ github.ref_name }}
