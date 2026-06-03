@@ -19,8 +19,8 @@ public final class AdminUsecaseImpl: AdminUsecaseProtocol {
         try await adminRepository.registerPopup(parameters: parameters)
     }
 
-    public func uploadPopupImages(popupUuid: String, images: [AdminPopupImageUploadItem]) async throws {
-        try await adminRepository.uploadPopupImages(popupUuid: popupUuid, images: images)
+    public func createPopupSubmission(_ request: PopupSubmissionCreateRequest) async throws {
+        try await adminRepository.createPopupSubmission(request)
     }
 
     public func registerPopupRecommendations(popupUuid: String, recommendIds: [Int]) async throws {

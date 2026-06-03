@@ -13,11 +13,9 @@ public protocol AdminUsecaseProtocol {
     /// - Returns: 등록 응답에 포함된 popupUuid. 응답 body가 없으면 nil.
     func registerPopup(parameters: [String: Any]) async throws -> String?
 
-    /// 관리자 팝업 이미지 업로드
-    /// - Parameters:
-    ///   - popupUuid: popupUuid
-    ///   - images: 업로드할 이미지 데이터 목록
-    func uploadPopupImages(popupUuid: String, images: [AdminPopupImageUploadItem]) async throws
+    /// 팝업스토어 제보 등록
+    /// - Parameter request: 제보 등록 요청
+    func createPopupSubmission(_ request: PopupSubmissionCreateRequest) async throws
 
     /// 관리자 팝업 추천 정보 등록
     /// - Parameters:

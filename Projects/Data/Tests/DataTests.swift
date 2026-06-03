@@ -192,12 +192,49 @@ struct DataTests {
         #expect(stringBody.popupUuid == "popup-3")
     }
 
+    @Test("팝업 제보 요청 엔티티가 서버 DTO 날짜 형식으로 변환된다")
+    func popupSubmissionCreateRequestMapsToServerDTO() throws {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "yyyy-MM-dd"
+
+        let request = PopupSubmissionCreateRequest(
+            name: "성수 팝업",
+            startDate: try #require(formatter.date(from: "2026-06-03")),
+            endDate: try #require(formatter.date(from: "2026-06-10")),
+            address: "서울 성동구 성수이로 00",
+            description: "브랜드 팝업 제보",
+            submitterUserId: 1
+        )
+
+        let dto = request.toDTO()
+
+        #expect(dto.name == "성수 팝업")
+        #expect(dto.startDate == "2026-06-03")
+        #expect(dto.endDate == "2026-06-10")
+        #expect(dto.address == "서울 성동구 성수이로 00")
+        #expect(dto.description == "브랜드 팝업 제보")
+        #expect(dto.submitterUserId == 1)
+
+        let anonymousDTO = PopupSubmissionCreateRequestDTO(
+            name: "성수 팝업",
+            startDate: "2026-06-03",
+            endDate: "2026-06-10",
+            address: "서울 성동구 성수이로 00",
+            description: "브랜드 팝업 제보",
+            submitterUserId: nil
+        )
+        let jsonObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(anonymousDTO)) as? [String: Any]
+
+        #expect(jsonObject?["submitterUserId"] == nil)
+    }
+
     @Test("API 경로가 V0 엔드포인트 정의와 일치한다")
     func apiPathsMatchV0EndpointDefinitions() {
         #expect(AdminAPI.getPopupValidationList.path == "/admin/popup-validation")
         #expect(AdminAPI.validatePopup(parameters: [:]).path == "/admin/popup-validation")
         #expect(AdminAPI.registerPopup(parameters: [:]).path == "/admin/popup")
-        #expect(AdminAPI.uploadPopupImages(popupUuid: "popup-1", multipartFormData: []).path == "/admin/popup/popup-1/images")
+        #expect(AdminAPI.createPopupSubmission(requestDTO: .fixture).path == "/admin/popup-submissions")
         #expect(AdminAPI.registerPopupRecommendations(popupUuid: "popup-1", recommendIds: [1, 2]).path == "/admin/popup/popup-1/recommendations")
         #expect(AdminAPI.deactivatePopup(userUuid: "user-1", popupUuid: "popup-1").path == "/admin/user/user-1/popup/popup-1/deactivate")
 
@@ -249,7 +286,7 @@ struct DataTests {
         #expect(AdminAPI.getPopupValidationList.method == .get)
         #expect(AdminAPI.validatePopup(parameters: [:]).method == .post)
         #expect(AdminAPI.registerPopup(parameters: [:]).method == .post)
-        #expect(AdminAPI.uploadPopupImages(popupUuid: "popup-1", multipartFormData: []).method == .post)
+        #expect(AdminAPI.createPopupSubmission(requestDTO: .fixture).method == .post)
         #expect(AdminAPI.registerPopupRecommendations(popupUuid: "popup-1", recommendIds: [1, 2]).method == .post)
         #expect(AdminAPI.deactivatePopup(userUuid: "user-1", popupUuid: "popup-1").method == .patch)
 
@@ -363,4 +400,15 @@ struct DataTests {
     private func contractTypeName(of value: Any) -> String {
         String(describing: type(of: value))
     }
+}
+
+private extension PopupSubmissionCreateRequestDTO {
+    static let fixture = PopupSubmissionCreateRequestDTO(
+        name: "성수 팝업",
+        startDate: "2026-06-03",
+        endDate: "2026-06-10",
+        address: "서울 성동구 성수이로 00",
+        description: "브랜드 팝업 제보",
+        submitterUserId: 1
+    )
 }

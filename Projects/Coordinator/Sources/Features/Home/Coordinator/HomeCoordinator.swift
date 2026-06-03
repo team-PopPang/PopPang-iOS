@@ -49,9 +49,6 @@ public final class HomeCoordinator: Coordinator<
                 popups: popups,
                 onSelectPopup: { [weak self] userUuid, popup in
                     self?.pushPopupDetail(userUuid: userUuid, popup: popup)
-                },
-                popupDetailDestination: { [weak self] userUuid, popup in
-                    self?.makePopupDetailDestination(userUuid: userUuid, popup: popup) ?? AnyView(EmptyView())
                 }
             )
         case .alert(let userUuid):
@@ -63,12 +60,6 @@ public final class HomeCoordinator: Coordinator<
             )
         case .reviewDetail(let reviews):
             ReviewFeatureView(reviews: reviews)
-        case .popupReport:
-            PopupReportFeatureView(
-                onDismiss: { [weak self] in
-                    self?.pop()
-                }
-            )
         }
     }
 
@@ -89,6 +80,13 @@ public final class HomeCoordinator: Coordinator<
                 }
             )
             .accessibilityIdentifier("home_search")
+        case .popupReport:
+            PopupReportFeatureView(
+                userUuid: session.userUuid,
+                onDismiss: { [weak self] in
+                    self?.dismissFullScreen()
+                }
+            )
         }
     }
 
@@ -101,9 +99,6 @@ public final class HomeCoordinator: Coordinator<
             },
             onShowAlert: { [weak self] userUuid in
                 self?.routeToAlert(userUuid: userUuid)
-            },
-            popupDetailDestination: { [weak self] userUuid, popup in
-                self?.makePopupDetailDestination(userUuid: userUuid, popup: popup) ?? AnyView(EmptyView())
             }
         )
     }

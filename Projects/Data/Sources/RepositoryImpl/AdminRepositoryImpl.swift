@@ -20,11 +20,8 @@ public final class AdminRepositoryImpl: AdminRepositoryProtocol {
         return try JSONDecoder().decode(AdminPopupRegistrationResponseDTO.self, from: response.data).popupUuid
     }
 
-    public func uploadPopupImages(popupUuid: String, images: [AdminPopupImageUploadItem]) async throws {
-        let multipartFormData = images.map { $0.toDTO().toMultipartFormData() }
-        try await adminProvider.asyncRequestVoid(
-            .uploadPopupImages(popupUuid: popupUuid, multipartFormData: multipartFormData)
-        )
+    public func createPopupSubmission(_ request: PopupSubmissionCreateRequest) async throws {
+        try await adminProvider.asyncRequestVoid(.createPopupSubmission(requestDTO: request.toDTO()))
     }
 
     public func registerPopupRecommendations(popupUuid: String, recommendIds: [Int]) async throws {

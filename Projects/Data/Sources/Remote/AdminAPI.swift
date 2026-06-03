@@ -6,7 +6,7 @@ public enum AdminAPI {
     case getPopupValidationList
     case validatePopup(parameters: [String: Any])
     case registerPopup(parameters: [String: Any])
-    case uploadPopupImages(popupUuid: String, multipartFormData: [MultipartFormData])
+    case createPopupSubmission(requestDTO: PopupSubmissionCreateRequestDTO)
     case registerPopupRecommendations(popupUuid: String, recommendIds: [Int])
     case deactivatePopup(userUuid: String, popupUuid: String)
 }
@@ -18,8 +18,8 @@ extension AdminAPI: BaseAPI {
             return "/admin/popup-validation"
         case .registerPopup:
             return "/admin/popup"
-        case .uploadPopupImages(let popupUuid, _):
-            return "/admin/popup/\(popupUuid)/images"
+        case .createPopupSubmission:
+            return "/admin/popup-submissions"
         case .registerPopupRecommendations(let popupUuid, _):
             return "/admin/popup/\(popupUuid)/recommendations"
         case .deactivatePopup(let userUuid, let popupUuid):
@@ -31,7 +31,7 @@ extension AdminAPI: BaseAPI {
         switch self {
         case .getPopupValidationList:
             return .get
-        case .validatePopup, .registerPopup, .uploadPopupImages, .registerPopupRecommendations:
+        case .validatePopup, .registerPopup, .createPopupSubmission, .registerPopupRecommendations:
             return .post
         case .deactivatePopup:
             return .patch
@@ -44,8 +44,8 @@ extension AdminAPI: BaseAPI {
             return .requestPlain
         case .validatePopup(let parameters), .registerPopup(let parameters):
             return .requestParameters(parameters: parameters, encoding: JSONEncoding.default)
-        case .uploadPopupImages(_, let multipartFormData):
-            return .uploadMultipart(multipartFormData)
+        case .createPopupSubmission(let requestDTO):
+            return .requestJSONEncodable(requestDTO)
         case .registerPopupRecommendations(_, let recommendIds):
             return .requestParameters(parameters: ["recommendIds": recommendIds], encoding: JSONEncoding.default)
         }

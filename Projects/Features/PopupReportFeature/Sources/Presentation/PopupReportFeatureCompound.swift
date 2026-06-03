@@ -33,6 +33,7 @@ final class PopupReportFeatureCompound {
     }
 
     struct State: Equatable {
+        var userUuid = ""
         var name = ""
         var startDate = Date()
         var endDate = Calendar.current.date(byAdding: .day, value: 7, to: Date()) ?? Date()
@@ -45,7 +46,6 @@ final class PopupReportFeatureCompound {
         var closeTime = ""
         var latitude = ""
         var longitude = ""
-        var instaPostId = ""
         var recommendList: [Recommend] = []
         var selectedRecommendIds: [Int] = []
         var images: [PopupReportSelectedImage] = []
@@ -59,7 +59,9 @@ final class PopupReportFeatureCompound {
     @Dependency private var adminUsecase: AdminUsecaseProtocol
     @Dependency private var userUsecase: UserUsecaseProtocol
 
-    init() {}
+    init(userUuid: String = "demo-user") {
+        state.userUuid = userUuid
+    }
 
     func react(action: Action) -> AsyncStream<Reaction> {
         switch action {
@@ -155,7 +157,6 @@ enum PopupReportTextField: Hashable {
     case closeTime
     case latitude
     case longitude
-    case instaPostId
 }
 
 struct PopupReportSelectedImage: Identifiable, Equatable {
@@ -175,31 +176,10 @@ struct PopupReportSelectedImage: Identifiable, Equatable {
         self.fileName = fileName
         self.mimeType = mimeType
     }
-
-    var uploadItem: AdminPopupImageUploadItem {
-        AdminPopupImageUploadItem(
-            data: data,
-            fileName: fileName,
-            mimeType: mimeType
-        )
-    }
 }
 
 private struct PopupReportSubmissionPayload {
-    let parameters: [String: Any]
-    let images: [AdminPopupImageUploadItem]
-    let recommendIds: [Int]
-}
-
-private enum PopupReportSubmissionError: LocalizedError {
-    case missingPopupUuidForAttachment
-
-    var errorDescription: String? {
-        switch self {
-        case .missingPopupUuidForAttachment:
-            "이미지 또는 추천 카테고리를 연결하려면 팝업 등록 응답에 popupUuid가 필요합니다."
-        }
-    }
+    let request: PopupSubmissionCreateRequest
 }
 
 private struct PopupReportValidationError: LocalizedError {
@@ -216,6 +196,8 @@ extension PopupReportFeatureCompound.State {
             trimmed(.roadAddress).isEmpty == false &&
             trimmed(.region).isEmpty == false &&
             trimmed(.captionSummary).isEmpty == false &&
+            selectedRecommendIds.isEmpty == false &&
+            images.isEmpty == false &&
             isSubmitting == false
     }
 
@@ -241,8 +223,6 @@ extension PopupReportFeatureCompound.State {
             latitude
         case .longitude:
             longitude
-        case .instaPostId:
-            instaPostId
         }
     }
 
@@ -272,8 +252,6 @@ extension PopupReportFeatureCompound.State {
             latitude = text
         case .longitude:
             longitude = text
-        case .instaPostId:
-            instaPostId = text
         }
     }
 }
@@ -302,26 +280,7 @@ private extension PopupReportFeatureCompound {
             .just(.setErrorMessage(nil)),
             .run { [adminUsecase, payload] send in
                 do {
-                    let popupUuid = try await adminUsecase.registerPopup(parameters: payload.parameters)
-                        .flatMap { $0.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty }
-
-                    if payload.images.isEmpty == false {
-                        guard let popupUuid else {
-                            throw PopupReportSubmissionError.missingPopupUuidForAttachment
-                        }
-                        try await adminUsecase.uploadPopupImages(popupUuid: popupUuid, images: payload.images)
-                    }
-
-                    if payload.recommendIds.isEmpty == false {
-                        guard let popupUuid else {
-                            throw PopupReportSubmissionError.missingPopupUuidForAttachment
-                        }
-                        try await adminUsecase.registerPopupRecommendations(
-                            popupUuid: popupUuid,
-                            recommendIds: payload.recommendIds
-                        )
-                    }
-
+                    try await adminUsecase.createPopupSubmission(payload.request)
                     await send(.setSubmitted(true))
                 } catch {
                     await send(.setErrorMessage(error.localizedDescription))
@@ -340,6 +299,7 @@ private extension PopupReportFeatureCompound {
         let region = state.trimmed(.region)
         let instaPostUrl = state.trimmed(.instaPostUrl)
         let captionSummary = state.trimmed(.captionSummary)
+        let submitterUserId = Int64(state.userUuid.trimmingCharacters(in: .whitespacesAndNewlines))
 
         guard name.isEmpty == false else { return .failure(.init(message: "팝업명을 입력해 주세요.")) }
         guard roadAddress.isEmpty == false else { return .failure(.init(message: "도로명 주소를 입력해 주세요.")) }
@@ -348,67 +308,28 @@ private extension PopupReportFeatureCompound {
             return .failure(.init(message: "인스타그램 URL을 올바르게 입력해 주세요."))
         }
         guard captionSummary.isEmpty == false else { return .failure(.init(message: "팝업 소개를 입력해 주세요.")) }
+        guard state.selectedRecommendIds.isEmpty == false else {
+            return .failure(.init(message: "추천 카테고리를 1개 이상 선택해 주세요."))
+        }
+        guard state.images.isEmpty == false else {
+            return .failure(.init(message: "이미지를 1개 이상 선택해 주세요."))
+        }
         guard state.endDate >= state.startDate else {
             return .failure(.init(message: "종료일은 시작일보다 빠를 수 없습니다."))
         }
 
-        let latitudeResult = optionalDouble(from: state.trimmed(.latitude), fieldName: "위도")
-        if case .failure(let error) = latitudeResult { return .failure(error) }
-
-        let longitudeResult = optionalDouble(from: state.trimmed(.longitude), fieldName: "경도")
-        if case .failure(let error) = longitudeResult { return .failure(error) }
-
-        var parameters: [String: Any] = [
-            "name": name,
-            "startDate": DateFormatter.popupDateFormat.string(from: state.startDate),
-            "endDate": DateFormatter.popupDateFormat.string(from: state.endDate),
-            "address": state.trimmed(.address).nilIfEmpty ?? roadAddress,
-            "roadAddress": roadAddress,
-            "region": region,
-            "captionSummary": captionSummary,
-            "mediaType": state.images.count > 1 ? "CAROUSEL_ALBUM" : "IMAGE",
-        ]
-
-        if let instaPostUrl = instaPostUrl.nilIfEmpty {
-            parameters["instaPostUrl"] = instaPostUrl
-            if let instaPostId = state.trimmed(.instaPostId).nilIfEmpty ?? postId(from: instaPostUrl).nilIfEmpty {
-                parameters["instaPostId"] = instaPostId
-            }
-        } else if let instaPostId = state.trimmed(.instaPostId).nilIfEmpty {
-            parameters["instaPostId"] = instaPostId
-        }
-
-        if let openTime = state.trimmed(.openTime).nilIfEmpty {
-            parameters["openTime"] = openTime
-        }
-
-        if let closeTime = state.trimmed(.closeTime).nilIfEmpty {
-            parameters["closeTime"] = closeTime
-        }
-
-        if case .success(let latitude?) = latitudeResult {
-            parameters["latitude"] = latitude
-        }
-
-        if case .success(let longitude?) = longitudeResult {
-            parameters["longitude"] = longitude
-        }
-
         return .success(
             PopupReportSubmissionPayload(
-                parameters: parameters,
-                images: state.images.map(\.uploadItem),
-                recommendIds: state.selectedRecommendIds
+                request: PopupSubmissionCreateRequest(
+                    name: name,
+                    startDate: state.startDate,
+                    endDate: state.endDate,
+                    address: state.trimmed(.address).nilIfEmpty ?? roadAddress,
+                    description: captionSummary,
+                    submitterUserId: submitterUserId
+                )
             )
         )
-    }
-
-    func optionalDouble(from text: String, fieldName: String) -> Result<Double?, PopupReportValidationError> {
-        guard text.isEmpty == false else { return .success(nil) }
-        guard let value = Double(text) else {
-            return .failure(.init(message: "\(fieldName)는 숫자로 입력해 주세요."))
-        }
-        return .success(value)
     }
 
     func isValidWebURL(_ text: String) -> Bool {
@@ -417,11 +338,6 @@ private extension PopupReportFeatureCompound {
         else { return false }
 
         return scheme == "http" || scheme == "https"
-    }
-
-    func postId(from urlString: String) -> String {
-        guard let url = URL(string: urlString) else { return "" }
-        return url.pathComponents.last { $0 != "/" } ?? ""
     }
 
     func emptyReactionStream() -> AsyncStream<Reaction> {

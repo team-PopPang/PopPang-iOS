@@ -13,8 +13,8 @@ public struct PopupReportFeatureView: View {
 
     private let onDismiss: (() -> Void)?
 
-    public init(onDismiss: (() -> Void)? = nil) {
-        _compound = State(wrappedValue: PopupReportFeatureCompound())
+    public init(userUuid: String = "demo-user", onDismiss: (() -> Void)? = nil) {
+        _compound = State(wrappedValue: PopupReportFeatureCompound(userUuid: userUuid))
         self.onDismiss = onDismiss
     }
 
@@ -25,8 +25,8 @@ public struct PopupReportFeatureView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     requiredSection
-                    optionalSection
                     imageSection
+                    optionalSection
                 }
                 .padding(.horizontal, .contentPadding)
                 .padding(.top, 24)
@@ -34,7 +34,8 @@ public struct PopupReportFeatureView: View {
             }
         }
         .background(Color.mainGray4.ignoresSafeArea())
-        .navigationBarBackButtonHidden()
+        .navigationBarBackButtonHidden(true)
+        .toolbar(.hidden, for: .navigationBar)
         .safeAreaInset(edge: .bottom, spacing: 0) {
             submitButton
         }
@@ -68,9 +69,12 @@ private extension PopupReportFeatureView {
             Button {
                 close()
             } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Color.mainBlack)
+                DSKitResource.image("backButton")
+                    .renderingMode(.template)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 18, height: 18)
+                    .foregroundStyle(Color.subBlack)
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
@@ -131,6 +135,15 @@ private extension PopupReportFeatureView {
                 text: binding(.captionSummary),
                 isRequired: true
             )
+
+            PopupReportCategoryPicker(
+                title: "추천 카테고리",
+                categories: compound.state.recommendList,
+                selectedIds: compound.state.selectedRecommendIds,
+                isRequired: true
+            ) { id in
+                compound.send(.categoryToggled(id))
+            }
         }
     }
 
@@ -181,26 +194,11 @@ private extension PopupReportFeatureView {
                 keyboardType: .URL,
                 textInputAutocapitalization: .never
             )
-
-            PopupReportTextInput(
-                title: "게시물 ID",
-                placeholder: "URL에서 자동 추출되며 직접 입력도 가능",
-                text: binding(.instaPostId),
-                textInputAutocapitalization: .never
-            )
-
-            PopupReportCategoryPicker(
-                title: "추천 카테고리",
-                categories: compound.state.recommendList,
-                selectedIds: compound.state.selectedRecommendIds
-            ) { id in
-                compound.send(.categoryToggled(id))
-            }
         }
     }
 
     var imageSection: some View {
-        PopupReportFormSection(title: "이미지") {
+        PopupReportFormSection(title: "이미지", isRequired: true) {
             PhotosPicker(
                 selection: $selectedPhotoItems,
                 maxSelectionCount: 10,
@@ -326,21 +324,32 @@ private extension PopupReportFeatureView {
 
 private struct PopupReportFormSection<Content: View>: View {
     let title: String
+    let isRequired: Bool
     private let content: Content
 
     init(
         title: String,
+        isRequired: Bool = false,
         @ViewBuilder content: () -> Content
     ) {
         self.title = title
+        self.isRequired = isRequired
         self.content = content()
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(title)
-                .font(.scdream(.bold, size: 15))
-                .foregroundStyle(Color.mainBlack)
+            HStack(spacing: 3) {
+                Text(title)
+                    .font(.scdream(.bold, size: 15))
+                    .foregroundStyle(Color.mainBlack)
+
+                if isRequired {
+                    Text("*")
+                        .font(.scdream(.bold, size: 15))
+                        .foregroundStyle(Color.mainOrange)
+                }
+            }
 
             VStack(spacing: 14) {
                 content
@@ -429,11 +438,12 @@ private struct PopupReportCategoryPicker: View {
     let title: String
     let categories: [Recommend]
     let selectedIds: [Int]
+    var isRequired = false
     let onToggle: (Int) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            PopupReportFieldTitle(title: title, isRequired: false)
+            PopupReportFieldTitle(title: title, isRequired: isRequired)
 
             if categories.isEmpty {
                 Text("추천 카테고리를 불러오는 중입니다.")
@@ -451,7 +461,7 @@ private struct PopupReportCategoryPicker: View {
             } else {
                 SearchFlowLayout {
                     ForEach(categories) { category in
-                        CategoryButton(
+                        PopupReportCategoryButton(
                             title: category.recommendName,
                             isSelected: selectedIds.contains(category.id)
                         ) {
@@ -464,6 +474,32 @@ private struct PopupReportCategoryPicker: View {
                 .padding(.vertical, 2)
             }
         }
+    }
+}
+
+private struct PopupReportCategoryButton: View {
+    let title: String
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.scdream(.medium, size: 12))
+                .lineLimit(1)
+                .foregroundStyle(isSelected ? Color.mainOrange : Color.mainGray)
+                .padding(.horizontal, 16)
+                .frame(minHeight: 34)
+                .background {
+                    Capsule()
+                        .fill(isSelected ? Color.categoryOrange : Color.subWhite)
+                }
+                .overlay {
+                    Capsule()
+                        .stroke(isSelected ? Color.mainOrange : Color.mainGray3, lineWidth: 1)
+                }
+        }
+        .buttonStyle(PressableButtonStyle())
     }
 }
 
