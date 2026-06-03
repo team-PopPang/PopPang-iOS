@@ -66,6 +66,7 @@ struct DataTests {
         #expect(popup.region == "서울")
         #expect(popup.latitude == 37.544)
         #expect(popup.longitude == 127.055)
+        #expect(popup.instaPostUrl == "https://instagram.com/p/post-1")
         #expect(popup.mediaType == .video)
         #expect(popup.favoriteCount == 12)
         #expect(popup.viewCount == 34)
@@ -76,6 +77,65 @@ struct DataTests {
         #expect(Calendar.current.component(.year, from: popup.startDate) == 2026)
         #expect(Calendar.current.component(.month, from: popup.startDate) == 5)
         #expect(Calendar.current.component(.day, from: popup.startDate) == 1)
+    }
+
+    @Test("팝업 DTO가 인스타 URL 누락과 null을 허용한다")
+    func popupDTOAllowsMissingInstagramURL() throws {
+        let missingURLJSON = """
+        {
+          "popupUuid": "popup-1",
+          "name": "성수 팝업",
+          "startDate": "26.05.01",
+          "endDate": "26.05.31",
+          "openTime": null,
+          "closeTime": null,
+          "address": "서울 성동구",
+          "roadAddress": "서울 성동구 성수이로",
+          "region": "서울",
+          "latitude": null,
+          "longitude": null,
+          "captionSummary": "요약",
+          "imageUrlList": [],
+          "mediaType": "image",
+          "favoriteCount": 0,
+          "viewCount": 0,
+          "isFavorited": false,
+          "recommendList": []
+        }
+        """.data(using: .utf8)!
+
+        let nullURLJSON = """
+        {
+          "popupUuid": "popup-2",
+          "name": "성수 팝업",
+          "startDate": "26.05.01",
+          "endDate": "26.05.31",
+          "openTime": null,
+          "closeTime": null,
+          "address": "서울 성동구",
+          "roadAddress": "서울 성동구 성수이로",
+          "region": "서울",
+          "latitude": null,
+          "longitude": null,
+          "instaPostId": null,
+          "instaPostUrl": null,
+          "captionSummary": "요약",
+          "imageUrlList": [],
+          "mediaType": "image",
+          "favoriteCount": 0,
+          "viewCount": 0,
+          "isFavorited": false,
+          "recommendList": []
+        }
+        """.data(using: .utf8)!
+
+        let missingURLPopup = try JSONDecoder().decode(PopupDTO.self, from: missingURLJSON).toEntity()
+        let nullURLPopup = try JSONDecoder().decode(PopupDTO.self, from: nullURLJSON).toEntity()
+
+        #expect(missingURLPopup.instaPostId == nil)
+        #expect(missingURLPopup.instaPostUrl == nil)
+        #expect(nullURLPopup.instaPostId == nil)
+        #expect(nullURLPopup.instaPostUrl == nil)
     }
 
     @Test("단순 DTO들이 V0와 같은 도메인 모델 값으로 변환된다")
@@ -110,6 +170,26 @@ struct DataTests {
         #expect(user.fcmToken == "fcm-token")
         #expect(user.alertKeywordList == ["성수"])
         #expect(user.recommendList == [7])
+    }
+
+    @Test("관리자 팝업 등록 응답에서 popupUuid를 추출한다")
+    func adminPopupRegistrationResponseExtractsPopupUuid() throws {
+        let direct = try JSONDecoder().decode(
+            AdminPopupRegistrationResponseDTO.self,
+            from: #"{"popupUuid":"popup-1"}"#.data(using: .utf8)!
+        )
+        let nested = try JSONDecoder().decode(
+            AdminPopupRegistrationResponseDTO.self,
+            from: #"{"data":{"uuid":"popup-2"}}"#.data(using: .utf8)!
+        )
+        let stringBody = try JSONDecoder().decode(
+            AdminPopupRegistrationResponseDTO.self,
+            from: #""popup-3""#.data(using: .utf8)!
+        )
+
+        #expect(direct.popupUuid == "popup-1")
+        #expect(nested.popupUuid == "popup-2")
+        #expect(stringBody.popupUuid == "popup-3")
     }
 
     @Test("API 경로가 V0 엔드포인트 정의와 일치한다")

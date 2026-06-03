@@ -3,6 +3,7 @@ import Core
 import Domain
 import HomeFeature
 import PopupDetailFeature
+import PopupReportFeature
 import ReviewFeature
 import SearchFeature
 import SwiftUI
@@ -62,6 +63,12 @@ public final class HomeCoordinator: Coordinator<
             )
         case .reviewDetail(let reviews):
             ReviewFeatureView(reviews: reviews)
+        case .popupReport:
+            PopupReportFeatureView(
+                onDismiss: { [weak self] in
+                    self?.pop()
+                }
+            )
         }
     }
 

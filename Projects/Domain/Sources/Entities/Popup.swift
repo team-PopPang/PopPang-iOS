@@ -14,8 +14,8 @@ public struct Popup: Hashable, Identifiable, Encodable, Sendable {
     public let region: String
     public let latitude: Double?
     public let longitude: Double?
-    public let instaPostId: String
-    public let instaPostUrl: String
+    public let instaPostId: String?
+    public let instaPostUrl: String?
     public let captionSummary: String
     public let imageUrlList: [String]
     public let mediaType: MediaType
@@ -36,8 +36,8 @@ public struct Popup: Hashable, Identifiable, Encodable, Sendable {
         region: String,
         latitude: Double?,
         longitude: Double?,
-        instaPostId: String,
-        instaPostUrl: String,
+        instaPostId: String?,
+        instaPostUrl: String?,
         captionSummary: String,
         imageUrlList: [String],
         mediaType: MediaType,

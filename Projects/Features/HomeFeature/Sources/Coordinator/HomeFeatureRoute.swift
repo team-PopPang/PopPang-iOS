@@ -6,6 +6,7 @@ public enum HomeFeatureRoute: Sendable {
     case comingPopupDetail(userUuid: String, popups: [Popup])
     case alert(userUuid: String)
     case reviewDetail([Review])
+    case popupReport
 }
 
 extension HomeFeatureRoute: Hashable {
@@ -19,6 +20,8 @@ extension HomeFeatureRoute: Hashable {
             lhsUserUuid == rhsUserUuid
         case let (.reviewDetail(lhsReviews), .reviewDetail(rhsReviews)):
             lhsReviews.map(\.id) == rhsReviews.map(\.id)
+        case (.popupReport, .popupReport):
+            true
         default:
             false
         }
@@ -40,6 +43,8 @@ extension HomeFeatureRoute: Hashable {
         case let .reviewDetail(reviews):
             hasher.combine("reviewDetail")
             hasher.combine(reviews.map(\.id))
+        case .popupReport:
+            hasher.combine("popupReport")
         }
     }
 }

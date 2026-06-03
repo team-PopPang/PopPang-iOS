@@ -14,8 +14,8 @@ public struct PopupDTO: Decodable, Sendable {
     public let region: String
     public let latitude: Double?
     public let longitude: Double?
-    public let instaPostId: String
-    public let instaPostUrl: String
+    public let instaPostId: String?
+    public let instaPostUrl: String?
     public let captionSummary: String
     public let imageUrlList: [String]
     public let mediaType: String

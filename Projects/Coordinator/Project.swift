@@ -4,6 +4,7 @@ let featureDependencies: [TargetDependency] = [
     .project(target: "AuthFeature", path: "../Features/AuthFeature"),
     .project(target: "OnboardingFeature", path: "../Features/OnboardingFeature"),
     .project(target: "HomeFeature", path: "../Features/HomeFeature"),
+    .project(target: "PopupReportFeature", path: "../Features/PopupReportFeature"),
     .project(target: "SearchFeature", path: "../Features/SearchFeature"),
     .project(target: "PopupDetailFeature", path: "../Features/PopupDetailFeature"),
     .project(target: "MapFeature", path: "../Features/MapFeature"),

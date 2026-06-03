@@ -51,6 +51,9 @@ public struct HomeFeatureView: View {
                     },
                     onAlert: { userUuid in
                         onShowAlert(userUuid)
+                    },
+                    onReport: {
+                        coordinator.push(.popupReport)
                     }
                 )
 
@@ -231,6 +234,7 @@ private struct HomeNavigationBar: View {
     let userUuid: String
     let onSearch: (String) -> Void
     let onAlert: (String) -> Void
+    let onReport: () -> Void
 
     var body: some View {
         CustomNavigationBar {
@@ -248,6 +252,11 @@ private struct HomeNavigationBar: View {
             IconButton {
                 onAlert(userUuid)
             }
+
+            IconButton(image: "square.and.pencil", systemImage: true, imageSize: 21) {
+                onReport()
+            }
+            .accessibilityIdentifier("home_popup_report_button")
         }
         .padding(.bottom, 15)
     }

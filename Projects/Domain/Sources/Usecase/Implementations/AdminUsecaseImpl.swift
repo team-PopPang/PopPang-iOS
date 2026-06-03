@@ -15,7 +15,7 @@ public final class AdminUsecaseImpl: AdminUsecaseProtocol {
         try await adminRepository.validatePopup(parameters: parameters)
     }
 
-    public func registerPopup(parameters: [String: Any]) async throws {
+    public func registerPopup(parameters: [String: Any]) async throws -> String? {
         try await adminRepository.registerPopup(parameters: parameters)
     }
 

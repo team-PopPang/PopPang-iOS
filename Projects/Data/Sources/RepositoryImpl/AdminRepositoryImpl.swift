@@ -14,8 +14,10 @@ public final class AdminRepositoryImpl: AdminRepositoryProtocol {
         try await adminProvider.asyncRequestVoid(.validatePopup(parameters: parameters))
     }
 
-    public func registerPopup(parameters: [String: Any]) async throws {
-        try await adminProvider.asyncRequestVoid(.registerPopup(parameters: parameters))
+    public func registerPopup(parameters: [String: Any]) async throws -> String? {
+        let response = try await adminProvider.asyncRequest(.registerPopup(parameters: parameters))
+        guard response.data.isEmpty == false else { return nil }
+        return try JSONDecoder().decode(AdminPopupRegistrationResponseDTO.self, from: response.data).popupUuid
     }
 
     public func uploadPopupImages(popupUuid: String, images: [AdminPopupImageUploadItem]) async throws {

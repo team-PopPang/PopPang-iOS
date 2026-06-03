@@ -10,7 +10,8 @@ public protocol AdminRepositoryProtocol {
 
     /// 관리자 팝업 등록
     /// - Parameter parameters: API 요청 body
-    func registerPopup(parameters: [String: Any]) async throws
+    /// - Returns: 등록 응답에 포함된 popupUuid. 응답 body가 없으면 nil.
+    func registerPopup(parameters: [String: Any]) async throws -> String?
 
     /// 관리자 팝업 이미지 업로드
     /// - Parameters:
