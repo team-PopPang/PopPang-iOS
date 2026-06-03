@@ -156,8 +156,8 @@ public struct HomeFeatureView: View {
                                 sheetRoute = .sortSheet
                             }
                         )
-                            .padding(.bottom, 10)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.bottom, 10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .sectionLayout(.grid(columns: 2, itemHeight: 302, columnSpacing: 15, rowSpacing: 20))
                     .sectionContentInsets(LKEdgeInsets(
@@ -242,12 +242,30 @@ private struct HomeNavigationBar: View {
                 onAlert(userUuid)
             }
 
-            IconButton(image: "square.and.pencil", systemImage: true, imageSize: 21) {
+            HomeReportButton {
                 onReport()
             }
             .accessibilityIdentifier("home_popup_report_button")
         }
         .padding(.bottom, 15)
+    }
+}
+
+private struct HomeReportButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "square.and.pencil")
+                .font(.system(size: 20, weight: .regular))
+                .foregroundStyle(Color.subBlack)
+                .frame(width: 21, height: 21)
+                .padding(10)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .contentShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .offset(y: -1.5)
+        .buttonStyle(PressableButtonStyle())
     }
 }
 
@@ -664,3 +682,214 @@ public struct ComingPopupDetailFeatureView: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("HomeFeatureView") {
+    HomeFeaturePreviewContainer()
+}
+
+private struct HomeFeaturePreviewContainer: View {
+    @State private var coordinator = HomeFeatureCoordinator()
+
+    init() {
+        DIContainer.shared.register(
+            HomeFeaturePreviewPopupUsecase(),
+            for: PopupUsecaseProtocol.self
+        )
+    }
+
+    var body: some View {
+        HomeFeatureView(
+            userUuid: "preview-user",
+            nickname: "팝팡"
+        )
+        .environment(coordinator)
+    }
+}
+
+private final class HomeFeaturePreviewPopupUsecase: PopupUsecaseProtocol {
+    private let popups: [Popup] = [
+        .preview(
+            popupUuid: "preview-1",
+            name: "성수 라이프스타일 팝업",
+            roadAddress: "서울 성동구 성수동",
+            startDate: Date().addingTimeInterval(60 * 60 * 24 * 2),
+            endDate: Date().addingTimeInterval(60 * 60 * 24 * 12),
+            favoriteCount: 124,
+            viewCount: 851,
+            isFavorited: true,
+            recommendList: ["생활용품", "친환경"]
+        ),
+        .preview(
+            popupUuid: "preview-2",
+            name: "홍대 디저트 마켓",
+            roadAddress: "서울 마포구 서교동",
+            startDate: Date().addingTimeInterval(60 * 60 * 24 * 5),
+            endDate: Date().addingTimeInterval(60 * 60 * 24 * 15),
+            favoriteCount: 78,
+            viewCount: 430,
+            recommendList: ["디저트", "카페"]
+        ),
+        .preview(
+            popupUuid: "preview-3",
+            name: "더현대 패션 쇼룸",
+            roadAddress: "서울 영등포구 여의도동",
+            startDate: Date().addingTimeInterval(-60 * 60 * 24),
+            endDate: Date().addingTimeInterval(60 * 60 * 24 * 8),
+            favoriteCount: 210,
+            viewCount: 1_924,
+            recommendList: ["패션", "뷰티"]
+        ),
+        .preview(
+            popupUuid: "preview-4",
+            name: "잠실 캐릭터 굿즈 페어",
+            roadAddress: "서울 송파구 잠실동",
+            startDate: Date().addingTimeInterval(60 * 60 * 24 * 9),
+            endDate: Date().addingTimeInterval(60 * 60 * 24 * 20),
+            favoriteCount: 56,
+            viewCount: 619,
+            isFavorited: true,
+            recommendList: ["애니메이션", "게임"]
+        ),
+    ]
+
+    func getPopupList() async throws -> [Popup] {
+        popups
+    }
+
+    func getUpcomingPopupList() async throws -> [Popup] {
+        popups
+    }
+
+    func getInProgressPopupList() async throws -> [Popup] {
+        popups
+    }
+
+    func getFavoriteList(userUuid: String) async throws -> [Popup] {
+        popups.filter(\.isFavorited)
+    }
+
+    func searchPopupList(searchText: String) async throws -> [Popup] {
+        popups
+    }
+
+    func getRandomPopupList() async throws -> [Popup] {
+        popups
+    }
+
+    func getPersonalPopupList(userUuid: String) async throws -> [Popup] {
+        popups
+    }
+
+    func getPersonalUseerRecommendPopupList(userUuid: String) async throws -> [Popup] {
+        popups
+    }
+
+    func getPersonalUpcomingPopupList(userUuid: String) async throws -> [Popup] {
+        popups
+    }
+
+    func getPersonalFilteredPopupList(
+        userUuid: String,
+        region: String,
+        district: String,
+        homeSortStandard: String
+    ) async throws -> [Popup] {
+        popups
+    }
+
+    func getPersonalSearchPopupList(userUuid: String, searchText: String) async throws -> [Popup] {
+        popups
+    }
+
+    func getPersonalMapFilteredPopupList(
+        userUuid: String,
+        region: String,
+        district: String,
+        latitude: Double?,
+        longitude: Double?,
+        mapSortStandard: String
+    ) async throws -> [Popup] {
+        popups
+    }
+
+    func getPersonalRelatedPopupList(userUuid: String, popupUuid: String) async throws -> [Popup] {
+        popups.filter { $0.popupUuid != popupUuid }
+    }
+
+    func getPersonalRandomPopupList(userUuid: String) async throws -> [Popup] {
+        popups
+    }
+
+    func getAlertPopupList(userUuid: String) async throws -> [Popup] {
+        popups
+    }
+
+    func removeAlertPopup(userUuid: String, popupUuid: String) async throws {}
+
+    func increaseViewCount(popupUuid: String) async throws {}
+
+    func addFavorite(userUuid: String, popupUuid: String) async throws {}
+
+    func removeFavorite(userUuid: String, popupUuid: String) async throws {}
+
+    func getRegionList() async throws -> [RegionList] {
+        [
+            RegionList(region: "전체", districtList: ["전체"]),
+            RegionList(region: "서울", districtList: ["전체", "성동구", "마포구", "영등포구", "송파구"]),
+            RegionList(region: "부산", districtList: ["전체", "해운대구", "수영구"]),
+        ]
+    }
+
+    func getPopularRecommendList() async throws -> [Recommend] {
+        [
+            Recommend(id: 1, recommendName: "패션"),
+            Recommend(id: 2, recommendName: "디저트"),
+            Recommend(id: 3, recommendName: "뷰티"),
+        ]
+    }
+
+    func getPopularRecommendPopupList(userUuid: String, recommendId: Int) async throws -> [Popup] {
+        popups
+    }
+}
+
+private extension Popup {
+    static func preview(
+        popupUuid: String,
+        name: String,
+        roadAddress: String,
+        startDate: Date,
+        endDate: Date,
+        favoriteCount: Int,
+        viewCount: Int,
+        isFavorited: Bool = false,
+        recommendList: [String]
+    ) -> Popup {
+        Popup(
+            popupUuid: popupUuid,
+            name: name,
+            startDate: startDate,
+            endDate: endDate,
+            openTime: "10:00",
+            closeTime: "20:00",
+            address: roadAddress,
+            roadAddress: roadAddress,
+            region: "서울",
+            latitude: 37.544,
+            longitude: 127.055,
+            instaPostId: nil,
+            instaPostUrl: nil,
+            captionSummary: "프리뷰용 팝업 소개 문구입니다.",
+            imageUrlList: [
+                "https://poppang.co.kr/images/20251021-165057_18386722330126645/LH_메이커스_스튜디오_팝업스토어_소문내기_이벤트_1.jpg",
+            ],
+            mediaType: .image,
+            favoriteCount: favoriteCount,
+            viewCount: viewCount,
+            isFavorited: isFavorited,
+            recommendList: recommendList
+        )
+    }
+}
+#endif
