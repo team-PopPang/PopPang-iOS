@@ -85,11 +85,14 @@ public final class ProfileCoordinator: Coordinator<
                 onSelectRelatedPopup: { [weak self] userUuid, popup in
                     self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
                 },
+                onDeactivateComplete: { [weak self] in
+                    self?.pop()
+                },
                 onShowReviews: { [weak self] reviews in
                     self?.push(.reviewDetail(reviews))
                 }
             )
-        case let .profileSetting(userUuid, nickname, isAlerted):
+        case .profileSetting(let userUuid, let nickname, let isAlerted):
             ProfileSettingFeatureView(
                 userUuid: userUuid,
                 nickname: nickname,
