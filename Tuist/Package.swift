@@ -69,7 +69,8 @@ import PackageDescription
     // 현재 정책
     // - Firebase: override하지 않고 기본값 유지
     //   - 이유: Firebase 계열을 `.framework`로 강제했을 때 `swiftCompatibility*`, `UIUtilities` 같은 auto-link 관련 링크 에러가 실제로 재현됐다.
-    //   - 즉 SDK가 기대한 기본 링크 구성을 깨지 않는 쪽이 더 안전했다.
+    //   - `FirebaseMessaging` + `FirebaseCoreInternal`만 `.framework`로 고정하면 빌드는 통과하지만 LLDB가 디바이스 메모리에서 동적 framework 심볼을 읽느라 앱 실행 대기가 길어졌다.
+    //   - 따라서 App 조립 계층은 Firebase Core/Analytics/Messaging을 Objective-C runtime bridge로 다루고, SDK가 기대한 기본 링크 구성을 유지한다.
     //   - Firebase 공식 문서도 SPM 배포는 static only라고 안내한다:
     //     https://firebase.google.com/docs/ios/link-firebase-static-dynamic
     // - GoogleSignIn과 직접 전이 product: `.framework` 유지

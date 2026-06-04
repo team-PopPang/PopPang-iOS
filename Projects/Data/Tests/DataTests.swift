@@ -204,7 +204,7 @@ struct DataTests {
             endDate: try #require(formatter.date(from: "2026-06-10")),
             address: "서울 성동구 성수이로 00",
             description: "브랜드 팝업 제보",
-            submitterUserId: 1
+            submitterUserUuid: "user-1"
         )
 
         let dto = request.toDTO()
@@ -214,19 +214,11 @@ struct DataTests {
         #expect(dto.endDate == "2026-06-10")
         #expect(dto.address == "서울 성동구 성수이로 00")
         #expect(dto.description == "브랜드 팝업 제보")
-        #expect(dto.submitterUserId == 1)
+        #expect(dto.submitterUserUuid == "user-1")
 
-        let anonymousDTO = PopupSubmissionCreateRequestDTO(
-            name: "성수 팝업",
-            startDate: "2026-06-03",
-            endDate: "2026-06-10",
-            address: "서울 성동구 성수이로 00",
-            description: "브랜드 팝업 제보",
-            submitterUserId: nil
-        )
-        let jsonObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(anonymousDTO)) as? [String: Any]
-
-        #expect(jsonObject?["submitterUserId"] == nil)
+        let dtoObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(dto)) as? [String: Any]
+        #expect(dtoObject?["submitterUserUuid"] as? String == "user-1")
+        #expect(dtoObject?["submitterUserId"] == nil)
     }
 
     @Test("API 경로가 V0 엔드포인트 정의와 일치한다")
@@ -409,6 +401,6 @@ private extension PopupSubmissionCreateRequestDTO {
         endDate: "2026-06-10",
         address: "서울 성동구 성수이로 00",
         description: "브랜드 팝업 제보",
-        submitterUserId: 1
+        submitterUserUuid: "user-1"
     )
 }

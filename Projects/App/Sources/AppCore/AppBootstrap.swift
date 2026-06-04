@@ -58,10 +58,12 @@ struct AppBootstrap {
             case .authenticated(let user):
                 sessionStorage.setOnboardingCompleted(true)
                 sessionStorage.saveUserID(user.userUuid)
+                AppNotificationManager.shared.syncStoredToken(userUuid: user.userUuid)
                 return .authenticated(user)
             case .registrationRequired(let user):
                 sessionStorage.setOnboardingCompleted(true)
                 sessionStorage.saveUserID(user.userUuid)
+                AppNotificationManager.shared.syncStoredToken(userUuid: user.userUuid)
                 return .registrationRequired(user)
             }
         }

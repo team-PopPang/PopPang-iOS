@@ -1,4 +1,5 @@
 import AlertFeature
+import PopupReportFeature
 import PopupDetailFeature
 import ReviewFeature
 import SwiftUI
@@ -82,6 +83,13 @@ private extension MainTabCoordinatorView {
                 userUuid: userUuid,
                 onSelectPopup: { userUuid, popup in
                     coordinator.push(.popupDetail(userUuid: userUuid, popup: popup))
+                }
+            )
+        case .popupReport(let userUuid):
+            PopupReportFeatureView(
+                userUuid: userUuid,
+                onDismiss: {
+                    coordinator.pop()
                 }
             )
         }

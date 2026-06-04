@@ -6,7 +6,7 @@ public struct PopupSubmissionCreateRequest: Equatable, Sendable {
     public let endDate: Date
     public let address: String
     public let description: String
-    public let submitterUserId: Int64?
+    public let submitterUserUuid: String
 
     public init(
         name: String,
@@ -14,13 +14,13 @@ public struct PopupSubmissionCreateRequest: Equatable, Sendable {
         endDate: Date,
         address: String,
         description: String,
-        submitterUserId: Int64?
+        submitterUserUuid: String
     ) {
         self.name = name
         self.startDate = startDate
         self.endDate = endDate
         self.address = address
         self.description = description
-        self.submitterUserId = submitterUserId
+        self.submitterUserUuid = submitterUserUuid
     }
 }

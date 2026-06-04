@@ -5,6 +5,7 @@ public enum MainTabRoute: Identifiable, Hashable, Sendable {
     case popupDetail(userUuid: String, popup: Popup)
     case reviewDetail([Review])
     case alert(userUuid: String)
+    case popupReport(userUuid: String)
 
     public var id: String {
         switch self {
@@ -14,6 +15,8 @@ public enum MainTabRoute: Identifiable, Hashable, Sendable {
             "reviewDetail-\(reviews.map(\.id.uuidString).joined(separator: "-"))"
         case .alert(let userUuid):
             "alert-\(userUuid)"
+        case .popupReport(let userUuid):
+            "popupReport-\(userUuid)"
         }
     }
 }
@@ -90,6 +93,9 @@ public final class MainTabCoordinator: ProfileCoordinatorParent {
         }
         homeCoordinator.onShowAlert = { [weak self] userUuid in
             self?.push(.alert(userUuid: userUuid))
+        }
+        homeCoordinator.onReport = { [weak self] userUuid in
+            self?.push(.popupReport(userUuid: userUuid))
         }
         calendarCoordinator.onShowAlert = { [weak self] userUuid in
             self?.push(.alert(userUuid: userUuid))

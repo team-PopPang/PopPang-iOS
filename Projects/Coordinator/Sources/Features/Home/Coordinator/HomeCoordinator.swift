@@ -18,6 +18,7 @@ public final class HomeCoordinator: Coordinator<
 > {
     public var onSelectPopup: ((String, Popup) -> Void)?
     public var onShowAlert: ((String) -> Void)?
+    public var onReport: ((String) -> Void)?
 
     private var session: MainTabSession
     private var rootView: HomeFeatureView
@@ -60,6 +61,13 @@ public final class HomeCoordinator: Coordinator<
             )
         case .reviewDetail(let reviews):
             ReviewFeatureView(reviews: reviews)
+        case .popupReport(let userUuid):
+            PopupReportFeatureView(
+                userUuid: userUuid,
+                onDismiss: { [weak self] in
+                    self?.pop()
+                }
+            )
         }
     }
 
@@ -80,13 +88,6 @@ public final class HomeCoordinator: Coordinator<
                 }
             )
             .accessibilityIdentifier("home_search")
-        case .popupReport:
-            PopupReportFeatureView(
-                userUuid: session.userUuid,
-                onDismiss: { [weak self] in
-                    self?.dismissFullScreen()
-                }
-            )
         }
     }
 
@@ -99,6 +100,9 @@ public final class HomeCoordinator: Coordinator<
             },
             onShowAlert: { [weak self] userUuid in
                 self?.routeToAlert(userUuid: userUuid)
+            },
+            onReport: { [weak self] userUuid in
+                self?.routeToReport(userUuid: userUuid)
             }
         )
     }
@@ -116,6 +120,14 @@ public final class HomeCoordinator: Coordinator<
             onSelectPopup(userUuid, popup)
         } else {
             pushPopupDetail(userUuid: userUuid, popup: popup)
+        }
+    }
+
+    private func routeToReport(userUuid: String) {
+        if let onReport {
+            onReport(userUuid)
+        } else {
+            push(.popupReport(userUuid: userUuid))
         }
     }
 

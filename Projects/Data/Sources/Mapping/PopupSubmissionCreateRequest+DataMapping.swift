@@ -9,7 +9,7 @@ extension PopupSubmissionCreateRequest {
             endDate: DateFormatter.popupSubmissionDateFormat.string(from: endDate),
             address: address,
             description: description,
-            submitterUserId: submitterUserId
+            submitterUserUuid: submitterUserUuid
         )
     }
 }

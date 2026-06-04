@@ -299,7 +299,7 @@ private extension PopupReportFeatureCompound {
         let region = state.trimmed(.region)
         let instaPostUrl = state.trimmed(.instaPostUrl)
         let captionSummary = state.trimmed(.captionSummary)
-        let submitterUserId = Int64(state.userUuid.trimmingCharacters(in: .whitespacesAndNewlines))
+        let submitterUserUuid = state.userUuid.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard name.isEmpty == false else { return .failure(.init(message: "팝업명을 입력해 주세요.")) }
         guard roadAddress.isEmpty == false else { return .failure(.init(message: "도로명 주소를 입력해 주세요.")) }
@@ -317,6 +317,9 @@ private extension PopupReportFeatureCompound {
         guard state.endDate >= state.startDate else {
             return .failure(.init(message: "종료일은 시작일보다 빠를 수 없습니다."))
         }
+        guard submitterUserUuid.isEmpty == false else {
+            return .failure(.init(message: "사용자 정보를 확인할 수 없습니다."))
+        }
 
         return .success(
             PopupReportSubmissionPayload(
@@ -326,7 +329,7 @@ private extension PopupReportFeatureCompound {
                     endDate: state.endDate,
                     address: state.trimmed(.address).nilIfEmpty ?? roadAddress,
                     description: captionSummary,
-                    submitterUserId: submitterUserId
+                    submitterUserUuid: submitterUserUuid
                 )
             )
         )

@@ -20,8 +20,6 @@ public struct PopupReportFeatureView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            navigationBar
-
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     requiredSection
@@ -35,7 +33,32 @@ public struct PopupReportFeatureView: View {
         }
         .background(Color.mainGray4.ignoresSafeArea())
         .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(Color.subWhite, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    close()
+                } label: {
+                    DSKitResource.image("backButton")
+                        .renderingMode(.template)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 14, height: 14)
+                        .foregroundStyle(Color.subBlack)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(PressableButtonStyle())
+            }
+
+            ToolbarItem(placement: .principal) {
+                Text("팝업 제보하기")
+                    .font(.scdream(.bold, size: 17))
+                    .foregroundStyle(Color.mainBlack)
+            }
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             submitButton
         }
@@ -64,36 +87,6 @@ public struct PopupReportFeatureView: View {
 }
 
 private extension PopupReportFeatureView {
-    var navigationBar: some View {
-        CustomNavigationBar {
-            Button {
-                close()
-            } label: {
-                DSKitResource.image("backButton")
-                    .renderingMode(.template)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 18, height: 18)
-                    .foregroundStyle(Color.subBlack)
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(PressableButtonStyle())
-
-            Spacer()
-
-            Text("팝업 제보하기")
-                .font(.scdream(.bold, size: 17))
-                .foregroundStyle(Color.mainBlack)
-
-            Spacer()
-
-            Color.clear
-                .frame(width: 44, height: 44)
-        }
-        .background(Color.subWhite)
-    }
-
     var requiredSection: some View {
         PopupReportFormSection(title: "필수 입력") {
             PopupReportTextInput(
@@ -408,21 +401,14 @@ private struct PopupReportTextEditor: View {
             PopupReportFieldTitle(title: title, isRequired: isRequired)
 
             ZStack(alignment: .topLeading) {
-                TextEditor(text: $text)
-                    .font(.scdream(.medium, size: 12))
-                    .foregroundStyle(Color.mainBlack)
-                    .scrollContentBackground(.hidden)
-                    .padding(10)
+                PopupReportComposingSafeTextView(
+                    text: $text,
+                    placeholder: placeholder,
+                    font: .scdream(.medium, size: 12),
+                    textColor: Color.mainBlack.uiColor,
+                    placeholderColor: Color.mainGray2.uiColor
+                )
                     .frame(minHeight: 116)
-
-                if text.isEmpty {
-                    Text(placeholder)
-                        .font(.scdream(.medium, size: 12))
-                        .foregroundStyle(Color.mainGray2)
-                        .padding(.horizontal, 15)
-                        .padding(.vertical, 18)
-                        .allowsHitTesting(false)
-                }
             }
             .background(Color.subWhite)
             .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -431,6 +417,136 @@ private struct PopupReportTextEditor: View {
                     .stroke(Color.mainGray3, lineWidth: 0.8)
             }
         }
+    }
+}
+
+private struct PopupReportComposingSafeTextView: UIViewRepresentable {
+    @Binding var text: String
+    let placeholder: String
+    let font: UIFont
+    let textColor: UIColor
+    let placeholderColor: UIColor
+
+    func makeUIView(context: Context) -> PopupReportPlaceholderTextView {
+        let textView = PopupReportPlaceholderTextView()
+        textView.delegate = context.coordinator
+        textView.backgroundColor = .clear
+        textView.font = font
+        textView.textColor = textColor
+        textView.text = text
+        textView.placeholder = placeholder
+        textView.placeholderLabel.font = font
+        textView.placeholderLabel.textColor = placeholderColor
+        textView.textContainerInset = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
+        textView.textContainer.lineFragmentPadding = 0
+        textView.isScrollEnabled = true
+        textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        textView.updatePlaceholderVisibility()
+        return textView
+    }
+
+    func updateUIView(_ textView: PopupReportPlaceholderTextView, context: Context) {
+        context.coordinator.text = $text
+        textView.font = font
+        textView.textColor = textColor
+        textView.placeholder = placeholder
+        textView.placeholderLabel.font = font
+        textView.placeholderLabel.textColor = placeholderColor
+
+        guard textView.isFirstResponder == false,
+              textView.markedTextRange == nil,
+              textView.text != text
+        else {
+            textView.updatePlaceholderVisibility()
+            return
+        }
+        textView.text = text
+        textView.updatePlaceholderVisibility()
+    }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(text: $text)
+    }
+
+    final class Coordinator: NSObject, UITextViewDelegate {
+        var text: Binding<String>
+        private var pendingTextUpdate: DispatchWorkItem?
+
+        init(text: Binding<String>) {
+            self.text = text
+        }
+
+        func textViewDidChange(_ textView: UITextView) {
+            (textView as? PopupReportPlaceholderTextView)?.updatePlaceholderVisibility()
+            guard textView.markedTextRange == nil else { return }
+
+            pendingTextUpdate?.cancel()
+            let update = DispatchWorkItem { [weak self, weak textView] in
+                guard let self, let textView, textView.markedTextRange == nil else { return }
+                self.updateText(from: textView)
+            }
+            pendingTextUpdate = update
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.12, execute: update)
+        }
+
+        func textViewDidEndEditing(_ textView: UITextView) {
+            pendingTextUpdate?.cancel()
+            pendingTextUpdate = nil
+            (textView as? PopupReportPlaceholderTextView)?.updatePlaceholderVisibility()
+            updateText(from: textView)
+        }
+
+        private func updateText(from textView: UITextView) {
+            guard text.wrappedValue != textView.text else { return }
+            text.wrappedValue = textView.text
+        }
+    }
+}
+
+private final class PopupReportPlaceholderTextView: UITextView {
+    let placeholderLabel = UILabel()
+
+    var placeholder: String = "" {
+        didSet {
+            placeholderLabel.text = placeholder
+            setNeedsLayout()
+        }
+    }
+
+    override init(frame: CGRect, textContainer: NSTextContainer?) {
+        super.init(frame: frame, textContainer: textContainer)
+        setupPlaceholderLabel()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupPlaceholderLabel()
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+
+        let horizontalInset = textContainerInset.left + textContainerInset.right
+        let horizontalPadding = textContainer.lineFragmentPadding * 2
+        let width = max(0, bounds.width - horizontalInset - horizontalPadding)
+        let size = placeholderLabel.sizeThatFits(CGSize(width: width, height: .greatestFiniteMagnitude))
+
+        placeholderLabel.frame = CGRect(
+            x: textContainerInset.left + textContainer.lineFragmentPadding,
+            y: textContainerInset.top,
+            width: width,
+            height: size.height
+        )
+    }
+
+    func updatePlaceholderVisibility() {
+        placeholderLabel.isHidden = text.isEmpty == false
+    }
+
+    private func setupPlaceholderLabel() {
+        placeholderLabel.numberOfLines = 0
+        placeholderLabel.isUserInteractionEnabled = false
+        addSubview(placeholderLabel)
     }
 }
 

@@ -1,32 +1,30 @@
 import Core
 import DSKit
+import FirebaseCore
 import KakaoSDKCommon
 import NMapsMap
 import UIKit
 
 enum AppSDKInitializer {
+    private static var isConfigured = false
+
     static func configure() {
+        guard isConfigured == false else { return }
+        isConfigured = true
+
         UITabBar.configureAppearance()
         UINavigationBar.configureAppearance()
-        FirebaseCoreBridge.configureIfNeeded()
+        FirebaseCoreBootstrap.configureIfNeeded()
         KakaoSDK.initSDK(appKey: Constants.KakaoAPI.key)
         NMFAuthManager.shared().ncpKeyId = Constants.NaverAPI.key
         UserDefaults.standard.set(false, forKey: "_UIConstraintBasedLayoutLogUnsatisfiable")
     }
 }
 
-private enum FirebaseCoreBridge {
+private enum FirebaseCoreBootstrap {
     static func configureIfNeeded() {
-        guard let appClass = NSClassFromString("FIRApp") as AnyObject? else {
-            return
-        }
-
-        let defaultApp = appClass
-            .perform(NSSelectorFromString("defaultApp"))?
-            .takeUnretainedValue()
-
-        guard defaultApp == nil else { return }
-
-        _ = appClass.perform(NSSelectorFromString("configure"))
+        FirebaseConfiguration.shared.setLoggerLevel(.error)
+        FirebaseApp.configure()
+        Logger.d("FirebaseApp.configure 완료")
     }
 }

@@ -19,19 +19,22 @@ public struct HomeFeatureView: View {
     private let deepLinkStorage: DeepLinkStorage
     private let onSelectPopup: (String, Popup) -> Void
     private let onShowAlert: (String) -> Void
+    private let onReport: ((String) -> Void)?
 
     public init(
         userUuid: String = "demo-user",
         nickname: String = "닉네임",
         deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore()),
         onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in },
-        onShowAlert: @escaping (String) -> Void = { _ in }
+        onShowAlert: @escaping (String) -> Void = { _ in },
+        onReport: ((String) -> Void)? = nil
     ) {
         let compound = HomeFeatureCompound(userUuid: userUuid, nickname: nickname)
         _compound = State(wrappedValue: compound)
         self.deepLinkStorage = deepLinkStorage
         self.onSelectPopup = onSelectPopup
         self.onShowAlert = onShowAlert
+        self.onReport = onReport
     }
 
     public var body: some View {
@@ -49,7 +52,11 @@ public struct HomeFeatureView: View {
                         onShowAlert(userUuid)
                     },
                     onReport: {
-                        coordinator.presentFullScreen(.popupReport)
+                        if let onReport {
+                            onReport(compound.state.userUuid)
+                        } else {
+                            coordinator.push(.popupReport(userUuid: compound.state.userUuid))
+                        }
                     }
                 )
 
@@ -257,7 +264,7 @@ private struct HomeReportButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: "square.and.pencil")
-                .font(.system(size: 20, weight: .regular))
+                .font(.system(size: 20, weight: .light))
                 .foregroundStyle(Color.subBlack)
                 .frame(width: 21, height: 21)
                 .padding(10)

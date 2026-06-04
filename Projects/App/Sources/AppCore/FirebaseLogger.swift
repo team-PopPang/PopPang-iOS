@@ -1,3 +1,4 @@
+import FirebaseAnalytics
 import Foundation
 import SwiftUI
 
@@ -19,19 +20,9 @@ extension View {
 
 private enum FirebaseAnalyticsBridge {
     static func logScreenView(_ name: String) {
-        guard let analyticsClass = NSClassFromString("FIRAnalytics") as AnyObject? else {
-            return
-        }
-
-        let parameters: [String: Any] = [
+        Analytics.logEvent("screen_view", parameters: [
             "firebase_screen": name,
             "firebase_screen_class": name,
-        ]
-
-        _ = analyticsClass.perform(
-            NSSelectorFromString("logEventWithName:parameters:"),
-            with: "screen_view",
-            with: parameters
-        )
+        ])
     }
 }

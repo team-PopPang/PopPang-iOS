@@ -6,6 +6,7 @@ public enum HomeFeatureRoute: Sendable {
     case comingPopupDetail(userUuid: String, popups: [Popup])
     case alert(userUuid: String)
     case reviewDetail([Review])
+    case popupReport(userUuid: String)
 }
 
 extension HomeFeatureRoute: Hashable {
@@ -19,6 +20,8 @@ extension HomeFeatureRoute: Hashable {
             lhsUserUuid == rhsUserUuid
         case let (.reviewDetail(lhsReviews), .reviewDetail(rhsReviews)):
             lhsReviews.map(\.id) == rhsReviews.map(\.id)
+        case let (.popupReport(lhsUserUuid), .popupReport(rhsUserUuid)):
+            lhsUserUuid == rhsUserUuid
         default:
             false
         }
@@ -40,6 +43,9 @@ extension HomeFeatureRoute: Hashable {
         case let .reviewDetail(reviews):
             hasher.combine("reviewDetail")
             hasher.combine(reviews.map(\.id))
+        case let .popupReport(userUuid):
+            hasher.combine("popupReport")
+            hasher.combine(userUuid)
         }
     }
 }
@@ -60,14 +66,11 @@ public enum HomeSheetRoute: Identifiable, Hashable, Sendable {
 
 public enum HomeFullScreenRoute: Identifiable, Hashable, Sendable {
     case search(uuid: String)
-    case popupReport
 
     public var id: String {
         switch self {
         case .search(let uuid):
             "search-\(uuid)"
-        case .popupReport:
-            "popupReport"
         }
     }
 }

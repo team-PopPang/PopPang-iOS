@@ -1,5 +1,6 @@
 import Core
 import Domain
+import FirebaseMessaging
 import Foundation
 import UIKit
 import UserNotifications
@@ -9,6 +10,7 @@ final class PopPangAppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        AppSDKInitializer.configure()
         AppNotificationManager.shared.configureNotification()
         return true
     }
@@ -28,7 +30,7 @@ final class PopPangAppDelegate: NSObject, UIApplicationDelegate {
     }
 }
 
-final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate {
+final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, MessagingDelegate {
     static let shared = AppNotificationManager()
 
     private var sessionStorage: AppSessionStorage
@@ -60,11 +62,11 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate {
         application: UIApplication = .shared
     ) {
         notificationCenter.delegate = self
-        FirebaseMessagingBridge.setDelegate(self)
+        Messaging.messaging().delegate = self
 
         notificationCenter.requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             if let error {
-                print("❌ configureNotification 에러: \(error)")
+                Logger.e("❌ configureNotification 에러: \(error)")
                 return
             }
 
@@ -76,28 +78,22 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate {
         }
     }
 
-    @objc(messaging:didReceiveRegistrationToken:)
-    func messaging(_ messaging: Any, didReceiveRegistrationToken fcmToken: String?) {
-        guard let fcmToken, fcmToken.isEmpty == false else {
-            print("⚠️ FCM 토큰이 nil입니다.")
-            return
-        }
-
-        sessionStorage.saveFCMToken(fcmToken)
-        print("Firebase에서 APNs 토큰을 기반으로 FCM 등록 및 클라이언트로 토큰 발급")
-
-        let snapshot = sessionStorage.loadSnapshot()
-        guard let userID = snapshot.userID else { return }
-        syncStoredToken(userUuid: userID)
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        Logger.d("Firebase에서 APNs 토큰을 기반으로 FCM 등록 및 클라이언트로 토큰 발급")
+        handleFCMToken(fcmToken, source: "MessagingDelegate")
     }
 
     func didRegisterForRemoteNotifications(deviceToken: Data) {
-        FirebaseMessagingBridge.setAPNSToken(deviceToken)
-        print("Apple의 APNs(푸시 서버) 디바이스 토큰을 Firebase에 전달 완료")
+        Messaging.messaging().apnsToken = deviceToken
+        Logger.d("Apple의 APNs(푸시 서버) 디바이스 토큰을 Firebase에 전달 완료")
+        #if DEBUG
+        Logger.d("APNs 디버그 디바이스 토큰: \(deviceToken.hexString)")
+        #endif
+        requestCurrentFCMToken(reason: "APNs 토큰 등록 직후")
     }
 
     func didFailToRegisterForRemoteNotifications(error: Error) {
-        print("❌ APNs 등록 실패:", error.localizedDescription)
+        Logger.e("❌ APNs 등록 실패: \(error.localizedDescription)")
     }
 
     func syncStoredToken(userUuid: String) {
@@ -107,6 +103,7 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
         Task {
             do {
+                Logger.d("로그인된 uuid가 있어 FCM 토큰 서버 일치 여부 확인")
                 let isSameToken = try await userUsecase.checkFcmToken(
                     userUuid: userUuid,
                     fcmToken: fcmToken
@@ -118,9 +115,9 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate {
                     userUuid: userUuid,
                     fcmToken: fcmToken
                 )
-                print("로컬 FCM 토큰을 서버로 전송 및 갱신 완료")
+                Logger.d("로컬 FCM 토큰을 서버로 전송 및 갱신 완료")
             } catch {
-                print("❌ FCM 토큰 중복 확인 실패: \(error)")
+                Logger.e("❌ FCM 토큰 중복 확인 실패: \(error)")
             }
         }
     }
@@ -132,26 +129,40 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate {
     ) {
         completionHandler([.banner, .sound, .list])
     }
-}
 
-private enum FirebaseMessagingBridge {
-    static func setDelegate(_ delegate: AnyObject) {
-        guard let messaging = messagingInstance() else { return }
-        _ = messaging.perform(NSSelectorFromString("setDelegate:"), with: delegate)
+    private func requestCurrentFCMToken(reason: String) {
+        Messaging.messaging().token { [weak self] fcmToken, error in
+            if let error {
+                Logger.e("❌ FCM 토큰 요청 실패(\(reason)): \(error.localizedDescription)")
+                return
+            }
+
+            self?.handleFCMToken(fcmToken, source: reason)
+        }
     }
 
-    static func setAPNSToken(_ deviceToken: Data) {
-        guard let messaging = messagingInstance() else { return }
-        _ = messaging.perform(NSSelectorFromString("setAPNSToken:"), with: deviceToken)
-    }
-
-    private static func messagingInstance() -> AnyObject? {
-        guard let messagingClass = NSClassFromString("FIRMessaging") else {
-            return nil
+    private func handleFCMToken(_ fcmToken: String?, source: String) {
+        guard let fcmToken, fcmToken.isEmpty == false else {
+            Logger.w("⚠️ FCM 토큰이 nil 또는 빈 값입니다. source=\(source)")
+            return
         }
 
-        return (messagingClass as AnyObject)
-            .perform(NSSelectorFromString("messaging"))?
-            .takeUnretainedValue()
+        sessionStorage.saveFCMToken(fcmToken)
+        Logger.d("FCM 토큰 저장 완료 source=\(source)")
+
+        let snapshot = sessionStorage.loadSnapshot()
+        guard let userID = snapshot.userID else {
+            Logger.w("⚠️ uuid 없음")
+            return
+        }
+        syncStoredToken(userUuid: userID)
     }
 }
+
+#if DEBUG
+private extension Data {
+    var hexString: String {
+        map { String(format: "%02x", $0) }.joined()
+    }
+}
+#endif
