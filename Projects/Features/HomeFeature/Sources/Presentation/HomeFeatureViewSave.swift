@@ -208,7 +208,6 @@ public struct HomeFeatureViewSave: View {
                 }
             }
         }
-        .withoutAnimation()
         .compoundOnLoad(compound, .onAppear)
         .sheet(item: $sheetRoute) { route in
             switch route {
