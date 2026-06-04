@@ -8,7 +8,6 @@ import SwiftUI
 import UIKit
 
 public struct HomeFeatureView: View {
-    @Environment(HomeFeatureCoordinator.self) private var coordinator
     @Environment(\.scenePhase) private var scenePhase
     @State private var compound: HomeFeatureCompound
     @State private var currentScrollOffset: CGFloat = 0
@@ -19,6 +18,8 @@ public struct HomeFeatureView: View {
     private let deepLinkStorage: DeepLinkStorage
     private let onSelectPopup: (String, Popup) -> Void
     private let onShowAlert: (String) -> Void
+    private let onSearch: (String) -> Void
+    private let onShowComingPopups: (String, [Popup]) -> Void
     private let onReport: ((String) -> Void)?
 
     public init(
@@ -27,6 +28,8 @@ public struct HomeFeatureView: View {
         deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore()),
         onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in },
         onShowAlert: @escaping (String) -> Void = { _ in },
+        onSearch: @escaping (String) -> Void = { _ in },
+        onShowComingPopups: @escaping (String, [Popup]) -> Void = { _, _ in },
         onReport: ((String) -> Void)? = nil
     ) {
         let compound = HomeFeatureCompound(userUuid: userUuid, nickname: nickname)
@@ -34,6 +37,8 @@ public struct HomeFeatureView: View {
         self.deepLinkStorage = deepLinkStorage
         self.onSelectPopup = onSelectPopup
         self.onShowAlert = onShowAlert
+        self.onSearch = onSearch
+        self.onShowComingPopups = onShowComingPopups
         self.onReport = onReport
     }
 
@@ -46,7 +51,7 @@ public struct HomeFeatureView: View {
                 HomeNavigationBar(
                     userUuid: compound.state.userUuid,
                     onSearch: { userUuid in
-                        coordinator.presentFullScreen(.search(uuid: userUuid))
+                        onSearch(userUuid)
                     },
                     onAlert: { userUuid in
                         onShowAlert(userUuid)
@@ -54,8 +59,6 @@ public struct HomeFeatureView: View {
                     onReport: {
                         if let onReport {
                             onReport(compound.state.userUuid)
-                        } else {
-                            coordinator.push(.popupReport(userUuid: compound.state.userUuid))
                         }
                     }
                 )
@@ -111,10 +114,10 @@ public struct HomeFeatureView: View {
                             userUuid: compound.state.userUuid,
                             popups: compound.state.comingPopups,
                             onTap: { _, _ in
-                                coordinator.push(.comingPopupDetail(
-                                    userUuid: compound.state.userUuid,
-                                    popups: compound.state.comingPopups
-                                ))
+                                onShowComingPopups(
+                                    compound.state.userUuid,
+                                    compound.state.comingPopups
+                                )
                             }
                         )
                             .padding(.bottom, 10)

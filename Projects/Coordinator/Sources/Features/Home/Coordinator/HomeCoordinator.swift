@@ -18,25 +18,24 @@ public final class HomeCoordinator: Coordinator<
 > {
     public var onSelectPopup: ((String, Popup) -> Void)?
     public var onShowAlert: ((String) -> Void)?
+    public var onSearch: ((String) -> Void)?
+    public var onShowComingPopups: ((String, [Popup]) -> Void)?
     public var onReport: ((String) -> Void)?
 
     private var session: MainTabSession
-    private var rootView: HomeFeatureView
 
     public init(session: MainTabSession = MainTabSession(userUuid: "demo-user")) {
         self.session = session
-        self.rootView = HomeFeatureView(userUuid: session.userUuid, nickname: session.nickname)
         super.init()
-        self.rootView = makeHomeRootView(session: session)
     }
 
     public func updateSession(_ session: MainTabSession) {
         self.session = session
-        self.rootView = makeHomeRootView(session: session)
     }
 
     public func makeRootView() -> some View {
-        rootView
+        makeHomeRootView(session: session)
+            .id(session)
     }
 
     @ViewBuilder
@@ -101,6 +100,12 @@ public final class HomeCoordinator: Coordinator<
             onShowAlert: { [weak self] userUuid in
                 self?.routeToAlert(userUuid: userUuid)
             },
+            onSearch: { [weak self] userUuid in
+                self?.routeToSearch(userUuid: userUuid)
+            },
+            onShowComingPopups: { [weak self] userUuid, popups in
+                self?.routeToComingPopupDetail(userUuid: userUuid, popups: popups)
+            },
             onReport: { [weak self] userUuid in
                 self?.routeToReport(userUuid: userUuid)
             }
@@ -112,6 +117,22 @@ public final class HomeCoordinator: Coordinator<
             onShowAlert(userUuid)
         } else {
             push(.alert(userUuid: userUuid))
+        }
+    }
+
+    private func routeToSearch(userUuid: String) {
+        if let onSearch {
+            onSearch(userUuid)
+        } else {
+            presentFullScreen(.search(uuid: userUuid))
+        }
+    }
+
+    private func routeToComingPopupDetail(userUuid: String, popups: [Popup]) {
+        if let onShowComingPopups {
+            onShowComingPopups(userUuid, popups)
+        } else {
+            push(.comingPopupDetail(userUuid: userUuid, popups: popups))
         }
     }
 

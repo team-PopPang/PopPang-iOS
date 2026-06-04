@@ -6,7 +6,7 @@ public typealias MapFeatureCoordinator = Coordinator<
     EmptySheetRoute,
     EmptyOverlayRoute,
     EmptyFullScreenRoute,
-    MapBottomSheetRoute
+    EmptyBottomSheetRoute
 >
 
 public enum MapFeatureRoute: Hashable, Sendable {

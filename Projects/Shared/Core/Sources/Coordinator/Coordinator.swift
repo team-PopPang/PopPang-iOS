@@ -4,21 +4,35 @@ import Observation
 public enum EmptyRoute: Hashable {}
 
 public enum EmptySheetRoute: Identifiable {
-    public var id: String { fatalError("EmptySheetRoute should never be instantiated") }
+    public var id: String {
+        switch self {}
+    }
 }
 
 public enum EmptyOverlayRoute: Identifiable {
-    public var id: String { fatalError("EmptyOverlayRoute should never be instantiated") }
+    public var id: String {
+        switch self {}
+    }
 }
 
 public enum EmptyFullScreenRoute: Identifiable {
-    public var id: String { fatalError("EmptyFullScreenRoute should never be instantiated") }
+    public var id: String {
+        switch self {}
+    }
 }
 
 public enum EmptyBottomSheetRoute: BottomSheetPresentingRoute {
-    public var id: String { fatalError("EmptyBottomSheetRoute should never be instantiated") }
-    public var preferredDetent: BottomSheetDetent { fatalError("EmptyBottomSheetRoute should never be instantiated") }
-    public var supportedDetents: [BottomSheetDetent] { fatalError("EmptyBottomSheetRoute should never be instantiated") }
+    public var id: String {
+        switch self {}
+    }
+
+    public var preferredDetent: BottomSheetDetent {
+        switch self {}
+    }
+
+    public var supportedDetents: [BottomSheetDetent] {
+        switch self {}
+    }
 }
 
 @Observable
