@@ -1,3 +1,4 @@
+import Core
 import Domain
 import Observation
 
@@ -23,7 +24,7 @@ public enum MainTabRoute: Identifiable, Hashable, Sendable {
             "alert-\(userUuid)"
         case .popupReport(let userUuid):
             "popupReport-\(userUuid)"
-        case let .profileSetting(userUuid, nickname, isAlerted):
+        case .profileSetting(let userUuid, let nickname, let isAlerted):
             "profileSetting-\(userUuid)-\(nickname)-\(isAlerted)"
         case .notifications:
             "notifications"
@@ -40,6 +41,13 @@ public enum MainTabFullScreenRoute: Identifiable, Hashable, Sendable {
         switch self {
         case .search(let userUuid):
             "search-\(userUuid)"
+        }
+    }
+
+    public var isPresentationAnimated: Bool {
+        switch self {
+        case .search:
+            false
         }
     }
 }
@@ -170,12 +178,16 @@ public final class MainTabCoordinator: ProfileCoordinatorParent {
         paths.removeAll()
     }
 
-    public func presentFullScreen(_ route: MainTabFullScreenRoute) {
-        fullScreen = route
+    public func presentFullScreen(_ route: MainTabFullScreenRoute, animated: Bool? = nil) {
+        PresentationAnimation.perform(animated: animated ?? route.isPresentationAnimated) {
+            fullScreen = route
+        }
     }
 
-    public func dismissFullScreen() {
-        fullScreen = nil
+    public func dismissFullScreen(animated: Bool? = nil) {
+        PresentationAnimation.perform(animated: animated ?? fullScreen?.isPresentationAnimated ?? true) {
+            fullScreen = nil
+        }
     }
 
     public func updateSession(_ session: MainTabSession) {
