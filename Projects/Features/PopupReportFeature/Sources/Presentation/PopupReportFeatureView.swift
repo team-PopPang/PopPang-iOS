@@ -32,32 +32,11 @@ public struct PopupReportFeatureView: View {
             }
         }
         .background(Color.mainGray4.ignoresSafeArea())
-        .navigationBarBackButtonHidden(true)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbarBackground(Color.subWhite, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    close()
-                } label: {
-                    DSKitResource.image("backButton")
-                        .renderingMode(.template)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 14, height: 14)
-                        .foregroundStyle(Color.subBlack)
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(PressableButtonStyle())
-            }
-
-            ToolbarItem(placement: .principal) {
-                Text("팝업 제보하기")
-                    .font(.scdream(.bold, size: 17))
-                    .foregroundStyle(Color.mainBlack)
-            }
+        .ppBackNavigationBar(
+            title: "팝업 제보하기",
+            showsSeparator: true
+        ) {
+            close()
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             submitButton
