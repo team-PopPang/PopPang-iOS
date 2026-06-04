@@ -43,7 +43,7 @@ public final class HomeCoordinator: Coordinator<
         switch route {
         case .popupDetail(let userUuid, let popup):
             makePopupDetailDestination(userUuid: userUuid, popup: popup)
-        case let .comingPopupDetail(userUuid, popups):
+        case .comingPopupDetail(let userUuid, let popups):
             ComingPopupDetailFeatureView(
                 userUuid: userUuid,
                 popups: popups,
@@ -78,11 +78,11 @@ public final class HomeCoordinator: Coordinator<
                 userUuid: userUuid,
                 nickname: session.nickname,
                 onDismiss: { [weak self] in
-                    self?.dismissFullScreen()
+                    self?.dismissFullScreen(animated: false)
                 },
                 onSelectPopup: { [weak self] popup in
                     guard let self else { return }
-                    dismissFullScreen()
+                    dismissFullScreen(animated: false)
                     routeToPopupDetail(userUuid: userUuid, popup: popup)
                 }
             )
@@ -124,7 +124,7 @@ public final class HomeCoordinator: Coordinator<
         if let onSearch {
             onSearch(userUuid)
         } else {
-            presentFullScreen(.search(uuid: userUuid))
+            presentFullScreen(.search(uuid: userUuid), animated: false)
         }
     }
 
@@ -164,6 +164,9 @@ public final class HomeCoordinator: Coordinator<
                 isAdmin: session.isAdmin,
                 onSelectRelatedPopup: { [weak self] userUuid, popup in
                     self?.pushPopupDetail(userUuid: userUuid, popup: popup)
+                },
+                onDeactivateComplete: { [weak self] in
+                    self?.pop()
                 },
                 onShowReviews: { [weak self] reviews in
                     self?.push(.reviewDetail(reviews))
