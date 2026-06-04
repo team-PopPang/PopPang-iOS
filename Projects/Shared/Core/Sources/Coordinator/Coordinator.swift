@@ -92,12 +92,16 @@ open class Coordinator<
         overlay = nil
     }
 
-    public func presentFullScreen(_ route: FullScreen) {
-        fullScreen = route
+    public func presentFullScreen(_ route: FullScreen, animated: Bool = true) {
+        PresentationAnimation.perform(animated: animated) {
+            fullScreen = route
+        }
     }
 
-    public func dismissFullScreen() {
-        fullScreen = nil
+    public func dismissFullScreen(animated: Bool = true) {
+        PresentationAnimation.perform(animated: animated) {
+            fullScreen = nil
+        }
     }
 
     public func presentBottomSheet(_ route: BottomSheet) {
