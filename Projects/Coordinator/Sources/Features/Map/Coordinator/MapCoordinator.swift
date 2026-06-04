@@ -51,6 +51,9 @@ public final class MapCoordinator: Coordinator<
                 onSelectRelatedPopup: { [weak self] userUuid, popup in
                     self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
                 },
+                onDeactivateComplete: { [weak self] in
+                    self?.pop()
+                },
                 onShowReviews: { [weak self] reviews in
                     self?.push(.reviewDetail(reviews))
                 }
