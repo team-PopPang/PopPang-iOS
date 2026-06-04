@@ -193,7 +193,6 @@ public struct HomeFeatureView: View {
                 }
             }
         }
-        .withoutAnimation()
         .sheet(item: $sheetRoute) { route in
             switch route {
             case .regionSheet:
