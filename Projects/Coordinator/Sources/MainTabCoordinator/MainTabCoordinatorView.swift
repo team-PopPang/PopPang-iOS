@@ -1,6 +1,3 @@
-import AlertFeature
-import PopupDetailFeature
-import ReviewFeature
 import SwiftUI
 
 public struct MainTabCoordinatorView: View {
@@ -21,7 +18,7 @@ public struct MainTabCoordinatorView: View {
     public var body: some View {
         @Bindable var coordinator = coordinator
 
-        NavigationStack {
+        NavigationStack(path: $coordinator.paths) {
             TabView(selection: $coordinator.selectedTab) {
                 ForEach(coordinator.tabs, id: \.self) { tab in
                     tabView(for: tab)
@@ -35,9 +32,12 @@ public struct MainTabCoordinatorView: View {
                     .tag(tab)
                 }
             }
-            .navigationDestination(item: $coordinator.route) { route in
-                destination(for: route)
+            .navigationDestination(for: MainTabRoute.self) { route in
+                coordinator.buildView(for: route)
             }
+        }
+        .fullScreenCover(item: $coordinator.fullScreen) { route in
+            coordinator.buildFullScreen(for: route)
         }
     }
 }
@@ -58,47 +58,14 @@ private extension MainTabCoordinatorView {
             ProfileCoordinatorView(coordinator: coordinator.profileCoordinator)
         }
     }
-
-    @ViewBuilder
-    func destination(for route: MainTabRoute) -> some View {
-        switch route {
-        case .popupDetail(let userUuid, let popup):
-            PopupDetailFeatureView(
-                userUuid: userUuid,
-                popup: popup,
-                isAdmin: coordinator.session.isAdmin,
-                hidesSystemTabBar: false,
-                onSelectRelatedPopup: { userUuid, popup in
-                    coordinator.push(.popupDetail(userUuid: userUuid, popup: popup))
-                },
-                onShowReviews: { reviews in
-                    coordinator.push(.reviewDetail(reviews))
-                }
-            )
-        case .reviewDetail(let reviews):
-            ReviewFeatureView(reviews: reviews)
-        case .alert(let userUuid):
-            AlertFeatureView(
-                userUuid: userUuid,
-                onSelectPopup: { userUuid, popup in
-                    coordinator.push(.popupDetail(userUuid: userUuid, popup: popup))
-                }
-            )
-        }
-    }
 }
 
 private struct HomeCoordinatorView: View {
     let coordinator: HomeCoordinator
 
     var body: some View {
-        CoordinatorContainer(coordinator: coordinator) {
-            coordinator.makeRootView()
-        } destination: { route in
-            coordinator.buildView(for: route)
-        } fullScreenView: { route in
-            coordinator.buildFullScreen(for: route)
-        }
+        coordinator.makeRootView()
+            .environment(coordinator)
     }
 }
 
@@ -106,11 +73,8 @@ private struct CalendarCoordinatorView: View {
     let coordinator: CalendarCoordinator
 
     var body: some View {
-        CoordinatorContainer(coordinator: coordinator) {
-            coordinator.makeRootView()
-        } destination: { route in
-            coordinator.buildView(for: route)
-        }
+        coordinator.makeRootView()
+            .environment(coordinator)
     }
 }
 
@@ -118,13 +82,8 @@ private struct MapCoordinatorView: View {
     let coordinator: MapCoordinator
 
     var body: some View {
-        CoordinatorContainer(coordinator: coordinator) {
-            coordinator.makeRootView()
-        } destination: { route in
-            coordinator.buildView(for: route)
-        } bottomSheetView: { route in
-            coordinator.buildBottomSheet(for: route)
-        }
+        coordinator.makeRootView()
+            .environment(coordinator)
     }
 }
 
@@ -132,11 +91,8 @@ private struct FavoritesCoordinatorView: View {
     let coordinator: FavoritesCoordinator
 
     var body: some View {
-        CoordinatorContainer(coordinator: coordinator) {
-            coordinator.makeRootView()
-        } destination: { route in
-            coordinator.buildView(for: route)
-        }
+        coordinator.makeRootView()
+            .environment(coordinator)
     }
 }
 
@@ -144,10 +100,7 @@ private struct ProfileCoordinatorView: View {
     let coordinator: ProfileCoordinator
 
     var body: some View {
-        CoordinatorContainer(coordinator: coordinator) {
-            coordinator.makeRootView()
-        } destination: { route in
-            coordinator.buildView(for: route)
-        }
+        coordinator.makeRootView()
+            .environment(coordinator)
     }
 }

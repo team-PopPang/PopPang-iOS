@@ -48,7 +48,15 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 
 <br/><br/>
 
-# 4. 핵심 성과
+# 4. 코디네이터 트리
+
+<div align="center">
+  <img src="./CoordinatorTree.png" width="100%" />
+</div>
+
+<br/><br/>
+
+# 5. 핵심 성과
 
 ### **1. 로딩 지연 문제 개선**
 > **문제**  
@@ -269,7 +277,7 @@ Projects
 
 <br/><br/>
 
-# 5. 실행 방법
+# 6. 실행 방법
 
 Tuist 버전은 `4.115.0`으로 고정합니다.
 
@@ -301,7 +309,7 @@ tuist test Data
 
 <br/><br/>
 
-# 6. 모듈 생성 명령
+# 7. 모듈 생성 명령
 
 ```bash
 make module LAYER=feature NAME=Home
@@ -315,7 +323,7 @@ make module LAYER=shared NAME=UIComponents
 
 <br/><br/>
 
-# 7. 참고
+# 8. 참고
 
 - `AGENTS.md`: 저장소 작업 규칙과 아키텍처 기준
 - `Projects/Coordinator/README.md`: Coordinator 상세 가이드

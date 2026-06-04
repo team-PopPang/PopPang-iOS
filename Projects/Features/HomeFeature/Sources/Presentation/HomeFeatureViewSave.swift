@@ -7,7 +7,6 @@ import ListKit
 import SwiftUI
 
 public struct HomeFeatureViewSave: View {
-    @Environment(HomeFeatureCoordinator.self) private var coordinator
     @State private var compound: HomeFeatureCompound
     @State private var hasSeenPopup = false
     @State private var startScrollOffset: CGFloat = 0
@@ -17,15 +16,27 @@ public struct HomeFeatureViewSave: View {
     @Environment(\.scenePhase) private var scenePhase
 
     private let deepLinkStorage: DeepLinkStorage
+    private let onSelectPopup: (String, Popup) -> Void
+    private let onShowAlert: (String) -> Void
+    private let onSearch: (String) -> Void
+    private let onShowComingPopups: (String, [Popup]) -> Void
 
     public init(
         userUuid: String = "demo-user",
         nickname: String = "닉네임",
-        deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore())
+        deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore()),
+        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in },
+        onShowAlert: @escaping (String) -> Void = { _ in },
+        onSearch: @escaping (String) -> Void = { _ in },
+        onShowComingPopups: @escaping (String, [Popup]) -> Void = { _, _ in }
     ) {
         let compound = HomeFeatureCompound(userUuid: userUuid, nickname: nickname)
         _compound = State(wrappedValue: compound)
         self.deepLinkStorage = deepLinkStorage
+        self.onSelectPopup = onSelectPopup
+        self.onShowAlert = onShowAlert
+        self.onSearch = onSearch
+        self.onShowComingPopups = onShowComingPopups
     }
 
     public var body: some View {
@@ -39,12 +50,12 @@ public struct HomeFeatureViewSave: View {
                     Spacer()
 
                     IconButton(image: "SearchDark", imageSize: 25) {
-                        coordinator.presentFullScreen(.search(uuid: compound.state.userUuid))
+                        onSearch(compound.state.userUuid)
                     }
                     .accessibilityIdentifier("home_search_button")
 
                     IconButton {
-                        coordinator.push(.alert(userUuid: compound.state.userUuid))
+                        onShowAlert(compound.state.userUuid)
                     }
                 }
                 .padding(.bottom, 15)
@@ -65,7 +76,9 @@ public struct HomeFeatureViewSave: View {
 
                                 BestPopupScrollView(
                                     popups: compound.state.bestPopups,
-                                    onSelect: { popup in coordinator.push(.popupDetail(userUuid: compound.state.userUuid, popup: popup)) }
+                                    onSelect: { popup in
+                                        onSelectPopup(compound.state.userUuid, popup)
+                                    }
                                 )
                                 .padding(.top, 15)
                             }
@@ -83,10 +96,10 @@ public struct HomeFeatureViewSave: View {
                                 Spacer()
 
                                 Button {
-                                    coordinator.push(.comingPopupDetail(
-                                        userUuid: compound.state.userUuid,
-                                        popups: compound.state.comingPopups
-                                    ))
+                                    onShowComingPopups(
+                                        compound.state.userUuid,
+                                        compound.state.comingPopups
+                                    )
                                 } label: {
                                     DSKitResource.image("navigationButton")
                                         .resizable()
@@ -100,7 +113,9 @@ public struct HomeFeatureViewSave: View {
 
                             ComingPopupScrollView(
                                 popups: compound.state.comingPopups,
-                                onSelect: { popup in coordinator.push(.popupDetail(userUuid: compound.state.userUuid, popup: popup)) }
+                                onSelect: { popup in
+                                    onSelectPopup(compound.state.userUuid, popup)
+                                }
                             )
 
                             HStack {
@@ -136,7 +151,9 @@ public struct HomeFeatureViewSave: View {
                                 popups: compound.state.gridPopups,
                                 isLiked: { popup in isLiked(popup: popup) },
                                 toggleLike: { popup in compound.send(.toggleLike(popup)) },
-                                onSelect: { popup in coordinator.push(.popupDetail(userUuid: compound.state.userUuid, popup: popup)) }
+                                onSelect: { popup in
+                                    onSelectPopup(compound.state.userUuid, popup)
+                                }
                             )
                             .padding(.top, 15)
                             .padding(.trailing, .contentPadding)
@@ -191,7 +208,6 @@ public struct HomeFeatureViewSave: View {
                 }
             }
         }
-        .withoutAnimation()
         .compoundOnLoad(compound, .onAppear)
         .sheet(item: $sheetRoute) { route in
             switch route {
@@ -290,7 +306,7 @@ private extension HomeFeatureViewSave {
             + compound.state.gridPopups
 
         if let targetPopup = allPopups.first(where: { $0.popupUuid == popupId }) {
-            coordinator.push(.popupDetail(userUuid: compound.state.userUuid, popup: targetPopup))
+            onSelectPopup(compound.state.userUuid, targetPopup)
         }
     }
 }

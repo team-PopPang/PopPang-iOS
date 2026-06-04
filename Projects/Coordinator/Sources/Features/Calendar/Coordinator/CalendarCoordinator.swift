@@ -18,21 +18,19 @@ public final class CalendarCoordinator: Coordinator<
     public var onShowAlert: ((String) -> Void)?
 
     private var session: MainTabSession
-    private var rootView: CalendarFeatureView!
 
     public init(session: MainTabSession = MainTabSession(userUuid: "demo-user")) {
         self.session = session
         super.init()
-        self.rootView = makeCalendarRootView(session: session)
     }
 
     public func updateSession(_ session: MainTabSession) {
         self.session = session
-        self.rootView = makeCalendarRootView(session: session)
     }
 
     public func makeRootView() -> some View {
-        rootView
+        makeCalendarRootView(session: session)
+            .id(session)
     }
 
     private func makeCalendarRootView(session: MainTabSession) -> CalendarFeatureView {
@@ -64,6 +62,9 @@ public final class CalendarCoordinator: Coordinator<
                 isAdmin: session.isAdmin,
                 onSelectRelatedPopup: { [weak self] userUuid, popup in
                     self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
+                },
+                onDeactivateComplete: { [weak self] in
+                    self?.pop()
                 },
                 onShowReviews: { [weak self] reviews in
                     self?.push(.reviewDetail(reviews))

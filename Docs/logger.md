@@ -38,6 +38,7 @@ V0의 modifier는 `onAppear`에서 아래 이벤트를 보낸다.
 - V0의 `trackScreen("...")` 사용 코드를 유지한다.
 - Firebase static product를 여러 모듈에 직접 링크해서 중복/링크 오류를 만들지 않는다.
 - `FirebaseApp.configure()`와 `GoogleService-Info.plist`는 App 조립 계층에서 유지한다.
+- FCM token 수신은 `FIRMessaging` bridge delegate와 명시적 token 요청으로 확인 가능하게 유지한다.
 
 ## 추가 적용 규칙
 

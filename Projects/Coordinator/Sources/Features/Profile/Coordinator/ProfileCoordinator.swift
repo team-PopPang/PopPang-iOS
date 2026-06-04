@@ -23,23 +23,24 @@ public final class ProfileCoordinator: Coordinator<
     public weak var parent: (any ProfileCoordinatorParent)?
     public var onSelectPopup: ((String, Popup) -> Void)?
     public var onShowAlert: ((String) -> Void)?
+    public var onProfileSetting: ((String, String, Bool) -> Void)?
+    public var onNotification: (() -> Void)?
+    public var onServiceTerms: (() -> Void)?
 
     private var session: MainTabSession
-    private var rootView: ProfileFeatureView!
 
     public init(session: MainTabSession = MainTabSession(userUuid: "demo-user")) {
         self.session = session
         super.init()
-        self.rootView = makeProfileRootView(session: session)
     }
 
     public func updateSession(_ session: MainTabSession) {
         self.session = session
-        self.rootView = makeProfileRootView(session: session)
     }
 
     public func makeRootView() -> some View {
-        rootView
+        makeProfileRootView(session: session)
+            .id(session)
     }
 
     private func makeProfileRootView(session: MainTabSession) -> ProfileFeatureView {
@@ -51,13 +52,17 @@ public final class ProfileCoordinator: Coordinator<
                 self?.routeToAlert(userUuid: userUuid)
             },
             onProfileSetting: { [weak self] userUuid, nickname, isAlerted in
-                self?.push(.profileSetting(userUuid: userUuid, nickname: nickname, isAlerted: isAlerted))
+                self?.routeToProfileSetting(
+                    userUuid: userUuid,
+                    nickname: nickname,
+                    isAlerted: isAlerted
+                )
             },
             onNotification: { [weak self] in
-                self?.push(.notifications)
+                self?.routeToNotification()
             },
             onServiceTerms: { [weak self] in
-                self?.push(.serviceTerms)
+                self?.routeToServiceTerms()
             }
         )
     }
@@ -80,11 +85,14 @@ public final class ProfileCoordinator: Coordinator<
                 onSelectRelatedPopup: { [weak self] userUuid, popup in
                     self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
                 },
+                onDeactivateComplete: { [weak self] in
+                    self?.pop()
+                },
                 onShowReviews: { [weak self] reviews in
                     self?.push(.reviewDetail(reviews))
                 }
             )
-        case let .profileSetting(userUuid, nickname, isAlerted):
+        case .profileSetting(let userUuid, let nickname, let isAlerted):
             ProfileSettingFeatureView(
                 userUuid: userUuid,
                 nickname: nickname,
@@ -106,6 +114,30 @@ public final class ProfileCoordinator: Coordinator<
             ServiceTermsFeatureView()
         case .reviewDetail(let reviews):
             ReviewFeatureView(reviews: reviews)
+        }
+    }
+
+    private func routeToProfileSetting(userUuid: String, nickname: String, isAlerted: Bool) {
+        if let onProfileSetting {
+            onProfileSetting(userUuid, nickname, isAlerted)
+        } else {
+            push(.profileSetting(userUuid: userUuid, nickname: nickname, isAlerted: isAlerted))
+        }
+    }
+
+    private func routeToNotification() {
+        if let onNotification {
+            onNotification()
+        } else {
+            push(.notifications)
+        }
+    }
+
+    private func routeToServiceTerms() {
+        if let onServiceTerms {
+            onServiceTerms()
+        } else {
+            push(.serviceTerms)
         }
     }
 

@@ -27,7 +27,12 @@ let project = Project(
                 .external(name: "Moya"),
                 .external(name: "NMapsMap"),
                 .external(name: "BottomSheet"),
-            ]
+            ],
+            settings: .settings(
+                base: [
+                    "OTHER_LDFLAGS": "$(inherited) -ObjC",
+                ]
+            )
         ),
     ]
 )

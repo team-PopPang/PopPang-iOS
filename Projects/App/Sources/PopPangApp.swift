@@ -5,11 +5,13 @@ import SwiftUI
 struct PopPangApp: App {
     @UIApplicationDelegateAdaptor(PopPangAppDelegate.self) private var appDelegate
 
-    private let bootstrap = AppBootstrap.live()
-    private let deepLinkHandler = AppDeepLinkHandler()
+    private let bootstrap: AppBootstrap
+    private let deepLinkHandler: AppDeepLinkHandler
 
     init() {
         AppSDKInitializer.configure()
+        self.bootstrap = AppBootstrap.live()
+        self.deepLinkHandler = AppDeepLinkHandler()
     }
 
     var body: some Scene {

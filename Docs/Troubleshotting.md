@@ -303,6 +303,7 @@ Firebase 계열은 기본 static 설정을 유지한다.
 - Firebase 공식 문서는 SPM 배포를 static only로 안내한다.
 - Firebase/Google 계열 product를 무리하게 전부 `.framework`로 강제하면 `swiftCompatibility*`, `UIUtilities`, `SwiftUICore` auto-link 관련 오류가 발생할 수 있다.
 - 따라서 Firebase는 필요한 product만 `ThirdParty`에 선언하고 product type override는 최소화한다.
+- `FirebaseMessaging`과 `FirebaseCoreInternal`만 `.framework`로 고정하면 빌드는 통과하지만, 디바이스 실행 시 LLDB가 동적 framework 심볼을 읽느라 앱 실행 대기가 길어질 수 있다.
 
 ## Firebase Swift import 대신 ObjC bridge를 쓰는 이유
 
@@ -338,7 +339,7 @@ clang: error: linker command failed with exit code 1
 - `Projects/App` source에서는 `FirebaseCore`, `FirebaseAnalytics`, `FirebaseMessaging`을 직접 import하지 않는다.
 - V0의 `FirebaseApp.configure()` 역할은 `FIRApp` Objective-C runtime bridge로 호출한다.
 - V0의 `FirebaseLogger.trackScreen(_:)` 역할은 `FIRAnalytics.logEventWithName:parameters:` bridge로 호출한다.
-- V0의 FCM token 수신/저장 흐름은 `FIRMessaging` bridge로 delegate와 APNs token만 연결한다.
+- V0의 FCM token 수신/저장 흐름은 `FIRMessaging` bridge로 delegate, APNs token, 명시적 token 요청을 연결한다.
 
 관련 파일:
 
@@ -389,3 +390,236 @@ xcodebuild -workspace PopPang.xcworkspace -scheme PopPangApp -destination 'platf
 - `PopPangApp` 테스트 성공
 - `PopPangApp` 테스트 실행 로그에서 KakaoSDKCommon duplicate class 경고 없음
 - `KakaoSDKCommon.framework` 빌드/복사 로그는 정상이다. 문제가 되는 로그는 `Class _TtC14KakaoSDKCommon... is implemented in both` 형태다.
+
+## Firebase static product에서 FIRApp/FIRMessaging class를 찾지 못하는 문제
+
+기준일: 2026-06-04
+
+### 증상
+
+앱 실행 초기에 Firebase 초기화와 FCM 토큰 요청이 실패한다.
+
+```text
+[AppSDKInitializer:26] configureIfNeeded() - ❌ FIRApp class를 찾지 못했습니다.
+[AppNotificationManager:213] messagingInstance() - ❌ FIRMessaging class를 찾지 못했습니다.
+[AppNotificationManager:136] requestCurrentFCMToken(reason:) - ❌ FCM 토큰 요청 실패(APNs 토큰 등록 직후): FIRMessaging 인스턴스를 찾지 못했습니다.
+```
+
+이 로그가 뜨면 Firebase가 configure 되지 않았고, `Messaging.messaging()`도 사용할 수 없는 상태다. APNs 디바이스 토큰을 받더라도 Firebase Messaging에 전달할 인스턴스가 없어서 FCM 토큰 발급이 실패한다.
+
+### 문제의 핵심
+
+이 문제는 "Firebase를 static으로 둬서 느리다"가 아니다. Firebase product type은 Tuist 기본값인 static 계열로 두는 것이 현재 기준이다.
+
+실제 문제는 App 코드가 Firebase SDK 타입을 직접 참조하지 않고 아래처럼 Objective-C runtime 문자열 조회만 사용한 점이다.
+
+```swift
+NSClassFromString("FIRApp")
+NSClassFromString("FIRMessaging")
+NSClassFromString("FIRAnalytics")
+```
+
+`NSClassFromString`은 런타임에 문자열 이름으로 class를 찾아보는 API다. 이 호출은 `FirebaseApp`, `Messaging`, `Analytics` 같은 Firebase 타입에 대한 컴파일 타임 참조나 강한 링크 참조를 만들지 않는다.
+
+static product에서는 linker가 "실제로 필요하다고 판단한 object file" 위주로 최종 바이너리에 포함한다. Firebase 타입을 직접 참조하지 않고 문자열로만 찾으면 linker 입장에서는 `FIRApp`, `FIRMessaging` 관련 Objective-C class metadata를 반드시 살려야 한다는 근거가 약해진다. 그 결과 의존성 그래프에 Firebase가 있어도 Objective-C runtime에 해당 class가 등록되지 않을 수 있다.
+
+그래서 런타임에서 `FIRApp class를 찾지 못했습니다`, `FIRMessaging class를 찾지 못했습니다`가 발생한다.
+
+### 잘못된 해결 방향
+
+Firebase product를 dynamic framework로 강제하는 방식은 기본 해결책이 아니다.
+
+- `FirebaseMessaging`과 `FirebaseCoreInternal`만 `.framework`로 고정하면 class lookup 문제는 겉으로 줄어들 수 있다.
+- 하지만 디바이스 실행 시 LLDB가 동적 framework 심볼을 읽는 시간이 늘어 실행 대기가 길어질 수 있다.
+- Firebase/Google 계열 product를 넓게 dynamic으로 강제하면 `swiftCompatibility*`, `UIUtilities`, auto-link 계열 링크 문제가 다시 생길 수 있다.
+
+따라서 product type을 dynamic으로 바꾸기 전에 static 링크를 올바르게 구성해야 한다.
+
+### 해결 원칙
+
+해결은 세 가지를 함께 맞춘다.
+
+1. Firebase product type은 `Tuist/Package.swift`에서 별도 override하지 않는다.
+2. Firebase SDK를 쓰는 App source 파일은 실제 Firebase 모듈을 직접 import하고 실제 SDK API를 호출한다.
+3. `ThirdParty` 타깃에는 Objective-C class/category가 dead strip 되지 않도록 `-ObjC` linker flag를 둔다.
+
+### 실제 코드 기준
+
+`Projects/App/Sources/AppCore/AppSDKInitializer.swift`
+
+```swift
+import FirebaseCore
+
+FirebaseConfiguration.shared.setLoggerLevel(.error)
+if FirebaseApp.app() == nil {
+    FirebaseApp.configure()
+}
+```
+
+`Projects/App/Sources/AppCore/AppNotificationManager.swift`
+
+```swift
+import FirebaseMessaging
+
+final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, MessagingDelegate {
+    func configureNotification(...) {
+        Messaging.messaging().delegate = self
+    }
+
+    func didRegisterForRemoteNotifications(deviceToken: Data) {
+        Messaging.messaging().apnsToken = deviceToken
+        Messaging.messaging().token { token, error in
+            ...
+        }
+    }
+
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        ...
+    }
+}
+```
+
+`Projects/App/Sources/AppCore/FirebaseLogger.swift`
+
+```swift
+import FirebaseAnalytics
+
+Analytics.logEvent("screen_view", parameters: [
+    "firebase_screen": name,
+    "firebase_screen_class": name,
+])
+```
+
+### ThirdParty linker flag
+
+`Projects/Shared/ThirdParty/Project.swift`
+
+```swift
+settings: .settings(
+    base: [
+        "OTHER_LDFLAGS": "$(inherited) -ObjC",
+    ]
+)
+```
+
+의미:
+
+- `OTHER_LDFLAGS`는 Xcode의 Linker Flags 설정이다. Swift/Objective-C 컴파일 옵션이 아니라 최종 바이너리를 링크할 때 linker에게 전달되는 옵션이다.
+- `$(inherited)`는 상위 설정, xcconfig, Tuist/SPM이 이미 넣어둔 linker flag를 유지한다는 뜻이다. 이 값을 빼면 기존 자동 링크 옵션을 덮어써서 다른 SDK 링크가 깨질 수 있다.
+- `-ObjC`는 정적 라이브러리나 static framework 안의 Objective-C class/category 심볼을 더 적극적으로 로드하게 하는 linker 옵션이다.
+- Firebase iOS SDK는 Swift API를 쓰더라도 내부에 Objective-C runtime class와 category가 많다. static product 조합에서 필요한 Objective-C class가 dead strip 되면 `FIRApp`, `FIRMessaging` 같은 class가 런타임에 등록되지 않을 수 있다.
+- `-ObjC`는 Firebase를 dynamic으로 바꾸는 설정이 아니다. static product를 유지하면서 Objective-C runtime 등록 누락을 막기 위한 보조 설정이다.
+
+`-ObjC`만으로 충분하지 않다. App source에서 `FirebaseApp`, `Messaging`, `Analytics` 같은 실제 SDK 타입을 직접 참조해야 static 링크가 확실히 살아난다.
+
+### Tuist 설정 기준
+
+- `Tuist/Package.swift`에서 Firebase product type은 별도 override하지 않는다.
+- `FirebaseCore`, `FirebaseMessaging`, `FirebaseAnalytics`는 `Projects/Shared/ThirdParty/Project.swift`의 `.external(...)`에 유지한다.
+- App은 `ThirdParty` 프로젝트 타깃에 의존한다.
+- Firebase를 쓰는 App source 파일은 `import FirebaseCore`, `import FirebaseMessaging`, `import FirebaseAnalytics`처럼 실제 SDK 모듈명을 직접 import한다.
+- 이 방식은 하루한컷 v2의 Firebase 조립 방식과 같은 방향이다.
+
+### 검증
+
+```sh
+make regen
+xcodebuild -workspace PopPang.xcworkspace -scheme PopPangApp -destination 'generic/platform=iOS Simulator' build
+```
+
+확인할 것:
+
+- `make regen` 후 `Projects/Shared/ThirdParty/ThirdParty.xcodeproj/project.pbxproj`에 `OTHER_LDFLAGS = "$(inherited) -ObjC";`가 반영되어야 한다.
+- App 빌드가 성공해야 한다.
+- 실행 로그에서 `FIRApp class를 찾지 못했습니다`, `FIRMessaging class를 찾지 못했습니다`가 다시 나오면 안 된다.
+
+## 실기기 Debug executable 실행 대기 시간이 긴 문제
+
+기준일: 2026-06-04
+
+### 증상
+
+실기기에서 Xcode로 앱을 실행할 때만 실행 전 대기 시간이 길다.
+
+예시:
+
+- 시뮬레이터 실행은 빠르다.
+- 실기기에서 Xcode Run을 누르면 앱이 뜨기 전 10초 안팎 대기한다.
+- Xcode 연결을 끊고 실기기에서 앱 아이콘으로 직접 실행하면 빠르다.
+- Scheme의 `Debug executable`을 끄면 실기기 Xcode 실행도 빨라진다.
+
+이 조합이면 앱 코드의 startup 지연보다 Xcode 디버거 attach 비용을 먼저 의심한다.
+
+### Debug executable 의미
+
+위치:
+
+```text
+Xcode > Product > Scheme > Edit Scheme... > Run > Info > Debug executable
+```
+
+`Debug executable`은 Xcode가 앱 실행 시 LLDB 디버거를 앱 프로세스에 붙일지 결정하는 옵션이다.
+
+켜져 있으면:
+
+- 브레이크포인트가 동작한다.
+- 변수 보기, call stack, thread 상태 확인이 가능하다.
+- LLDB 콘솔에서 `po`, `bt` 같은 명령을 사용할 수 있다.
+- crash 또는 exception 지점에서 Xcode가 멈출 수 있다.
+- 대신 실기기에서는 앱 시작 전에 `debugserver` 연결, LLDB attach, Swift/ObjC symbol loading 비용이 든다.
+
+꺼져 있으면:
+
+- Xcode가 앱 설치와 실행은 하지만 LLDB를 붙이지 않는다.
+- 브레이크포인트가 잡히지 않는다.
+- 변수 보기, call stack 확인, LLDB 명령 사용이 불가능하다.
+- crash 지점에서 자동으로 멈춰 원인을 보여주지 않는다.
+- 대신 기기에서 앱 아이콘으로 직접 실행하는 것과 더 가까운 속도로 뜬다.
+
+### 왜 실기기에서 더 느린가
+
+실기기 Debug 실행은 앱 코드만 실행하는 과정이 아니다.
+
+Xcode가 실행 전에 다음 작업을 수행한다.
+
+1. 앱 설치와 서명 검증
+2. `debugserver` 연결
+3. LLDB attach
+4. 앱 실행 파일과 dynamic framework 이미지 로드 확인
+5. Swift/Objective-C symbol loading
+6. 브레이크포인트와 소스 위치 매핑
+7. dSYM/debug info 연결
+
+현재 PopPang은 Tuist 멀티 모듈 구조이고, Debug 산출물에 여러 dynamic framework가 포함된다. dynamic framework가 많을수록 실기기에서 LLDB가 읽고 매핑해야 하는 이미지와 심볼도 늘어난다.
+
+따라서 `Debug executable`을 켰을 때만 느리고, 끄거나 기기에서 직접 실행하면 빠른 경우는 Firebase 초기화 지연이나 앱 코드 성능 문제가 아니라 디버거 준비 시간일 가능성이 높다.
+
+### 판단 기준
+
+아래 조건이 모두 맞으면 앱 startup 성능 문제가 아니라 디버거 attach 문제로 본다.
+
+- `Debug executable` ON: 실기기 실행 전 대기 시간이 길다.
+- `Debug executable` OFF: 실기기 실행이 빠르다.
+- Xcode 없이 앱 아이콘 직접 실행: 빠르다.
+- 시뮬레이터 실행: 상대적으로 빠르다.
+
+반대로 `Debug executable`을 꺼도 느리거나, 앱 아이콘 직접 실행도 느리면 앱 코드 startup, SDK 초기화, 네트워크 preload, 런치 화면 전환 로직을 별도로 추적한다.
+
+### 사용 기준
+
+평소 UI 확인과 플로우 점검:
+
+- `Debug executable` OFF를 사용한다.
+- 실제 사용자 체감 실행 속도 확인도 OFF 또는 기기 직접 실행 기준으로 본다.
+
+문제 추적:
+
+- 브레이크포인트가 필요하면 `Debug executable` ON을 사용한다.
+- 변수 값, reducer/action 흐름, async task, delegate callback, deep link, push callback을 추적할 때 ON이 필요하다.
+- crash 지점을 Xcode에서 멈춰 확인해야 할 때 ON이 필요하다.
+
+주의:
+
+- `Debug executable` OFF에서 빠르다고 해서 Release 성능 검증을 대체하지는 않는다.
+- 실제 배포 성능은 Release 또는 TestFlight 빌드 기준으로 확인한다.
+- `Debug executable` ON에서만 10초 안팎 대기하는 현상은 실기기 디버깅 비용일 수 있으며, 그 자체만으로 앱 startup regression으로 판단하지 않는다.

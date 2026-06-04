@@ -66,6 +66,7 @@ struct DataTests {
         #expect(popup.region == "서울")
         #expect(popup.latitude == 37.544)
         #expect(popup.longitude == 127.055)
+        #expect(popup.instaPostUrl == "https://instagram.com/p/post-1")
         #expect(popup.mediaType == .video)
         #expect(popup.favoriteCount == 12)
         #expect(popup.viewCount == 34)
@@ -76,6 +77,65 @@ struct DataTests {
         #expect(Calendar.current.component(.year, from: popup.startDate) == 2026)
         #expect(Calendar.current.component(.month, from: popup.startDate) == 5)
         #expect(Calendar.current.component(.day, from: popup.startDate) == 1)
+    }
+
+    @Test("팝업 DTO가 인스타 URL 누락과 null을 허용한다")
+    func popupDTOAllowsMissingInstagramURL() throws {
+        let missingURLJSON = """
+        {
+          "popupUuid": "popup-1",
+          "name": "성수 팝업",
+          "startDate": "26.05.01",
+          "endDate": "26.05.31",
+          "openTime": null,
+          "closeTime": null,
+          "address": "서울 성동구",
+          "roadAddress": "서울 성동구 성수이로",
+          "region": "서울",
+          "latitude": null,
+          "longitude": null,
+          "captionSummary": "요약",
+          "imageUrlList": [],
+          "mediaType": "image",
+          "favoriteCount": 0,
+          "viewCount": 0,
+          "isFavorited": false,
+          "recommendList": []
+        }
+        """.data(using: .utf8)!
+
+        let nullURLJSON = """
+        {
+          "popupUuid": "popup-2",
+          "name": "성수 팝업",
+          "startDate": "26.05.01",
+          "endDate": "26.05.31",
+          "openTime": null,
+          "closeTime": null,
+          "address": "서울 성동구",
+          "roadAddress": "서울 성동구 성수이로",
+          "region": "서울",
+          "latitude": null,
+          "longitude": null,
+          "instaPostId": null,
+          "instaPostUrl": null,
+          "captionSummary": "요약",
+          "imageUrlList": [],
+          "mediaType": "image",
+          "favoriteCount": 0,
+          "viewCount": 0,
+          "isFavorited": false,
+          "recommendList": []
+        }
+        """.data(using: .utf8)!
+
+        let missingURLPopup = try JSONDecoder().decode(PopupDTO.self, from: missingURLJSON).toEntity()
+        let nullURLPopup = try JSONDecoder().decode(PopupDTO.self, from: nullURLJSON).toEntity()
+
+        #expect(missingURLPopup.instaPostId == nil)
+        #expect(missingURLPopup.instaPostUrl == nil)
+        #expect(nullURLPopup.instaPostId == nil)
+        #expect(nullURLPopup.instaPostUrl == nil)
     }
 
     @Test("단순 DTO들이 V0와 같은 도메인 모델 값으로 변환된다")
@@ -112,8 +172,62 @@ struct DataTests {
         #expect(user.recommendList == [7])
     }
 
+    @Test("관리자 팝업 등록 응답에서 popupUuid를 추출한다")
+    func adminPopupRegistrationResponseExtractsPopupUuid() throws {
+        let direct = try JSONDecoder().decode(
+            AdminPopupRegistrationResponseDTO.self,
+            from: #"{"popupUuid":"popup-1"}"#.data(using: .utf8)!
+        )
+        let nested = try JSONDecoder().decode(
+            AdminPopupRegistrationResponseDTO.self,
+            from: #"{"data":{"uuid":"popup-2"}}"#.data(using: .utf8)!
+        )
+        let stringBody = try JSONDecoder().decode(
+            AdminPopupRegistrationResponseDTO.self,
+            from: #""popup-3""#.data(using: .utf8)!
+        )
+
+        #expect(direct.popupUuid == "popup-1")
+        #expect(nested.popupUuid == "popup-2")
+        #expect(stringBody.popupUuid == "popup-3")
+    }
+
+    @Test("팝업 제보 요청 엔티티가 서버 DTO 날짜 형식으로 변환된다")
+    func popupSubmissionCreateRequestMapsToServerDTO() throws {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ko_KR")
+        formatter.dateFormat = "yyyy-MM-dd"
+
+        let request = PopupSubmissionCreateRequest(
+            name: "성수 팝업",
+            startDate: try #require(formatter.date(from: "2026-06-03")),
+            endDate: try #require(formatter.date(from: "2026-06-10")),
+            address: "서울 성동구 성수이로 00",
+            description: "브랜드 팝업 제보",
+            submitterUserUuid: "user-1"
+        )
+
+        let dto = request.toDTO()
+
+        #expect(dto.name == "성수 팝업")
+        #expect(dto.startDate == "2026-06-03")
+        #expect(dto.endDate == "2026-06-10")
+        #expect(dto.address == "서울 성동구 성수이로 00")
+        #expect(dto.description == "브랜드 팝업 제보")
+        #expect(dto.submitterUserUuid == "user-1")
+
+        let dtoObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(dto)) as? [String: Any]
+        #expect(dtoObject?["submitterUserUuid"] as? String == "user-1")
+        #expect(dtoObject?["submitterUserId"] == nil)
+    }
+
     @Test("API 경로가 V0 엔드포인트 정의와 일치한다")
     func apiPathsMatchV0EndpointDefinitions() {
+        #expect(AdminAPI.getPopupValidationList.path == "/admin/popup-validation")
+        #expect(AdminAPI.validatePopup(parameters: [:]).path == "/admin/popup-validation")
+        #expect(AdminAPI.registerPopup(parameters: [:]).path == "/admin/popup")
+        #expect(AdminAPI.createPopupSubmission(requestDTO: .fixture).path == "/admin/popup-submissions")
+        #expect(AdminAPI.registerPopupRecommendations(popupUuid: "popup-1", recommendIds: [1, 2]).path == "/admin/popup/popup-1/recommendations")
         #expect(AdminAPI.deactivatePopup(userUuid: "user-1", popupUuid: "popup-1").path == "/admin/user/user-1/popup/popup-1/deactivate")
 
         #expect(AppleAuthAPI.login(authCode: "auth").path == "/auth/apple/mobile/login")
@@ -161,6 +275,11 @@ struct DataTests {
 
     @Test("API 메서드가 V0 엔드포인트 정의와 일치한다")
     func apiMethodsMatchV0EndpointDefinitions() {
+        #expect(AdminAPI.getPopupValidationList.method == .get)
+        #expect(AdminAPI.validatePopup(parameters: [:]).method == .post)
+        #expect(AdminAPI.registerPopup(parameters: [:]).method == .post)
+        #expect(AdminAPI.createPopupSubmission(requestDTO: .fixture).method == .post)
+        #expect(AdminAPI.registerPopupRecommendations(popupUuid: "popup-1", recommendIds: [1, 2]).method == .post)
         #expect(AdminAPI.deactivatePopup(userUuid: "user-1", popupUuid: "popup-1").method == .patch)
 
         #expect(AppleAuthAPI.login(authCode: "auth").method == .post)
@@ -209,6 +328,10 @@ struct DataTests {
 
     @Test("API 요청 파라미터가 V0 엔드포인트 정의와 일치한다")
     func apiRequestParametersMatchV0EndpointDefinitions() {
+        #expect(stringParameter(AdminAPI.validatePopup(parameters: ["instagramUrl": "https://instagram.com/popup"]).task, key: "instagramUrl") == "https://instagram.com/popup")
+        #expect(stringParameter(AdminAPI.registerPopup(parameters: ["name": "성수 팝업"]).task, key: "name") == "성수 팝업")
+        #expect(intArrayParameter(AdminAPI.registerPopupRecommendations(popupUuid: "popup-1", recommendIds: [1, 2]).task, key: "recommendIds") == [1, 2])
+
         #expect(stringParameter(PopupAPI.searchPopupList(searchText: "성수").task, key: "q") == "성수")
         #expect(stringParameter(PopupAPI.getPersonalPopupList(userUuid: "user-1").task, key: "userUuid") == "user-1")
         #expect(stringParameter(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").task, key: "region") == "서울")
@@ -255,6 +378,10 @@ struct DataTests {
         parameter(task, key: key) as? Bool
     }
 
+    private func intArrayParameter(_ task: Moya.Task, key: String) -> [Int]? {
+        parameter(task, key: key) as? [Int]
+    }
+
     private func parameter(_ task: Moya.Task, key: String) -> Any? {
         guard case let .requestParameters(parameters, _) = task else {
             return nil
@@ -265,4 +392,15 @@ struct DataTests {
     private func contractTypeName(of value: Any) -> String {
         String(describing: type(of: value))
     }
+}
+
+private extension PopupSubmissionCreateRequestDTO {
+    static let fixture = PopupSubmissionCreateRequestDTO(
+        name: "성수 팝업",
+        startDate: "2026-06-03",
+        endDate: "2026-06-10",
+        address: "서울 성동구 성수이로 00",
+        description: "브랜드 팝업 제보",
+        submitterUserUuid: "user-1"
+    )
 }

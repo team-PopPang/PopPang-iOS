@@ -4,21 +4,35 @@ import Observation
 public enum EmptyRoute: Hashable {}
 
 public enum EmptySheetRoute: Identifiable {
-    public var id: String { fatalError("EmptySheetRoute should never be instantiated") }
+    public var id: String {
+        switch self {}
+    }
 }
 
 public enum EmptyOverlayRoute: Identifiable {
-    public var id: String { fatalError("EmptyOverlayRoute should never be instantiated") }
+    public var id: String {
+        switch self {}
+    }
 }
 
 public enum EmptyFullScreenRoute: Identifiable {
-    public var id: String { fatalError("EmptyFullScreenRoute should never be instantiated") }
+    public var id: String {
+        switch self {}
+    }
 }
 
 public enum EmptyBottomSheetRoute: BottomSheetPresentingRoute {
-    public var id: String { fatalError("EmptyBottomSheetRoute should never be instantiated") }
-    public var preferredDetent: BottomSheetDetent { fatalError("EmptyBottomSheetRoute should never be instantiated") }
-    public var supportedDetents: [BottomSheetDetent] { fatalError("EmptyBottomSheetRoute should never be instantiated") }
+    public var id: String {
+        switch self {}
+    }
+
+    public var preferredDetent: BottomSheetDetent {
+        switch self {}
+    }
+
+    public var supportedDetents: [BottomSheetDetent] {
+        switch self {}
+    }
 }
 
 @Observable
@@ -78,12 +92,16 @@ open class Coordinator<
         overlay = nil
     }
 
-    public func presentFullScreen(_ route: FullScreen) {
-        fullScreen = route
+    public func presentFullScreen(_ route: FullScreen, animated: Bool = true) {
+        PresentationAnimation.perform(animated: animated) {
+            fullScreen = route
+        }
     }
 
-    public func dismissFullScreen() {
-        fullScreen = nil
+    public func dismissFullScreen(animated: Bool = true) {
+        PresentationAnimation.perform(animated: animated) {
+            fullScreen = nil
+        }
     }
 
     public func presentBottomSheet(_ route: BottomSheet) {

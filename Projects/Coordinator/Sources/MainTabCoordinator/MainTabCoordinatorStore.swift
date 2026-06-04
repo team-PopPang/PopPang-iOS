@@ -1,24 +1,58 @@
+import Core
 import Domain
 import Observation
 
 public enum MainTabRoute: Identifiable, Hashable, Sendable {
     case popupDetail(userUuid: String, popup: Popup)
+    case comingPopupDetail(userUuid: String, popups: [Popup])
     case reviewDetail([Review])
     case alert(userUuid: String)
+    case popupReport(userUuid: String)
+    case profileSetting(userUuid: String, nickname: String, isAlerted: Bool)
+    case notifications
+    case serviceTerms
 
     public var id: String {
         switch self {
         case .popupDetail(let userUuid, let popup):
             "popupDetail-\(userUuid)-\(popup.popupUuid)"
+        case .comingPopupDetail(let userUuid, let popups):
+            "comingPopupDetail-\(userUuid)-\(popups.map(\.popupUuid).joined(separator: "-"))"
         case .reviewDetail(let reviews):
             "reviewDetail-\(reviews.map(\.id.uuidString).joined(separator: "-"))"
         case .alert(let userUuid):
             "alert-\(userUuid)"
+        case .popupReport(let userUuid):
+            "popupReport-\(userUuid)"
+        case .profileSetting(let userUuid, let nickname, let isAlerted):
+            "profileSetting-\(userUuid)-\(nickname)-\(isAlerted)"
+        case .notifications:
+            "notifications"
+        case .serviceTerms:
+            "serviceTerms"
         }
     }
 }
 
-public struct MainTabSession: Equatable, Sendable {
+public enum MainTabFullScreenRoute: Identifiable, Hashable, Sendable {
+    case search(userUuid: String)
+
+    public var id: String {
+        switch self {
+        case .search(let userUuid):
+            "search-\(userUuid)"
+        }
+    }
+
+    public var isPresentationAnimated: Bool {
+        switch self {
+        case .search:
+            false
+        }
+    }
+}
+
+public struct MainTabSession: Equatable, Hashable, Sendable {
     public var userUuid: String
     public var nickname: String
     public var isAlerted: Bool
@@ -51,7 +85,8 @@ public final class MainTabCoordinator: ProfileCoordinatorParent {
     public let favoritesCoordinator: FavoritesCoordinator
     public let profileCoordinator: ProfileCoordinator
     public let tabs: [MainTab]
-    public var route: MainTabRoute?
+    public var paths: [MainTabRoute]
+    public var fullScreen: MainTabFullScreenRoute?
     public var selectedTab: MainTab
     public private(set) var session: MainTabSession
 
@@ -66,7 +101,8 @@ public final class MainTabCoordinator: ProfileCoordinatorParent {
         self.favoritesCoordinator = FavoritesCoordinator(session: session)
         self.profileCoordinator = ProfileCoordinator(session: session)
         self.tabs = MainTab.allCases
-        self.route = nil
+        self.paths = []
+        self.fullScreen = nil
         self.selectedTab = selectedTab
 
         profileCoordinator.parent = self
@@ -75,6 +111,12 @@ public final class MainTabCoordinator: ProfileCoordinatorParent {
         }
         homeCoordinator.onSelectPopup = { [weak self] userUuid, popup in
             self?.push(.popupDetail(userUuid: userUuid, popup: popup))
+        }
+        homeCoordinator.onSearch = { [weak self] userUuid in
+            self?.presentFullScreen(.search(userUuid: userUuid))
+        }
+        homeCoordinator.onShowComingPopups = { [weak self] userUuid, popups in
+            self?.push(.comingPopupDetail(userUuid: userUuid, popups: popups))
         }
         calendarCoordinator.onSelectPopup = { [weak self] userUuid, popup in
             self?.push(.popupDetail(userUuid: userUuid, popup: popup))
@@ -91,6 +133,9 @@ public final class MainTabCoordinator: ProfileCoordinatorParent {
         homeCoordinator.onShowAlert = { [weak self] userUuid in
             self?.push(.alert(userUuid: userUuid))
         }
+        homeCoordinator.onReport = { [weak self] userUuid in
+            self?.push(.popupReport(userUuid: userUuid))
+        }
         calendarCoordinator.onShowAlert = { [weak self] userUuid in
             self?.push(.alert(userUuid: userUuid))
         }
@@ -100,6 +145,19 @@ public final class MainTabCoordinator: ProfileCoordinatorParent {
         profileCoordinator.onShowAlert = { [weak self] userUuid in
             self?.push(.alert(userUuid: userUuid))
         }
+        profileCoordinator.onProfileSetting = { [weak self] userUuid, nickname, isAlerted in
+            self?.push(.profileSetting(
+                userUuid: userUuid,
+                nickname: nickname,
+                isAlerted: isAlerted
+            ))
+        }
+        profileCoordinator.onNotification = { [weak self] in
+            self?.push(.notifications)
+        }
+        profileCoordinator.onServiceTerms = { [weak self] in
+            self?.push(.serviceTerms)
+        }
     }
 
     public func select(_ tab: MainTab) {
@@ -107,12 +165,29 @@ public final class MainTabCoordinator: ProfileCoordinatorParent {
     }
 
     public func push(_ route: MainTabRoute) {
-        guard self.route != route else { return }
-        self.route = route
+        guard paths.last != route else { return }
+        paths.append(route)
     }
 
     public func pop() {
-        route = nil
+        guard paths.isEmpty == false else { return }
+        paths.removeLast()
+    }
+
+    public func popToRoot() {
+        paths.removeAll()
+    }
+
+    public func presentFullScreen(_ route: MainTabFullScreenRoute, animated: Bool? = nil) {
+        PresentationAnimation.perform(animated: animated ?? route.isPresentationAnimated) {
+            fullScreen = route
+        }
+    }
+
+    public func dismissFullScreen(animated: Bool? = nil) {
+        PresentationAnimation.perform(animated: animated ?? fullScreen?.isPresentationAnimated ?? true) {
+            fullScreen = nil
+        }
     }
 
     public func updateSession(_ session: MainTabSession) {

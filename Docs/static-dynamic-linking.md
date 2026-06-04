@@ -475,6 +475,7 @@ Firebase 계열은 override하지 않는다.
 
 - Firebase SPM은 static 배포 전제가 강하다.
 - 무리하게 dynamic으로 강제하면 auto-link 오류가 날 수 있다.
+- `FirebaseMessaging`과 `FirebaseCoreInternal`만 dynamic으로 고정하면 빌드는 통과하지만 LLDB 심볼 해석 때문에 디바이스 실행 대기가 길어질 수 있다.
 - App에서는 Firebase 직접 import를 최소화하고 bridge 또는 App 조립 계층에서만 다룬다.
 
 ## 자주 헷갈리는 질문

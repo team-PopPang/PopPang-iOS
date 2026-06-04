@@ -6,6 +6,7 @@ import Kingfisher
 import SwiftUI
 
 public struct AlertFeatureView: View {
+    @Environment(\.dismiss) private var dismiss
     @State private var compound: AlertFeatureCompound
     @State private var showKeywordLimitAlert = false
     @State private var selectedIndex = 0
@@ -102,20 +103,16 @@ public struct AlertFeatureView: View {
                     .padding(.vertical, 8)
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("알림")
-                    .ppStyleFont(.scdream(.medium, size: 20))
-                    .padding(.top, 10)
-            }
-
-            ToolbarItem(placement: .topBarTrailing) {
-                TrashButton(isEditing: compound.state.isEditing) {
-                    compound.send(.toggleEditing)
-                }
+        .ppBackNavigationBar(
+            title: "알림",
+            showsSeparator: false
+        ) {
+            dismiss()
+        } trailing: {
+            TrashButton(isEditing: compound.state.isEditing) {
+                compound.send(.toggleEditing)
             }
         }
-        .navigationBarTitleDisplayMode(.inline)
         .compoundOnLoad(compound, .onAppear)
         .alert("키워드 개수 제한", isPresented: $showKeywordLimitAlert) {
             Button("확인", role: .cancel) {}

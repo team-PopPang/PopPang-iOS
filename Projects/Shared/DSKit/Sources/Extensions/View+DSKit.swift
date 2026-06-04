@@ -24,12 +24,6 @@ public extension View {
         clipShape(RoundedCorner(radius: radius, corners: corners))
     }
 
-    func withoutAnimation() -> some View {
-        transaction { transaction in
-            transaction.disablesAnimations = true
-        }
-    }
-
     func applyShadow(
         color: Color = .black,
         alpha: Double = 0.5,

@@ -3,6 +3,7 @@ import Core
 import Domain
 import HomeFeature
 import PopupDetailFeature
+import PopupReportFeature
 import ReviewFeature
 import SearchFeature
 import SwiftUI
@@ -17,24 +18,24 @@ public final class HomeCoordinator: Coordinator<
 > {
     public var onSelectPopup: ((String, Popup) -> Void)?
     public var onShowAlert: ((String) -> Void)?
+    public var onSearch: ((String) -> Void)?
+    public var onShowComingPopups: ((String, [Popup]) -> Void)?
+    public var onReport: ((String) -> Void)?
 
     private var session: MainTabSession
-    private var rootView: HomeFeatureView
 
     public init(session: MainTabSession = MainTabSession(userUuid: "demo-user")) {
         self.session = session
-        self.rootView = HomeFeatureView(userUuid: session.userUuid, nickname: session.nickname)
         super.init()
-        self.rootView = makeHomeRootView(session: session)
     }
 
     public func updateSession(_ session: MainTabSession) {
         self.session = session
-        self.rootView = makeHomeRootView(session: session)
     }
 
     public func makeRootView() -> some View {
-        rootView
+        makeHomeRootView(session: session)
+            .id(session)
     }
 
     @ViewBuilder
@@ -42,15 +43,12 @@ public final class HomeCoordinator: Coordinator<
         switch route {
         case .popupDetail(let userUuid, let popup):
             makePopupDetailDestination(userUuid: userUuid, popup: popup)
-        case let .comingPopupDetail(userUuid, popups):
+        case .comingPopupDetail(let userUuid, let popups):
             ComingPopupDetailFeatureView(
                 userUuid: userUuid,
                 popups: popups,
                 onSelectPopup: { [weak self] userUuid, popup in
                     self?.pushPopupDetail(userUuid: userUuid, popup: popup)
-                },
-                popupDetailDestination: { [weak self] userUuid, popup in
-                    self?.makePopupDetailDestination(userUuid: userUuid, popup: popup) ?? AnyView(EmptyView())
                 }
             )
         case .alert(let userUuid):
@@ -62,6 +60,13 @@ public final class HomeCoordinator: Coordinator<
             )
         case .reviewDetail(let reviews):
             ReviewFeatureView(reviews: reviews)
+        case .popupReport(let userUuid):
+            PopupReportFeatureView(
+                userUuid: userUuid,
+                onDismiss: { [weak self] in
+                    self?.pop()
+                }
+            )
         }
     }
 
@@ -73,11 +78,11 @@ public final class HomeCoordinator: Coordinator<
                 userUuid: userUuid,
                 nickname: session.nickname,
                 onDismiss: { [weak self] in
-                    self?.dismissFullScreen()
+                    self?.dismissFullScreen(animated: false)
                 },
                 onSelectPopup: { [weak self] popup in
                     guard let self else { return }
-                    dismissFullScreen()
+                    dismissFullScreen(animated: false)
                     routeToPopupDetail(userUuid: userUuid, popup: popup)
                 }
             )
@@ -95,8 +100,14 @@ public final class HomeCoordinator: Coordinator<
             onShowAlert: { [weak self] userUuid in
                 self?.routeToAlert(userUuid: userUuid)
             },
-            popupDetailDestination: { [weak self] userUuid, popup in
-                self?.makePopupDetailDestination(userUuid: userUuid, popup: popup) ?? AnyView(EmptyView())
+            onSearch: { [weak self] userUuid in
+                self?.routeToSearch(userUuid: userUuid)
+            },
+            onShowComingPopups: { [weak self] userUuid, popups in
+                self?.routeToComingPopupDetail(userUuid: userUuid, popups: popups)
+            },
+            onReport: { [weak self] userUuid in
+                self?.routeToReport(userUuid: userUuid)
             }
         )
     }
@@ -109,11 +120,35 @@ public final class HomeCoordinator: Coordinator<
         }
     }
 
+    private func routeToSearch(userUuid: String) {
+        if let onSearch {
+            onSearch(userUuid)
+        } else {
+            presentFullScreen(.search(uuid: userUuid), animated: false)
+        }
+    }
+
+    private func routeToComingPopupDetail(userUuid: String, popups: [Popup]) {
+        if let onShowComingPopups {
+            onShowComingPopups(userUuid, popups)
+        } else {
+            push(.comingPopupDetail(userUuid: userUuid, popups: popups))
+        }
+    }
+
     private func routeToPopupDetail(userUuid: String, popup: Popup) {
         if let onSelectPopup {
             onSelectPopup(userUuid, popup)
         } else {
             pushPopupDetail(userUuid: userUuid, popup: popup)
+        }
+    }
+
+    private func routeToReport(userUuid: String) {
+        if let onReport {
+            onReport(userUuid)
+        } else {
+            push(.popupReport(userUuid: userUuid))
         }
     }
 
@@ -129,6 +164,9 @@ public final class HomeCoordinator: Coordinator<
                 isAdmin: session.isAdmin,
                 onSelectRelatedPopup: { [weak self] userUuid, popup in
                     self?.pushPopupDetail(userUuid: userUuid, popup: popup)
+                },
+                onDeactivateComplete: { [weak self] in
+                    self?.pop()
                 },
                 onShowReviews: { [weak self] reviews in
                     self?.push(.reviewDetail(reviews))

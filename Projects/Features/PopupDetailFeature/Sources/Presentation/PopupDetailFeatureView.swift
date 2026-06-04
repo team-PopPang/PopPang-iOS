@@ -289,27 +289,28 @@ private struct BodyView: View {
                     letterSpacing: 0.02
                 )
 
-            PopupDivider(padding: 20)
-
             // ReviewPreviewSection(reviews: reviews) {
             //     onShowReviews(reviews)
             // }
             //
             // PopupDivider(padding: 20)
 
-            Text("SNS / 홈페이지")
-                .font(.scdream(.medium, size: 15))
-                .frame(height: 21)
+            if let instagramURL {
+                PopupDivider(padding: 20)
 
-            SNSButton(
-                imageName: "insta",
-                buttonTitle: "인스타그램"
-            ) {
-                guard let url = URL(string: popup.instaPostUrl) else { return }
-                openURL(url)
+                Text("SNS / 홈페이지")
+                    .font(.scdream(.medium, size: 15))
+                    .frame(height: 21)
+
+                SNSButton(
+                    imageName: "insta",
+                    buttonTitle: "인스타그램"
+                ) {
+                    openURL(instagramURL)
+                }
+                .padding(.top, 8)
+                .padding(.bottom, relatedPopupList.isEmpty ? 40 : 0)
             }
-            .padding(.top, 8)
-            .padding(.bottom, relatedPopupList.isEmpty ? 40 : 0)
 
             if !relatedPopupList.isEmpty {
                 PopupDivider(padding: 20)
@@ -325,6 +326,14 @@ private struct BodyView: View {
                 .padding(.bottom, 20)
             }
         }
+    }
+
+    private var instagramURL: URL? {
+        guard let urlString = popup.instaPostUrl?.trimmingCharacters(in: .whitespacesAndNewlines),
+              urlString.isEmpty == false
+        else { return nil }
+
+        return URL(string: urlString)
     }
 }
 

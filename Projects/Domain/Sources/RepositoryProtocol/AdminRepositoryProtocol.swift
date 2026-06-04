@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol AdminUsecaseProtocol {
+public protocol AdminRepositoryProtocol {
     /// 관리자 팝업 검증 내역 조회
     func getPopupValidationList() async throws -> Data
 
