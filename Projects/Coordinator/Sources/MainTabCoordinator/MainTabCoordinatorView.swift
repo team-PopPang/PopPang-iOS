@@ -1,10 +1,3 @@
-import AlertFeature
-import HomeFeature
-import PopupDetailFeature
-import PopupReportFeature
-import ProfileFeature
-import ReviewFeature
-import SearchFeature
 import SwiftUI
 
 public struct MainTabCoordinatorView: View {
@@ -40,11 +33,11 @@ public struct MainTabCoordinatorView: View {
                 }
             }
             .navigationDestination(for: MainTabRoute.self) { route in
-                destination(for: route)
+                coordinator.buildView(for: route)
             }
         }
         .fullScreenCover(item: $coordinator.fullScreen) { route in
-            fullScreenDestination(for: route)
+            coordinator.buildFullScreen(for: route)
         }
     }
 }
@@ -63,86 +56,6 @@ private extension MainTabCoordinatorView {
             FavoritesCoordinatorView(coordinator: coordinator.favoritesCoordinator)
         case .profile:
             ProfileCoordinatorView(coordinator: coordinator.profileCoordinator)
-        }
-    }
-
-    @ViewBuilder
-    func destination(for route: MainTabRoute) -> some View {
-        switch route {
-        case .popupDetail(let userUuid, let popup):
-            PopupDetailFeatureView(
-                userUuid: userUuid,
-                popup: popup,
-                isAdmin: coordinator.session.isAdmin,
-                hidesSystemTabBar: false,
-                onSelectRelatedPopup: { userUuid, popup in
-                    coordinator.push(.popupDetail(userUuid: userUuid, popup: popup))
-                },
-                onShowReviews: { reviews in
-                    coordinator.push(.reviewDetail(reviews))
-                }
-            )
-        case let .comingPopupDetail(userUuid, popups):
-            ComingPopupDetailFeatureView(
-                userUuid: userUuid,
-                popups: popups,
-                onSelectPopup: { userUuid, popup in
-                    coordinator.push(.popupDetail(userUuid: userUuid, popup: popup))
-                }
-            )
-        case .reviewDetail(let reviews):
-            ReviewFeatureView(reviews: reviews)
-        case .alert(let userUuid):
-            AlertFeatureView(
-                userUuid: userUuid,
-                onSelectPopup: { userUuid, popup in
-                    coordinator.push(.popupDetail(userUuid: userUuid, popup: popup))
-                }
-            )
-        case .popupReport(let userUuid):
-            PopupReportFeatureView(
-                userUuid: userUuid,
-                onDismiss: {
-                    coordinator.pop()
-                }
-            )
-        case let .profileSetting(userUuid, nickname, isAlerted):
-            ProfileSettingFeatureView(
-                userUuid: userUuid,
-                nickname: nickname,
-                isAlerted: isAlerted,
-                onLogout: {
-                    coordinator.logout()
-                },
-                onNicknameUpdated: { nickname in
-                    var updatedSession = coordinator.session
-                    updatedSession.nickname = nickname
-                    coordinator.updateProfileSession(updatedSession)
-                }
-            )
-        case .notifications:
-            NotificationFeatureView()
-        case .serviceTerms:
-            ServiceTermsFeatureView()
-        }
-    }
-
-    @ViewBuilder
-    func fullScreenDestination(for route: MainTabFullScreenRoute) -> some View {
-        switch route {
-        case .search(let userUuid):
-            SearchFeatureView(
-                userUuid: userUuid,
-                nickname: coordinator.session.nickname,
-                onDismiss: {
-                    coordinator.dismissFullScreen()
-                },
-                onSelectPopup: { popup in
-                    coordinator.dismissFullScreen()
-                    coordinator.push(.popupDetail(userUuid: userUuid, popup: popup))
-                }
-            )
-            .accessibilityIdentifier("home_search")
         }
     }
 }
