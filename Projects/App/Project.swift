@@ -36,6 +36,7 @@ let project = Project(
                         ],
                     ],
                     "FirebaseAppDelegateProxyEnabled": false,
+                    "GADApplicationIdentifier": "$(ADMOB_APP_ID)",
                     "GIDClientID": "$(GIDClientID)",
                     "GoogleURLScheme": "$(GoogleURLScheme)",
                     "KAKAO_NATIVE_APP_KEY": "$(KAKAO_NATIVE_APP_KEY)",
