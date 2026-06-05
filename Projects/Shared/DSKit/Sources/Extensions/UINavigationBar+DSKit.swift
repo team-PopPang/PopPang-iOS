@@ -9,30 +9,44 @@ public extension UINavigationBar {
         defaultAppearance.shadowColor = .clear
 
         let backAppearance = UIBarButtonItemAppearance()
-        backAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.clear]
+        let hiddenBackTitleAttributes: [NSAttributedString.Key: Any] = [
+            .font: UIFont.systemFont(ofSize: 0.1),
+            .foregroundColor: UIColor.clear,
+        ]
+        backAppearance.normal.titleTextAttributes = hiddenBackTitleAttributes
+        backAppearance.highlighted.titleTextAttributes = hiddenBackTitleAttributes
+        backAppearance.disabled.titleTextAttributes = hiddenBackTitleAttributes
+        backAppearance.focused.titleTextAttributes = hiddenBackTitleAttributes
         defaultAppearance.backButtonAppearance = backAppearance
 
         defaultAppearance.titleTextAttributes = [
-            .font: UIFont.systemFont(ofSize: 26),
-            .foregroundColor: UIColor.black,
+            .font: UIFont.scdream(.medium, size: 17),
+            .foregroundColor: UIColor(Color.mainBlack),
         ]
 
-        if let chevronImage = DSKitResource.uiImage(named: "backButton")?.withRenderingMode(.alwaysTemplate) {
-            let resized = chevronImage.preparingThumbnail(of: CGSize(width: 18, height: 18))
-            let tinted = resized?.withTintColor(UIColor(Color.subBlack), renderingMode: .alwaysOriginal)
-            let adjusted = tinted?.withAlignmentRectInsets(
-                UIEdgeInsets(top: 0, left: -6, bottom: 0, right: 0)
-            )
-
-            if let adjusted {
-                defaultAppearance.setBackIndicatorImage(adjusted, transitionMaskImage: adjusted)
-            }
+        let backIndicatorImage = Self.backIndicatorImage()
+        if let backIndicatorImage {
+            defaultAppearance.setBackIndicatorImage(backIndicatorImage, transitionMaskImage: backIndicatorImage)
         }
 
         let navigationBar = UINavigationBar.appearance()
+        navigationBar.tintColor = UIColor(Color.subBlack)
+        navigationBar.backIndicatorImage = backIndicatorImage
+        navigationBar.backIndicatorTransitionMaskImage = backIndicatorImage
         navigationBar.standardAppearance = defaultAppearance
         navigationBar.compactAppearance = defaultAppearance
         navigationBar.scrollEdgeAppearance = defaultAppearance
         navigationBar.compactScrollEdgeAppearance = defaultAppearance
+    }
+
+    private static func backIndicatorImage() -> UIImage? {
+        guard let image = DSKitResource.uiImage(named: "backButton") else { return nil }
+
+        let targetSize = CGSize(width: 18, height: 18)
+        let renderer = UIGraphicsImageRenderer(size: targetSize)
+        return renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
+        .withRenderingMode(.alwaysTemplate)
     }
 }

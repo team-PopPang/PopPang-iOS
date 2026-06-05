@@ -26,7 +26,7 @@ public struct CustomNavigationBar<Content: View>: View {
     }
 }
 
-/// 뒤로가기 버튼과 중앙 타이틀만 있는 시스템 toolbar 기반 내비게이션 바 modifier.
+/// 뒤로가기 버튼과 중앙 타이틀만 있는 SwiftUI 네이티브 내비게이션 바 modifier.
 /// 탭 루트 헤더용 `CustomNavigationBar`와 달리 push 서브 화면 전용이다.
 /// `showsSeparator`가 true이면 내비게이션 바 아래 구분선을 표시한다.
 private struct BackNavigationBarModifier: ViewModifier {
@@ -36,15 +36,14 @@ private struct BackNavigationBarModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .navigationBarBackButtonHidden(true)
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .toolbarRole(.editor)
+            .tint(Color.subBlack)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     BackNavigationButton(action: onBack)
-                }
-
-                ToolbarItem(placement: .principal) {
-                    BackNavigationTitle(title: title)
                 }
             }
             .navigationBarBackground(isVisible: showsSeparator)
@@ -52,7 +51,7 @@ private struct BackNavigationBarModifier: ViewModifier {
     }
 }
 
-/// 뒤로가기 버튼, 중앙 타이틀, 우측 액션을 함께 표시하는 시스템 toolbar 기반 내비게이션 바 modifier.
+/// 뒤로가기 버튼, 중앙 타이틀, 우측 액션을 함께 표시하는 SwiftUI 네이티브 내비게이션 바 modifier.
 /// 탭 루트 헤더용 `CustomNavigationBar`와 달리 push 서브 화면 전용이다.
 /// `showsSeparator`가 true이면 내비게이션 바 아래 구분선을 표시한다.
 private struct BackNavigationBarWithTrailingModifier<Trailing: View>: ViewModifier {
@@ -63,15 +62,14 @@ private struct BackNavigationBarWithTrailingModifier<Trailing: View>: ViewModifi
 
     func body(content: Content) -> some View {
         content
-            .navigationBarBackButtonHidden(true)
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
+            .toolbarRole(.editor)
+            .tint(Color.subBlack)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     BackNavigationButton(action: onBack)
-                }
-
-                ToolbarItem(placement: .principal) {
-                    BackNavigationTitle(title: title)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -95,22 +93,10 @@ private struct BackNavigationButton: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 18, height: 18)
                 .foregroundStyle(Color.subBlack)
+                .frame(width: 32, height: 44, alignment: .leading)
                 .contentShape(Rectangle())
         }
-        .padding(.leading, -6)
-        .buttonStyle(PressableButtonStyle())
-    }
-}
-
-/// PopPang 공통 내비게이션 중앙 타이틀.
-private struct BackNavigationTitle: View {
-    let title: String
-
-    var body: some View {
-        Text(title)
-            .ppStyleFont(.scdream(.medium, size: 17))
-            .foregroundStyle(Color.mainBlack)
-            .padding(.top, 10)
+        .buttonStyle(.plain)
     }
 }
 
