@@ -2,7 +2,7 @@ import Core
 import Foundation
 import Moya
 
-public enum AdminAPI {
+enum AdminAPI {
     case getPopupSubmissionList
     case createPopupSubmission(requestDTO: PopupSubmissionCreateRequestDTO)
     case deactivatePopupByUser(userUuid: String, popupUuid: String)
@@ -14,7 +14,7 @@ public enum AdminAPI {
 }
 
 extension AdminAPI: BaseAPI {
-    public var path: String {
+    var path: String {
         switch self {
         case .getPopupSubmissionList, .createPopupSubmission:
             return "/admin/popup-submissions"
@@ -27,7 +27,7 @@ extension AdminAPI: BaseAPI {
         }
     }
 
-    public var method: Moya.Method {
+    var method: Moya.Method {
         switch self {
         case .getPopupSubmissionList:
             return .get
@@ -40,7 +40,7 @@ extension AdminAPI: BaseAPI {
         }
     }
 
-    public var task: Task {
+    var task: Task {
         switch self {
         case .getPopupSubmissionList,
              .deactivatePopupByUser,
