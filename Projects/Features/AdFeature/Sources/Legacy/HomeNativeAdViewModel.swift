@@ -1,3 +1,6 @@
+// Legacy copy from HomeFeature before AdFeature split.
+// Kept out of compilation while preserving the original implementation for reference.
+#if false
 import Core
 import Foundation
 import GoogleMobileAds
@@ -48,3 +51,4 @@ extension HomeNativeAdViewModel: NativeAdLoaderDelegate, NativeAdDelegate {
         errorMessage = error.localizedDescription
     }
 }
+#endif

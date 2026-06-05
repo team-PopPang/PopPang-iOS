@@ -1,4 +1,9 @@
 import SwiftUI
+{% if includeInterface %}
+import {{ name }}FeatureInterface
+{% else %}
+import {{ name }}Feature
+{% endif %}
 
 @main
 struct {{ name }}FeatureDemoApp: App {
@@ -7,7 +12,7 @@ struct {{ name }}FeatureDemoApp: App {
             {% if includeInterface %}
             {{ name }}FeatureEntryView()
             {% else %}
-            {{ name }}FeatureRootView()
+            {{ name }}FeatureView()
             {% endif %}
         }
     }

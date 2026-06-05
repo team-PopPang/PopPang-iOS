@@ -1,3 +1,6 @@
+// Legacy copy from HomeFeature before AdFeature split.
+// Kept out of compilation while preserving the original implementation for reference.
+#if false
 import GoogleMobileAds
 import SwiftUI
 import UIKit
@@ -113,3 +116,4 @@ private struct HomeNativeAdGridCellContainer: UIViewRepresentable {
         nativeAdView.nativeAd = nativeAd
     }
 }
+#endif

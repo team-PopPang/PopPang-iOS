@@ -113,6 +113,9 @@ let project = Project(
                         "UIImageName": "",
                     ],
                     "UIDesignRequiresCompatibility": true, // 임시 - iOS 26에서 디자인이 깨지는 현상 방지 위해 추가, 추후 제거 필요
+                    "UISupportedInterfaceOrientations": [
+                        "UIInterfaceOrientationPortrait",
+                    ],
                     "UIUserInterfaceStyle": "Light",
                 ]
             ),

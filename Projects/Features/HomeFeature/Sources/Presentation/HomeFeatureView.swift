@@ -1,3 +1,4 @@
+import AdFeatureInterface
 import Compound
 import Core
 import Domain
@@ -14,7 +15,7 @@ public struct HomeFeatureView: View {
     @State private var listProxy = LKListProxy()
     @State private var lastHandledPopupId: String?
     @State private var sheetRoute: HomeSheetRoute?
-    @StateObject private var nativeAdViewModel = HomeNativeAdViewModel()
+    @StateObject private var nativeAdSlotStore = AdNativeAdSlotStore()
 
     private let deepLinkStorage: DeepLinkStorage
     private let onSelectPopup: (String, Popup) -> Void
@@ -23,12 +24,16 @@ public struct HomeFeatureView: View {
     private let onShowComingPopups: (String, [Popup]) -> Void
     private let onReport: ((String) -> Void)?
     private let onManagePopupRequests: (() -> Void)?
+    private let nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration
+    private let nativeAdCount: Int?
     private let isAdmin: Bool
 
     public init(
         userUuid: String = "demo-user",
         nickname: String = "닉네임",
         isAdmin: Bool = false,
+        nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration = .homeGrid,
+        nativeAdCount: Int? = nil,
         deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore()),
         onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in },
         onShowAlert: @escaping (String) -> Void = { _ in },
@@ -40,6 +45,8 @@ public struct HomeFeatureView: View {
         let compound = HomeFeatureCompound(userUuid: userUuid, nickname: nickname)
         _compound = State(wrappedValue: compound)
         self.isAdmin = isAdmin
+        self.nativeAdPlacementConfiguration = nativeAdPlacementConfiguration
+        self.nativeAdCount = nativeAdCount
         self.deepLinkStorage = deepLinkStorage
         self.onSelectPopup = onSelectPopup
         self.onShowAlert = onShowAlert
@@ -147,12 +154,13 @@ public struct HomeFeatureView: View {
                     .pinnedHeader(background: Color.subWhite)
 
                     LKSection(id: "grid") {
-                        for item in HomeNativeAdGridItemBuilder.make(
-                            popups: compound.state.gridPopups,
-                            includesNativeAd: nativeAdViewModel.nativeAd != nil
+                        for item in AdInjectedListItemBuilder.make(
+                            items: compound.state.gridPopups,
+                            nativeAdPlacements: loadedNativeAdPlacements,
+                            id: { $0.popupUuid }
                         ) {
                             switch item {
-                            case let .popup(popup):
+                            case .content(let popup, _):
                                 LKRow(
                                     popup,
                                     id: \.popupUuid,
@@ -170,12 +178,15 @@ public struct HomeFeatureView: View {
                                     onSelectPopup(compound.state.userUuid, popup)
                                 }
 
-                            case .nativeAd:
+                            case .nativeAd(let slotID):
                                 LKRow(
                                     id: item.id,
-                                    reuseIdentifier: "HomeFeature.HomeNativeAdGridCell"
+                                    reuseIdentifier: "HomeFeature.AdNativeAdGridCell"
                                 ) {
-                                    HomeNativeAdGridCellView(viewModel: nativeAdViewModel)
+                                    AdNativeAdView(
+                                        viewModel: nativeAdSlotStore.viewModel(for: slotID),
+                                        layout: .grid
+                                    )
 //                                        .frame(width: Self.gridCellWidth, height: Self.gridCellHeight)
                                 }
                                 .equatableToken(item.id)
@@ -238,7 +249,9 @@ public struct HomeFeatureView: View {
         }
         .onAppear {
             compound.send(.onAppear)
-            nativeAdViewModel.loadAdIfNeeded()
+        }
+        .task(id: nativeAdPlacementIDs) {
+            nativeAdSlotStore.loadAdIfNeeded(for: nativeAdPlacementIDs)
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
@@ -255,6 +268,24 @@ private extension HomeFeatureView {
 
     static var gridCellWidth: CGFloat {
         (UIScreen.main.bounds.width - CGFloat.contentPadding * 2 - 15) / 2
+    }
+
+    var nativeAdPlacements: [AdNativeAdPlacement] {
+        AdNativeAdPlacementPolicy.placements(
+            contentCount: compound.state.gridPopups.count,
+            userIdentifier: compound.state.userUuid,
+            adCount: nativeAdCount,
+            configuration: nativeAdPlacementConfiguration
+        )
+    }
+
+    var nativeAdPlacementIDs: [String] {
+        nativeAdPlacements.map(\.id)
+    }
+
+    var loadedNativeAdPlacements: [AdNativeAdPlacement] {
+        let loadedSlotIDs = nativeAdSlotStore.loadedSlotIDs(in: nativeAdPlacementIDs)
+        return nativeAdPlacements.filter { loadedSlotIDs.contains($0.id) }
     }
 }
 

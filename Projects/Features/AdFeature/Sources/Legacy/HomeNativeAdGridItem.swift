@@ -1,3 +1,6 @@
+// Legacy copy from HomeFeature before AdFeature split.
+// Kept out of compilation while preserving the original implementation for reference.
+#if false
 import Domain
 
 enum HomeGridItem: Identifiable {
@@ -28,3 +31,4 @@ enum HomeNativeAdGridItemBuilder {
         return items
     }
 }
+#endif

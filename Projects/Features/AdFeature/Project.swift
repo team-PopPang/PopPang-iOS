@@ -1,40 +1,40 @@
 import ProjectDescription
 
 let project = Project(
-    name: "{{ name }}Feature",
+    name: "AdFeature",
     targets: [
         .target(
-            name: "{{ name }}Feature",
+            name: "AdFeature",
             destinations: [.iPhone],
             product: .staticFramework,
-            bundleId: "{{ bundleIdPrefix }}.features.{{ name | lowercase }}",
-            deploymentTargets: .iOS("{{ deploymentTarget }}"),
+            bundleId: "com.poppang.features.ad",
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: [
+                .project(target: "Core", path: "../../Shared/Core"),
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]
         ),
-        {% if includeInterface %}
         .target(
-            name: "{{ name }}FeatureInterface",
+            name: "AdFeatureInterface",
             destinations: [.iPhone],
             product: .framework,
-            bundleId: "{{ bundleIdPrefix }}.features.{{ name | lowercase }}.interface",
-            deploymentTargets: .iOS("{{ deploymentTarget }}"),
+            bundleId: "com.poppang.features.ad.interface",
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Interface/Sources/**"],
-            dependencies: [.target(name: "{{ name }}Feature")]
+            dependencies: [.target(name: "AdFeature")]
         ),
-        {% endif %}
         .target(
-            name: "{{ name }}FeatureDemo",
+            name: "AdFeatureDemo",
             destinations: [.iPhone],
             product: .app,
-            bundleId: "{{ bundleIdPrefix }}.demo.{{ name | lowercase }}",
-            deploymentTargets: .iOS("{{ deploymentTarget }}"),
+            bundleId: "com.poppang.demo.ad",
+            deploymentTargets: .iOS("17.0"),
             infoPlist: .extendingDefault(
                 with: [
+                    "GADApplicationIdentifier": "ca-app-pub-3940256099942544~1458002511",
                     "UILaunchScreen": [
                         "UIColorName": "",
                         "UIImageName": "",
@@ -42,11 +42,7 @@ let project = Project(
                 ]
             ),
             sources: ["Demo/Sources/**"],
-            {% if includeInterface %}
-            dependencies: [.target(name: "{{ name }}FeatureInterface")]
-            {% else %}
-            dependencies: [.target(name: "{{ name }}Feature")]
-            {% endif %}
+            dependencies: [.target(name: "AdFeatureInterface")]
         ),
     ]
 )

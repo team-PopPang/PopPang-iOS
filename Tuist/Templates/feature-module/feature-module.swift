@@ -20,14 +20,6 @@ let template = Template(
             templatePath: "FeatureEntryView.stencil"
         ),
         .file(
-            path: "Projects/Features/\(name)Feature/Sources/Presentation/\(name)FeatureRootView.swift",
-            templatePath: "FeatureRootView.stencil"
-        ),
-        .file(
-            path: "Projects/Features/\(name)Feature/Sources/Navigation/\(name)FeatureNavigator.swift",
-            templatePath: "FeatureNavigator.stencil"
-        ),
-        .file(
             path: "Projects/Features/\(name)Feature/Sources/Presentation/\(name)FeatureView.swift",
             templatePath: "FeatureView.stencil"
         ),
@@ -36,16 +28,8 @@ let template = Template(
             templatePath: "FeatureCompound.stencil"
         ),
         .file(
-            path: "Projects/Features/\(name)Feature/Sources/Navigation/\(name)FeatureRoute.swift",
-            templatePath: "FeatureRoute.stencil"
-        ),
-        .file(
             path: "Projects/Features/\(name)Feature/Demo/Sources/\(name)FeatureDemoApp.swift",
             templatePath: "DemoApp.stencil"
-        ),
-        .file(
-            path: "Projects/Features/\(name)Feature/Tests/\(name)FeatureTests.swift",
-            templatePath: "Tests.stencil"
         ),
     ]
 )
