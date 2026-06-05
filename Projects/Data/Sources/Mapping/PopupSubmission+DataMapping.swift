@@ -18,7 +18,7 @@ extension PopupSubmissionDTO {
             throw PopupSubmissionMappingError.unknownStatus(status)
         }
 
-        PopupSubmission(
+        return PopupSubmission(
             id: id,
             name: name,
             startDate: startDate,
