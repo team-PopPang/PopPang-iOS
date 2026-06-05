@@ -6,15 +6,15 @@ import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
 
-public struct PopupReportFeatureView: View {
+public struct PopupRequestFeatureView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var compound: PopupReportFeatureCompound
+    @State private var compound: PopupRequestFeatureCompound
     @State private var selectedPhotoItems: [PhotosPickerItem] = []
 
     private let onDismiss: (() -> Void)?
 
     public init(userUuid: String = "demo-user", onDismiss: (() -> Void)? = nil) {
-        _compound = State(wrappedValue: PopupReportFeatureCompound(userUuid: userUuid))
+        _compound = State(wrappedValue: PopupRequestFeatureCompound(userUuid: userUuid))
         self.onDismiss = onDismiss
     }
 
@@ -65,17 +65,17 @@ public struct PopupReportFeatureView: View {
     }
 }
 
-private extension PopupReportFeatureView {
+private extension PopupRequestFeatureView {
     var requiredSection: some View {
-        PopupReportFormSection(title: "필수 입력") {
-            PopupReportTextInput(
+        PopupRequestFormSection(title: "필수 입력") {
+            PopupRequestTextInput(
                 title: "팝업명",
                 placeholder: "팝업명을 입력해 주세요",
                 text: binding(.name),
                 isRequired: true
             )
 
-            PopupReportDateInput(
+            PopupRequestDateInput(
                 title: "운영 기간",
                 startDate: Binding(
                     get: { compound.state.startDate },
@@ -87,28 +87,28 @@ private extension PopupReportFeatureView {
                 )
             )
 
-            PopupReportTextInput(
+            PopupRequestTextInput(
                 title: "도로명 주소",
                 placeholder: "예: 서울 성동구 성수이로 00",
                 text: binding(.roadAddress),
                 isRequired: true
             )
 
-            PopupReportTextInput(
+            PopupRequestTextInput(
                 title: "지역",
                 placeholder: "예: 서울",
                 text: binding(.region),
                 isRequired: true
             )
 
-            PopupReportTextEditor(
+            PopupRequestTextEditor(
                 title: "팝업 소개",
                 placeholder: "팝업의 주요 내용과 참고할 정보를 입력해 주세요",
                 text: binding(.captionSummary),
                 isRequired: true
             )
 
-            PopupReportCategoryPicker(
+            PopupRequestCategoryPicker(
                 title: "추천 카테고리",
                 categories: compound.state.recommendList,
                 selectedIds: compound.state.selectedRecommendIds,
@@ -120,22 +120,22 @@ private extension PopupReportFeatureView {
     }
 
     var optionalSection: some View {
-        PopupReportFormSection(title: "선택 입력") {
-            PopupReportTextInput(
+        PopupRequestFormSection(title: "선택 입력") {
+            PopupRequestTextInput(
                 title: "지번 주소",
                 placeholder: "도로명 주소와 다를 때 입력",
                 text: binding(.address)
             )
 
             HStack(spacing: 10) {
-                PopupReportTextInput(
+                PopupRequestTextInput(
                     title: "오픈 시간",
                     placeholder: "10:00",
                     text: binding(.openTime),
                     keyboardType: .numbersAndPunctuation
                 )
 
-                PopupReportTextInput(
+                PopupRequestTextInput(
                     title: "마감 시간",
                     placeholder: "20:00",
                     text: binding(.closeTime),
@@ -144,14 +144,14 @@ private extension PopupReportFeatureView {
             }
 
             HStack(spacing: 10) {
-                PopupReportTextInput(
+                PopupRequestTextInput(
                     title: "위도",
                     placeholder: "37.544",
                     text: binding(.latitude),
                     keyboardType: .decimalPad
                 )
 
-                PopupReportTextInput(
+                PopupRequestTextInput(
                     title: "경도",
                     placeholder: "127.055",
                     text: binding(.longitude),
@@ -159,7 +159,7 @@ private extension PopupReportFeatureView {
                 )
             }
 
-            PopupReportTextInput(
+            PopupRequestTextInput(
                 title: "인스타그램 URL",
                 placeholder: "https://instagram.com/p/...",
                 text: binding(.instaPostUrl),
@@ -170,7 +170,7 @@ private extension PopupReportFeatureView {
     }
 
     var imageSection: some View {
-        PopupReportFormSection(title: "이미지", isRequired: true) {
+        PopupRequestFormSection(title: "이미지", isRequired: true) {
             PhotosPicker(
                 selection: $selectedPhotoItems,
                 maxSelectionCount: 10,
@@ -202,7 +202,7 @@ private extension PopupReportFeatureView {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(compound.state.images) { image in
-                            PopupReportImageThumbnail(image: image) {
+                            PopupRequestImageThumbnail(image: image) {
                                 compound.send(.imageRemoved(image.id))
                             }
                         }
@@ -253,7 +253,7 @@ private extension PopupReportFeatureView {
         )
     }
 
-    func binding(_ field: PopupReportTextField) -> Binding<String> {
+    func binding(_ field: PopupRequestTextField) -> Binding<String> {
         Binding(
             get: { compound.state.text(for: field) },
             set: { compound.send(.textChanged(field, $0)) }
@@ -270,7 +270,7 @@ private extension PopupReportFeatureView {
 
     func loadImages(from items: [PhotosPickerItem]) async {
         do {
-            var images: [PopupReportSelectedImage] = []
+            var images: [PopupRequestSelectedImage] = []
 
             for (index, item) in items.enumerated() {
                 guard let data = try await item.loadTransferable(type: Data.self) else { continue }
@@ -279,7 +279,7 @@ private extension PopupReportFeatureView {
                 let mimeType = contentType?.preferredMIMEType ?? "image/jpeg"
 
                 images.append(
-                    PopupReportSelectedImage(
+                    PopupRequestSelectedImage(
                         data: data,
                         fileName: "popup-report-\(index + 1).\(fileExtension)",
                         mimeType: mimeType
@@ -294,7 +294,7 @@ private extension PopupReportFeatureView {
     }
 }
 
-private struct PopupReportFormSection<Content: View>: View {
+private struct PopupRequestFormSection<Content: View>: View {
     let title: String
     let isRequired: Bool
     private let content: Content
@@ -330,7 +330,7 @@ private struct PopupReportFormSection<Content: View>: View {
     }
 }
 
-private struct PopupReportTextInput: View {
+private struct PopupRequestTextInput: View {
     let title: String
     let placeholder: String
     @Binding var text: String
@@ -340,7 +340,7 @@ private struct PopupReportTextInput: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            PopupReportFieldTitle(title: title, isRequired: isRequired)
+            PopupRequestFieldTitle(title: title, isRequired: isRequired)
 
             TextField("", text: $text)
                 .font(.scdream(.medium, size: 12))
@@ -369,7 +369,7 @@ private struct PopupReportTextInput: View {
     }
 }
 
-private struct PopupReportTextEditor: View {
+private struct PopupRequestTextEditor: View {
     let title: String
     let placeholder: String
     @Binding var text: String
@@ -377,10 +377,10 @@ private struct PopupReportTextEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            PopupReportFieldTitle(title: title, isRequired: isRequired)
+            PopupRequestFieldTitle(title: title, isRequired: isRequired)
 
             ZStack(alignment: .topLeading) {
-                PopupReportComposingSafeTextView(
+                PopupRequestComposingSafeTextView(
                     text: $text,
                     placeholder: placeholder,
                     font: .scdream(.medium, size: 12),
@@ -399,15 +399,15 @@ private struct PopupReportTextEditor: View {
     }
 }
 
-private struct PopupReportComposingSafeTextView: UIViewRepresentable {
+private struct PopupRequestComposingSafeTextView: UIViewRepresentable {
     @Binding var text: String
     let placeholder: String
     let font: UIFont
     let textColor: UIColor
     let placeholderColor: UIColor
 
-    func makeUIView(context: Context) -> PopupReportPlaceholderTextView {
-        let textView = PopupReportPlaceholderTextView()
+    func makeUIView(context: Context) -> PopupRequestPlaceholderTextView {
+        let textView = PopupRequestPlaceholderTextView()
         textView.delegate = context.coordinator
         textView.backgroundColor = .clear
         textView.font = font
@@ -424,7 +424,7 @@ private struct PopupReportComposingSafeTextView: UIViewRepresentable {
         return textView
     }
 
-    func updateUIView(_ textView: PopupReportPlaceholderTextView, context: Context) {
+    func updateUIView(_ textView: PopupRequestPlaceholderTextView, context: Context) {
         context.coordinator.text = $text
         textView.font = font
         textView.textColor = textColor
@@ -456,7 +456,7 @@ private struct PopupReportComposingSafeTextView: UIViewRepresentable {
         }
 
         func textViewDidChange(_ textView: UITextView) {
-            (textView as? PopupReportPlaceholderTextView)?.updatePlaceholderVisibility()
+            (textView as? PopupRequestPlaceholderTextView)?.updatePlaceholderVisibility()
             guard textView.markedTextRange == nil else { return }
 
             pendingTextUpdate?.cancel()
@@ -471,7 +471,7 @@ private struct PopupReportComposingSafeTextView: UIViewRepresentable {
         func textViewDidEndEditing(_ textView: UITextView) {
             pendingTextUpdate?.cancel()
             pendingTextUpdate = nil
-            (textView as? PopupReportPlaceholderTextView)?.updatePlaceholderVisibility()
+            (textView as? PopupRequestPlaceholderTextView)?.updatePlaceholderVisibility()
             updateText(from: textView)
         }
 
@@ -482,7 +482,7 @@ private struct PopupReportComposingSafeTextView: UIViewRepresentable {
     }
 }
 
-private final class PopupReportPlaceholderTextView: UITextView {
+private final class PopupRequestPlaceholderTextView: UITextView {
     let placeholderLabel = UILabel()
 
     var placeholder: String = "" {
@@ -529,7 +529,7 @@ private final class PopupReportPlaceholderTextView: UITextView {
     }
 }
 
-private struct PopupReportCategoryPicker: View {
+private struct PopupRequestCategoryPicker: View {
     let title: String
     let categories: [Recommend]
     let selectedIds: [Int]
@@ -538,7 +538,7 @@ private struct PopupReportCategoryPicker: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            PopupReportFieldTitle(title: title, isRequired: isRequired)
+            PopupRequestFieldTitle(title: title, isRequired: isRequired)
 
             if categories.isEmpty {
                 Text("추천 카테고리를 불러오는 중입니다.")
@@ -556,7 +556,7 @@ private struct PopupReportCategoryPicker: View {
             } else {
                 SearchFlowLayout {
                     ForEach(categories) { category in
-                        PopupReportCategoryButton(
+                        PopupRequestCategoryButton(
                             title: category.recommendName,
                             isSelected: selectedIds.contains(category.id)
                         ) {
@@ -572,7 +572,7 @@ private struct PopupReportCategoryPicker: View {
     }
 }
 
-private struct PopupReportCategoryButton: View {
+private struct PopupRequestCategoryButton: View {
     let title: String
     let isSelected: Bool
     let action: () -> Void
@@ -598,14 +598,14 @@ private struct PopupReportCategoryButton: View {
     }
 }
 
-private struct PopupReportDateInput: View {
+private struct PopupRequestDateInput: View {
     let title: String
     @Binding var startDate: Date
     @Binding var endDate: Date
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            PopupReportFieldTitle(title: title, isRequired: true)
+            PopupRequestFieldTitle(title: title, isRequired: true)
 
             HStack(spacing: 10) {
                 DatePicker("시작일", selection: $startDate, displayedComponents: .date)
@@ -632,7 +632,7 @@ private struct PopupReportDateInput: View {
     }
 }
 
-private struct PopupReportFieldTitle: View {
+private struct PopupRequestFieldTitle: View {
     let title: String
     let isRequired: Bool
 
@@ -651,8 +651,8 @@ private struct PopupReportFieldTitle: View {
     }
 }
 
-private struct PopupReportImageThumbnail: View {
-    let image: PopupReportSelectedImage
+private struct PopupRequestImageThumbnail: View {
+    let image: PopupRequestSelectedImage
     let onRemove: () -> Void
 
     var body: some View {

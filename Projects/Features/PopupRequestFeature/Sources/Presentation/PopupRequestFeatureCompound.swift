@@ -4,14 +4,14 @@ import Domain
 import Foundation
 
 @Compound
-final class PopupReportFeatureCompound {
+final class PopupRequestFeatureCompound {
     enum Action {
         case onAppear
-        case textChanged(PopupReportTextField, String)
+        case textChanged(PopupRequestTextField, String)
         case startDateChanged(Date)
         case endDateChanged(Date)
         case categoryToggled(Int)
-        case imagesLoaded([PopupReportSelectedImage])
+        case imagesLoaded([PopupRequestSelectedImage])
         case imageRemoved(UUID)
         case imageLoadingFailed(String)
         case submit
@@ -20,12 +20,12 @@ final class PopupReportFeatureCompound {
     }
 
     enum Reaction {
-        case setText(PopupReportTextField, String)
+        case setText(PopupRequestTextField, String)
         case setStartDate(Date)
         case setEndDate(Date)
         case setRecommendList([Recommend])
         case setSelectedRecommendIds([Int])
-        case setImages([PopupReportSelectedImage])
+        case setImages([PopupRequestSelectedImage])
         case removeImage(UUID)
         case setSubmitting(Bool)
         case setErrorMessage(String?)
@@ -48,7 +48,7 @@ final class PopupReportFeatureCompound {
         var longitude = ""
         var recommendList: [Recommend] = []
         var selectedRecommendIds: [Int] = []
-        var images: [PopupReportSelectedImage] = []
+        var images: [PopupRequestSelectedImage] = []
         var isSubmitting = false
         var errorMessage: String?
         var isSubmitted = false
@@ -146,7 +146,7 @@ final class PopupReportFeatureCompound {
     }
 }
 
-enum PopupReportTextField: Hashable {
+enum PopupRequestTextField: Hashable {
     case name
     case roadAddress
     case region
@@ -159,7 +159,7 @@ enum PopupReportTextField: Hashable {
     case longitude
 }
 
-struct PopupReportSelectedImage: Identifiable, Equatable {
+struct PopupRequestSelectedImage: Identifiable, Equatable {
     let id: UUID
     let data: Data
     let fileName: String
@@ -178,11 +178,11 @@ struct PopupReportSelectedImage: Identifiable, Equatable {
     }
 }
 
-private struct PopupReportSubmissionPayload {
+private struct PopupRequestSubmissionPayload {
     let request: PopupSubmissionCreateRequest
 }
 
-private struct PopupReportValidationError: LocalizedError {
+private struct PopupRequestValidationError: LocalizedError {
     let message: String
 
     var errorDescription: String? {
@@ -190,7 +190,7 @@ private struct PopupReportValidationError: LocalizedError {
     }
 }
 
-extension PopupReportFeatureCompound.State {
+extension PopupRequestFeatureCompound.State {
     var isSubmitEnabled: Bool {
         trimmed(.name).isEmpty == false &&
             trimmed(.roadAddress).isEmpty == false &&
@@ -201,7 +201,7 @@ extension PopupReportFeatureCompound.State {
             isSubmitting == false
     }
 
-    func text(for field: PopupReportTextField) -> String {
+    func text(for field: PopupRequestTextField) -> String {
         switch field {
         case .name:
             name
@@ -226,11 +226,11 @@ extension PopupReportFeatureCompound.State {
         }
     }
 
-    func trimmed(_ field: PopupReportTextField) -> String {
+    func trimmed(_ field: PopupRequestTextField) -> String {
         text(for: field).trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    mutating func update(field: PopupReportTextField, text: String) {
+    mutating func update(field: PopupRequestTextField, text: String) {
         switch field {
         case .name:
             name = text
@@ -256,7 +256,7 @@ extension PopupReportFeatureCompound.State {
     }
 }
 
-private extension PopupReportFeatureCompound {
+private extension PopupRequestFeatureCompound {
     func loadRecommendList() -> AsyncStream<Reaction> {
         guard state.recommendList.isEmpty else { return emptyReactionStream() }
 
@@ -272,7 +272,7 @@ private extension PopupReportFeatureCompound {
         }
     }
 
-    func submit(payload: PopupReportSubmissionPayload) -> AsyncStream<Reaction> {
+    func submit(payload: PopupRequestSubmissionPayload) -> AsyncStream<Reaction> {
         let adminUsecase = adminUsecase
 
         return .concat(
@@ -293,7 +293,7 @@ private extension PopupReportFeatureCompound {
 
     func makeSubmissionPayload(
         from state: State
-    ) -> Result<PopupReportSubmissionPayload, PopupReportValidationError> {
+    ) -> Result<PopupRequestSubmissionPayload, PopupRequestValidationError> {
         let name = state.trimmed(.name)
         let roadAddress = state.trimmed(.roadAddress)
         let region = state.trimmed(.region)
@@ -322,7 +322,7 @@ private extension PopupReportFeatureCompound {
         }
 
         return .success(
-            PopupReportSubmissionPayload(
+            PopupRequestSubmissionPayload(
                 request: PopupSubmissionCreateRequest(
                     name: name,
                     startDate: state.startDate,

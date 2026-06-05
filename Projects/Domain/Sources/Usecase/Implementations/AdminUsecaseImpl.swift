@@ -7,27 +7,23 @@ public final class AdminUsecaseImpl: AdminUsecaseProtocol {
         self.adminRepository = adminRepository
     }
 
-    public func getPopupValidationList() async throws -> Data {
-        try await adminRepository.getPopupValidationList()
-    }
-
-    public func validatePopup(parameters: [String: Any]) async throws {
-        try await adminRepository.validatePopup(parameters: parameters)
-    }
-
-    public func registerPopup(parameters: [String: Any]) async throws -> String? {
-        try await adminRepository.registerPopup(parameters: parameters)
+    public func getPopupSubmissionList() async throws -> [PopupSubmission] {
+        try await adminRepository.getPopupSubmissionList()
     }
 
     public func createPopupSubmission(_ request: PopupSubmissionCreateRequest) async throws {
         try await adminRepository.createPopupSubmission(request)
     }
 
-    public func registerPopupRecommendations(popupUuid: String, recommendIds: [Int]) async throws {
-        try await adminRepository.registerPopupRecommendations(popupUuid: popupUuid, recommendIds: recommendIds)
+    public func deactivatePopupByUser(userUuid: String, popupUuid: String) async throws {
+        try await adminRepository.deactivatePopupByUser(userUuid: userUuid, popupUuid: popupUuid)
     }
 
-    public func deactivatePopup(userUuid: String, popupUuid: String) async throws {
-        try await adminRepository.deactivatePopup(userUuid: userUuid, popupUuid: popupUuid)
+    public func deactivatePopup(popupUuid: String) async throws {
+        try await adminRepository.deactivatePopup(popupUuid: popupUuid)
+    }
+
+    public func updatePopupSubmissionStatus(submissionId: Int, status: PopupSubmissionStatus) async throws {
+        try await adminRepository.updatePopupSubmissionStatus(submissionId: submissionId, status: status)
     }
 }
