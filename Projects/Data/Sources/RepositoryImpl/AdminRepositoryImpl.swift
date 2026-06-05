@@ -7,11 +7,12 @@ public final class AdminRepositoryImpl: AdminRepositoryProtocol {
     public init() {}
 
     public func getPopupSubmissionList() async throws -> [PopupSubmission] {
-        try await adminProvider.asyncRequest(
+        let dtos = try await adminProvider.asyncRequest(
             .getPopupSubmissionList,
             decodeTo: [PopupSubmissionDTO].self
         )
-        .map { $0.toEntity() }
+
+        return try dtos.map { try $0.toEntity() }
     }
 
     public func createPopupSubmission(_ request: PopupSubmissionCreateRequest) async throws {

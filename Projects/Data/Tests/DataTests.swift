@@ -237,6 +237,28 @@ struct DataTests {
         #expect(submission.createdAt == "2026-06-05T10:20:30.000Z")
     }
 
+    @Test("팝업 제보 목록 DTO가 알 수 없는 상태를 실패로 처리한다")
+    func popupSubmissionDTORejectsUnknownStatus() throws {
+        let json = """
+        {
+          "id": 7,
+          "name": "성수 팝업",
+          "startDate": "2026-06-03",
+          "endDate": "2026-06-10",
+          "address": "서울 성동구 성수이로 00",
+          "description": "브랜드 팝업 제보",
+          "status": "ARCHIVED",
+          "createdAt": "2026-06-05T10:20:30.000Z"
+        }
+        """.data(using: .utf8)!
+
+        let dto = try JSONDecoder().decode(PopupSubmissionDTO.self, from: json)
+
+        #expect(throws: PopupSubmissionMappingError.unknownStatus("ARCHIVED")) {
+            try dto.toEntity()
+        }
+    }
+
     @Test("API 경로가 현재 명세와 일치한다")
     func apiPathsMatchEndpointDefinitions() {
         #expect(AdminAPI.getPopupSubmissionList.path == "/admin/popup-submissions")
