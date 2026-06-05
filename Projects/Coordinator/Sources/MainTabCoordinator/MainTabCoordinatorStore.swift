@@ -1,7 +1,6 @@
 import Core
 import Domain
 import Observation
-import PopupRequestManagementFeature
 
 public enum MainTabRoute: Identifiable, Hashable, Sendable {
     case popupDetail(userUuid: String, popup: Popup)
@@ -10,7 +9,7 @@ public enum MainTabRoute: Identifiable, Hashable, Sendable {
     case alert(userUuid: String)
     case popupRequest(userUuid: String)
     case popupRequestManagement
-    case popupRequestManagementDetail(PopupRequestManagementItem)
+    case popupRequestManagementDetail(submissionId: String)
     case profileSetting(userUuid: String, nickname: String, isAlerted: Bool)
     case notifications
     case serviceTerms
@@ -29,8 +28,8 @@ public enum MainTabRoute: Identifiable, Hashable, Sendable {
             "popupRequest-\(userUuid)"
         case .popupRequestManagement:
             "popupRequestManagement"
-        case .popupRequestManagementDetail(let item):
-            "popupRequestManagementDetail-\(item.id)"
+        case .popupRequestManagementDetail(let submissionId):
+            "popupRequestManagementDetail-\(submissionId)"
         case .profileSetting(let userUuid, let nickname, let isAlerted):
             "profileSetting-\(userUuid)-\(nickname)-\(isAlerted)"
         case .notifications:

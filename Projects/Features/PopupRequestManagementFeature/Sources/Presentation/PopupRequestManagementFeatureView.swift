@@ -7,16 +7,16 @@ public struct PopupRequestManagementFeatureView: View {
     @State private var compound: PopupRequestManagementFeatureCompound
 
     private let onBack: (() -> Void)?
-    private let onSelectItem: (PopupRequestManagementItem) -> Void
+    private let onSelectSubmission: (String) -> Void
 
     public init(
         items: [PopupRequestManagementItem] = [],
         onBack: (() -> Void)? = nil,
-        onSelectItem: @escaping (PopupRequestManagementItem) -> Void = { _ in }
+        onSelectSubmission: @escaping (String) -> Void = { _ in }
     ) {
         _compound = State(wrappedValue: PopupRequestManagementFeatureCompound(items: items))
         self.onBack = onBack
-        self.onSelectItem = onSelectItem
+        self.onSelectSubmission = onSelectSubmission
     }
 
     public var body: some View {
@@ -110,7 +110,7 @@ private extension PopupRequestManagementFeatureView {
             LazyVStack(spacing: 10) {
                 ForEach(compound.state.filteredItems) { item in
                     PopupRequestManagementCell(item: item) {
-                        onSelectItem(item)
+                        onSelectSubmission(item.id)
                     }
                 }
             }
@@ -211,37 +211,70 @@ private struct PopupRequestManagementCell: View {
 }
 
 public struct PopupRequestManagementDetailFeatureView: View {
-    private let item: PopupRequestManagementItem
+    @State private var compound: PopupRequestManagementDetailFeatureCompound
+
     private let onBack: () -> Void
 
     public init(
-        item: PopupRequestManagementItem,
+        submissionId: String,
         onBack: @escaping () -> Void
     ) {
-        self.item = item
+        _compound = State(wrappedValue: PopupRequestManagementDetailFeatureCompound(submissionId: submissionId))
         self.onBack = onBack
     }
 
     public var body: some View {
+        detailContent
+            .background(Color.mainGray4.ignoresSafeArea())
+            .ppBackNavigationBar(
+                title: "제보 상세",
+                showsSeparator: true,
+                onBack: onBack
+            )
+            .compoundOnLoad(compound, .onAppear)
+    }
+
+    @ViewBuilder
+    private var detailContent: some View {
+        if compound.state.isLoading, compound.state.item == nil {
+            ScrollView {
+                PopupRequestManagementLoadingView()
+                    .padding(.horizontal, .contentPadding)
+                    .padding(.top, 12)
+            }
+        } else if let errorMessage = compound.state.errorMessage {
+            ScrollView {
+                PopupRequestManagementErrorView(message: errorMessage) {
+                    compound.send(.refresh)
+                }
+                .padding(.horizontal, .contentPadding)
+                .padding(.top, 12)
+            }
+        } else if let item = compound.state.item {
+            content(item: item)
+        } else {
+            ScrollView {
+                PopupRequestManagementEmptyView()
+                    .padding(.horizontal, .contentPadding)
+                    .padding(.top, 12)
+            }
+        }
+    }
+
+    private func content(item: PopupRequestManagementItem) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                headerSection
-                infoSection
-                descriptionSection
+                headerSection(item: item)
+                infoSection(item: item)
+                descriptionSection(item: item)
             }
             .padding(.horizontal, .contentPadding)
             .padding(.top, 12)
             .padding(.bottom, 32)
         }
-        .background(Color.mainGray4.ignoresSafeArea())
-        .ppBackNavigationBar(
-            title: "제보 상세",
-            showsSeparator: true,
-            onBack: onBack
-        )
     }
 
-    private var headerSection: some View {
+    private func headerSection(item: PopupRequestManagementItem) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 10) {
                 Text(item.popupName)
@@ -265,7 +298,7 @@ public struct PopupRequestManagementDetailFeatureView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
-    private var infoSection: some View {
+    private func infoSection(item: PopupRequestManagementItem) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             PopupRequestDetailRow(title: "운영 기간", value: item.periodText)
             PopupRequestDetailRow(title: "지역", value: item.region)
@@ -278,7 +311,7 @@ public struct PopupRequestManagementDetailFeatureView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
-    private var descriptionSection: some View {
+    private func descriptionSection(item: PopupRequestManagementItem) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("제보 내용")
                 .font(.scdream(.bold, size: 15))

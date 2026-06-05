@@ -156,6 +156,59 @@ final class PopupRequestManagementFeatureCompound {
     }
 }
 
+@Compound
+final class PopupRequestManagementDetailFeatureCompound {
+    enum Action: Sendable {
+        case onAppear
+        case refresh
+    }
+
+    enum Reaction: Sendable {
+        case setLoading(Bool)
+        case setItem(PopupRequestManagementItem?)
+        case setErrorMessage(String?)
+    }
+
+    struct State: Equatable, Sendable {
+        let submissionId: String
+        var item: PopupRequestManagementItem?
+        var isLoading = false
+        var errorMessage: String?
+    }
+
+    var state: State
+
+    @Dependency private var adminUsecase: AdminUsecaseProtocol
+
+    init(submissionId: String) {
+        state = State(submissionId: submissionId)
+    }
+
+    func react(action: Action) -> AsyncStream<Reaction> {
+        switch action {
+        case .onAppear:
+            return loadSubmission()
+        case .refresh:
+            return loadSubmission()
+        }
+    }
+
+    func reduce(state: State, reaction: Reaction) -> State {
+        var newState = state
+
+        switch reaction {
+        case .setLoading(let isLoading):
+            newState.isLoading = isLoading
+        case .setItem(let item):
+            newState.item = item
+        case .setErrorMessage(let message):
+            newState.errorMessage = message
+        }
+
+        return newState
+    }
+}
+
 extension PopupRequestManagementFeatureCompound.State {
     var filteredItems: [PopupRequestManagementItem] {
         guard let status = selectedFilter.status else { return items }
@@ -172,6 +225,45 @@ extension PopupRequestManagementFeatureCompound.State {
 
     var rejectedCount: Int {
         items.filter { $0.status == .rejected }.count
+    }
+}
+
+private extension PopupRequestManagementDetailFeatureCompound {
+    func loadSubmission() -> AsyncStream<Reaction> {
+        guard state.isLoading == false else { return emptyReactionStream() }
+
+        let adminUsecase = adminUsecase
+        let submissionId = state.submissionId
+
+        return .concat(
+            .just(.setLoading(true)),
+            .just(.setErrorMessage(nil)),
+            .run { [adminUsecase, submissionId] send in
+                do {
+                    let submissions = try await adminUsecase.getPopupSubmissionList()
+                    let items = submissions.map { $0.toManagementItem() }
+
+                    guard let item = items.first(where: { $0.id == submissionId }) else {
+                        await send(.setItem(nil))
+                        await send(.setErrorMessage("해당 팝업 제보를 찾을 수 없습니다."))
+                        await send(.setLoading(false))
+                        return
+                    }
+
+                    await send(.setItem(item))
+                } catch {
+                    await send(.setErrorMessage(error.localizedDescription))
+                }
+
+                await send(.setLoading(false))
+            }
+        )
+    }
+
+    func emptyReactionStream() -> AsyncStream<Reaction> {
+        AsyncStream { continuation in
+            continuation.finish()
+        }
     }
 }
 

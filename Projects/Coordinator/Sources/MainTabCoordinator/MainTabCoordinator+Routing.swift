@@ -57,13 +57,13 @@ extension MainTabCoordinator {
                 onBack: { [weak self] in
                     self?.pop()
                 },
-                onSelectItem: { [weak self] item in
-                    self?.push(.popupRequestManagementDetail(item))
+                onSelectSubmission: { [weak self] submissionId in
+                    self?.push(.popupRequestManagementDetail(submissionId: submissionId))
                 }
             )
-        case .popupRequestManagementDetail(let item):
+        case .popupRequestManagementDetail(let submissionId):
             PopupRequestManagementDetailFeatureView(
-                item: item,
+                submissionId: submissionId,
                 onBack: { [weak self] in
                     self?.pop()
                 }
