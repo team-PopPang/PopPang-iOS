@@ -321,6 +321,7 @@ private extension AdNativeAdPlacementPolicy {
         )
     }
 
+    /// FNV-1a 해시 알고리즘을 사용하여 문자열의 결정적 해시값을 계산합니다.
     static func stableHash(_ string: String) -> UInt64 {
         var hash: UInt64 = 14_695_981_039_346_656_037
 
