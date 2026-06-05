@@ -14,6 +14,7 @@ public struct HomeFeatureView: View {
     @State private var listProxy = LKListProxy()
     @State private var lastHandledPopupId: String?
     @State private var sheetRoute: HomeSheetRoute?
+    @StateObject private var nativeAdViewModel = HomeNativeAdViewModel()
 
     private let deepLinkStorage: DeepLinkStorage
     private let onSelectPopup: (String, Popup) -> Void
@@ -82,7 +83,7 @@ public struct HomeFeatureView: View {
                                 reuseIdentifier: "HomeFeature.ListKitBestPopupCell"
                             ) {
                                 ListKitBestPopupCell(popup: popup)
-                                    .frame(width: 194, height: 271)
+//                                    .frame(width: 194, height: 271)
                             }
                             .onSelect { _ in
                                 onSelectPopup(compound.state.userUuid, popup)
@@ -113,7 +114,7 @@ public struct HomeFeatureView: View {
                                 reuseIdentifier: "HomeFeature.ListKitComingPopupCell"
                             ) {
                                 ListKitComingPopupCell(popup: popup)
-                                    .frame(width: 283, height: 138)
+//                                    .frame(width: 283, height: 138)
                             }
                             .onSelect { _ in
                                 onSelectPopup(compound.state.userUuid, popup)
@@ -146,22 +147,38 @@ public struct HomeFeatureView: View {
                     .pinnedHeader(background: Color.subWhite)
 
                     LKSection(id: "grid") {
-                        for popup in compound.state.gridPopups {
-                            LKRow(
-                                popup,
-                                id: \.popupUuid,
-                                reuseIdentifier: "HomeFeature.ListKitGridPopupCell"
-                            ) {
-                                ListKitGridPopupCell(
-                                    popup: popup,
-                                    isLiked: isLiked(popup: popup),
-                                    cellWidth: Self.gridCellWidth,
-                                    toggleLike: { compound.send(.toggleLike(popup)) }
-                                )
-                            }
-                            .equatableToken("\(popup.popupUuid)-\(isLiked(popup: popup))")
-                            .onSelect { _ in
-                                onSelectPopup(compound.state.userUuid, popup)
+                        for item in HomeNativeAdGridItemBuilder.make(
+                            popups: compound.state.gridPopups,
+                            includesNativeAd: nativeAdViewModel.nativeAd != nil
+                        ) {
+                            switch item {
+                            case let .popup(popup):
+                                LKRow(
+                                    popup,
+                                    id: \.popupUuid,
+                                    reuseIdentifier: "HomeFeature.ListKitGridPopupCell"
+                                ) {
+                                    ListKitGridPopupCell(
+                                        popup: popup,
+                                        isLiked: isLiked(popup: popup),
+                                        cellWidth: Self.gridCellWidth,
+                                        toggleLike: { compound.send(.toggleLike(popup)) }
+                                    )
+                                }
+                                .equatableToken("\(popup.popupUuid)-\(isLiked(popup: popup))")
+                                .onSelect { _ in
+                                    onSelectPopup(compound.state.userUuid, popup)
+                                }
+
+                            case .nativeAd:
+                                LKRow(
+                                    id: item.id,
+                                    reuseIdentifier: "HomeFeature.HomeNativeAdGridCell"
+                                ) {
+                                    HomeNativeAdGridCellView(viewModel: nativeAdViewModel)
+//                                        .frame(width: Self.gridCellWidth, height: Self.gridCellHeight)
+                                }
+                                .equatableToken(item.id)
                             }
                         }
                     } header: {
@@ -179,7 +196,7 @@ public struct HomeFeatureView: View {
                         .padding(.bottom, 10)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .sectionLayout(.grid(columns: 2, itemHeight: 302, columnSpacing: 15, rowSpacing: 20))
+                    .sectionLayout(.grid(columns: 2, itemHeight: Self.gridCellHeight, columnSpacing: 15, rowSpacing: 20))
                     .sectionContentInsets(LKEdgeInsets(
                         top: 0,
                         left: .contentPadding,
@@ -221,6 +238,7 @@ public struct HomeFeatureView: View {
         }
         .onAppear {
             compound.send(.onAppear)
+            nativeAdViewModel.loadAdIfNeeded()
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
@@ -233,6 +251,8 @@ public struct HomeFeatureView: View {
 }
 
 private extension HomeFeatureView {
+    static let gridCellHeight: CGFloat = 302
+
     static var gridCellWidth: CGFloat {
         (UIScreen.main.bounds.width - CGFloat.contentPadding * 2 - 15) / 2
     }
@@ -709,7 +729,7 @@ public struct ComingPopupDetailFeatureView: View {
                     }
                 }
             }
-            .sectionLayout(.grid(columns: 2, itemHeight: 302, columnSpacing: 15, rowSpacing: 20))
+            .sectionLayout(.grid(columns: 2, itemHeight: HomeFeatureView.gridCellHeight, columnSpacing: 15, rowSpacing: 20))
             .sectionContentInsets(LKEdgeInsets(
                 top: 0,
                 left: .contentPadding,

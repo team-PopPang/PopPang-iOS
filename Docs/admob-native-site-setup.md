@@ -1,40 +1,42 @@
-# AdMob Native 광고 사이트 설정 가이드
+# AdMob Native 광고 설정과 개발 순서
 
-이 문서는 AdMob 계정 생성이 끝난 상태에서 Native 광고를 붙이기 위해 AdMob 사이트에서 설정해야 하는 작업을 정리한다.
+기준일: 2026-06-05
 
-범위:
+이 문서는 PopPang iOS 앱에 AdMob Native 광고를 붙일 때 필요한 작업을 사이트 설정부터 Xcode/Tuist 설정, SDK 초기화, Home 화면 개발까지 한 순서로 정리한다.
 
-- AdMob 사이트에서 앱을 등록한다.
-- Native 광고 단위를 만든다.
-- 개발자에게 전달할 ID를 확인한다.
-- 테스트 광고, 개인정보 메시지, app-ads.txt 준비 항목을 확인한다.
+## 현재 결론
 
-코드 연동은 별도 작업으로 다룬다. 이 문서에서는 사이트 설정을 우선한다.
+PopPang은 Firebase를 이미 사용하므로 AdMob 앱을 Firebase 앱에 연결한 상태로 운영한다. 광고 표시 자체는 Firebase SDK가 아니라 Google Mobile Ads SDK가 담당한다.
 
-## PopPang 기준값
+현재 구현 방향:
 
-| 항목 | 값 |
-| --- | --- |
-| 플랫폼 | iOS |
-| 앱 이름 | PopPang 또는 팝팡 |
-| Bundle ID | `kr.co.poppang.PopPang` |
-| 광고 형식 | Native |
+- AdMob 사이트에서 iOS 앱과 Native 광고 단위를 만든다.
+- `ADMOB_APP_ID`와 `ADMOB_NATIVE_AD_UNIT_ID` 두 값을 `Secrets.xcconfig`에 둔다.
+- `GADApplicationIdentifier`, `SKAdNetworkItems`, `ADMOB_NATIVE_AD_UNIT_ID`는 `Projects/App/Project.swift`에서 Info.plist 값으로 생성한다.
+- SDK는 `Tuist/Package.swift`에 Google Mobile Ads SPM 패키지로 추가한다.
+- 앱 시작 시 Firebase 초기화 후 `MobileAds.shared.start(completionHandler: nil)`을 한 번 호출한다.
+- Home Native 광고는 `HomeFeature`의 Presentation 계층에서만 처리한다.
+- Debug 빌드는 Google 공식 Native 테스트 광고 단위 ID를 사용하고, Release 빌드는 `ADMOB_NATIVE_AD_UNIT_ID`를 사용한다.
 
-## 전체 순서
+## ID 구분
 
-1. AdMob 사이트에 앱을 등록한다.
-2. 앱 ID를 복사한다.
-3. Native 광고 단위를 생성한다.
-4. 광고 단위 ID를 복사한다.
-5. 테스트 광고 설정을 확인한다.
-6. 개인정보 메시지와 app-ads.txt 준비 상태를 확인한다.
-7. 개발자에게 전달할 값을 정리한다.
+AdMob에서 받는 ID는 생김새와 용도가 다르다.
 
-## 1. 앱 등록
+| 값 | 예시 형식 | 저장 위치 | 용도 |
+| --- | --- | --- | --- |
+| AdMob 앱 ID | `ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy` | `ADMOB_APP_ID` | 앱 전체 식별자. Info.plist의 `GADApplicationIdentifier`로 들어간다. |
+| Native 광고 단위 ID | `ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy` | `ADMOB_NATIVE_AD_UNIT_ID` | 실제 Native 광고 요청에 사용한다. |
+| Native 테스트 광고 단위 ID | `ca-app-pub-3940256099942544/3986624511` | `Constants.AdMob.testNativeAdUnitId` | Google 공식 Demo ID. Debug 개발 중에만 사용한다. |
 
-AdMob 접속:
+정리하면 `~`가 들어간 값은 앱 ID, `/`가 들어간 값은 광고 단위 ID다.
 
-- https://admob.google.com
+## 1. AdMob 사이트에서 앱 등록
+
+AdMob:
+
+```text
+https://admob.google.com
+```
 
 경로:
 
@@ -44,79 +46,72 @@ Apps
 > Platform: iOS
 ```
 
-### 앱이 App Store에 이미 출시된 경우
+앱이 App Store에 아직 없으면 `No`를 선택하고 앱 이름과 플랫폼만으로 먼저 등록한다. 앱이 출시된 뒤에는 App Store listing을 다시 연결한다.
 
-선택:
+PopPang 기준:
 
-```text
-Yes, it's listed on a supported app store
-```
+| 항목 | 값 |
+| --- | --- |
+| 플랫폼 | iOS |
+| 앱 이름 | PopPang 또는 팝팡 |
+| Bundle ID | `kr.co.poppang.PopPang` |
+| 광고 형식 | Native |
 
-진행:
-
-1. 앱 이름, 개발자 이름, Apple App Store URL, Apple Store ID 중 하나로 앱을 검색한다.
-2. PopPang 앱을 선택한다.
-3. user metrics 활성화 여부를 선택한다.
-4. `Add app`을 누른다.
-
-### 앱이 아직 App Store에 출시되지 않은 경우
-
-선택:
-
-```text
-No
-```
-
-진행:
-
-1. 앱 이름을 입력한다.
-2. 플랫폼이 iOS인지 다시 확인한다.
-3. user metrics 활성화 여부를 선택한다.
-4. `Add`를 누른다.
-
-주의:
-
-- 미출시 앱은 테스트와 사전 설정용으로 등록할 수 있다.
-- 앱이 출시되면 AdMob에서 다시 App Store listing을 연결해야 한다.
-- App Store에 연결되고 AdMob readiness review가 끝나기 전까지 광고 게재가 제한될 수 있다.
-
-## 2. 앱 ID 복사
-
-앱 등록 후 앱 ID를 복사한다.
-
-경로:
-
-```text
-Apps
-> View all apps
-> PopPang 행의 App ID 복사
-```
-
-형식:
+앱 등록 후 AdMob 앱 ID를 복사한다.
 
 ```text
 ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy
 ```
 
-용도:
+이 값은 `ADMOB_APP_ID`에 넣는다.
 
-- iOS 앱의 `GADApplicationIdentifier` 값으로 사용한다.
-- 앱 전체를 식별하는 값이다.
-- 광고 단위 ID와 다르다.
+## 2. Firebase 연결
 
-## 3. Native 광고 단위 생성
+Firebase를 이미 쓰는 앱이면 AdMob 앱을 Firebase 앱에 연결한다.
 
-경로:
+AdMob 경로:
 
 ```text
 Apps
-> PopPang 선택
-> Ad units
-> Add ad unit
-> Native 선택
+> PopPang
+> App settings 또는 Firebase 연결 영역
+> 기존 Firebase 프로젝트/앱 연결
 ```
 
-광고 단위 이름은 위치와 형식을 알 수 있게 정한다.
+확인할 것:
+
+- Firebase 앱의 Bundle ID와 AdMob 앱의 Bundle ID가 같아야 한다.
+- Google Analytics가 켜져 있으면 AdMob 사용자 측정항목과 Firebase Analytics를 같이 볼 수 있다.
+- Firebase 연결은 분석과 수익 데이터 연동을 위한 것이고, 광고를 화면에 띄우는 코드는 Google Mobile Ads SDK로 작성한다.
+
+### 노출 수준 광고 수익 설정
+
+AdMob에서 다음 문구가 나오면 켜는 쪽으로 진행한다.
+
+```text
+노출 수준 광고 수익을 사용 설정하시겠습니까?
+앱이 Firebase에 연결되어 있습니다...
+```
+
+의미:
+
+- 광고 1회 노출마다 추정 수익 데이터를 Firebase/Analytics 쪽으로 넘길 수 있게 하는 설정이다.
+- 광고 표시 기능 자체를 켜는 버튼은 아니다.
+- Firebase와 AdMob을 연결해서 수익 분석까지 보려면 켜는 것이 맞다.
+
+## 3. Native 광고 단위 생성
+
+AdMob 경로:
+
+```text
+Apps
+> PopPang
+> Ad units
+> Add ad unit
+> Native
+```
+
+광고 단위 이름은 위치와 형식이 드러나게 만든다.
 
 예시:
 
@@ -126,166 +121,387 @@ iOS_PopupDetail_Native
 iOS_SearchResult_Native
 ```
 
-추천 규칙:
-
-- 플랫폼을 앞에 붙인다: `iOS`
-- 노출 위치를 넣는다: `Home`, `PopupDetail`, `SearchResult`
-- 광고 형식을 넣는다: `Native`
-- 하나의 화면에 여러 위치가 있으면 번호를 붙인다: `iOS_Home_Native_01`
-
-## 4. Native 광고 단위 옵션
-
-Native 광고 단위 생성 중 advanced settings가 나오면 아래 기준으로 시작한다.
-
-### Media type
-
-초기에는 기본값 또는 이미지/비디오 모두 허용하는 설정으로 시작한다.
-
-특정 UI에서 비디오 대응이 어렵다면 image 중심으로 제한할 수 있다. 다만 비디오를 막으면 광고 수요나 수익성에 영향이 있을 수 있으므로 디자인과 개발 구현 상태를 먼저 확인한다.
-
-주의:
-
-- Native 광고의 메인 이미지 또는 비디오는 `MediaView`로 렌더링해야 한다.
-- 로고나 앱 아이콘은 별도 이미지 뷰로 표시할 수 있다.
-
-### eCPM floor
-
-초기 테스트 단계에서는 `Disabled` 또는 Google optimized 계열로 시작한다.
-
-수동 floor는 광고 요청은 성공하지만 fill rate가 낮아질 수 있으므로, 충분한 노출 데이터가 쌓인 뒤 조정한다.
-
-## 5. 광고 단위 ID 복사
-
-Native 광고 단위를 만든 뒤 광고 단위 ID를 복사한다.
-
-경로:
-
-```text
-Apps
-> PopPang 선택
-> Ad units
-> 생성한 Native 광고 단위의 Ad unit ID 복사
-```
-
-형식:
+생성 후 Native 광고 단위 ID를 복사한다.
 
 ```text
 ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy
 ```
 
-용도:
+이 값은 `ADMOB_NATIVE_AD_UNIT_ID`에 넣는다.
 
-- 실제 광고 요청에 사용하는 값이다.
-- 화면별 광고 노출 위치마다 다른 광고 단위 ID를 쓰는 것이 관리하기 쉽다.
+## 4. Secrets.xcconfig 설정
 
-## 6. 테스트 광고 설정
+AdMob 관련 시크릿 키는 두 개다.
 
-개발 중에는 실제 광고 단위 ID로 바로 클릭 테스트하지 않는다.
-
-우선 Google이 제공하는 iOS Native 테스트 광고 단위 ID를 사용한다.
-
-```text
-Native: ca-app-pub-3940256099942544/3986624511
-Native Video: ca-app-pub-3940256099942544/2521693316
+```xcconfig
+ADMOB_APP_ID = ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy
+ADMOB_NATIVE_AD_UNIT_ID = ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy
 ```
 
-실제 광고 단위 ID로 테스트해야 한다면 AdMob에서 테스트 기기를 등록한다.
+역할:
+
+- `ADMOB_APP_ID`: 앱 시작 시 Google Mobile Ads SDK가 앱을 식별하기 위해 Info.plist에서 읽는다.
+- `ADMOB_NATIVE_AD_UNIT_ID`: Release에서 Native 광고를 로드할 때 사용한다.
+
+Debug 테스트 광고 단위 ID는 Google 공식 Demo 값이므로 `Secrets.xcconfig`에 넣지 않고 `Constants.AdMob.testNativeAdUnitId`에 둔다.
+
+## 5. Tuist Package 설정
+
+Google Mobile Ads SDK는 SPM으로 추가한다.
+
+파일:
+
+```text
+Tuist/Package.swift
+```
+
+현재 설정:
+
+```swift
+.package(
+    url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git",
+    exact: "13.4.0"
+)
+```
+
+추가 후 실행:
+
+```bash
+tuist install
+make regen
+```
+
+## 6. ThirdParty 링크 설정
+
+외부 SDK SPM product는 `ThirdParty` 타깃에서만 직접 링크한다.
+
+파일:
+
+```text
+Projects/Shared/ThirdParty/Project.swift
+```
+
+현재 설정:
+
+```swift
+.external(name: "GoogleMobileAds"),
+.sdk(name: "JavaScriptCore", type: .framework),
+```
+
+`JavaScriptCore.framework`는 Google Mobile Ads SDK 링크 과정에서 필요해서 같이 연결한다.
+
+## 7. Info.plist 설정
+
+이 프로젝트는 생성된 Xcode의 Info.plist를 직접 고치지 않는다. Tuist가 `Projects/App/Project.swift`의 `infoPlist` 설정으로 생성한다.
+
+파일:
+
+```text
+Projects/App/Project.swift
+```
+
+현재 AdMob 관련 키:
+
+```swift
+"ADMOB_NATIVE_AD_UNIT_ID": "$(ADMOB_NATIVE_AD_UNIT_ID)",
+"GADApplicationIdentifier": "$(ADMOB_APP_ID)",
+"SKAdNetworkItems": [
+    ["SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork"],
+    ...
+],
+```
+
+### GADApplicationIdentifier
+
+`GADApplicationIdentifier`에는 AdMob 앱 ID가 들어간다.
+
+```text
+ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy
+```
+
+이 값이 없으면 Google Mobile Ads SDK 초기화 시 앱이 비정상 종료될 수 있다.
+
+### ADMOB_NATIVE_AD_UNIT_ID
+
+`ADMOB_NATIVE_AD_UNIT_ID`는 앱 런타임에서 광고 단위 ID를 읽기 위해 Info.plist에 같이 넣는다.
+
+Release에서 `Constants.AdMob.nativeAdUnitId`가 이 값을 읽는다.
+
+### SKAdNetworkItems
+
+`SKAdNetworkItems`는 Apple의 SKAdNetwork 전환 측정을 위해 광고 네트워크 식별자를 Info.plist에 등록하는 값이다.
+
+쉽게 말하면:
+
+- 광고를 보여주는 기능 자체의 필수 스위치는 아니다.
+- 하지만 광고주 입장에서는 광고 성과 측정이 되는 앱이 더 유리하다.
+- 측정이 잘 되면 광고 수요, 캠페인 참여, 단가 최적화에 유리할 수 있다.
+- 그래서 AdMob 공식 iOS 설정 문서의 식별자 목록을 `Project.swift`에 넣어둔다.
+
+식별자 목록은 한 번 넣고 끝이 아니라 Google 문서 기준으로 변경될 수 있으므로 SDK 업데이트 시 같이 확인한다.
+
+## 8. SDK 초기화
+
+파일:
+
+```text
+Projects/App/Sources/AppCore/AppSDKInitializer.swift
+```
+
+현재 순서:
+
+```swift
+FirebaseCoreBootstrap.configureIfNeeded()
+MobileAds.shared.start(completionHandler: nil)
+KakaoSDK.initSDK(appKey: Constants.KakaoAPI.key)
+NMFAuthManager.shared().ncpKeyId = Constants.NaverAPI.key
+```
+
+기준:
+
+- 앱 실행 중 한 번만 호출한다.
+- 광고를 로드하기 전에 호출되어야 한다.
+- Firebase를 쓰는 프로젝트이므로 Firebase 초기화 후 바로 호출한다.
+- Firebase 문서의 예전 Swift 예시는 `GADMobileAds.sharedInstance().start(...)` 형태로 보일 수 있지만, 현재 Google Mobile Ads Swift API에서는 `MobileAds.shared.start()` 형태를 사용한다.
+
+## 9. AdMob 상수 연결
+
+파일:
+
+```text
+Projects/Shared/Core/Sources/Support/Constants.swift
+```
+
+현재 설정:
+
+```swift
+public enum AdMob {
+    public static let nativeAdUnitId = AppConfig.string(forKey: "ADMOB_NATIVE_AD_UNIT_ID")
+    public static let testNativeAdUnitId = "ca-app-pub-3940256099942544/3986624511"
+
+    public static var currentNativeAdUnitId: String {
+        #if DEBUG
+            testNativeAdUnitId
+        #else
+            nativeAdUnitId
+        #endif
+    }
+}
+```
+
+역할:
+
+- `nativeAdUnitId`: Release에서 실제 광고 요청에 사용한다.
+- `testNativeAdUnitId`: Debug에서 Google 공식 테스트 Native 광고를 요청한다.
+- `currentNativeAdUnitId`: 빌드 환경에 맞게 Debug는 테스트 ID, Release는 실제 ID를 반환한다.
+
+## 10. Native 광고 로드 구조
+
+Home Native 광고는 Domain, UseCase, Repository로 내리지 않는다.
+
+이유:
+
+- 광고 로드는 비즈니스 도메인 규칙이 아니라 화면 수익화 UI 관심사다.
+- 현재는 Home 화면 한 위치에 붙는 SDK UI 컴포넌트다.
+- 서버 데이터와 섞지 않고 `HomeFeature` Presentation 안에서 끝내는 편이 변경 범위가 작다.
+- Compound 상태에는 팝업 목록, 필터, 딥링크처럼 Home 기능 상태만 유지한다.
+
+파일:
+
+```text
+Projects/Features/HomeFeature/Sources/Presentation/NativeAd/HomeNativeAdViewModel.swift
+```
+
+현재 흐름:
+
+```swift
+init(adUnitID: String = Constants.AdMob.currentNativeAdUnitId) {
+    self.adUnitID = adUnitID
+}
+```
+
+로드 방식:
+
+```swift
+let mediaOptions = NativeAdMediaAdLoaderOptions()
+mediaOptions.mediaAspectRatio = .landscape
+
+let adLoader = AdLoader(
+    adUnitID: adUnitID,
+    rootViewController: nil,
+    adTypes: [.native],
+    options: [mediaOptions]
+)
+adLoader.delegate = self
+adLoader.load(Request())
+```
+
+`mediaAspectRatio = .landscape`는 2열 grid 광고 셀에 더 잘 맞는 가로형 media를 선호한다는 뜻이다. Google 문서 기준으로 이 값은 선호 옵션이며, 모든 광고 소재가 해당 비율로 내려온다고 보장되지는 않는다.
+
+성공하면 `NativeAd`를 `@Published private(set) var nativeAd`에 보관하고, 실패하면 `errorMessage`에 실패 메시지를 둔다.
+
+## 11. Native 광고 UI 구조
+
+파일:
+
+```text
+Projects/Features/HomeFeature/Sources/Presentation/NativeAd/HomeNativeAdView.swift
+```
+
+구조:
+
+- SwiftUI에서는 `HomeNativeAdGridCellView`를 사용한다.
+- 실제 Google SDK 뷰는 `UIViewRepresentable`로 감싼다.
+- UIKit 쪽 루트 뷰는 `NativeAdView`다.
+- 이미지/비디오 영역은 `MediaView`다.
+- Home grid의 기존 셀 크기와 맞추기 위해 `302` 높이 안에 compact 형태로 배치한다.
+
+Native 광고에서 중요한 연결:
+
+```swift
+nativeAdView.mediaView = mediaView
+nativeAdView.headlineView = headlineLabel
+nativeAdView.callToActionView = callToActionButton
+nativeAdView.nativeAd = nativeAd
+```
+
+주의:
+
+- Native 광고는 단순히 SwiftUI 카드처럼 직접 그리는 것이 아니라 Google SDK의 `NativeAdView`에 에셋 뷰를 등록해야 한다.
+- CTA 버튼은 SDK가 클릭을 처리해야 하므로 `callToActionView?.isUserInteractionEnabled = false`로 둔다.
+- 광고임을 알 수 있게 `광고` 배지를 표시한다.
+
+## 12. Home 화면 배치
+
+파일:
+
+```text
+Projects/Features/HomeFeature/Sources/Presentation/HomeFeatureView.swift
+```
+
+현재 배치:
+
+- `best` 섹션
+- `coming` 섹션
+- `grid` 섹션
+
+Native 광고는 별도 섹션으로 만들지 않고, `grid` 섹션 안에서 팝업 셀 사이에 삽입한다.
+
+광고 item 삽입 로직은 아래 파일에 둔다.
+
+```text
+Projects/Features/HomeFeature/Sources/Presentation/NativeAd/HomeNativeAdGridItem.swift
+```
+
+현재 삽입 규칙:
+
+```swift
+var gridItems: [HomeGridItem] {
+    var items = compound.state.gridPopups.map(HomeGridItem.popup)
+    guard nativeAdViewModel.nativeAd != nil, items.isEmpty == false else { return items }
+
+    let insertIndex = min(4, items.count)
+    items.insert(.nativeAd, at: insertIndex)
+    return items
+}
+```
+
+의미:
+
+- 광고가 아직 로드되지 않았으면 기존 팝업 grid만 보여준다.
+- 광고가 로드되면 팝업 4개 뒤에 `nativeAd` item을 하나 삽입한다.
+- grid가 비어 있으면 광고만 단독으로 보여주지 않는다.
+- 광고 셀도 기존 grid와 같은 `itemHeight: 302` 안에서 렌더링한다.
+
+진입 시점:
+
+```swift
+.onAppear {
+    compound.send(.onAppear)
+    nativeAdViewModel.loadAdIfNeeded()
+}
+```
+
+광고가 로드된 경우에만 grid item 목록에 광고 셀을 끼워 넣는다.
+
+## 13. 테스트 광고 기준
+
+개발 중에는 실제 광고 단위 ID를 직접 클릭 테스트하지 않는다.
+
+Debug 기준:
+
+```text
+ca-app-pub-3940256099942544/3986624511
+```
+
+이 값은 Google 공식 iOS Native 테스트 광고 단위 ID다. 개발자 개인 AdMob 계정에서 발급받은 키가 아니다.
+
+Release 기준:
+
+```text
+ADMOB_NATIVE_AD_UNIT_ID
+```
+
+실제 광고 단위 ID로 테스트해야 하면 AdMob의 테스트 기기 등록을 사용한다.
 
 경로:
 
 ```text
-Settings
+AdMob
+> Settings
 > Test devices
 > Add test device
 ```
 
-확인 기준:
-
-- iOS Simulator는 테스트 기기로 자동 처리된다.
-- 실기기는 AdMob UI 또는 SDK 로그에 나온 test device ID로 등록한다.
-- 테스트 광고에는 `Test mode` 표시가 붙는다.
-- Native Advanced 광고는 headline에 `Test mode` 문구가 붙을 수 있다.
-
 금지:
 
-- 테스트 모드가 아닌 실제 광고를 개발자가 반복 클릭하지 않는다.
-- QA 중에도 실제 광고 클릭으로 동작 확인하지 않는다.
+- 개발자나 QA가 실제 광고를 반복 클릭하지 않는다.
+- 테스트 모드 표시가 없는 광고를 디버깅 목적으로 누르지 않는다.
 
-## 7. 개인정보 메시지 설정
+## 14. 검증 명령
 
-AdMob에서 개인정보 메시지는 아래 메뉴에서 설정한다.
+Tuist 설정을 바꾼 뒤:
 
-경로:
-
-```text
-Privacy & messaging
+```bash
+make regen
 ```
 
-확인 항목:
+HomeFeature 단위 빌드:
 
-- GDPR 또는 유럽 경제 지역 사용자를 대상으로 하는지
-- IDFA/ATT 동의 메시지가 필요한지
-- 사용자가 나중에 개인정보 선택을 다시 바꿀 수 있는 진입점이 필요한지
-
-주의:
-
-- UMP 동의가 필요한 경우 광고 요청 전에 동의 상태를 먼저 확인해야 한다.
-- 이 부분은 사이트 설정만으로 끝나지 않고 iOS 코드 연동이 필요하다.
-
-## 8. app-ads.txt 준비
-
-AdMob은 앱 소유권과 광고 판매 권한 확인을 위해 app-ads.txt 설정을 요구할 수 있다.
-
-준비 항목:
-
-1. App Store listing에 개발자 웹사이트 URL이 연결되어 있어야 한다.
-2. 해당 개발자 웹사이트 루트에 `app-ads.txt`를 게시해야 한다.
-3. AdMob에서 app-ads.txt 상태가 확인될 때까지 기다린다.
-
-예시 URL:
-
-```text
-https://example.com/app-ads.txt
+```bash
+tuist build HomeFeature
 ```
 
-주의:
+앱 전체 빌드:
 
-- App Store에 앱이 등록되어 있어야 AdMob이 개발자 웹사이트를 확인할 수 있다.
-- AdMob이 파일을 크롤링하고 검증하는 데 시간이 걸릴 수 있다.
-- app-ads.txt가 준비되지 않으면 앱 승인 또는 광고 게재가 제한될 수 있다.
+```bash
+tuist build PopPangApp
+```
 
-## 9. 개발자에게 전달할 값
+현재 확인된 결과:
 
-사이트 설정이 끝나면 아래 값을 개발자에게 전달한다.
+- `make regen` 성공
+- `tuist build HomeFeature` 성공
+- `tuist build PopPangApp` 성공
 
-| 이름 | 예시 형식 | 설명 |
-| --- | --- | --- |
-| AdMob App ID | `ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy` | 앱 전체 식별자 |
-| Native Ad Unit ID | `ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy` | Native 광고 요청용 ID |
-| Native Ad Unit name | `iOS_Home_Native` | AdMob 콘솔에서 관리하는 이름 |
-| 테스트 광고 사용 여부 | 테스트 ID 또는 test device 등록 | 개발/QA 정책 |
-| 개인정보 메시지 사용 여부 | GDPR, IDFA/ATT 등 | UMP 연동 필요 여부 |
+## 15. 출시 전 체크리스트
 
-PopPang에서는 운영 ID를 코드에 직접 하드코딩하지 않는다. 실제 코드 연동 단계에서는 `Secrets.xcconfig` 같은 로컬 설정 파일 또는 빌드 설정을 통해 주입한다.
-
-## 10. 설정 완료 체크리스트
-
-- [ ] AdMob에 iOS 앱을 등록했다.
-- [ ] 앱 ID를 복사했다.
-- [ ] Native 광고 단위를 생성했다.
-- [ ] 광고 단위 ID를 복사했다.
-- [ ] 광고 단위 이름에 플랫폼, 위치, 형식을 포함했다.
-- [ ] 개발 중 사용할 테스트 광고 ID를 확인했다.
-- [ ] 실기기 테스트가 필요하면 test device를 등록했다.
-- [ ] 개인정보 메시지 필요 여부를 확인했다.
-- [ ] app-ads.txt 준비 상태를 확인했다.
-- [ ] 앱 출시 후 AdMob 앱과 App Store listing을 연결할 계획을 확인했다.
+- `Secrets.xcconfig`의 `ADMOB_APP_ID`가 `~` 형식 앱 ID인지 확인한다.
+- `Secrets.xcconfig`의 `ADMOB_NATIVE_AD_UNIT_ID`가 `/` 형식 Native 광고 단위 ID인지 확인한다.
+- Release 빌드에서 테스트 광고 ID가 사용되지 않는지 확인한다.
+- AdMob 앱 상태와 광고 단위 상태가 준비됨인지 확인한다.
+- App Store 출시 후 AdMob 앱을 App Store listing에 연결한다.
+- app-ads.txt가 필요한 상태인지 AdMob 콘솔에서 확인한다.
+- EEA 등 사용자 동의가 필요한 지역을 위해 UMP 동의 플로우 적용 여부를 결정한다.
+- ATT 권한 요청이 필요한 광고 전략인지 확인한다.
+- 실제 광고 클릭 테스트를 하지 않는다.
+- SDK 업데이트 시 `SKAdNetworkItems` 목록 변경 여부를 다시 확인한다.
 
 ## 참고 문서
 
-- [Set up an app in AdMob](https://support.google.com/admob/answer/9989980?hl=en)
-- [Create a native ad unit](https://support.google.com/admob/answer/7187428?hl=en)
-- [Find and copy an app ID or ad unit ID](https://support.google.com/admob/answer/7356431?hl=en)
-- [Enable test ads on iOS](https://developers.google.com/admob/ios/test-ads)
-- [Set up an app-ads.txt file](https://support.google.com/admob/answer/9363762?hl=en)
-- [User Messaging Platform iOS quick start](https://developers.google.com/admob/ump/ios/quick-start)
+- Firebase와 함께 AdMob iOS 시작하기: https://firebase.google.com/docs/admob/ios/quick-start?hl=ko
+- Google Mobile Ads SDK iOS 설정: https://developers.google.com/admob/ios/quick-start?hl=ko
+- iOS Native Advanced 광고 구현: https://developers.google.com/admob/ios/native/advanced?hl=ko#swiftui
+- iOS 테스트 광고 단위 ID: https://developers.google.com/admob/ios/test-ads
+- iOS 개인정보 보호 전략과 SKAdNetwork: https://developers.google.com/admob/ios/privacy/strategies?hl=ko#enable_skadnetwork_to_track_conversions
+- Apple SKAdNetworkItems: https://developer.apple.com/documentation/BundleResources/Information-Property-List/SKAdNetworkItems
