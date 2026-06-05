@@ -56,7 +56,7 @@ public struct HomeFeatureView: View {
             VStack(spacing: 0) {
                 HomeNavigationBar(
                     userUuid: compound.state.userUuid,
-                    isAdmin: isAdmin,
+                    showsPopupRequestManagement: isAdmin && onManagePopupRequests != nil,
                     onSearch: { userUuid in
                         onSearch(userUuid)
                     },
@@ -240,7 +240,7 @@ private extension HomeFeatureView {
 
 private struct HomeNavigationBar: View {
     let userUuid: String
-    let isAdmin: Bool
+    let showsPopupRequestManagement: Bool
     let onSearch: (String) -> Void
     let onAlert: (String) -> Void
     let onReport: () -> Void
@@ -268,7 +268,7 @@ private struct HomeNavigationBar: View {
             }
             .accessibilityIdentifier("home_popup_report_button")
 
-            if isAdmin {
+            if showsPopupRequestManagement {
                 HomePopupRequestManagementButton {
                     onManagePopupRequests()
                 }
