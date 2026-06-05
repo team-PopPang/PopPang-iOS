@@ -3,8 +3,6 @@ import Core
 import Domain
 import HomeFeature
 import PopupDetailFeature
-import PopupRequestManagementFeature
-import PopupRequestFeature
 import ReviewFeature
 import SearchFeature
 import SwiftUI
@@ -63,14 +61,14 @@ public final class HomeCoordinator: Coordinator<
         case .reviewDetail(let reviews):
             ReviewFeatureView(reviews: reviews)
         case .popupRequest(let userUuid):
-            PopupRequestFeatureView(
+            PopupRequestFeatureFactory.makeRequestView(
                 userUuid: userUuid,
                 onDismiss: { [weak self] in
                     self?.pop()
                 }
             )
         case .popupRequestManagement:
-            PopupRequestManagementFeatureView(
+            PopupRequestFeatureFactory.makeManagementView(
                 onBack: { [weak self] in
                     self?.pop()
                 }
