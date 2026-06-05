@@ -1,10 +1,10 @@
 import Data
 import Domain
-import PopupReportFeature
+import PopupRequestFeature
 import SwiftUI
 
 @main
-struct PopupReportFeatureDemoApp: App {
+struct PopupRequestFeatureDemoApp: App {
     init() {
         DIContainer.shared.register(
             AdminUsecaseImpl(adminRepository: AdminRepositoryImpl()),
@@ -18,7 +18,7 @@ struct PopupReportFeatureDemoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            PopupReportFeatureView()
+            PopupRequestFeatureView()
         }
     }
 }

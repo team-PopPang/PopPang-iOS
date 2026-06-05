@@ -1,7 +1,6 @@
 import AlertFeature
 import HomeFeature
 import PopupDetailFeature
-import PopupReportFeature
 import ProfileFeature
 import ReviewFeature
 import SearchFeature
@@ -44,10 +43,26 @@ extension MainTabCoordinator {
                     self?.push(.popupDetail(userUuid: userUuid, popup: popup))
                 }
             )
-        case .popupReport(let userUuid):
-            PopupReportFeatureView(
+        case .popupRequest(let userUuid):
+            PopupRequestFeatureFactory.makeRequestView(
                 userUuid: userUuid,
                 onDismiss: { [weak self] in
+                    self?.pop()
+                }
+            )
+        case .popupRequestManagement:
+            PopupRequestFeatureFactory.makeManagementView(
+                onBack: { [weak self] in
+                    self?.pop()
+                },
+                onSelectSubmission: { [weak self] submissionId in
+                    self?.push(.popupRequestManagementDetail(submissionId: submissionId))
+                }
+            )
+        case .popupRequestManagementDetail(let submissionId):
+            PopupRequestFeatureFactory.makeManagementDetailView(
+                submissionId: submissionId,
+                onBack: { [weak self] in
                     self?.pop()
                 }
             )

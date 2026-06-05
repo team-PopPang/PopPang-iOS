@@ -2,52 +2,55 @@ import Core
 import Foundation
 import Moya
 
-public enum AdminAPI {
-    case getPopupValidationList
-    case validatePopup(parameters: [String: Any])
-    case registerPopup(parameters: [String: Any])
+enum AdminAPI {
+    case getPopupSubmissionList
+    /// Swagger 기준 사용자 제보 등록도 `/admin/popup-submissions` 경로를 사용한다.
     case createPopupSubmission(requestDTO: PopupSubmissionCreateRequestDTO)
-    case registerPopupRecommendations(popupUuid: String, recommendIds: [Int])
-    case deactivatePopup(userUuid: String, popupUuid: String)
+    case deactivatePopupByUser(userUuid: String, popupUuid: String)
+    case deactivatePopup(popupUuid: String)
+    case updatePopupSubmissionStatus(
+        submissionId: Int,
+        requestDTO: PopupSubmissionStatusUpdateRequestDTO
+    )
 }
 
 extension AdminAPI: BaseAPI {
-    public var path: String {
+    var path: String {
         switch self {
-        case .getPopupValidationList, .validatePopup:
-            return "/admin/popup-validation"
-        case .registerPopup:
-            return "/admin/popup"
-        case .createPopupSubmission:
+        case .getPopupSubmissionList, .createPopupSubmission:
             return "/admin/popup-submissions"
-        case .registerPopupRecommendations(let popupUuid, _):
-            return "/admin/popup/\(popupUuid)/recommendations"
-        case .deactivatePopup(let userUuid, let popupUuid):
+        case .deactivatePopupByUser(let userUuid, let popupUuid):
             return "/admin/user/\(userUuid)/popup/\(popupUuid)/deactivate"
+        case .deactivatePopup(let popupUuid):
+            return "/admin/popup/\(popupUuid)/deactivate"
+        case .updatePopupSubmissionStatus(let submissionId, _):
+            return "/admin/popup-submissions/\(submissionId)/status"
         }
     }
 
-    public var method: Moya.Method {
+    var method: Moya.Method {
         switch self {
-        case .getPopupValidationList:
+        case .getPopupSubmissionList:
             return .get
-        case .validatePopup, .registerPopup, .createPopupSubmission, .registerPopupRecommendations:
+        case .createPopupSubmission:
             return .post
-        case .deactivatePopup:
+        case .deactivatePopupByUser,
+             .deactivatePopup,
+             .updatePopupSubmissionStatus:
             return .patch
         }
     }
 
-    public var task: Task {
+    var task: Task {
         switch self {
-        case .getPopupValidationList, .deactivatePopup:
+        case .getPopupSubmissionList,
+             .deactivatePopupByUser,
+             .deactivatePopup:
             return .requestPlain
-        case .validatePopup(let parameters), .registerPopup(let parameters):
-            return .requestParameters(parameters: parameters, encoding: JSONEncoding.default)
         case .createPopupSubmission(let requestDTO):
             return .requestJSONEncodable(requestDTO)
-        case .registerPopupRecommendations(_, let recommendIds):
-            return .requestParameters(parameters: ["recommendIds": recommendIds], encoding: JSONEncoding.default)
+        case .updatePopupSubmissionStatus(_, let requestDTO):
+            return .requestJSONEncodable(requestDTO)
         }
     }
 }

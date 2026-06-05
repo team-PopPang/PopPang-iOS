@@ -6,32 +6,35 @@ import Moya
 public final class AdminRepositoryImpl: AdminRepositoryProtocol {
     public init() {}
 
-    public func getPopupValidationList() async throws -> Data {
-        try await adminProvider.asyncRequest(.getPopupValidationList).data
-    }
+    public func getPopupSubmissionList() async throws -> [PopupSubmission] {
+        let dtos = try await adminProvider.asyncRequest(
+            .getPopupSubmissionList,
+            decodeTo: [PopupSubmissionDTO].self
+        )
 
-    public func validatePopup(parameters: [String: Any]) async throws {
-        try await adminProvider.asyncRequestVoid(.validatePopup(parameters: parameters))
-    }
-
-    public func registerPopup(parameters: [String: Any]) async throws -> String? {
-        let response = try await adminProvider.asyncRequest(.registerPopup(parameters: parameters))
-        guard response.data.isEmpty == false else { return nil }
-        return try JSONDecoder().decode(AdminPopupRegistrationResponseDTO.self, from: response.data).popupUuid
+        return try dtos.map { try $0.toEntity() }
     }
 
     public func createPopupSubmission(_ request: PopupSubmissionCreateRequest) async throws {
         try await adminProvider.asyncRequestVoid(.createPopupSubmission(requestDTO: request.toDTO()))
     }
 
-    public func registerPopupRecommendations(popupUuid: String, recommendIds: [Int]) async throws {
-        try await adminProvider.asyncRequestVoid(
-            .registerPopupRecommendations(popupUuid: popupUuid, recommendIds: recommendIds)
-        )
+    @available(*, deprecated, message: "토큰 기반 V2 deactivatePopup(popupUuid:)를 사용하세요.")
+    public func deactivatePopupByUser(userUuid: String, popupUuid: String) async throws {
+        try await adminProvider.asyncRequestVoid(.deactivatePopupByUser(userUuid: userUuid, popupUuid: popupUuid))
     }
 
-    public func deactivatePopup(userUuid: String, popupUuid: String) async throws {
-        try await adminProvider.asyncRequestVoid(.deactivatePopup(userUuid: userUuid, popupUuid: popupUuid))
+    public func deactivatePopup(popupUuid: String) async throws {
+        try await adminProvider.asyncRequestVoid(.deactivatePopup(popupUuid: popupUuid))
+    }
+
+    public func updatePopupSubmissionStatus(submissionId: Int, status: PopupSubmissionStatus) async throws {
+        try await adminProvider.asyncRequestVoid(
+            .updatePopupSubmissionStatus(
+                submissionId: submissionId,
+                requestDTO: status.toDTO()
+            )
+        )
     }
 
     private var adminProvider: MoyaProvider<AdminAPI> {

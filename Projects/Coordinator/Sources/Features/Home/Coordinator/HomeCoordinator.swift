@@ -3,7 +3,6 @@ import Core
 import Domain
 import HomeFeature
 import PopupDetailFeature
-import PopupReportFeature
 import ReviewFeature
 import SearchFeature
 import SwiftUI
@@ -21,6 +20,7 @@ public final class HomeCoordinator: Coordinator<
     public var onSearch: ((String) -> Void)?
     public var onShowComingPopups: ((String, [Popup]) -> Void)?
     public var onReport: ((String) -> Void)?
+    public var onManagePopupRequests: (() -> Void)?
 
     private var session: MainTabSession
 
@@ -60,10 +60,16 @@ public final class HomeCoordinator: Coordinator<
             )
         case .reviewDetail(let reviews):
             ReviewFeatureView(reviews: reviews)
-        case .popupReport(let userUuid):
-            PopupReportFeatureView(
+        case .popupRequest(let userUuid):
+            PopupRequestFeatureFactory.makeRequestView(
                 userUuid: userUuid,
                 onDismiss: { [weak self] in
+                    self?.pop()
+                }
+            )
+        case .popupRequestManagement:
+            PopupRequestFeatureFactory.makeManagementView(
+                onBack: { [weak self] in
                     self?.pop()
                 }
             )
@@ -94,6 +100,7 @@ public final class HomeCoordinator: Coordinator<
         HomeFeatureView(
             userUuid: session.userUuid,
             nickname: session.nickname,
+            isAdmin: session.isAdmin,
             onSelectPopup: { [weak self] userUuid, popup in
                 self?.routeToPopupDetail(userUuid: userUuid, popup: popup)
             },
@@ -108,6 +115,9 @@ public final class HomeCoordinator: Coordinator<
             },
             onReport: { [weak self] userUuid in
                 self?.routeToReport(userUuid: userUuid)
+            },
+            onManagePopupRequests: { [weak self] in
+                self?.routeToPopupRequestManagement()
             }
         )
     }
@@ -148,7 +158,15 @@ public final class HomeCoordinator: Coordinator<
         if let onReport {
             onReport(userUuid)
         } else {
-            push(.popupReport(userUuid: userUuid))
+            push(.popupRequest(userUuid: userUuid))
+        }
+    }
+
+    private func routeToPopupRequestManagement() {
+        if let onManagePopupRequests {
+            onManagePopupRequests()
+        } else {
+            push(.popupRequestManagement)
         }
     }
 

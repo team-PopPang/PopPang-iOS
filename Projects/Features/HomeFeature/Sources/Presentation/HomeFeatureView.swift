@@ -21,25 +21,31 @@ public struct HomeFeatureView: View {
     private let onSearch: (String) -> Void
     private let onShowComingPopups: (String, [Popup]) -> Void
     private let onReport: ((String) -> Void)?
+    private let onManagePopupRequests: (() -> Void)?
+    private let isAdmin: Bool
 
     public init(
         userUuid: String = "demo-user",
         nickname: String = "닉네임",
+        isAdmin: Bool = false,
         deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore()),
         onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in },
         onShowAlert: @escaping (String) -> Void = { _ in },
         onSearch: @escaping (String) -> Void = { _ in },
         onShowComingPopups: @escaping (String, [Popup]) -> Void = { _, _ in },
-        onReport: ((String) -> Void)? = nil
+        onReport: ((String) -> Void)? = nil,
+        onManagePopupRequests: (() -> Void)? = nil
     ) {
         let compound = HomeFeatureCompound(userUuid: userUuid, nickname: nickname)
         _compound = State(wrappedValue: compound)
+        self.isAdmin = isAdmin
         self.deepLinkStorage = deepLinkStorage
         self.onSelectPopup = onSelectPopup
         self.onShowAlert = onShowAlert
         self.onSearch = onSearch
         self.onShowComingPopups = onShowComingPopups
         self.onReport = onReport
+        self.onManagePopupRequests = onManagePopupRequests
     }
 
     public var body: some View {
@@ -50,6 +56,7 @@ public struct HomeFeatureView: View {
             VStack(spacing: 0) {
                 HomeNavigationBar(
                     userUuid: compound.state.userUuid,
+                    showsPopupRequestManagement: isAdmin && onManagePopupRequests != nil,
                     onSearch: { userUuid in
                         onSearch(userUuid)
                     },
@@ -60,6 +67,9 @@ public struct HomeFeatureView: View {
                         if let onReport {
                             onReport(compound.state.userUuid)
                         }
+                    },
+                    onManagePopupRequests: {
+                        onManagePopupRequests?()
                     }
                 )
 
@@ -230,9 +240,11 @@ private extension HomeFeatureView {
 
 private struct HomeNavigationBar: View {
     let userUuid: String
+    let showsPopupRequestManagement: Bool
     let onSearch: (String) -> Void
     let onAlert: (String) -> Void
     let onReport: () -> Void
+    let onManagePopupRequests: () -> Void
 
     var body: some View {
         CustomNavigationBar {
@@ -255,6 +267,13 @@ private struct HomeNavigationBar: View {
                 onReport()
             }
             .accessibilityIdentifier("home_popup_report_button")
+
+            if showsPopupRequestManagement {
+                HomePopupRequestManagementButton {
+                    onManagePopupRequests()
+                }
+                .accessibilityIdentifier("home_popup_request_management_button")
+            }
         }
         .padding(.bottom, 15)
     }
@@ -274,6 +293,23 @@ private struct HomeReportButton: View {
                 .contentShape(RoundedRectangle(cornerRadius: 6))
         }
         .offset(y: -1.5)
+        .buttonStyle(PressableButtonStyle())
+    }
+}
+
+private struct HomePopupRequestManagementButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "tray.full")
+                .font(.system(size: 20, weight: .light))
+                .foregroundStyle(Color.subBlack)
+                .frame(width: 21, height: 21)
+                .padding(10)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .contentShape(RoundedRectangle(cornerRadius: 6))
+        }
         .buttonStyle(PressableButtonStyle())
     }
 }

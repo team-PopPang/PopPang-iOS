@@ -172,26 +172,6 @@ struct DataTests {
         #expect(user.recommendList == [7])
     }
 
-    @Test("관리자 팝업 등록 응답에서 popupUuid를 추출한다")
-    func adminPopupRegistrationResponseExtractsPopupUuid() throws {
-        let direct = try JSONDecoder().decode(
-            AdminPopupRegistrationResponseDTO.self,
-            from: #"{"popupUuid":"popup-1"}"#.data(using: .utf8)!
-        )
-        let nested = try JSONDecoder().decode(
-            AdminPopupRegistrationResponseDTO.self,
-            from: #"{"data":{"uuid":"popup-2"}}"#.data(using: .utf8)!
-        )
-        let stringBody = try JSONDecoder().decode(
-            AdminPopupRegistrationResponseDTO.self,
-            from: #""popup-3""#.data(using: .utf8)!
-        )
-
-        #expect(direct.popupUuid == "popup-1")
-        #expect(nested.popupUuid == "popup-2")
-        #expect(stringBody.popupUuid == "popup-3")
-    }
-
     @Test("팝업 제보 요청 엔티티가 서버 DTO 날짜 형식으로 변환된다")
     func popupSubmissionCreateRequestMapsToServerDTO() throws {
         let formatter = DateFormatter()
@@ -221,14 +201,74 @@ struct DataTests {
         #expect(dtoObject?["submitterUserId"] == nil)
     }
 
-    @Test("API 경로가 V0 엔드포인트 정의와 일치한다")
-    func apiPathsMatchV0EndpointDefinitions() {
-        #expect(AdminAPI.getPopupValidationList.path == "/admin/popup-validation")
-        #expect(AdminAPI.validatePopup(parameters: [:]).path == "/admin/popup-validation")
-        #expect(AdminAPI.registerPopup(parameters: [:]).path == "/admin/popup")
+    @Test("팝업 제보 상태 엔티티가 서버 DTO로 변환된다")
+    func popupSubmissionStatusMapsToServerDTO() throws {
+        let dto = PopupSubmissionStatus.approved.toDTO()
+        let dtoObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(dto)) as? [String: Any]
+
+        #expect(dto.popupSubmissionStatus == "APPROVED")
+        #expect(dtoObject?["popupSubmissionStatus"] as? String == "APPROVED")
+    }
+
+    @Test("팝업 제보 목록 DTO가 서버 응답을 도메인 모델로 변환한다")
+    func popupSubmissionDTOMapsToDomainModel() throws {
+        let json = """
+        {
+          "id": 7,
+          "name": "성수 팝업",
+          "startDate": "2026-06-03",
+          "endDate": "2026-06-10",
+          "address": "서울 성동구 성수이로 00",
+          "description": "브랜드 팝업 제보",
+          "status": "PENDING",
+          "createdAt": "2026-06-05T10:20:30.000Z"
+        }
+        """.data(using: .utf8)!
+
+        let submission = try JSONDecoder().decode(PopupSubmissionDTO.self, from: json).toEntity()
+
+        #expect(submission.id == 7)
+        #expect(submission.name == "성수 팝업")
+        #expect(submission.startDate == "2026-06-03")
+        #expect(submission.endDate == "2026-06-10")
+        #expect(submission.address == "서울 성동구 성수이로 00")
+        #expect(submission.description == "브랜드 팝업 제보")
+        #expect(submission.status == .pending)
+        #expect(submission.createdAt == "2026-06-05T10:20:30.000Z")
+    }
+
+    @Test("팝업 제보 목록 DTO가 알 수 없는 상태를 실패로 처리한다")
+    func popupSubmissionDTORejectsUnknownStatus() throws {
+        let json = """
+        {
+          "id": 7,
+          "name": "성수 팝업",
+          "startDate": "2026-06-03",
+          "endDate": "2026-06-10",
+          "address": "서울 성동구 성수이로 00",
+          "description": "브랜드 팝업 제보",
+          "status": "ARCHIVED",
+          "createdAt": "2026-06-05T10:20:30.000Z"
+        }
+        """.data(using: .utf8)!
+
+        let dto = try JSONDecoder().decode(PopupSubmissionDTO.self, from: json)
+
+        #expect(throws: PopupSubmissionMappingError.unknownStatus("ARCHIVED")) {
+            try dto.toEntity()
+        }
+    }
+
+    @Test("API 경로가 현재 명세와 일치한다")
+    func apiPathsMatchEndpointDefinitions() {
+        #expect(AdminAPI.getPopupSubmissionList.path == "/admin/popup-submissions")
         #expect(AdminAPI.createPopupSubmission(requestDTO: .fixture).path == "/admin/popup-submissions")
-        #expect(AdminAPI.registerPopupRecommendations(popupUuid: "popup-1", recommendIds: [1, 2]).path == "/admin/popup/popup-1/recommendations")
-        #expect(AdminAPI.deactivatePopup(userUuid: "user-1", popupUuid: "popup-1").path == "/admin/user/user-1/popup/popup-1/deactivate")
+        #expect(AdminAPI.deactivatePopupByUser(userUuid: "user-1", popupUuid: "popup-1").path == "/admin/user/user-1/popup/popup-1/deactivate")
+        #expect(AdminAPI.deactivatePopup(popupUuid: "popup-1").path == "/admin/popup/popup-1/deactivate")
+        #expect(AdminAPI.updatePopupSubmissionStatus(
+            submissionId: 7,
+            requestDTO: PopupSubmissionStatus.approved.toDTO()
+        ).path == "/admin/popup-submissions/7/status")
 
         #expect(AppleAuthAPI.login(authCode: "auth").path == "/auth/apple/mobile/login")
         #expect(AppleAuthAPI.signup(userDto: UserDTO.adminUser).path == "/auth/apple/signup")
@@ -273,14 +313,16 @@ struct DataTests {
         #expect(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").path == "/user/user-1/fcm-token/update")
     }
 
-    @Test("API 메서드가 V0 엔드포인트 정의와 일치한다")
-    func apiMethodsMatchV0EndpointDefinitions() {
-        #expect(AdminAPI.getPopupValidationList.method == .get)
-        #expect(AdminAPI.validatePopup(parameters: [:]).method == .post)
-        #expect(AdminAPI.registerPopup(parameters: [:]).method == .post)
+    @Test("API 메서드가 현재 명세와 일치한다")
+    func apiMethodsMatchEndpointDefinitions() {
+        #expect(AdminAPI.getPopupSubmissionList.method == .get)
         #expect(AdminAPI.createPopupSubmission(requestDTO: .fixture).method == .post)
-        #expect(AdminAPI.registerPopupRecommendations(popupUuid: "popup-1", recommendIds: [1, 2]).method == .post)
-        #expect(AdminAPI.deactivatePopup(userUuid: "user-1", popupUuid: "popup-1").method == .patch)
+        #expect(AdminAPI.deactivatePopupByUser(userUuid: "user-1", popupUuid: "popup-1").method == .patch)
+        #expect(AdminAPI.deactivatePopup(popupUuid: "popup-1").method == .patch)
+        #expect(AdminAPI.updatePopupSubmissionStatus(
+            submissionId: 7,
+            requestDTO: PopupSubmissionStatus.approved.toDTO()
+        ).method == .patch)
 
         #expect(AppleAuthAPI.login(authCode: "auth").method == .post)
         #expect(AppleAuthAPI.loginWithEmail(authCode: "auth", email: "index@example.com").method == .post)
@@ -326,12 +368,8 @@ struct DataTests {
         #expect(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").method == .put)
     }
 
-    @Test("API 요청 파라미터가 V0 엔드포인트 정의와 일치한다")
-    func apiRequestParametersMatchV0EndpointDefinitions() {
-        #expect(stringParameter(AdminAPI.validatePopup(parameters: ["instagramUrl": "https://instagram.com/popup"]).task, key: "instagramUrl") == "https://instagram.com/popup")
-        #expect(stringParameter(AdminAPI.registerPopup(parameters: ["name": "성수 팝업"]).task, key: "name") == "성수 팝업")
-        #expect(intArrayParameter(AdminAPI.registerPopupRecommendations(popupUuid: "popup-1", recommendIds: [1, 2]).task, key: "recommendIds") == [1, 2])
-
+    @Test("API 요청 파라미터가 현재 명세와 일치한다")
+    func apiRequestParametersMatchEndpointDefinitions() {
         #expect(stringParameter(PopupAPI.searchPopupList(searchText: "성수").task, key: "q") == "성수")
         #expect(stringParameter(PopupAPI.getPersonalPopupList(userUuid: "user-1").task, key: "userUuid") == "user-1")
         #expect(stringParameter(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").task, key: "region") == "서울")
@@ -376,10 +414,6 @@ struct DataTests {
 
     private func boolParameter(_ task: Moya.Task, key: String) -> Bool? {
         parameter(task, key: key) as? Bool
-    }
-
-    private func intArrayParameter(_ task: Moya.Task, key: String) -> [Int]? {
-        parameter(task, key: key) as? [Int]
     }
 
     private func parameter(_ task: Moya.Task, key: String) -> Any? {

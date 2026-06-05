@@ -7,7 +7,9 @@ public enum MainTabRoute: Identifiable, Hashable, Sendable {
     case comingPopupDetail(userUuid: String, popups: [Popup])
     case reviewDetail([Review])
     case alert(userUuid: String)
-    case popupReport(userUuid: String)
+    case popupRequest(userUuid: String)
+    case popupRequestManagement
+    case popupRequestManagementDetail(submissionId: String)
     case profileSetting(userUuid: String, nickname: String, isAlerted: Bool)
     case notifications
     case serviceTerms
@@ -22,8 +24,12 @@ public enum MainTabRoute: Identifiable, Hashable, Sendable {
             "reviewDetail-\(reviews.map(\.id.uuidString).joined(separator: "-"))"
         case .alert(let userUuid):
             "alert-\(userUuid)"
-        case .popupReport(let userUuid):
-            "popupReport-\(userUuid)"
+        case .popupRequest(let userUuid):
+            "popupRequest-\(userUuid)"
+        case .popupRequestManagement:
+            "popupRequestManagement"
+        case .popupRequestManagementDetail(let submissionId):
+            "popupRequestManagementDetail-\(submissionId)"
         case .profileSetting(let userUuid, let nickname, let isAlerted):
             "profileSetting-\(userUuid)-\(nickname)-\(isAlerted)"
         case .notifications:
@@ -134,7 +140,10 @@ public final class MainTabCoordinator: ProfileCoordinatorParent {
             self?.push(.alert(userUuid: userUuid))
         }
         homeCoordinator.onReport = { [weak self] userUuid in
-            self?.push(.popupReport(userUuid: userUuid))
+            self?.push(.popupRequest(userUuid: userUuid))
+        }
+        homeCoordinator.onManagePopupRequests = { [weak self] in
+            self?.push(.popupRequestManagement)
         }
         calendarCoordinator.onShowAlert = { [weak self] userUuid in
             self?.push(.alert(userUuid: userUuid))

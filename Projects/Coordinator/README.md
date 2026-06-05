@@ -39,7 +39,9 @@
 - coming popup detail
 - review detail
 - alert
-- popup report
+- popup request
+- popup request management
+- popup request management detail
 - profile setting
 - notification
 - service terms

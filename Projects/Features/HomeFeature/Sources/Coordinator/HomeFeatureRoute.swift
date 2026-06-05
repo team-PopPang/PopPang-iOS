@@ -5,7 +5,8 @@ public enum HomeFeatureRoute: Hashable, Sendable {
     case comingPopupDetail(userUuid: String, popups: [Popup])
     case alert(userUuid: String)
     case reviewDetail([Review])
-    case popupReport(userUuid: String)
+    case popupRequest(userUuid: String)
+    case popupRequestManagement
 }
 
 public enum HomeSheetRoute: Identifiable, Hashable, Sendable {

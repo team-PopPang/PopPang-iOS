@@ -1,13 +1,13 @@
 import ProjectDescription
 
 let project = Project(
-    name: "PopupReportFeature",
+    name: "PopupRequestManagementFeature",
     targets: [
         .target(
-            name: "PopupReportFeature",
+            name: "PopupRequestManagementFeature",
             destinations: [.iPhone],
             product: .staticFramework,
-            bundleId: "com.poppang.features.popupreport",
+            bundleId: "com.poppang.features.popuprequestmanagement",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
@@ -19,10 +19,10 @@ let project = Project(
             ]
         ),
         .target(
-            name: "PopupReportFeatureDemo",
+            name: "PopupRequestManagementFeatureDemo",
             destinations: [.iPhone],
             product: .app,
-            bundleId: "com.poppang.demo.popupreport",
+            bundleId: "com.poppang.demo.popuprequestmanagement",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .extendingDefault(
                 with: [
@@ -34,9 +34,8 @@ let project = Project(
             ),
             sources: ["Demo/Sources/**"],
             dependencies: [
-                .target(name: "PopupReportFeature"),
+                .target(name: "PopupRequestManagementFeature"),
                 .project(target: "Domain", path: "../../Domain"),
-                .project(target: "Data", path: "../../Data"),
             ]
         ),
     ]
