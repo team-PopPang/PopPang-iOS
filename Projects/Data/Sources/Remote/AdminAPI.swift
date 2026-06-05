@@ -4,6 +4,7 @@ import Moya
 
 enum AdminAPI {
     case getPopupSubmissionList
+    /// Swagger 기준 사용자 제보 등록도 `/admin/popup-submissions` 경로를 사용한다.
     case createPopupSubmission(requestDTO: PopupSubmissionCreateRequestDTO)
     case deactivatePopupByUser(userUuid: String, popupUuid: String)
     case deactivatePopup(popupUuid: String)
