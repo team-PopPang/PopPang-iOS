@@ -116,6 +116,7 @@ let package = Package(
     name: "PopPang",
     dependencies: [
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", exact: "12.6.0"),
+        .package(url: "https://github.com/googleads/swift-package-manager-google-mobile-ads.git", exact: "13.4.0"),
         .package(url: "https://github.com/google/GoogleSignIn-iOS", exact: "9.0.0"),
         .package(url: "https://github.com/kakao/kakao-ios-sdk", exact: "2.26.0"),
         .package(url: "https://github.com/onevcat/Kingfisher", exact: "8.6.2"),
