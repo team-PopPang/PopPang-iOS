@@ -33,6 +33,45 @@ public enum AdInjectedListItem<Item>: Identifiable {
 
 /// 기존 콘텐츠 배열에 네이티브 광고 아이템을 삽입하는 유틸리티입니다.
 public enum AdInjectedListItemBuilder {
+    /// 광고 배치 목록을 기준으로 리스트 아이템 배열을 생성합니다.
+    ///
+    /// - Parameters:
+    ///   - items: 광고가 삽입될 원본 콘텐츠 배열입니다.
+    ///   - nativeAdPlacements: 삽입할 네이티브 광고 위치 목록입니다. 빈 배열이면 광고를 삽입하지 않습니다.
+    ///   - id: 원본 콘텐츠에서 안정적인 식별자를 추출하는 클로저입니다.
+    /// - Returns: 일반 콘텐츠와 네이티브 광고 자리가 섞인 리스트 아이템 배열입니다.
+    public static func make<Item>(
+        items: [Item],
+        nativeAdPlacements: [AdNativeAdPlacement],
+        id: (Item) -> String
+    ) -> [AdInjectedListItem<Item>] {
+        var injectedItems = items.map { item in
+            AdInjectedListItem.content(item, id: id(item))
+        }
+        guard injectedItems.isEmpty == false, nativeAdPlacements.isEmpty == false else {
+            return injectedItems
+        }
+
+        let normalizedPlacements = nativeAdPlacements
+            .reduce(into: [String: AdNativeAdPlacement]()) { placementsByID, placement in
+                placementsByID[placement.id] = placement
+            }
+            .values
+            .sorted { lhs, rhs in
+                if lhs.insertIndex == rhs.insertIndex {
+                    return lhs.id < rhs.id
+                }
+                return lhs.insertIndex < rhs.insertIndex
+            }
+
+        for (offset, placement) in normalizedPlacements.enumerated() {
+            let baseIndex = min(max(placement.insertIndex, 0), items.count)
+            injectedItems.insert(.nativeAd(id: placement.id), at: baseIndex + offset)
+        }
+
+        return injectedItems
+    }
+
     /// 광고 로드 여부와 삽입 위치를 기준으로 리스트 아이템 배열을 생성합니다.
     ///
     /// - Parameters:
@@ -60,8 +99,12 @@ public enum AdInjectedListItemBuilder {
             return injectedItems
         }
 
-        let insertIndex = min(max(adInsertIndex, 0), injectedItems.count)
-        injectedItems.insert(.nativeAd(id: nativeAdId), at: insertIndex)
-        return injectedItems
+        return make(
+            items: items,
+            nativeAdPlacements: [
+                AdNativeAdPlacement(id: nativeAdId, insertIndex: adInsertIndex),
+            ],
+            id: id
+        )
     }
 }

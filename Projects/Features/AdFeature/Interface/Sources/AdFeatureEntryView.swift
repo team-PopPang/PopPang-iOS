@@ -7,6 +7,9 @@ public typealias AdNativeAdViewModel = AdFeature.AdNativeAdViewModel
 /// 광고 로딩 상태를 `AdFeatureInterface` 사용자에게 노출하는 타입 별칭입니다.
 public typealias AdNativeAdLoadState = AdFeature.AdNativeAdLoadState
 
+/// 여러 광고 슬롯 ViewModel store를 `AdFeatureInterface` 사용자에게 노출하는 타입 별칭입니다.
+public typealias AdNativeAdSlotStore = AdFeature.AdNativeAdSlotStore
+
 /// 광고 레이아웃 값을 `AdFeatureInterface` 사용자에게 노출하는 타입 별칭입니다.
 public typealias AdNativeAdLayout = AdFeature.AdNativeAdLayout
 
@@ -15,6 +18,12 @@ public typealias AdNativeAdInsets = AdFeature.AdNativeAdInsets
 
 /// 광고 배치 규칙을 `AdFeatureInterface` 사용자에게 노출하는 타입 별칭입니다.
 public typealias AdNativeAdPlacementRule = AdFeature.AdNativeAdPlacementRule
+
+/// 광고 배치 슬롯을 `AdFeatureInterface` 사용자에게 노출하는 타입 별칭입니다.
+public typealias AdNativeAdPlacementSlot = AdFeature.AdNativeAdPlacementSlot
+
+/// 계산된 광고 배치 위치를 `AdFeatureInterface` 사용자에게 노출하는 타입 별칭입니다.
+public typealias AdNativeAdPlacement = AdFeature.AdNativeAdPlacement
 
 /// 광고 배치 설정을 `AdFeatureInterface` 사용자에게 노출하는 타입 별칭입니다.
 public typealias AdNativeAdPlacementConfiguration = AdFeature.AdNativeAdPlacementConfiguration
