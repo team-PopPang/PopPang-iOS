@@ -6,7 +6,7 @@ public struct {{ name }}FeatureEntryView: View {
     public init() {}
 
     public var body: some View {
-        {{ name }}FeatureRootView()
+        {{ name }}FeatureView()
     }
 }
 {% else %}

@@ -14,6 +14,7 @@ let project = Project(
                 "Sources/**",
             ],
             dependencies: [
+                .project(target: "AdFeatureInterface", path: "../AdFeature"),
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
                 .project(target: "Core", path: "../../Shared/Core"),

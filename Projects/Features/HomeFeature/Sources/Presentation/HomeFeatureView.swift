@@ -1,3 +1,4 @@
+import AdFeatureInterface
 import Compound
 import Core
 import Domain
@@ -14,7 +15,7 @@ public struct HomeFeatureView: View {
     @State private var listProxy = LKListProxy()
     @State private var lastHandledPopupId: String?
     @State private var sheetRoute: HomeSheetRoute?
-    @StateObject private var nativeAdViewModel = HomeNativeAdViewModel()
+    @StateObject private var nativeAdViewModel = AdNativeAdViewModel()
 
     private let deepLinkStorage: DeepLinkStorage
     private let onSelectPopup: (String, Popup) -> Void
@@ -147,12 +148,14 @@ public struct HomeFeatureView: View {
                     .pinnedHeader(background: Color.subWhite)
 
                     LKSection(id: "grid") {
-                        for item in HomeNativeAdGridItemBuilder.make(
-                            popups: compound.state.gridPopups,
-                            includesNativeAd: nativeAdViewModel.nativeAd != nil
+                        for item in AdInjectedListItemBuilder.make(
+                            items: compound.state.gridPopups,
+                            includesNativeAd: nativeAdViewModel.hasLoadedAd,
+                            nativeAdId: "home-native-ad",
+                            id: { $0.popupUuid }
                         ) {
                             switch item {
-                            case let .popup(popup):
+                            case .content(let popup, _):
                                 LKRow(
                                     popup,
                                     id: \.popupUuid,
@@ -173,9 +176,12 @@ public struct HomeFeatureView: View {
                             case .nativeAd:
                                 LKRow(
                                     id: item.id,
-                                    reuseIdentifier: "HomeFeature.HomeNativeAdGridCell"
+                                    reuseIdentifier: "HomeFeature.AdNativeAdGridCell"
                                 ) {
-                                    HomeNativeAdGridCellView(viewModel: nativeAdViewModel)
+                                    AdNativeAdView(
+                                        viewModel: nativeAdViewModel,
+                                        layout: .grid
+                                    )
 //                                        .frame(width: Self.gridCellWidth, height: Self.gridCellHeight)
                                 }
                                 .equatableToken(item.id)

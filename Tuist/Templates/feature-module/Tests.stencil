@@ -1,8 +1,0 @@
-import Testing
-@testable import {{ name }}Feature
-
-struct {{ name }}FeatureTests {
-    @Test
-    func example() async throws {
-    }
-}
