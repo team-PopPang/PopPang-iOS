@@ -22,7 +22,7 @@
         <mxCell id="mainTab" value="MainTabCoordinator&#xa;NavigationStack + TabView&#xa;selectedTab / paths / fullScreen" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6FCF5;strokeColor=#1E1E1E;strokeWidth=2;fontSize=16;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
           <mxGeometry x="1140" y="230" width="370" height="132" as="geometry" />
         </mxCell>
-        <mxCell id="homeCoordinator" value="HomeCoordinator&#xa;Root: HomeFeatureView&#xa;push: popupDetail, coming&#xa;alert, review, report&#xa;fullScreen: search" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F0FF;strokeColor=#1E1E1E;strokeWidth=2;fontSize=15;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
+        <mxCell id="homeCoordinator" value="HomeCoordinator&#xa;Root: HomeFeatureView&#xa;push: popupDetail, coming&#xa;alert, review, request,&#xa;request management&#xa;fullScreen: search" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F0FF;strokeColor=#1E1E1E;strokeWidth=2;fontSize=15;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
           <mxGeometry x="50" y="500" width="310" height="164" as="geometry" />
         </mxCell>
         <mxCell id="calendarCoordinator" value="CalendarCoordinator&#xa;Root: CalendarFeatureView&#xa;push: alert, popupDetail,&#xa;reviewDetail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F0FF;strokeColor=#1E1E1E;strokeWidth=2;fontSize=15;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
@@ -37,7 +37,7 @@
         <mxCell id="profileCoordinator" value="ProfileCoordinator&#xa;Root: ProfileFeatureView&#xa;push: alert, popupDetail,&#xa;profileSetting, notifications,&#xa;serviceTerms, reviewDetail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F0FF;strokeColor=#1E1E1E;strokeWidth=2;fontSize=15;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
           <mxGeometry x="1450" y="500" width="330" height="164" as="geometry" />
         </mxCell>
-        <mxCell id="mainRoutes" value="MainTabRoute push destinations&#xa;PopupDetail / ComingPopupDetail / ReviewDetail / Alert&#xa;PopupRequest / ProfileSetting / Notifications / ServiceTerms&#xa;Tab callbacks can be promoted to MainTabCoordinator" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6FCF5;strokeColor=#087F5B;strokeWidth=2;fontSize=16;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
+        <mxCell id="mainRoutes" value="MainTabRoute push destinations&#xa;PopupDetail / ComingPopupDetail / ReviewDetail / Alert&#xa;PopupRequest / PopupRequestManagement / PopupRequestManagementDetail&#xa;ProfileSetting / Notifications / ServiceTerms&#xa;Tab callbacks can be promoted to MainTabCoordinator" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6FCF5;strokeColor=#087F5B;strokeWidth=2;fontSize=16;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
           <mxGeometry x="440" y="790" width="560" height="150" as="geometry" />
         </mxCell>
         <mxCell id="mainFullScreen" value="MainTabFullScreenRoute&#xa;search -&gt; SearchFeatureView&#xa;animation: false" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6FCF5;strokeColor=#087F5B;strokeWidth=2;fontSize=16;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
