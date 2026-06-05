@@ -149,10 +149,7 @@ private extension PopupDetailFeatureCompound {
             .just(.setDeactivating(true)),
             .run { [state, adminUsecase, onDeactivateComplete] send in
                 do {
-                    try await adminUsecase.deactivatePopupByUser(
-                        userUuid: state.userUuid,
-                        popupUuid: state.popup.popupUuid
-                    )
+                    try await adminUsecase.deactivatePopup(popupUuid: state.popup.popupUuid)
                     await send(.setErrorMessage(nil))
                     await MainActor.run {
                         onDeactivateComplete()

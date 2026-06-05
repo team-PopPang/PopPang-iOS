@@ -12,6 +12,7 @@ public protocol AdminUsecaseProtocol {
     /// - Parameters:
     ///   - userUuid: userUuid
     ///   - popupUuid: popupUuid
+    @available(*, deprecated, message: "토큰 기반 V2 deactivatePopup(popupUuid:)를 사용하세요.")
     func deactivatePopupByUser(userUuid: String, popupUuid: String) async throws
 
     /// 관리자 팝업 비활성화 V2

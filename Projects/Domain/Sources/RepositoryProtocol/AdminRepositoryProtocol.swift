@@ -34,6 +34,7 @@ public protocol AdminRepositoryProtocol {
     /// - Parameters:
     ///   - userUuid: 관리자 권한 검증에 사용할 사용자 uuid.
     ///   - popupUuid: 비활성화할 팝업 uuid.
+    @available(*, deprecated, message: "토큰 기반 V2 deactivatePopup(popupUuid:)를 사용하세요.")
     func deactivatePopupByUser(userUuid: String, popupUuid: String) async throws
 
     /// 관리자 권한으로 팝업을 비활성화한다.

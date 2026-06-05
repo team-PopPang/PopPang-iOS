@@ -55,6 +55,7 @@ private struct MockAdminUsecase: AdminUsecaseProtocol {
 
     func createPopupSubmission(_ request: PopupSubmissionCreateRequest) async throws {}
 
+    @available(*, deprecated, message: "토큰 기반 V2 deactivatePopup(popupUuid:)를 사용하세요.")
     func deactivatePopupByUser(userUuid: String, popupUuid: String) async throws {}
 
     func deactivatePopup(popupUuid: String) async throws {}

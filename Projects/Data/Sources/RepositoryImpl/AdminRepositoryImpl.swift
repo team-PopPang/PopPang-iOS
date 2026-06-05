@@ -19,6 +19,7 @@ public final class AdminRepositoryImpl: AdminRepositoryProtocol {
         try await adminProvider.asyncRequestVoid(.createPopupSubmission(requestDTO: request.toDTO()))
     }
 
+    @available(*, deprecated, message: "토큰 기반 V2 deactivatePopup(popupUuid:)를 사용하세요.")
     public func deactivatePopupByUser(userUuid: String, popupUuid: String) async throws {
         try await adminProvider.asyncRequestVoid(.deactivatePopupByUser(userUuid: userUuid, popupUuid: popupUuid))
     }
