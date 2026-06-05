@@ -46,6 +46,17 @@ jobs:
       - name: Disable Swift Macro fingerprint validation
         run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
 
+      - name: Create CI Secrets.xcconfig
+        run: |
+          cat <<EOF > Projects/App/Secrets.xcconfig
+          KAKAO_NATIVE_APP_KEY = cidummy
+          NMFClientID = cidummy
+          GoogleURLScheme = cidummy
+          GIDClientID = cidummy
+          ADMOB_APP_ID = ca-app-pub-3940256099942544~1458002511
+          ADMOB_NATIVE_AD_UNIT_ID = ca-app-pub-3940256099942544/3986624511
+          EOF
+
       - name: Generate Tuist workspace
         run: |
           "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist install

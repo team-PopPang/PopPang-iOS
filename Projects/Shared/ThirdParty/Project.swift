@@ -16,6 +16,7 @@ let project = Project(
                 .external(name: "FirebaseAnalytics"),
                 .external(name: "FirebaseCore"),
                 .external(name: "FirebaseMessaging"),
+                .external(name: "GoogleMobileAds"),
                 .external(name: "GoogleSignIn"),
                 .external(name: "KakaoSDKAuth"),
                 .external(name: "KakaoSDKCommon"),
@@ -27,6 +28,7 @@ let project = Project(
                 .external(name: "Moya"),
                 .external(name: "NMapsMap"),
                 .external(name: "BottomSheet"),
+                .sdk(name: "JavaScriptCore", type: .framework),
             ],
             settings: .settings(
                 base: [

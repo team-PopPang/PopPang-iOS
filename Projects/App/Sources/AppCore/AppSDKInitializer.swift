@@ -1,6 +1,7 @@
 import Core
 import DSKit
 import FirebaseCore
+import GoogleMobileAds
 import KakaoSDKCommon
 import NMapsMap
 import UIKit
@@ -15,6 +16,7 @@ enum AppSDKInitializer {
         UITabBar.configureAppearance()
         UINavigationBar.configureAppearance()
         FirebaseCoreBootstrap.configureIfNeeded()
+        MobileAds.shared.start(completionHandler: nil)
         KakaoSDK.initSDK(appKey: Constants.KakaoAPI.key)
         NMFAuthManager.shared().ncpKeyId = Constants.NaverAPI.key
         UserDefaults.standard.set(false, forKey: "_UIConstraintBasedLayoutLogUnsatisfiable")

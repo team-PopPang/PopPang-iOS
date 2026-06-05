@@ -19,6 +19,20 @@ public enum Constants {
         public static let key = AppConfig.string(forKey: "NMFClientID")
     }
 
+    public enum AdMob {
+        public static let nativeAdUnitId = AppConfig.string(forKey: "ADMOB_NATIVE_AD_UNIT_ID")
+        // Google Mobile Ads 공식 iOS Native 테스트 광고 단위 ID
+        public static let testNativeAdUnitId = "ca-app-pub-3940256099942544/3986624511"
+
+        public static var currentNativeAdUnitId: String {
+            #if DEBUG
+                testNativeAdUnitId
+            #else
+                nativeAdUnitId
+            #endif
+        }
+    }
+
     public enum BetaNotice {
         public static let beta_0930 = """
         홈화면
