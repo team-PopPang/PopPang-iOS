@@ -38,21 +38,27 @@ public enum AdInjectedListItemBuilder {
     /// - Parameters:
     ///   - items: 광고가 삽입될 원본 콘텐츠 배열입니다.
     ///   - includesNativeAd: `true`이면 원본 배열이 비어 있지 않을 때 광고 아이템을 삽입합니다.
-    ///   - adInsertIndex: 광고를 삽입할 0 기반 인덱스입니다. 배열 범위를 벗어나면 가능한 범위로 보정됩니다.
+    ///   - adInsertIndex: 광고를 삽입할 0 기반 인덱스입니다. `nil`이면 광고를 삽입하지 않고, 배열 범위를 벗어나면 가능한 범위로 보정됩니다.
     ///   - nativeAdId: 광고 아이템의 식별자입니다. 같은 리스트 안에서 고유해야 합니다.
     ///   - id: 원본 콘텐츠에서 안정적인 식별자를 추출하는 클로저입니다.
     /// - Returns: 일반 콘텐츠와 네이티브 광고 자리가 섞인 리스트 아이템 배열입니다.
     public static func make<Item>(
         items: [Item],
         includesNativeAd: Bool,
-        adInsertIndex: Int = 4,
+        adInsertIndex: Int? = 4,
         nativeAdId: String = "native-ad",
         id: (Item) -> String
     ) -> [AdInjectedListItem<Item>] {
         var injectedItems = items.map { item in
             AdInjectedListItem.content(item, id: id(item))
         }
-        guard includesNativeAd, injectedItems.isEmpty == false else { return injectedItems }
+        guard
+            includesNativeAd,
+            injectedItems.isEmpty == false,
+            let adInsertIndex
+        else {
+            return injectedItems
+        }
 
         let insertIndex = min(max(adInsertIndex, 0), injectedItems.count)
         injectedItems.insert(.nativeAd(id: nativeAdId), at: insertIndex)

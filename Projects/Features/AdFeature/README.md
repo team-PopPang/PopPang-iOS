@@ -14,6 +14,8 @@ import AdFeatureInterface
 - `AdNativeAdView`: 외부에서 소유한 `AdNativeAdViewModel`을 렌더링하는 뷰
 - `AdNativeAdViewModel`: Google Mobile Ads 네이티브 광고 로딩 상태를 관리하는 모델
 - `AdNativeAdLayout`: 광고 내부 배치, 비율, 글자 크기, CTA 버튼 높이를 정의하는 값
+- `AdNativeAdPlacementPolicy`: 콘텐츠 개수와 seed 기반으로 광고 삽입 위치를 계산하는 정책
+- `AdNativeAdPlacementConfiguration`: placement별 후보 위치와 seed 기준을 조절하는 설정
 - `AdInjectedListItemBuilder`: 기존 리스트 중간에 광고 아이템을 삽입하는 헬퍼
 
 ## 기본 사용
@@ -63,10 +65,16 @@ var body: some View {
 기존 콘텐츠 배열 중간에 광고 셀을 넣을 때는 `AdInjectedListItemBuilder`를 사용한다.
 
 ```swift
+let adIndex = AdNativeAdPlacementPolicy.insertionIndex(
+    contentCount: popups.count,
+    userIdentifier: userUuid,
+    configuration: .homeGrid
+)
+
 let items = AdInjectedListItemBuilder.make(
     items: popups,
     includesNativeAd: nativeAdViewModel.hasLoadedAd,
-    adInsertIndex: 4,
+    adInsertIndex: adIndex,
     nativeAdId: "home-native-ad",
     id: { $0.popupUuid }
 )
@@ -83,6 +91,47 @@ for item in items {
 ```
 
 `nativeAdId`는 같은 리스트 안에서 고유해야 한다. diffable/list 기반 UI에서는 이 값이 광고 셀의 안정적인 식별자가 된다.
+
+## 배치 정책
+
+기본 홈 grid 정책은 `Seeded Row-Aligned Jitter` 방식이다.
+후보 index 여러 개는 광고 여러 개를 넣는다는 뜻이 아니라, 광고 1개를 어느 위치에 넣을지 고르는 선택지다.
+
+```text
+8개 미만     -> 광고 없음
+8...11개    -> index 4
+12...15개   -> index 4 또는 6
+16개 이상   -> index 4, 6, 8 중 선택
+```
+
+선택은 `userIdentifier + yyyyMMdd + placementKey`로 만든 seed를 stable hash해서 결정한다. 같은 유저, 같은 날짜, 같은 placement에서는 앱을 다시 열어도 같은 위치가 나온다. 날짜가 바뀌거나 사용자/placement가 달라지면 다른 후보가 선택될 수 있다.
+
+```swift
+let adIndex = AdNativeAdPlacementPolicy.insertionIndex(
+    contentCount: gridPopups.count,
+    userIdentifier: userUuid,
+    configuration: .homeGrid
+)
+```
+
+Swift 기본 `hashValue`는 앱 실행마다 달라질 수 있으므로 사용하지 않는다. `AdNativeAdPlacementPolicy`는 내부에서 FNV-1a 기반 stable hash를 사용한다.
+
+## 배치 설정 조절
+
+placement별로 최소 콘텐츠 수와 후보 위치를 바꾸고 싶으면 `AdNativeAdPlacementConfiguration`을 직접 만든다.
+
+```swift
+let relaxedHomeGrid = AdNativeAdPlacementConfiguration(
+    placementKey: "home-grid-native-ad-v2",
+    rules: [
+        AdNativeAdPlacementRule(minimumContentCount: 6, candidateIndexes: [4]),
+        AdNativeAdPlacementRule(minimumContentCount: 10, candidateIndexes: [4, 6]),
+        AdNativeAdPlacementRule(minimumContentCount: 14, candidateIndexes: [4, 6, 8]),
+    ]
+)
+```
+
+규칙은 조건을 만족하는 것 중 `minimumContentCount`가 가장 큰 규칙이 사용된다. 후보 index가 콘텐츠 개수보다 크면 마지막 위치로 보정되고, 음수면 0으로 보정된다.
 
 ## 커스텀 레이아웃
 

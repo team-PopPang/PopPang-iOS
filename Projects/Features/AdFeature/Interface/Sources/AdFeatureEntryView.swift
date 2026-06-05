@@ -13,6 +13,15 @@ public typealias AdNativeAdLayout = AdFeature.AdNativeAdLayout
 /// 광고 콘텐츠 여백 값을 `AdFeatureInterface` 사용자에게 노출하는 타입 별칭입니다.
 public typealias AdNativeAdInsets = AdFeature.AdNativeAdInsets
 
+/// 광고 배치 규칙을 `AdFeatureInterface` 사용자에게 노출하는 타입 별칭입니다.
+public typealias AdNativeAdPlacementRule = AdFeature.AdNativeAdPlacementRule
+
+/// 광고 배치 설정을 `AdFeatureInterface` 사용자에게 노출하는 타입 별칭입니다.
+public typealias AdNativeAdPlacementConfiguration = AdFeature.AdNativeAdPlacementConfiguration
+
+/// 광고 배치 정책을 `AdFeatureInterface` 사용자에게 노출하는 타입 별칭입니다.
+public typealias AdNativeAdPlacementPolicy = AdFeature.AdNativeAdPlacementPolicy
+
 /// 외부 ViewModel 기반 광고 뷰를 `AdFeatureInterface` 사용자에게 노출하는 타입 별칭입니다.
 public typealias AdNativeAdView = AdFeature.AdNativeAdView
 

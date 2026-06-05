@@ -24,12 +24,14 @@ public struct HomeFeatureView: View {
     private let onShowComingPopups: (String, [Popup]) -> Void
     private let onReport: ((String) -> Void)?
     private let onManagePopupRequests: (() -> Void)?
+    private let nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration
     private let isAdmin: Bool
 
     public init(
         userUuid: String = "demo-user",
         nickname: String = "닉네임",
         isAdmin: Bool = false,
+        nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration = .homeGrid,
         deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore()),
         onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in },
         onShowAlert: @escaping (String) -> Void = { _ in },
@@ -41,6 +43,7 @@ public struct HomeFeatureView: View {
         let compound = HomeFeatureCompound(userUuid: userUuid, nickname: nickname)
         _compound = State(wrappedValue: compound)
         self.isAdmin = isAdmin
+        self.nativeAdPlacementConfiguration = nativeAdPlacementConfiguration
         self.deepLinkStorage = deepLinkStorage
         self.onSelectPopup = onSelectPopup
         self.onShowAlert = onShowAlert
@@ -151,6 +154,7 @@ public struct HomeFeatureView: View {
                         for item in AdInjectedListItemBuilder.make(
                             items: compound.state.gridPopups,
                             includesNativeAd: nativeAdViewModel.hasLoadedAd,
+                            adInsertIndex: nativeAdInsertIndex,
                             nativeAdId: "home-native-ad",
                             id: { $0.popupUuid }
                         ) {
@@ -261,6 +265,14 @@ private extension HomeFeatureView {
 
     static var gridCellWidth: CGFloat {
         (UIScreen.main.bounds.width - CGFloat.contentPadding * 2 - 15) / 2
+    }
+
+    var nativeAdInsertIndex: Int? {
+        AdNativeAdPlacementPolicy.insertionIndex(
+            contentCount: compound.state.gridPopups.count,
+            userIdentifier: compound.state.userUuid,
+            configuration: nativeAdPlacementConfiguration
+        )
     }
 }
 
