@@ -445,7 +445,7 @@ static은 상위 바이너리에 합쳐진다.
 | 외부 SDK product 허브인가? | `ThirdParty` | `.framework` |
 | SPM product가 static 기본값으로 링크 오류를 내는가? | `Moya`, `Alamofire` | `PackageSettings`에서 `.framework` |
 | SPM product가 dynamic 강제 시 링크 오류를 내는가? | Firebase 계열 | override하지 않음 |
-| SPM product가 static이면 duplicate class가 나는가? | KakaoSDKCommon | `PackageSettings`에서 `.framework` |
+| SPM product가 static이면 duplicate class가 나는가? | KakaoSDKCommon, BottomSheet | `PackageSettings`에서 `.framework` |
 
 ## PopPang 현재 SPM product override
 
@@ -464,6 +464,7 @@ local target의 `product: .staticFramework` 또는 `product: .framework`와는 �
 | `KakaoSDKShare` | PopupDetail share 구현에서 사용 |
 | `KakaoSDKTemplate` | Kakao share template 전이 의존 |
 | `KakaoSDKCommon` | Kakao product 공통 코드 중복 포함 방지 |
+| `BottomSheet` | MapFeature static 산출물이 Coordinator.framework에 합쳐질 때 ThirdParty.framework와 BottomSheet 코드가 중복 포함되는 문제 방지 |
 | `GoogleSignIn` | Google 로그인 구현에서 사용 |
 | `AppAuth`, `AppAuthCore`, `GTMAppAuth`, `GTMSessionFetcherCore` | GoogleSignIn 전이 의존 링크 안정화 |
 | `AppCheckCore`, `FBLPromises` | GoogleSignIn/AppCheck 전이 의존 링크 안정화 |

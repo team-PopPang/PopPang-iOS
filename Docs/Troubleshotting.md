@@ -623,3 +623,170 @@ Xcode가 실행 전에 다음 작업을 수행한다.
 - `Debug executable` OFF에서 빠르다고 해서 Release 성능 검증을 대체하지는 않는다.
 - 실제 배포 성능은 Release 또는 TestFlight 빌드 기준으로 확인한다.
 - `Debug executable` ON에서만 10초 안팎 대기하는 현상은 실기기 디버깅 비용일 수 있으며, 그 자체만으로 앱 startup regression으로 판단하지 않는다.
+
+## 릴리스 빌드 지도 탭 진입 시 BottomSheet duplicate class 크래시
+
+기준일: 2026-06-05
+
+### 증상
+
+릴리스 빌드에서 앱 실행 후 팝팡지도 탭에 진입하면 잠깐 멈춘 뒤 크래시가 난다.
+
+대표 로그:
+
+```text
+objc[...] Class _TtC11BottomSheet24BottomSheetConfiguration is implemented in both
+.../PopPangApp.app/Frameworks/ThirdParty.framework/ThirdParty
+and
+.../PopPangApp.app/Frameworks/Coordinator.framework/Coordinator
+This may cause spurious casting failures and mysterious crashes.
+One of the duplicates must be removed or renamed.
+
+=== AttributeGraph: cycle detected through attribute ... ===
+Error: distanvePerminWidth is 0
+Thread 1: EXC_BAD_ACCESS
+```
+
+판단:
+
+- `BottomSheetConfiguration is implemented in both ...`가 1차 원인이다.
+- `AttributeGraph cycle`, layout warning, `distanvePerminWidth is 0`은 같이 보일 수 있지만, 이 로그 조합에서는 링크 중복으로 인한 런타임 클래스 충돌을 먼저 해결한다.
+- 지도 탭에서 `BottomSheet`를 실제로 쓰기 시작하면서 중복 로딩 문제가 드러난다.
+
+### 원인
+
+현재 PopPang 구조:
+
+```text
+PopPangApp.app
+ -> ThirdParty.framework
+    -> BottomSheet
+
+PopPangApp.app
+ -> Coordinator.framework
+    -> MapFeature.staticFramework
+       -> import BottomSheet
+```
+
+`BottomSheet` SPM product가 기본 static product로 처리되면 다음 문제가 생긴다.
+
+- `ThirdParty.framework`가 `BottomSheet` 코드를 포함한다.
+- `MapFeature`는 `.staticFramework`라서 `Coordinator.framework`에 합쳐진다.
+- `MapFeature`가 쓰는 `BottomSheet` 코드도 `Coordinator.framework` 안으로 들어갈 수 있다.
+- 앱 실행 시 Objective-C/Swift 런타임이 같은 클래스인 `BottomSheetConfiguration`을 두 framework에서 발견한다.
+- 그 결과 duplicate class 경고와 casting failure, `EXC_BAD_ACCESS`가 발생할 수 있다.
+
+중요:
+
+- 여러 Swift 파일에서 `import BottomSheet`를 쓰는 것 자체가 문제는 아니다.
+- 문제는 같은 SDK 구현 코드가 여러 dynamic framework 바이너리 안에 각각 포함되는 것이다.
+
+### 해결
+
+`Tuist/Package.swift`의 `PackageSettings.productTypes`에서 `BottomSheet`를 dynamic framework로 고정한다.
+
+```swift
+let packageSettings = PackageSettings(
+    productTypes: [
+        "BottomSheet": .framework,
+        ...
+    ]
+)
+```
+
+의미:
+
+- `BottomSheet` 구현 코드를 `ThirdParty.framework`나 `Coordinator.framework` 안에 각각 복사하지 않는다.
+- 앱 번들의 `BottomSheet.framework` 한 곳에서 로드되게 만든다.
+- `BottomSheetConfiguration` 같은 런타임 클래스가 한 번만 등록되도록 한다.
+
+`Projects/Shared/ThirdParty/Project.swift`의 `.external(name: "BottomSheet")`는 유지한다.
+
+```swift
+.external(name: "BottomSheet")
+```
+
+각 feature source에서는 실제 SDK 모듈명을 그대로 import한다.
+
+```swift
+import BottomSheet
+```
+
+### 언제 static framework를 쓰는가
+
+아래 조건이면 `.staticFramework`가 기본 선택이다.
+
+| 조건 | 예 | 이유 |
+| --- | --- | --- |
+| 앱 내부 전용 feature | `HomeFeature`, `MapFeature`, `SearchFeature` | 앱 밖에서 독립 SDK처럼 배포하지 않는다. |
+| leaf 모듈 | `Feature -> Domain/Core/DSKit/ThirdParty` | 다른 여러 모듈이 feature 구현을 다시 공유하지 않는다. |
+| feature 수가 많다 | `Projects/Features/*Feature` | 런타임 dynamic framework 수, embed/sign 대상, dyld 로드 비용을 줄인다. |
+| 런타임 교체가 필요 없다 | 대부분의 PopPang feature | 바이너리 경계보다 실행 단순성이 중요하다. |
+
+PopPang 기본 feature 설정:
+
+```swift
+product: .staticFramework
+```
+
+주의:
+
+- static feature라도 source boundary와 import boundary는 유지된다.
+- static은 "모듈이 아니다"라는 뜻이 아니다.
+- static dependency가 여러 dynamic framework에 각각 들어가면 duplicate class 문제가 생길 수 있다.
+
+### 언제 dynamic framework를 쓰는가
+
+아래 조건이면 `.framework`가 맞다.
+
+| 조건 | 예 | 이유 |
+| --- | --- | --- |
+| 여러 레이어가 공유하는 경계 | `Domain`, `Core`, `DSKit` | 여러 target이 명시적으로 import하는 계약/API 경계다. |
+| 앱 조립 또는 인프라 경계 | `Coordinator`, `Data`, `ThirdParty` | App이 별도 framework로 조립하는 큰 경계다. |
+| feature public interface | `SearchFeatureInterface`, `PopupDetailFeatureInterface` | 재사용 entry API를 명시적으로 노출한다. |
+| static이면 duplicate class가 난 SPM product | `BottomSheet`, `KakaoSDKCommon` | 같은 SDK 코드가 여러 dynamic framework에 복사되는 것을 막는다. |
+| static 기본값에서 링크/모듈 해석이 깨지는 SPM product | `Moya`, `Alamofire`, `GoogleSignIn` 전이 product | `no such module`, undefined symbols를 막는다. |
+
+SPM product override 기준:
+
+- 기본값으로 먼저 빌드한다.
+- 문제가 재현된 product만 최소 범위로 `PackageSettings.productTypes`에 추가한다.
+- `Class ... is implemented in both ...`가 나오면 해당 SDK 코드가 여러 dynamic framework에 들어갔는지 확인한다.
+- Firebase 계열처럼 static 전제가 강한 SDK는 무리하게 dynamic으로 고정하지 않는다.
+
+### 검증
+
+프로젝트 재생성:
+
+```sh
+tuist install
+tuist generate
+```
+
+생성된 프로젝트에서 확인:
+
+```sh
+rg -n "BottomSheet.framework" Projects/Shared/ThirdParty/ThirdParty.xcodeproj Projects/Coordinator/Coordinator.xcodeproj Projects/Features/MapFeature/MapFeature.xcodeproj -g "*.pbxproj"
+```
+
+기대:
+
+- `BottomSheet` 프로젝트가 별도로 생성된다.
+- App build phase에 `BottomSheet.framework`가 embed 대상 또는 copy files 대상으로 잡힌다.
+- `Coordinator.framework` 안에 `BottomSheetConfiguration` 구현이 중복 포함되지 않아야 한다.
+
+릴리스 빌드 확인:
+
+```sh
+xcodebuild -workspace PopPang.xcworkspace \
+  -scheme PopPangApp \
+  -configuration Release \
+  -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' \
+  build
+```
+
+실기기 또는 TestFlight에서 확인:
+
+- 앱 실행 후 팝팡지도 탭에 진입한다.
+- 로그에 `Class _TtC11BottomSheet24BottomSheetConfiguration is implemented in both`가 다시 나오면 아직 해결되지 않은 상태다.
+- duplicate class 로그가 사라졌는데도 지도 탭에서 크래시가 나면 그때는 `AttributeGraph`, `BottomSheet` layout, NMapsMap marker/cluster 갱신을 별도 이슈로 분리해 추적한다.

@@ -79,6 +79,9 @@ import PackageDescription
     // - KakaoSDK 직접 사용 product: `.framework` 유지
     //   - 이유: Data는 KakaoSDKAuth/User를, PopupDetailFeature는 KakaoSDKShare/Template을 직접 import한다.
     //     기본 static product로 두면 KakaoSDKCommon 코드가 Data.framework와 Coordinator.framework에 각각 포함되어 런타임 duplicate class 경고가 난다.
+    // - BottomSheet: `.framework` 유지
+    //   - 이유: 기본 static product로 두면 MapFeature static framework를 포함하는 Coordinator.framework와
+    //     ThirdParty.framework 양쪽에 BottomSheet 코드가 들어가 런타임 duplicate class 경고와 크래시가 난다.
     // - Moya, Alamofire: `.framework` 유지
     //   - 이유: 기본값으로 둘 때 `Moya` 쪽에서 `Alamofire`를 못 찾는 모듈 해석 문제가 실제로 재현됐다.
     //   - `Compound`는 feature에서 직접 들고 가지 않고 `ThirdParty` 허브를 통해 제공한다.
@@ -88,6 +91,7 @@ import PackageDescription
             "AppAuth": .framework,
             "AppAuthCore": .framework,
             "AppCheckCore": .framework,
+            "BottomSheet": .framework,
             "FBLPromises": .framework,
             "GoogleSignIn": .framework,
             "GTMAppAuth": .framework,
