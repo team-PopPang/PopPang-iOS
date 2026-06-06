@@ -1,8 +1,6 @@
 *.xcconfig
 .env
 GoogleService-Info.plist
-AGENTS.md
-agents.md
 .codex/
 
 # macOS
