@@ -29,6 +29,15 @@ let project = Project(
                 .external(name: "NMapsMap"),
                 .external(name: "BottomSheet"),
                 .sdk(name: "JavaScriptCore", type: .framework),
+
+                // AirBridge관련
+                .external(name: "Airbridge"),
+                .sdk(name: "AdSupport", type: .framework, status: .optional),
+                .sdk(name: "AdServices", type: .framework, status: .optional),
+                .sdk(name: "CoreTelephony", type: .framework, status: .optional),
+                .sdk(name: "StoreKit", type: .framework, status: .optional),
+                .sdk(name: "AppTrackingTransparency", type: .framework, status: .optional),
+                .sdk(name: "WebKit", type: .framework, status: .optional),
             ],
             settings: .settings(
                 base: [

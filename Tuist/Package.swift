@@ -125,5 +125,7 @@ let package = Package(
         .package(url: "https://github.com/indextrown/Compound", exact: "1.0.5"),
         .package(url: "https://github.com/indextrown/Listkit.git", exact: "1.0.5"),
         .package(url: "https://github.com/lucaszischka/BottomSheet", exact: "3.1.1"),
+        .package(url: "https://github.com/ab180/airbridge-ios-sdk-deployment", exact: "4.10.0"),
     ]
 )
+
