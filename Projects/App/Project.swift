@@ -38,6 +38,8 @@ let project = Project(
                     "FirebaseAppDelegateProxyEnabled": false,
                     "ADMOB_NATIVE_AD_UNIT_ID": "$(ADMOB_NATIVE_AD_UNIT_ID)",
                     "GADApplicationIdentifier": "$(ADMOB_APP_ID)",
+                    "AIRBRIDGE_APP_NAME": "$(AIRBRIDGE_APP_NAME)",
+                    "AIRBRIDGE_SDK_TOKEN": "$(AIRBRIDGE_SDK_TOKEN)",
                     "GIDClientID": "$(GIDClientID)",
                     "GoogleURLScheme": "$(GoogleURLScheme)",
                     "KAKAO_NATIVE_APP_KEY": "$(KAKAO_NATIVE_APP_KEY)",

@@ -32,6 +32,11 @@ public enum Constants {
             #endif
         }
     }
+    
+    public enum Airbridge {
+        public static let appName = AppConfig.string(forKey: "AIRBRIDGE_APP_NAME")
+        public static let sdkToken = AppConfig.string(forKey: "AIRBRIDGE_SDK_TOKEN")
+    }
 
     public enum BetaNotice {
         public static let beta_0930 = """
