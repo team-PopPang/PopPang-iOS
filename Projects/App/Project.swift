@@ -40,6 +40,8 @@ let project = Project(
                     "GADApplicationIdentifier": "$(ADMOB_APP_ID)",
                     "AIRBRIDGE_APP_NAME": "$(AIRBRIDGE_APP_NAME)",
                     "AIRBRIDGE_SDK_TOKEN": "$(AIRBRIDGE_SDK_TOKEN)",
+                    // ATT
+                    "NSUserTrackingUsageDescription": "맞춤형 광고 제공과 광고 성과 측정을 위해 앱 사용 정보가 사용될 수 있습니다.",
                     "GIDClientID": "$(GIDClientID)",
                     "GoogleURLScheme": "$(GoogleURLScheme)",
                     "KAKAO_NATIVE_APP_KEY": "$(KAKAO_NATIVE_APP_KEY)",
