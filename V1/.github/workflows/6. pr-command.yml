@@ -1,0 +1,82 @@
+name: PR 명령어 실행
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: read
+  actions: write
+
+jobs:
+  parse-and-run:
+    if: github.event.issue.pull_request != null
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Parse command
+        id: parse
+        shell: bash
+        run: |
+          BODY="$(echo "${{ github.event.comment.body }}" | xargs)"  # trim
+
+          if [[ "$BODY" == "/팝팡 빌드" ]]; then
+            echo "workflow=1. poppang-build.yml" >> $GITHUB_ENV
+          elif [[ "$BODY" == "/팝팡 테스트" ]]; then
+            echo "workflow=2. poppang-test.yml" >> $GITHUB_ENV
+          elif [[ "$BODY" == "/팝팡 빌드하고테스트" ]]; then
+            echo "workflow=3. poppang-build-and-test.yml" >> $GITHUB_ENV
+          elif [[ "$BODY" == "/팝팡 버전점검" || "$BODY" == "/팝팡 의존성점검" ]]; then
+            echo "workflow=0. poppang-dependency-canary.yml" >> $GITHUB_ENV
+          else
+            echo "workflow=none" >> $GITHUB_ENV
+          fi
+
+      - name: Stop if no command
+        if: env.workflow == 'none'
+        run: |
+          echo "No command detected"
+          exit 0
+        
+#      - name: Comment acknowledge
+#        if: env.workflow != 'none'
+#        uses: peter-evans/create-or-update-comment@v4
+#        with:
+#          issue-number: ${{ github.event.issue.number }}
+#          body: |
+#            ${{ env.ci_message }}
+#          body: |
+#            🤖 **PopPang CI**
+#            명령을 인식했어요: **`${{ github.event.comment.body }}`**
+#            실행 중입니다 ⏳
+
+      - name: Trigger workflow
+        if: env.workflow != 'none'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // 1) PR 번호
+            const prNumber = context.payload.issue.number;
+
+            // 2) PR 정보 조회해서 head ref 얻기
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            const ref = pr.head.ref;
+
+            // 3) workflow_dispatch 실행 (+ inputs 전달)
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: process.env.workflow,
+              ref,
+              inputs: {
+                triggered_by_command: "true",
+                pr_number: String(prNumber),
+              },
+            });

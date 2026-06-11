@@ -1,0 +1,15 @@
+"common.next" = "Next";
+"common.skip" = "Skip";
+"common.start" = "Get Started";
+"onboarding.keyword.title" = "Popup Store Alerts";
+"onboarding.keyword.content" = "Add keywords to receive alerts for the popups you want.";
+"onboarding.map.title" = "Location-Based Service";
+"onboarding.map.content" = "See popups happening near you right away.";
+"onboarding.favorite.title" = "Calendar Favorites";
+"onboarding.favorite.content" = "Check your saved popups by date.";
+"login.social.kakao" = "Continue with Kakao";
+"login.social.apple" = "Continue with Apple";
+"login.social.google" = "Continue with Google";
+"greeting_message" = "Hello";
+"home_description" = "Your day becomes a warm memory";
+"login_button" = "Login";

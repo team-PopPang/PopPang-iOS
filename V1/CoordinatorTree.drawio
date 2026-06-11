@@ -1,0 +1,88 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.0.9 Chrome/128.0.6613.186 Electron/32.2.5 Safari/537.36" version="26.0.9">
+  <diagram id="coordinator-tree" name="Coordinator Tree">
+    <mxGraphModel dx="2243" dy="1437" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1840" pageHeight="1080" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="PopPang Coordinator Tree" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=26;fontStyle=1;fontColor=#1e1e1e;" parent="1" vertex="1">
+          <mxGeometry x="610" y="10" width="620" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rootCoordinator" value="RootCoordinator&#xa;RootCoordinatorView" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E7F5FF;strokeColor=#1E1E1E;strokeWidth=2;fontSize=20;fontStyle=1;align=center;verticalAlign=middle;spacing=8;arcSize=14;" parent="1" vertex="1">
+          <mxGeometry x="760" y="70" width="320" height="86" as="geometry" />
+        </mxCell>
+        <mxCell id="launch" value="destination: launch&#xa;LaunchScene" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8F9FA;strokeColor=#1E1E1E;strokeWidth=2;fontSize=17;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="70" y="250" width="250" height="92" as="geometry" />
+        </mxCell>
+        <mxCell id="onboarding" value="OnboardingCoordinator&#xa;Root: OnboardingFeatureView&#xa;Route.login -&gt; AuthFeatureView" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E6;strokeColor=#1E1E1E;strokeWidth=2;fontSize=16;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="390" y="240" width="300" height="112" as="geometry" />
+        </mxCell>
+        <mxCell id="authFlow" value="AuthFlowCoordinator&#xa;AuthFeatureView&#xa;RegisterFlowFeatureView" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF4E6;strokeColor=#1E1E1E;strokeWidth=2;fontSize=16;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="760" y="240" width="300" height="112" as="geometry" />
+        </mxCell>
+        <mxCell id="mainTab" value="MainTabCoordinator&#xa;NavigationStack + TabView&#xa;selectedTab / paths / fullScreen" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6FCF5;strokeColor=#1E1E1E;strokeWidth=2;fontSize=16;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="1140" y="230" width="370" height="132" as="geometry" />
+        </mxCell>
+        <mxCell id="homeCoordinator" value="HomeCoordinator&#xa;Root: HomeFeatureView&#xa;push: popupDetail, coming&#xa;alert, review, request,&#xa;request management&#xa;fullScreen: search" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F0FF;strokeColor=#1E1E1E;strokeWidth=2;fontSize=15;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="50" y="500" width="310" height="164" as="geometry" />
+        </mxCell>
+        <mxCell id="calendarCoordinator" value="CalendarCoordinator&#xa;Root: CalendarFeatureView&#xa;push: alert, popupDetail,&#xa;reviewDetail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F0FF;strokeColor=#1E1E1E;strokeWidth=2;fontSize=15;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="400" y="500" width="310" height="164" as="geometry" />
+        </mxCell>
+        <mxCell id="mapCoordinator" value="MapCoordinator&#xa;Root: MapFeatureView&#xa;push: popupDetail, reviewDetail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F0FF;strokeColor=#1E1E1E;strokeWidth=2;fontSize=15;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="750" y="500" width="310" height="164" as="geometry" />
+        </mxCell>
+        <mxCell id="favoritesCoordinator" value="FavoritesCoordinator&#xa;Root: FavoritesFeatureView&#xa;push: alert, popupDetail,&#xa;reviewDetail&#xa;browse -&gt; MainTab.home" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F0FF;strokeColor=#1E1E1E;strokeWidth=2;fontSize=15;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="1100" y="500" width="310" height="164" as="geometry" />
+        </mxCell>
+        <mxCell id="profileCoordinator" value="ProfileCoordinator&#xa;Root: ProfileFeatureView&#xa;push: alert, popupDetail,&#xa;profileSetting, notifications,&#xa;serviceTerms, reviewDetail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F3F0FF;strokeColor=#1E1E1E;strokeWidth=2;fontSize=15;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="1450" y="500" width="330" height="164" as="geometry" />
+        </mxCell>
+        <mxCell id="mainRoutes" value="MainTabRoute push destinations&#xa;PopupDetail / ComingPopupDetail / ReviewDetail / Alert&#xa;PopupRequest / PopupRequestManagement / PopupRequestManagementDetail&#xa;ProfileSetting / Notifications / ServiceTerms&#xa;Tab callbacks can be promoted to MainTabCoordinator" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6FCF5;strokeColor=#087F5B;strokeWidth=2;fontSize=16;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="440" y="790" width="560" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="mainFullScreen" value="MainTabFullScreenRoute&#xa;search -&gt; SearchFeatureView&#xa;animation: false" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E6FCF5;strokeColor=#087F5B;strokeWidth=2;fontSize=16;align=center;verticalAlign=middle;spacing=8;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="1060" y="795" width="380" height="118" as="geometry" />
+        </mxCell>
+        <mxCell id="legendSolid" value="실선: 코디네이터 소유/루트 화면 흐름" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#ADB5BD;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;spacing=6;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="1560" y="807" width="250" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="legendDashed" value="초록 점선: MainTabCoordinator 중앙 라우팅" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#087F5B;strokeWidth=1;fontSize=13;align=center;verticalAlign=middle;spacing=6;arcSize=12;" parent="1" vertex="1">
+          <mxGeometry x="1560" y="867" width="250" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="edgeRootLaunch" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1E1E1E;" parent="1" source="rootCoordinator" target="launch" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edgeRootOnboarding" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1E1E1E;" parent="1" source="rootCoordinator" target="onboarding" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edgeRootAuth" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1E1E1E;" parent="1" source="rootCoordinator" target="authFlow" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edgeRootMain" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1E1E1E;" parent="1" source="rootCoordinator" target="mainTab" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edgeMainHome" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1E1E1E;" parent="1" source="mainTab" target="homeCoordinator" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edgeMainCalendar" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1E1E1E;" parent="1" source="mainTab" target="calendarCoordinator" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edgeMainMap" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1E1E1E;" parent="1" source="mainTab" target="mapCoordinator" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edgeMainFavorites" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1E1E1E;" parent="1" source="mainTab" target="favoritesCoordinator" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edgeMainProfile" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#1E1E1E;" parent="1" source="mainTab" target="profileCoordinator" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edgeMainRoutes" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#087F5B;dashed=1;dashPattern=8 4;" parent="1" source="mainTab" target="mainRoutes" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edgeMainFullScreen" value="" style="endArrow=block;html=1;rounded=0;strokeWidth=2;strokeColor=#087F5B;dashed=1;dashPattern=8 4;" parent="1" source="mainTab" target="mainFullScreen" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,171 @@
+name: 팝팡 앱타겟 iOS17 빌드 & 테스트
+
+on:
+#  pull_request:
+#    branches: [ main, develop ]
+#  push:
+#    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR 번호(명령어 트리거일 때만 입력)"
+        required: false
+        default: ""
+      triggered_by_command:
+        description: "PR 명령어로 실행되면 true"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  ios-ci:
+    name: iOS Build & Test
+    runs-on: macos-14
+
+    steps:
+      # ======================
+      # 1️⃣ Checkout
+      # ======================
+      # PR 명령어 실행일 때
+      - name: Checkout PR branch
+        if: github.event.inputs.pr_number != ''
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+      
+      # 수동 실행일 때
+      - name: Checkout default branch
+        if: github.event.inputs.pr_number == ''
+        uses: actions/checkout@v4
+      
+      # 시작 댓글: 명령어 트리거일 때만
+      - name: Comment start
+        if: github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            🔨 iOS 17.5 iPhone 15 에서 빌드 및 테스트를 실행합니다.
+
+      # ======================
+      # 2️⃣ Xcode 선택
+      # ======================
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.2.app
+
+      # ======================
+      # 3️⃣ Swift Macro 검증 해제
+      # ======================
+      - name: Disable Swift Macro fingerprint validation
+        run: |
+          defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+
+      # ======================
+      # 4️⃣ Swift Version
+      # ======================
+      - name: Swift Version
+        run: swift --version
+
+      # ======================
+      # 5️⃣ Config.xcconfig 생성
+      # ======================
+      - name: Create Config.xcconfig from Secrets
+        run: |
+          cat <<EOF > Config.xcconfig
+          KAKAO_NATIVE_APP_KEY = ${{ secrets.KAKAO_NATIVE_APP_KEY }}
+          GIDClientID = ${{ secrets.GIDClientID }}
+          GoogleURLScheme = ${{ secrets.GoogleURLScheme }}
+          NMFClientID = ${{ secrets.NMFClientID }}
+          EOF
+
+      # ======================
+      # 6️⃣ Build
+      # ======================
+      - name: Build
+        run: |
+          set -o pipefail
+          xcodebuild clean build \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
+            -xcconfig Config.xcconfig \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty
+
+      # ======================
+      # 7️⃣ Test
+      # ======================
+      - name: Run Unit & UI Tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project PopPang.xcodeproj \
+            -scheme PopPang \
+            -xcconfig Config.xcconfig \
+            -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.5' \
+            -enableCodeCoverage YES \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty
+
+      # ======================
+      # 8️⃣ PR 댓글 (명령어 트리거일 때만)
+      # ======================
+      - name: Comment success
+        if: success() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            ✅ **팝팡 패키지를 성공적으로 빌드하고 테스트했습니다.**
+
+      - name: Comment failure
+        if: failure() && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            ❌ **팝팡 패키지 빌드 또는 테스트에 실패했습니다.**
+            👉 Actions 탭에서 로그를 확인해주세요.
+
+      # 여기부터 메일
+      - name: Send email on success
+        if: success()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: ✅ PopPang iOS 빌드 & 테스트 성공
+          body: |
+            ✅ **팝팡 패키지를 성공적으로 빌드하고 테스트했습니다.**
+
+            📦 Repository: ${{ github.repository }}
+            🌿 Branch: ${{ github.ref_name }}
+            👤 Triggered by: ${{ github.actor }}
+            🔗 Action URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: indextrown@gmail.com
+          from: GitHub CI <${{ secrets.MAIL_USERNAME }}>
+
+      - name: Send email on failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: ❌ PopPang iOS 빌드 실패
+          body: |
+            ❌ **팝팡 패키지 빌드 또는 테스트에 실패했습니다.**
+
+            📦 Repository: ${{ github.repository }}
+            🌿 Branch: ${{ github.ref_name }}
+            👤 Triggered by: ${{ github.actor }}
+            🔗 Action URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: indextrown@gmail.com
+          from: GitHub CI <${{ secrets.MAIL_USERNAME }}>

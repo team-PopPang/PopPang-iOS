@@ -1,0 +1,27 @@
+import ProjectDescription
+
+let project = Project(
+    name: "{{ name }}",
+    targets: [
+        .target(
+            name: "{{ name }}",
+            destinations: [.iPhone],
+            product: .framework,
+            bundleId: "{{ bundleIdPrefix }}.core.{{ name | lowercase }}",
+            deploymentTargets: .iOS("{{ deploymentTarget }}"),
+            infoPlist: .default,
+            sources: ["Sources/**"],
+            dependencies: []
+        ),
+        .target(
+            name: "{{ name }}Tests",
+            destinations: [.iPhone],
+            product: .unitTests,
+            bundleId: "{{ bundleIdPrefix }}.core.{{ name | lowercase }}.tests",
+            deploymentTargets: .iOS("{{ deploymentTarget }}"),
+            infoPlist: .default,
+            sources: ["Tests/**"],
+            dependencies: [.target(name: "{{ name }}")]
+        ),
+    ]
+)
