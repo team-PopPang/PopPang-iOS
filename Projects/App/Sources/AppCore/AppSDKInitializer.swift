@@ -24,6 +24,7 @@ enum AppSDKInitializer {
 
         // 앱이 active 상태가 되었을 때 ATT 프롬프트 요청
         ATTBootstrap.requestWhenAppBecomesActiveOnce()
+        // Logger.d("ATT current status: \(ATTrackingManager.trackingAuthorizationStatus.rawValue)")
 
         MobileAds.shared.start(completionHandler: nil)
         KakaoSDK.initSDK(appKey: Constants.KakaoAPI.key)
