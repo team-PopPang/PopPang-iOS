@@ -1,7 +1,9 @@
 *.xcconfig
 .env
 GoogleService-Info.plist
-.codex/
+
+# codex
+.codex/logs/
 
 # macOS
 .DS_Store

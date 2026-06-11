@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto Commit Push"
+  short_description: "PopPang 전용 커밋/푸시 규칙"
+  default_prompt: "Use $auto-commit-push to inspect changes and commit them with the PopPang Korean commit-message rules."
