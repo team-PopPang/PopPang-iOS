@@ -187,7 +187,7 @@ Hook 파일:
 - `.codex/hooks/log_pre_tool_use.py`: `PreToolUse` 이벤트에서 Codex가 실행하려는 도구 이름과 명령 메타데이터를 `.codex/logs/tools.jsonl`에 기록한다.
 - `.codex/hooks/log_post_tool_use.py`: `PostToolUse` 이벤트에서 도구 실행 결과 메타데이터를 `.codex/logs/tools.jsonl`에 기록한다.
 - `.codex/hooks/log_stop.py`: `Stop` 이벤트에서 한 턴의 종료 메타데이터를 `.codex/logs/turns.jsonl`에 기록한다.
-- `.codex/logs/.gitignore`: 실제 JSONL 로그가 Git에 커밋되지 않도록 `.codex/logs/` 안의 로그 파일을 무시한다.
+- 루트 `.gitignore`: 실제 JSONL 로그가 Git에 커밋되지 않도록 `.codex/logs/` 전체를 무시한다.
 
 공식 문서:
 
