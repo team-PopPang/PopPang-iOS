@@ -1,7 +1,8 @@
 *.xcconfig
 .env
 GoogleService-Info.plist
-.codex/
+.codex/logs/*
+!.codex/logs/.gitignore
 
 # macOS
 .DS_Store
