@@ -8,6 +8,7 @@ struct ComingPopupDetailReducer {
     struct State: Equatable, Sendable {
         var userUuid: String
         var popups: [Popup]
+        var isLoading = false
         var errorMessage: String?
 
         init(
@@ -33,6 +34,7 @@ struct ComingPopupDetailReducer {
         Reduce { state, action in
             switch action {
             case .onAppear:
+                state.isLoading = true
                 return updateComingPopups(userUuid: state.userUuid)
 
             case .toggleLike(let popup):
@@ -56,6 +58,7 @@ struct ComingPopupDetailReducer {
 
             case .popupsLoaded(let popups):
                 state.popups = popups.sorted { $0.startDate < $1.startDate }
+                state.isLoading = false
                 state.errorMessage = nil
                 return .none
 
@@ -69,6 +72,7 @@ struct ComingPopupDetailReducer {
                 return .none
 
             case .errorMessageChanged(let errorMessage):
+                state.isLoading = false
                 state.errorMessage = errorMessage
                 return .none
             }

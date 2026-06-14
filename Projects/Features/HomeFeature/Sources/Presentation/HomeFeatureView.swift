@@ -19,6 +19,7 @@ public struct HomeFeatureView: View {
     @StateObject private var nativeAdSlotStore = AdNativeAdSlotStore()
 
     private let deepLinkStorage: DeepLinkStorage
+    // TODO: 코디네이터 패턴은 추후 TCA navigation/state ownership으로 전환 예정
     private let onSelectPopup: (String, Popup) -> Void
     private let onShowAlert: (String) -> Void
     private let onSearch: (String) -> Void
@@ -28,6 +29,32 @@ public struct HomeFeatureView: View {
     private let nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration
     private let nativeAdCount: Int?
     private let isAdmin: Bool
+
+    init(
+        store: StoreOf<HomeFeatureReducer>,
+        isAdmin: Bool = false,
+        nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration = .homeGrid,
+        nativeAdCount: Int? = nil,
+        deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore()),
+        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in },
+        onShowAlert: @escaping (String) -> Void = { _ in },
+        onSearch: @escaping (String) -> Void = { _ in },
+        onShowComingPopups: @escaping (String, [Popup]) -> Void = { _, _ in },
+        onReport: ((String) -> Void)? = nil,
+        onManagePopupRequests: (() -> Void)? = nil
+    ) {
+        _store = State(initialValue: store)
+        self.isAdmin = isAdmin
+        self.nativeAdPlacementConfiguration = nativeAdPlacementConfiguration
+        self.nativeAdCount = nativeAdCount
+        self.deepLinkStorage = deepLinkStorage
+        self.onSelectPopup = onSelectPopup
+        self.onShowAlert = onShowAlert
+        self.onSearch = onSearch
+        self.onShowComingPopups = onShowComingPopups
+        self.onReport = onReport
+        self.onManagePopupRequests = onManagePopupRequests
+    }
 
     public init(
         userUuid: String = "demo-user",
@@ -43,24 +70,26 @@ public struct HomeFeatureView: View {
         onReport: ((String) -> Void)? = nil,
         onManagePopupRequests: (() -> Void)? = nil
     ) {
-        _store = State(initialValue: Store(
-            initialState: HomeFeatureReducer.State(
-                userUuid: userUuid,
-                nickname: nickname
-            )
-        ) {
-            HomeFeatureReducer()
-        })
-        self.isAdmin = isAdmin
-        self.nativeAdPlacementConfiguration = nativeAdPlacementConfiguration
-        self.nativeAdCount = nativeAdCount
-        self.deepLinkStorage = deepLinkStorage
-        self.onSelectPopup = onSelectPopup
-        self.onShowAlert = onShowAlert
-        self.onSearch = onSearch
-        self.onShowComingPopups = onShowComingPopups
-        self.onReport = onReport
-        self.onManagePopupRequests = onManagePopupRequests
+        self.init(
+            store: Store(
+                initialState: HomeFeatureReducer.State(
+                    userUuid: userUuid,
+                    nickname: nickname
+                )
+            ) {
+                HomeFeatureReducer()
+            },
+            isAdmin: isAdmin,
+            nativeAdPlacementConfiguration: nativeAdPlacementConfiguration,
+            nativeAdCount: nativeAdCount,
+            deepLinkStorage: deepLinkStorage,
+            onSelectPopup: onSelectPopup,
+            onShowAlert: onShowAlert,
+            onSearch: onSearch,
+            onShowComingPopups: onShowComingPopups,
+            onReport: onReport,
+            onManagePopupRequests: onManagePopupRequests
+        )
     }
 
     public var body: some View {
@@ -260,6 +289,18 @@ public struct HomeFeatureView: View {
         .task(id: nativeAdPlacementIDs) {
             nativeAdSlotStore.loadAdIfNeeded(for: nativeAdPlacementIDs)
         }
+        .overlay {
+            if store.isLoading {
+                HomeFeatureLoadingOverlay()
+            }
+        }
+        .alert("안내", isPresented: isErrorPresented) {
+            Button("확인", role: .cancel) {
+                store.send(.errorMessageChanged(nil))
+            }
+        } message: {
+            Text(store.errorMessage ?? "")
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
@@ -293,6 +334,32 @@ private extension HomeFeatureView {
     var loadedNativeAdPlacements: [AdNativeAdPlacement] {
         let loadedSlotIDs = nativeAdSlotStore.loadedSlotIDs(in: nativeAdPlacementIDs)
         return nativeAdPlacements.filter { loadedSlotIDs.contains($0.id) }
+    }
+
+    var isErrorPresented: Binding<Bool> {
+        Binding(
+            get: { store.errorMessage != nil },
+            set: { isPresented in
+                if !isPresented {
+                    store.send(.errorMessageChanged(nil))
+                }
+            }
+        )
+    }
+}
+
+private struct HomeFeatureLoadingOverlay: View {
+    var body: some View {
+        ZStack {
+            Color.mainBlack.opacity(0.08)
+                .ignoresSafeArea()
+
+            ProgressView()
+                .controlSize(.large)
+                .padding(20)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
     }
 }
 
@@ -727,20 +794,30 @@ public struct ComingPopupDetailFeatureView: View {
     @State private var store: StoreOf<ComingPopupDetailReducer>
     private let onSelectPopup: (String, Popup) -> Void
 
+    init(
+        store: StoreOf<ComingPopupDetailReducer>,
+        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in }
+    ) {
+        _store = State(initialValue: store)
+        self.onSelectPopup = onSelectPopup
+    }
+
     public init(
         userUuid: String,
         popups: [Popup],
         onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in }
     ) {
-        _store = State(initialValue: Store(
-            initialState: ComingPopupDetailReducer.State(
-                userUuid: userUuid,
-                popups: popups
-            )
-        ) {
-            ComingPopupDetailReducer()
-        })
-        self.onSelectPopup = onSelectPopup
+        self.init(
+            store: Store(
+                initialState: ComingPopupDetailReducer.State(
+                    userUuid: userUuid,
+                    popups: popups
+                )
+            ) {
+                ComingPopupDetailReducer()
+            },
+            onSelectPopup: onSelectPopup
+        )
     }
 
     public var body: some View {
@@ -782,9 +859,34 @@ public struct ComingPopupDetailFeatureView: View {
         .updateEngine(.reloadData)
         .scrollIndicators(.hidden)
         .contentInsets(LKEdgeInsets(top: 0, left: 0, bottom: 0, right: 0))
+        .overlay {
+            if store.isLoading {
+                HomeFeatureLoadingOverlay()
+            }
+        }
+        .alert("안내", isPresented: isComingPopupErrorPresented) {
+            Button("확인", role: .cancel) {
+                store.send(.errorMessageChanged(nil))
+            }
+        } message: {
+            Text(store.errorMessage ?? "")
+        }
         .onAppear {
             store.send(.onAppear)
         }
+    }
+}
+
+private extension ComingPopupDetailFeatureView {
+    var isComingPopupErrorPresented: Binding<Bool> {
+        Binding(
+            get: { store.errorMessage != nil },
+            set: { isPresented in
+                if !isPresented {
+                    store.send(.errorMessageChanged(nil))
+                }
+            }
+        )
     }
 }
 
@@ -805,8 +907,14 @@ private struct HomeFeaturePreviewContainer: View {
 
     var body: some View {
         HomeFeatureView(
-            userUuid: "preview-user",
-            nickname: "팝팡"
+            store: Store(
+                initialState: HomeFeatureReducer.State(
+                    userUuid: "preview-user",
+                    nickname: "팝팡"
+                )
+            ) {
+                HomeFeatureReducer()
+            }
         )
         .environment(coordinator)
     }
