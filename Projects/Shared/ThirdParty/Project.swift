@@ -13,6 +13,7 @@ let project = Project(
             sources: ["Sources/**"],
             dependencies: [
                 .external(name: "Compound"),
+                .external(name: "ComposableArchitecture"),
                 .external(name: "FirebaseAnalytics"),
                 .external(name: "FirebaseCore"),
                 .external(name: "FirebaseMessaging"),

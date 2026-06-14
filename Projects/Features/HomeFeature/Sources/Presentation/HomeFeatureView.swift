@@ -1,5 +1,6 @@
+import AdFeature
 import AdFeatureInterface
-import Compound
+import ComposableArchitecture
 import Core
 import Domain
 import DSKit
@@ -10,7 +11,7 @@ import UIKit
 
 public struct HomeFeatureView: View {
     @Environment(\.scenePhase) private var scenePhase
-    @State private var compound: HomeFeatureCompound
+    @State private var store: StoreOf<HomeFeatureReducer>
     @State private var currentScrollOffset: CGFloat = 0
     @State private var listProxy = LKListProxy()
     @State private var lastHandledPopupId: String?
@@ -42,8 +43,14 @@ public struct HomeFeatureView: View {
         onReport: ((String) -> Void)? = nil,
         onManagePopupRequests: (() -> Void)? = nil
     ) {
-        let compound = HomeFeatureCompound(userUuid: userUuid, nickname: nickname)
-        _compound = State(wrappedValue: compound)
+        _store = State(initialValue: Store(
+            initialState: HomeFeatureReducer.State(
+                userUuid: userUuid,
+                nickname: nickname
+            )
+        ) {
+            HomeFeatureReducer()
+        })
         self.isAdmin = isAdmin
         self.nativeAdPlacementConfiguration = nativeAdPlacementConfiguration
         self.nativeAdCount = nativeAdCount
@@ -63,7 +70,7 @@ public struct HomeFeatureView: View {
 
             VStack(spacing: 0) {
                 HomeNavigationBar(
-                    userUuid: compound.state.userUuid,
+                    userUuid: store.userUuid,
                     showsPopupRequestManagement: isAdmin && onManagePopupRequests != nil,
                     onSearch: { userUuid in
                         onSearch(userUuid)
@@ -73,7 +80,7 @@ public struct HomeFeatureView: View {
                     },
                     onReport: {
                         if let onReport {
-                            onReport(compound.state.userUuid)
+                            onReport(store.userUuid)
                         }
                     },
                     onManagePopupRequests: {
@@ -83,7 +90,7 @@ public struct HomeFeatureView: View {
 
                 LKList {
                     LKSection(id: "best") {
-                        for popup in compound.state.bestPopups {
+                        for popup in store.bestPopups {
                             LKRow(
                                 popup,
                                 id: \.popupUuid,
@@ -93,11 +100,11 @@ public struct HomeFeatureView: View {
 //                                    .frame(width: 194, height: 271)
                             }
                             .onSelect { _ in
-                                onSelectPopup(compound.state.userUuid, popup)
+                                onSelectPopup(store.userUuid, popup)
                             }
                         }
                     } header: {
-                        HomeBestHeader(nickname: compound.state.nickname)
+                        HomeBestHeader(nickname: store.nickname)
                             .padding(.bottom, 10)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -114,7 +121,7 @@ public struct HomeFeatureView: View {
                     .pinnedHeader(background: Color.subWhite)
 
                     LKSection(id: "coming") {
-                        for popup in compound.state.comingPopups {
+                        for popup in store.comingPopups {
                             LKRow(
                                 popup,
                                 id: \.popupUuid,
@@ -124,17 +131,17 @@ public struct HomeFeatureView: View {
 //                                    .frame(width: 283, height: 138)
                             }
                             .onSelect { _ in
-                                onSelectPopup(compound.state.userUuid, popup)
+                                onSelectPopup(store.userUuid, popup)
                             }
                         }
                     } header: {
                         HomeComingHeader(
-                            userUuid: compound.state.userUuid,
-                            popups: compound.state.comingPopups,
+                            userUuid: store.userUuid,
+                            popups: store.comingPopups,
                             onTap: { _, _ in
                                 onShowComingPopups(
-                                    compound.state.userUuid,
-                                    compound.state.comingPopups
+                                    store.userUuid,
+                                    store.comingPopups
                                 )
                             }
                         )
@@ -155,7 +162,7 @@ public struct HomeFeatureView: View {
 
                     LKSection(id: "grid") {
                         for item in AdInjectedListItemBuilder.make(
-                            items: compound.state.gridPopups,
+                            items: store.gridPopups,
                             nativeAdPlacements: loadedNativeAdPlacements,
                             id: { $0.popupUuid }
                         ) {
@@ -170,12 +177,12 @@ public struct HomeFeatureView: View {
                                         popup: popup,
                                         isLiked: isLiked(popup: popup),
                                         cellWidth: Self.gridCellWidth,
-                                        toggleLike: { compound.send(.toggleLike(popup)) }
+                                        toggleLike: { store.send(.toggleLike(popup)) }
                                     )
                                 }
                                 .equatableToken("\(popup.popupUuid)-\(isLiked(popup: popup))")
                                 .onSelect { _ in
-                                    onSelectPopup(compound.state.userUuid, popup)
+                                    onSelectPopup(store.userUuid, popup)
                                 }
 
                             case .nativeAd(let slotID):
@@ -194,8 +201,8 @@ public struct HomeFeatureView: View {
                         }
                     } header: {
                         HomeFilterHeader(
-                            selectedRegion: compound.state.selectedRegion,
-                            selectedDistrict: compound.state.selectedDistrict,
+                            selectedRegion: store.selectedRegion,
+                            selectedDistrict: store.selectedDistrict,
                             selectedOption: selectedOptionBinding,
                             onRegionTap: {
                                 sheetRoute = .regionSheet
@@ -235,7 +242,7 @@ public struct HomeFeatureView: View {
             switch route {
             case .regionSheet:
                 RegionButtonSheet(
-                    regions: compound.state.regions,
+                    regions: store.regions,
                     selectedRegion: selectedRegionBinding,
                     selectedDistrict: selectedDistrictBinding,
                     regionTitle: { $0.region },
@@ -248,7 +255,7 @@ public struct HomeFeatureView: View {
             }
         }
         .onAppear {
-            compound.send(.onAppear)
+            store.send(.onAppear)
         }
         .task(id: nativeAdPlacementIDs) {
             nativeAdSlotStore.loadAdIfNeeded(for: nativeAdPlacementIDs)
@@ -272,8 +279,8 @@ private extension HomeFeatureView {
 
     var nativeAdPlacements: [AdNativeAdPlacement] {
         AdNativeAdPlacementPolicy.placements(
-            contentCount: compound.state.gridPopups.count,
-            userIdentifier: compound.state.userUuid,
+            contentCount: store.gridPopups.count,
+            userIdentifier: store.userUuid,
             adCount: nativeAdCount,
             configuration: nativeAdPlacementConfiguration
         )
@@ -648,20 +655,20 @@ private struct ListKitGridPopupCell: View {
 private extension HomeFeatureView {
     var selectedRegionBinding: Binding<RegionList?> {
         Binding(
-            get: { compound.state.selectedRegion },
+            get: { store.selectedRegion },
             set: { region in
                 guard let region else { return }
-                compound.send(.regionSelected(region))
+                store.send(.regionSelected(region))
             }
         )
     }
 
     var selectedDistrictBinding: Binding<String?> {
         Binding(
-            get: { compound.state.selectedDistrict },
+            get: { store.selectedDistrict },
             set: { district in
                 guard let district else { return }
-                compound.send(.districtSelected(district))
+                store.send(.districtSelected(district))
                 sheetRoute = nil
             }
         )
@@ -669,16 +676,16 @@ private extension HomeFeatureView {
 
     var selectedOptionBinding: Binding<SortButton.SortOption> {
         Binding(
-            get: { compound.state.selectedOption },
+            get: { store.selectedOption },
             set: { option in
-                compound.send(.sortOptionSelected(option))
+                store.send(.sortOptionSelected(option))
                 sheetRoute = nil
             }
         )
     }
 
     func isLiked(popup: Popup) -> Bool {
-        compound.state.gridPopups.first { $0.popupUuid == popup.popupUuid }?.isFavorited ?? popup.isFavorited
+        store.gridPopups.first { $0.popupUuid == popup.popupUuid }?.isFavorited ?? popup.isFavorited
     }
 }
 
@@ -691,9 +698,9 @@ private extension HomeFeatureView {
                 return
             }
 
-            while compound.state.bestPopups.isEmpty &&
-                compound.state.comingPopups.isEmpty &&
-                compound.state.gridPopups.isEmpty {
+            while store.bestPopups.isEmpty &&
+                store.comingPopups.isEmpty &&
+                store.gridPopups.isEmpty {
                 try? await Task.sleep(nanoseconds: 200_000_000)
             }
 
@@ -706,18 +713,18 @@ private extension HomeFeatureView {
     }
 
     func moveToPopupDetailIfExists(popupId: String) {
-        let allPopups = compound.state.bestPopups
-            + compound.state.comingPopups
-            + compound.state.gridPopups
+        let allPopups = store.bestPopups
+            + store.comingPopups
+            + store.gridPopups
 
         if let targetPopup = allPopups.first(where: { $0.popupUuid == popupId }) {
-            onSelectPopup(compound.state.userUuid, targetPopup)
+            onSelectPopup(store.userUuid, targetPopup)
         }
     }
 }
 
 public struct ComingPopupDetailFeatureView: View {
-    @State private var compound: ComingPopupDetailCompound
+    @State private var store: StoreOf<ComingPopupDetailReducer>
     private let onSelectPopup: (String, Popup) -> Void
 
     public init(
@@ -725,19 +732,21 @@ public struct ComingPopupDetailFeatureView: View {
         popups: [Popup],
         onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in }
     ) {
-        _compound = State(
-            wrappedValue: ComingPopupDetailCompound(
+        _store = State(initialValue: Store(
+            initialState: ComingPopupDetailReducer.State(
                 userUuid: userUuid,
                 popups: popups
             )
-        )
+        ) {
+            ComingPopupDetailReducer()
+        })
         self.onSelectPopup = onSelectPopup
     }
 
     public var body: some View {
         LKList {
             LKSection(id: "coming-popup-detail") {
-                for popup in compound.state.popups {
+                for popup in store.popups {
                     LKRow(
                         popup,
                         id: \.popupUuid,
@@ -748,7 +757,7 @@ public struct ComingPopupDetailFeatureView: View {
                             isLiked: popup.isFavorited,
                             cellWidth: HomeFeatureView.gridCellWidth,
                             toggleLike: {
-                                compound.send(.toggleLike(popup))
+                                store.send(.toggleLike(popup))
                             }
                         )
                         .accessibilityElement(children: .ignore)
@@ -756,7 +765,7 @@ public struct ComingPopupDetailFeatureView: View {
                     }
                     .equatableToken("\(popup.popupUuid)-\(popup.isFavorited)")
                     .onSelect { _ in
-                        onSelectPopup(compound.state.userUuid, popup)
+                        onSelectPopup(store.userUuid, popup)
                     }
                 }
             }
@@ -774,7 +783,7 @@ public struct ComingPopupDetailFeatureView: View {
         .scrollIndicators(.hidden)
         .contentInsets(LKEdgeInsets(top: 0, left: 0, bottom: 0, right: 0))
         .onAppear {
-            compound.send(.onAppear)
+            store.send(.onAppear)
         }
     }
 }

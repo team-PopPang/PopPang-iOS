@@ -1,0 +1,120 @@
+require "shellwords"
+
+default_platform(:ios)
+
+ROOT_DIR = File.expand_path("..", __dir__)
+WORKSPACE = File.join(ROOT_DIR, "PopPang.xcworkspace")
+APP_SCHEME = "PopPangApp"
+CORE_SCHEME = "Core"
+DATA_SCHEME = "Data"
+APP_PROJECT = File.join(ROOT_DIR, "Projects/App/App.xcodeproj")
+APP_IDENTIFIER = "kr.co.poppang.PopPang"
+SIMULATOR_DESTINATION = "generic/platform=iOS Simulator"
+TEST_DEVICE = "iPhone 16"
+
+platform :ios do
+  ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] = "60"
+  ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] = "6"
+
+  desc "Install Tuist dependencies and generate the modular workspace"
+  private_lane :prepare_tuist do
+    sh("cd #{ROOT_DIR.shellescape} && tuist install")
+    sh("cd #{ROOT_DIR.shellescape} && tuist generate --no-open")
+  end
+
+  desc "Build the modular PopPang app"
+  lane :build do
+    prepare_tuist
+
+    build_app(
+      workspace: WORKSPACE,
+      scheme: APP_SCHEME,
+      clean: true,
+      skip_archive: true,
+      destination: SIMULATOR_DESTINATION,
+      xcargs: "CODE_SIGNING_ALLOWED=NO"
+    )
+  end
+
+  desc "Run the maintained modular test schemes"
+  lane :test do
+    prepare_tuist
+
+    scan(
+      workspace: WORKSPACE,
+      scheme: CORE_SCHEME,
+      device: TEST_DEVICE,
+      clean: true,
+      code_coverage: true
+    )
+
+    scan(
+      workspace: WORKSPACE,
+      scheme: DATA_SCHEME,
+      device: TEST_DEVICE,
+      clean: false,
+      code_coverage: true
+    )
+  end
+
+  desc "Build PopPangApp and run Core/Data tests"
+  lane :ci do
+    build
+    test
+  end
+
+  desc "Archive and upload the modular app to TestFlight"
+  lane :beta do |options|
+    prepare_tuist unless options[:skip_prepare]
+    increment_build_number(xcodeproj: APP_PROJECT)
+    archive_and_upload
+  end
+
+  desc "Release a new modular app version to the App Store"
+  lane :release do |options|
+    version = options[:version]
+    UI.user_error!("version 파라미터가 필요합니다. 예: fastlane release version:1.1.3") if version.nil?
+
+    prepare_tuist
+    increment_version_number(version_number: version, xcodeproj: APP_PROJECT)
+    beta(skip_prepare: true)
+
+    deliver(
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      submit_for_review: true,
+      force: true,
+      run_precheck_before_submit: false
+    )
+  end
+
+  private_lane :archive_and_upload do
+    match(
+      type: "appstore",
+      readonly: true
+    )
+
+    build_app(
+      workspace: WORKSPACE,
+      scheme: APP_SCHEME,
+      clean: true,
+      export_method: "app-store",
+      disable_package_automatic_updates: true,
+      xcargs: "-skipPackagePluginValidation -skipMacroValidation",
+      export_options: {
+        provisioningProfiles: {
+          APP_IDENTIFIER => "match AppStore kr.co.poppang.PopPang 1762797101"
+        }
+      }
+    )
+
+    api_key = app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY_CONTENT"],
+      in_house: false
+    )
+
+    upload_to_testflight(api_key: api_key)
+  end
+end

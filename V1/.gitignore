@@ -1,0 +1,39 @@
+*.xcconfig
+.env
+GoogleService-Info.plist
+
+# codex
+.codex/logs/
+
+# macOS
+.DS_Store
+._*
+
+# SwiftPM
+.spm/
+.build/
+.swiftpm/
+
+# Tuist generated files
+.tuist/
+Tuist/.build/
+*.xcodeproj/
+*.xcworkspace/
+**/Derived/
+**/DerivedData/
+
+# Xcode
+DerivedData/
+*.xcuserstate
+*.xcuserdata/
+
+# Build artifacts
+*.ipa
+*.dSYM
+*.dSYM.zip
+graph.png
+
+# fastlane
+fastlane/metadata/
+fastlane/Preview.html
+fastlane/report.xml

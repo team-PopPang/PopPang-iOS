@@ -1,0 +1,4 @@
+interface:
+  display_name: "Planning Pipeline"
+  short_description: "계획 요청용 3단계 검토"
+  default_prompt: "Use $planning-pipeline to review a PopPang iOS app request with Researcher, Planner, and Reviewer perspectives before implementation."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "PopPang TCA Refactor"
+  short_description: "PopPang Compound를 TCA로 점진 전환하는 워크플로우"
+  default_prompt: "Use $tca-refactor to start from a PopPang issue, follow the issue-to-branch workflow, and migrate the target feature from Compound to TCA."

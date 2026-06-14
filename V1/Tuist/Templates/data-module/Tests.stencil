@@ -1,0 +1,8 @@
+import Testing
+@testable import {{ name }}Data
+
+struct {{ name }}DataTests {
+    @Test
+    func example() async throws {
+    }
+}

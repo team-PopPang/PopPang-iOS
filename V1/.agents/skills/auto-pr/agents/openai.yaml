@@ -1,0 +1,4 @@
+interface:
+  display_name: "Auto PR"
+  short_description: "PopPang 전용 PR 작성과 GitHub 게시"
+  default_prompt: "Use $auto-pr to inspect commits, draft a PopPang-style PR body, and create the pull request."

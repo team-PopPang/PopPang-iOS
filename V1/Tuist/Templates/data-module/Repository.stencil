@@ -1,0 +1,5 @@
+import Foundation
+
+public final class Default{{ name }}Repository {
+    public init() {}
+}

@@ -1,0 +1,52 @@
+import ProjectDescription
+
+let project = Project(
+    name: "{{ name }}Feature",
+    targets: [
+        .target(
+            name: "{{ name }}Feature",
+            destinations: [.iPhone],
+            product: .staticFramework,
+            bundleId: "{{ bundleIdPrefix }}.features.{{ name | lowercase }}",
+            deploymentTargets: .iOS("{{ deploymentTarget }}"),
+            infoPlist: .default,
+            sources: ["Sources/**"],
+            dependencies: [
+                .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
+            ]
+        ),
+        {% if includeInterface %}
+        .target(
+            name: "{{ name }}FeatureInterface",
+            destinations: [.iPhone],
+            product: .framework,
+            bundleId: "{{ bundleIdPrefix }}.features.{{ name | lowercase }}.interface",
+            deploymentTargets: .iOS("{{ deploymentTarget }}"),
+            infoPlist: .default,
+            sources: ["Interface/Sources/**"],
+            dependencies: [.target(name: "{{ name }}Feature")]
+        ),
+        {% endif %}
+        .target(
+            name: "{{ name }}FeatureDemo",
+            destinations: [.iPhone],
+            product: .app,
+            bundleId: "{{ bundleIdPrefix }}.demo.{{ name | lowercase }}",
+            deploymentTargets: .iOS("{{ deploymentTarget }}"),
+            infoPlist: .extendingDefault(
+                with: [
+                    "UILaunchScreen": [
+                        "UIColorName": "",
+                        "UIImageName": "",
+                    ],
+                ]
+            ),
+            sources: ["Demo/Sources/**"],
+            {% if includeInterface %}
+            dependencies: [.target(name: "{{ name }}FeatureInterface")]
+            {% else %}
+            dependencies: [.target(name: "{{ name }}Feature")]
+            {% endif %}
+        ),
+    ]
+)

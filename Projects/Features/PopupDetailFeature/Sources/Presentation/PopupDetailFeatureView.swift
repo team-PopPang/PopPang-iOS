@@ -1,5 +1,5 @@
 import Core
-import Compound
+import ComposableArchitecture
 import Domain
 import DSKit
 import Kingfisher
@@ -10,12 +10,14 @@ public struct PopupDetailFeatureView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
-    @State private var compound: PopupDetailFeatureCompound
+    @State private var store: StoreOf<PopupDetailFeatureReducer>
     @State private var showDeactivateAlert = false
     @State private var showingPopup = false
 
     private let isAdmin: Bool
     private let hidesSystemTabBar: Bool
+    private let onSelectRelatedPopup: (String, Popup) -> Void
+    private let onDeactivateComplete: () -> Void
     private let onShowReviews: ([Review]) -> Void
 
     public init(
@@ -27,16 +29,18 @@ public struct PopupDetailFeatureView: View {
         onDeactivateComplete: @escaping () -> Void = {},
         onShowReviews: @escaping ([Review]) -> Void = { _ in }
     ) {
-        _compound = State(
-            wrappedValue: PopupDetailFeatureCompound(
+        _store = State(initialValue: Store(
+            initialState: PopupDetailFeatureReducer.State(
                 userUuid: userUuid,
-                popup: popup,
-                onSelectRelatedPopup: onSelectRelatedPopup,
-                onDeactivateComplete: onDeactivateComplete
+                popup: popup
             )
-        )
+        ) {
+            PopupDetailFeatureReducer()
+        })
         self.isAdmin = isAdmin
         self.hidesSystemTabBar = hidesSystemTabBar
+        self.onSelectRelatedPopup = onSelectRelatedPopup
+        self.onDeactivateComplete = onDeactivateComplete
         self.onShowReviews = onShowReviews
     }
 
@@ -45,27 +49,27 @@ public struct PopupDetailFeatureView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
                     ImageSliderView(
-                        popup: compound.state.popup,
+                        popup: store.popup,
                         isAdmin: isAdmin,
                         showDeactivateAlert: $showDeactivateAlert
                     )
 
                     VStack(alignment: .leading, spacing: 0) {
-                        TitleView(popup: compound.state.popup)
+                        TitleView(popup: store.popup)
 
                         PopupDivider()
 
-                        InfoView(showingPopup: $showingPopup, popup: compound.state.popup)
+                        InfoView(showingPopup: $showingPopup, popup: store.popup)
 
                         PopupDivider(padding: 20)
 
                         BodyView(
-                            popup: compound.state.popup,
+                            popup: store.popup,
                             reviews: Review.mock,
-                            relatedPopupList: compound.state.relatedPopupList,
+                            relatedPopupList: store.relatedPopupList,
                             onShowReviews: onShowReviews,
                             onSelectRelatedPopup: { popup in
-                                compound.send(.relatedPopupTapped(popup))
+                                onSelectRelatedPopup(store.userUuid, popup)
                             }
                         )
                     }
@@ -79,17 +83,17 @@ public struct PopupDetailFeatureView: View {
             .ignoresSafeArea()
 
             BottomTabBarView(
-                popup: compound.state.popup,
+                popup: store.popup,
                 onShare: {
                     KakaoShareManager.shared.shareAppOnly(
-                        title: compound.state.popup.name,
-                        description: compound.state.popup.captionSummary,
-                        imageUrl: compound.state.popup.imageUrlList.first ?? "",
-                        popupId: compound.state.popup.popupUuid
+                        title: store.popup.name,
+                        description: store.popup.captionSummary,
+                        imageUrl: store.popup.imageUrlList.first ?? "",
+                        popupId: store.popup.popupUuid
                     )
                 },
                 onToggleLike: {
-                    compound.send(.toggleLike)
+                    store.send(.toggleLike)
                 }
             )
             .padding(.vertical, 10)
@@ -100,7 +104,9 @@ public struct PopupDetailFeatureView: View {
         .if(hidesSystemTabBar) {
             $0.toolbar(.hidden, for: .tabBar)
         }
-        .compoundOnLoad(compound, .onAppear)
+        .onAppear {
+            store.send(.onAppear)
+        }
         .popupDetailNavigationBack {
             dismiss()
         }
@@ -127,10 +133,14 @@ public struct PopupDetailFeatureView: View {
             Button("취소", role: .cancel) {}
 
             Button("비활성화", role: .destructive) {
-                compound.send(.deactivatePopup)
+                store.send(.deactivatePopup)
             }
         } message: {
             Text("정말로 이 팝업을 비활성화하시겠습니까?\n비활성화된 팝업은 사용자에게 노출되지 않습니다.")
+        }
+        .onChange(of: store.didDeactivate) { _, didDeactivate in
+            guard didDeactivate else { return }
+            onDeactivateComplete()
         }
     }
 }
