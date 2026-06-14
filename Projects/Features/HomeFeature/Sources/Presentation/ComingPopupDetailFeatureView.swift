@@ -6,6 +6,7 @@ import ListKit
 import SwiftUI
 
 public struct ComingPopupDetailFeatureView: View {
+    @Environment(\.dismiss) private var dismiss
     @State private var store: StoreOf<ComingPopupDetailReducer>
     private let onSelectPopup: (String, Popup) -> Void
 
@@ -85,6 +86,9 @@ public struct ComingPopupDetailFeatureView: View {
             }
         } message: {
             Text(store.errorMessage ?? "")
+        }
+        .ppBackNavigationBar(title: "오픈 예정 팝업") {
+            dismiss()
         }
         .onAppear {
             store.send(.onAppear)
