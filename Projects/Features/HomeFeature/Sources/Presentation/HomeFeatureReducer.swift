@@ -4,6 +4,49 @@ import DSKit
 import Foundation
 
 @Reducer
+struct HomeFilterReducer {
+    @ObservableState
+    struct State: Equatable, Sendable {
+        var regions: [RegionList] = []
+        var selectedRegion: RegionList?
+        var selectedDistrict: String?
+        var selectedOption: SortButton.SortOption = .newest
+    }
+
+    enum Action: Sendable {
+        case regionSelected(RegionList)
+        case districtSelected(String)
+        case sortOptionSelected(SortButton.SortOption)
+        case regionSelectionPrepared(HomeRegionSelection)
+    }
+
+    var body: some Reducer<State, Action> {
+        Reduce { state, action in
+            switch action {
+            case .regionSelected(let region):
+                state.selectedRegion = region
+                state.selectedDistrict = region.districtList.first
+                return .none
+
+            case .districtSelected(let district):
+                state.selectedDistrict = district
+                return .none
+
+            case .sortOptionSelected(let option):
+                state.selectedOption = option
+                return .none
+
+            case .regionSelectionPrepared(let selection):
+                state.regions = selection.regions
+                state.selectedRegion = selection.selectedRegion
+                state.selectedDistrict = selection.selectedDistrict
+                return .none
+            }
+        }
+    }
+}
+
+@Reducer
 struct HomeFeatureReducer {
     @ObservableState
     struct State: Equatable, Sendable {
@@ -12,10 +55,7 @@ struct HomeFeatureReducer {
         var bestPopups: [Popup] = []
         var comingPopups: [Popup] = []
         var gridPopups: [Popup] = []
-        var regions: [RegionList] = []
-        var selectedRegion: RegionList?
-        var selectedDistrict: String?
-        var selectedOption: SortButton.SortOption = .newest
+        var filter = HomeFilterReducer.State()
         var isLoading = false
         var errorMessage: String?
 
@@ -30,12 +70,9 @@ struct HomeFeatureReducer {
 
     enum Action: Sendable {
         case onAppear
-        case regionSelected(RegionList)
-        case districtSelected(String)
-        case sortOptionSelected(SortButton.SortOption)
+        case filter(HomeFilterReducer.Action)
         case toggleLike(Popup)
         case refreshFilteredPopupList
-        case regionSelectionPrepared(HomeRegionSelection)
         case popupSectionsLoaded(HomePopupSections)
         case filteredPopupListLoaded([Popup])
         case favoriteUpdated(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
@@ -46,6 +83,10 @@ struct HomeFeatureReducer {
     @Dependencies.Dependency(\.homePopupClient) private var popupClient: HomePopupClient
 
     var body: some Reducer<State, Action> {
+        Scope(state: \.filter, action: \.filter) {
+            HomeFilterReducer()
+        }
+
         Reduce { state, action in
             switch action {
             case .onAppear:
@@ -53,20 +94,12 @@ struct HomeFeatureReducer {
                 state.errorMessage = nil
                 return loadAllPopupData(state: state)
 
-            case .regionSelected(let region):
-                state.selectedRegion = region
-                state.selectedDistrict = region.districtList.first
+            case .filter(.districtSelected), .filter(.sortOptionSelected):
+                state.isLoading = true
+                return updatePersonalFilteredPopupList(state: state)
+
+            case .filter:
                 return .none
-
-            case .districtSelected(let district):
-                state.selectedDistrict = district
-                state.isLoading = true
-                return updatePersonalFilteredPopupList(state: state)
-
-            case .sortOptionSelected(let option):
-                state.selectedOption = option
-                state.isLoading = true
-                return updatePersonalFilteredPopupList(state: state)
 
             case .toggleLike(let popup):
                 return toggleLike(state: state, popup: popup)
@@ -74,12 +107,6 @@ struct HomeFeatureReducer {
             case .refreshFilteredPopupList:
                 state.isLoading = true
                 return updatePersonalFilteredPopupList(state: state)
-
-            case .regionSelectionPrepared(let selection):
-                state.regions = selection.regions
-                state.selectedRegion = selection.selectedRegion
-                state.selectedDistrict = selection.selectedDistrict
-                return .none
 
             case .popupSectionsLoaded(let sections):
                 state.bestPopups = sections.bestPopups
@@ -132,17 +159,17 @@ private extension HomeFeatureReducer {
 
         return .run { [state, popupClient] send in
             do {
-                let regions = state.regions.isEmpty
+                let regions = state.filter.regions.isEmpty
                     ? try await popupClient.getRegionList().sortedByHomePriority()
-                    : state.regions
-                let selectedRegion = state.selectedRegion ?? regions.first
-                let selectedDistrict = state.selectedDistrict ?? selectedRegion?.districtList.first
+                    : state.filter.regions
+                let selectedRegion = state.filter.selectedRegion ?? regions.first
+                let selectedDistrict = state.filter.selectedDistrict ?? selectedRegion?.districtList.first
 
-                await send(.regionSelectionPrepared(HomeRegionSelection(
+                await send(.filter(.regionSelectionPrepared(HomeRegionSelection(
                     regions: regions,
                     selectedRegion: selectedRegion,
                     selectedDistrict: selectedDistrict
-                )))
+                ))))
 
                 async let bestPopups = popupClient.getPersonalRandomPopupList(state.userUuid)
                 async let comingPopups = popupClient.getPersonalUpcomingPopupList(state.userUuid)
@@ -150,7 +177,7 @@ private extension HomeFeatureReducer {
                     state.userUuid,
                     selectedRegion?.region ?? "전체",
                     selectedDistrict ?? "전체",
-                    state.selectedOption.rawValue
+                    state.filter.selectedOption.rawValue
                 )
 
                 await send(.popupSectionsLoaded(HomePopupSections(
@@ -169,9 +196,9 @@ private extension HomeFeatureReducer {
     func updatePersonalFilteredPopupList(state: State) -> Effect<Action> {
         let popupClient = popupClient
         let userUuid = state.userUuid
-        let region = state.selectedRegion?.region ?? "전체"
-        let district = state.selectedDistrict ?? "전체"
-        let sortOption = state.selectedOption
+        let region = state.filter.selectedRegion?.region ?? "전체"
+        let district = state.filter.selectedDistrict ?? "전체"
+        let sortOption = state.filter.selectedOption
 
         return .run { [popupClient, userUuid, region, district, sortOption] send in
             do {

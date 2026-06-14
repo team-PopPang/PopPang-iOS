@@ -230,9 +230,7 @@ public struct HomeFeatureView: View {
                         }
                     } header: {
                         HomeFilterHeader(
-                            selectedRegion: store.selectedRegion,
-                            selectedDistrict: store.selectedDistrict,
-                            selectedOption: selectedOptionBinding,
+                            store: filterStore,
                             onRegionTap: {
                                 sheetRoute = .regionSheet
                             },
@@ -271,7 +269,7 @@ public struct HomeFeatureView: View {
             switch route {
             case .regionSheet:
                 RegionButtonSheet(
-                    regions: store.regions,
+                    regions: filterStore.regions,
                     selectedRegion: selectedRegionBinding,
                     selectedDistrict: selectedDistrictBinding,
                     regionTitle: { $0.region },
@@ -334,6 +332,10 @@ private extension HomeFeatureView {
     var loadedNativeAdPlacements: [AdNativeAdPlacement] {
         let loadedSlotIDs = nativeAdSlotStore.loadedSlotIDs(in: nativeAdPlacementIDs)
         return nativeAdPlacements.filter { loadedSlotIDs.contains($0.id) }
+    }
+
+    var filterStore: StoreOf<HomeFilterReducer> {
+        store.scope(state: \.filter, action: \.filter)
     }
 
     var isErrorPresented: Binding<Bool> {
@@ -490,19 +492,17 @@ private struct HomeComingHeader: View {
 }
 
 private struct HomeFilterHeader: View {
-    let selectedRegion: RegionList?
-    let selectedDistrict: String?
-    @Binding var selectedOption: SortButton.SortOption
+    let store: StoreOf<HomeFilterReducer>
     let onRegionTap: () -> Void
     let onSortTap: () -> Void
 
     var body: some View {
         HStack {
-            Text(selectedRegion?.region ?? "전체")
+            Text(store.selectedRegion?.region ?? "전체")
                 .foregroundStyle(Color.mainBlack)
                 .ppStyleFont(.scdream(.medium, size: 17))
 
-            if let selectedDistrict, selectedDistrict != "전체" {
+            if let selectedDistrict = store.selectedDistrict, selectedDistrict != "전체" {
                 Text(selectedDistrict)
                     .foregroundStyle(Color.mainBlack)
                     .ppStyleFont(.scdream(.medium, size: 17))
@@ -514,7 +514,7 @@ private struct HomeFilterHeader: View {
                 .padding(.leading, -10)
                 .accessibilityIdentifier("home_region_dropdown")
 
-            SortButton(selectedOption: $selectedOption, action: onSortTap)
+            SortButton(selectedOption: .constant(store.selectedOption), action: onSortTap)
                 .accessibilityIdentifier("home_sort_dropdown")
         }
     }
@@ -722,20 +722,20 @@ private struct ListKitGridPopupCell: View {
 private extension HomeFeatureView {
     var selectedRegionBinding: Binding<RegionList?> {
         Binding(
-            get: { store.selectedRegion },
+            get: { filterStore.selectedRegion },
             set: { region in
                 guard let region else { return }
-                store.send(.regionSelected(region))
+                filterStore.send(.regionSelected(region))
             }
         )
     }
 
     var selectedDistrictBinding: Binding<String?> {
         Binding(
-            get: { store.selectedDistrict },
+            get: { filterStore.selectedDistrict },
             set: { district in
                 guard let district else { return }
-                store.send(.districtSelected(district))
+                filterStore.send(.districtSelected(district))
                 sheetRoute = nil
             }
         )
@@ -743,9 +743,9 @@ private extension HomeFeatureView {
 
     var selectedOptionBinding: Binding<SortButton.SortOption> {
         Binding(
-            get: { store.selectedOption },
+            get: { filterStore.selectedOption },
             set: { option in
-                store.send(.sortOptionSelected(option))
+                filterStore.send(.sortOptionSelected(option))
                 sheetRoute = nil
             }
         )
