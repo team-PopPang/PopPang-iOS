@@ -126,7 +126,6 @@ public struct HomeFeatureView: View {
                                 reuseIdentifier: "HomeFeature.ListKitBestPopupCell"
                             ) {
                                 ListKitBestPopupCell(popup: popup)
-//                                    .frame(width: 194, height: 271)
                             }
                             .onSelect { _ in
                                 onSelectPopup(store.userUuid, popup)
@@ -135,7 +134,6 @@ public struct HomeFeatureView: View {
                     } header: {
                         HomeBestHeader(nickname: store.nickname)
                             .padding(.bottom, 10)
-                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .sectionLayout(.horizontal(width: 194, height: 271))
                     .scrollAxis(.horizontal)
@@ -157,7 +155,6 @@ public struct HomeFeatureView: View {
                                 reuseIdentifier: "HomeFeature.ListKitComingPopupCell"
                             ) {
                                 ListKitComingPopupCell(popup: popup)
-//                                    .frame(width: 283, height: 138)
                             }
                             .onSelect { _ in
                                 onSelectPopup(store.userUuid, popup)
@@ -174,8 +171,7 @@ public struct HomeFeatureView: View {
                                 )
                             }
                         )
-                            .padding(.bottom, 10)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.bottom, 10)
                     }
                     .sectionLayout(.horizontal(width: 283, height: 138))
                     .scrollAxis(.horizontal)
@@ -240,7 +236,6 @@ public struct HomeFeatureView: View {
                             }
                         )
                         .padding(.bottom, 10)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .sectionLayout(.grid(columns: 2, itemHeight: Self.gridCellHeight, columnSpacing: 15, rowSpacing: 20))
                     .sectionContentInsets(LKEdgeInsets(
@@ -442,85 +437,6 @@ private struct HomePopupRequestManagementButton: View {
     }
 }
 
-private struct HomeBestHeader: View {
-    let nickname: String
-
-    var body: some View {
-        HStack(spacing: 0) {
-            Text(nickname)
-                .foregroundStyle(Color.mainOrange)
-                .font(.scdream(.bold, size: 15))
-
-            Text("님을 위한 팝업")
-                .font(.scdream(.bold, size: 15))
-                .foregroundStyle(Color.mainBlack)
-
-            Spacer()
-        }
-    }
-}
-
-private struct HomeComingHeader: View {
-    let userUuid: String
-    let popups: [Popup]
-    let onTap: (String, [Popup]) -> Void
-
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("COMING SOON")
-                    .font(.scdream(.medium, size: 11))
-                    .foregroundStyle(Color.mainOrange)
-
-                Text("오픈 예정 팝업")
-                    .font(.scdream(.bold, size: 15))
-                    .foregroundStyle(Color.mainBlack)
-            }
-
-            Spacer()
-
-            Button {
-                onTap(userUuid, popups)
-            } label: {
-                DSKitResource.image("navigationButton")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 16, height: 16)
-            }
-            .accessibilityIdentifier("home_comming_button")
-        }
-    }
-}
-
-private struct HomeFilterHeader: View {
-    let store: StoreOf<HomeFilterReducer>
-    let onRegionTap: () -> Void
-    let onSortTap: () -> Void
-
-    var body: some View {
-        HStack {
-            Text(store.selectedRegion?.region ?? "전체")
-                .foregroundStyle(Color.mainBlack)
-                .ppStyleFont(.scdream(.medium, size: 17))
-
-            if let selectedDistrict = store.selectedDistrict, selectedDistrict != "전체" {
-                Text(selectedDistrict)
-                    .foregroundStyle(Color.mainBlack)
-                    .ppStyleFont(.scdream(.medium, size: 17))
-            }
-
-            Spacer()
-
-            RegionButton(text: "지역", action: onRegionTap)
-                .padding(.leading, -10)
-                .accessibilityIdentifier("home_region_dropdown")
-
-            SortButton(selectedOption: .constant(store.selectedOption), action: onSortTap)
-                .accessibilityIdentifier("home_sort_dropdown")
-        }
-    }
-}
-
 private struct HomeTopAnchorButton: View {
     let isVisible: Bool
     let onTap: () -> Void
@@ -548,175 +464,6 @@ private struct HomeTopAnchorButton: View {
         .padding(.trailing, 20)
         .padding(.bottom, 20)
         .opacity(isVisible ? 1 : 0)
-    }
-}
-
-private struct ListKitBestPopupCell: View {
-    let popup: Popup
-
-    var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            KFImage(URL(string: popup.imageUrlList.first ?? ""))
-                .downSampled(.bestPopupCell)
-                .scaledToFill()
-                .frame(width: 194, height: 271)
-                .clipped()
-
-            LinearGradient(
-                gradient: Gradient(stops: [
-                    .init(color: Color.mainBlack.opacity(0.0), location: 0.00),
-                    .init(color: Color.mainBlack.opacity(0.50), location: 0.52),
-                    .init(color: Color.mainBlack.opacity(1.00), location: 0.83),
-                ]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 100)
-            .clipped()
-
-            VStack(alignment: .leading) {
-                Text(popup.name)
-                    .font(.scdream(.bold, size: 15))
-                    .foregroundStyle(Color.bestPostTitle)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-
-                HStack(spacing: 2) {
-                    DSKitResource.image("Address")
-                        .resizable()
-                        .renderingMode(.template)
-                        .aspectRatio(contentMode: .fit)
-                        .foregroundStyle(Color.bestPostAddress)
-                        .frame(width: 15, height: 15)
-
-                    Text(popup.roadAddress.shortAddress)
-                        .font(.scdream(.medium, size: 12))
-                        .foregroundStyle(Color.bestPostAddress)
-                }
-            }
-            .padding(11)
-        }
-        .contentShape(Rectangle())
-    }
-}
-
-private struct ListKitComingPopupCell: View {
-    let popup: Popup
-
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 5)
-                .fill(Color.subWhite)
-                .frame(width: 283, height: 138)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 5)
-                        .stroke(Color.mainGray3, lineWidth: 0.05)
-                }
-                .applyShadow(color: .subWhite2, alpha: 0.2, x: 0, y: 0, blur: 13)
-
-            HStack(spacing: 0) {
-                KFImage(URL(string: popup.imageUrlList.first ?? ""))
-                    .downSampled(.comingPopupCell)
-                    .scaledToFill()
-                    .frame(width: 94.4, height: 118)
-                    .cornerRadius(5)
-                    .clipped()
-                    .padding(10)
-
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(dDay(date: popup.startDate))
-                        .font(.scdream(.bold, size: 11))
-                        .foregroundStyle(Color.mainOrange)
-
-                    Text(popup.name)
-                        .font(.scdream(.medium, size: 13))
-                        .foregroundStyle(Color.mainBlack)
-
-                    Spacer()
-
-                    Text(popup.roadAddress.shortAddress)
-                        .font(.scdream(.regular, size: 11))
-                        .foregroundStyle(Color.mainGray)
-                }
-                .padding(.vertical, 15)
-
-                Spacer()
-            }
-            .frame(width: 283, height: 138)
-        }
-        .contentShape(Rectangle())
-    }
-
-    private func dDay(date: Date) -> String {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        let target = calendar.startOfDay(for: date)
-
-        if let diff = calendar.dateComponents([.day], from: today, to: target).day {
-            if diff > 0 {
-                return "오픈 D-\(diff)"
-            } else {
-                return "오늘 오픈"
-            }
-        }
-        return ""
-    }
-}
-
-struct ListKitGridPopupCell: View {
-    let popup: Popup
-    let isLiked: Bool
-    let cellWidth: CGFloat
-    let toggleLike: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .topTrailing) {
-                KFImage(URL(string: popup.imageUrlList.first ?? ""))
-                    .placeholder {
-                        Rectangle()
-                            .fill(Color.subWhite)
-                            .frame(width: cellWidth, height: 217)
-                    }
-                    .downSampled(.gridPopupCell)
-                    .scaledToFill()
-                    .frame(width: cellWidth, height: 217)
-                    .clipped()
-
-                Button {
-                    toggleLike()
-                } label: {
-                    DSKitResource.image(isLiked ? "favorite_fill" : "favorite")
-                        .renderingMode(.template)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 25, height: 25)
-                        .foregroundStyle(isLiked ? Color.mainOrange : Color.subWhite)
-                }
-                .padding(10)
-                .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
-            }
-            .frame(width: cellWidth, height: 217)
-
-            Text(popup.roadAddress.shortAddress)
-                .font(.scdream(.regular, size: 12))
-                .foregroundStyle(Color.mainBlack)
-                .padding(.top, 10)
-
-            Text(popup.name)
-                .font(.scdream(.medium, size: 14))
-                .foregroundStyle(Color.mainBlack)
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .padding(.top, 5)
-
-            Text("\(popup.startDate, formatter: DateFormatter.popupDateFormat) - \(popup.endDate, formatter: DateFormatter.popupDateFormat)")
-                .ppStyleFontFixedSpacing(.scdream(.regular, size: 12), letterSpacingPt: -1)
-                .foregroundStyle(Color.mainGray)
-                .padding(.top, 5)
-        }
-        .frame(width: cellWidth, alignment: .leading)
-        .contentShape(Rectangle())
     }
 }
 
