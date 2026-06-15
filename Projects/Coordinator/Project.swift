@@ -29,6 +29,7 @@ let project = Project(
             sources: ["Sources/**"],
             resources: ["Resources/**"],
             dependencies: featureDependencies + [
+                .project(target: "ADKit", path: "../Shared/ADKit"),
                 .project(target: "Core", path: "../Shared/Core"),
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "DSKit", path: "../Shared/DSKit"),

@@ -1,10 +1,10 @@
 default: all
 
-# all: ensure-homebrew ensure-gem ensure-bundler ensure-bundle-install ensure-fastlane download-privates fetch-certificates install-templates
+# all: ensure-homebrew ensure-gem ensure-bundler ensure-bundle-install ensure-fastlane download-privates fetch-certificates install-templates 실행
 
 
 # # -----------------------------
-# # 🛠 Homebrew 설치 확인
+# # 🛠 Homebrew 설치 여부 확인
 # # -----------------------------
 # ensure-homebrew:
 # 	@echo "🔍 Checking for Homebrew..."
@@ -16,7 +16,7 @@ default: all
 # 	@echo ""
 
 # # -----------------------------
-# # 💎 RubyGems 설치 확인
+# # 💎 RubyGems 설치 여부 확인
 # # -----------------------------
 # ensure-gem:
 # 	@echo "🔍 Checking for RubyGems..."
@@ -28,7 +28,7 @@ default: all
 # 	@echo ""
 
 # # -----------------------------
-# # 📦 Bundler 설치 확인
+# # 📦 Bundler 설치 여부 확인
 # # -----------------------------
 # ensure-bundler: ensure-gem
 # 	@echo "🔍 Checking for Bundler..."
@@ -53,7 +53,7 @@ default: all
 # 	@echo ""
 
 # # -----------------------------
-# # 🛫 Fastlane 설치 확인
+# # 🛫 Fastlane 설치 여부 확인
 # # -----------------------------
 # ensure-fastlane:
 # 	@echo "🔍 Checking for fastlane..."
@@ -79,7 +79,7 @@ default: all
 # 	curl -fL -H "Authorization: Bearer $(GITHUB_ACCESS_TOKEN)" -o "$(2)" "$(BASE_URL)/$(1)"
 # endef
 
-# # ✅ .env 파일 없을 경우 GitHub 토큰을 받아 저장
+# # ✅ .env 파일이 없으면 GitHub 토큰을 입력받아 저장
 # download-privates:
 # 	@echo "🔐 Downloading private files..."
 # 	@if [ ! -f .env ]; then \
@@ -110,7 +110,7 @@ default: all
 
 
 # -----------------------------
-# 🧱 Tuist Module Scaffold
+# 🧱 Tuist 모듈 스캐폴드
 # -----------------------------
 LAYER ?=
 NAME ?=
@@ -176,7 +176,7 @@ module:
 	fi
 
 # -----------------------------
-# ♻️ Regenerate Tuist Projects
+# ♻️ Tuist 프로젝트 재생성
 # -----------------------------
 regen:
 	@echo "♻️ Removing generated xcodeproj/Derived artifacts..."
@@ -186,7 +186,7 @@ regen:
 	@tuist generate
 
 # -----------------------------
-# 🗑 Remove Build Outputs Only
+# 🗑 빌드 산출물만 삭제
 # -----------------------------
 trash:
 	@echo "🗑 Removing local build outputs..."
@@ -198,7 +198,7 @@ trash:
 	@echo "✅ Local build outputs removed."
 
 # -----------------------------
-# 🧹 Clean Local Build Artifacts
+# 🧹 로컬 빌드 아티팩트 정리
 # -----------------------------
 clean:
 	@echo "🧹 Removing generated workspace/project artifacts..."
@@ -213,7 +213,7 @@ clean:
 	@echo "✅ Local build artifacts and Tuist caches removed."
 
 # -----------------------------
-# 🔄 Reinstall Tuist Dependencies and Regenerate
+# 🔄 Tuist 의존성 재설치 및 재생성
 # -----------------------------
 reinstall: clean
 	@echo "📦 Reinstalling Tuist dependencies..."

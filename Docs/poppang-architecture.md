@@ -236,6 +236,7 @@ Feature
 - 외부 SDK `.external(...)` 선언은 `Projects/Shared/ThirdParty/Project.swift`에 모은다.
 - 다른 모듈은 `ThirdParty` target에 의존하되 source에서는 실제 SDK module을 직접 import한다.
 - `ThirdParty`는 `@_exported import`로 SDK를 재노출하지 않는다.
+- 다만 AdMob 관련 런타임 구현은 `Projects/Shared/ADKit`이 직접 `GoogleMobileAds`를 링크하고 초기화한다.
 - SDK product type 정책은 `Tuist/Package.swift`와 `Docs/static-dynamic-linking.md`를 먼저 확인한다.
 
 ## 의존성 방향

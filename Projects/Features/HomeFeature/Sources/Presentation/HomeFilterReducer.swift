@@ -13,7 +13,7 @@ struct HomeFilterReducer {
         var selectedOption: SortButton.SortOption = .newest
     }
 
-    enum Action: Sendable {
+    enum Action: Equatable, Sendable {
         case regionSelected(RegionList)
         case districtSelected(String)
         case sortOptionSelected(SortButton.SortOption)

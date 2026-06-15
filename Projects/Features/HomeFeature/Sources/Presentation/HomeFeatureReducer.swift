@@ -25,7 +25,7 @@ struct HomeFeatureReducer {
         }
     }
 
-    enum Action: Sendable {
+    enum Action: Equatable, Sendable {
         case onAppear
         case filter(HomeFilterReducer.Action)
         case toggleLike(Popup)

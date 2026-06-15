@@ -20,7 +20,7 @@ struct ComingPopupDetailReducer {
         }
     }
 
-    enum Action: Sendable {
+    enum Action: Equatable, Sendable {
         case onAppear
         case toggleLike(Popup)
         case popupsLoaded([Popup])

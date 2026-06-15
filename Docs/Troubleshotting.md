@@ -137,7 +137,40 @@ PopPang은 Haruhancut-V2 방식처럼 외부 라이브러리 SPM product를 `Thi
 - Swift 파일은 `import ThirdParty`로 SDK 사용 사실을 숨기지 않는다.
 - 실제 SDK 타입을 쓰는 파일은 `import Moya`, `import Kingfisher`, `import KakaoSDKAuth`, `import GoogleSignIn`처럼 실제 모듈명을 직접 import한다.
 - `ThirdParty`는 `@_exported import`로 SDK를 재노출하지 않는다.
+- 예외적으로 AdMob 런타임 구현은 `ADKit`이 직접 `GoogleMobileAds`와 `JavaScriptCore`를 링크한다.
 - wrapper/adapter는 기본 전략이 아니다. 꼭 필요할 때만 별도 판단한다.
+
+### ADKit에서 GAD 심볼이 링크되지 않는 경우
+
+증상:
+
+```text
+Undefined symbol: _GADAdLoaderAdTypeNative
+Undefined symbol: _OBJC_CLASS_$_GADAdLoader
+Undefined symbol: _OBJC_CLASS_$_GADMediaView
+Undefined symbol: _OBJC_CLASS_$_GADNativeAd
+```
+
+원인:
+
+- `ADKit`은 `import GoogleMobileAds`로 AdMob 타입을 직접 사용한다.
+- 하지만 Tuist가 생성한 `GoogleMobileAdsTarget.framework`는 실제 SDK 구현체를 재수출하는 프레임워크라기보다 `GoogleMobileAds.xcframework`를 감싸는 wrapper target에 가깝다.
+- 그래서 `ADKit.framework` 링크 단계에서 wrapper target 간접 링크만으로는 `_OBJC_CLASS_$_GAD...` Objective-C 심볼이 충분히 붙지 않을 수 있다.
+
+해결:
+
+- `Projects/Shared/ADKit/Project.swift`에서 `GoogleMobileAds`와 `JavaScriptCore`를 직접 의존한다.
+- 그리고 `ADKit` target의 `OTHER_LDFLAGS`에 아래 값을 추가해 실제 SDK 바이너리를 명시적으로 링크한다.
+
+```swift
+"OTHER_LDFLAGS": "$(inherited) -ObjC -framework GoogleMobileAds -framework UserMessagingPlatform"
+```
+
+왜 `UserMessagingPlatform`도 같이 넣는가:
+
+- 이번 문제의 본질은 wrapper target 간접 링크에 기대던 경로가 `ADKit.framework` 링크 단계에서 충분하지 않았다는 점이다.
+- 그래서 `GoogleMobileAds`만 직접 링크하고 나머지 전이 framework는 계속 wrapper target 쪽에 남겨두면 링크 책임이 다시 분산될 수 있다.
+- `UserMessagingPlatform`까지 함께 직접 링크하면 AdMob 관련 바이너리 책임을 `ADKit` 한 곳으로 모을 수 있고, direct link/indirect link 경로가 섞이지 않는다.
 
 ## KakaoSDKCommon duplicate class 경고
 

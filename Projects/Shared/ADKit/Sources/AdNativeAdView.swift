@@ -4,20 +4,12 @@ import SwiftUI
 import UIKit
 
 /// 자체 `AdNativeAdViewModel`을 소유하고 등장 시 네이티브 광고를 자동으로 로드하는 진입 뷰입니다.
-///
-/// 호출 화면은 이 뷰에 `.frame(...)`을 적용해서 실제 표시 크기를 결정할 수 있습니다.
 public struct AdNativeAdEntryView: View {
     @StateObject private var viewModel: AdNativeAdViewModel
 
     private let layout: AdNativeAdLayout
     private let reservesSpaceWhileLoading: Bool
 
-    /// 자동 로딩 네이티브 광고 뷰를 생성합니다.
-    ///
-    /// - Parameters:
-    ///   - adUnitID: 사용할 AdMob 네이티브 광고 단위 ID입니다. `nil`이면 앱 설정의 현재 네이티브 광고 단위 ID를 사용합니다.
-    ///   - layout: 광고 내부 배치와 글자 크기를 정의하는 레이아웃입니다.
-    ///   - reservesSpaceWhileLoading: `true`이면 광고가 로드되기 전에도 투명 뷰로 부모가 잡아둔 공간을 유지합니다.
     public init(
         adUnitID: String? = nil,
         layout: AdNativeAdLayout = .grid,
@@ -30,7 +22,6 @@ public struct AdNativeAdEntryView: View {
         self.reservesSpaceWhileLoading = reservesSpaceWhileLoading
     }
 
-    /// 광고 로딩 상태에 따라 네이티브 광고 또는 투명 placeholder를 렌더링합니다.
     public var body: some View {
         AdNativeAdView(
             viewModel: viewModel,
@@ -44,20 +35,12 @@ public struct AdNativeAdEntryView: View {
 }
 
 /// 외부에서 소유한 `AdNativeAdViewModel`을 렌더링하는 네이티브 광고 뷰입니다.
-///
-/// 하나의 화면에서 광고 로드 시점과 리스트 삽입 여부를 직접 제어해야 할 때 사용합니다.
 public struct AdNativeAdView: View {
     @ObservedObject private var viewModel: AdNativeAdViewModel
 
     private let layout: AdNativeAdLayout
     private let reservesSpaceWhileLoading: Bool
 
-    /// 외부 ViewModel 기반 네이티브 광고 뷰를 생성합니다.
-    ///
-    /// - Parameters:
-    ///   - viewModel: 광고 로딩과 상태를 소유하는 모델입니다.
-    ///   - layout: 광고 내부 배치와 글자 크기를 정의하는 레이아웃입니다.
-    ///   - reservesSpaceWhileLoading: `true`이면 광고가 로드되기 전에도 투명 뷰로 부모가 잡아둔 공간을 유지합니다.
     public init(
         viewModel: AdNativeAdViewModel,
         layout: AdNativeAdLayout = .grid,
@@ -68,7 +51,6 @@ public struct AdNativeAdView: View {
         self.reservesSpaceWhileLoading = reservesSpaceWhileLoading
     }
 
-    /// 로드된 광고가 있으면 Google Mobile Ads 네이티브 광고 뷰를 렌더링합니다.
     public var body: some View {
         if let nativeAd = viewModel.nativeAd {
             AdNativeAdContainer(nativeAd: nativeAd, layout: layout)
