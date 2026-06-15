@@ -10,7 +10,11 @@ final class PopPangAppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        
+        // 초기 설정
         AppSDKInitializer.configure()
+        
+        // FCM 설정
         AppNotificationManager.shared.configureNotification()
         return true
     }
@@ -65,24 +69,34 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
         Messaging.messaging().delegate = self
 
         notificationCenter.requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
+            // 요청 과정에서 오류가 발생하였는지 확인
             if let error {
                 Logger.e("❌ configureNotification 에러: \(error)")
                 return
             }
 
             guard granted else { return }
-
+            
             DispatchQueue.main.async {
+                // 권한이 허용된 경우
                 application.registerForRemoteNotifications()
             }
         }
     }
 
+    /// FCM 등록 토큰을 수신했을 때 호출되는 메서드입니다.
+    ///
+    /// - Parameter fcmToken: Firebase Cloud Messaging에서 발급받은 고유 토큰 문자열.
+    ///
+    /// - Note:
+    ///   앱이 처음 실행되거나, APNs 토큰이 변경될 때, 또는 Firebase 토큰이 갱신될 때 자동으로 호출됩니다.
+    ///   이 토큰은 Firestore에 저장하거나, 서버 API로 전달해 푸시 발송 대상 식별용으로 사용합니다.
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         Logger.d("Firebase에서 APNs 토큰을 기반으로 FCM 등록 및 클라이언트로 토큰 발급")
         handleFCMToken(fcmToken, source: "MessagingDelegate")
     }
 
+    // APNs 등록 성공 → APNs 토큰을 FCM에 연결
     func didRegisterForRemoteNotifications(deviceToken: Data) {
         Messaging.messaging().apnsToken = deviceToken
         Logger.d("Apple의 APNs(푸시 서버) 디바이스 토큰을 Firebase에 전달 완료")
@@ -92,6 +106,7 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
         requestCurrentFCMToken(reason: "APNs 토큰 등록 직후")
     }
 
+    // APNs 등록 실패 로깅
     func didFailToRegisterForRemoteNotifications(error: Error) {
         Logger.e("❌ APNs 등록 실패: \(error.localizedDescription)")
     }
@@ -122,11 +137,13 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
         }
     }
 
+    // 🔔 포그라운드 상태에서 알림이 도착했을 때 호출됨
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        // ✅ 알림을 배너 + 사운드 + 리스트에 표시되게 함
         completionHandler([.banner, .sound, .list])
     }
 

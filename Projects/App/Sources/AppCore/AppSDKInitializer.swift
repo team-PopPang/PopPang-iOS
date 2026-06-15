@@ -13,12 +13,23 @@ enum AppSDKInitializer {
         guard isConfigured == false else { return }
         isConfigured = true
 
+        // UI 초기화
         UITabBar.configureAppearance()
         UINavigationBar.configureAppearance()
+        
+        // firebase 초기화
         FirebaseCoreBootstrap.configureIfNeeded()
+        
+        // AdMob 설정
         ADKitBootstrap.start()
+        
+        // KakaoSDK 설정
         KakaoSDK.initSDK(appKey: Constants.KakaoAPI.key)
+        
+        // NaverMapSDK 설정
         NMFAuthManager.shared().ncpKeyId = Constants.NaverAPI.key
+        
+        // 지도 오토 레이아웃 경고 제거
         UserDefaults.standard.set(false, forKey: "_UIConstraintBasedLayoutLogUnsatisfiable")
     }
 }
