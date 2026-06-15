@@ -173,12 +173,12 @@ make regen
 
 ## 6. ThirdParty 링크 설정
 
-외부 SDK SPM product는 `ThirdParty` 타깃에서만 직접 링크한다.
+AdMob SDK product는 `ADKit` 타깃에서 직접 링크한다.
 
 파일:
 
 ```text
-Projects/Shared/ThirdParty/Project.swift
+Projects/Shared/ADKit/Project.swift
 ```
 
 현재 설정:
@@ -189,6 +189,21 @@ Projects/Shared/ThirdParty/Project.swift
 ```
 
 `JavaScriptCore.framework`는 Google Mobile Ads SDK 링크 과정에서 필요해서 같이 연결한다.
+
+추가 참고:
+
+- `ADKit` source는 `import GoogleMobileAds`로 `GADAdLoader`, `GADNativeAd`, `GADMediaView` 같은 SDK 타입을 직접 사용한다.
+- Tuist가 생성한 `GoogleMobileAdsTarget.framework`는 실제 SDK 구현체를 재수출하는 용도라기보다 `GoogleMobileAds.xcframework`를 감싸는 래퍼 타깃에 가깝다.
+- 그래서 `ADKit` dynamic framework 링크 단계에서는 wrapper target만으로 `_OBJC_CLASS_$_GAD...` 심볼이 충분히 연결되지 않을 수 있다.
+- 이 경우 `ADKit`의 `OTHER_LDFLAGS`에 아래 값을 추가해 실제 바이너리를 명시적으로 링크한다.
+
+```swift
+"OTHER_LDFLAGS": "$(inherited) -ObjC -framework GoogleMobileAds -framework UserMessagingPlatform"
+```
+
+- 핵심은 `GoogleMobileAdsTarget.framework` 같은 wrapper target 간접 링크에만 기대지 않고, `GoogleMobileAds.framework`와 관련 전이 framework를 `ADKit`이 직접 링크하게 만드는 것이다.
+- `UserMessagingPlatform`을 같이 직접 링크하는 이유는, AdMob 관련 링크 책임을 다시 wrapper target 쪽에 일부 남겨두지 않고 `ADKit` 한 곳으로 모으기 위해서다.
+- 즉 `GoogleMobileAds` 본체만 직접 링크하고 전이 framework는 계속 wrapper target에 맡기면 링크 경로가 다시 섞일 수 있으므로, AdMob 관련 바이너리 책임을 같은 규칙으로 직접 명시한다.
 
 ## 7. Info.plist 설정
 
@@ -252,7 +267,7 @@ Projects/App/Sources/AppCore/AppSDKInitializer.swift
 
 ```swift
 FirebaseCoreBootstrap.configureIfNeeded()
-MobileAds.shared.start(completionHandler: nil)
+ADKitBootstrap.start()
 KakaoSDK.initSDK(appKey: Constants.KakaoAPI.key)
 NMFAuthManager.shared().ncpKeyId = Constants.NaverAPI.key
 ```
@@ -263,6 +278,7 @@ NMFAuthManager.shared().ncpKeyId = Constants.NaverAPI.key
 - 광고를 로드하기 전에 호출되어야 한다.
 - Firebase를 쓰는 프로젝트이므로 Firebase 초기화 후 바로 호출한다.
 - Firebase 문서의 예전 Swift 예시는 `GADMobileAds.sharedInstance().start(...)` 형태로 보일 수 있지만, 현재 Google Mobile Ads Swift API에서는 `MobileAds.shared.start()` 형태를 사용한다.
+- AdMob 초기화 호출은 `App`에 직접 두지 않고 `ADKitBootstrap.start()`로 감싼다. 이렇게 하면 AdMob SDK 직접 의존 경계가 `ADKit` 하나로 모인다.
 
 ## 9. AdMob 상수 연결
 

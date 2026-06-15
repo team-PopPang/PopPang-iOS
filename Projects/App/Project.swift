@@ -123,6 +123,7 @@ let project = Project(
             resources: ["Resources/**"],
             entitlements: "PopPangApp.entitlements",
             dependencies: [
+                .project(target: "ADKit", path: "../Shared/ADKit"),
                 .project(target: "Coordinator", path: "../Coordinator"),
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "Data", path: "../Data"),
@@ -141,7 +142,7 @@ let project = Project(
                     "CURRENT_PROJECT_VERSION": "6",
                     "MARKETING_VERSION": "1.1.3",
                     "PROVISIONING_PROFILE_SPECIFIER": "",
-                    "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]": "match Development kr.co.poppang.PopPang 1762797005",
+                    "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]": "match Development kr.co.poppang.PopPang",
                 ],
                 configurations: [
                     .debug(

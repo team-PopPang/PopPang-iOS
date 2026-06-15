@@ -90,13 +90,23 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 ## 현재 issue 매핑
 
 - `#28` umbrella / 설계용 refactor issue
-- `#29` HomeFeature TCA 1차 전환
-- `#30` HomeFeature TCA 2차 전환
-- `#31` PopupDetailFeature TCA 전환
-- `#32` PopupUsecase 소비 feature 1차 전환
-- `#33` User/Admin feature 2차 전환
-- `#34` MapFeature TCA 전환
-- `#35` PopupUsecaseProtocol 분리와 Coordinator TCA 전환 필요성 검토
+- `#29` HomeFeature TCA 전환
+- `#30` PopupDetailFeature TCA 전환
+- `#31` SearchFeature TCA 전환
+- `#32` FavoritesFeature TCA 전환
+- `#33` AlertFeature TCA 전환
+- `#34` CalendarFeature TCA 전환
+- `#35` MapFeature TCA 전환
+- `#37` ReviewFeature TCA 전환
+- `#38` AuthFeature TCA 전환
+- `#39` OnboardingFeature TCA 전환
+- `#40` ProfileFeature TCA 전환
+- `#41` PopupRequestFeature TCA 전환
+- `#42` PopupRequestManagementFeature TCA 전환
+- `#43` AdFeature TCA 적용 범위 검토
+- `#44` TCA Dependency Client 규칙 표준화
+- `#45` App dependency bootstrap 이전 준비
+- `#46` Coordinator TCA 전환
 
 새 issue가 추가되거나 번호가 바뀌면 이 section을 업데이트한다.
 

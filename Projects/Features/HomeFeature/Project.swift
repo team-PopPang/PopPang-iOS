@@ -14,7 +14,7 @@ let project = Project(
                 "Sources/**",
             ],
             dependencies: [
-                .project(target: "AdFeatureInterface", path: "../AdFeature"),
+                .project(target: "ADKit", path: "../../Shared/ADKit"),
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
                 .project(target: "Core", path: "../../Shared/Core"),
@@ -29,6 +29,7 @@ let project = Project(
             deploymentTargets: .iOS("17.0"),
             infoPlist: .extendingDefault(
                 with: [
+                    "GADApplicationIdentifier": "$(ADMOB_APP_ID)",
                     "UILaunchScreen": [
                         "UIColorName": "",
                         "UIImageName": "",
@@ -38,8 +39,33 @@ let project = Project(
             sources: ["Demo/Sources/**"],
             dependencies: [
                 .target(name: "HomeFeature"),
+            ],
+            settings: .settings(
+                configurations: [
+                    .debug(
+                        name: "Debug",
+                        xcconfig: .relativeToManifest("Demo/HomeFeatureDemo.xcconfig")
+                    ),
+                    .release(
+                        name: "Release",
+                        xcconfig: .relativeToManifest("Demo/HomeFeatureDemo.xcconfig")
+                    ),
+                ]
+            )
+        ),
+        .target(
+            name: "HomeFeatureTests",
+            destinations: [.iPhone],
+            product: .unitTests,
+            bundleId: "com.poppang.features.home.tests",
+            deploymentTargets: .iOS("17.0"),
+            infoPlist: .default,
+            sources: ["Tests/**"],
+            dependencies: [
+                .target(name: "HomeFeature"),
                 .project(target: "Domain", path: "../../Domain"),
-                .project(target: "Data", path: "../../Data"),
+                .project(target: "DSKit", path: "../../Shared/DSKit"),
+                .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]
         ),
     ]

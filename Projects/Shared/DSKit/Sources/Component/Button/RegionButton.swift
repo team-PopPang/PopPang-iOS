@@ -50,6 +50,7 @@ public struct RegionButtonSheet<Region: Identifiable & Equatable>: View {
     private let buttonFont: Font = .scdream(.regular, size: 12)
     private let rowHeight: CGFloat = 46
     private let dividerHeight: CGFloat = 1.5
+    @State private var pendingSelectedDistrict: String?
 
     public init(
         regions: [Region],
@@ -96,7 +97,13 @@ public struct RegionButtonSheet<Region: Identifiable & Equatable>: View {
                         VStack(spacing: 0) {
                             Button {
                                 selectedRegion = region
-                                selectedDistrict = districts(region).first
+                                let firstDistrict = districts(region).first
+                                pendingSelectedDistrict = firstDistrict
+
+                                if districts(region).count <= 1 {
+                                    selectedDistrict = firstDistrict
+                                    dismiss()
+                                }
                             } label: {
                                 HStack(spacing: 0) {
                                     Spacer()
@@ -116,33 +123,56 @@ public struct RegionButtonSheet<Region: Identifiable & Equatable>: View {
                     .frame(width: 65)
                     .scrollContentBackground(.hidden)
                     .listStyle(.plain)
+                    .scrollIndicators(.hidden)
+
+                    Divider()
 
                     if let selectedRegion {
                         List(districts(selectedRegion), id: \.self) { district in
-                            Button {
-                                selectedDistrict = district
-                                dismiss()
-                            } label: {
-                                HStack(spacing: 0) {
-                                    Text(district)
-                                        .foregroundStyle(selectedDistrict == district ? Color.mainOrange : Color.mainGray)
-                                        .font(buttonFont)
-                                    Spacer()
+                            VStack(spacing: 0) {
+                                Button {
+                                    pendingSelectedDistrict = district
+                                    selectedDistrict = district
+                                    dismiss()
+                                } label: {
+                                    HStack(spacing: 0) {
+                                        Text(district)
+                                            .foregroundStyle((pendingSelectedDistrict ?? selectedDistrict) == district ? Color.mainOrange : Color.mainGray)
+                                            .font(buttonFont)
+                                            .padding(.leading, 20)
+                                        Spacer()
+                                    }
                                 }
+                                .frame(height: rowHeight)
+                                .accessibilityIdentifier("\(accessibilityPrefix)_district_\(district)")
+
+                                Divider()
+                                    .padding(.leading, 0)
                             }
-                            .frame(height: rowHeight)
                             .listRowInsets(EdgeInsets())
                             .listRowSeparator(.hidden)
-                            .accessibilityIdentifier("\(accessibilityPrefix)_district_\(district)")
                         }
                         .scrollContentBackground(.hidden)
                         .listStyle(.plain)
+                        .scrollIndicators(.hidden)
                     }
                 }
-                .frame(height: 300)
+                .frame(height: CGFloat(max(regions.count, 1)) * rowHeight)
+
+                Rectangle()
+                    .frame(height: dividerHeight)
+                    .foregroundStyle(Color.mainGray3)
+
+                Spacer()
             }
             .padding(.horizontal, 28)
         }
         .presentationDragIndicator(.visible)
+        .onAppear {
+            pendingSelectedDistrict = selectedDistrict
+        }
+        .onChange(of: selectedDistrict) { _, district in
+            pendingSelectedDistrict = district
+        }
     }
 }

@@ -108,7 +108,31 @@ import PackageDescription
             "KakaoSDKUser": .framework,
             "Moya": .framework,
             "third-party-IsAppEncrypted": .framework,
-        ]
+            "Kingfisher": .framework,
+            "GoogleMobileAds": .framework,
+            
+
+            // "ComposableArchitecture": .framework,
+            // "Dependencies": .framework,
+            // "CombineSchedulers": .framework,
+            // "Sharing": .framework,
+            // "SwiftNavigation": .framework,
+            // "SwiftUINavigation": .framework,
+            // "UIKitNavigation": .framework,
+            // "UIKitNavigationShim": .framework,
+            // "ConcurrencyExtras": .framework,
+            // "Clocks": .framework,
+            // "CustomDump": .framework,
+            // "IdentifiedCollections": .framework,
+            // "XCTestDynamicOverlay": .framework,
+            // "IssueReporting": .framework,
+            // "_CollectionsUtilities": .framework,
+            // "PerceptionCore": .framework,
+            // "Perception": .framework,
+            // "OrderedCollections": .framework,
+            // "CasePaths": .framework,
+            // "DependenciesMacros": .framework,
+        ],
     )
 #endif
 

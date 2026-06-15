@@ -61,7 +61,11 @@ issue 생성/assign/branch checkout의 자세한 절차는 `references/issue-bra
 2. reducer에는 비즈니스 상태, effect 타이밍에 직접 영향을 주는 상태, 테스트가 필요한 상태를 둔다.
 3. scroll offset, proxy, 일회성 animation 같은 순수 UI 임시 상태는 무조건 reducer로 올리지 않는다.
 4. feature 간 이동은 coordinator callback 또는 route로 올리고, feature가 다른 feature를 직접 조립하지 않도록 유지한다.
-5. Root/MainTab/FeatureCoordinator 구조는 issue가 명시적으로 요구하지 않는 한 먼저 TCA로 바꾸지 않는다.
+5. 같은 feature 내부의 child reducer 상태를 부모 feature state가 소유해야 하고, coordinator navigation ownership을 변경하지 않아도 되는 경우에만 부분 `scope` 도입을 검토한다.
+6. push, sheet, fullScreen 존재 여부 자체를 부모가 소유해야 하거나 coordinator callback 제거가 필요한 경우에는 feature issue에서 `scope`를 강제로 도입하지 않고 coordinator 관련 후속 issue에서 검토한다.
+7. feature 모듈을 수정할 때 view에 callback 방식 coordinator 연결이 남아 있다면, callback 묶음 상단에 `// TODO: 코디네이터 패턴은 추후 TCA navigation/state ownership으로 전환 예정` 주석을 추가한다.
+8. coordinator 관련 후속 issue에서는 위 TODO 주석이 달린 callback 경계를 TCA navigation/state ownership 전환 후보 지점으로 검토한다.
+9. Root/MainTab/FeatureCoordinator 구조는 issue가 명시적으로 요구하지 않는 한 먼저 TCA로 바꾸지 않는다.
 
 구체적인 구조 기준과 현재 전환 상태는 `references/current-architecture.md`, `references/feature-migration-inventory.md`를 따른다.
 
