@@ -105,8 +105,11 @@ jobs:
           NMFClientID = cidummy
           GoogleURLScheme = cidummy
           GIDClientID = cidummy
-          ADMOB_APP_ID = ca-app-pub-3940256099942544~1458002511
-          ADMOB_NATIVE_AD_UNIT_ID = ca-app-pub-3940256099942544/3986624511
+          ADMOB_APP_ID = cidummy
+          ADMOB_NATIVE_AD_UNIT_ID = cidummy
+          EOF
+          cat <<EOF > Projects/Features/HomeFeature/Demo/HomeFeatureDemo.xcconfig
+          ADMOB_APP_ID = cidummy
           EOF
 
       - name: Generate Tuist workspace
