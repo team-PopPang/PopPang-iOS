@@ -15,6 +15,7 @@ public struct HomeFeatureView: View {
     @State private var listProxy = LKListProxy()
     @State private var lastHandledPopupId: String?
     @State private var sheetRoute: HomeSheetRoute?
+    @State private var presentedSheetRoute: HomeSheetRoute?
     @StateObject private var nativeAdSlotStore = AdNativeAdSlotStore()
 
     private let deepLinkStorage: DeepLinkStorage
@@ -230,9 +231,11 @@ public struct HomeFeatureView: View {
                         HomeFilterHeader(
                             store: filterStore,
                             onRegionTap: {
+                                presentedSheetRoute = .regionSheet
                                 sheetRoute = .regionSheet
                             },
                             onSortTap: {
+                                presentedSheetRoute = .sortSheet
                                 sheetRoute = .sortSheet
                             }
                         )
@@ -263,7 +266,7 @@ public struct HomeFeatureView: View {
                 }
             }
         }
-        .sheet(item: $sheetRoute) { route in
+        .sheet(item: $sheetRoute, onDismiss: handleSheetDismiss) { route in
             switch route {
             case .regionSheet:
                 RegionButtonSheet(
@@ -734,7 +737,6 @@ private extension HomeFeatureView {
             set: { district in
                 guard let district else { return }
                 filterStore.send(.districtSelected(district))
-                sheetRoute = nil
             }
         )
     }
@@ -744,9 +746,18 @@ private extension HomeFeatureView {
             get: { filterStore.selectedOption },
             set: { option in
                 filterStore.send(.sortOptionSelected(option))
-                sheetRoute = nil
             }
         )
+    }
+
+    func handleSheetDismiss() {
+        guard let presentedSheetRoute else { return }
+        defer { self.presentedSheetRoute = nil }
+
+        switch presentedSheetRoute {
+        case .regionSheet, .sortSheet:
+            store.send(.refreshFilteredPopupList)
+        }
     }
 
     func isLiked(popup: Popup) -> Bool {
