@@ -51,7 +51,7 @@ struct HomeFeatureReducer {
                 state.errorMessage = nil
                 return loadAllPopupData(state: state)
 
-            case .filter(.districtSelected), .filter(.sortOptionSelected):
+            case .filter(.regionSelected), .filter(.districtSelected), .filter(.sortOptionSelected):
                 state.isLoading = true
                 return updatePersonalFilteredPopupList(state: state)
 
