@@ -1,0 +1,5 @@
+import Foundation
+
+public struct {{ name }}: Equatable, Sendable {
+    public init() {}
+}

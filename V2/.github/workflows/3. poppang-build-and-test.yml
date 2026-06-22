@@ -1,0 +1,226 @@
+name: 팝팡 모듈러 빌드 & 테스트
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  schedule:
+    - cron: "0 22 * * *"
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR 번호(명령어 트리거일 때만 입력)"
+        required: false
+        default: ""
+      triggered_by_command:
+        description: "PR 명령어 트리거 여부"
+        required: false
+        default: "false"
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  module_ci:
+    name: ${{ matrix.job_name }} (${{ matrix.scheme }})
+    runs-on: macos-15
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - job_name: app-build
+            scheme: PopPangApp
+            xcode_action: build
+            destination: generic/platform=iOS Simulator
+          - job_name: core-test
+            scheme: Core
+            xcode_action: test
+            destination: platform=iOS Simulator
+          - job_name: data-test
+            scheme: Data
+            xcode_action: test
+            destination: platform=iOS Simulator
+          - job_name: domain-build
+            scheme: Domain
+            xcode_action: build
+            destination: generic/platform=iOS Simulator
+          - job_name: dskit-build
+            scheme: DSKit
+            xcode_action: build
+            destination: generic/platform=iOS Simulator
+
+    steps:
+      - name: Checkout PR branch
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.pr_number != ''
+        uses: actions/checkout@v4
+        with:
+          ref: refs/pull/${{ github.event.inputs.pr_number }}/head
+
+      - name: Checkout default branch
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.pr_number == ''
+        uses: actions/checkout@v4
+
+      - name: Cache Tuist and SwiftPM
+        uses: actions/cache@v4
+        with:
+          path: |
+            Tuist/.build
+            ~/Library/Caches/org.swift.swiftpm
+          key: tuist-spm-${{ runner.os }}-${{ hashFiles('Tuist/Package.resolved') }}
+          restore-keys: |
+            tuist-spm-${{ runner.os }}-
+
+      - name: Cache DerivedData
+        uses: actions/cache@v4
+        with:
+          path: DerivedData/${{ matrix.scheme }}
+          key: deriveddata-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('Tuist/Package.resolved', 'Projects/**/*.swift') }}
+          restore-keys: |
+            deriveddata-${{ runner.os }}-${{ matrix.scheme }}-
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_26.2.app
+
+      - name: Install CI tools
+        run: |
+          gem install xcpretty --no-document
+          curl https://mise.run | sh
+          "$HOME/.local/bin/mise" install tuist@$(cat .tuist-version)
+
+      - name: Disable Swift Macro fingerprint validation
+        run: defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES
+
+      - name: Create CI Secrets.xcconfig
+        run: |
+          cat <<EOF > Projects/App/Secrets.xcconfig
+          KAKAO_NATIVE_APP_KEY = cidummy
+          NMFClientID = cidummy
+          GoogleURLScheme = cidummy
+          GIDClientID = cidummy
+          ADMOB_APP_ID = cidummy
+          ADMOB_NATIVE_AD_UNIT_ID = cidummy
+          EOF
+          cat <<EOF > Projects/Features/HomeFeature/Demo/HomeFeatureDemo.xcconfig
+          ADMOB_APP_ID = cidummy
+          EOF
+
+      - name: Generate Tuist workspace
+        run: |
+          "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist install
+          "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist generate
+
+      - name: Resolve test simulator
+        if: matrix.xcode_action == 'test'
+        id: test_simulator
+        run: |
+          SIMULATOR_UDID="$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ { print $2; exit }')"
+
+          if [ -z "$SIMULATOR_UDID" ]; then
+            echo "No available iPhone simulator found."
+            xcrun simctl list devices available
+            exit 1
+          fi
+
+          echo "destination=platform=iOS Simulator,id=$SIMULATOR_UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Run ${{ matrix.job_name }}
+        env:
+          XCODE_ACTION: ${{ matrix.xcode_action }}
+          XCODE_DESTINATION: ${{ matrix.destination }}
+          XCODE_SCHEME: ${{ matrix.scheme }}
+          TEST_SIMULATOR_DESTINATION: ${{ steps.test_simulator.outputs.destination }}
+        run: |
+          set -o pipefail
+          if [ "$XCODE_ACTION" = "test" ] && [ -n "$TEST_SIMULATOR_DESTINATION" ]; then
+            XCODE_DESTINATION="$TEST_SIMULATOR_DESTINATION"
+          fi
+
+          echo "Using destination: $XCODE_DESTINATION"
+          xcodebuild "$XCODE_ACTION" \
+            -workspace PopPang.xcworkspace \
+            -scheme "$XCODE_SCHEME" \
+            -destination "$XCODE_DESTINATION" \
+            -derivedDataPath "DerivedData/$XCODE_SCHEME" \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcpretty
+
+  notify:
+    name: Notify CI result
+    runs-on: ubuntu-latest
+    needs: module_ci
+    if: always()
+
+    steps:
+      - name: Comment success
+        if: needs.module_ci.result == 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            모듈러 병렬 CI가 성공했습니다.
+
+            - app-build: PopPangApp
+            - core-test: Core
+            - data-test: Data
+            - domain-build: Domain
+            - dskit-build: DSKit
+
+      - name: Comment failure
+        if: needs.module_ci.result != 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.inputs.pr_number }}
+          body: |
+            모듈러 병렬 CI가 실패했습니다. Actions 로그를 확인해주세요.
+
+      - name: Send email on success
+        if: needs.module_ci.result == 'success'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: PopPang 모듈러 빌드 & 테스트 성공
+          body: |
+            모듈러 병렬 CI가 성공했습니다.
+
+            - app-build: PopPangApp
+            - core-test: Core
+            - data-test: Data
+            - domain-build: Domain
+            - dskit-build: DSKit
+
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Triggered by: ${{ github.actor }}
+            Action URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: indextrown@gmail.com
+          from: GitHub CI <${{ secrets.MAIL_USERNAME }}>
+
+      - name: Send email on failure
+        if: needs.module_ci.result != 'success'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: PopPang 모듈러 빌드 또는 테스트 실패
+          body: |
+            모듈러 병렬 CI가 실패했습니다.
+
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref_name }}
+            Triggered by: ${{ github.actor }}
+            Action URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: indextrown@gmail.com
+          from: GitHub CI <${{ secrets.MAIL_USERNAME }}>

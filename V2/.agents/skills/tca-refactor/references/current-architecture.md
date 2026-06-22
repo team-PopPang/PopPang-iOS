@@ -1,0 +1,159 @@
+# Current Architecture
+
+이 문서는 PopPang의 현재 활성 코드 구조와 TCA migration 시 지켜야 할 기준선을 빠르게 복원하기 위한 reference다.
+
+코드와 이 문서가 충돌하면 현재 루트 `Projects/*` 코드를 우선한다. 구조 이해가 바뀌면 이 문서를 함께 갱신한다.
+
+## 활성 코드 기준
+
+- 실제 구현 대상: 루트 `Projects/*`
+- 비교용 reference: `V1/*`
+- root workspace: `Workspace.swift`는 `Projects/App`, `Projects/Coordinator`, `Projects/Features`, `Projects/Domain`, `Projects/Data`, `Projects/Shared`만 포함한다.
+
+즉 현재 작업은 기본적으로 `V1/*`가 아니라 루트 `Projects/*`에 반영한다.
+
+## 최상위 구조
+
+```text
+Projects
+├── App
+├── Coordinator
+├── Domain
+├── Data
+├── Features
+│   ├── AdFeature
+│   ├── AlertFeature
+│   ├── AuthFeature
+│   ├── CalendarFeature
+│   ├── FavoritesFeature
+│   ├── HomeFeature
+│   ├── MapFeature
+│   ├── OnboardingFeature
+│   ├── PopupDetailFeature
+│   ├── PopupRequestFeature
+│   ├── PopupRequestManagementFeature
+│   ├── ProfileFeature
+│   ├── ReviewFeature
+│   └── SearchFeature
+└── Shared
+    ├── Core
+    ├── DSKit
+    └── ThirdParty
+```
+
+## 아키텍처 기준
+
+### App
+
+- SDK 초기화
+- repository/usecase live 조립
+- `DIContainer` 등록
+- root coordinator 생성
+
+핵심 파일:
+
+- `Projects/App/Sources/PopPangApp.swift`
+- `Projects/App/Sources/AppCore/AppBootstrap.swift`
+- `Projects/App/Sources/AppCore/AppDependencyRegistry.swift`
+
+### Coordinator
+
+- `RootCoordinator -> MainTabCoordinator -> FeatureCoordinator` 구조를 사용한다.
+- main flow는 `MainTabCoordinatorView`의 단일 `NavigationStack(path:)`를 기준으로 한다.
+- 탭 root view는 중첩 `NavigationStack`을 만들지 않는다.
+- feature는 callback/route intent를 coordinator로 올린다.
+- route에는 `Binding`, `View`, 무거운 closure를 넣지 않는다.
+
+핵심 파일:
+
+- `Projects/Coordinator/Sources/RootCoordinator/*`
+- `Projects/Coordinator/Sources/MainTabCoordinator/*`
+- `Projects/Coordinator/Sources/Features/*/Coordinator/*`
+- `Projects/Coordinator/README.md`
+
+### Features
+
+- 현재 기본 상태관리는 여전히 Compound 기반이다.
+- TCA migration은 feature 단위 vertical slice로 진행 중이다.
+- feature는 `Domain`, `Core`, `DSKit`, `ThirdParty`를 주로 의존한다.
+- feature 간 직접 import는 예외를 줄이고 coordinator 조립을 우선한다.
+
+### Domain
+
+- Entity
+- Repository protocol
+- Usecase protocol / implementation
+- `DIContainer`와 `@Dependency`
+
+주의:
+
+- 외부 SDK나 DTO를 Domain에 넣지 않는다.
+- public protocol 변경은 Feature/Data/App에 파급된다.
+
+### Data
+
+- Repository protocol 구현
+- Moya API target
+- DTO 및 mapping
+- 소셜 로그인 SDK 구현
+
+### Shared
+
+- `Core`: network, storage, coordinator base
+- `DSKit`: design system
+- `ThirdParty`: 외부 SDK link hub
+
+## 현재 TCA 전환 상태
+
+### 이미 `@Reducer`가 들어간 영역
+
+- `Projects/Features/HomeFeature/Sources/Presentation/HomeFeatureReducer.swift`
+- `Projects/Features/HomeFeature/Sources/Presentation/ComingPopupDetailReducer.swift`
+- `Projects/Features/PopupDetailFeature/Sources/Presentation/PopupDetailFeatureReducer.swift`
+
+### 아직 `@Compound` 중심인 주요 영역
+
+- `AlertFeature`
+- `AuthFeature`
+- `RegisterFlowFeature`
+- `CalendarFeature`
+- `FavoritesFeature`
+- `MapFeature`
+- `OnboardingFeature`
+- `PopupRequestFeature`
+- `PopupRequestManagementFeature`
+- `ProfileFeature`
+- `ReviewFeature`
+- `SearchFeature`
+
+## 현재 TCA 패턴
+
+현재 reducer 예시는 아래 패턴을 사용한다.
+
+1. `@Reducer` + `@ObservableState`
+2. feature 전용 `Client` struct 정의
+3. `DIContainer.shared.resolve(...)`를 `DependencyValues` bridge 뒤에 숨김
+4. view는 `StoreOf<Reducer>`를 `@State`로 보유
+5. navigation은 아직 coordinator callback 중심으로 유지
+
+예:
+
+- `HomeFeatureReducer`는 `HomePopupClient`를 통해 `PopupUsecaseProtocol`을 감싼다.
+- `PopupDetailFeatureReducer`는 `PopupDetailClient`를 통해 `PopupUsecaseProtocol`, `AdminUsecaseProtocol`을 감싼다.
+
+## Migration 시 우선 지킬 원칙
+
+1. coordinator 구조를 먼저 재작성하지 않는다.
+2. `PopupUsecaseProtocol` 같은 넓은 public contract를 초반에 분리하지 않는다.
+3. reducer에는 비즈니스 상태와 effect 타이밍에 필요한 상태만 둔다.
+4. 순수 UI 임시 상태는 view local state로 남겨도 된다.
+5. feature 이동은 callback/route 경계를 유지한다.
+6. `V1/*`는 원형 비교용일 뿐, 수정 대상으로 가정하지 않는다.
+
+## 링크/모듈 정책
+
+- feature 모듈은 기본적으로 `.staticFramework`
+- `ThirdParty`, `Core`, `DSKit`, `Domain`, `Data`, `Coordinator`는 공유 경계로 유지
+- 외부 SDK 선언은 `Projects/Shared/ThirdParty/Project.swift` 기준으로 본다.
+
+TCA migration 중에도 이 정책은 그대로 유지하는 것을 기본값으로 삼는다.
