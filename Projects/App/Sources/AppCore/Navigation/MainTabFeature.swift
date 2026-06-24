@@ -49,9 +49,8 @@ struct MainTabFeature {
     @ObservableState
     struct CoreState: Equatable {
         var selectedTab: MainTab = .home
-        var home: HomeFeatureReducer.State
+        var home: HomeRootFeature.State
         var path = StackState<Path.State>()
-        @Presents var destination: Destination.State?
 
         init(currentUser: User) {
             self.home = .init(
@@ -115,13 +114,12 @@ struct MainTabFeature {
 
     enum Action {
         case selectedTabChanged(MainTab)
-        case home(HomeFeatureReducer.Action)
+        case home(HomeRootFeature.Action)
         case calendar(CalendarTabFeature.Action)
         case map(MapTabFeature.Action)
         case favorites(FavoritesTabFeature.Action)
         case profile(ProfileTabFeature.Action)
         case path(StackActionOf<Path>)
-        case destination(PresentationAction<Destination.Action>)
         case delegate(Delegate)
 
         enum Delegate: Equatable {
@@ -132,25 +130,16 @@ struct MainTabFeature {
     @Reducer
     enum Path {
         case popupDetail(PopupDetailDestinationFeature)
-        case comingPopupDetail(ComingPopupDetailDestinationFeature)
         case reviewDetail(ReviewDetailDestinationFeature)
         case alert(AlertDestinationFeature)
-        case popupRequest(PopupRequestDestinationFeature)
-        case popupRequestManagement(PopupRequestManagementDestinationFeature)
-        case popupRequestManagementDetail(PopupRequestManagementDetailDestinationFeature)
         case profileSetting(ProfileSettingDestinationFeature)
         case notifications(NotificationDestinationFeature)
         case serviceTerms(ServiceTermsDestinationFeature)
     }
 
-    @Reducer
-    enum Destination {
-        case search(SearchDestinationFeature)
-    }
-
     var body: some ReducerOf<Self> {
         Scope(state: \.core.home, action: \.home) {
-            HomeFeatureReducer()
+            HomeRootFeature()
         }
         Scope(state: \.calendar, action: \.calendar) {
             CalendarTabFeature()
@@ -184,34 +173,6 @@ struct MainTabFeature {
                     .favorites(.delegate(.alertRequested)),
                     .profile(.delegate(.alertRequested)):
                 state.core.path.append(.alert(.init(userUuid: state.currentUser.userUuid)))
-                return .none
-
-            case .home(.delegate(.searchRequested)):
-                state.core.destination = .search(
-                    .init(
-                        userUuid: state.currentUser.userUuid,
-                        nickname: state.currentUser.displayNickname
-                    )
-                )
-                return .none
-
-            case .home(.delegate(.comingPopupsRequested(let popups))):
-                state.core.path.append(
-                    .comingPopupDetail(
-                        .init(
-                            userUuid: state.currentUser.userUuid,
-                            popups: popups
-                        )
-                    )
-                )
-                return .none
-
-            case .home(.delegate(.popupRequestRequested)):
-                state.core.path.append(.popupRequest(.init(userUuid: state.currentUser.userUuid)))
-                return .none
-
-            case .home(.delegate(.popupRequestManagementRequested)):
-                state.core.path.append(.popupRequestManagement(.init()))
                 return .none
 
             case .favorites(.delegate(.browsePopupsRequested)):
@@ -251,24 +212,11 @@ struct MainTabFeature {
             case .path:
                 return .none
 
-            case .destination(.presented(.search(.delegate(.dismiss)))):
-                state.core.destination = nil
-                return .none
-
-            case .destination(.presented(.search(.delegate(.selectPopup(let popup))))):
-                state.core.destination = nil
-                appendPopupDetail(popup, state: &state)
-                return .none
-
-            case .destination:
-                return .none
-
             case .delegate:
                 return .none
             }
         }
         .forEach(\.core.path, action: \.path)
-        .ifLet(\.core.$destination, action: \.destination)
     }
 }
 
@@ -292,7 +240,6 @@ private extension MainTabFeature {
     ) -> Effect<Action> {
         switch action {
         case .popupDetail(.delegate(.pushPopupDetail(_, let popup))),
-                .comingPopupDetail(.delegate(.pushPopupDetail(_, let popup))),
                 .alert(.delegate(.pushPopupDetail(_, let popup))):
             appendPopupDetail(popup, state: &state)
             return .none
@@ -303,20 +250,6 @@ private extension MainTabFeature {
 
         case .popupDetail(.delegate(.close)):
             state.core.path.pop(from: id)
-            return .none
-
-        case .popupRequest(.delegate(.dismiss)),
-                .popupRequestManagement(.delegate(.back)),
-                .popupRequestManagementDetail(.delegate(.back)):
-            state.core.path.pop(from: id)
-            return .none
-
-        case .popupRequestManagement(.delegate(.showDetail(let submissionId))):
-            state.core.path.append(
-                .popupRequestManagementDetail(
-                    .init(submissionId: submissionId)
-                )
-            )
             return .none
 
         case .profileSetting(.delegate(.logout)):
@@ -529,41 +462,6 @@ extension User {
 }
 
 @Reducer
-struct SearchDestinationFeature {
-    @ObservableState
-    struct State: Equatable, Identifiable {
-        let userUuid: String
-        let nickname: String
-
-        var id: String { "search-\(userUuid)" }
-    }
-
-    enum Action: Equatable {
-        case dismissTapped
-        case popupSelected(Popup)
-        case delegate(Delegate)
-
-        enum Delegate: Equatable {
-            case dismiss
-            case selectPopup(Popup)
-        }
-    }
-
-    var body: some ReducerOf<Self> {
-        Reduce { _, action in
-            switch action {
-            case .dismissTapped:
-                return .send(.delegate(.dismiss))
-            case .popupSelected(let popup):
-                return .send(.delegate(.selectPopup(popup)))
-            case .delegate:
-                return .none
-            }
-        }
-    }
-}
-
-@Reducer
 struct PopupDetailDestinationFeature {
     @ObservableState
     struct State: Equatable {
@@ -594,35 +492,6 @@ struct PopupDetailDestinationFeature {
                 return .send(.delegate(.close))
             case .reviewsTapped(let reviews):
                 return .send(.delegate(.showReviews(reviews)))
-            case .delegate:
-                return .none
-            }
-        }
-    }
-}
-
-@Reducer
-struct ComingPopupDetailDestinationFeature {
-    @ObservableState
-    struct State: Equatable {
-        let userUuid: String
-        let popups: [Popup]
-    }
-
-    enum Action: Equatable {
-        case popupSelected(String, Popup)
-        case delegate(Delegate)
-
-        enum Delegate: Equatable {
-            case pushPopupDetail(String, Popup)
-        }
-    }
-
-    var body: some ReducerOf<Self> {
-        Reduce { _, action in
-            switch action {
-            case .popupSelected(let userUuid, let popup):
-                return .send(.delegate(.pushPopupDetail(userUuid, popup)))
             case .delegate:
                 return .none
             }
@@ -669,94 +538,6 @@ struct ReviewDetailDestinationFeature {
 
     var body: some ReducerOf<Self> {
         Reduce { _, _ in .none }
-    }
-}
-
-@Reducer
-struct PopupRequestDestinationFeature {
-    @ObservableState
-    struct State: Equatable {
-        let userUuid: String
-    }
-
-    enum Action: Equatable {
-        case dismissTapped
-        case delegate(Delegate)
-
-        enum Delegate: Equatable {
-            case dismiss
-        }
-    }
-
-    var body: some ReducerOf<Self> {
-        Reduce { _, action in
-            switch action {
-            case .dismissTapped:
-                return .send(.delegate(.dismiss))
-            case .delegate:
-                return .none
-            }
-        }
-    }
-}
-
-@Reducer
-struct PopupRequestManagementDestinationFeature {
-    @ObservableState
-    struct State: Equatable {
-        init() {}
-    }
-
-    enum Action: Equatable {
-        case backTapped
-        case submissionSelected(String)
-        case delegate(Delegate)
-
-        enum Delegate: Equatable {
-            case back
-            case showDetail(String)
-        }
-    }
-
-    var body: some ReducerOf<Self> {
-        Reduce { _, action in
-            switch action {
-            case .backTapped:
-                return .send(.delegate(.back))
-            case .submissionSelected(let submissionId):
-                return .send(.delegate(.showDetail(submissionId)))
-            case .delegate:
-                return .none
-            }
-        }
-    }
-}
-
-@Reducer
-struct PopupRequestManagementDetailDestinationFeature {
-    @ObservableState
-    struct State: Equatable {
-        let submissionId: String
-    }
-
-    enum Action: Equatable {
-        case backTapped
-        case delegate(Delegate)
-
-        enum Delegate: Equatable {
-            case back
-        }
-    }
-
-    var body: some ReducerOf<Self> {
-        Reduce { _, action in
-            switch action {
-            case .backTapped:
-                return .send(.delegate(.back))
-            case .delegate:
-                return .none
-            }
-        }
     }
 }
 

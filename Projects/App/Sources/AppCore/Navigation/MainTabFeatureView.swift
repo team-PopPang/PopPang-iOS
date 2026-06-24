@@ -6,11 +6,8 @@ import FavoritesFeature
 import HomeFeature
 import MapFeature
 import PopupDetailFeature
-import PopupRequestFeature
-import PopupRequestManagementFeature
 import ProfileFeature
 import ReviewFeature
-import SearchFeature
 import SwiftUI
 
 struct MainTabFeatureView: View {
@@ -40,18 +37,10 @@ struct MainTabFeatureView: View {
             switch store.case {
             case .popupDetail(let store):
                 PopupDetailDestinationView(store: store)
-            case .comingPopupDetail(let store):
-                ComingPopupDetailDestinationView(store: store)
             case .reviewDetail(let store):
                 ReviewDetailDestinationView(store: store)
             case .alert(let store):
                 AlertDestinationView(store: store)
-            case .popupRequest(let store):
-                PopupRequestDestinationView(store: store)
-            case .popupRequestManagement(let store):
-                PopupRequestManagementDestinationView(store: store)
-            case .popupRequestManagementDetail(let store):
-                PopupRequestManagementDetailDestinationView(store: store)
             case .profileSetting(let store):
                 ProfileSettingDestinationView(store: store)
             case .notifications(let store):
@@ -60,38 +49,15 @@ struct MainTabFeatureView: View {
                 ServiceTermsDestinationView(store: store)
             }
         }
-        .fullScreenCover(
-            item: $store.scope(state: \.core.destination?.search, action: \.destination.search)
-        ) { store in
-            SearchDestinationView(store: store)
-        }
     }
 
     @ViewBuilder
     private func tabView(for tab: MainTab) -> some View {
         switch tab {
         case .home:
-            HomeFeatureView(
+            HomeRootFeatureView(
                 store: store.scope(state: \.core.home, action: \.home),
-                isAdmin: store.currentUser.isAdminRole,
-                onSelectPopup: { _, popup in
-                    store.send(.home(.popupSelected(popup)))
-                },
-                onShowAlert: { _ in
-                    store.send(.home(.alertTapped))
-                },
-                onSearch: { _ in
-                    store.send(.home(.searchTapped))
-                },
-                onShowComingPopups: { _, popups in
-                    store.send(.home(.comingPopupsTapped(popups)))
-                },
-                onReport: { _ in
-                    store.send(.home(.popupRequestTapped))
-                },
-                onManagePopupRequests: {
-                    store.send(.home(.popupRequestManagementTapped))
-                }
+                isAdmin: store.currentUser.isAdminRole
             )
         case .calendar:
             CalendarTabView(store: store.scope(state: \.calendar, action: \.calendar))
@@ -177,24 +143,6 @@ private struct ProfileTabView: View {
     }
 }
 
-private struct SearchDestinationView: View {
-    let store: StoreOf<SearchDestinationFeature>
-
-    var body: some View {
-        SearchFeatureView(
-            userUuid: store.userUuid,
-            nickname: store.nickname,
-            onDismiss: {
-                store.send(.dismissTapped)
-            },
-            onSelectPopup: { popup in
-                store.send(.popupSelected(popup))
-            }
-        )
-        .accessibilityIdentifier("home_search")
-    }
-}
-
 private struct PopupDetailDestinationView: View {
     let store: StoreOf<PopupDetailDestinationFeature>
 
@@ -217,20 +165,6 @@ private struct PopupDetailDestinationView: View {
     }
 }
 
-private struct ComingPopupDetailDestinationView: View {
-    let store: StoreOf<ComingPopupDetailDestinationFeature>
-
-    var body: some View {
-        ComingPopupDetailFeatureView(
-            userUuid: store.userUuid,
-            popups: store.popups,
-            onSelectPopup: { userUuid, popup in
-                store.send(.popupSelected(userUuid, popup))
-            }
-        )
-    }
-}
-
 private struct ReviewDetailDestinationView: View {
     let store: StoreOf<ReviewDetailDestinationFeature>
 
@@ -247,47 +181,6 @@ private struct AlertDestinationView: View {
             userUuid: store.userUuid,
             onSelectPopup: { userUuid, popup in
                 store.send(.popupSelected(userUuid, popup))
-            }
-        )
-    }
-}
-
-private struct PopupRequestDestinationView: View {
-    let store: StoreOf<PopupRequestDestinationFeature>
-
-    var body: some View {
-        PopupRequestFeatureView(
-            userUuid: store.userUuid,
-            onDismiss: {
-                store.send(.dismissTapped)
-            }
-        )
-    }
-}
-
-private struct PopupRequestManagementDestinationView: View {
-    let store: StoreOf<PopupRequestManagementDestinationFeature>
-
-    var body: some View {
-        PopupRequestManagementFeatureView(
-            onBack: {
-                store.send(.backTapped)
-            },
-            onSelectSubmission: { submissionId in
-                store.send(.submissionSelected(submissionId))
-            }
-        )
-    }
-}
-
-private struct PopupRequestManagementDetailDestinationView: View {
-    let store: StoreOf<PopupRequestManagementDetailDestinationFeature>
-
-    var body: some View {
-        PopupRequestManagementDetailFeatureView(
-            submissionId: store.submissionId,
-            onBack: {
-                store.send(.backTapped)
             }
         )
     }
