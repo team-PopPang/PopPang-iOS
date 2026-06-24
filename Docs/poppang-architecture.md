@@ -22,7 +22,8 @@ PopPang은 팝업스토어 정보를 키워드, 검색, 필터, 달력, 지도, 
 - SwiftUI 기반 iOS 앱
 - Tuist 기반 workspace/project 구성
 - Micro Feature Architecture
-- Compound 기반 Feature 상태 관리
+- Compound 기반 Feature 상태 관리를 TCA로 점진 전환 중
+- 화면 전환은 Coordinator 패턴에서 TCA tree-based / stack-based navigation으로 전환 중
 - Moya 기반 네트워크와 async/await wrapper
 - Firebase, KakaoSDK, GoogleSignIn, Google Mobile Ads, NMapsMap, Kingfisher, BottomSheet 사용
 - iOS deployment target은 현재 `17.0` 기준
@@ -32,7 +33,7 @@ PopPang은 팝업스토어 정보를 키워드, 검색, 필터, 달력, 지도, 
 ```text
 Projects
 ├── App
-├── Coordinator
+├── Coordinator              # legacy, 제거 대상
 ├── Domain
 ├── Data
 ├── Features
@@ -58,6 +59,8 @@ Projects
 
 `V0/`는 기존 단일 타깃 구현과 참고 자료 성격이다. 모듈러 구현의 실제 변경은 기본적으로 `Projects/` 아래에서 판단한다.
 
+장기 목표 구조는 `Docs/tca-navigation-guidelines.md`의 `AppFeature`, `AuthFlowFeature`, `MainTabFeature`, `SharedFeature`, `Shared.Models`, `Shared.Clients`, `Shared.Caches` 방향을 따른다. 현재 `Domain`과 feature target을 즉시 대량 이동하지 않고, navigation ownership과 escaping routing 제거를 먼저 진행한다.
+
 ## 모듈 책임
 
 ### App
@@ -71,7 +74,8 @@ Projects
 - 앱 bootstrap
 - repository/usecase live 조립
 - `DIContainer` 등록
-- root coordinator 생성
+- `AppFeature` root store 생성
+- TCA root/auth/main navigation 소유
 - Info.plist, entitlements, app resources 관리
 
 주요 파일:
@@ -86,24 +90,32 @@ Projects
 
 위치: `Projects/Coordinator`
 
-역할:
+상태:
+
+- legacy 모듈
+- 제거 대상
+- 새 기능에서 확장하지 않음
+
+기존 역할:
 
 - Root flow, auth/onboarding/main 전환
 - MainTab 전역 navigation
 - Feature root 조립
-- Feature에서 올라온 intent를 상위 route로 전달
+- feature navigation callback adapter
 
 기준 문서:
 
 - `Projects/Coordinator/README.md`
 - `CoordinatorTree.png`
+- `Docs/tca-navigation-guidelines.md`
 
 핵심 원칙:
 
-- main flow는 `MainTabCoordinatorView`의 단일 `NavigationStack(path:)`를 기준으로 한다.
+- active main flow는 App 모듈의 `MainTabFeature`가 TCA `StackState`와 `@Presents` destination으로 소유한다.
+- root flow는 `RootCoordinator` bridge에서 `AppFeature` tree-based navigation으로 옮긴다.
+- feature coordinator와 화면 전환용 escaping closure는 제거한다.
 - 탭 root view는 중첩 `NavigationStack`을 만들지 않는다.
-- route는 navigation intent만 담고 `Binding`, `View`, 무거운 closure를 넣지 않는다.
-- feature coordinator는 root factory와 navigation adapter 역할을 우선한다.
+- path/destination state는 navigation intent와 child state만 담고 `Binding`, `View`, 무거운 closure를 넣지 않는다.
 - feature 내부 상태인 bottom sheet, selected item, sheet position은 feature state에 둔다.
 
 ### Features
@@ -113,9 +125,10 @@ Projects
 역할:
 
 - 사용자 화면과 화면별 state/action/effect 구현
-- Compound 기반 `*FeatureCompound`
+- 기존 Compound 기반 `*FeatureCompound`
+- 신규/전환 대상 TCA `@Reducer`
 - SwiftUI `*FeatureView`
-- 상위 flow로 전달할 intent callback 제공
+- reducer action과 delegate action을 통해 상위 flow에 navigation intent 전달
 
 기본 의존:
 
@@ -127,9 +140,10 @@ Projects
 주의:
 
 - feature가 다른 feature를 직접 import하는 구조는 기본 전략이 아니다.
-- feature 간 이동은 Coordinator route/factory를 통해 조립한다.
+- active main flow에서 feature 간 이동은 `MainTabFeature.Path` 또는 `MainTabFeature.Destination` state로 조립한다.
 - 화면 로컬 상태는 feature compound 또는 feature view local state에 둔다.
-- 전역 이동, 탭 바깥 push, full screen 전환은 상위 Coordinator로 올린다.
+- 전역 이동, 탭 바깥 push, full screen 전환은 상위 TCA parent reducer로 올린다.
+- 새 화면 전환용 `@escaping` closure를 추가하지 않는다.
 
 ### Domain
 
@@ -197,7 +211,7 @@ Feature
 - Network 공통 타입
 - Moya async wrapper
 - local storage
-- coordinator base
+- legacy coordinator base
 - logging/support/foundation extension
 
 주요 파일:
@@ -205,7 +219,7 @@ Feature
 - `Projects/Shared/Core/Sources/Network/BaseAPI.swift`
 - `Projects/Shared/Core/Sources/Network/NetworkProvider.swift`
 - `Projects/Shared/Core/Sources/Network/MoyaProvider+Async.swift`
-- `Projects/Shared/Core/Sources/Coordinator/Coordinator.swift`
+- `Projects/Shared/Core/Sources/Coordinator/**` legacy coordinator base
 
 ### Shared/DSKit
 
@@ -245,6 +259,13 @@ Feature
 
 ```text
 App
+ -> Features
+ -> Domain
+ -> Data
+ -> Shared
+
+Legacy only:
+App
  -> Coordinator
  -> Features
  -> Domain
@@ -273,6 +294,7 @@ Domain
 
 - `Domain -> Data`, `Domain -> Feature`, `Domain -> Coordinator` 방향 의존을 만들지 않는다.
 - feature 간 직접 의존은 기본 전략이 아니다.
+- `App -> Coordinator` 의존은 제거 대상이다. 새 의존성을 추가하지 않는다.
 - public protocol, DI, module dependency 변경은 작은 수정처럼 보이더라도 영향 범위를 넓게 본다.
 - Tuist 설정 변경은 빌드/link/runtime 위험을 함께 검토한다.
 
@@ -302,15 +324,20 @@ DI 변경 시 함께 확인할 파일:
 
 ## Navigation 기준
 
-자세한 기준은 `Projects/Coordinator/README.md`를 우선한다.
+자세한 기준은 `Docs/tca-navigation-guidelines.md`를 우선한다.
 
 계획 단계 체크:
 
 - 앱 루트 전환인지, MainTab 전역 이동인지, feature 로컬 상태인지 구분한다.
-- MainTab 전역 이동이면 `MainTabRoute` 또는 `MainTabFullScreenRoute` 영향 여부를 확인한다.
-- feature root에는 callback을 추가하고 feature coordinator가 상위 handler로 전달하는 구조를 우선한다.
-- route에는 runtime state, `Binding`, `View`, 무거운 closure를 넣지 않는다.
+- root/auth/sheet/fullScreen처럼 동시에 하나만 떠야 하는 화면은 tree-based navigation을 사용한다.
+- tree-based navigation에서 여러 destination이 있으면 `@Reducer enum Destination`을 만들고 State에는 `@Presents var destination: Destination.State?` 하나만 둔다.
+- push가 누적되는 drill-down 화면은 stack-based navigation을 사용한다.
+- MainTab 전역 push 이동이면 `MainTabFeature.Path` 영향 여부를 확인한다.
+- MainTab presentation 이동이면 `MainTabFeature.Destination` 영향 여부를 확인한다.
+- active main flow feature는 delegate action을 통해 `MainTabFeature`로 navigation intent를 전달한다.
+- path/destination state에는 runtime state, `Binding`, `View`, 무거운 closure를 넣지 않는다.
 - Map bottom sheet처럼 feature 내부 interaction 상태는 feature가 소유한다.
+- 화면 전환용 escaping closure는 제거 대상이며 새로 추가하지 않는다.
 
 ## 네트워크와 API 기준
 
@@ -338,7 +365,9 @@ DI 변경 시 함께 확인할 파일:
 원칙:
 
 - feature target은 기본적으로 `.staticFramework` 성격의 앱 내부 leaf feature로 본다.
-- `Coordinator`, `Domain`, `Data`, `Core`, `DSKit`, `ThirdParty`는 공유 경계로 본다.
+- `Coordinator`는 legacy 공유 경계이며 제거 대상이다.
+- `Domain`, `Data`, `Core`, `DSKit`, `ThirdParty`는 현재 공유 경계로 본다.
+- 장기적으로 `Shared.Models`, `Shared.Clients`, `Shared.Caches`, `SharedFeature` 분리를 검토한다.
 - 외부 SDK 링크 문제는 `ThirdParty`와 `Tuist/Package.swift` product type 정책을 같이 확인한다.
 - `tuist generate`, `make regen`, `make clean`, `make reinstall`은 파일을 생성/삭제/갱신할 수 있으므로 승인 없이 실행하지 않는다.
 - `Projects/**/Derived`, `*.xcodeproj`, `PopPang.xcworkspace`는 생성물 성격이므로 계획 없이 직접 수정하지 않는다.
@@ -358,6 +387,7 @@ DI 변경 시 함께 확인할 파일:
 
 문서 업데이트 후보:
 
+- `Docs/tca-navigation-guidelines.md`
 - `Docs/poppang-architecture.md`
 - `Projects/Coordinator/README.md`
 - `Docs/static-dynamic-linking.md`
@@ -376,7 +406,7 @@ DI 변경 시 함께 확인할 파일:
 요청별 기본 탐색 예:
 
 - 앱 시작, SDK, DI: `Projects/App/Sources/AppCore/**`
-- 루트 전환, 탭, 화면 이동: `Projects/Coordinator/**`, `Projects/Coordinator/README.md`
+- 루트 전환, 탭, 화면 이동: `Docs/tca-navigation-guidelines.md`, `Projects/App/Sources/AppCore/Navigation/**`, `Projects/Coordinator/**`
 - 화면 상태/UI: `Projects/Features/<FeatureName>/Sources/**`
 - 도메인 계약: `Projects/Domain/Sources/**`
 - API/DTO/repository: `Projects/Data/Sources/**`

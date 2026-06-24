@@ -152,7 +152,96 @@ Role Prompt Workflow를 적용할 때는 아래 형식으로 답한다.
 - auto-pr에서 PR 생성 요청은 현재 브랜치를 원격에 게시하는 작업을 포함한다.
 - `.env`, `*.xcconfig`, `GoogleService-Info.plist`, `.codex/logs/*.jsonl`, Xcode/Tuist 생성물, 빌드 산출물, 인증키/토큰/비밀번호는 커밋하지 않는다.
 
-## 3. AI Work Logging
+## 3. TCA Navigation Migration Direction
+
+PopPang은 Coordinator 패턴을 제거하고 TCA navigation을 기준 구조로 전환한다.
+
+현재 코드에 `Projects/Coordinator` 모듈, `RootCoordinator`, `MainTabCoordinator`, feature coordinator, 화면 전환용 escaping closure가 남아 있어도 새 작업에서는 이를 확장하지 않는다. 기존 coordinator는 제거 대상이며, 새 화면 전환은 TCA reducer state/action으로 모델링한다.
+
+자세한 기준은 `Docs/tca-navigation-guidelines.md`를 먼저 읽는다.
+
+### 기본 방향
+
+- 앱 루트 전환은 `AppFeature`가 소유한다.
+- 인증/온보딩/회원가입 흐름은 `AuthFlowFeature`가 소유한다.
+- 메인 탭과 탭 공통 push/fullScreen/sheet 흐름은 `MainTabFeature`가 소유한다.
+- feature는 다른 feature를 직접 조립하지 않고 delegate action으로 intent만 올린다.
+- parent feature가 `StackState` 또는 `@Presents` destination을 변경해 실제 화면 전환을 수행한다.
+- 화면 전환을 위해 `@escaping` closure를 새로 추가하지 않는다.
+- SwiftUI view 내부의 버튼/컴포넌트 이벤트 closure와 UIKit/SDK delegate bridge는 화면 전환용 escaping closure와 구분한다.
+
+### Tree-based Navigation
+
+sheet, fullScreenCover, popover, alert, confirmationDialog, root/auth 단계처럼 동시에 하나만 활성화되어야 하는 화면은 tree-based navigation을 사용한다.
+
+여러 destination이 가능한 경우 여러 optional을 State에 나열하지 않는다. 아래처럼 `@Reducer enum Destination`을 따로 두고 State에는 단일 `@Presents var destination`만 둔다.
+
+```swift
+@Reducer
+struct InventoryFeature {
+    @Reducer
+    enum Destination {
+        case addItem(AddFeature)
+        case detailItem(DetailFeature)
+        case editItem(EditFeature)
+    }
+
+    @ObservableState
+    struct State {
+        @Presents var destination: Destination.State?
+    }
+
+    enum Action {
+        case destination(PresentationAction<Destination.Action>)
+    }
+}
+```
+
+### Stack-based Navigation
+
+popup detail처럼 push가 누적되거나 관련 상세로 다시 진입할 수 있는 drill-down 흐름은 stack-based navigation을 사용한다.
+
+stack destination은 parent feature 안의 `@Reducer enum Path`로 정의하고, parent State가 `StackState<Path.State>`를 소유한다. child feature가 parent의 `Path.State`를 직접 알도록 만들지 않는다. child는 `.delegate(...)` action을 올리고 parent가 `path.append(...)`를 결정한다.
+
+### Reducer Case Ordering
+
+reducer의 `switch action`은 읽는 순서를 일정하게 유지한다.
+
+1. binding, lifecycle, task
+2. 일반 상태 변경 action
+3. async response action
+4. child feature action과 delegate action
+5. navigation action: `path`, `destination`, dismiss
+
+상태 변경과 화면 전환이 섞이면 먼저 상태 변경 case를 모으고, 그 다음 화면 전환 case를 둔다.
+
+### Target Module Shape
+
+장기 목표 구조는 아래 방향을 따른다. 실제 폴더 분리는 점진적으로 진행한다.
+
+```text
+PopPang
+├─ AppFeature
+│  ├─ AuthFlowFeature
+│  │  ├─ OnboardingFeature
+│  │  ├─ LoginFeature
+│  │  └─ SignupFeature
+│  └─ MainTabFeature
+│     ├─ HomeFeature
+│     ├─ CalendarFeature
+│     ├─ MapFeature
+│     ├─ FavoriteFeature
+│     └─ ProfileFeature
+├─ SharedFeature
+└─ Shared
+   ├─ Models
+   ├─ Clients
+   └─ Caches
+```
+
+현재 `Domain`의 entity/usecase/repository 계약은 즉시 `Shared`로 옮기지 않는다. 먼저 TCA navigation ownership과 escaping routing 제거를 안정화한 뒤, `Shared.Models`, `Shared.Clients`, `Shared.Caches` 분리를 별도 계획으로 진행한다.
+
+## 4. AI Work Logging
 
 Codex 작업은 재현성, 디버깅 가능성, 오류 원인 추적을 위해 최소 로그를 남긴다.
 

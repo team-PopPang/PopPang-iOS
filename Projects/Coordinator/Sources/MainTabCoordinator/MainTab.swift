@@ -7,7 +7,7 @@ public enum MainTab: Hashable, CaseIterable, Sendable {
     case favorites
     case profile
 
-    var title: String {
+    public var title: String {
         switch self {
         case .home:
             "홈"
@@ -71,7 +71,7 @@ public enum MainTab: Hashable, CaseIterable, Sendable {
         }
     }
 
-    func tabAsset(selected: Bool) -> CoordinatorImages {
+    public func tabAsset(selected: Bool) -> CoordinatorImages {
         selected ? selectedImage : image
     }
 }

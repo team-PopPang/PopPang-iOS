@@ -22,9 +22,9 @@ static/dynamic product type 선택 기준은 `Docs/static-dynamic-linking.md`를
 해결:
 
 - 각 탭의 팝업 선택은 탭 내부 route로 직접 push하지 않는다.
-- `HomeFeatureView`, `CalendarFeatureView`, `MapFeatureView`, `FavoritesFeatureView`, `AlertFeatureView` 등은 `onSelectPopup` 콜백만 호출한다.
-- 각 탭 coordinator는 해당 콜백을 `MainTabCoordinator`로 전달한다.
-- `MainTabCoordinatorView`가 `NavigationStack`으로 `TabView`를 감싸고, `MainTabRoute.popupDetail`을 `navigationDestination(item:)` 상위 destination으로 push한다.
+- legacy coordinator 구조에서는 `HomeFeatureView`, `CalendarFeatureView`, `MapFeatureView`, `FavoritesFeatureView`, `AlertFeatureView` 등이 `onSelectPopup` 콜백을 호출하고, 각 탭 coordinator가 이를 `MainTabCoordinator`로 전달했다.
+- TCA 전환 구조에서는 각 feature가 `.delegate(.popupSelected(...))` action을 올리고, `MainTabFeature`가 `Path.popupDetail`을 `StackState`에 append한다.
+- `MainTabFeatureView`가 하나의 상위 `NavigationStack`으로 `TabView`를 감싸고, `MainTabFeature.Path.popupDetail`을 상위 destination으로 push한다.
 - 상위 destination으로 열린 `PopupDetailFeatureView`는 `hidesSystemTabBar: false`로 생성한다. 이 화면은 이미 `TabView` 바깥 destination이라 숨길 탭바가 없다.
 
 주의:
