@@ -6,8 +6,8 @@
 
 ## 결정 사항
 
-- Coordinator 패턴은 제거 대상이다.
-- `Projects/Coordinator` 모듈은 새 기능에서 확장하지 않는다.
+- Coordinator 패턴은 제거 완료된 legacy 구조다.
+- `Projects/Coordinator` 모듈은 workspace에서 제거되었고 새 기능에서 재도입하지 않는다.
 - 화면 전환용 `@escaping` closure는 제거 대상이다.
 - 새 화면 전환은 TCA state/action/reducer로 모델링한다.
 - tree-based navigation과 stack-based navigation을 함께 사용한다.
@@ -365,7 +365,7 @@ case .destination:
 ### 1. App navigation 기준선
 
 - `AppFeature` 도입
-- `RootCoordinator` 제거
+- `RootCoordinator` 제거 완료
 - `MainTab`, `UserSession` 성격 타입을 Coordinator 밖으로 이동
 - App target에서 Coordinator dependency 제거
 

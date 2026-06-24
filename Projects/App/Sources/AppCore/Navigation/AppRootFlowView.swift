@@ -1,42 +1,48 @@
-import Coordinator
+import AuthFeature
+import ComposableArchitecture
 import DSKit
+import OnboardingFeature
 import SwiftUI
 
 struct AppRootFlowView: View {
-    @State private var coordinator: RootCoordinator
-
-    @MainActor
-    init(coordinator: RootCoordinator) {
-        _coordinator = State(initialValue: coordinator)
-    }
+    @Bindable var store: StoreOf<AppFeature>
 
     var body: some View {
-        @Bindable var coordinator = coordinator
-
         Group {
-            switch coordinator.destination {
+            switch store.destination {
             case .launch:
-                LaunchScene(
-                    onContinue: {
-                        await coordinator.begin()
+                LaunchScene {
+                    store.send(.launchTask)
+                }
+
+            case .onboarding:
+                OnboardingFeatureView(
+                    onSkip: {
+                        store.send(.onboardingCompleted)
+                    },
+                    onComplete: {
+                        store.send(.onboardingCompleted)
                     }
                 )
-            case .onboarding:
-                OnboardingFlowView(coordinator: coordinator.onboardingCoordinator)
+
             case .auth:
-                coordinator.authFlowCoordinator.makeRootView()
+                AuthFeatureView(
+                    onLoginSuccess: { user in
+                        store.send(.authCompleted(user))
+                    }
+                )
+
             case .register:
-                coordinator.authFlowCoordinator.makeRegisterView()
+                RegisterFlowFeatureView(
+                    user: store.pendingRegistrationUser,
+                    onComplete: { user in
+                        store.send(.registerCompleted(user))
+                    }
+                )
+
             case .main:
-                if let mainTabCoordinator = coordinator.mainTabCoordinator {
-                    MainTabFeatureHost(
-                        session: mainTabCoordinator.session,
-                        selectedTab: mainTabCoordinator.selectedTab,
-                        onLogout: {
-                            coordinator.logout()
-                        }
-                    )
-                    .id(mainTabCoordinator.session)
+                if let mainTabStore = store.scope(state: \.mainTab, action: \.mainTab) {
+                    MainTabFeatureView(store: mainTabStore)
                 }
             }
         }
@@ -44,7 +50,7 @@ struct AppRootFlowView: View {
 }
 
 private struct LaunchScene: View {
-    let onContinue: @MainActor () async -> Void
+    let onContinue: () -> Void
 
     var body: some View {
         ZStack {
@@ -54,19 +60,7 @@ private struct LaunchScene: View {
                 .ignoresSafeArea()
         }
         .task {
-            await onContinue()
-        }
-    }
-}
-
-private struct OnboardingFlowView: View {
-    let coordinator: OnboardingCoordinator
-
-    var body: some View {
-        CoordinatorContainer(coordinator: coordinator) {
-            coordinator.makeRootView()
-        } destination: { route in
-            coordinator.buildView(for: route)
+            onContinue()
         }
     }
 }

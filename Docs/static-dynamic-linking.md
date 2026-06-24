@@ -130,10 +130,9 @@ Data sources
 | --- | --- | --- |
 | `Projects/Features/*Feature` | `.staticFramework` | 앱 내부 전용 leaf feature. feature 수가 많으므로 런타임 dynamic framework 증가를 막는다. |
 | `SearchFeatureInterface`, `PopupDetailFeatureInterface` | `.framework` | 다른 모듈이 명시적으로 import하는 재사용 경계다. |
-| `Coordinator` | `.framework` | legacy navigation shell이다. 제거 대상이며 새 기능에서 확장하지 않는다. |
-| `Domain` | `.framework` | Feature/Data/Coordinator가 공유하는 계약 경계다. |
+| `Domain` | `.framework` | Feature/Data/App이 공유하는 계약 경계다. |
 | `Data` | `.framework` | repository 구현과 외부 SDK 로그인 구현이 있는 인프라 경계다. |
-| `Core` | `.framework` | 네트워크, 저장소, formatter, coordinator base 등 여러 레이어가 공유하는 기반 모듈이다. |
+| `Core` | `.framework` | 네트워크, 저장소, formatter 등 여러 레이어가 공유하는 기반 모듈이다. |
 | `DSKit` | `.framework` | Feature들이 공유하는 UI resource/API 경계다. |
 | `ThirdParty` | `.framework` | 외부 SDK product를 한 곳에서 링크하는 허브다. |
 | demo app | `.app` | 독립 실행 샘플 앱이다. |
@@ -562,7 +561,7 @@ local target을 `.staticFramework`에서 `.framework`로 바꾸거나 반대로 
 - 이 모듈을 App extension도 쓰는가?
 - 이 모듈을 외부에 binary로 배포해야 하는가?
 - `tuist generate`가 통과하는가?
-- `tuist build Coordinator` 또는 App 빌드가 통과하는가?
+- App 빌드가 통과하는가?
 - 앱 실행 로그에 `Class ... is implemented in both ...`가 없는가?
 - `no such module`, `Undefined symbols`, `explicit module` 오류가 없는가?
 
@@ -588,7 +587,7 @@ product: .staticFramework
 product: .framework
 ```
 
-새 domain/data/core/dskit/shared/thirdparty/coordinator 모듈:
+새 domain/data/core/dskit/shared/thirdparty 모듈:
 
 ```swift
 product: .framework

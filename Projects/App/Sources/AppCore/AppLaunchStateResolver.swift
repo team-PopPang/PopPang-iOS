@@ -1,9 +1,8 @@
-import Coordinator
 import Domain
 import Foundation
 
 struct AppLaunchStateResolver: Sendable {
-    func resolve(snapshot: AppSessionSnapshot) -> RootDestination {
+    func resolve(snapshot: AppSessionSnapshot) -> AppRootDestination {
         if snapshot.hasAuthenticatedUser {
             return .main
         }
@@ -30,10 +29,4 @@ struct AppLaunchStateResolver: Sendable {
             return .destination(.onboarding)
         }
     }
-}
-
-enum AppLaunchResolution {
-    case destination(RootDestination)
-    case authenticated(User)
-    case registrationRequired(User)
 }

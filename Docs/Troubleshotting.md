@@ -22,8 +22,8 @@ static/dynamic product type 선택 기준은 `Docs/static-dynamic-linking.md`를
 해결:
 
 - 각 탭의 팝업 선택은 탭 내부 route로 직접 push하지 않는다.
-- legacy coordinator 구조에서는 `HomeFeatureView`, `CalendarFeatureView`, `MapFeatureView`, `FavoritesFeatureView`, `AlertFeatureView` 등이 `onSelectPopup` 콜백을 호출하고, 각 탭 coordinator가 이를 `MainTabCoordinator`로 전달했다.
-- TCA 전환 구조에서는 각 feature가 `.delegate(.popupSelected(...))` action을 올리고, `MainTabFeature`가 `Path.popupDetail`을 `StackState`에 append한다.
+- legacy coordinator 구조에서는 각 탭 coordinator가 팝업 선택 이벤트를 상위 coordinator로 전달했다.
+- 현재 TCA 구조에서는 각 feature가 `.delegate(.popupSelected(...))` action을 올리고, `MainTabFeature`가 `Path.popupDetail`을 `StackState`에 append한다.
 - `MainTabFeatureView`가 하나의 상위 `NavigationStack`으로 `TabView`를 감싸고, `MainTabFeature.Path.popupDetail`을 상위 destination으로 push한다.
 - 상위 destination으로 열린 `PopupDetailFeatureView`는 `hidesSystemTabBar: false`로 생성한다. 이 화면은 이미 `TabView` 바깥 destination이라 숨길 탭바가 없다.
 
@@ -31,7 +31,7 @@ static/dynamic product type 선택 기준은 `Docs/static-dynamic-linking.md`를
 
 - 탭 내부 route로 상세를 push하는 fallback 경로는 아직 있을 수 있으므로 `PopupDetailFeatureView`의 기본값은 `hidesSystemTabBar: true`로 유지한다.
 - V0와 같은 체감을 원하면 사용자 플로우의 팝업 상세 진입점은 가능한 상위 route로 모아야 한다.
-- 상위 `NavigationStack`에 typed path 배열을 두고, 탭 내부에도 각기 다른 typed path의 `NavigationStack`을 중첩하면 SwiftUI가 내부 path 비교 중 `AnyNavigationPath.Error.comparisonTypeMismatch`로 크래시할 수 있다. 그래서 상위 팝업 상세 route는 단일 optional item route로 둔다.
+- 상위 `NavigationStack`에 typed path 배열을 두고, 탭 내부에도 각기 다른 typed path의 `NavigationStack`을 중첩하면 SwiftUI가 내부 path 비교 중 `AnyNavigationPath.Error.comparisonTypeMismatch`로 크래시할 수 있다. 그래서 공통 상세 route는 `MainTabFeature.Path`의 단일 `StackState`로 모은다.
 
 ## BottomSheet 안의 지도 목록이 데이터 변경을 바로 반영하지 않는 문제
 
@@ -775,7 +775,7 @@ product: .staticFramework
 | 조건 | 예 | 이유 |
 | --- | --- | --- |
 | 여러 레이어가 공유하는 경계 | `Domain`, `Core`, `DSKit` | 여러 target이 명시적으로 import하는 계약/API 경계다. |
-| 앱 조립 또는 인프라 경계 | `Coordinator`, `Data`, `ThirdParty` | App이 별도 framework로 조립하는 큰 경계다. |
+| 앱 조립 또는 인프라 경계 | `Data`, `ThirdParty` | App이 별도 framework로 조립하는 큰 경계다. |
 | feature public interface | `SearchFeatureInterface`, `PopupDetailFeatureInterface` | 재사용 entry API를 명시적으로 노출한다. |
 | static이면 duplicate class가 난 SPM product | `BottomSheet`, `KakaoSDKCommon` | 같은 SDK 코드가 여러 dynamic framework에 복사되는 것을 막는다. |
 | static 기본값에서 링크/모듈 해석이 깨지는 SPM product | `Moya`, `Alamofire`, `GoogleSignIn` 전이 product | `no such module`, undefined symbols를 막는다. |
@@ -799,14 +799,14 @@ tuist generate
 생성된 프로젝트에서 확인:
 
 ```sh
-rg -n "BottomSheet.framework" Projects/Shared/ThirdParty/ThirdParty.xcodeproj Projects/Coordinator/Coordinator.xcodeproj Projects/Features/MapFeature/MapFeature.xcodeproj -g "*.pbxproj"
+rg -n "BottomSheet.framework" Projects/Shared/ThirdParty/ThirdParty.xcodeproj Projects/Features/MapFeature/MapFeature.xcodeproj Projects/App/App.xcodeproj -g "*.pbxproj"
 ```
 
 기대:
 
 - `BottomSheet` 프로젝트가 별도로 생성된다.
 - App build phase에 `BottomSheet.framework`가 embed 대상 또는 copy files 대상으로 잡힌다.
-- `Coordinator.framework` 안에 `BottomSheetConfiguration` 구현이 중복 포함되지 않아야 한다.
+- App과 feature 산출물 안에 `BottomSheetConfiguration` 구현이 중복 포함되지 않아야 한다.
 
 릴리스 빌드 확인:
 

@@ -1,4 +1,4 @@
-import Coordinator
+import ComposableArchitecture
 import Core
 import Foundation
 
@@ -24,56 +24,13 @@ struct AppBootstrap {
         )
     }
 
-    @MainActor
-    func makeRootCoordinator() -> RootCoordinator {
-        let snapshot = sessionStorage.loadSnapshot()
-        let nextDestination = launchStateResolver.resolve(snapshot: snapshot)
-        let userUsecase = dependencies.usecases.userUsecase
-        let actions = RootCoordinatorActions(
-            completeOnboarding: {
-                sessionStorage.setOnboardingCompleted(true)
-            },
-            authenticate: { userID in
-                sessionStorage.setOnboardingCompleted(true)
-                sessionStorage.saveUserID(userID)
-                AppNotificationManager.shared.syncStoredToken(userUuid: userID)
-            },
-            logout: {
-                sessionStorage.clearSession()
-            }
-        )
-        let launch: @MainActor () async -> RootLaunchResult = {
-            let latestSnapshot = sessionStorage.loadSnapshot()
-            let resolution = await launchStateResolver.resolve(
-                snapshot: latestSnapshot,
-                userUsecase: userUsecase
+    func makeAppStore() -> StoreOf<AppFeature> {
+        Store(initialState: AppFeature.State()) {
+            AppFeature(
+                sessionStorage: sessionStorage,
+                launchStateResolver: launchStateResolver,
+                userUsecase: dependencies.usecases.userUsecase
             )
-
-            switch resolution {
-            case .destination(let destination):
-                if latestSnapshot.hasAuthenticatedUser {
-                    sessionStorage.clearSession()
-                }
-                return .destination(destination)
-            case .authenticated(let user):
-                sessionStorage.setOnboardingCompleted(true)
-                sessionStorage.saveUserID(user.userUuid)
-                AppNotificationManager.shared.syncStoredToken(userUuid: user.userUuid)
-                return .authenticated(user)
-            case .registrationRequired(let user):
-                sessionStorage.setOnboardingCompleted(true)
-                sessionStorage.saveUserID(user.userUuid)
-                AppNotificationManager.shared.syncStoredToken(userUuid: user.userUuid)
-                return .registrationRequired(user)
-            }
         }
-
-        return RootCoordinator(
-            destination: .launch,
-            nextDestination: nextDestination,
-            initialSession: MainTabSession(userUuid: snapshot.userID ?? "demo-user"),
-            actions: actions,
-            launch: launch
-        )
     }
 }

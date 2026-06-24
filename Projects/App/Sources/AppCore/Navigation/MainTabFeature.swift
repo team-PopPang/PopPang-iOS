@@ -1,6 +1,70 @@
 import ComposableArchitecture
-import Coordinator
 import Domain
+
+enum MainTab: Hashable, CaseIterable, Sendable {
+    case home
+    case calendar
+    case map
+    case favorites
+    case profile
+
+    var title: String {
+        switch self {
+        case .home:
+            "홈"
+        case .calendar:
+            "캘린더"
+        case .map:
+            "팝팡지도"
+        case .favorites:
+            "팝팡"
+        case .profile:
+            "마이"
+        }
+    }
+
+    private var rawImageName: String {
+        switch self {
+        case .home:
+            "home"
+        case .calendar:
+            "calendar"
+        case .map:
+            "map"
+        case .favorites:
+            "favorite"
+        case .profile:
+            "profile"
+        }
+    }
+
+    func tabImageName(selected: Bool) -> String {
+        selected ? "\(rawImageName)_fill" : rawImageName
+    }
+}
+
+struct MainTabSession: Equatable, Hashable, Sendable {
+    var userUuid: String
+    var nickname: String
+    var isAlerted: Bool
+    var role: String
+
+    init(
+        userUuid: String,
+        nickname: String = "닉네임",
+        isAlerted: Bool = false,
+        role: String = "USER"
+    ) {
+        self.userUuid = userUuid
+        self.nickname = nickname
+        self.isAlerted = isAlerted
+        self.role = role
+    }
+
+    var isAdmin: Bool {
+        role.uppercased() == "ADMIN"
+    }
+}
 
 @Reducer
 struct MainTabFeature {
@@ -8,9 +72,13 @@ struct MainTabFeature {
     struct State: Equatable {
         var selectedTab: MainTab
         var session: MainTabSession
+        var home: HomeTabFeature.State
+        var calendar: CalendarTabFeature.State
+        var map: MapTabFeature.State
+        var favorites: FavoritesTabFeature.State
+        var profile: ProfileTabFeature.State
         var path = StackState<Path.State>()
-        @Presents var search: SearchDestinationFeature.State?
-        var logoutToken = 0
+        @Presents var destination: Destination.State?
 
         init(
             selectedTab: MainTab = .home,
@@ -18,29 +86,47 @@ struct MainTabFeature {
         ) {
             self.selectedTab = selectedTab
             self.session = session
+            self.home = HomeTabFeature.State(session: session)
+            self.calendar = CalendarTabFeature.State(session: session)
+            self.map = MapTabFeature.State(session: session)
+            self.favorites = FavoritesTabFeature.State(session: session)
+            self.profile = ProfileTabFeature.State(session: session)
+        }
+
+        mutating func updateSession(_ session: MainTabSession) {
+            self.session = session
+            home.updateSession(session)
+            calendar.updateSession(session)
+            map.updateSession(session)
+            favorites.updateSession(session)
+            profile.updateSession(session)
+        }
+
+        static func == (lhs: Self, rhs: Self) -> Bool {
+            lhs.selectedTab == rhs.selectedTab
+                && lhs.session == rhs.session
+                && lhs.home == rhs.home
+                && lhs.calendar == rhs.calendar
+                && lhs.map == rhs.map
+                && lhs.favorites == rhs.favorites
+                && lhs.profile == rhs.profile
         }
     }
 
     enum Action: BindableAction {
         case binding(BindingAction<State>)
+        case home(HomeTabFeature.Action)
+        case calendar(CalendarTabFeature.Action)
+        case map(MapTabFeature.Action)
+        case favorites(FavoritesTabFeature.Action)
+        case profile(ProfileTabFeature.Action)
         case path(StackActionOf<Path>)
-        case search(PresentationAction<SearchDestinationFeature.Action>)
-        case homePopupSelected(Popup)
-        case homeAlertTapped
-        case homeSearchTapped
-        case homeComingTapped([Popup])
-        case homeReportTapped
-        case homeManagePopupRequestsTapped
-        case calendarAlertTapped
-        case calendarPopupSelected(Popup)
-        case favoritesAlertTapped
-        case favoritesPopupSelected(Popup)
-        case favoritesBrowsePopupsTapped
-        case mapPopupSelected(Popup)
-        case profileAlertTapped
-        case profileSettingTapped(nickname: String, isAlerted: Bool)
-        case profileNotificationsTapped
-        case profileServiceTermsTapped
+        case destination(PresentationAction<Destination.Action>)
+        case delegate(Delegate)
+
+        enum Delegate: Equatable {
+            case logout
+        }
     }
 
     @Reducer
@@ -57,44 +143,60 @@ struct MainTabFeature {
         case serviceTerms(ServiceTermsDestinationFeature)
     }
 
+    @Reducer
+    enum Destination {
+        case search(SearchDestinationFeature)
+    }
+
     var body: some ReducerOf<Self> {
         BindingReducer()
+
+        Scope(state: \.home, action: \.home) {
+            HomeTabFeature()
+        }
+        Scope(state: \.calendar, action: \.calendar) {
+            CalendarTabFeature()
+        }
+        Scope(state: \.map, action: \.map) {
+            MapTabFeature()
+        }
+        Scope(state: \.favorites, action: \.favorites) {
+            FavoritesTabFeature()
+        }
+        Scope(state: \.profile, action: \.profile) {
+            ProfileTabFeature()
+        }
 
         Reduce { state, action in
             switch action {
             case .binding:
                 return .none
 
-            case .homePopupSelected(let popup),
-                    .calendarPopupSelected(let popup),
-                    .favoritesPopupSelected(let popup),
-                    .mapPopupSelected(let popup):
-                state.path.append(
-                    .popupDetail(
-                        .init(
-                            userUuid: state.session.userUuid,
-                            popup: popup,
-                            isAdmin: state.session.isAdmin
-                        )
+            case .home(.delegate(.popupSelected(let popup))),
+                    .calendar(.delegate(.popupSelected(let popup))),
+                    .favorites(.delegate(.popupSelected(let popup))),
+                    .map(.delegate(.popupSelected(let popup))),
+                    .profile(.delegate(.popupSelected(let popup))):
+                appendPopupDetail(popup, state: &state)
+                return .none
+
+            case .home(.delegate(.alertRequested)),
+                    .calendar(.delegate(.alertRequested)),
+                    .favorites(.delegate(.alertRequested)),
+                    .profile(.delegate(.alertRequested)):
+                state.path.append(.alert(.init(userUuid: state.session.userUuid)))
+                return .none
+
+            case .home(.delegate(.searchRequested)):
+                state.destination = .search(
+                    .init(
+                        userUuid: state.session.userUuid,
+                        nickname: state.session.nickname
                     )
                 )
                 return .none
 
-            case .homeAlertTapped,
-                    .calendarAlertTapped,
-                    .favoritesAlertTapped,
-                    .profileAlertTapped:
-                state.path.append(.alert(.init(userUuid: state.session.userUuid)))
-                return .none
-
-            case .homeSearchTapped:
-                state.search = .init(
-                    userUuid: state.session.userUuid,
-                    nickname: state.session.nickname
-                )
-                return .none
-
-            case .homeComingTapped(let popups):
+            case .home(.delegate(.comingPopupsRequested(let popups))):
                 state.path.append(
                     .comingPopupDetail(
                         .init(
@@ -105,19 +207,19 @@ struct MainTabFeature {
                 )
                 return .none
 
-            case .homeReportTapped:
+            case .home(.delegate(.popupRequestRequested)):
                 state.path.append(.popupRequest(.init(userUuid: state.session.userUuid)))
                 return .none
 
-            case .homeManagePopupRequestsTapped:
+            case .home(.delegate(.popupRequestManagementRequested)):
                 state.path.append(.popupRequestManagement(.init()))
                 return .none
 
-            case .favoritesBrowsePopupsTapped:
+            case .favorites(.delegate(.browsePopupsRequested)):
                 state.selectedTab = .home
                 return .none
 
-            case .profileSettingTapped(let nickname, let isAlerted):
+            case .profile(.delegate(.profileSettingRequested(let nickname, let isAlerted))):
                 state.path.append(
                     .profileSetting(
                         .init(
@@ -129,114 +231,346 @@ struct MainTabFeature {
                 )
                 return .none
 
-            case .profileNotificationsTapped:
+            case .profile(.delegate(.notificationsRequested)):
                 state.path.append(.notifications(.init()))
                 return .none
 
-            case .profileServiceTermsTapped:
+            case .profile(.delegate(.serviceTermsRequested)):
                 state.path.append(.serviceTerms(.init()))
                 return .none
 
+            case .home,
+                    .calendar,
+                    .map,
+                    .favorites,
+                    .profile:
+                return .none
+
             case .path(.element(let id, let action)):
-                switch action {
-                case .popupDetail(.delegate(.pushPopupDetail(let userUuid, let popup))):
-                    state.path.append(
-                        .popupDetail(
-                            .init(
-                                userUuid: userUuid,
-                                popup: popup,
-                                isAdmin: state.session.isAdmin
-                            )
-                        )
-                    )
-                    return .none
-
-                case .popupDetail(.delegate(.showReviews(let reviews))):
-                    state.path.append(.reviewDetail(.init(reviews: reviews)))
-                    return .none
-
-                case .popupDetail(.delegate(.close)):
-                    state.path.pop(from: id)
-                    return .none
-
-                case .comingPopupDetail(.delegate(.pushPopupDetail(let userUuid, let popup))):
-                    state.path.append(
-                        .popupDetail(
-                            .init(
-                                userUuid: userUuid,
-                                popup: popup,
-                                isAdmin: state.session.isAdmin
-                            )
-                        )
-                    )
-                    return .none
-
-                case .alert(.delegate(.pushPopupDetail(let userUuid, let popup))):
-                    state.path.append(
-                        .popupDetail(
-                            .init(
-                                userUuid: userUuid,
-                                popup: popup,
-                                isAdmin: state.session.isAdmin
-                            )
-                        )
-                    )
-                    return .none
-
-                case .popupRequest(.delegate(.dismiss)),
-                        .popupRequestManagement(.delegate(.back)),
-                        .popupRequestManagementDetail(.delegate(.back)):
-                    state.path.pop(from: id)
-                    return .none
-
-                case .popupRequestManagement(.delegate(.showDetail(let submissionId))):
-                    state.path.append(
-                        .popupRequestManagementDetail(
-                            .init(submissionId: submissionId)
-                        )
-                    )
-                    return .none
-
-                case .profileSetting(.delegate(.logout)):
-                    state.logoutToken += 1
-                    return .none
-
-                case .profileSetting(.delegate(.nicknameUpdated(let nickname))):
-                    state.session.nickname = nickname
-                    return .none
-
-                default:
-                    return .none
-                }
+                return reducePathAction(id: id, action: action, state: &state)
 
             case .path:
                 return .none
 
-            case .search(.presented(.delegate(.dismiss))):
-                state.search = nil
+            case .destination(.presented(.search(.delegate(.dismiss)))):
+                state.destination = nil
                 return .none
 
-            case .search(.presented(.delegate(.selectPopup(let popup)))):
-                let userUuid = state.session.userUuid
-                state.search = nil
-                state.path.append(
-                    .popupDetail(
-                        .init(
-                            userUuid: userUuid,
-                            popup: popup,
-                            isAdmin: state.session.isAdmin
-                        )
-                    )
-                )
+            case .destination(.presented(.search(.delegate(.selectPopup(let popup))))):
+                state.destination = nil
+                appendPopupDetail(popup, state: &state)
                 return .none
 
-            case .search:
+            case .destination:
+                return .none
+
+            case .delegate:
                 return .none
             }
         }
         .forEach(\.path, action: \.path)
-        .ifLet(\.$search, action: \.search) {
-            SearchDestinationFeature()
+        .ifLet(\.$destination, action: \.destination)
+    }
+}
+
+private extension MainTabFeature {
+    func appendPopupDetail(_ popup: Popup, state: inout State) {
+        state.path.append(
+            .popupDetail(
+                .init(
+                    userUuid: state.session.userUuid,
+                    popup: popup,
+                    isAdmin: state.session.isAdmin
+                )
+            )
+        )
+    }
+
+    func reducePathAction(
+        id: StackElementID,
+        action: Path.Action,
+        state: inout State
+    ) -> Effect<Action> {
+        switch action {
+        case .popupDetail(.delegate(.pushPopupDetail(_, let popup))),
+                .comingPopupDetail(.delegate(.pushPopupDetail(_, let popup))),
+                .alert(.delegate(.pushPopupDetail(_, let popup))):
+            appendPopupDetail(popup, state: &state)
+            return .none
+
+        case .popupDetail(.delegate(.showReviews(let reviews))):
+            state.path.append(.reviewDetail(.init(reviews: reviews)))
+            return .none
+
+        case .popupDetail(.delegate(.close)):
+            state.path.pop(from: id)
+            return .none
+
+        case .popupRequest(.delegate(.dismiss)),
+                .popupRequestManagement(.delegate(.back)),
+                .popupRequestManagementDetail(.delegate(.back)):
+            state.path.pop(from: id)
+            return .none
+
+        case .popupRequestManagement(.delegate(.showDetail(let submissionId))):
+            state.path.append(
+                .popupRequestManagementDetail(
+                    .init(submissionId: submissionId)
+                )
+            )
+            return .none
+
+        case .profileSetting(.delegate(.logout)):
+            return .send(.delegate(.logout))
+
+        case .profileSetting(.delegate(.nicknameUpdated(let nickname))):
+            var nextSession = state.session
+            nextSession.nickname = nickname
+            state.updateSession(nextSession)
+            return .none
+
+        default:
+            return .none
+        }
+    }
+}
+
+@Reducer
+struct HomeTabFeature {
+    @ObservableState
+    struct State: Equatable {
+        var userUuid: String
+        var nickname: String
+        var isAdmin: Bool
+
+        init(session: MainTabSession) {
+            self.userUuid = session.userUuid
+            self.nickname = session.nickname
+            self.isAdmin = session.isAdmin
+        }
+
+        mutating func updateSession(_ session: MainTabSession) {
+            userUuid = session.userUuid
+            nickname = session.nickname
+            isAdmin = session.isAdmin
+        }
+    }
+
+    enum Action: Equatable {
+        case popupSelected(Popup)
+        case alertTapped
+        case searchTapped
+        case comingPopupsTapped([Popup])
+        case popupRequestTapped
+        case popupRequestManagementTapped
+        case delegate(Delegate)
+
+        enum Delegate: Equatable {
+            case popupSelected(Popup)
+            case alertRequested
+            case searchRequested
+            case comingPopupsRequested([Popup])
+            case popupRequestRequested
+            case popupRequestManagementRequested
+        }
+    }
+
+    var body: some ReducerOf<Self> {
+        Reduce { _, action in
+            switch action {
+            case .popupSelected(let popup):
+                return .send(.delegate(.popupSelected(popup)))
+            case .alertTapped:
+                return .send(.delegate(.alertRequested))
+            case .searchTapped:
+                return .send(.delegate(.searchRequested))
+            case .comingPopupsTapped(let popups):
+                return .send(.delegate(.comingPopupsRequested(popups)))
+            case .popupRequestTapped:
+                return .send(.delegate(.popupRequestRequested))
+            case .popupRequestManagementTapped:
+                return .send(.delegate(.popupRequestManagementRequested))
+            case .delegate:
+                return .none
+            }
+        }
+    }
+}
+
+@Reducer
+struct CalendarTabFeature {
+    @ObservableState
+    struct State: Equatable {
+        var userUuid: String
+
+        init(session: MainTabSession) {
+            self.userUuid = session.userUuid
+        }
+
+        mutating func updateSession(_ session: MainTabSession) {
+            userUuid = session.userUuid
+        }
+    }
+
+    enum Action: Equatable {
+        case alertTapped
+        case popupSelected(Popup)
+        case delegate(Delegate)
+
+        enum Delegate: Equatable {
+            case alertRequested
+            case popupSelected(Popup)
+        }
+    }
+
+    var body: some ReducerOf<Self> {
+        Reduce { _, action in
+            switch action {
+            case .alertTapped:
+                return .send(.delegate(.alertRequested))
+            case .popupSelected(let popup):
+                return .send(.delegate(.popupSelected(popup)))
+            case .delegate:
+                return .none
+            }
+        }
+    }
+}
+
+@Reducer
+struct MapTabFeature {
+    @ObservableState
+    struct State: Equatable {
+        var userUuid: String
+
+        init(session: MainTabSession) {
+            self.userUuid = session.userUuid
+        }
+
+        mutating func updateSession(_ session: MainTabSession) {
+            userUuid = session.userUuid
+        }
+    }
+
+    enum Action: Equatable {
+        case popupSelected(Popup)
+        case delegate(Delegate)
+
+        enum Delegate: Equatable {
+            case popupSelected(Popup)
+        }
+    }
+
+    var body: some ReducerOf<Self> {
+        Reduce { _, action in
+            switch action {
+            case .popupSelected(let popup):
+                return .send(.delegate(.popupSelected(popup)))
+            case .delegate:
+                return .none
+            }
+        }
+    }
+}
+
+@Reducer
+struct FavoritesTabFeature {
+    @ObservableState
+    struct State: Equatable {
+        var userUuid: String
+
+        init(session: MainTabSession) {
+            self.userUuid = session.userUuid
+        }
+
+        mutating func updateSession(_ session: MainTabSession) {
+            userUuid = session.userUuid
+        }
+    }
+
+    enum Action: Equatable {
+        case alertTapped
+        case popupSelected(Popup)
+        case browsePopupsTapped
+        case delegate(Delegate)
+
+        enum Delegate: Equatable {
+            case alertRequested
+            case popupSelected(Popup)
+            case browsePopupsRequested
+        }
+    }
+
+    var body: some ReducerOf<Self> {
+        Reduce { _, action in
+            switch action {
+            case .alertTapped:
+                return .send(.delegate(.alertRequested))
+            case .popupSelected(let popup):
+                return .send(.delegate(.popupSelected(popup)))
+            case .browsePopupsTapped:
+                return .send(.delegate(.browsePopupsRequested))
+            case .delegate:
+                return .none
+            }
+        }
+    }
+}
+
+@Reducer
+struct ProfileTabFeature {
+    @ObservableState
+    struct State: Equatable {
+        var userUuid: String
+        var nickname: String
+        var isAlerted: Bool
+
+        init(session: MainTabSession) {
+            self.userUuid = session.userUuid
+            self.nickname = session.nickname
+            self.isAlerted = session.isAlerted
+        }
+
+        mutating func updateSession(_ session: MainTabSession) {
+            userUuid = session.userUuid
+            nickname = session.nickname
+            isAlerted = session.isAlerted
+        }
+    }
+
+    enum Action: Equatable {
+        case alertTapped
+        case popupSelected(Popup)
+        case profileSettingTapped(nickname: String, isAlerted: Bool)
+        case notificationsTapped
+        case serviceTermsTapped
+        case delegate(Delegate)
+
+        enum Delegate: Equatable {
+            case alertRequested
+            case popupSelected(Popup)
+            case profileSettingRequested(nickname: String, isAlerted: Bool)
+            case notificationsRequested
+            case serviceTermsRequested
+        }
+    }
+
+    var body: some ReducerOf<Self> {
+        Reduce { _, action in
+            switch action {
+            case .alertTapped:
+                return .send(.delegate(.alertRequested))
+            case .popupSelected(let popup):
+                return .send(.delegate(.popupSelected(popup)))
+            case .profileSettingTapped(let nickname, let isAlerted):
+                return .send(.delegate(.profileSettingRequested(nickname: nickname, isAlerted: isAlerted)))
+            case .notificationsTapped:
+                return .send(.delegate(.notificationsRequested))
+            case .serviceTermsTapped:
+                return .send(.delegate(.serviceTermsRequested))
+            case .delegate:
+                return .none
+            }
         }
     }
 }

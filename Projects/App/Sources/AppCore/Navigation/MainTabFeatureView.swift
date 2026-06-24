@@ -1,7 +1,7 @@
 import AlertFeature
 import CalendarFeature
 import ComposableArchitecture
-import Coordinator
+import DSKit
 import FavoritesFeature
 import HomeFeature
 import MapFeature
@@ -13,36 +13,8 @@ import ReviewFeature
 import SearchFeature
 import SwiftUI
 
-struct MainTabFeatureHost: View {
-    @State private var store: StoreOf<MainTabFeature>
-    private let onLogout: @MainActor () -> Void
-
-    init(
-        session: MainTabSession,
-        selectedTab: MainTab = .home,
-        onLogout: @escaping @MainActor () -> Void
-    ) {
-        _store = State(
-            initialValue: Store(
-                initialState: MainTabFeature.State(
-                    selectedTab: selectedTab,
-                    session: session
-                )
-            ) {
-                MainTabFeature()
-            }
-        )
-        self.onLogout = onLogout
-    }
-
-    var body: some View {
-        MainTabFeatureView(store: store, onLogout: onLogout)
-    }
-}
-
-private struct MainTabFeatureView: View {
+struct MainTabFeatureView: View {
     @Bindable var store: StoreOf<MainTabFeature>
-    let onLogout: @MainActor () -> Void
 
     var body: some View {
         NavigationStackStore(store.scope(state: \.path, action: \.path)) {
@@ -50,7 +22,7 @@ private struct MainTabFeatureView: View {
                 ForEach(MainTab.allCases, id: \.self) { tab in
                     tabView(for: tab)
                         .tabItem {
-                            tab.tabAsset(selected: store.selectedTab == tab).swiftUIImage
+                            DSKitResource.image(tab.tabImageName(selected: store.selectedTab == tab))
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: 25, height: 25)
@@ -83,12 +55,10 @@ private struct MainTabFeatureView: View {
                 ServiceTermsDestinationView(store: store)
             }
         }
-        .fullScreenCover(item: $store.scope(\.search, action: \.search)) { store in
+        .fullScreenCover(
+            item: $store.scope(state: \.destination?.search, action: \.destination.search)
+        ) { store in
             SearchDestinationView(store: store)
-        }
-        .onChange(of: store.logoutToken) { _, value in
-            guard value > 0 else { return }
-            onLogout()
         }
     }
 
@@ -96,83 +66,123 @@ private struct MainTabFeatureView: View {
     private func tabView(for tab: MainTab) -> some View {
         switch tab {
         case .home:
-            HomeFeatureView(
-                userUuid: store.session.userUuid,
-                nickname: store.session.nickname,
-                isAdmin: store.session.isAdmin,
-                onSelectPopup: { _, popup in
-                    store.send(.homePopupSelected(popup))
-                },
-                onShowAlert: { _ in
-                    store.send(.homeAlertTapped)
-                },
-                onSearch: { _ in
-                    store.send(.homeSearchTapped)
-                },
-                onShowComingPopups: { _, popups in
-                    store.send(.homeComingTapped(popups))
-                },
-                onReport: { _ in
-                    store.send(.homeReportTapped)
-                },
-                onManagePopupRequests: {
-                    store.send(.homeManagePopupRequestsTapped)
-                }
-            )
-            .id(store.session)
+            HomeTabView(store: store.scope(state: \.home, action: \.home))
+                .id(store.session)
         case .calendar:
-            CalendarFeatureView(
-                userUuid: store.session.userUuid,
-                onShowAlert: { _ in
-                    store.send(.calendarAlertTapped)
-                },
-                onSelectPopup: { _, popup in
-                    store.send(.calendarPopupSelected(popup))
-                }
-            )
-            .id(store.session)
+            CalendarTabView(store: store.scope(state: \.calendar, action: \.calendar))
+                .id(store.session)
         case .map:
-            MapFeatureView(
-                userUuid: store.session.userUuid,
-                onSelectPopup: { _, popup in
-                    store.send(.mapPopupSelected(popup))
-                }
-            )
-            .id(store.session)
+            MapTabView(store: store.scope(state: \.map, action: \.map))
+                .id(store.session)
         case .favorites:
-            FavoritesFeatureView(
-                userUuid: store.session.userUuid,
-                onShowAlert: { _ in
-                    store.send(.favoritesAlertTapped)
-                },
-                onSelectPopup: { _, popup in
-                    store.send(.favoritesPopupSelected(popup))
-                },
-                onBrowsePopups: {
-                    store.send(.favoritesBrowsePopupsTapped)
-                }
-            )
-            .id(store.session)
+            FavoritesTabView(store: store.scope(state: \.favorites, action: \.favorites))
+                .id(store.session)
         case .profile:
-            ProfileFeatureView(
-                userUuid: store.session.userUuid,
-                nickname: store.session.nickname,
-                isAlerted: store.session.isAlerted,
-                onShowAlert: { _ in
-                    store.send(.profileAlertTapped)
-                },
-                onProfileSetting: { _, nickname, isAlerted in
-                    store.send(.profileSettingTapped(nickname: nickname, isAlerted: isAlerted))
-                },
-                onNotification: {
-                    store.send(.profileNotificationsTapped)
-                },
-                onServiceTerms: {
-                    store.send(.profileServiceTermsTapped)
-                }
-            )
-            .id(store.session)
+            ProfileTabView(store: store.scope(state: \.profile, action: \.profile))
+                .id(store.session)
         }
+    }
+}
+
+private struct HomeTabView: View {
+    let store: StoreOf<HomeTabFeature>
+
+    var body: some View {
+        HomeFeatureView(
+            userUuid: store.userUuid,
+            nickname: store.nickname,
+            isAdmin: store.isAdmin,
+            onSelectPopup: { _, popup in
+                store.send(.popupSelected(popup))
+            },
+            onShowAlert: { _ in
+                store.send(.alertTapped)
+            },
+            onSearch: { _ in
+                store.send(.searchTapped)
+            },
+            onShowComingPopups: { _, popups in
+                store.send(.comingPopupsTapped(popups))
+            },
+            onReport: { _ in
+                store.send(.popupRequestTapped)
+            },
+            onManagePopupRequests: {
+                store.send(.popupRequestManagementTapped)
+            }
+        )
+    }
+}
+
+private struct CalendarTabView: View {
+    let store: StoreOf<CalendarTabFeature>
+
+    var body: some View {
+        CalendarFeatureView(
+            userUuid: store.userUuid,
+            onShowAlert: { _ in
+                store.send(.alertTapped)
+            },
+            onSelectPopup: { _, popup in
+                store.send(.popupSelected(popup))
+            }
+        )
+    }
+}
+
+private struct MapTabView: View {
+    let store: StoreOf<MapTabFeature>
+
+    var body: some View {
+        MapFeatureView(
+            userUuid: store.userUuid,
+            onSelectPopup: { _, popup in
+                store.send(.popupSelected(popup))
+            }
+        )
+    }
+}
+
+private struct FavoritesTabView: View {
+    let store: StoreOf<FavoritesTabFeature>
+
+    var body: some View {
+        FavoritesFeatureView(
+            userUuid: store.userUuid,
+            onShowAlert: { _ in
+                store.send(.alertTapped)
+            },
+            onSelectPopup: { _, popup in
+                store.send(.popupSelected(popup))
+            },
+            onBrowsePopups: {
+                store.send(.browsePopupsTapped)
+            }
+        )
+    }
+}
+
+private struct ProfileTabView: View {
+    let store: StoreOf<ProfileTabFeature>
+
+    var body: some View {
+        ProfileFeatureView(
+            userUuid: store.userUuid,
+            nickname: store.nickname,
+            isAlerted: store.isAlerted,
+            onShowAlert: { _ in
+                store.send(.alertTapped)
+            },
+            onProfileSetting: { _, nickname, isAlerted in
+                store.send(.profileSettingTapped(nickname: nickname, isAlerted: isAlerted))
+            },
+            onNotification: {
+                store.send(.notificationsTapped)
+            },
+            onServiceTerms: {
+                store.send(.serviceTermsTapped)
+            }
+        )
     }
 }
 

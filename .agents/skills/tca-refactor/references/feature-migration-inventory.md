@@ -13,7 +13,7 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 
 ### Navigation 전환 기준
 
-- Coordinator 패턴은 제거 대상이다.
+- Coordinator 패턴은 제거 완료된 legacy 구조다.
 - 화면 전환용 escaping closure는 제거 대상이다.
 - root/auth/sheet/fullScreen은 tree-based navigation으로 모델링한다.
 - push/drill-down은 stack-based navigation으로 모델링한다.
@@ -56,7 +56,7 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 
 이유:
 
-- Coordinator 모듈 제거의 진입점이다.
+- Coordinator 제거 이후 navigation ownership을 안정화하는 진입점이다.
 - `MainTabFeature`에 이미 `StackState` 기반 초안이 있다.
 - 이미 reducer 초안이 존재한다.
 - `PopupUsecaseProtocol` 기반 전환 패턴을 먼저 굳히기 좋다.

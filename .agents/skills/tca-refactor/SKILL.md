@@ -24,7 +24,7 @@ PopPang의 Compound 기반 feature를 현재 루트 `Projects/*` 구조 안에�
 1. 루트 `Projects/*`를 실제 구현 대상으로 사용한다.
 2. `V1/*`는 이전 상태 비교나 Compound 원형 확인이 필요할 때만 참고한다.
 3. `AGENTS.md`의 plan-first 규칙을 계속 따른다.
-4. Coordinator 패턴은 제거 대상이다. 새 navigation ownership은 TCA reducer state/action으로 둔다.
+4. Coordinator 패턴은 제거 완료된 legacy 구조다. 새 navigation ownership은 TCA reducer state/action으로 둔다.
 5. `PopupUsecaseProtocol`, `AdminUsecaseProtocol`, `UserUsecaseProtocol` 같은 public contract는 issue 범위가 명확히 허용하지 않는 한 초반에 분리하지 않는다.
 6. 실제 migration으로 구조 이해가 바뀌면 reference 문서를 같은 작업 범위 안에서 갱신한다.
 7. navigation 작업 전에는 `Docs/tca-navigation-guidelines.md`를 읽고 tree-based / stack-based 기준을 따른다.
@@ -68,7 +68,7 @@ issue 생성/assign/branch checkout의 자세한 절차는 `references/issue-bra
 7. 여러 presentation optional을 State에 직접 나열하지 않는다. Destination enum으로 모은다.
 8. child feature가 parent `Path.State`를 알도록 만들지 않는다. `NavigationLink(state:)`는 모듈성을 깨뜨릴 수 있으므로 parent boundary 안에서만 신중히 사용한다.
 9. 화면 전환용 `@escaping` closure는 새로 추가하지 않는다. 기존 closure는 feature migration 때 delegate action으로 제거한다.
-10. Root/MainTab/FeatureCoordinator 구조는 제거 대상이다. 새 작업은 `AppFeature`, `AuthFlowFeature`, `MainTabFeature` 기준으로 설계한다.
+10. Root/MainTab/FeatureCoordinator 구조는 제거 완료된 legacy 구조다. 새 작업은 `AppFeature`, `AuthFlowFeature`, `MainTabFeature` 기준으로 설계한다.
 
 구체적인 구조 기준과 현재 전환 상태는 `references/current-architecture.md`, `references/feature-migration-inventory.md`를 따른다.
 

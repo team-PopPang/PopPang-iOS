@@ -1,8 +1,0 @@
-import Testing
-@testable import {{ name }}Coordinator
-
-struct {{ name }}CoordinatorTests {
-    @Test
-    func example() async throws {
-    }
-}

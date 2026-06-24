@@ -23,7 +23,7 @@ PopPang은 팝업스토어 정보를 키워드, 검색, 필터, 달력, 지도, 
 - Tuist 기반 workspace/project 구성
 - Micro Feature Architecture
 - Compound 기반 Feature 상태 관리를 TCA로 점진 전환 중
-- 화면 전환은 Coordinator 패턴에서 TCA tree-based / stack-based navigation으로 전환 중
+- 화면 전환은 TCA tree-based / stack-based navigation 기준
 - Moya 기반 네트워크와 async/await wrapper
 - Firebase, KakaoSDK, GoogleSignIn, Google Mobile Ads, NMapsMap, Kingfisher, BottomSheet 사용
 - iOS deployment target은 현재 `17.0` 기준
@@ -33,7 +33,6 @@ PopPang은 팝업스토어 정보를 키워드, 검색, 필터, 달력, 지도, 
 ```text
 Projects
 ├── App
-├── Coordinator              # legacy, 제거 대상
 ├── Domain
 ├── Data
 ├── Features
@@ -86,37 +85,22 @@ Projects
 - `Projects/App/Sources/AppCore/AppSDKInitializer.swift`
 - `Projects/App/Project.swift`
 
-### Coordinator
-
-위치: `Projects/Coordinator`
+### Navigation
 
 상태:
 
-- legacy 모듈
-- 제거 대상
-- 새 기능에서 확장하지 않음
-
-기존 역할:
-
-- Root flow, auth/onboarding/main 전환
-- MainTab 전역 navigation
-- Feature root 조립
-- feature navigation callback adapter
-
-기준 문서:
-
-- `Projects/Coordinator/README.md`
-- `CoordinatorTree.png`
-- `Docs/tca-navigation-guidelines.md`
+- `Projects/Coordinator` 모듈 제거 완료
+- `RootCoordinator`, `MainTabCoordinator`, feature coordinator 제거 완료
+- active navigation owner는 `Projects/App/Sources/AppCore/Navigation`의 TCA feature다.
 
 핵심 원칙:
 
-- active main flow는 App 모듈의 `MainTabFeature`가 TCA `StackState`와 `@Presents` destination으로 소유한다.
-- root flow는 `RootCoordinator` bridge에서 `AppFeature` tree-based navigation으로 옮긴다.
-- feature coordinator와 화면 전환용 escaping closure는 제거한다.
-- 탭 root view는 중첩 `NavigationStack`을 만들지 않는다.
-- path/destination state는 navigation intent와 child state만 담고 `Binding`, `View`, 무거운 closure를 넣지 않는다.
-- feature 내부 상태인 bottom sheet, selected item, sheet position은 feature state에 둔다.
+- root flow는 `AppFeature`가 소유한다.
+- active main flow는 `MainTabFeature`가 TCA `StackState`와 단일 `@Presents` destination으로 소유한다.
+- `MainTabFeature.Action`은 탭 child action, `path`, `destination`, parent delegate 중심으로 유지한다.
+- 탭 내부의 로컬 sheet/bottom sheet/selected item 상태는 각 feature가 소유한다.
+- 여러 탭에서 공통으로 여는 push/presentation 화면은 `MainTabFeature`가 소유한다.
+- path/destination state에는 navigation intent와 child state만 담고 `Binding`, `View`, 무거운 closure를 넣지 않는다.
 
 ### Features
 
@@ -211,7 +195,6 @@ Feature
 - Network 공통 타입
 - Moya async wrapper
 - local storage
-- legacy coordinator base
 - logging/support/foundation extension
 
 주요 파일:
@@ -219,7 +202,6 @@ Feature
 - `Projects/Shared/Core/Sources/Network/BaseAPI.swift`
 - `Projects/Shared/Core/Sources/Network/NetworkProvider.swift`
 - `Projects/Shared/Core/Sources/Network/MoyaProvider+Async.swift`
-- `Projects/Shared/Core/Sources/Coordinator/**` legacy coordinator base
 
 ### Shared/DSKit
 
@@ -294,7 +276,7 @@ Domain
 
 - `Domain -> Data`, `Domain -> Feature`, `Domain -> Coordinator` 방향 의존을 만들지 않는다.
 - feature 간 직접 의존은 기본 전략이 아니다.
-- `App -> Coordinator` 의존은 제거 대상이다. 새 의존성을 추가하지 않는다.
+- `App -> Coordinator` 의존은 제거된 구조다. 새 Coordinator 의존성을 추가하지 않는다.
 - public protocol, DI, module dependency 변경은 작은 수정처럼 보이더라도 영향 범위를 넓게 본다.
 - Tuist 설정 변경은 빌드/link/runtime 위험을 함께 검토한다.
 
@@ -377,7 +359,7 @@ DI 변경 시 함께 확인할 파일:
 코드 변경 계획이나 구현이 아래를 바꾸면 문서 업데이트 필요 여부를 반드시 검토한다.
 
 - 모듈 책임이나 의존성 방향
-- Coordinator navigation 규칙
+- TCA navigation 규칙
 - DI 조립 방식
 - API/DTO/entity/usecase 흐름
 - ThirdParty 링크 정책
@@ -389,7 +371,6 @@ DI 변경 시 함께 확인할 파일:
 
 - `Docs/tca-navigation-guidelines.md`
 - `Docs/poppang-architecture.md`
-- `Projects/Coordinator/README.md`
 - `Docs/static-dynamic-linking.md`
 - `Docs/Troubleshotting.md`
 - `Docs/logger.md`
@@ -406,7 +387,7 @@ DI 변경 시 함께 확인할 파일:
 요청별 기본 탐색 예:
 
 - 앱 시작, SDK, DI: `Projects/App/Sources/AppCore/**`
-- 루트 전환, 탭, 화면 이동: `Docs/tca-navigation-guidelines.md`, `Projects/App/Sources/AppCore/Navigation/**`, `Projects/Coordinator/**`
+- 루트 전환, 탭, 화면 이동: `Docs/tca-navigation-guidelines.md`, `Projects/App/Sources/AppCore/Navigation/**`
 - 화면 상태/UI: `Projects/Features/<FeatureName>/Sources/**`
 - 도메인 계약: `Projects/Domain/Sources/**`
 - API/DTO/repository: `Projects/Data/Sources/**`
@@ -424,7 +405,7 @@ DI 변경 시 함께 확인할 파일:
 - Domain entity
 - public protocol
 - DI registration
-- Coordinator route
+- TCA route/path/destination
 - module dependency
 - Tuist package/product type
 - Info.plist, entitlements, signing 설정
