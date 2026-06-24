@@ -37,12 +37,28 @@ public struct HomeFeatureReducer {
         case onAppear
         case filter(HomeFilterReducer.Action)
         case toggleLike(Popup)
+        case popupSelected(Popup)
+        case alertTapped
+        case searchTapped
+        case comingPopupsTapped([Popup])
+        case popupRequestTapped
+        case popupRequestManagementTapped
         case refreshFilteredPopupList
         case popupSectionsLoaded(HomePopupSections)
         case filteredPopupListLoaded([Popup])
         case favoriteUpdated(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
         case loadingChanged(Bool)
         case errorMessageChanged(String?)
+        case delegate(Delegate)
+
+        public enum Delegate: Equatable {
+            case popupSelected(Popup)
+            case alertRequested
+            case searchRequested
+            case comingPopupsRequested([Popup])
+            case popupRequestRequested
+            case popupRequestManagementRequested
+        }
     }
 
     @Dependencies.Dependency(\.homePopupClient) private var popupClient: HomePopupClient
@@ -66,6 +82,24 @@ public struct HomeFeatureReducer {
 
             case .toggleLike(let popup):
                 return toggleLike(state: state, popup: popup)
+
+            case .popupSelected(let popup):
+                return .send(.delegate(.popupSelected(popup)))
+
+            case .alertTapped:
+                return .send(.delegate(.alertRequested))
+
+            case .searchTapped:
+                return .send(.delegate(.searchRequested))
+
+            case .comingPopupsTapped(let popups):
+                return .send(.delegate(.comingPopupsRequested(popups)))
+
+            case .popupRequestTapped:
+                return .send(.delegate(.popupRequestRequested))
+
+            case .popupRequestManagementTapped:
+                return .send(.delegate(.popupRequestManagementRequested))
 
             case .refreshFilteredPopupList:
                 state.isLoading = true
@@ -110,6 +144,9 @@ public struct HomeFeatureReducer {
 
             case .errorMessageChanged(let errorMessage):
                 state.errorMessage = errorMessage
+                return .none
+
+            case .delegate:
                 return .none
             }
         }

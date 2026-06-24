@@ -75,22 +75,22 @@ struct MainTabFeatureView: View {
                 store: store.scope(state: \.core.home, action: \.home),
                 isAdmin: store.currentUser.isAdminRole,
                 onSelectPopup: { _, popup in
-                    store.send(.homeNavigation(.popupSelected(popup)))
+                    store.send(.home(.popupSelected(popup)))
                 },
                 onShowAlert: { _ in
-                    store.send(.homeNavigation(.alertRequested))
+                    store.send(.home(.alertTapped))
                 },
                 onSearch: { _ in
-                    store.send(.homeNavigation(.searchRequested))
+                    store.send(.home(.searchTapped))
                 },
                 onShowComingPopups: { _, popups in
-                    store.send(.homeNavigation(.comingPopupsRequested(popups)))
+                    store.send(.home(.comingPopupsTapped(popups)))
                 },
                 onReport: { _ in
-                    store.send(.homeNavigation(.popupRequestRequested))
+                    store.send(.home(.popupRequestTapped))
                 },
                 onManagePopupRequests: {
-                    store.send(.homeNavigation(.popupRequestManagementRequested))
+                    store.send(.home(.popupRequestManagementTapped))
                 }
             )
         case .calendar:

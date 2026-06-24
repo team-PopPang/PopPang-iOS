@@ -116,7 +116,6 @@ struct MainTabFeature {
     enum Action {
         case selectedTabChanged(MainTab)
         case home(HomeFeatureReducer.Action)
-        case homeNavigation(HomeNavigationAction)
         case calendar(CalendarTabFeature.Action)
         case map(MapTabFeature.Action)
         case favorites(FavoritesTabFeature.Action)
@@ -127,15 +126,6 @@ struct MainTabFeature {
 
         enum Delegate: Equatable {
             case logout
-        }
-
-        enum HomeNavigationAction: Equatable {
-            case popupSelected(Popup)
-            case alertRequested
-            case searchRequested
-            case comingPopupsRequested([Popup])
-            case popupRequestRequested
-            case popupRequestManagementRequested
         }
     }
 
@@ -181,7 +171,7 @@ struct MainTabFeature {
                 state.core.selectedTab = tab
                 return .none
 
-            case .homeNavigation(.popupSelected(let popup)),
+            case .home(.delegate(.popupSelected(let popup))),
                     .calendar(.delegate(.popupSelected(let popup))),
                     .favorites(.delegate(.popupSelected(let popup))),
                     .map(.delegate(.popupSelected(let popup))),
@@ -189,14 +179,14 @@ struct MainTabFeature {
                 appendPopupDetail(popup, state: &state)
                 return .none
 
-            case .homeNavigation(.alertRequested),
+            case .home(.delegate(.alertRequested)),
                     .calendar(.delegate(.alertRequested)),
                     .favorites(.delegate(.alertRequested)),
                     .profile(.delegate(.alertRequested)):
                 state.core.path.append(.alert(.init(userUuid: state.currentUser.userUuid)))
                 return .none
 
-            case .homeNavigation(.searchRequested):
+            case .home(.delegate(.searchRequested)):
                 state.core.destination = .search(
                     .init(
                         userUuid: state.currentUser.userUuid,
@@ -205,7 +195,7 @@ struct MainTabFeature {
                 )
                 return .none
 
-            case .homeNavigation(.comingPopupsRequested(let popups)):
+            case .home(.delegate(.comingPopupsRequested(let popups))):
                 state.core.path.append(
                     .comingPopupDetail(
                         .init(
@@ -216,11 +206,11 @@ struct MainTabFeature {
                 )
                 return .none
 
-            case .homeNavigation(.popupRequestRequested):
+            case .home(.delegate(.popupRequestRequested)):
                 state.core.path.append(.popupRequest(.init(userUuid: state.currentUser.userUuid)))
                 return .none
 
-            case .homeNavigation(.popupRequestManagementRequested):
+            case .home(.delegate(.popupRequestManagementRequested)):
                 state.core.path.append(.popupRequestManagement(.init()))
                 return .none
 
@@ -249,7 +239,6 @@ struct MainTabFeature {
                 return .none
 
             case .home,
-                    .homeNavigation,
                     .calendar,
                     .map,
                     .favorites,
