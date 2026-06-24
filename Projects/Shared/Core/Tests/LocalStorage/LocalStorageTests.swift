@@ -67,4 +67,27 @@ struct LocalStorageTests {
         #expect(pushTokenStorage.load() == nil)
         #expect(deepLinkStorage.loadPopupID() == nil)
     }
+
+    @Test("앱 세션 저장소는 userID와 온보딩 여부만 저장한다")
+    func appSessionStorageStoresOnlyRestoreHints() {
+        let suiteName = "CoreTests.AppSessionStorage"
+        let userDefaults = UserDefaults(suiteName: suiteName)!
+        userDefaults.removePersistentDomain(forName: suiteName)
+
+        let store = UserDefaultsStore(userDefaults: userDefaults)
+        let appSessionStorage = AppSessionStorage(store: store)
+
+        appSessionStorage.saveUserID("user-1")
+        appSessionStorage.setOnboardingCompleted(true)
+
+        let snapshot = appSessionStorage.loadSnapshot()
+
+        #expect(snapshot.userID == "user-1")
+        #expect(snapshot.hasCompletedOnboarding)
+
+        appSessionStorage.clearSession()
+
+        #expect(appSessionStorage.loadSnapshot().userID == nil)
+        #expect(appSessionStorage.loadSnapshot().hasCompletedOnboarding)
+    }
 }

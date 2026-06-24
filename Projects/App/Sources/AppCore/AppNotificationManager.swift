@@ -38,26 +38,35 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
     static let shared = AppNotificationManager()
 
     private var sessionStorage: AppSessionStorage
+    private var pushTokenStorage: PushTokenStorage
     private var userUsecase: UserUsecaseProtocol?
 
     override convenience init() {
-        self.init(sessionStorage: AppSessionStorage(store: UserDefaultsStore()))
+        let store = UserDefaultsStore()
+        self.init(
+            sessionStorage: AppSessionStorage(store: store),
+            pushTokenStorage: PushTokenStorage(store: store)
+        )
     }
 
     init(
         sessionStorage: AppSessionStorage,
+        pushTokenStorage: PushTokenStorage,
         userUsecase: UserUsecaseProtocol? = nil
     ) {
         self.sessionStorage = sessionStorage
+        self.pushTokenStorage = pushTokenStorage
         self.userUsecase = userUsecase
         super.init()
     }
 
     func configure(
         sessionStorage: AppSessionStorage,
+        pushTokenStorage: PushTokenStorage,
         userUsecase: UserUsecaseProtocol
     ) {
         self.sessionStorage = sessionStorage
+        self.pushTokenStorage = pushTokenStorage
         self.userUsecase = userUsecase
     }
 
@@ -112,8 +121,7 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
     }
 
     func syncStoredToken(userUuid: String) {
-        let snapshot = sessionStorage.loadSnapshot()
-        guard let fcmToken = snapshot.fcmToken, fcmToken.isEmpty == false else { return }
+        guard let fcmToken = pushTokenStorage.load(), fcmToken.isEmpty == false else { return }
         guard let userUsecase else { return }
 
         Task {
@@ -164,7 +172,7 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
             return
         }
 
-        sessionStorage.saveFCMToken(fcmToken)
+        pushTokenStorage.save(fcmToken)
         Logger.d("FCM 토큰 저장 완료 source=\(source)")
 
         let snapshot = sessionStorage.loadSnapshot()

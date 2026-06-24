@@ -11,9 +11,11 @@ struct AppBootstrap {
         store: KeyValueStoring = UserDefaultsStore()
     ) -> AppBootstrap {
         let sessionStorage = AppSessionStorage(store: store)
+        let pushTokenStorage = PushTokenStorage(store: store)
         let dependencies = AppDependencyRegistry.live()
         AppNotificationManager.shared.configure(
             sessionStorage: sessionStorage,
+            pushTokenStorage: pushTokenStorage,
             userUsecase: dependencies.usecases.userUsecase
         )
 
