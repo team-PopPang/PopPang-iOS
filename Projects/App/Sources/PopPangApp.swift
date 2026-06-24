@@ -16,7 +16,7 @@ struct PopPangApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootCoordinatorView(coordinator: bootstrap.makeRootCoordinator())
+            AppRootFlowView(coordinator: bootstrap.makeRootCoordinator())
                 .versionUpdateAlert()
                 .onOpenURL { url in
                     deepLinkHandler.handleIncomingURL(url)

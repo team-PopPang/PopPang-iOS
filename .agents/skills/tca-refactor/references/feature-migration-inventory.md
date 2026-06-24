@@ -1,6 +1,6 @@
 # Feature Migration Inventory
 
-이 문서는 PopPang의 Compound -> TCA 전환 현황과 issue 기반 우선순위를 기록한다.
+이 문서는 PopPang의 Compound -> TCA 전환 현황, Coordinator 제거 방향, issue 기반 우선순위를 기록한다.
 
 migration이 진행되면 이 문서를 함께 업데이트한다.
 
@@ -10,6 +10,16 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 - 활성 코드 기준: 루트 `Projects/*`
 
 ## 현재 상태 요약
+
+### Navigation 전환 기준
+
+- Coordinator 패턴은 제거 대상이다.
+- 화면 전환용 escaping closure는 제거 대상이다.
+- root/auth/sheet/fullScreen은 tree-based navigation으로 모델링한다.
+- push/drill-down은 stack-based navigation으로 모델링한다.
+- tree-based navigation에서 여러 destination이 있으면 `@Reducer enum Destination`과 단일 `@Presents var destination`을 사용한다.
+- stack-based navigation은 `@Reducer enum Path`와 `StackState<Path.State>`를 사용한다.
+- 자세한 기준은 `Docs/tca-navigation-guidelines.md`를 따른다.
 
 ### TCA 예시가 이미 존재하는 feature
 
@@ -39,14 +49,18 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 
 ### 1차
 
+- `AppFeature` / root navigation
+- `MainTabFeature` navigation 정리
 - `HomeFeature`
 - `PopupDetailFeature`
 
 이유:
 
+- Coordinator 모듈 제거의 진입점이다.
+- `MainTabFeature`에 이미 `StackState` 기반 초안이 있다.
 - 이미 reducer 초안이 존재한다.
 - `PopupUsecaseProtocol` 기반 전환 패턴을 먼저 굳히기 좋다.
-- coordinator callback 구조를 유지한 채 vertical slice로 진행할 수 있다.
+- 화면 전환용 escaping closure 제거 패턴을 검증하기 좋다.
 
 ### 2차
 
@@ -138,7 +152,8 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 - popup list state
 - loading / error state
 - like state synchronization
-- coordinator callback 유지 여부
+- 화면 전환용 escaping closure 제거 여부
+- delegate action으로 parent navigation intent 전달
 
 ### User/Admin feature
 
@@ -151,18 +166,21 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 - user/admin usecase 분리
 - session 관련 state
 - 화면별 async state 전이
+- root/auth tree-based navigation 영향
 
 ### MapFeature
 
 - first/second bottom sheet ownership
 - user location / map center state ownership
 - filter state와 detail state 분리
-- coordinator로 올릴 state와 feature 내부 state 구분
+- parent reducer로 올릴 navigation intent와 feature 내부 state 구분
+- `NaverMapCoordinator` SDK bridge와 화면 전환 coordinator를 구분
 
 ## TCA 전환이 끝난 뒤 검토할 구조 변경
 
 - `PopupUsecaseProtocol` 세분화 필요 여부
-- coordinator를 TCA store 기반으로 올릴 필요 여부
+- `Shared.Models`, `Shared.Clients`, `Shared.Caches` 분리 필요 여부
+- `SharedFeature` 분리 필요 여부
 - 문서 기준선 갱신
 
-이 항목은 `#35` 또는 후속 spike issue에서만 다루는 것을 기본값으로 삼는다.
+이 항목은 navigation ownership과 escaping routing 제거가 안정화된 뒤 후속 spike issue에서 다룬다.

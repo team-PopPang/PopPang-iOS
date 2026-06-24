@@ -130,7 +130,7 @@ Data sources
 | --- | --- | --- |
 | `Projects/Features/*Feature` | `.staticFramework` | 앱 내부 전용 leaf feature. feature 수가 많으므로 런타임 dynamic framework 증가를 막는다. |
 | `SearchFeatureInterface`, `PopupDetailFeatureInterface` | `.framework` | 다른 모듈이 명시적으로 import하는 재사용 경계다. |
-| `Coordinator` | `.framework` | App이 조립하는 큰 흐름 경계이고 여러 feature static 산출물을 받아 최종 navigation shell을 만든다. |
+| `Coordinator` | `.framework` | legacy navigation shell이다. 제거 대상이며 새 기능에서 확장하지 않는다. |
 | `Domain` | `.framework` | Feature/Data/Coordinator가 공유하는 계약 경계다. |
 | `Data` | `.framework` | repository 구현과 외부 SDK 로그인 구현이 있는 인프라 경계다. |
 | `Core` | `.framework` | 네트워크, 저장소, formatter, coordinator base 등 여러 레이어가 공유하는 기반 모듈이다. |
@@ -146,7 +146,7 @@ PopPang feature는 아래 성격이다.
 - App 내부에서만 사용한다.
 - 외부 배포용 SDK가 아니다.
 - 런타임에 feature 바이너리를 교체하지 않는다.
-- feature 간 직접 import를 줄이고 Coordinator route/factory로 조립한다.
+- feature 간 직접 import를 줄이고 parent TCA reducer의 `Path`/`Destination`에서 조립한다.
 - feature 수가 많다.
 - 대부분 UI와 feature state를 가진 leaf 모듈이다.
 
@@ -165,7 +165,7 @@ static feature의 이점:
 - feature 모듈 경계는 유지하면서 런타임 framework 수는 줄인다.
 - 앱 시작 비용이 낮아질 가능성이 높다.
 - feature 자체를 embed/sign하지 않아도 된다.
-- App/Coordinator 입장에서는 feature 코드를 최종 산출물에 합쳐서 단순하게 실행할 수 있다.
+- App 입장에서는 feature 코드를 최종 산출물에 합쳐서 단순하게 실행할 수 있다.
 
 ## ThirdParty와 feature static의 관계
 
@@ -512,7 +512,7 @@ import Kingfisher
 PopPang 원칙:
 
 - feature는 다른 feature 구현을 직접 import하지 않는다.
-- 이동은 Coordinator route/factory/interface로 연결한다.
+- 이동은 parent TCA reducer의 `Path`/`Destination`과 feature delegate action으로 연결한다.
 - 재사용 public entry가 필요한 경우에만 `FeatureInterface`를 둔다.
 
 ### static이 빌드 속도에 항상 좋은가?
