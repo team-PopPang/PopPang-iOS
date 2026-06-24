@@ -43,78 +43,65 @@ enum MainTab: Hashable, CaseIterable, Sendable {
     }
 }
 
-struct MainTabSession: Equatable, Hashable, Sendable {
-    var userUuid: String
-    var nickname: String
-    var isAlerted: Bool
-    var role: String
-
-    init(
-        userUuid: String,
-        nickname: String = "닉네임",
-        isAlerted: Bool = false,
-        role: String = "USER"
-    ) {
-        self.userUuid = userUuid
-        self.nickname = nickname
-        self.isAlerted = isAlerted
-        self.role = role
-    }
-
-    var isAdmin: Bool {
-        role.uppercased() == "ADMIN"
-    }
-}
-
 @Reducer
 struct MainTabFeature {
     @ObservableState
-    struct State: Equatable {
-        var selectedTab: MainTab
-        var session: MainTabSession
-        var home: HomeTabFeature.State
-        var calendar: CalendarTabFeature.State
-        var map: MapTabFeature.State
-        var favorites: FavoritesTabFeature.State
-        var profile: ProfileTabFeature.State
+    struct CoreState: Equatable {
+        var selectedTab: MainTab = .home
         var path = StackState<Path.State>()
         @Presents var destination: Destination.State?
 
-        init(
-            selectedTab: MainTab = .home,
-            session: MainTabSession
-        ) {
-            self.selectedTab = selectedTab
-            self.session = session
-            self.home = HomeTabFeature.State(session: session)
-            self.calendar = CalendarTabFeature.State(session: session)
-            self.map = MapTabFeature.State(session: session)
-            self.favorites = FavoritesTabFeature.State(session: session)
-            self.profile = ProfileTabFeature.State(session: session)
-        }
-
-        mutating func updateSession(_ session: MainTabSession) {
-            self.session = session
-            home.updateSession(session)
-            calendar.updateSession(session)
-            map.updateSession(session)
-            favorites.updateSession(session)
-            profile.updateSession(session)
-        }
-
         static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.selectedTab == rhs.selectedTab
-                && lhs.session == rhs.session
-                && lhs.home == rhs.home
-                && lhs.calendar == rhs.calendar
-                && lhs.map == rhs.map
-                && lhs.favorites == rhs.favorites
-                && lhs.profile == rhs.profile
         }
     }
 
-    enum Action: BindableAction {
-        case binding(BindingAction<State>)
+    @ObservableState
+    struct State: Equatable {
+        var currentUser: User
+        var core: CoreState
+
+        init(
+            currentUser: User,
+            core: CoreState = .init()
+        ) {
+            self.currentUser = currentUser
+            self.core = core
+        }
+
+        var home: HomeTabFeature.State {
+            get { .init(currentUser: currentUser) }
+            set {}
+        }
+
+        var calendar: CalendarTabFeature.State {
+            get { .init(currentUser: currentUser) }
+            set {}
+        }
+
+        var map: MapTabFeature.State {
+            get { .init(currentUser: currentUser) }
+            set {}
+        }
+
+        var favorites: FavoritesTabFeature.State {
+            get { .init(currentUser: currentUser) }
+            set {}
+        }
+
+        var profile: ProfileTabFeature.State {
+            get { .init(currentUser: currentUser) }
+            set {}
+        }
+
+        static func == (lhs: Self, rhs: Self) -> Bool {
+            MainTabCurrentUserSnapshot(lhs.currentUser) == MainTabCurrentUserSnapshot(rhs.currentUser)
+                && lhs.core == rhs.core
+        }
+    }
+
+    enum Action {
+        case selectedTabChanged(MainTab)
         case home(HomeTabFeature.Action)
         case calendar(CalendarTabFeature.Action)
         case map(MapTabFeature.Action)
@@ -149,8 +136,6 @@ struct MainTabFeature {
     }
 
     var body: some ReducerOf<Self> {
-        BindingReducer()
-
         Scope(state: \.home, action: \.home) {
             HomeTabFeature()
         }
@@ -169,7 +154,8 @@ struct MainTabFeature {
 
         Reduce { state, action in
             switch action {
-            case .binding:
+            case .selectedTabChanged(let tab):
+                state.core.selectedTab = tab
                 return .none
 
             case .home(.delegate(.popupSelected(let popup))),
@@ -184,23 +170,23 @@ struct MainTabFeature {
                     .calendar(.delegate(.alertRequested)),
                     .favorites(.delegate(.alertRequested)),
                     .profile(.delegate(.alertRequested)):
-                state.path.append(.alert(.init(userUuid: state.session.userUuid)))
+                state.core.path.append(.alert(.init(userUuid: state.currentUser.userUuid)))
                 return .none
 
             case .home(.delegate(.searchRequested)):
-                state.destination = .search(
+                state.core.destination = .search(
                     .init(
-                        userUuid: state.session.userUuid,
-                        nickname: state.session.nickname
+                        userUuid: state.currentUser.userUuid,
+                        nickname: state.currentUser.displayNickname
                     )
                 )
                 return .none
 
             case .home(.delegate(.comingPopupsRequested(let popups))):
-                state.path.append(
+                state.core.path.append(
                     .comingPopupDetail(
                         .init(
-                            userUuid: state.session.userUuid,
+                            userUuid: state.currentUser.userUuid,
                             popups: popups
                         )
                     )
@@ -208,22 +194,22 @@ struct MainTabFeature {
                 return .none
 
             case .home(.delegate(.popupRequestRequested)):
-                state.path.append(.popupRequest(.init(userUuid: state.session.userUuid)))
+                state.core.path.append(.popupRequest(.init(userUuid: state.currentUser.userUuid)))
                 return .none
 
             case .home(.delegate(.popupRequestManagementRequested)):
-                state.path.append(.popupRequestManagement(.init()))
+                state.core.path.append(.popupRequestManagement(.init()))
                 return .none
 
             case .favorites(.delegate(.browsePopupsRequested)):
-                state.selectedTab = .home
+                state.core.selectedTab = .home
                 return .none
 
             case .profile(.delegate(.profileSettingRequested(let nickname, let isAlerted))):
-                state.path.append(
+                state.core.path.append(
                     .profileSetting(
                         .init(
-                            userUuid: state.session.userUuid,
+                            userUuid: state.currentUser.userUuid,
                             nickname: nickname,
                             isAlerted: isAlerted
                         )
@@ -232,11 +218,11 @@ struct MainTabFeature {
                 return .none
 
             case .profile(.delegate(.notificationsRequested)):
-                state.path.append(.notifications(.init()))
+                state.core.path.append(.notifications(.init()))
                 return .none
 
             case .profile(.delegate(.serviceTermsRequested)):
-                state.path.append(.serviceTerms(.init()))
+                state.core.path.append(.serviceTerms(.init()))
                 return .none
 
             case .home,
@@ -253,11 +239,11 @@ struct MainTabFeature {
                 return .none
 
             case .destination(.presented(.search(.delegate(.dismiss)))):
-                state.destination = nil
+                state.core.destination = nil
                 return .none
 
             case .destination(.presented(.search(.delegate(.selectPopup(let popup))))):
-                state.destination = nil
+                state.core.destination = nil
                 appendPopupDetail(popup, state: &state)
                 return .none
 
@@ -268,19 +254,19 @@ struct MainTabFeature {
                 return .none
             }
         }
-        .forEach(\.path, action: \.path)
-        .ifLet(\.$destination, action: \.destination)
+        .forEach(\.core.path, action: \.path)
+        .ifLet(\.core.$destination, action: \.destination)
     }
 }
 
 private extension MainTabFeature {
     func appendPopupDetail(_ popup: Popup, state: inout State) {
-        state.path.append(
+        state.core.path.append(
             .popupDetail(
                 .init(
-                    userUuid: state.session.userUuid,
+                    userUuid: state.currentUser.userUuid,
                     popup: popup,
-                    isAdmin: state.session.isAdmin
+                    isAdmin: state.currentUser.isAdminRole
                 )
             )
         )
@@ -299,21 +285,21 @@ private extension MainTabFeature {
             return .none
 
         case .popupDetail(.delegate(.showReviews(let reviews))):
-            state.path.append(.reviewDetail(.init(reviews: reviews)))
+            state.core.path.append(.reviewDetail(.init(reviews: reviews)))
             return .none
 
         case .popupDetail(.delegate(.close)):
-            state.path.pop(from: id)
+            state.core.path.pop(from: id)
             return .none
 
         case .popupRequest(.delegate(.dismiss)),
                 .popupRequestManagement(.delegate(.back)),
                 .popupRequestManagementDetail(.delegate(.back)):
-            state.path.pop(from: id)
+            state.core.path.pop(from: id)
             return .none
 
         case .popupRequestManagement(.delegate(.showDetail(let submissionId))):
-            state.path.append(
+            state.core.path.append(
                 .popupRequestManagementDetail(
                     .init(submissionId: submissionId)
                 )
@@ -324,9 +310,7 @@ private extension MainTabFeature {
             return .send(.delegate(.logout))
 
         case .profileSetting(.delegate(.nicknameUpdated(let nickname))):
-            var nextSession = state.session
-            nextSession.nickname = nickname
-            state.updateSession(nextSession)
+            state.currentUser.nickname = nickname
             return .none
 
         default:
@@ -343,16 +327,10 @@ struct HomeTabFeature {
         var nickname: String
         var isAdmin: Bool
 
-        init(session: MainTabSession) {
-            self.userUuid = session.userUuid
-            self.nickname = session.nickname
-            self.isAdmin = session.isAdmin
-        }
-
-        mutating func updateSession(_ session: MainTabSession) {
-            userUuid = session.userUuid
-            nickname = session.nickname
-            isAdmin = session.isAdmin
+        init(currentUser: User) {
+            self.userUuid = currentUser.userUuid
+            self.nickname = currentUser.displayNickname
+            self.isAdmin = currentUser.isAdminRole
         }
     }
 
@@ -403,12 +381,8 @@ struct CalendarTabFeature {
     struct State: Equatable {
         var userUuid: String
 
-        init(session: MainTabSession) {
-            self.userUuid = session.userUuid
-        }
-
-        mutating func updateSession(_ session: MainTabSession) {
-            userUuid = session.userUuid
+        init(currentUser: User) {
+            self.userUuid = currentUser.userUuid
         }
     }
 
@@ -443,12 +417,8 @@ struct MapTabFeature {
     struct State: Equatable {
         var userUuid: String
 
-        init(session: MainTabSession) {
-            self.userUuid = session.userUuid
-        }
-
-        mutating func updateSession(_ session: MainTabSession) {
-            userUuid = session.userUuid
+        init(currentUser: User) {
+            self.userUuid = currentUser.userUuid
         }
     }
 
@@ -479,12 +449,8 @@ struct FavoritesTabFeature {
     struct State: Equatable {
         var userUuid: String
 
-        init(session: MainTabSession) {
-            self.userUuid = session.userUuid
-        }
-
-        mutating func updateSession(_ session: MainTabSession) {
-            userUuid = session.userUuid
+        init(currentUser: User) {
+            self.userUuid = currentUser.userUuid
         }
     }
 
@@ -525,16 +491,10 @@ struct ProfileTabFeature {
         var nickname: String
         var isAlerted: Bool
 
-        init(session: MainTabSession) {
-            self.userUuid = session.userUuid
-            self.nickname = session.nickname
-            self.isAlerted = session.isAlerted
-        }
-
-        mutating func updateSession(_ session: MainTabSession) {
-            userUuid = session.userUuid
-            nickname = session.nickname
-            isAlerted = session.isAlerted
+        init(currentUser: User) {
+            self.userUuid = currentUser.userUuid
+            self.nickname = currentUser.displayNickname
+            self.isAlerted = currentUser.isAlerted
         }
     }
 
@@ -572,6 +532,42 @@ struct ProfileTabFeature {
                 return .none
             }
         }
+    }
+}
+
+private struct MainTabCurrentUserSnapshot: Equatable {
+    let userUuid: String
+    let uid: String
+    let provider: String
+    let email: String?
+    let nickname: String?
+    let role: String
+    let isAlerted: Bool
+    let fcmToken: String?
+    let alertKeywordList: [String]?
+    let recommendList: [Int]?
+
+    init(_ user: User) {
+        userUuid = user.userUuid
+        uid = user.uid
+        provider = user.provider
+        email = user.email
+        nickname = user.nickname
+        role = user.role
+        isAlerted = user.isAlerted
+        fcmToken = user.fcmToken
+        alertKeywordList = user.alertKeywordList
+        recommendList = user.recommendList
+    }
+}
+
+private extension User {
+    var displayNickname: String {
+        nickname ?? "닉네임"
+    }
+
+    var isAdminRole: Bool {
+        role.uppercased() == "ADMIN"
     }
 }
 

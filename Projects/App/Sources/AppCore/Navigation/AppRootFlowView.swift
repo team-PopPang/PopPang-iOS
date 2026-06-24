@@ -34,7 +34,7 @@ struct AppRootFlowView: View {
 
             case .register:
                 RegisterFlowFeatureView(
-                    user: store.pendingRegistrationUser,
+                    user: store.currentUser,
                     onComplete: { user in
                         store.send(.registerCompleted(user))
                     }

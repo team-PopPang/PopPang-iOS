@@ -96,7 +96,9 @@ Projects
 핵심 원칙:
 
 - root flow는 `AppFeature`가 소유한다.
+- 전역 현재 유저 상태의 source of truth는 `AppFeature.currentUser`다.
 - active main flow는 `MainTabFeature`가 TCA `StackState`와 단일 `@Presents` destination으로 소유한다.
+- `MainTabFeature`는 parent가 보유한 `currentUser`와 `mainTabCore`를 projection해서 동작한다.
 - `MainTabFeature.Action`은 탭 child action, `path`, `destination`, parent delegate 중심으로 유지한다.
 - 탭 내부의 로컬 sheet/bottom sheet/selected item 상태는 각 feature가 소유한다.
 - 여러 탭에서 공통으로 여는 push/presentation 화면은 `MainTabFeature`가 소유한다.

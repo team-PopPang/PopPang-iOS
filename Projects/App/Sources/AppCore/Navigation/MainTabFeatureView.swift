@@ -17,12 +17,17 @@ struct MainTabFeatureView: View {
     @Bindable var store: StoreOf<MainTabFeature>
 
     var body: some View {
-        NavigationStackStore(store.scope(state: \.path, action: \.path)) {
-            TabView(selection: $store.selectedTab) {
+        NavigationStackStore(store.scope(state: \.core.path, action: \.path)) {
+            TabView(
+                selection: Binding(
+                    get: { store.core.selectedTab },
+                    set: { store.send(.selectedTabChanged($0)) }
+                )
+            ) {
                 ForEach(MainTab.allCases, id: \.self) { tab in
                     tabView(for: tab)
                         .tabItem {
-                            DSKitResource.image(tab.tabImageName(selected: store.selectedTab == tab))
+                            DSKitResource.image(tab.tabImageName(selected: store.core.selectedTab == tab))
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: 25, height: 25)
@@ -56,7 +61,7 @@ struct MainTabFeatureView: View {
             }
         }
         .fullScreenCover(
-            item: $store.scope(state: \.destination?.search, action: \.destination.search)
+            item: $store.scope(state: \.core.destination?.search, action: \.destination.search)
         ) { store in
             SearchDestinationView(store: store)
         }
@@ -67,19 +72,14 @@ struct MainTabFeatureView: View {
         switch tab {
         case .home:
             HomeTabView(store: store.scope(state: \.home, action: \.home))
-                .id(store.session)
         case .calendar:
             CalendarTabView(store: store.scope(state: \.calendar, action: \.calendar))
-                .id(store.session)
         case .map:
             MapTabView(store: store.scope(state: \.map, action: \.map))
-                .id(store.session)
         case .favorites:
             FavoritesTabView(store: store.scope(state: \.favorites, action: \.favorites))
-                .id(store.session)
         case .profile:
             ProfileTabView(store: store.scope(state: \.profile, action: \.profile))
-                .id(store.session)
         }
     }
 }

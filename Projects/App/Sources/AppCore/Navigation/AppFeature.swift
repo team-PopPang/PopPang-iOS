@@ -21,13 +21,32 @@ struct AppFeature {
     @ObservableState
     struct State: Equatable {
         var destination: AppRootDestination = .launch
-        var pendingRegistrationUser: User?
-        var mainTab: MainTabFeature.State?
+        var currentUser: User?
+        var mainTabCore: MainTabFeature.CoreState?
+
+        var mainTab: MainTabFeature.State? {
+            get {
+                guard let currentUser, let mainTabCore else { return nil }
+                return MainTabFeature.State(
+                    currentUser: currentUser,
+                    core: mainTabCore
+                )
+            }
+            set {
+                guard let newValue else {
+                    mainTabCore = nil
+                    return
+                }
+
+                currentUser = newValue.currentUser
+                mainTabCore = newValue.core
+            }
+        }
 
         static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.destination == rhs.destination
-                && lhs.pendingRegistrationUser?.userUuid == rhs.pendingRegistrationUser?.userUuid
-                && lhs.mainTab == rhs.mainTab
+                && AppCurrentUserSnapshot(lhs.currentUser) == AppCurrentUserSnapshot(rhs.currentUser)
+                && lhs.mainTabCore == rhs.mainTabCore
         }
     }
 
@@ -77,8 +96,8 @@ struct AppFeature {
 
             case .mainTab(.delegate(.logout)):
                 sessionStorage.clearSession()
-                state.mainTab = nil
-                state.pendingRegistrationUser = nil
+                state.currentUser = nil
+                state.mainTabCore = nil
                 state.destination = .onboarding
                 return .none
 
@@ -112,38 +131,38 @@ private extension AppFeature {
     func applyLaunchResolution(_ resolution: AppLaunchResolution, state: inout State) {
         switch resolution {
         case .destination(let destination):
-            if destination == .main {
-                let snapshot = sessionStorage.loadSnapshot()
-                state.mainTab = MainTabFeature.State(
-                    session: MainTabSession(userUuid: snapshot.userID ?? "demo-user")
-                )
-            }
+            state.currentUser = nil
+            state.mainTabCore = nil
             state.destination = destination
 
         case .authenticated(let user):
             configureAuthenticatedSession(user)
-            state.pendingRegistrationUser = nil
-            state.mainTab = MainTabFeature.State(session: MainTabSession(user: user))
-            state.destination = .main
+            state.currentUser = user
+            if user.nickname == nil {
+                state.mainTabCore = nil
+                state.destination = .register
+            } else {
+                state.mainTabCore = state.mainTabCore ?? .init()
+                state.destination = .main
+            }
 
         case .registrationRequired(let user):
             configureAuthenticatedSession(user)
-            state.pendingRegistrationUser = user
-            state.mainTab = nil
+            state.currentUser = user
+            state.mainTabCore = nil
             state.destination = .register
         }
     }
 
     func applyAuthenticatedUser(_ user: User, state: inout State) {
         configureAuthenticatedSession(user)
+        state.currentUser = user
 
         if user.nickname == nil {
-            state.pendingRegistrationUser = user
-            state.mainTab = nil
+            state.mainTabCore = nil
             state.destination = .register
         } else {
-            state.pendingRegistrationUser = nil
-            state.mainTab = MainTabFeature.State(session: MainTabSession(user: user))
+            state.mainTabCore = state.mainTabCore ?? .init()
             state.destination = .main
         }
     }
@@ -155,13 +174,28 @@ private extension AppFeature {
     }
 }
 
-extension MainTabSession {
-    init(user: User) {
-        self.init(
-            userUuid: user.userUuid,
-            nickname: user.nickname ?? "닉네임",
-            isAlerted: user.isAlerted,
-            role: user.role
-        )
+private struct AppCurrentUserSnapshot: Equatable {
+    let userUuid: String?
+    let uid: String?
+    let provider: String?
+    let email: String?
+    let nickname: String?
+    let role: String?
+    let isAlerted: Bool?
+    let fcmToken: String?
+    let alertKeywordList: [String]?
+    let recommendList: [Int]?
+
+    init(_ user: User?) {
+        userUuid = user?.userUuid
+        uid = user?.uid
+        provider = user?.provider
+        email = user?.email
+        nickname = user?.nickname
+        role = user?.role
+        isAlerted = user?.isAlerted
+        fcmToken = user?.fcmToken
+        alertKeywordList = user?.alertKeywordList
+        recommendList = user?.recommendList
     }
 }
