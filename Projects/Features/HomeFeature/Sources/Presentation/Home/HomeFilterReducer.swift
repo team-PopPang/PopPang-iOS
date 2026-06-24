@@ -4,23 +4,27 @@ import DSKit
 import Foundation
 
 @Reducer
-struct HomeFilterReducer {
+public struct HomeFilterReducer {
     @ObservableState
-    struct State: Equatable, Sendable {
+    public struct State: Equatable {
         var regions: [RegionList] = []
         var selectedRegion: RegionList?
         var selectedDistrict: String?
         var selectedOption: SortButton.SortOption = .newest
+
+        public init() {}
     }
 
-    enum Action: Equatable, Sendable {
+    public enum Action: Equatable {
         case regionSelected(RegionList)
         case districtSelected(String)
         case sortOptionSelected(SortButton.SortOption)
         case regionSelectionPrepared(HomeRegionSelection)
     }
 
-    var body: some Reducer<State, Action> {
+    public init() {}
+
+    public var body: some Reducer<State, Action> {
         Reduce { state, action in
             switch action {
             case .regionSelected(let region):

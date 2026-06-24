@@ -1,5 +1,6 @@
 import ComposableArchitecture
 import Domain
+import HomeFeature
 
 enum MainTab: Hashable, CaseIterable, Sendable {
     case home
@@ -48,11 +49,27 @@ struct MainTabFeature {
     @ObservableState
     struct CoreState: Equatable {
         var selectedTab: MainTab = .home
+        var home: HomeFeatureReducer.State
         var path = StackState<Path.State>()
         @Presents var destination: Destination.State?
 
+        init(currentUser: User) {
+            self.home = .init(
+                userUuid: currentUser.userUuid,
+                nickname: currentUser.displayNickname
+            )
+        }
+
+        mutating func syncCurrentUser(_ user: User) {
+            home.syncUser(
+                userUuid: user.userUuid,
+                nickname: user.displayNickname
+            )
+        }
+
         static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.selectedTab == rhs.selectedTab
+                && lhs.home == rhs.home
         }
     }
 
@@ -63,15 +80,11 @@ struct MainTabFeature {
 
         init(
             currentUser: User,
-            core: CoreState = .init()
+            core: CoreState? = nil
         ) {
             self.currentUser = currentUser
-            self.core = core
-        }
-
-        var home: HomeTabFeature.State {
-            get { .init(currentUser: currentUser) }
-            set {}
+            self.core = core ?? .init(currentUser: currentUser)
+            self.core.syncCurrentUser(currentUser)
         }
 
         var calendar: CalendarTabFeature.State {
@@ -102,7 +115,8 @@ struct MainTabFeature {
 
     enum Action {
         case selectedTabChanged(MainTab)
-        case home(HomeTabFeature.Action)
+        case home(HomeFeatureReducer.Action)
+        case homeNavigation(HomeNavigationAction)
         case calendar(CalendarTabFeature.Action)
         case map(MapTabFeature.Action)
         case favorites(FavoritesTabFeature.Action)
@@ -113,6 +127,15 @@ struct MainTabFeature {
 
         enum Delegate: Equatable {
             case logout
+        }
+
+        enum HomeNavigationAction: Equatable {
+            case popupSelected(Popup)
+            case alertRequested
+            case searchRequested
+            case comingPopupsRequested([Popup])
+            case popupRequestRequested
+            case popupRequestManagementRequested
         }
     }
 
@@ -136,8 +159,8 @@ struct MainTabFeature {
     }
 
     var body: some ReducerOf<Self> {
-        Scope(state: \.home, action: \.home) {
-            HomeTabFeature()
+        Scope(state: \.core.home, action: \.home) {
+            HomeFeatureReducer()
         }
         Scope(state: \.calendar, action: \.calendar) {
             CalendarTabFeature()
@@ -158,7 +181,7 @@ struct MainTabFeature {
                 state.core.selectedTab = tab
                 return .none
 
-            case .home(.delegate(.popupSelected(let popup))),
+            case .homeNavigation(.popupSelected(let popup)),
                     .calendar(.delegate(.popupSelected(let popup))),
                     .favorites(.delegate(.popupSelected(let popup))),
                     .map(.delegate(.popupSelected(let popup))),
@@ -166,14 +189,14 @@ struct MainTabFeature {
                 appendPopupDetail(popup, state: &state)
                 return .none
 
-            case .home(.delegate(.alertRequested)),
+            case .homeNavigation(.alertRequested),
                     .calendar(.delegate(.alertRequested)),
                     .favorites(.delegate(.alertRequested)),
                     .profile(.delegate(.alertRequested)):
                 state.core.path.append(.alert(.init(userUuid: state.currentUser.userUuid)))
                 return .none
 
-            case .home(.delegate(.searchRequested)):
+            case .homeNavigation(.searchRequested):
                 state.core.destination = .search(
                     .init(
                         userUuid: state.currentUser.userUuid,
@@ -182,7 +205,7 @@ struct MainTabFeature {
                 )
                 return .none
 
-            case .home(.delegate(.comingPopupsRequested(let popups))):
+            case .homeNavigation(.comingPopupsRequested(let popups)):
                 state.core.path.append(
                     .comingPopupDetail(
                         .init(
@@ -193,11 +216,11 @@ struct MainTabFeature {
                 )
                 return .none
 
-            case .home(.delegate(.popupRequestRequested)):
+            case .homeNavigation(.popupRequestRequested):
                 state.core.path.append(.popupRequest(.init(userUuid: state.currentUser.userUuid)))
                 return .none
 
-            case .home(.delegate(.popupRequestManagementRequested)):
+            case .homeNavigation(.popupRequestManagementRequested):
                 state.core.path.append(.popupRequestManagement(.init()))
                 return .none
 
@@ -226,6 +249,7 @@ struct MainTabFeature {
                 return .none
 
             case .home,
+                    .homeNavigation,
                     .calendar,
                     .map,
                     .favorites,
@@ -315,62 +339,6 @@ private extension MainTabFeature {
 
         default:
             return .none
-        }
-    }
-}
-
-@Reducer
-struct HomeTabFeature {
-    @ObservableState
-    struct State: Equatable {
-        var userUuid: String
-        var nickname: String
-        var isAdmin: Bool
-
-        init(currentUser: User) {
-            self.userUuid = currentUser.userUuid
-            self.nickname = currentUser.displayNickname
-            self.isAdmin = currentUser.isAdminRole
-        }
-    }
-
-    enum Action: Equatable {
-        case popupSelected(Popup)
-        case alertTapped
-        case searchTapped
-        case comingPopupsTapped([Popup])
-        case popupRequestTapped
-        case popupRequestManagementTapped
-        case delegate(Delegate)
-
-        enum Delegate: Equatable {
-            case popupSelected(Popup)
-            case alertRequested
-            case searchRequested
-            case comingPopupsRequested([Popup])
-            case popupRequestRequested
-            case popupRequestManagementRequested
-        }
-    }
-
-    var body: some ReducerOf<Self> {
-        Reduce { _, action in
-            switch action {
-            case .popupSelected(let popup):
-                return .send(.delegate(.popupSelected(popup)))
-            case .alertTapped:
-                return .send(.delegate(.alertRequested))
-            case .searchTapped:
-                return .send(.delegate(.searchRequested))
-            case .comingPopupsTapped(let popups):
-                return .send(.delegate(.comingPopupsRequested(popups)))
-            case .popupRequestTapped:
-                return .send(.delegate(.popupRequestRequested))
-            case .popupRequestManagementTapped:
-                return .send(.delegate(.popupRequestManagementRequested))
-            case .delegate:
-                return .none
-            }
         }
     }
 }
@@ -561,7 +529,7 @@ private struct MainTabCurrentUserSnapshot: Equatable {
     }
 }
 
-private extension User {
+extension User {
     var displayNickname: String {
         nickname ?? "닉네임"
     }

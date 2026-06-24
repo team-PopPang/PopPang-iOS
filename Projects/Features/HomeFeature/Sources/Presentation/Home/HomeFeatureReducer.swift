@@ -4,9 +4,9 @@ import DSKit
 import Foundation
 
 @Reducer
-struct HomeFeatureReducer {
+public struct HomeFeatureReducer {
     @ObservableState
-    struct State: Equatable, Sendable {
+    public struct State: Equatable {
         var userUuid: String
         var nickname: String
         var bestPopups: [Popup] = []
@@ -16,7 +16,15 @@ struct HomeFeatureReducer {
         var isLoading = false
         var errorMessage: String?
 
-        init(
+        public init(
+            userUuid: String,
+            nickname: String
+        ) {
+            self.userUuid = userUuid
+            self.nickname = nickname
+        }
+
+        public mutating func syncUser(
             userUuid: String,
             nickname: String
         ) {
@@ -25,7 +33,7 @@ struct HomeFeatureReducer {
         }
     }
 
-    enum Action: Equatable, Sendable {
+    public enum Action: Equatable {
         case onAppear
         case filter(HomeFilterReducer.Action)
         case toggleLike(Popup)
@@ -39,7 +47,9 @@ struct HomeFeatureReducer {
 
     @Dependencies.Dependency(\.homePopupClient) private var popupClient: HomePopupClient
 
-    var body: some Reducer<State, Action> {
+    public init() {}
+
+    public var body: some Reducer<State, Action> {
         Scope(state: \.filter, action: \.filter) {
             HomeFilterReducer()
         }
@@ -218,16 +228,36 @@ private extension HomeFeatureReducer {
     }
 }
 
-struct HomeRegionSelection: Equatable, Sendable {
+public struct HomeRegionSelection: Equatable, Sendable {
     var regions: [RegionList]
     var selectedRegion: RegionList?
     var selectedDistrict: String?
+
+    public init(
+        regions: [RegionList],
+        selectedRegion: RegionList?,
+        selectedDistrict: String?
+    ) {
+        self.regions = regions
+        self.selectedRegion = selectedRegion
+        self.selectedDistrict = selectedDistrict
+    }
 }
 
-struct HomePopupSections: Equatable, Sendable {
+public struct HomePopupSections: Equatable, Sendable {
     var bestPopups: [Popup]
     var comingPopups: [Popup]
     var gridPopups: [Popup]
+
+    public init(
+        bestPopups: [Popup],
+        comingPopups: [Popup],
+        gridPopups: [Popup]
+    ) {
+        self.bestPopups = bestPopups
+        self.comingPopups = comingPopups
+        self.gridPopups = gridPopups
+    }
 }
 
 private extension [RegionList] {

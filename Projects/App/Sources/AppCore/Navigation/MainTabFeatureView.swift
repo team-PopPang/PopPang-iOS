@@ -71,7 +71,28 @@ struct MainTabFeatureView: View {
     private func tabView(for tab: MainTab) -> some View {
         switch tab {
         case .home:
-            HomeTabView(store: store.scope(state: \.home, action: \.home))
+            HomeFeatureView(
+                store: store.scope(state: \.core.home, action: \.home),
+                isAdmin: store.currentUser.isAdminRole,
+                onSelectPopup: { _, popup in
+                    store.send(.homeNavigation(.popupSelected(popup)))
+                },
+                onShowAlert: { _ in
+                    store.send(.homeNavigation(.alertRequested))
+                },
+                onSearch: { _ in
+                    store.send(.homeNavigation(.searchRequested))
+                },
+                onShowComingPopups: { _, popups in
+                    store.send(.homeNavigation(.comingPopupsRequested(popups)))
+                },
+                onReport: { _ in
+                    store.send(.homeNavigation(.popupRequestRequested))
+                },
+                onManagePopupRequests: {
+                    store.send(.homeNavigation(.popupRequestManagementRequested))
+                }
+            )
         case .calendar:
             CalendarTabView(store: store.scope(state: \.calendar, action: \.calendar))
         case .map:
@@ -81,36 +102,6 @@ struct MainTabFeatureView: View {
         case .profile:
             ProfileTabView(store: store.scope(state: \.profile, action: \.profile))
         }
-    }
-}
-
-private struct HomeTabView: View {
-    let store: StoreOf<HomeTabFeature>
-
-    var body: some View {
-        HomeFeatureView(
-            userUuid: store.userUuid,
-            nickname: store.nickname,
-            isAdmin: store.isAdmin,
-            onSelectPopup: { _, popup in
-                store.send(.popupSelected(popup))
-            },
-            onShowAlert: { _ in
-                store.send(.alertTapped)
-            },
-            onSearch: { _ in
-                store.send(.searchTapped)
-            },
-            onShowComingPopups: { _, popups in
-                store.send(.comingPopupsTapped(popups))
-            },
-            onReport: { _ in
-                store.send(.popupRequestTapped)
-            },
-            onManagePopupRequests: {
-                store.send(.popupRequestManagementTapped)
-            }
-        )
     }
 }
 

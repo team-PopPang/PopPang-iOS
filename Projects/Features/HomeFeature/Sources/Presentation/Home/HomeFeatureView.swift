@@ -30,7 +30,7 @@ public struct HomeFeatureView: View {
     private let nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration
     private let nativeAdCount: Int?
 
-    init(
+    public init(
         store: StoreOf<HomeFeatureReducer>,
         isAdmin: Bool = false,
         nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration = .homeGrid,

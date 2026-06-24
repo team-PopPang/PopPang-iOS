@@ -142,7 +142,7 @@ private extension AppFeature {
                 state.mainTabCore = nil
                 state.destination = .register
             } else {
-                state.mainTabCore = state.mainTabCore ?? .init()
+                state.mainTabCore = state.mainTabCore ?? .init(currentUser: user)
                 state.destination = .main
             }
 
@@ -162,7 +162,7 @@ private extension AppFeature {
             state.mainTabCore = nil
             state.destination = .register
         } else {
-            state.mainTabCore = state.mainTabCore ?? .init()
+            state.mainTabCore = state.mainTabCore ?? .init(currentUser: user)
             state.destination = .main
         }
     }
