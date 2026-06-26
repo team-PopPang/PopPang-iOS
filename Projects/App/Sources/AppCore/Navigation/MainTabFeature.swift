@@ -1,6 +1,7 @@
 import ComposableArchitecture
 import Domain
 import HomeFeature
+import PopupRequestManagementFeature
 
 enum MainTab: Hashable, CaseIterable, Sendable {
     case home
@@ -150,6 +151,8 @@ struct MainTabFeature {
 
     @Reducer
     enum Path {
+        case popupRequestManagement(PopupRequestManagementFlowFeature)
+        case popupRequestManagementDetail(PopupRequestManagementDetailFeature)
         case homeComingPopupDetail(HomeComingPopupDetailDestinationFeature)
         case popupDetail(PopupDetailDestinationFeature)
         case reviewDetail(ReviewDetailDestinationFeature)
@@ -197,6 +200,14 @@ struct MainTabFeature {
                             userUuid: state.currentUser.userUuid,
                             popups: popups
                         )
+                    )
+                )
+                return .none
+
+            case .home(.delegate(.popupRequestManagementRequested)):
+                state.core.path.append(
+                    .popupRequestManagement(
+                        .init(adminUuid: state.currentUser.userUuid)
                     )
                 )
                 return .none
@@ -272,6 +283,25 @@ private extension MainTabFeature {
         state: inout State
     ) -> Effect<Action> {
         switch action {
+        case .popupRequestManagement(.delegate(.dismiss)):
+            state.core.path.pop(from: id)
+            return .none
+
+        case .popupRequestManagement(.delegate(.showDetail(let submissionId))):
+            state.core.path.append(
+                .popupRequestManagementDetail(
+                    .init(
+                        adminUuid: state.currentUser.userUuid,
+                        submissionId: submissionId
+                    )
+                )
+            )
+            return .none
+
+        case .popupRequestManagementDetail(.delegate(.pop)):
+            state.core.path.pop(from: id)
+            return .none
+
         case .homeComingPopupDetail(.delegate(.selectPopup(let popup))):
             appendPopupDetail(popup, state: &state)
             return .none

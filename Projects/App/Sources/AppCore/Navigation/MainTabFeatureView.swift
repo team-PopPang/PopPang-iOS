@@ -6,6 +6,7 @@ import FavoritesFeature
 import HomeFeature
 import MapFeature
 import PopupDetailFeature
+import PopupRequestManagementFeature
 import ProfileFeature
 import ReviewFeature
 import SwiftUI
@@ -35,6 +36,14 @@ struct MainTabFeatureView: View {
             }
         } destination: { store in
             switch store.state {
+            case .popupRequestManagement:
+                if let store = store.scope(state: \.popupRequestManagement, action: \.popupRequestManagement) {
+                    PopupRequestManagementDestinationView(store: store)
+                }
+            case .popupRequestManagementDetail:
+                if let store = store.scope(state: \.popupRequestManagementDetail, action: \.popupRequestManagementDetail) {
+                    PopupRequestManagementDetailDestinationView(store: store)
+                }
             case .homeComingPopupDetail:
                 if let store = store.scope(state: \.homeComingPopupDetail, action: \.homeComingPopupDetail) {
                     HomeComingPopupDetailDestinationView(store: store)
@@ -175,6 +184,22 @@ private struct PopupDetailDestinationView: View {
                 store.send(.reviewsTapped(reviews))
             }
         )
+    }
+}
+
+private struct PopupRequestManagementDestinationView: View {
+    let store: StoreOf<PopupRequestManagementFlowFeature>
+
+    var body: some View {
+        PopupRequestManagementFlowView(store: store)
+    }
+}
+
+private struct PopupRequestManagementDetailDestinationView: View {
+    let store: StoreOf<PopupRequestManagementDetailFeature>
+
+    var body: some View {
+        PopupRequestManagementDetailView(store: store)
     }
 }
 

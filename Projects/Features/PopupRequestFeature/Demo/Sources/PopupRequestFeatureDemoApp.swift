@@ -1,24 +1,20 @@
-import Data
-import Domain
+import ComposableArchitecture
 import PopupRequestFeature
 import SwiftUI
 
 @main
 struct PopupRequestFeatureDemoApp: App {
-    init() {
-        DIContainer.shared.register(
-            AdminUsecaseImpl(adminRepository: AdminRepositoryImpl()),
-            for: AdminUsecaseProtocol.self
-        )
-        DIContainer.shared.register(
-            UserUsecaseImpl(userRepository: UserRepositoryImpl()),
-            for: UserUsecaseProtocol.self
-        )
-    }
-
     var body: some Scene {
         WindowGroup {
-            PopupRequestFeatureView()
+            NavigationStack {
+                PopupRequestFeatureView(
+                    store: Store(initialState: PopupRequestFeature.State(userUuid: "demo-user")) {
+                        PopupRequestFeature()
+                    } withDependencies: {
+                        $0.popupRequestClient = .previewValue
+                    }
+                )
+            }
         }
     }
 }

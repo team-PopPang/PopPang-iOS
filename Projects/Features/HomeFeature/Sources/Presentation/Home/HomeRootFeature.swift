@@ -10,8 +10,7 @@ public struct HomeRootFeature {
     @Reducer
     public enum Destination {
         case search(HomeSearchDestinationFeature)
-        case popupRequest(HomePopupRequestDestinationFeature)
-        case popupRequestManagement(HomePopupRequestManagementFlowFeature)
+        case popupRequest(PopupRequestFeature)
     }
 
     @ObservableState
@@ -57,8 +56,6 @@ public struct HomeRootFeature {
                 lhsState == rhsState
             case (.popupRequest(let lhsState), .popupRequest(let rhsState)):
                 lhsState == rhsState
-            case (.popupRequestManagement(let lhsState), .popupRequestManagement(let rhsState)):
-                lhsState == rhsState
             case (nil, nil):
                 true
             default:
@@ -76,6 +73,7 @@ public struct HomeRootFeature {
             case popupSelected(Popup)
             case alertRequested
             case comingPopupListRequested([Popup])
+            case popupRequestManagementRequested
         }
     }
 
@@ -113,8 +111,7 @@ public struct HomeRootFeature {
                 return .none
 
             case .content(.delegate(.popupRequestManagementRequested)):
-                state.destination = .popupRequestManagement(.init())
-                return .none
+                return .send(.delegate(.popupRequestManagementRequested))
 
             case .destination(.presented(.search(.delegate(.dismiss)))):
                 state.destination = nil
@@ -124,8 +121,7 @@ public struct HomeRootFeature {
                 state.destination = nil
                 return .send(.delegate(.popupSelected(popup)))
 
-            case .destination(.presented(.popupRequest(.delegate(.dismiss)))),
-                    .destination(.presented(.popupRequestManagement(.delegate(.dismiss)))):
+            case .destination(.presented(.popupRequest(.delegate(.dismiss)))):
                 state.destination = nil
                 return .none
 
@@ -157,11 +153,6 @@ public struct HomeRootFeatureView: View {
             item: $store.scope(state: \.destination?.popupRequest, action: \.destination.popupRequest)
         ) { store in
             HomePopupRequestDestinationView(store: store)
-        }
-        .navigationDestination(
-            item: $store.scope(state: \.destination?.popupRequestManagement, action: \.destination.popupRequestManagement)
-        ) { store in
-            HomePopupRequestManagementFlowView(store: store)
         }
     }
 }
@@ -287,129 +278,10 @@ public struct HomeComingPopupDetailDestinationView: View {
     }
 }
 
-@Reducer
-public struct HomePopupRequestDestinationFeature {
-    @ObservableState
-    public struct State: Equatable, Identifiable {
-        let userUuid: String
-
-        public var id: String { "home-popup-request-\(userUuid)" }
-
-        public init(userUuid: String) {
-            self.userUuid = userUuid
-        }
-    }
-
-    public enum Action: Equatable {
-        case dismissTapped
-        case delegate(Delegate)
-
-        public enum Delegate: Equatable {
-            case dismiss
-        }
-    }
-
-    public init() {}
-
-    public var body: some ReducerOf<Self> {
-        Reduce { _, action in
-            switch action {
-            case .dismissTapped:
-                return .send(.delegate(.dismiss))
-            case .delegate:
-                return .none
-            }
-        }
-    }
-}
-
 private struct HomePopupRequestDestinationView: View {
-    let store: StoreOf<HomePopupRequestDestinationFeature>
+    let store: StoreOf<PopupRequestFeature>
 
     var body: some View {
-        PopupRequestFeatureView(
-            userUuid: store.userUuid,
-            onDismiss: {
-                store.send(.dismissTapped)
-            }
-        )
-    }
-}
-
-@Reducer
-public struct HomePopupRequestManagementFlowFeature {
-    @ObservableState
-    public struct State: Equatable, Identifiable {
-        var detailSubmissionId: String?
-
-        public var id: String { "home-popup-request-management" }
-
-        public init(detailSubmissionId: String? = nil) {
-            self.detailSubmissionId = detailSubmissionId
-        }
-    }
-
-    public enum Action: Equatable {
-        case backTapped
-        case submissionSelected(String)
-        case detailDismissed
-        case delegate(Delegate)
-
-        public enum Delegate: Equatable {
-            case dismiss
-        }
-    }
-
-    public init() {}
-
-    public var body: some ReducerOf<Self> {
-        Reduce { state, action in
-            switch action {
-            case .backTapped:
-                return .send(.delegate(.dismiss))
-            case .submissionSelected(let submissionId):
-                state.detailSubmissionId = submissionId
-                return .none
-            case .detailDismissed:
-                state.detailSubmissionId = nil
-                return .none
-            case .delegate:
-                return .none
-            }
-        }
-    }
-}
-
-private struct HomePopupRequestManagementFlowView: View {
-    @Bindable var store: StoreOf<HomePopupRequestManagementFlowFeature>
-
-    var body: some View {
-        PopupRequestManagementFeatureView(
-            onBack: {
-                store.send(.backTapped)
-            },
-            onSelectSubmission: { submissionId in
-                store.send(.submissionSelected(submissionId))
-            }
-        )
-        .navigationDestination(
-            isPresented: Binding(
-                get: { store.detailSubmissionId != nil },
-                set: { isPresented in
-                    if !isPresented {
-                        store.send(.detailDismissed)
-                    }
-                }
-            )
-        ) {
-            if let submissionId = store.detailSubmissionId {
-                PopupRequestManagementDetailFeatureView(
-                    submissionId: submissionId,
-                    onBack: {
-                        store.send(.detailDismissed)
-                    }
-                )
-            }
-        }
+        PopupRequestFeatureView(store: store)
     }
 }
