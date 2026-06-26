@@ -2,7 +2,7 @@ import ComposableArchitecture
 import Domain
 import Foundation
 
-struct HomePopupClient: Sendable {
+public struct HomePopupClient: Sendable {
     var getRegionList: @Sendable () async throws -> [RegionList]
     var getPersonalRandomPopupList: @Sendable (_ userUuid: String) async throws -> [Popup]
     var getPersonalUpcomingPopupList: @Sendable (_ userUuid: String) async throws -> [Popup]
@@ -16,11 +16,13 @@ struct HomePopupClient: Sendable {
     var removeFavorite: @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void
 }
 
-extension HomePopupClient: DependencyKey {
-    static var liveValue: HomePopupClient {
-        let box = PopupUsecaseBox(DIContainer.shared.resolve(PopupUsecaseProtocol.self))
+extension HomePopupClient {
+    public static func live(
+        popupUsecase: PopupUsecaseProtocol
+    ) -> Self {
+        let box = PopupUsecaseBox(popupUsecase)
 
-        return HomePopupClient(
+        return Self(
             getRegionList: {
                 try await box.usecase.getRegionList()
             },
@@ -46,9 +48,20 @@ extension HomePopupClient: DependencyKey {
             }
         )
     }
+}
+
+extension HomePopupClient: DependencyKey {
+    public static let liveValue = HomePopupClient(
+        getRegionList: { [] },
+        getPersonalRandomPopupList: { _ in [] },
+        getPersonalUpcomingPopupList: { _ in [] },
+        getPersonalFilteredPopupList: { _, _, _, _ in [] },
+        addFavorite: { _, _ in },
+        removeFavorite: { _, _ in }
+    )
 
 #if DEBUG
-    static var previewValue: HomePopupClient {
+    public static var previewValue: HomePopupClient {
         let popups: [Popup] = [
             .homeFeaturePreview(
                 popupUuid: "preview-1",
@@ -154,7 +167,7 @@ private extension Popup {
 #endif
 
 extension HomePopupClient: TestDependencyKey {
-    static var testValue: HomePopupClient {
+    public static var testValue: HomePopupClient {
         HomePopupClient(
             getRegionList: { [] },
             getPersonalRandomPopupList: { _ in [] },
@@ -167,7 +180,7 @@ extension HomePopupClient: TestDependencyKey {
 }
 
 extension DependencyValues {
-    var homePopupClient: HomePopupClient {
+    public var homePopupClient: HomePopupClient {
         get { self[HomePopupClient.self] }
         set { self[HomePopupClient.self] = newValue }
     }

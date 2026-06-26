@@ -383,7 +383,7 @@ API, SDK, 위치, 딥링크 같은 작업 도구를 TCA dependency로 감싸는 
 - LocationClient
 - DeepLinkClient
 
-현재는 `DIContainer.shared.resolve(...)`와 `@Dependency` bridge가 섞여 있다. 새 TCA feature는 feature-scoped client를 만들고, 내부에서 기존 usecase protocol을 감싼다.
+현재는 `DIContainer.shared.resolve(...)`와 `@Dependency` bridge가 섞여 있다. 새 TCA feature는 feature-scoped client를 만들고, 내부에서 기존 usecase protocol을 감싼다. 이때 TCA client의 `liveValue` 안에서 `DIContainer.shared.resolve(...)`를 직접 호출하지 않고, `AppBootstrap` 같은 composition root에서 concrete client를 조립해 `withDependencies`로 주입한다.
 
 ### Shared.Caches
 

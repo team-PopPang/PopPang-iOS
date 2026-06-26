@@ -348,7 +348,7 @@ Domain
 
 ## DI 기준
 
-현재 DI는 `Domain`의 `DIContainer`와 `@Dependency`를 사용한다.
+현재 DI는 legacy와 TCA를 분리해서 본다.
 
 흐름:
 
@@ -357,8 +357,16 @@ AppDependencyRegistry.live()
  -> RepositoryImpl 생성
  -> UsecaseImpl 생성
  -> DIContainer.shared.register(..., for: Protocol.self)
- -> FeatureCompound에서 @Dependency로 resolve
+ -> legacy FeatureCompound에서 @Dependency로 resolve
+ -> AppBootstrap이 TCA feature-scoped client를 조립
+ -> Store.withDependencies(...)로 TCA reducer에 주입
 ```
+
+원칙:
+
+- legacy Compound는 `DIContainer`와 `@Dependency`를 유지할 수 있다.
+- TCA reducer는 `DependencyValues`만 사용한다.
+- TCA client `liveValue` 안에서 `DIContainer.shared.resolve(...)`를 직접 호출하지 않는다.
 
 DI 변경 시 함께 확인할 파일:
 

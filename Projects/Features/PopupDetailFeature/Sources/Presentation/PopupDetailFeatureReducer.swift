@@ -166,7 +166,7 @@ private extension PopupDetailFeatureReducer {
     }
 }
 
-struct PopupDetailClient: Sendable {
+public struct PopupDetailClient: Sendable {
     var increaseViewCount: @Sendable (_ popupUuid: String) async throws -> Void
     var getPersonalRelatedPopupList: @Sendable (
         _ userUuid: String,
@@ -177,12 +177,15 @@ struct PopupDetailClient: Sendable {
     var deactivatePopup: @Sendable (_ popupUuid: String) async throws -> Void
 }
 
-extension PopupDetailClient: DependencyKey {
-    static var liveValue: PopupDetailClient {
-        let popupUsecaseBox = PopupDetailPopupUsecaseBox(DIContainer.shared.resolve(PopupUsecaseProtocol.self))
-        let adminUsecaseBox = PopupDetailAdminUsecaseBox(DIContainer.shared.resolve(AdminUsecaseProtocol.self))
+extension PopupDetailClient {
+    public static func live(
+        popupUsecase: PopupUsecaseProtocol,
+        adminUsecase: AdminUsecaseProtocol
+    ) -> Self {
+        let popupUsecaseBox = PopupDetailPopupUsecaseBox(popupUsecase)
+        let adminUsecaseBox = PopupDetailAdminUsecaseBox(adminUsecase)
 
-        return PopupDetailClient(
+        return Self(
             increaseViewCount: { popupUuid in
                 try await popupUsecaseBox.usecase.increaseViewCount(popupUuid: popupUuid)
             },
@@ -205,8 +208,18 @@ extension PopupDetailClient: DependencyKey {
     }
 }
 
+extension PopupDetailClient: DependencyKey {
+    public static let liveValue = PopupDetailClient(
+        increaseViewCount: { _ in },
+        getPersonalRelatedPopupList: { _, _ in [] },
+        addFavorite: { _, _ in },
+        removeFavorite: { _, _ in },
+        deactivatePopup: { _ in }
+    )
+}
+
 extension DependencyValues {
-    var popupDetailClient: PopupDetailClient {
+    public var popupDetailClient: PopupDetailClient {
         get { self[PopupDetailClient.self] }
         set { self[PopupDetailClient.self] = newValue }
     }
