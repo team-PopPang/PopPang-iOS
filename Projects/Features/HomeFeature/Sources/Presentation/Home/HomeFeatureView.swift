@@ -19,19 +19,16 @@ public struct HomeFeatureView: View {
     @StateObject private var nativeAdSlotStore = AdNativeAdSlotStore()
 
     private let deepLinkStorage: DeepLinkStorage
-    private let isAdmin: Bool
     private let nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration
     private let nativeAdCount: Int?
 
     public init(
         store: StoreOf<HomeFeatureReducer>,
-        isAdmin: Bool = false,
         nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration = .homeGrid,
         nativeAdCount: Int? = nil,
         deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore())
     ) {
         self.store = store
-        self.isAdmin = isAdmin
         self.nativeAdPlacementConfiguration = nativeAdPlacementConfiguration
         self.nativeAdCount = nativeAdCount
         self.deepLinkStorage = deepLinkStorage
@@ -45,7 +42,7 @@ public struct HomeFeatureView: View {
             VStack(spacing: 0) {
                 HomeNavigationBar(
                     userUuid: store.userUuid,
-                    showsPopupRequestManagement: isAdmin,
+                    showsPopupRequestManagement: store.isAdmin,
                     onSearch: { _ in
                         store.send(.searchTapped)
                     },
@@ -492,7 +489,8 @@ private extension HomeFeatureView {
         store: Store(
             initialState: HomeFeatureReducer.State(
                 userUuid: "preview-user",
-                nickname: "팝팡"
+                nickname: "팝팡",
+                isAdmin: false
             )
         ) {
             HomeFeatureReducer()

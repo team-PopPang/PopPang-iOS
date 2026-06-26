@@ -67,24 +67,21 @@ struct MainTabFeatureView: View {
     private func tabView(for tab: MainTab) -> some View {
         switch tab {
         case .home:
-            HomeRootFeatureView(
-                store: store.scope(state: \.core.home, action: \.home),
-                isAdmin: store.sessionContext.isAdmin
-            )
+            HomeRootFeatureView(store: store.scope(state: \.core.home, action: \.home))
         case .calendar:
-            CalendarTabView(store: store.scope(state: \.calendar, action: \.calendar))
+            CalendarLegacyBridgeView(store: store.scope(state: \.calendar, action: \.calendar))
         case .map:
-            MapTabView(store: store.scope(state: \.map, action: \.map))
+            MapLegacyBridgeView(store: store.scope(state: \.map, action: \.map))
         case .favorites:
-            FavoritesTabView(store: store.scope(state: \.favorites, action: \.favorites))
+            FavoritesLegacyBridgeView(store: store.scope(state: \.favorites, action: \.favorites))
         case .profile:
-            ProfileTabView(store: store.scope(state: \.profile, action: \.profile))
+            ProfileLegacyBridgeView(store: store.scope(state: \.profile, action: \.profile))
         }
     }
 }
 
-private struct CalendarTabView: View {
-    let store: StoreOf<CalendarTabFeature>
+private struct CalendarLegacyBridgeView: View {
+    let store: StoreOf<CalendarLegacyBridgeFeature>
 
     var body: some View {
         CalendarFeatureView(
@@ -99,8 +96,8 @@ private struct CalendarTabView: View {
     }
 }
 
-private struct MapTabView: View {
-    let store: StoreOf<MapTabFeature>
+private struct MapLegacyBridgeView: View {
+    let store: StoreOf<MapLegacyBridgeFeature>
 
     var body: some View {
         MapFeatureView(
@@ -112,8 +109,8 @@ private struct MapTabView: View {
     }
 }
 
-private struct FavoritesTabView: View {
-    let store: StoreOf<FavoritesTabFeature>
+private struct FavoritesLegacyBridgeView: View {
+    let store: StoreOf<FavoritesLegacyBridgeFeature>
 
     var body: some View {
         FavoritesFeatureView(
@@ -131,8 +128,8 @@ private struct FavoritesTabView: View {
     }
 }
 
-private struct ProfileTabView: View {
-    let store: StoreOf<ProfileTabFeature>
+private struct ProfileLegacyBridgeView: View {
+    let store: StoreOf<ProfileLegacyBridgeFeature>
 
     var body: some View {
         ProfileFeatureView(

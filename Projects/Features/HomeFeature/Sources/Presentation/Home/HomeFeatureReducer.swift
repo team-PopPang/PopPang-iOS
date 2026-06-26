@@ -9,6 +9,7 @@ public struct HomeFeatureReducer {
     public struct State: Equatable {
         var userUuid: String
         var nickname: String
+        var isAdmin: Bool
         var bestPopups: [Popup] = []
         var comingPopups: [Popup] = []
         var gridPopups: [Popup] = []
@@ -18,18 +19,22 @@ public struct HomeFeatureReducer {
 
         public init(
             userUuid: String,
-            nickname: String
+            nickname: String,
+            isAdmin: Bool
         ) {
             self.userUuid = userUuid
             self.nickname = nickname
+            self.isAdmin = isAdmin
         }
 
         public mutating func syncUser(
             userUuid: String,
-            nickname: String
+            nickname: String,
+            isAdmin: Bool
         ) {
             self.userUuid = userUuid
             self.nickname = nickname
+            self.isAdmin = isAdmin
         }
     }
 

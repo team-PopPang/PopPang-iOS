@@ -16,7 +16,9 @@
 - 현재 로그인 사용자는 `AppFeature.session.user`로 표현한다.
 - `MainTabFeature`는 전역 유저를 직접 저장하지 않고 parent projection state로 사용한다.
 - direct scope가 가능한 feature는 `session.user`를 projection해서 reducer/state에 주입한다.
+- 현재 `HomeFeature`는 `userUuid`, `nickname`, `isAdmin`을 feature state로 projection해서 direct scope한다.
 - legacy feature는 당분간 `SessionContext` 또는 primitive 값을 view init으로 주입한다.
+- 현재 `Calendar`, `Map`, `Favorites`, `Profile`은 `*LegacyBridgeFeature`가 session-derived primitive를 만들어 legacy view로 넘긴다.
 
 ## 용어
 
@@ -242,6 +244,87 @@ PopPang
 
 ## Module Boundary
 
+## Session Injection Strategy
+
+세션 source of truth는 항상 `AppFeature.session`이다. 하위 feature는 이 세션을 직접 소유하지 않고 parent가 projection한 값만 받는다.
+
+### 1. TCA-ready feature는 state projection + direct scope
+
+`HomeFeature`가 현재 기준선이다.
+
+```swift
+@ObservableState
+struct AppFeature.State: Equatable {
+    var session = SessionState()
+    var mainTabCore: MainTabFeature.CoreState?
+}
+```
+
+```swift
+init(session: SessionState) {
+    guard let context = session.context else {
+        preconditionFailure("Home core requires a logged in session.")
+    }
+    self.home = .init(
+        userUuid: context.userUuid,
+        nickname: context.nickname,
+        isAdmin: context.isAdmin
+    )
+}
+```
+
+```swift
+HomeRootFeatureView(store: store.scope(state: \.core.home, action: \.home))
+```
+
+이 방식에서는 view가 `userUuid`, `nickname`, `isAdmin` 같은 session-derived primitive를 따로 받지 않는다. feature state가 이미 그 값을 들고 있고, reducer는 feature-scoped dependency를 직접 사용한다.
+
+```swift
+@Reducer
+public struct HomeFeatureReducer {
+    @Dependencies.Dependency(\.homePopupClient) private var popupClient: HomePopupClient
+}
+```
+
+### 2. legacy feature는 bridge reducer + view init 주입
+
+아직 내부 state/effect/navigation을 TCA reducer로 옮기지 않은 탭은 `MainTabFeature` 아래에 bridge reducer를 둔다. bridge reducer는 session-derived primitive만 만들고 실제 레거시 화면으로 전달한다.
+
+```swift
+var profile: ProfileLegacyBridgeFeature.State {
+    get { .init(sessionContext: sessionContext) }
+    set {}
+}
+```
+
+```swift
+private struct ProfileLegacyBridgeView: View {
+    let store: StoreOf<ProfileLegacyBridgeFeature>
+
+    var body: some View {
+        ProfileFeatureView(
+            userUuid: store.userUuid,
+            nickname: store.nickname,
+            isAlerted: store.isAlerted,
+            onShowAlert: { _ in
+                store.send(.alertTapped)
+            }
+        )
+    }
+}
+```
+
+이 단계에서는 legacy feature 내부의 기존 `Compound`와 기존 `@Dependency`/`DIContainer` 구조를 유지한다. 즉 `SessionClient`를 억지로 레거시 feature마다 넣지 않고, root session만 parent가 projection해서 bridge에서 넘긴다.
+
+### 3. 점진 마이그레이션의 완료 기준
+
+각 탭이 아래 조건을 만족하면 bridge를 제거하고 direct scope로 옮긴다.
+
+- 탭 root가 public TCA reducer/state/view entry를 가진다.
+- 화면 전환 intent를 delegate action으로 올린다.
+- 내부 비동기 작업을 feature-scoped TCA dependency로 처리한다.
+- parent가 필요한 session-derived 값만 state projection으로 내려줄 수 있다.
+
 ### Feature
 
 Feature는 화면 상태와 액션을 가진다.
@@ -380,6 +463,7 @@ case .destination:
 - `MainTabFeature.Destination`으로 sheet/fullScreen/search 통합
 - `@Presents`는 단일 destination enum state로 사용
 - tab root는 중첩 `NavigationStack`을 만들지 않음
+- 아직 reducer가 준비되지 않은 탭은 `*LegacyBridgeFeature`로 한시 운영 가능
 
 ### 3. Feature escaping routing 제거
 
@@ -393,6 +477,12 @@ case .destination:
 - feature-scoped client 표준화
 - 기존 usecase protocol bridge 정리
 - Shared.Models/Clients/Caches 분리 여부 검토
+
+### 5. 탭별 점진 전환
+
+- `HomeFeature`: direct scope 완료, Home 전용 route를 feature ownership으로 이동
+- `Calendar/Map/Favorites/Profile`: bridge reducer를 유지하며 session primitive만 주입
+- 각 탭이 TCA reducer entry를 갖추면 `*LegacyBridgeFeature`를 제거하고 direct scope로 전환
 
 ## Do Not
 

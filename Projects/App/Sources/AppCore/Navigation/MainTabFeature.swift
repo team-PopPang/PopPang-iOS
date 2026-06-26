@@ -58,7 +58,8 @@ struct MainTabFeature {
             }
             self.home = .init(
                 userUuid: context.userUuid,
-                nickname: context.nickname
+                nickname: context.nickname,
+                isAdmin: context.isAdmin
             )
         }
 
@@ -66,7 +67,8 @@ struct MainTabFeature {
             guard let context = session.context else { return }
             home.syncUser(
                 userUuid: context.userUuid,
-                nickname: context.nickname
+                nickname: context.nickname,
+                isAdmin: context.isAdmin
             )
         }
 
@@ -90,22 +92,23 @@ struct MainTabFeature {
             self.core.syncSession(session)
         }
 
-        var calendar: CalendarTabFeature.State {
+        // Legacy tabs still own Compound/internal state, so MainTab only bridges session-derived primitives for now.
+        var calendar: CalendarLegacyBridgeFeature.State {
             get { .init(sessionContext: sessionContext) }
             set {}
         }
 
-        var map: MapTabFeature.State {
+        var map: MapLegacyBridgeFeature.State {
             get { .init(sessionContext: sessionContext) }
             set {}
         }
 
-        var favorites: FavoritesTabFeature.State {
+        var favorites: FavoritesLegacyBridgeFeature.State {
             get { .init(sessionContext: sessionContext) }
             set {}
         }
 
-        var profile: ProfileTabFeature.State {
+        var profile: ProfileLegacyBridgeFeature.State {
             get { .init(sessionContext: sessionContext) }
             set {}
         }
@@ -133,10 +136,10 @@ struct MainTabFeature {
     enum Action {
         case selectedTabChanged(MainTab)
         case home(HomeRootFeature.Action)
-        case calendar(CalendarTabFeature.Action)
-        case map(MapTabFeature.Action)
-        case favorites(FavoritesTabFeature.Action)
-        case profile(ProfileTabFeature.Action)
+        case calendar(CalendarLegacyBridgeFeature.Action)
+        case map(MapLegacyBridgeFeature.Action)
+        case favorites(FavoritesLegacyBridgeFeature.Action)
+        case profile(ProfileLegacyBridgeFeature.Action)
         case path(StackActionOf<Path>)
         case delegate(Delegate)
 
@@ -160,16 +163,16 @@ struct MainTabFeature {
             HomeRootFeature()
         }
         Scope(state: \.calendar, action: \.calendar) {
-            CalendarTabFeature()
+            CalendarLegacyBridgeFeature()
         }
         Scope(state: \.map, action: \.map) {
-            MapTabFeature()
+            MapLegacyBridgeFeature()
         }
         Scope(state: \.favorites, action: \.favorites) {
-            FavoritesTabFeature()
+            FavoritesLegacyBridgeFeature()
         }
         Scope(state: \.profile, action: \.profile) {
-            ProfileTabFeature()
+            ProfileLegacyBridgeFeature()
         }
 
         Reduce { state, action in
@@ -285,7 +288,7 @@ private extension MainTabFeature {
 }
 
 @Reducer
-struct CalendarTabFeature {
+struct CalendarLegacyBridgeFeature {
     @ObservableState
     struct State: Equatable {
         var userUuid: String
@@ -321,7 +324,7 @@ struct CalendarTabFeature {
 }
 
 @Reducer
-struct MapTabFeature {
+struct MapLegacyBridgeFeature {
     @ObservableState
     struct State: Equatable {
         var userUuid: String
@@ -353,7 +356,7 @@ struct MapTabFeature {
 }
 
 @Reducer
-struct FavoritesTabFeature {
+struct FavoritesLegacyBridgeFeature {
     @ObservableState
     struct State: Equatable {
         var userUuid: String
@@ -393,7 +396,7 @@ struct FavoritesTabFeature {
 }
 
 @Reducer
-struct ProfileTabFeature {
+struct ProfileLegacyBridgeFeature {
     @ObservableState
     struct State: Equatable {
         var userUuid: String

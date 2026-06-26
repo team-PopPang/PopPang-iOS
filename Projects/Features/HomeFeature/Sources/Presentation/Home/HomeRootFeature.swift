@@ -22,26 +22,51 @@ public struct HomeRootFeature {
 
         public init(
             userUuid: String,
-            nickname: String
+            nickname: String,
+            isAdmin: Bool
         ) {
             self.content = .init(
                 userUuid: userUuid,
-                nickname: nickname
+                nickname: nickname,
+                isAdmin: isAdmin
             )
         }
 
         public mutating func syncUser(
             userUuid: String,
-            nickname: String
+            nickname: String,
+            isAdmin: Bool
         ) {
             content.syncUser(
                 userUuid: userUuid,
-                nickname: nickname
+                nickname: nickname,
+                isAdmin: isAdmin
             )
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.content == rhs.content
+                && destinationsEqual(lhs.destination, rhs.destination)
+        }
+
+        private static func destinationsEqual(
+            _ lhs: Destination.State?,
+            _ rhs: Destination.State?
+        ) -> Bool {
+            switch (lhs, rhs) {
+            case (.search(let lhsState), .search(let rhsState)):
+                lhsState == rhsState
+            case (.comingPopupDetail(let lhsState), .comingPopupDetail(let rhsState)):
+                lhsState == rhsState
+            case (.popupRequest(let lhsState), .popupRequest(let rhsState)):
+                lhsState == rhsState
+            case (.popupRequestManagement(let lhsState), .popupRequestManagement(let rhsState)):
+                lhsState == rhsState
+            case (nil, nil):
+                true
+            default:
+                false
+            }
         }
     }
 
@@ -127,21 +152,13 @@ public struct HomeRootFeature {
 
 public struct HomeRootFeatureView: View {
     @Bindable var store: StoreOf<HomeRootFeature>
-    let isAdmin: Bool
 
-    public init(
-        store: StoreOf<HomeRootFeature>,
-        isAdmin: Bool = false
-    ) {
+    public init(store: StoreOf<HomeRootFeature>) {
         self.store = store
-        self.isAdmin = isAdmin
     }
 
     public var body: some View {
-        HomeFeatureView(
-            store: store.scope(state: \.content, action: \.content),
-            isAdmin: isAdmin
-        )
+        HomeFeatureView(store: store.scope(state: \.content, action: \.content))
         .fullScreenCover(
             item: $store.scope(state: \.destination?.search, action: \.destination.search)
         ) { store in

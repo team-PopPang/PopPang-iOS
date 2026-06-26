@@ -101,11 +101,71 @@ Projects
 - active main flow는 `MainTabFeature`가 TCA `StackState`와 단일 `@Presents` destination으로 소유한다.
 - `MainTabFeature`는 parent가 보유한 `session.user`와 `mainTabCore`를 projection해서 동작한다.
 - TCA-ready feature는 `session.user`를 projection해서 reducer/state에 직접 주입한다.
+- 현재 `HomeFeature`는 `userUuid`, `nickname`, `isAdmin`을 feature state로 projection해 direct scope한다.
 - legacy feature는 당분간 `SessionContext` 또는 primitive 값을 view init으로 주입한다.
+- 현재 `Calendar`, `Map`, `Favorites`, `Profile`은 `*LegacyBridgeFeature`가 session-derived primitive를 view init으로 넘긴다.
 - `MainTabFeature.Action`은 탭 child action, `path`, `destination`, parent delegate 중심으로 유지한다.
 - 탭 내부의 로컬 sheet/bottom sheet/selected item 상태는 각 feature가 소유한다.
 - 여러 탭에서 공통으로 여는 push/presentation 화면은 `MainTabFeature`가 소유한다.
 - path/destination state에는 navigation intent와 child state만 담고 `Binding`, `View`, 무거운 closure를 넣지 않는다.
+
+### Session and Persistence
+
+세션과 영속성은 아래처럼 역할을 나눈다.
+
+- `SessionState`: 앱이 지금 실제로 쓰는 세션 상태. source of truth는 `AppFeature.session`
+- `SessionClient`: 세션 load/save/clear 조합. `LocalSessionStorage`와 `autoLogin(userUuid:)`를 연결
+- `LocalSessionStorage`: local storage 읽기/쓰기 도구. `userID`, `hasCompletedOnboarding` 저장
+- `LocalSessionSnapshot`: storage에서 읽어온 값 묶음. 앱 런치 시 세션 복원 힌트
+
+현재 런치 흐름은 아래 순서를 따른다.
+
+1. `AppFeature.launchTask`
+2. `LocalSessionStorage.loadSnapshot()`
+3. `SessionClient.load()`
+4. `LocalSessionSnapshot + SessionState`를 조합해 root destination 계산
+5. `AppFeature.session`과 `destination` 반영
+
+### Home vs Legacy Tabs
+
+현재 PopPang은 탭별로 두 가지 연결 방식을 함께 사용한다.
+
+#### Home
+
+- `MainTabFeature`가 `SessionState`에서 `userUuid`, `nickname`, `isAdmin`을 projection
+- `HomeRootFeature.State`와 `HomeFeatureReducer.State`가 그 값을 직접 소유
+- `HomeFeatureReducer`가 `@Dependencies.Dependency(\.homePopupClient)`로 feature-scoped dependency 사용
+- `HomeRootFeature`가 검색, 예정 팝업, 팝업 요청 route를 소유
+
+```swift
+HomeRootFeatureView(store: store.scope(state: \.core.home, action: \.home))
+```
+
+#### Calendar / Map / Favorites / Profile
+
+- 아직 레거시 `Compound`/view 구조가 남아 있음
+- `MainTabFeature` 아래 `*LegacyBridgeFeature`가 session-derived primitive만 생성
+- bridge view가 기존 `FeatureView` init에 `userUuid`, `nickname`, `isAlerted` 등을 전달
+- 실제 usecase dependency는 당분간 각 레거시 feature 내부 구조를 유지
+
+```swift
+private struct ProfileLegacyBridgeView: View {
+    let store: StoreOf<ProfileLegacyBridgeFeature>
+
+    var body: some View {
+        ProfileFeatureView(
+            userUuid: store.userUuid,
+            nickname: store.nickname,
+            isAlerted: store.isAlerted,
+            onShowAlert: { _ in
+                store.send(.alertTapped)
+            }
+        )
+    }
+}
+```
+
+이 차이는 임시 타협안이다. 각 탭이 public TCA reducer/state/view entry를 갖추면 bridge를 제거하고 `Home`처럼 direct scope로 옮긴다.
 
 ### Features
 

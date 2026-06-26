@@ -26,7 +26,8 @@ struct HomeFeatureReducerTests {
         let expectedPopups = [makePopup(popupUuid: "popup-1", name: "성수 팝업")]
         var initialState = HomeFeatureReducer.State(
             userUuid: "user-1",
-            nickname: "팝팡"
+            nickname: "팝팡",
+            isAdmin: false
         )
         initialState.filter.selectedRegion = region
         initialState.filter.selectedDistrict = "전체"
