@@ -1,4 +1,3 @@
-import Coordinator
 import SwiftUI
 
 @main
@@ -16,7 +15,7 @@ struct PopPangApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppRootFlowView(coordinator: bootstrap.makeRootCoordinator())
+            AppRootFlowView(store: bootstrap.makeAppStore())
                 .versionUpdateAlert()
                 .onOpenURL { url in
                     deepLinkHandler.handleIncomingURL(url)

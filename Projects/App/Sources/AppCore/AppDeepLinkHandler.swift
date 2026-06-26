@@ -5,10 +5,10 @@ import KakaoSDKAuth
 
 @MainActor
 struct AppDeepLinkHandler {
-    private let storage: AppSessionStorage
+    private let storage: DeepLinkStorage
 
     init(store: KeyValueStoring = UserDefaultsStore()) {
-        self.storage = AppSessionStorage(store: store)
+        self.storage = DeepLinkStorage(store: store)
     }
 
     @discardableResult
@@ -30,12 +30,12 @@ struct AppDeepLinkHandler {
                 return false
             }
 
-            storage.saveDeepLinkPopupID(popupID)
+            storage.savePopupID(popupID)
             return true
         }
 
         if url.absoluteString.hasPrefix(ExternalLinkConfig.popupUniversalLinkBaseURLString) {
-            storage.saveDeepLinkPopupID(url.lastPathComponent)
+            storage.savePopupID(url.lastPathComponent)
             return true
         }
 

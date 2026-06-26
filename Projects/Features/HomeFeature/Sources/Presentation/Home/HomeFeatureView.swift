@@ -10,7 +10,7 @@ import UIKit
 
 public struct HomeFeatureView: View {
     @Environment(\.scenePhase) private var scenePhase
-    @State private var store: StoreOf<HomeFeatureReducer>
+    @Bindable var store: StoreOf<HomeFeature>
     @State private var currentScrollOffset: CGFloat = 0
     @State private var listProxy = LKListProxy()
     @State private var lastHandledPopupId: String?
@@ -19,77 +19,19 @@ public struct HomeFeatureView: View {
     @StateObject private var nativeAdSlotStore = AdNativeAdSlotStore()
 
     private let deepLinkStorage: DeepLinkStorage
-    // TODO: 코디네이터 패턴은 추후 TCA navigation/state ownership으로 전환 예정
-    private let onSelectPopup: (String, Popup) -> Void
-    private let onShowAlert: (String) -> Void
-    private let onSearch: (String) -> Void
-    private let onShowComingPopups: (String, [Popup]) -> Void
-    private let onReport: ((String) -> Void)?
-    private let onManagePopupRequests: (() -> Void)?
-    private let isAdmin: Bool
     private let nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration
     private let nativeAdCount: Int?
 
-    init(
-        store: StoreOf<HomeFeatureReducer>,
-        isAdmin: Bool = false,
+    public init(
+        store: StoreOf<HomeFeature>,
         nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration = .homeGrid,
         nativeAdCount: Int? = nil,
-        deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore()),
-        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in },
-        onShowAlert: @escaping (String) -> Void = { _ in },
-        onSearch: @escaping (String) -> Void = { _ in },
-        onShowComingPopups: @escaping (String, [Popup]) -> Void = { _, _ in },
-        onReport: ((String) -> Void)? = nil,
-        onManagePopupRequests: (() -> Void)? = nil
+        deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore())
     ) {
-        _store = State(initialValue: store)
-        self.isAdmin = isAdmin
+        self.store = store
         self.nativeAdPlacementConfiguration = nativeAdPlacementConfiguration
         self.nativeAdCount = nativeAdCount
         self.deepLinkStorage = deepLinkStorage
-        self.onSelectPopup = onSelectPopup
-        self.onShowAlert = onShowAlert
-        self.onSearch = onSearch
-        self.onShowComingPopups = onShowComingPopups
-        self.onReport = onReport
-        self.onManagePopupRequests = onManagePopupRequests
-    }
-
-    public init(
-        userUuid: String = "demo-user",
-        nickname: String = "닉네임",
-        isAdmin: Bool = false,
-        nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration = .homeGrid,
-        nativeAdCount: Int? = nil,
-        deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore()),
-        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in },
-        onShowAlert: @escaping (String) -> Void = { _ in },
-        onSearch: @escaping (String) -> Void = { _ in },
-        onShowComingPopups: @escaping (String, [Popup]) -> Void = { _, _ in },
-        onReport: ((String) -> Void)? = nil,
-        onManagePopupRequests: (() -> Void)? = nil
-    ) {
-        self.init(
-            store: Store(
-                initialState: HomeFeatureReducer.State(
-                    userUuid: userUuid,
-                    nickname: nickname
-                )
-            ) {
-                HomeFeatureReducer()
-            },
-            isAdmin: isAdmin,
-            nativeAdPlacementConfiguration: nativeAdPlacementConfiguration,
-            nativeAdCount: nativeAdCount,
-            deepLinkStorage: deepLinkStorage,
-            onSelectPopup: onSelectPopup,
-            onShowAlert: onShowAlert,
-            onSearch: onSearch,
-            onShowComingPopups: onShowComingPopups,
-            onReport: onReport,
-            onManagePopupRequests: onManagePopupRequests
-        )
     }
 
     public var body: some View {
@@ -100,20 +42,18 @@ public struct HomeFeatureView: View {
             VStack(spacing: 0) {
                 HomeNavigationBar(
                     userUuid: store.userUuid,
-                    showsPopupRequestManagement: isAdmin && onManagePopupRequests != nil,
-                    onSearch: { userUuid in
-                        onSearch(userUuid)
+                    showsPopupRequestManagement: store.isAdmin,
+                    onSearch: { _ in
+                        store.send(.searchTapped)
                     },
-                    onAlert: { userUuid in
-                        onShowAlert(userUuid)
+                    onAlert: { _ in
+                        store.send(.alertTapped)
                     },
                     onReport: {
-                        if let onReport {
-                            onReport(store.userUuid)
-                        }
+                        store.send(.popupRequestTapped)
                     },
                     onManagePopupRequests: {
-                        onManagePopupRequests?()
+                        store.send(.popupRequestManagementTapped)
                     }
                 )
 
@@ -128,7 +68,7 @@ public struct HomeFeatureView: View {
                                 ListKitBestPopupCell(popup: popup)
                             }
                             .onSelect { _ in
-                                onSelectPopup(store.userUuid, popup)
+                                store.send(.popupSelected(popup))
                             }
                         }
                     } header: {
@@ -157,7 +97,7 @@ public struct HomeFeatureView: View {
                                 ListKitComingPopupCell(popup: popup)
                             }
                             .onSelect { _ in
-                                onSelectPopup(store.userUuid, popup)
+                                store.send(.popupSelected(popup))
                             }
                         }
                     } header: {
@@ -165,10 +105,7 @@ public struct HomeFeatureView: View {
                             userUuid: store.userUuid,
                             popups: store.comingPopups,
                             onTap: { _, _ in
-                                onShowComingPopups(
-                                    store.userUuid,
-                                    store.comingPopups
-                                )
+                                store.send(.comingPopupsTapped(store.comingPopups))
                             }
                         )
                         .padding(.bottom, 10)
@@ -207,7 +144,7 @@ public struct HomeFeatureView: View {
                                 }
                                 .equatableToken("\(popup.popupUuid)-\(isLiked(popup: popup))")
                                 .onSelect { _ in
-                                    onSelectPopup(store.userUuid, popup)
+                                    store.send(.popupSelected(popup))
                                 }
 
                             case .nativeAd(let slotID):
@@ -283,11 +220,11 @@ public struct HomeFeatureView: View {
         .task(id: nativeAdPlacementIDs) {
             nativeAdSlotStore.loadAdIfNeeded(for: nativeAdPlacementIDs)
         }
-        .overlay {
-            if store.isLoading {
-                HomeFeatureLoadingOverlay()
-            }
-        }
+//        .overlay {
+//            if store.isLoading {
+//                HomeFeatureLoadingOverlay()
+//            }
+//        }
         .alert("안내", isPresented: isErrorPresented) {
             Button("확인", role: .cancel) {
                 store.send(.errorMessageChanged(nil))
@@ -330,7 +267,7 @@ private extension HomeFeatureView {
         return nativeAdPlacements.filter { loadedSlotIDs.contains($0.id) }
     }
 
-    var filterStore: StoreOf<HomeFilterReducer> {
+    var filterStore: StoreOf<HomeFilter> {
         store.scope(state: \.filter, action: \.filter)
     }
 
@@ -541,7 +478,7 @@ private extension HomeFeatureView {
             + store.gridPopups
 
         if let targetPopup = allPopups.first(where: { $0.popupUuid == popupId }) {
-            onSelectPopup(store.userUuid, targetPopup)
+            store.send(.popupSelected(targetPopup))
         }
     }
 }
@@ -550,12 +487,13 @@ private extension HomeFeatureView {
 #Preview("HomeFeatureView") {
     HomeFeatureView(
         store: Store(
-            initialState: HomeFeatureReducer.State(
+            initialState: HomeFeature.State(
                 userUuid: "preview-user",
-                nickname: "팝팡"
+                nickname: "팝팡",
+                isAdmin: false
             )
         ) {
-            HomeFeatureReducer()
+            HomeFeature()
         } withDependencies: {
             $0.homePopupClient = .previewValue
         }

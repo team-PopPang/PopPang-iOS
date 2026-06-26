@@ -4,8 +4,6 @@ import SwiftUI
 
 @main
 struct HomeFeatureDemoApp: App {
-    @State private var coordinator = HomeFeatureCoordinator()
-
     init() {
         DIContainer.shared.register(
             HomeFeatureDemoPopupUsecase(),
@@ -16,7 +14,6 @@ struct HomeFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
             HomeFeatureView()
-                .environment(coordinator)
         }
     }
 }

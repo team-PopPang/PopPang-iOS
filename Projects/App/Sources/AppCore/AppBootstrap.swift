@@ -1,79 +1,45 @@
-import Coordinator
+import ComposableArchitecture
 import Core
 import Foundation
 
 struct AppBootstrap {
-    let sessionStorage: AppSessionStorage
+    let sessionStorage: LocalSessionStorage
+    let sessionClient: SessionClient
     let launchStateResolver: AppLaunchStateResolver
     let dependencies: AppDependencyRegistry
 
     static func live(
         store: KeyValueStoring = UserDefaultsStore()
     ) -> AppBootstrap {
-        let sessionStorage = AppSessionStorage(store: store)
+        let sessionStorage = LocalSessionStorage(store: store)
         let dependencies = AppDependencyRegistry.live()
+        let sessionClient = SessionClient.live(
+            sessionStorage: sessionStorage,
+            userUsecase: dependencies.usecases.userUsecase
+        )
+        let pushTokenStorage = PushTokenStorage(store: store)
         AppNotificationManager.shared.configure(
             sessionStorage: sessionStorage,
+            pushTokenStorage: pushTokenStorage,
             userUsecase: dependencies.usecases.userUsecase
         )
 
         return AppBootstrap(
             sessionStorage: sessionStorage,
+            sessionClient: sessionClient,
             launchStateResolver: AppLaunchStateResolver(),
             dependencies: dependencies
         )
     }
 
-    @MainActor
-    func makeRootCoordinator() -> RootCoordinator {
-        let snapshot = sessionStorage.loadSnapshot()
-        let nextDestination = launchStateResolver.resolve(snapshot: snapshot)
-        let userUsecase = dependencies.usecases.userUsecase
-        let actions = RootCoordinatorActions(
-            completeOnboarding: {
-                sessionStorage.setOnboardingCompleted(true)
-            },
-            authenticate: { userID in
-                sessionStorage.setOnboardingCompleted(true)
-                sessionStorage.saveUserID(userID)
-                AppNotificationManager.shared.syncStoredToken(userUuid: userID)
-            },
-            logout: {
-                sessionStorage.clearSession()
-            }
-        )
-        let launch: @MainActor () async -> RootLaunchResult = {
-            let latestSnapshot = sessionStorage.loadSnapshot()
-            let resolution = await launchStateResolver.resolve(
-                snapshot: latestSnapshot,
-                userUsecase: userUsecase
+    func makeAppStore() -> StoreOf<AppFeature> {
+        Store(initialState: AppFeature.State()) {
+            AppFeature(
+                sessionStorage: sessionStorage,
+                launchStateResolver: launchStateResolver
             )
-
-            switch resolution {
-            case .destination(let destination):
-                if latestSnapshot.hasAuthenticatedUser {
-                    sessionStorage.clearSession()
-                }
-                return .destination(destination)
-            case .authenticated(let user):
-                sessionStorage.setOnboardingCompleted(true)
-                sessionStorage.saveUserID(user.userUuid)
-                AppNotificationManager.shared.syncStoredToken(userUuid: user.userUuid)
-                return .authenticated(user)
-            case .registrationRequired(let user):
-                sessionStorage.setOnboardingCompleted(true)
-                sessionStorage.saveUserID(user.userUuid)
-                AppNotificationManager.shared.syncStoredToken(userUuid: user.userUuid)
-                return .registrationRequired(user)
-            }
+        } withDependencies: {
+            $0.sessionClient = sessionClient
         }
-
-        return RootCoordinator(
-            destination: .launch,
-            nextDestination: nextDestination,
-            initialSession: MainTabSession(userUuid: snapshot.userID ?? "demo-user"),
-            actions: actions,
-            launch: launch
-        )
     }
 }

@@ -1,56 +1,30 @@
 import AlertFeature
 import CalendarFeature
 import ComposableArchitecture
-import Coordinator
+import DSKit
 import FavoritesFeature
 import HomeFeature
 import MapFeature
 import PopupDetailFeature
-import PopupRequestFeature
-import PopupRequestManagementFeature
 import ProfileFeature
 import ReviewFeature
-import SearchFeature
 import SwiftUI
 
-struct MainTabFeatureHost: View {
-    @State private var store: StoreOf<MainTabFeature>
-    private let onLogout: @MainActor () -> Void
+struct MainTabFeatureView: View {
+    @Bindable var store: StoreOf<MainTabFeature>
 
-    init(
-        session: MainTabSession,
-        selectedTab: MainTab = .home,
-        onLogout: @escaping @MainActor () -> Void
-    ) {
-        _store = State(
-            initialValue: Store(
-                initialState: MainTabFeature.State(
-                    selectedTab: selectedTab,
-                    session: session
+    var body: some View {
+        NavigationStack(path: $store.scope(state: \.core.path, action: \.path)) {
+            TabView(
+                selection: Binding(
+                    get: { store.core.selectedTab },
+                    set: { store.send(.selectedTabChanged($0)) }
                 )
             ) {
-                MainTabFeature()
-            }
-        )
-        self.onLogout = onLogout
-    }
-
-    var body: some View {
-        MainTabFeatureView(store: store, onLogout: onLogout)
-    }
-}
-
-private struct MainTabFeatureView: View {
-    @Bindable var store: StoreOf<MainTabFeature>
-    let onLogout: @MainActor () -> Void
-
-    var body: some View {
-        NavigationStackStore(store.scope(state: \.path, action: \.path)) {
-            TabView(selection: $store.selectedTab) {
                 ForEach(MainTab.allCases, id: \.self) { tab in
                     tabView(for: tab)
                         .tabItem {
-                            tab.tabAsset(selected: store.selectedTab == tab).swiftUIImage
+                            DSKitResource.image(tab.tabImageName(selected: store.core.selectedTab == tab))
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: 25, height: 25)
@@ -60,35 +34,36 @@ private struct MainTabFeatureView: View {
                 }
             }
         } destination: { store in
-            switch store.case {
-            case .popupDetail(let store):
-                PopupDetailDestinationView(store: store)
-            case .comingPopupDetail(let store):
-                ComingPopupDetailDestinationView(store: store)
-            case .reviewDetail(let store):
-                ReviewDetailDestinationView(store: store)
-            case .alert(let store):
-                AlertDestinationView(store: store)
-            case .popupRequest(let store):
-                PopupRequestDestinationView(store: store)
-            case .popupRequestManagement(let store):
-                PopupRequestManagementDestinationView(store: store)
-            case .popupRequestManagementDetail(let store):
-                PopupRequestManagementDetailDestinationView(store: store)
-            case .profileSetting(let store):
-                ProfileSettingDestinationView(store: store)
-            case .notifications(let store):
-                NotificationDestinationView(store: store)
-            case .serviceTerms(let store):
-                ServiceTermsDestinationView(store: store)
+            switch store.state {
+            case .homeComingPopupDetail:
+                if let store = store.scope(state: \.homeComingPopupDetail, action: \.homeComingPopupDetail) {
+                    HomeComingPopupDetailDestinationView(store: store)
+                }
+            case .popupDetail:
+                if let store = store.scope(state: \.popupDetail, action: \.popupDetail) {
+                    PopupDetailDestinationView(store: store)
+                }
+            case .reviewDetail:
+                if let store = store.scope(state: \.reviewDetail, action: \.reviewDetail) {
+                    ReviewDetailDestinationView(store: store)
+                }
+            case .alert:
+                if let store = store.scope(state: \.alert, action: \.alert) {
+                    AlertDestinationView(store: store)
+                }
+            case .profileSetting:
+                if let store = store.scope(state: \.profileSetting, action: \.profileSetting) {
+                    ProfileSettingDestinationView(store: store)
+                }
+            case .notifications:
+                if let store = store.scope(state: \.notifications, action: \.notifications) {
+                    NotificationDestinationView(store: store)
+                }
+            case .serviceTerms:
+                if let store = store.scope(state: \.serviceTerms, action: \.serviceTerms) {
+                    ServiceTermsDestinationView(store: store)
+                }
             }
-        }
-        .fullScreenCover(item: $store.scope(\.search, action: \.search)) { store in
-            SearchDestinationView(store: store)
-        }
-        .onChange(of: store.logoutToken) { _, value in
-            guard value > 0 else { return }
-            onLogout()
         }
     }
 
@@ -96,101 +71,88 @@ private struct MainTabFeatureView: View {
     private func tabView(for tab: MainTab) -> some View {
         switch tab {
         case .home:
-            HomeFeatureView(
-                userUuid: store.session.userUuid,
-                nickname: store.session.nickname,
-                isAdmin: store.session.isAdmin,
-                onSelectPopup: { _, popup in
-                    store.send(.homePopupSelected(popup))
-                },
-                onShowAlert: { _ in
-                    store.send(.homeAlertTapped)
-                },
-                onSearch: { _ in
-                    store.send(.homeSearchTapped)
-                },
-                onShowComingPopups: { _, popups in
-                    store.send(.homeComingTapped(popups))
-                },
-                onReport: { _ in
-                    store.send(.homeReportTapped)
-                },
-                onManagePopupRequests: {
-                    store.send(.homeManagePopupRequestsTapped)
-                }
-            )
-            .id(store.session)
+            HomeRootFeatureView(store: store.scope(state: \.core.home, action: \.home))
         case .calendar:
-            CalendarFeatureView(
-                userUuid: store.session.userUuid,
-                onShowAlert: { _ in
-                    store.send(.calendarAlertTapped)
-                },
-                onSelectPopup: { _, popup in
-                    store.send(.calendarPopupSelected(popup))
-                }
-            )
-            .id(store.session)
+            CalendarLegacyBridgeView(store: store.scope(state: \.calendar, action: \.calendar))
         case .map:
-            MapFeatureView(
-                userUuid: store.session.userUuid,
-                onSelectPopup: { _, popup in
-                    store.send(.mapPopupSelected(popup))
-                }
-            )
-            .id(store.session)
+            MapLegacyBridgeView(store: store.scope(state: \.map, action: \.map))
         case .favorites:
-            FavoritesFeatureView(
-                userUuid: store.session.userUuid,
-                onShowAlert: { _ in
-                    store.send(.favoritesAlertTapped)
-                },
-                onSelectPopup: { _, popup in
-                    store.send(.favoritesPopupSelected(popup))
-                },
-                onBrowsePopups: {
-                    store.send(.favoritesBrowsePopupsTapped)
-                }
-            )
-            .id(store.session)
+            FavoritesLegacyBridgeView(store: store.scope(state: \.favorites, action: \.favorites))
         case .profile:
-            ProfileFeatureView(
-                userUuid: store.session.userUuid,
-                nickname: store.session.nickname,
-                isAlerted: store.session.isAlerted,
-                onShowAlert: { _ in
-                    store.send(.profileAlertTapped)
-                },
-                onProfileSetting: { _, nickname, isAlerted in
-                    store.send(.profileSettingTapped(nickname: nickname, isAlerted: isAlerted))
-                },
-                onNotification: {
-                    store.send(.profileNotificationsTapped)
-                },
-                onServiceTerms: {
-                    store.send(.profileServiceTermsTapped)
-                }
-            )
-            .id(store.session)
+            ProfileLegacyBridgeView(store: store.scope(state: \.profile, action: \.profile))
         }
     }
 }
 
-private struct SearchDestinationView: View {
-    let store: StoreOf<SearchDestinationFeature>
+private struct CalendarLegacyBridgeView: View {
+    let store: StoreOf<CalendarLegacyBridgeFeature>
 
     var body: some View {
-        SearchFeatureView(
+        CalendarFeatureView(
             userUuid: store.userUuid,
-            nickname: store.nickname,
-            onDismiss: {
-                store.send(.dismissTapped)
+            onShowAlert: { _ in
+                store.send(.alertTapped)
             },
-            onSelectPopup: { popup in
+            onSelectPopup: { _, popup in
                 store.send(.popupSelected(popup))
             }
         )
-        .accessibilityIdentifier("home_search")
+    }
+}
+
+private struct MapLegacyBridgeView: View {
+    let store: StoreOf<MapLegacyBridgeFeature>
+
+    var body: some View {
+        MapFeatureView(
+            userUuid: store.userUuid,
+            onSelectPopup: { _, popup in
+                store.send(.popupSelected(popup))
+            }
+        )
+    }
+}
+
+private struct FavoritesLegacyBridgeView: View {
+    let store: StoreOf<FavoritesLegacyBridgeFeature>
+
+    var body: some View {
+        FavoritesFeatureView(
+            userUuid: store.userUuid,
+            onShowAlert: { _ in
+                store.send(.alertTapped)
+            },
+            onSelectPopup: { _, popup in
+                store.send(.popupSelected(popup))
+            },
+            onBrowsePopups: {
+                store.send(.browsePopupsTapped)
+            }
+        )
+    }
+}
+
+private struct ProfileLegacyBridgeView: View {
+    let store: StoreOf<ProfileLegacyBridgeFeature>
+
+    var body: some View {
+        ProfileFeatureView(
+            userUuid: store.userUuid,
+            nickname: store.nickname,
+            isAlerted: store.isAlerted,
+            onShowAlert: { _ in
+                store.send(.alertTapped)
+            },
+            onProfileSetting: { _, nickname, isAlerted in
+                store.send(.profileSettingTapped(nickname: nickname, isAlerted: isAlerted))
+            },
+            onNotification: {
+                store.send(.notificationsTapped)
+            },
+            onServiceTerms: {
+                store.send(.serviceTermsTapped)
+            }
+        )
     }
 }
 
@@ -216,20 +178,6 @@ private struct PopupDetailDestinationView: View {
     }
 }
 
-private struct ComingPopupDetailDestinationView: View {
-    let store: StoreOf<ComingPopupDetailDestinationFeature>
-
-    var body: some View {
-        ComingPopupDetailFeatureView(
-            userUuid: store.userUuid,
-            popups: store.popups,
-            onSelectPopup: { userUuid, popup in
-                store.send(.popupSelected(userUuid, popup))
-            }
-        )
-    }
-}
-
 private struct ReviewDetailDestinationView: View {
     let store: StoreOf<ReviewDetailDestinationFeature>
 
@@ -246,47 +194,6 @@ private struct AlertDestinationView: View {
             userUuid: store.userUuid,
             onSelectPopup: { userUuid, popup in
                 store.send(.popupSelected(userUuid, popup))
-            }
-        )
-    }
-}
-
-private struct PopupRequestDestinationView: View {
-    let store: StoreOf<PopupRequestDestinationFeature>
-
-    var body: some View {
-        PopupRequestFeatureView(
-            userUuid: store.userUuid,
-            onDismiss: {
-                store.send(.dismissTapped)
-            }
-        )
-    }
-}
-
-private struct PopupRequestManagementDestinationView: View {
-    let store: StoreOf<PopupRequestManagementDestinationFeature>
-
-    var body: some View {
-        PopupRequestManagementFeatureView(
-            onBack: {
-                store.send(.backTapped)
-            },
-            onSelectSubmission: { submissionId in
-                store.send(.submissionSelected(submissionId))
-            }
-        )
-    }
-}
-
-private struct PopupRequestManagementDetailDestinationView: View {
-    let store: StoreOf<PopupRequestManagementDetailDestinationFeature>
-
-    var body: some View {
-        PopupRequestManagementDetailFeatureView(
-            submissionId: store.submissionId,
-            onBack: {
-                store.send(.backTapped)
             }
         )
     }

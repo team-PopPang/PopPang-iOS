@@ -70,4 +70,4 @@ PopPang 저장소에서 구현 전에 Researcher, Planner, Reviewer 관점을 �
 - API 계약, DTO, public protocol, DI 구조, 모듈 의존성, Tuist 설정 변경을 가볍게 제안하지 않는다.
 - `tuist generate`, `make regen`처럼 파일을 생성하거나 갱신할 수 있는 명령을 승인 없이 실행하지 않는다.
 - 구현 단계의 세부 코드 변경을 확정 사실처럼 말하지 않는다.
-- 코드 변경으로 `Docs/poppang-architecture.md`, `Projects/Coordinator/README.md`, `Docs/static-dynamic-linking.md`, `Docs/Troubleshotting.md` 같은 기준 문서가 달라져야 하는데도 문서 영향 여부를 생략하지 않는다.
+- 코드 변경으로 `Docs/poppang-architecture.md`, `Docs/tca-navigation-guidelines.md`, `Docs/static-dynamic-linking.md`, `Docs/Troubleshotting.md` 같은 기준 문서가 달라져야 하는데도 문서 영향 여부를 생략하지 않는다.

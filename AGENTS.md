@@ -154,16 +154,16 @@ Role Prompt Workflow를 적용할 때는 아래 형식으로 답한다.
 
 ## 3. TCA Navigation Migration Direction
 
-PopPang은 Coordinator 패턴을 제거하고 TCA navigation을 기준 구조로 전환한다.
+PopPang은 Coordinator 패턴을 제거했고 TCA navigation을 기준 구조로 전환한다.
 
-현재 코드에 `Projects/Coordinator` 모듈, `RootCoordinator`, `MainTabCoordinator`, feature coordinator, 화면 전환용 escaping closure가 남아 있어도 새 작업에서는 이를 확장하지 않는다. 기존 coordinator는 제거 대상이며, 새 화면 전환은 TCA reducer state/action으로 모델링한다.
+`Projects/Coordinator`, `RootCoordinator`, `MainTabCoordinator`, feature coordinator, `Core`의 legacy coordinator base는 제거 대상이 아니라 제거 완료된 구조로 본다. 새 화면 전환은 TCA reducer state/action으로 모델링한다.
 
 자세한 기준은 `Docs/tca-navigation-guidelines.md`를 먼저 읽는다.
 
 ### 기본 방향
 
 - 앱 루트 전환은 `AppFeature`가 소유한다.
-- 인증/온보딩/회원가입 흐름은 `AuthFlowFeature`가 소유한다.
+- 인증/온보딩/회원가입 흐름은 `AppFeature`의 root flow와 각 auth/onboarding feature action이 소유한다.
 - 메인 탭과 탭 공통 push/fullScreen/sheet 흐름은 `MainTabFeature`가 소유한다.
 - feature는 다른 feature를 직접 조립하지 않고 delegate action으로 intent만 올린다.
 - parent feature가 `StackState` 또는 `@Presents` destination을 변경해 실제 화면 전환을 수행한다.

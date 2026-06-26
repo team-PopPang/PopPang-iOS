@@ -126,11 +126,10 @@ module-help:
 	@echo "  make reinstall"
 	@echo ""
 	@echo "Available layers:"
-	@echo "  app, coordinator, feature, domain, data, thirdparty, core, dskit, shared"
+	@echo "  app, feature, domain, data, thirdparty, core, dskit, shared"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make module LAYER=app NAME=AppSession"
-	@echo "  make module LAYER=coordinator NAME=Root"
 	@echo "  make module LAYER=feature NAME=Home"
 	@echo "  make module LAYER=feature NAME=PopupDetail INTERFACE=true"
 	@echo "  make module LAYER=domain NAME=Popup"
@@ -153,7 +152,6 @@ module:
 	fi
 	@case "$(LAYER)" in \
 		app) TEMPLATE="app-module" ;; \
-		coordinator) TEMPLATE="coordinator-module" ;; \
 		feature) TEMPLATE="feature-module" ;; \
 		domain) TEMPLATE="domain-module" ;; \
 		data) TEMPLATE="data-module" ;; \
