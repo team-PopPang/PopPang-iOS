@@ -1,4 +1,4 @@
-public struct User: Sendable {
+public struct User: Equatable, Sendable {
     public let userUuid: String
     public let uid: String
     public let provider: String
@@ -32,6 +32,21 @@ public struct User: Sendable {
         self.fcmToken = fcmToken
         self.alertKeywordList = alertKeywordList
         self.recommendList = recommendList
+    }
+}
+
+public extension User {
+    static func == (lhs: User, rhs: User) -> Bool {
+        lhs.userUuid == rhs.userUuid
+            && lhs.uid == rhs.uid
+            && lhs.provider == rhs.provider
+            && lhs.email == rhs.email
+            && lhs.nickname == rhs.nickname
+            && lhs.role == rhs.role
+            && lhs.isAlerted == rhs.isAlerted
+            && lhs.fcmToken == rhs.fcmToken
+            && lhs.alertKeywordList == rhs.alertKeywordList
+            && lhs.recommendList == rhs.recommendList
     }
 }
 
