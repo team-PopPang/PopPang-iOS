@@ -1,3 +1,4 @@
+import ComposableArchitecture
 import Core
 import Domain
 
@@ -33,5 +34,20 @@ extension SessionClient {
                 sessionStorage.clearSession()
             }
         )
+    }
+}
+
+extension SessionClient: DependencyKey {
+    static let liveValue = SessionClient(
+        load: { SessionState() },
+        saveUser: { _ in },
+        clear: {}
+    )
+}
+
+extension DependencyValues {
+    var sessionClient: SessionClient {
+        get { self[SessionClient.self] }
+        set { self[SessionClient.self] = newValue }
     }
 }

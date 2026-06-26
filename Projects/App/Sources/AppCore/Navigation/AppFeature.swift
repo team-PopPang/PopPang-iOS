@@ -59,17 +59,15 @@ struct AppFeature {
         case mainTab(MainTabFeature.Action)
     }
 
+    @Dependencies.Dependency(\.sessionClient) private var sessionClient: SessionClient
     private let sessionStorage: LocalSessionStorage
-    private let sessionClient: SessionClient
     private let launchStateResolver: AppLaunchStateResolver
 
     init(
         sessionStorage: LocalSessionStorage,
-        sessionClient: SessionClient,
         launchStateResolver: AppLaunchStateResolver
     ) {
         self.sessionStorage = sessionStorage
-        self.sessionClient = sessionClient
         self.launchStateResolver = launchStateResolver
     }
 
@@ -96,13 +94,14 @@ struct AppFeature {
             case .authCompleted(let user),
                     .registerCompleted(let user):
                 applyAuthenticatedUser(user, state: &state)
-                return .none
+                return .run { _ in
+                    await sessionClient.saveUser(user)
+                }
 
             case .mainTab(.delegate(.logout)):
                 state.session = SessionState()
                 state.mainTabCore = nil
                 state.destination = .auth
-                let sessionClient = sessionClient
                 return .run { _ in
                     await sessionClient.clear()
                 }
@@ -120,7 +119,6 @@ struct AppFeature {
 private extension AppFeature {
     func resolveLaunch() -> Effect<Action> {
         let sessionStorage = sessionStorage
-        let sessionClient = sessionClient
         let launchStateResolver = launchStateResolver
 
         return .run { send in
@@ -166,9 +164,5 @@ private extension AppFeature {
     func configureAuthenticatedSession(_ user: User) {
         sessionStorage.setOnboardingCompleted(true)
         AppNotificationManager.shared.syncStoredToken(userUuid: user.userUuid)
-        let sessionClient = sessionClient
-        Task {
-            await sessionClient.saveUser(user)
-        }
     }
 }

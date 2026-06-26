@@ -36,9 +36,10 @@ struct AppBootstrap {
         Store(initialState: AppFeature.State()) {
             AppFeature(
                 sessionStorage: sessionStorage,
-                sessionClient: sessionClient,
                 launchStateResolver: launchStateResolver
             )
+        } withDependencies: {
+            $0.sessionClient = sessionClient
         }
     }
 }
