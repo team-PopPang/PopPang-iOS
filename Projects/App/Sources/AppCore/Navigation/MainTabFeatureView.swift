@@ -14,7 +14,7 @@ struct MainTabFeatureView: View {
     @Bindable var store: StoreOf<MainTabFeature>
 
     var body: some View {
-        NavigationStackStore(store.scope(state: \.core.path, action: \.path)) {
+        NavigationStack(path: $store.scope(state: \.core.path, action: \.path)) {
             TabView(
                 selection: Binding(
                     get: { store.core.selectedTab },
@@ -34,19 +34,31 @@ struct MainTabFeatureView: View {
                 }
             }
         } destination: { store in
-            switch store.case {
-            case .popupDetail(let store):
-                PopupDetailDestinationView(store: store)
-            case .reviewDetail(let store):
-                ReviewDetailDestinationView(store: store)
-            case .alert(let store):
-                AlertDestinationView(store: store)
-            case .profileSetting(let store):
-                ProfileSettingDestinationView(store: store)
-            case .notifications(let store):
-                NotificationDestinationView(store: store)
-            case .serviceTerms(let store):
-                ServiceTermsDestinationView(store: store)
+            switch store.state {
+            case .popupDetail:
+                if let store = store.scope(state: \.popupDetail, action: \.popupDetail) {
+                    PopupDetailDestinationView(store: store)
+                }
+            case .reviewDetail:
+                if let store = store.scope(state: \.reviewDetail, action: \.reviewDetail) {
+                    ReviewDetailDestinationView(store: store)
+                }
+            case .alert:
+                if let store = store.scope(state: \.alert, action: \.alert) {
+                    AlertDestinationView(store: store)
+                }
+            case .profileSetting:
+                if let store = store.scope(state: \.profileSetting, action: \.profileSetting) {
+                    ProfileSettingDestinationView(store: store)
+                }
+            case .notifications:
+                if let store = store.scope(state: \.notifications, action: \.notifications) {
+                    NotificationDestinationView(store: store)
+                }
+            case .serviceTerms:
+                if let store = store.scope(state: \.serviceTerms, action: \.serviceTerms) {
+                    ServiceTermsDestinationView(store: store)
+                }
             }
         }
     }
