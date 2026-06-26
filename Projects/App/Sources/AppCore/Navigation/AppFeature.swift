@@ -21,14 +21,14 @@ struct AppFeature {
     @ObservableState
     struct State: Equatable {
         var destination: AppRootDestination = .launch
-        var currentUser: User?
+        var session = SessionState()
         var mainTabCore: MainTabFeature.CoreState?
 
         var mainTab: MainTabFeature.State? {
             get {
-                guard let currentUser, let mainTabCore else { return nil }
+                guard session.user != nil, let mainTabCore else { return nil }
                 return MainTabFeature.State(
-                    currentUser: currentUser,
+                    session: session,
                     core: mainTabCore
                 )
             }
@@ -38,21 +38,21 @@ struct AppFeature {
                     return
                 }
 
-                currentUser = newValue.currentUser
+                session = newValue.session
                 mainTabCore = newValue.core
             }
         }
 
         static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.destination == rhs.destination
-                && AppCurrentUserSnapshot(lhs.currentUser) == AppCurrentUserSnapshot(rhs.currentUser)
+                && lhs.session == rhs.session
                 && lhs.mainTabCore == rhs.mainTabCore
         }
     }
 
     enum Action {
         case launchTask
-        case launchResolved(AppLaunchResolution)
+        case launchResolved(SessionState, AppRootDestination)
         case onboardingCompleted
         case authCompleted(User)
         case registerCompleted(User)
@@ -60,17 +60,17 @@ struct AppFeature {
     }
 
     private let sessionStorage: AppSessionStorage
+    private let sessionClient: SessionClient
     private let launchStateResolver: AppLaunchStateResolver
-    private let userUsecase: UserUsecaseProtocol
 
     init(
         sessionStorage: AppSessionStorage,
-        launchStateResolver: AppLaunchStateResolver,
-        userUsecase: UserUsecaseProtocol
+        sessionClient: SessionClient,
+        launchStateResolver: AppLaunchStateResolver
     ) {
         self.sessionStorage = sessionStorage
+        self.sessionClient = sessionClient
         self.launchStateResolver = launchStateResolver
-        self.userUsecase = userUsecase
     }
 
     var body: some ReducerOf<Self> {
@@ -80,8 +80,12 @@ struct AppFeature {
                 guard state.destination == .launch else { return .none }
                 return resolveLaunch()
 
-            case .launchResolved(let resolution):
-                applyLaunchResolution(resolution, state: &state)
+            case .launchResolved(let session, let destination):
+                applyLaunchState(
+                    session: session,
+                    destination: destination,
+                    state: &state
+                )
                 return .none
 
             case .onboardingCompleted:
@@ -95,11 +99,13 @@ struct AppFeature {
                 return .none
 
             case .mainTab(.delegate(.logout)):
-                sessionStorage.clearSession()
-                state.currentUser = nil
+                state.session = SessionState()
                 state.mainTabCore = nil
-                state.destination = .onboarding
-                return .none
+                state.destination = .auth
+                let sessionClient = sessionClient
+                return .run { _ in
+                    await sessionClient.clear()
+                }
 
             case .mainTab:
                 return .none
@@ -114,88 +120,55 @@ struct AppFeature {
 private extension AppFeature {
     func resolveLaunch() -> Effect<Action> {
         let sessionStorage = sessionStorage
+        let sessionClient = sessionClient
         let launchStateResolver = launchStateResolver
-        let userUsecase = userUsecase
 
         return .run { send in
             let latestSnapshot = sessionStorage.loadSnapshot()
-            let resolution = await launchStateResolver.resolve(
+            let session = await sessionClient.load()
+            let destination = launchStateResolver.resolve(
                 snapshot: latestSnapshot,
-                userUsecase: userUsecase
+                session: session
             )
 
-            await send(.launchResolved(resolution))
+            await send(.launchResolved(session, destination))
         }
     }
 
-    func applyLaunchResolution(_ resolution: AppLaunchResolution, state: inout State) {
-        switch resolution {
-        case .destination(let destination):
-            state.currentUser = nil
-            state.mainTabCore = nil
-            state.destination = destination
+    func applyLaunchState(
+        session: SessionState,
+        destination: AppRootDestination,
+        state: inout State
+    ) {
+        state.session = session
+        state.destination = destination
 
-        case .authenticated(let user):
-            configureAuthenticatedSession(user)
-            state.currentUser = user
-            if user.nickname == nil {
-                state.mainTabCore = nil
-                state.destination = .register
-            } else {
-                state.mainTabCore = state.mainTabCore ?? .init(currentUser: user)
-                state.destination = .main
-            }
-
-        case .registrationRequired(let user):
-            configureAuthenticatedSession(user)
-            state.currentUser = user
+        if destination == .main, session.user != nil {
+            state.mainTabCore = state.mainTabCore ?? .init(session: session)
+        } else {
             state.mainTabCore = nil
-            state.destination = .register
         }
     }
 
     func applyAuthenticatedUser(_ user: User, state: inout State) {
         configureAuthenticatedSession(user)
-        state.currentUser = user
+        state.session.user = user
 
         if user.nickname == nil {
             state.mainTabCore = nil
             state.destination = .register
         } else {
-            state.mainTabCore = state.mainTabCore ?? .init(currentUser: user)
+            state.mainTabCore = state.mainTabCore ?? .init(session: state.session)
             state.destination = .main
         }
     }
 
     func configureAuthenticatedSession(_ user: User) {
         sessionStorage.setOnboardingCompleted(true)
-        sessionStorage.saveUserID(user.userUuid)
         AppNotificationManager.shared.syncStoredToken(userUuid: user.userUuid)
-    }
-}
-
-private struct AppCurrentUserSnapshot: Equatable {
-    let userUuid: String?
-    let uid: String?
-    let provider: String?
-    let email: String?
-    let nickname: String?
-    let role: String?
-    let isAlerted: Bool?
-    let fcmToken: String?
-    let alertKeywordList: [String]?
-    let recommendList: [Int]?
-
-    init(_ user: User?) {
-        userUuid = user?.userUuid
-        uid = user?.uid
-        provider = user?.provider
-        email = user?.email
-        nickname = user?.nickname
-        role = user?.role
-        isAlerted = user?.isAlerted
-        fcmToken = user?.fcmToken
-        alertKeywordList = user?.alertKeywordList
-        recommendList = user?.recommendList
+        let sessionClient = sessionClient
+        Task {
+            await sessionClient.saveUser(user)
+        }
     }
 }

@@ -34,7 +34,7 @@ struct AppRootFlowView: View {
 
             case .register:
                 RegisterFlowFeatureView(
-                    user: store.currentUser,
+                    user: store.session.user,
                     onComplete: { user in
                         store.send(.registerCompleted(user))
                     }
@@ -43,6 +43,8 @@ struct AppRootFlowView: View {
             case .main:
                 if let mainTabStore = store.scope(state: \.mainTab, action: \.mainTab) {
                     MainTabFeatureView(store: mainTabStore)
+                } else {
+                    EmptyView()
                 }
             }
         }

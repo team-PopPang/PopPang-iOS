@@ -52,17 +52,21 @@ struct MainTabFeature {
         var home: HomeRootFeature.State
         var path = StackState<Path.State>()
 
-        init(currentUser: User) {
+        init(session: SessionState) {
+            guard let context = session.context else {
+                preconditionFailure("Home core requires a logged in session.")
+            }
             self.home = .init(
-                userUuid: currentUser.userUuid,
-                nickname: currentUser.displayNickname
+                userUuid: context.userUuid,
+                nickname: context.nickname
             )
         }
 
-        mutating func syncCurrentUser(_ user: User) {
+        mutating func syncSession(_ session: SessionState) {
+            guard let context = session.context else { return }
             home.syncUser(
-                userUuid: user.userUuid,
-                nickname: user.displayNickname
+                userUuid: context.userUuid,
+                nickname: context.nickname
             )
         }
 
@@ -74,40 +78,54 @@ struct MainTabFeature {
 
     @ObservableState
     struct State: Equatable {
-        var currentUser: User
+        var session: SessionState
         var core: CoreState
 
         init(
-            currentUser: User,
+            session: SessionState,
             core: CoreState? = nil
         ) {
-            self.currentUser = currentUser
-            self.core = core ?? .init(currentUser: currentUser)
-            self.core.syncCurrentUser(currentUser)
+            self.session = session
+            self.core = core ?? .init(session: session)
+            self.core.syncSession(session)
         }
 
         var calendar: CalendarTabFeature.State {
-            get { .init(currentUser: currentUser) }
+            get { .init(sessionContext: sessionContext) }
             set {}
         }
 
         var map: MapTabFeature.State {
-            get { .init(currentUser: currentUser) }
+            get { .init(sessionContext: sessionContext) }
             set {}
         }
 
         var favorites: FavoritesTabFeature.State {
-            get { .init(currentUser: currentUser) }
+            get { .init(sessionContext: sessionContext) }
             set {}
         }
 
         var profile: ProfileTabFeature.State {
-            get { .init(currentUser: currentUser) }
+            get { .init(sessionContext: sessionContext) }
             set {}
         }
 
+        var currentUser: User {
+            guard let user = session.user else {
+                preconditionFailure("MainTabFeature requires a logged in user.")
+            }
+            return user
+        }
+
+        var sessionContext: SessionContext {
+            guard let context = session.context else {
+                preconditionFailure("MainTabFeature requires session context.")
+            }
+            return context
+        }
+
         static func == (lhs: Self, rhs: Self) -> Bool {
-            MainTabCurrentUserSnapshot(lhs.currentUser) == MainTabCurrentUserSnapshot(rhs.currentUser)
+            lhs.session == rhs.session
                 && lhs.core == rhs.core
         }
     }
@@ -256,7 +274,8 @@ private extension MainTabFeature {
             return .send(.delegate(.logout))
 
         case .profileSetting(.delegate(.nicknameUpdated(let nickname))):
-            state.currentUser.nickname = nickname
+            state.session.user?.nickname = nickname
+            state.core.syncSession(state.session)
             return .none
 
         default:
@@ -271,8 +290,8 @@ struct CalendarTabFeature {
     struct State: Equatable {
         var userUuid: String
 
-        init(currentUser: User) {
-            self.userUuid = currentUser.userUuid
+        init(sessionContext: SessionContext) {
+            self.userUuid = sessionContext.userUuid
         }
     }
 
@@ -307,8 +326,8 @@ struct MapTabFeature {
     struct State: Equatable {
         var userUuid: String
 
-        init(currentUser: User) {
-            self.userUuid = currentUser.userUuid
+        init(sessionContext: SessionContext) {
+            self.userUuid = sessionContext.userUuid
         }
     }
 
@@ -339,8 +358,8 @@ struct FavoritesTabFeature {
     struct State: Equatable {
         var userUuid: String
 
-        init(currentUser: User) {
-            self.userUuid = currentUser.userUuid
+        init(sessionContext: SessionContext) {
+            self.userUuid = sessionContext.userUuid
         }
     }
 
@@ -381,10 +400,10 @@ struct ProfileTabFeature {
         var nickname: String
         var isAlerted: Bool
 
-        init(currentUser: User) {
-            self.userUuid = currentUser.userUuid
-            self.nickname = currentUser.displayNickname
-            self.isAlerted = currentUser.isAlerted
+        init(sessionContext: SessionContext) {
+            self.userUuid = sessionContext.userUuid
+            self.nickname = sessionContext.nickname
+            self.isAlerted = sessionContext.isAlerted
         }
     }
 
@@ -422,32 +441,6 @@ struct ProfileTabFeature {
                 return .none
             }
         }
-    }
-}
-
-private struct MainTabCurrentUserSnapshot: Equatable {
-    let userUuid: String
-    let uid: String
-    let provider: String
-    let email: String?
-    let nickname: String?
-    let role: String
-    let isAlerted: Bool
-    let fcmToken: String?
-    let alertKeywordList: [String]?
-    let recommendList: [Int]?
-
-    init(_ user: User) {
-        userUuid = user.userUuid
-        uid = user.uid
-        provider = user.provider
-        email = user.email
-        nickname = user.nickname
-        role = user.role
-        isAlerted = user.isAlerted
-        fcmToken = user.fcmToken
-        alertKeywordList = user.alertKeywordList
-        recommendList = user.recommendList
     }
 }
 

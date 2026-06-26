@@ -4,6 +4,7 @@ import Foundation
 
 struct AppBootstrap {
     let sessionStorage: AppSessionStorage
+    let sessionClient: SessionClient
     let launchStateResolver: AppLaunchStateResolver
     let dependencies: AppDependencyRegistry
 
@@ -11,8 +12,12 @@ struct AppBootstrap {
         store: KeyValueStoring = UserDefaultsStore()
     ) -> AppBootstrap {
         let sessionStorage = AppSessionStorage(store: store)
-        let pushTokenStorage = PushTokenStorage(store: store)
         let dependencies = AppDependencyRegistry.live()
+        let sessionClient = SessionClient.live(
+            sessionStorage: sessionStorage,
+            userUsecase: dependencies.usecases.userUsecase
+        )
+        let pushTokenStorage = PushTokenStorage(store: store)
         AppNotificationManager.shared.configure(
             sessionStorage: sessionStorage,
             pushTokenStorage: pushTokenStorage,
@@ -21,6 +26,7 @@ struct AppBootstrap {
 
         return AppBootstrap(
             sessionStorage: sessionStorage,
+            sessionClient: sessionClient,
             launchStateResolver: AppLaunchStateResolver(),
             dependencies: dependencies
         )
@@ -30,8 +36,8 @@ struct AppBootstrap {
         Store(initialState: AppFeature.State()) {
             AppFeature(
                 sessionStorage: sessionStorage,
-                launchStateResolver: launchStateResolver,
-                userUsecase: dependencies.usecases.userUsecase
+                sessionClient: sessionClient,
+                launchStateResolver: launchStateResolver
             )
         }
     }

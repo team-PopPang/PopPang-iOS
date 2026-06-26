@@ -57,7 +57,7 @@ struct MainTabFeatureView: View {
         case .home:
             HomeRootFeatureView(
                 store: store.scope(state: \.core.home, action: \.home),
-                isAdmin: store.currentUser.isAdminRole
+                isAdmin: store.sessionContext.isAdmin
             )
         case .calendar:
             CalendarTabView(store: store.scope(state: \.calendar, action: \.calendar))

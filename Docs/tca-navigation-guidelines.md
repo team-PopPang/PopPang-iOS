@@ -12,8 +12,11 @@
 - 새 화면 전환은 TCA state/action/reducer로 모델링한다.
 - tree-based navigation과 stack-based navigation을 함께 사용한다.
 - feature는 다른 feature를 직접 조립하지 않고 delegate action으로 intent만 올린다.
-- 전역 현재 유저 상태의 source of truth는 `AppFeature.currentUser`다.
+- 전역 세션 상태의 source of truth는 `AppFeature.session`이다.
+- 현재 로그인 사용자는 `AppFeature.session.user`로 표현한다.
 - `MainTabFeature`는 전역 유저를 직접 저장하지 않고 parent projection state로 사용한다.
+- direct scope가 가능한 feature는 `session.user`를 projection해서 reducer/state에 주입한다.
+- legacy feature는 당분간 `SessionContext` 또는 primitive 값을 view init으로 주입한다.
 
 ## 용어
 
