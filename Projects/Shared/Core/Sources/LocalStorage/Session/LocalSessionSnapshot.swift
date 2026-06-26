@@ -1,6 +1,6 @@
 import Foundation
 
-public struct AppSessionSnapshot: Equatable, Sendable {
+public struct LocalSessionSnapshot: Equatable, Sendable {
     public let userID: String?
     public let hasCompletedOnboarding: Bool
 

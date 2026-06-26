@@ -59,12 +59,12 @@ struct AppFeature {
         case mainTab(MainTabFeature.Action)
     }
 
-    private let sessionStorage: AppSessionStorage
+    private let sessionStorage: LocalSessionStorage
     private let sessionClient: SessionClient
     private let launchStateResolver: AppLaunchStateResolver
 
     init(
-        sessionStorage: AppSessionStorage,
+        sessionStorage: LocalSessionStorage,
         sessionClient: SessionClient,
         launchStateResolver: AppLaunchStateResolver
     ) {

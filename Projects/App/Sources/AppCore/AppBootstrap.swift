@@ -3,7 +3,7 @@ import Core
 import Foundation
 
 struct AppBootstrap {
-    let sessionStorage: AppSessionStorage
+    let sessionStorage: LocalSessionStorage
     let sessionClient: SessionClient
     let launchStateResolver: AppLaunchStateResolver
     let dependencies: AppDependencyRegistry
@@ -11,7 +11,7 @@ struct AppBootstrap {
     static func live(
         store: KeyValueStoring = UserDefaultsStore()
     ) -> AppBootstrap {
-        let sessionStorage = AppSessionStorage(store: store)
+        let sessionStorage = LocalSessionStorage(store: store)
         let dependencies = AppDependencyRegistry.live()
         let sessionClient = SessionClient.live(
             sessionStorage: sessionStorage,

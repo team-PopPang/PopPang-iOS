@@ -70,12 +70,12 @@ struct LocalStorageTests {
 
     @Test("앱 세션 저장소는 userID와 온보딩 여부만 저장한다")
     func appSessionStorageStoresOnlyRestoreHints() {
-        let suiteName = "CoreTests.AppSessionStorage"
+        let suiteName = "CoreTests.LocalSessionStorage"
         let userDefaults = UserDefaults(suiteName: suiteName)!
         userDefaults.removePersistentDomain(forName: suiteName)
 
         let store = UserDefaultsStore(userDefaults: userDefaults)
-        let appSessionStorage = AppSessionStorage(store: store)
+        let appSessionStorage = LocalSessionStorage(store: store)
 
         appSessionStorage.saveUserID("user-1")
         appSessionStorage.setOnboardingCompleted(true)

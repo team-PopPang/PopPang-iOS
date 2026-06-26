@@ -37,20 +37,20 @@ final class PopPangAppDelegate: NSObject, UIApplicationDelegate {
 final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, MessagingDelegate {
     static let shared = AppNotificationManager()
 
-    private var sessionStorage: AppSessionStorage
+    private var sessionStorage: LocalSessionStorage
     private var pushTokenStorage: PushTokenStorage
     private var userUsecase: UserUsecaseProtocol?
 
     override convenience init() {
         let store = UserDefaultsStore()
         self.init(
-            sessionStorage: AppSessionStorage(store: store),
+            sessionStorage: LocalSessionStorage(store: store),
             pushTokenStorage: PushTokenStorage(store: store)
         )
     }
 
     init(
-        sessionStorage: AppSessionStorage,
+        sessionStorage: LocalSessionStorage,
         pushTokenStorage: PushTokenStorage,
         userUsecase: UserUsecaseProtocol? = nil
     ) {
@@ -61,7 +61,7 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
     }
 
     func configure(
-        sessionStorage: AppSessionStorage,
+        sessionStorage: LocalSessionStorage,
         pushTokenStorage: PushTokenStorage,
         userUsecase: UserUsecaseProtocol
     ) {

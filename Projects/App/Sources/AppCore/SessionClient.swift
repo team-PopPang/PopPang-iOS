@@ -9,7 +9,7 @@ struct SessionClient: Sendable {
 
 extension SessionClient {
     static func live(
-        sessionStorage: AppSessionStorage,
+        sessionStorage: LocalSessionStorage,
         userUsecase: UserUsecaseProtocol
     ) -> Self {
         Self(

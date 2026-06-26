@@ -1,6 +1,6 @@
 import Foundation
 
-public struct AppSessionStorage: Sendable {
+public struct LocalSessionStorage: Sendable {
     enum Key {
         static let userID = "uuid"
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
@@ -12,11 +12,11 @@ public struct AppSessionStorage: Sendable {
         self.store = store
     }
 
-    public func loadSnapshot() -> AppSessionSnapshot {
+    public func loadSnapshot() -> LocalSessionSnapshot {
         let userID = store.object(forKey: Key.userID) as? String
         let hasCompletedOnboarding = store.object(forKey: Key.hasCompletedOnboarding) as? Bool ?? false
 
-        return AppSessionSnapshot(
+        return LocalSessionSnapshot(
             userID: userID,
             hasCompletedOnboarding: hasCompletedOnboarding
         )
