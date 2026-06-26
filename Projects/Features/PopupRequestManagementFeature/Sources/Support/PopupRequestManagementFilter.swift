@@ -32,17 +32,4 @@ public enum PopupRequestManagementFilter: CaseIterable, Equatable, Sendable {
             .rejected
         }
     }
-
-    var status: PopupSubmissionStatus? {
-        switch self {
-        case .all:
-            nil
-        case .pending:
-            .pending
-        case .approved:
-            .approved
-        case .rejected:
-            .rejected
-        }
-    }
 }

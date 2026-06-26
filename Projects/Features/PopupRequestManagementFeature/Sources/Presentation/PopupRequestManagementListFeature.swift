@@ -8,6 +8,7 @@ public struct PopupRequestManagementListFeature {
     public struct State: Equatable {
         public let adminUuid: String
         public var allItems: [PopupRequestManagementListItem] = []
+        public var items: [PopupRequestManagementListItem] = []
         public var selectedFilter: PopupRequestManagementFilter = .all
         public var isLoading = false
         public var hasLoaded = false
@@ -18,8 +19,7 @@ public struct PopupRequestManagementListFeature {
         }
 
         var filteredItems: [PopupRequestManagementListItem] {
-            guard let status = selectedFilter.status else { return allItems }
-            return allItems.filter { $0.status == status }
+            items
         }
 
         var pendingCount: Int { allItems.filter { $0.status == .pending }.count }
@@ -33,7 +33,10 @@ public struct PopupRequestManagementListFeature {
         case backTapped
         case filterSelected(PopupRequestManagementFilter)
         case submissionTapped(Int)
-        case submissionsLoaded([PopupRequestManagementListItem])
+        case submissionsLoaded(
+            summaryItems: [PopupRequestManagementListItem],
+            items: [PopupRequestManagementListItem]
+        )
         case submissionsFailed(String)
         case delegate(Delegate)
 
@@ -55,26 +58,38 @@ public struct PopupRequestManagementListFeature {
                 state.hasLoaded = true
                 state.isLoading = true
                 state.errorMessage = nil
-                return loadList(adminUuid: state.adminUuid)
+                return loadList(
+                    adminUuid: state.adminUuid,
+                    filter: state.selectedFilter
+                )
 
             case .refresh:
                 state.isLoading = true
                 state.errorMessage = nil
-                return loadList(adminUuid: state.adminUuid)
+                return loadList(
+                    adminUuid: state.adminUuid,
+                    filter: state.selectedFilter
+                )
 
             case .backTapped:
                 return .send(.delegate(.backRequested))
 
             case .filterSelected(let filter):
                 state.selectedFilter = filter
-                return .none
+                state.isLoading = true
+                state.errorMessage = nil
+                return loadList(
+                    adminUuid: state.adminUuid,
+                    filter: filter
+                )
 
             case .submissionTapped(let submissionId):
                 return .send(.delegate(.submissionSelected(submissionId)))
 
-            case .submissionsLoaded(let items):
+            case let .submissionsLoaded(summaryItems, items):
                 state.isLoading = false
-                state.allItems = items
+                state.allItems = summaryItems
+                state.items = items
                 state.errorMessage = nil
                 return .none
 
@@ -91,14 +106,27 @@ public struct PopupRequestManagementListFeature {
 }
 
 private extension PopupRequestManagementListFeature {
-    func loadList(adminUuid: String) -> Effect<Action> {
+    func loadList(
+        adminUuid: String,
+        filter: PopupRequestManagementFilter
+    ) -> Effect<Action> {
         let popupRequestManagementClient = popupRequestManagementClient
 
-        return .run { [popupRequestManagementClient, adminUuid] send in
+        return .run { [popupRequestManagementClient, adminUuid, filter] send in
             do {
-                let items = try await popupRequestManagementClient.getPopupSubmissionList(adminUuid, .all)
-                    .map(PopupRequestManagementListItem.init(item:))
-                await send(.submissionsLoaded(items))
+                async let summaryResponse = popupRequestManagementClient.getPopupSubmissionList(adminUuid, .all)
+                async let filteredResponse = popupRequestManagementClient.getPopupSubmissionList(
+                    adminUuid,
+                    filter.domainFilter
+                )
+
+                let summaryItems = try await summaryResponse.map(PopupRequestManagementListItem.init(item:))
+                let items = try await filteredResponse.map(PopupRequestManagementListItem.init(item:))
+
+                await send(.submissionsLoaded(
+                    summaryItems: summaryItems,
+                    items: items
+                ))
             } catch {
                 await send(.submissionsFailed(error.localizedDescription))
             }
