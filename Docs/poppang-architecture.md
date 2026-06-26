@@ -135,7 +135,8 @@ Projects
 - `MainTabFeature`가 `SessionState`에서 `userUuid`, `nickname`, `isAdmin`을 projection
 - `HomeRootFeature.State`와 `HomeFeature.State`가 그 값을 직접 소유
 - `HomeFeature`가 `@Dependencies.Dependency(\.homePopupClient)`로 feature-scoped dependency 사용
-- `HomeRootFeature`가 검색, 예정 팝업, 팝업 요청 route를 소유
+- `HomeRootFeature`가 검색, 팝업 요청 route를 소유
+- 홈에서 시작하는 연속 drill-down push(`오픈예정팝업 리스트 -> 팝업 상세`)는 `MainTabFeature.path`가 소유
 
 ```swift
 HomeRootFeatureView(store: store.scope(state: \.core.home, action: \.home))

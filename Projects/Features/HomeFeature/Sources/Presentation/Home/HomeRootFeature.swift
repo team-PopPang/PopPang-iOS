@@ -10,7 +10,6 @@ public struct HomeRootFeature {
     @Reducer
     public enum Destination {
         case search(HomeSearchDestinationFeature)
-        case comingPopupDetail(HomeComingPopupDetailDestinationFeature)
         case popupRequest(HomePopupRequestDestinationFeature)
         case popupRequestManagement(HomePopupRequestManagementFlowFeature)
     }
@@ -56,8 +55,6 @@ public struct HomeRootFeature {
             switch (lhs, rhs) {
             case (.search(let lhsState), .search(let rhsState)):
                 lhsState == rhsState
-            case (.comingPopupDetail(let lhsState), .comingPopupDetail(let rhsState)):
-                lhsState == rhsState
             case (.popupRequest(let lhsState), .popupRequest(let rhsState)):
                 lhsState == rhsState
             case (.popupRequestManagement(let lhsState), .popupRequestManagement(let rhsState)):
@@ -78,6 +75,7 @@ public struct HomeRootFeature {
         public enum Delegate: Equatable {
             case popupSelected(Popup)
             case alertRequested
+            case comingPopupListRequested([Popup])
         }
     }
 
@@ -106,13 +104,7 @@ public struct HomeRootFeature {
                 return .none
 
             case .content(.delegate(.comingPopupsRequested(let popups))):
-                state.destination = .comingPopupDetail(
-                    .init(
-                        userUuid: state.content.userUuid,
-                        popups: popups
-                    )
-                )
-                return .none
+                return .send(.delegate(.comingPopupListRequested(popups)))
 
             case .content(.delegate(.popupRequestRequested)):
                 state.destination = .popupRequest(
@@ -130,9 +122,6 @@ public struct HomeRootFeature {
 
             case .destination(.presented(.search(.delegate(.selectPopup(let popup))))):
                 state.destination = nil
-                return .send(.delegate(.popupSelected(popup)))
-
-            case .destination(.presented(.comingPopupDetail(.delegate(.selectPopup(let popup))))):
                 return .send(.delegate(.popupSelected(popup)))
 
             case .destination(.presented(.popupRequest(.delegate(.dismiss)))),
@@ -163,11 +152,6 @@ public struct HomeRootFeatureView: View {
             item: $store.scope(state: \.destination?.search, action: \.destination.search)
         ) { store in
             HomeSearchDestinationView(store: store)
-        }
-        .navigationDestination(
-            item: $store.scope(state: \.destination?.comingPopupDetail, action: \.destination.comingPopupDetail)
-        ) { store in
-            HomeComingPopupDetailDestinationView(store: store)
         }
         .navigationDestination(
             item: $store.scope(state: \.destination?.popupRequest, action: \.destination.popupRequest)
@@ -285,10 +269,14 @@ public struct HomeComingPopupDetailDestinationFeature {
     }
 }
 
-private struct HomeComingPopupDetailDestinationView: View {
+public struct HomeComingPopupDetailDestinationView: View {
     let store: StoreOf<HomeComingPopupDetailDestinationFeature>
 
-    var body: some View {
+    public init(store: StoreOf<HomeComingPopupDetailDestinationFeature>) {
+        self.store = store
+    }
+
+    public var body: some View {
         ComingPopupDetailFeatureView(
             userUuid: store.userUuid,
             popups: store.popups,

@@ -150,6 +150,7 @@ struct MainTabFeature {
 
     @Reducer
     enum Path {
+        case homeComingPopupDetail(HomeComingPopupDetailDestinationFeature)
         case popupDetail(PopupDetailDestinationFeature)
         case reviewDetail(ReviewDetailDestinationFeature)
         case alert(AlertDestinationFeature)
@@ -187,6 +188,17 @@ struct MainTabFeature {
                     .map(.delegate(.popupSelected(let popup))),
                     .profile(.delegate(.popupSelected(let popup))):
                 appendPopupDetail(popup, state: &state)
+                return .none
+
+            case .home(.delegate(.comingPopupListRequested(let popups))):
+                state.core.path.append(
+                    .homeComingPopupDetail(
+                        .init(
+                            userUuid: state.currentUser.userUuid,
+                            popups: popups
+                        )
+                    )
+                )
                 return .none
 
             case .home(.delegate(.alertRequested)),
@@ -260,6 +272,10 @@ private extension MainTabFeature {
         state: inout State
     ) -> Effect<Action> {
         switch action {
+        case .homeComingPopupDetail(.delegate(.selectPopup(let popup))):
+            appendPopupDetail(popup, state: &state)
+            return .none
+
         case .popupDetail(.delegate(.pushPopupDetail(_, let popup))),
                 .alert(.delegate(.pushPopupDetail(_, let popup))):
             appendPopupDetail(popup, state: &state)

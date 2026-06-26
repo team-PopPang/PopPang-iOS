@@ -35,6 +35,10 @@ struct MainTabFeatureView: View {
             }
         } destination: { store in
             switch store.state {
+            case .homeComingPopupDetail:
+                if let store = store.scope(state: \.homeComingPopupDetail, action: \.homeComingPopupDetail) {
+                    HomeComingPopupDetailDestinationView(store: store)
+                }
             case .popupDetail:
                 if let store = store.scope(state: \.popupDetail, action: \.popupDetail) {
                     PopupDetailDestinationView(store: store)

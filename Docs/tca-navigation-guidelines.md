@@ -131,6 +131,7 @@ PopPang에서 stack-based navigation을 쓰는 경우:
 - popup detail push
 - related popup detail push
 - coming popup detail
+- coming popup list에서 popup detail로 이어지는 drill-down
 - review detail
 - alert에서 popup detail 진입
 - popup request management detail
@@ -480,7 +481,8 @@ case .destination:
 
 ### 5. 탭별 점진 전환
 
-- `HomeFeature`: direct scope 완료, Home 전용 route를 feature ownership으로 이동
+- `HomeFeature`: direct scope 완료, search/popupRequest intent는 feature ownership으로 유지
+- `HomeFeature`에서 시작하는 연속 push(`coming popup list -> popup detail`)는 `MainTabFeature.path`가 소유
 - `Calendar/Map/Favorites/Profile`: bridge reducer를 유지하며 session primitive만 주입
 - 각 탭이 TCA reducer entry를 갖추면 `*LegacyBridgeFeature`를 제거하고 direct scope로 전환
 
