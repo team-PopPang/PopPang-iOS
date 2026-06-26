@@ -37,30 +37,6 @@ public struct HomeFeatureView: View {
         self.deepLinkStorage = deepLinkStorage
     }
 
-    public init(
-        userUuid: String = "demo-user",
-        nickname: String = "닉네임",
-        isAdmin: Bool = false,
-        nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration = .homeGrid,
-        nativeAdCount: Int? = nil,
-        deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore())
-    ) {
-        self.init(
-            store: Store(
-                initialState: HomeFeatureReducer.State(
-                    userUuid: userUuid,
-                    nickname: nickname
-                )
-            ) {
-                HomeFeatureReducer()
-            },
-            isAdmin: isAdmin,
-            nativeAdPlacementConfiguration: nativeAdPlacementConfiguration,
-            nativeAdCount: nativeAdCount,
-            deepLinkStorage: deepLinkStorage
-        )
-    }
-
     public var body: some View {
         ZStack {
             Color.subWhite
@@ -247,11 +223,11 @@ public struct HomeFeatureView: View {
         .task(id: nativeAdPlacementIDs) {
             nativeAdSlotStore.loadAdIfNeeded(for: nativeAdPlacementIDs)
         }
-        .overlay {
-            if store.isLoading {
-                HomeFeatureLoadingOverlay()
-            }
-        }
+//        .overlay {
+//            if store.isLoading {
+//                HomeFeatureLoadingOverlay()
+//            }
+//        }
         .alert("안내", isPresented: isErrorPresented) {
             Button("확인", role: .cancel) {
                 store.send(.errorMessageChanged(nil))
