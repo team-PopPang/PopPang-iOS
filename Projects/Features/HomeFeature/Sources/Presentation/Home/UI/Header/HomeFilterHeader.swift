@@ -10,7 +10,7 @@ import ComposableArchitecture
 import DSKit
 
 struct HomeFilterHeader: View {
-    let store: StoreOf<HomeFilterReducer>
+    let store: StoreOf<HomeFilter>
     let onRegionTap: () -> Void
     let onSortTap: () -> Void
 

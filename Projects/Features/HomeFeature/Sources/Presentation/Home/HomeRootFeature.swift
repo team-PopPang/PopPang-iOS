@@ -17,7 +17,7 @@ public struct HomeRootFeature {
 
     @ObservableState
     public struct State: Equatable {
-        public var content: HomeFeatureReducer.State
+        public var content: HomeFeature.State
         @Presents var destination: Destination.State?
 
         public init(
@@ -71,7 +71,7 @@ public struct HomeRootFeature {
     }
 
     public enum Action {
-        case content(HomeFeatureReducer.Action)
+        case content(HomeFeature.Action)
         case destination(PresentationAction<Destination.Action>)
         case delegate(Delegate)
 
@@ -85,7 +85,7 @@ public struct HomeRootFeature {
 
     public var body: some ReducerOf<Self> {
         Scope(state: \.content, action: \.content) {
-            HomeFeatureReducer()
+            HomeFeature()
         }
 
         Reduce { state, action in

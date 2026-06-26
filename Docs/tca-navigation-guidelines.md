@@ -281,7 +281,7 @@ HomeRootFeatureView(store: store.scope(state: \.core.home, action: \.home))
 
 ```swift
 @Reducer
-public struct HomeFeatureReducer {
+public struct HomeFeature {
     @Dependencies.Dependency(\.homePopupClient) private var popupClient: HomePopupClient
 }
 ```

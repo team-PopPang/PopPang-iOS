@@ -4,7 +4,7 @@ import DSKit
 import Foundation
 
 @Reducer
-public struct HomeFeatureReducer {
+public struct HomeFeature {
     @ObservableState
     public struct State: Equatable {
         var userUuid: String
@@ -13,7 +13,7 @@ public struct HomeFeatureReducer {
         var bestPopups: [Popup] = []
         var comingPopups: [Popup] = []
         var gridPopups: [Popup] = []
-        var filter = HomeFilterReducer.State()
+        var filter = HomeFilter.State()
         var isLoading = false
         var errorMessage: String?
 
@@ -40,7 +40,7 @@ public struct HomeFeatureReducer {
 
     public enum Action: Equatable {
         case onAppear
-        case filter(HomeFilterReducer.Action)
+        case filter(HomeFilter.Action)
         case toggleLike(Popup)
         case popupSelected(Popup)
         case alertTapped
@@ -72,7 +72,7 @@ public struct HomeFeatureReducer {
 
     public var body: some Reducer<State, Action> {
         Scope(state: \.filter, action: \.filter) {
-            HomeFilterReducer()
+            HomeFilter()
         }
 
         Reduce { state, action in
@@ -158,7 +158,7 @@ public struct HomeFeatureReducer {
     }
 }
 
-private extension HomeFeatureReducer {
+private extension HomeFeature {
     func loadAllPopupData(state: State) -> Effect<Action> {
         let popupClient = popupClient
 

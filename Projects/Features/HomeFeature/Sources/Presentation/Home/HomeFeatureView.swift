@@ -10,7 +10,7 @@ import UIKit
 
 public struct HomeFeatureView: View {
     @Environment(\.scenePhase) private var scenePhase
-    @Bindable var store: StoreOf<HomeFeatureReducer>
+    @Bindable var store: StoreOf<HomeFeature>
     @State private var currentScrollOffset: CGFloat = 0
     @State private var listProxy = LKListProxy()
     @State private var lastHandledPopupId: String?
@@ -23,7 +23,7 @@ public struct HomeFeatureView: View {
     private let nativeAdCount: Int?
 
     public init(
-        store: StoreOf<HomeFeatureReducer>,
+        store: StoreOf<HomeFeature>,
         nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration = .homeGrid,
         nativeAdCount: Int? = nil,
         deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore())
@@ -267,7 +267,7 @@ private extension HomeFeatureView {
         return nativeAdPlacements.filter { loadedSlotIDs.contains($0.id) }
     }
 
-    var filterStore: StoreOf<HomeFilterReducer> {
+    var filterStore: StoreOf<HomeFilter> {
         store.scope(state: \.filter, action: \.filter)
     }
 
@@ -487,13 +487,13 @@ private extension HomeFeatureView {
 #Preview("HomeFeatureView") {
     HomeFeatureView(
         store: Store(
-            initialState: HomeFeatureReducer.State(
+            initialState: HomeFeature.State(
                 userUuid: "preview-user",
                 nickname: "팝팡",
                 isAdmin: false
             )
         ) {
-            HomeFeatureReducer()
+            HomeFeature()
         } withDependencies: {
             $0.homePopupClient = .previewValue
         }

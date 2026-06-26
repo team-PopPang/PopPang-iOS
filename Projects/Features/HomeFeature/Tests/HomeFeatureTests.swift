@@ -6,12 +6,12 @@ import Testing
 @testable import HomeFeature
 
 @MainActor
-struct HomeFeatureReducerTests {
-    @Test("HomeFilterReducer가 지역 선택 시 첫 번째 구를 기본값으로 설정한다")
-    func homeFilterReducerSelectsFirstDistrictWhenRegionChanges() async {
+struct HomeFeatureTests {
+    @Test("HomeFilter가 지역 선택 시 첫 번째 구를 기본값으로 설정한다")
+    func homeFilterSelectsFirstDistrictWhenRegionChanges() async {
         let region = RegionList(region: "서울", districtList: ["전체", "성동구", "마포구"])
-        let store = TestStore(initialState: HomeFilterReducer.State()) {
-            HomeFilterReducer()
+        let store = TestStore(initialState: HomeFilter.State()) {
+            HomeFilter()
         }
 
         await store.send(.regionSelected(region)) {
@@ -20,11 +20,11 @@ struct HomeFeatureReducerTests {
         }
     }
 
-    @Test("HomeFeatureReducer가 정렬 변경 시 필터 목록 재조회 effect를 시작한다")
-    func homeFeatureReducerReloadsFilteredListWhenSortChanges() async {
+    @Test("HomeFeature가 정렬 변경 시 필터 목록 재조회 effect를 시작한다")
+    func homeFeatureReloadsFilteredListWhenSortChanges() async {
         let region = RegionList(region: "서울", districtList: ["전체", "성동구"])
         let expectedPopups = [makePopup(popupUuid: "popup-1", name: "성수 팝업")]
-        var initialState = HomeFeatureReducer.State(
+        var initialState = HomeFeature.State(
             userUuid: "user-1",
             nickname: "팝팡",
             isAdmin: false
@@ -35,7 +35,7 @@ struct HomeFeatureReducerTests {
         let store = TestStore(
             initialState: initialState
         ) {
-            HomeFeatureReducer()
+            HomeFeature()
         } withDependencies: {
             $0.homePopupClient.getPersonalFilteredPopupList = { userUuid, selectedRegion, district, sort in
                 #expect(userUuid == "user-1")

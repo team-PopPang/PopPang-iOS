@@ -4,7 +4,7 @@ import DSKit
 import Foundation
 
 @Reducer
-public struct HomeFilterReducer {
+public struct HomeFilter {
     @ObservableState
     public struct State: Equatable {
         var regions: [RegionList] = []
