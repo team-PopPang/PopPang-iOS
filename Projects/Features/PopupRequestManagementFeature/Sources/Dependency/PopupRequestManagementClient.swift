@@ -17,7 +17,7 @@ extension PopupRequestManagementClient {
         popupSubmissionUsecase: PopupSubmissionUsecaseProtocol
     ) -> Self {
         let box = PopupSubmissionUsecaseBox(popupSubmissionUsecase)
-
+        
         return Self(
             getPopupSubmissionList: { adminUuid, filter in
                 try await box.usecase.getPopupSubmissionList(adminUuid: adminUuid, filter: filter)
@@ -62,7 +62,7 @@ extension PopupRequestManagementClient: DependencyKey {
             PopupSubmissionAdminUpdateResult(popupUuid: nil)
         }
     )
-
+    
 #if DEBUG
     public static let previewValue = PopupRequestManagementClient(
         getPopupSubmissionList: { _, _ in
@@ -153,7 +153,7 @@ extension DependencyValues {
 
 private final class PopupSubmissionUsecaseBox: @unchecked Sendable {
     let usecase: PopupSubmissionUsecaseProtocol
-
+    
     init(_ usecase: PopupSubmissionUsecaseProtocol) {
         self.usecase = usecase
     }
