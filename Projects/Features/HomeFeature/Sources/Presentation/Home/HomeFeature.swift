@@ -2,9 +2,16 @@ import ComposableArchitecture
 import Domain
 import DSKit
 import Foundation
+import PopupRequestFeature
 
 @Reducer
 public struct HomeFeature {
+    @Reducer
+    public enum Destination {
+        case search(HomeSearchDestinationFeature)
+        case popupRequest(PopupRequestFeature)
+    }
+
     @ObservableState
     public struct State: Equatable {
         var userUuid: String
@@ -16,6 +23,7 @@ public struct HomeFeature {
         var filter = HomeFilter.State()
         var isLoading = false
         var errorMessage: String?
+        @Presents var destination: Destination.State?
 
         public init(
             userUuid: String,
@@ -36,9 +44,38 @@ public struct HomeFeature {
             self.nickname = nickname
             self.isAdmin = isAdmin
         }
+
+        public static func == (lhs: Self, rhs: Self) -> Bool {
+            lhs.userUuid == rhs.userUuid
+                && lhs.nickname == rhs.nickname
+                && lhs.isAdmin == rhs.isAdmin
+                && lhs.bestPopups == rhs.bestPopups
+                && lhs.comingPopups == rhs.comingPopups
+                && lhs.gridPopups == rhs.gridPopups
+                && lhs.filter == rhs.filter
+                && lhs.isLoading == rhs.isLoading
+                && lhs.errorMessage == rhs.errorMessage
+                && destinationsEqual(lhs.destination, rhs.destination)
+        }
+
+        private static func destinationsEqual(
+            _ lhs: Destination.State?,
+            _ rhs: Destination.State?
+        ) -> Bool {
+            switch (lhs, rhs) {
+            case (.search(let lhsState), .search(let rhsState)):
+                lhsState == rhsState
+            case (.popupRequest(let lhsState), .popupRequest(let rhsState)):
+                lhsState == rhsState
+            case (nil, nil):
+                true
+            default:
+                false
+            }
+        }
     }
 
-    public enum Action: Equatable {
+    public enum Action {
         case onAppear
         case filter(HomeFilter.Action)
         case toggleLike(Popup)
@@ -54,14 +91,13 @@ public struct HomeFeature {
         case favoriteUpdated(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
         case loadingChanged(Bool)
         case errorMessageChanged(String?)
+        case destination(PresentationAction<Destination.Action>)
         case delegate(Delegate)
 
         public enum Delegate: Equatable {
             case popupSelected(Popup)
             case alertRequested
-            case searchRequested
             case comingPopupsRequested([Popup])
-            case popupRequestRequested
             case popupRequestManagementRequested
         }
     }
@@ -70,7 +106,7 @@ public struct HomeFeature {
 
     public init() {}
 
-    public var body: some Reducer<State, Action> {
+    public var body: some ReducerOf<Self> {
         Scope(state: \.filter, action: \.filter) {
             HomeFilter()
         }
@@ -95,13 +131,22 @@ public struct HomeFeature {
                 return .send(.delegate(.alertRequested))
 
             case .searchTapped:
-                return .send(.delegate(.searchRequested))
+                state.destination = .search(
+                    .init(
+                        userUuid: state.userUuid,
+                        nickname: state.nickname
+                    )
+                )
+                return .none
 
             case .comingPopupsTapped(let popups):
                 return .send(.delegate(.comingPopupsRequested(popups)))
 
             case .popupRequestTapped:
-                return .send(.delegate(.popupRequestRequested))
+                state.destination = .popupRequest(
+                    .init(userUuid: state.userUuid)
+                )
+                return .none
 
             case .popupRequestManagementTapped:
                 return .send(.delegate(.popupRequestManagementRequested))
@@ -151,10 +196,26 @@ public struct HomeFeature {
                 state.errorMessage = errorMessage
                 return .none
 
+            case .destination(.presented(.search(.delegate(.dismiss)))):
+                state.destination = nil
+                return .none
+
+            case .destination(.presented(.search(.delegate(.selectPopup(let popup))))):
+                state.destination = nil
+                return .send(.delegate(.popupSelected(popup)))
+
+            case .destination(.presented(.popupRequest(.delegate(.dismiss)))):
+                state.destination = nil
+                return .none
+
+            case .destination:
+                return .none
+
             case .delegate:
                 return .none
             }
         }
+        .ifLet(\.$destination, action: \.destination)
     }
 }
 

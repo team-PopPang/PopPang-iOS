@@ -5,6 +5,7 @@ import Domain
 import DSKit
 import Kingfisher
 import ListKit
+import PopupRequestFeature
 import SwiftUI
 import UIKit
 
@@ -213,6 +214,16 @@ public struct HomeFeatureView: View {
                 SortButtonSheet(selectedOption: selectedOptionBinding)
                     .presentationDetents([.height(270)])
             }
+        }
+        .fullScreenCover(
+            item: $store.scope(state: \.destination?.search, action: \.destination.search)
+        ) { store in
+            HomeSearchDestinationView(store: store)
+        }
+        .fullScreenCover(
+            item: $store.scope(state: \.destination?.popupRequest, action: \.destination.popupRequest)
+        ) { store in
+            PopupRequestFeatureView(store: store)
         }
         .onAppear {
             store.send(.onAppear)

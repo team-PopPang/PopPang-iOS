@@ -7,14 +7,14 @@ import SwiftUI
 
 public struct ComingPopupDetailFeatureView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var store: StoreOf<ComingPopupDetailReducer>
+    @Bindable var store: StoreOf<ComingPopupDetailReducer>
     private let onSelectPopup: (String, Popup) -> Void
 
-    init(
+    public init(
         store: StoreOf<ComingPopupDetailReducer>,
         onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in }
     ) {
-        _store = State(initialValue: store)
+        self.store = store
         self.onSelectPopup = onSelectPopup
     }
 

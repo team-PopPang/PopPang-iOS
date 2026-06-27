@@ -23,11 +23,12 @@ public struct PopupRequestFeatureView: View {
             }
         }
         .background(Color.mainGray4.ignoresSafeArea())
-        .ppBackNavigationBar(
-            title: "팝업 제보하기",
-            showsSeparator: true
-        ) {
-            close()
+        .safeAreaInset(edge: .top, spacing: 0) {
+            ModalNavigationHeader(
+                title: "팝업 제보하기",
+                showsSeparator: true,
+                onBack: close
+            )
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             submitButton
@@ -99,3 +100,17 @@ private extension PopupRequestFeatureView {
         dismiss()
     }
 }
+
+#if DEBUG
+#Preview("PopupRequestFeatureView") {
+    PopupRequestFeatureView(
+        store: Store(
+            initialState: PopupRequestFeature.State(userUuid: "preview-user")
+        ) {
+            PopupRequestFeature()
+        } withDependencies: {
+            $0.popupRequestClient = .previewValue
+        }
+    )
+}
+#endif

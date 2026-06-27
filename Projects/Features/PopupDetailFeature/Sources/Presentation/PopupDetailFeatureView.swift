@@ -10,7 +10,7 @@ public struct PopupDetailFeatureView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
-    @State private var store: StoreOf<PopupDetailFeatureReducer>
+    @Bindable var store: StoreOf<PopupDetailFeatureReducer>
     @State private var showDeactivateAlert = false
     @State private var showingPopup = false
 
@@ -21,6 +21,22 @@ public struct PopupDetailFeatureView: View {
     private let onShowReviews: ([Review]) -> Void
 
     public init(
+        store: StoreOf<PopupDetailFeatureReducer>,
+        isAdmin: Bool = false,
+        hidesSystemTabBar: Bool = true,
+        onSelectRelatedPopup: @escaping (String, Popup) -> Void = { _, _ in },
+        onDeactivateComplete: @escaping () -> Void = {},
+        onShowReviews: @escaping ([Review]) -> Void = { _ in }
+    ) {
+        self.store = store
+        self.isAdmin = isAdmin
+        self.hidesSystemTabBar = hidesSystemTabBar
+        self.onSelectRelatedPopup = onSelectRelatedPopup
+        self.onDeactivateComplete = onDeactivateComplete
+        self.onShowReviews = onShowReviews
+    }
+
+    public init(
         userUuid: String = "demo-user",
         popup: Popup = .popupMock,
         isAdmin: Bool = false,
@@ -29,19 +45,21 @@ public struct PopupDetailFeatureView: View {
         onDeactivateComplete: @escaping () -> Void = {},
         onShowReviews: @escaping ([Review]) -> Void = { _ in }
     ) {
-        _store = State(initialValue: Store(
-            initialState: PopupDetailFeatureReducer.State(
-                userUuid: userUuid,
-                popup: popup
-            )
-        ) {
-            PopupDetailFeatureReducer()
-        })
-        self.isAdmin = isAdmin
-        self.hidesSystemTabBar = hidesSystemTabBar
-        self.onSelectRelatedPopup = onSelectRelatedPopup
-        self.onDeactivateComplete = onDeactivateComplete
-        self.onShowReviews = onShowReviews
+        self.init(
+            store: Store(
+                initialState: PopupDetailFeatureReducer.State(
+                    userUuid: userUuid,
+                    popup: popup
+                )
+            ) {
+                PopupDetailFeatureReducer()
+            },
+            isAdmin: isAdmin,
+            hidesSystemTabBar: hidesSystemTabBar,
+            onSelectRelatedPopup: onSelectRelatedPopup,
+            onDeactivateComplete: onDeactivateComplete,
+            onShowReviews: onShowReviews
+        )
     }
 
     public var body: some View {

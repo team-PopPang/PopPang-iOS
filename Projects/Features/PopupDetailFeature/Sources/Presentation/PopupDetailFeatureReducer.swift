@@ -4,9 +4,9 @@ import Foundation
 import Kingfisher
 
 @Reducer
-struct PopupDetailFeatureReducer {
+public struct PopupDetailFeatureReducer {
     @ObservableState
-    struct State: Equatable, Sendable {
+    public struct State: Equatable, Sendable {
         var userUuid: String
         var popup: Popup
         var relatedPopupList: [Popup] = []
@@ -16,7 +16,7 @@ struct PopupDetailFeatureReducer {
         var hasLoaded = false
         var errorMessage: String?
 
-        init(
+        public init(
             userUuid: String,
             popup: Popup
         ) {
@@ -25,7 +25,7 @@ struct PopupDetailFeatureReducer {
         }
     }
 
-    enum Action: Sendable {
+    public enum Action: Equatable, Sendable {
         case onAppear
         case toggleLike
         case deactivatePopup
@@ -35,11 +35,18 @@ struct PopupDetailFeatureReducer {
         case loadingChanged(Bool)
         case deactivatingChanged(Bool)
         case errorMessageChanged(String?)
+        case delegate(Delegate)
+
+        public enum Delegate: Equatable, Sendable {
+            case favoriteChanged(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
+        }
     }
 
     @Dependencies.Dependency(\.popupDetailClient) private var popupDetailClient: PopupDetailClient
 
-    var body: some Reducer<State, Action> {
+    public init() {}
+
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .onAppear:
@@ -60,9 +67,16 @@ struct PopupDetailFeatureReducer {
                 state.popup.isFavorited = nextIsFavorited
                 state.popup.favoriteCount = nextFavoriteCount
 
-                return toggleLike(
-                    userUuid: state.userUuid,
-                    previousPopup: previousPopup
+                return .merge(
+                    .send(.delegate(.favoriteChanged(
+                        popupUuid: previousPopup.popupUuid,
+                        isFavorited: nextIsFavorited,
+                        favoriteCount: nextFavoriteCount
+                    ))),
+                    toggleLike(
+                        userUuid: state.userUuid,
+                        previousPopup: previousPopup
+                    )
                 )
 
             case .deactivatePopup:
@@ -96,6 +110,9 @@ struct PopupDetailFeatureReducer {
 
             case .errorMessageChanged(let errorMessage):
                 state.errorMessage = errorMessage
+                return .none
+
+            case .delegate:
                 return .none
             }
         }
@@ -146,6 +163,11 @@ private extension PopupDetailFeatureReducer {
                     isFavorited: previousPopup.isFavorited,
                     favoriteCount: previousPopup.favoriteCount
                 ))
+                await send(.delegate(.favoriteChanged(
+                    popupUuid: previousPopup.popupUuid,
+                    isFavorited: previousPopup.isFavorited,
+                    favoriteCount: previousPopup.favoriteCount
+                )))
                 await send(.errorMessageChanged(error.localizedDescription))
             }
         }

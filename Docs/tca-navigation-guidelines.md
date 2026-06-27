@@ -275,7 +275,7 @@ init(session: SessionState) {
 ```
 
 ```swift
-HomeRootFeatureView(store: store.scope(state: \.core.home, action: \.home))
+HomeFeatureView(store: store.scope(state: \.core.home, action: \.home))
 ```
 
 이 방식에서는 view가 `userUuid`, `nickname`, `isAdmin` 같은 session-derived primitive를 따로 받지 않는다. feature state가 이미 그 값을 들고 있고, reducer는 feature-scoped dependency를 직접 사용한다.
@@ -481,8 +481,9 @@ case .destination:
 
 ### 5. 탭별 점진 전환
 
-- `HomeFeature`: direct scope 완료, search/popupRequest intent는 feature ownership으로 유지
+- `HomeFeature`: direct scope 완료, search/popupRequest는 feature 내부 tree-based navigation으로 소유
 - `HomeFeature`에서 시작하는 연속 push(`coming popup list -> popup detail`)는 `MainTabFeature.path`가 소유
+- `popupRequestManagement`처럼 메인 공통 흐름으로 이어지는 push는 `MainTabFeature.path`가 소유
 - `Calendar/Map/Favorites/Profile`: bridge reducer를 유지하며 session primitive만 주입
 - 각 탭이 TCA reducer entry를 갖추면 `*LegacyBridgeFeature`를 제거하고 direct scope로 전환
 

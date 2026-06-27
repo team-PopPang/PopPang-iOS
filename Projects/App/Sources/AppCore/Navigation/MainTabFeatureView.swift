@@ -3,7 +3,8 @@ import CalendarFeature
 import ComposableArchitecture
 import DSKit
 import FavoritesFeature
-import HomeFeature
+import struct HomeFeature.HomeComingPopupDetailDestinationView
+import struct HomeFeature.HomeFeatureView
 import MapFeature
 import PopupDetailFeature
 import PopupRequestManagementFeature
@@ -80,7 +81,7 @@ struct MainTabFeatureView: View {
     private func tabView(for tab: MainTab) -> some View {
         switch tab {
         case .home:
-            HomeRootFeatureView(store: store.scope(state: \.core.home, action: \.home))
+            HomeFeatureView(store: store.scope(state: \.core.home, action: \.home))
         case .calendar:
             CalendarLegacyBridgeView(store: store.scope(state: \.calendar, action: \.calendar))
         case .map:
@@ -170,8 +171,7 @@ private struct PopupDetailDestinationView: View {
 
     var body: some View {
         PopupDetailFeatureView(
-            userUuid: store.userUuid,
-            popup: store.popup,
+            store: store.scope(state: \.content, action: \.content),
             isAdmin: store.isAdmin,
             hidesSystemTabBar: false,
             onSelectRelatedPopup: { userUuid, popup in
