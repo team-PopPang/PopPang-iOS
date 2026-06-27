@@ -1,18 +1,26 @@
 import SwiftUI
 
+// MARK: - Navigation Stack Root Header
+
 /// 화면 내부에 직접 배치하는 PopPang 커스텀 내비게이션 바 컨테이너.
 /// 홈, 캘린더, 찜, 마이페이지처럼 탭 루트 화면의 상단 헤더를 만들 때 사용한다.
 /// 뒤로가기 버튼이 있는 push 서브 화면에는 `ppBackNavigationBar`를 사용한다.
 public struct CustomNavigationBar<Content: View>: View {
     let content: Content
     let hPadding: CGFloat
+    let topPadding: CGFloat
+    let height: CGFloat
 
     /// 지정한 좌우 패딩으로 내비게이션 바 높이와 상단 여백을 맞춘다.
     public init(
         hPadding: CGFloat = .contentPadding,
+        topPadding: CGFloat = 10,
+        height: CGFloat = 55,
         @ViewBuilder content: () -> Content
     ) {
         self.hPadding = hPadding
+        self.topPadding = topPadding
+        self.height = height
         self.content = content()
     }
 
@@ -20,11 +28,80 @@ public struct CustomNavigationBar<Content: View>: View {
         HStack(spacing: 0) {
             content
         }
-        .padding(.top, 10)
+        .padding(.top, topPadding)
         .padding(.horizontal, hPadding)
-        .frame(height: 55)
+        .frame(height: height)
     }
 }
+
+// MARK: - Modal Header
+
+/// fullScreenCover, sheet처럼 네이티브 네비게이션 스택 밖에서 사용하는 PopPang 공통 모달 헤더.
+/// 뒤로가기 버튼과 중앙 타이틀을 직접 그리며, 필요하면 우측 액션도 함께 배치할 수 있다.
+public struct ModalNavigationHeader<Trailing: View>: View {
+    let title: String
+    let showsSeparator: Bool
+    let onBack: () -> Void
+    let trailing: Trailing
+
+    public init(
+        title: String,
+        showsSeparator: Bool = false,
+        onBack: @escaping () -> Void,
+        @ViewBuilder trailing: () -> Trailing
+    ) {
+        self.title = title
+        self.showsSeparator = showsSeparator
+        self.onBack = onBack
+        self.trailing = trailing()
+    }
+
+    public var body: some View {
+        VStack(spacing: 0) {
+            CustomNavigationBar(
+                topPadding: 0,
+                height: 44
+            ) {
+                ZStack {
+                    Text(title)
+                        .font(.scdream(.medium, size: 17))
+                        .foregroundStyle(Color.mainBlack)
+                        .lineLimit(1)
+
+                    HStack(spacing: 0) {
+                        BackNavigationButton(action: onBack)
+                        Spacer(minLength: 0)
+                        trailing
+                    }
+                }
+                .frame(maxWidth: .infinity)
+            }
+
+            if showsSeparator {
+                Divider()
+            }
+        }
+        .background(Color.subWhite)
+    }
+}
+
+public extension ModalNavigationHeader where Trailing == EmptyView {
+    init(
+        title: String,
+        showsSeparator: Bool = false,
+        onBack: @escaping () -> Void
+    ) {
+        self.init(
+            title: title,
+            showsSeparator: showsSeparator,
+            onBack: onBack
+        ) {
+            EmptyView()
+        }
+    }
+}
+
+// MARK: - Navigation Push Header
 
 /// 뒤로가기 버튼과 중앙 타이틀만 있는 SwiftUI 네이티브 내비게이션 바 modifier.
 /// 탭 루트 헤더용 `CustomNavigationBar`와 달리 push 서브 화면 전용이다.
@@ -81,6 +158,8 @@ private struct BackNavigationBarWithTrailingModifier<Trailing: View>: ViewModifi
     }
 }
 
+// MARK: - Shared Components
+
 /// PopPang 공통 뒤로가기 버튼.
 private struct BackNavigationButton: View {
     let action: () -> Void
@@ -99,6 +178,8 @@ private struct BackNavigationButton: View {
         .buttonStyle(.plain)
     }
 }
+
+// MARK: - View Helpers
 
 private extension View {
     /// 구분선이 필요한 내비게이션 바에서만 toolbar 배경을 명시적으로 표시한다.
@@ -124,6 +205,8 @@ private extension View {
         }
     }
 }
+
+// MARK: - Public API
 
 public extension View {
     /// 뒤로가기 버튼과 중앙 타이틀을 가진 PopPang 공통 내비게이션 바를 적용한다.

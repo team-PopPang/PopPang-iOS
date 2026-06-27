@@ -27,6 +27,14 @@ permissions:
   issues: write
   pull-requests: write
 
+# 같은 PR/브랜치에서 새 커밋이 올라오면 이전 CI를 취소하고 최신 커밋만 검사한다.
+# - pull_request: PR 번호 기준으로 묶음
+# - workflow_dispatch(pr_number): 명령어 트리거 PR 번호 기준으로 묶음
+# - 그 외(schedule/manual without pr_number): 브랜치 이름 기준으로 묶음
+concurrency:
+  group: poppang-build-and-test-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
 jobs:
   module_ci:
     name: ${{ matrix.job_name }} (${{ matrix.scheme }})

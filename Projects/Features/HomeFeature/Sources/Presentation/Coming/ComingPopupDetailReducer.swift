@@ -3,15 +3,15 @@ import Domain
 import Foundation
 
 @Reducer
-struct ComingPopupDetailReducer {
+public struct ComingPopupDetailReducer {
     @ObservableState
-    struct State: Equatable, Sendable {
+    public struct State: Equatable, Sendable {
         var userUuid: String
         var popups: [Popup]
         var isLoading = false
         var errorMessage: String?
 
-        init(
+        public init(
             userUuid: String,
             popups: [Popup]
         ) {
@@ -20,7 +20,7 @@ struct ComingPopupDetailReducer {
         }
     }
 
-    enum Action: Equatable, Sendable {
+    public enum Action: Equatable, Sendable {
         case onAppear
         case toggleLike(Popup)
         case popupsLoaded([Popup])
@@ -30,7 +30,9 @@ struct ComingPopupDetailReducer {
 
     @Dependencies.Dependency(\.homePopupClient) private var popupClient: HomePopupClient
 
-    var body: some Reducer<State, Action> {
+    public init() {}
+
+    public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
             case .onAppear:

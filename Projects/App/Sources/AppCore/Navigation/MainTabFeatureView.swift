@@ -3,9 +3,11 @@ import CalendarFeature
 import ComposableArchitecture
 import DSKit
 import FavoritesFeature
-import HomeFeature
+import struct HomeFeature.HomeComingPopupDetailDestinationView
+import struct HomeFeature.HomeFeatureView
 import MapFeature
 import PopupDetailFeature
+import PopupRequestManagementFeature
 import ProfileFeature
 import ReviewFeature
 import SwiftUI
@@ -35,6 +37,14 @@ struct MainTabFeatureView: View {
             }
         } destination: { store in
             switch store.state {
+            case .popupRequestManagement:
+                if let store = store.scope(state: \.popupRequestManagement, action: \.popupRequestManagement) {
+                    PopupRequestManagementDestinationView(store: store)
+                }
+            case .popupRequestManagementDetail:
+                if let store = store.scope(state: \.popupRequestManagementDetail, action: \.popupRequestManagementDetail) {
+                    PopupRequestManagementDetailDestinationView(store: store)
+                }
             case .homeComingPopupDetail:
                 if let store = store.scope(state: \.homeComingPopupDetail, action: \.homeComingPopupDetail) {
                     HomeComingPopupDetailDestinationView(store: store)
@@ -71,7 +81,7 @@ struct MainTabFeatureView: View {
     private func tabView(for tab: MainTab) -> some View {
         switch tab {
         case .home:
-            HomeRootFeatureView(store: store.scope(state: \.core.home, action: \.home))
+            HomeFeatureView(store: store.scope(state: \.core.home, action: \.home))
         case .calendar:
             CalendarLegacyBridgeView(store: store.scope(state: \.calendar, action: \.calendar))
         case .map:
@@ -161,8 +171,7 @@ private struct PopupDetailDestinationView: View {
 
     var body: some View {
         PopupDetailFeatureView(
-            userUuid: store.userUuid,
-            popup: store.popup,
+            store: store.scope(state: \.content, action: \.content),
             isAdmin: store.isAdmin,
             hidesSystemTabBar: false,
             onSelectRelatedPopup: { userUuid, popup in
@@ -175,6 +184,22 @@ private struct PopupDetailDestinationView: View {
                 store.send(.reviewsTapped(reviews))
             }
         )
+    }
+}
+
+private struct PopupRequestManagementDestinationView: View {
+    let store: StoreOf<PopupRequestManagementFlowFeature>
+
+    var body: some View {
+        PopupRequestManagementFlowView(store: store)
+    }
+}
+
+private struct PopupRequestManagementDetailDestinationView: View {
+    let store: StoreOf<PopupRequestManagementDetailFeature>
+
+    var body: some View {
+        PopupRequestManagementDetailView(store: store)
     }
 }
 

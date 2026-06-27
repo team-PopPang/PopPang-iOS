@@ -390,7 +390,8 @@ private struct MapListView: View {
     let onToggleLike: (Popup) -> Void
 
     var body: some View {
-        if isLoading || isWaitingForUserLocation {
+        // if isLoading || isWaitingForUserLocation { // 임시 주석
+        if isWaitingForUserLocation {
             ProgressView()
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 24)

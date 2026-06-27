@@ -103,7 +103,7 @@ platform :ios do
       xcargs: "-skipPackagePluginValidation -skipMacroValidation",
       export_options: {
         provisioningProfiles: {
-          APP_IDENTIFIER => "match AppStore kr.co.poppang.PopPang 1762797101"
+          APP_IDENTIFIER => "match AppStore kr.co.poppang.PopPang"
         }
       }
     )

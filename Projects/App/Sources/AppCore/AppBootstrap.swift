@@ -3,12 +3,16 @@ import Core
 import Foundation
 import HomeFeature
 import PopupDetailFeature
+import PopupRequestFeature
+import PopupRequestManagementFeature
 
 struct AppBootstrap {
     let sessionStorage: LocalSessionStorage
     let sessionClient: SessionClient
     let homePopupClient: HomePopupClient
     let popupDetailClient: PopupDetailClient
+    let popupRequestClient: PopupRequestClient
+    let popupRequestManagementClient: PopupRequestManagementClient
     let launchStateResolver: AppLaunchStateResolver
     let dependencies: AppDependencyRegistry
 
@@ -28,6 +32,13 @@ struct AppBootstrap {
             popupUsecase: dependencies.usecases.popupUsecase,
             adminUsecase: dependencies.usecases.adminUsecase
         )
+        let popupRequestClient = PopupRequestClient.live(
+            popupSubmissionUsecase: dependencies.usecases.popupSubmissionUsecase,
+            userUsecase: dependencies.usecases.userUsecase
+        )
+        let popupRequestManagementClient = PopupRequestManagementClient.live(
+            popupSubmissionUsecase: dependencies.usecases.popupSubmissionUsecase
+        )
         let pushTokenStorage = PushTokenStorage(store: store)
         AppNotificationManager.shared.configure(
             sessionStorage: sessionStorage,
@@ -40,6 +51,8 @@ struct AppBootstrap {
             sessionClient: sessionClient,
             homePopupClient: homePopupClient,
             popupDetailClient: popupDetailClient,
+            popupRequestClient: popupRequestClient,
+            popupRequestManagementClient: popupRequestManagementClient,
             launchStateResolver: AppLaunchStateResolver(),
             dependencies: dependencies
         )
@@ -55,6 +68,8 @@ struct AppBootstrap {
             $0.sessionClient = sessionClient
             $0.homePopupClient = homePopupClient
             $0.popupDetailClient = popupDetailClient
+            $0.popupRequestClient = popupRequestClient
+            $0.popupRequestManagementClient = popupRequestManagementClient
         }
     }
 }
