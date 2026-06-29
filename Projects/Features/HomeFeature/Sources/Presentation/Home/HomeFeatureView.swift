@@ -12,7 +12,7 @@ import UIKit
 public struct HomeFeatureView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Bindable var store: StoreOf<HomeFeature>
-    @State private var currentScrollOffset: CGFloat = 0
+    @State private var isTopAnchorVisible = false
     @State private var listProxy = LKListProxy()
     @State private var lastHandledPopupId: String?
     @State private var sheetRoute: HomeSheetRoute?
@@ -138,12 +138,12 @@ public struct HomeFeatureView: View {
                                 ) {
                                     ListKitGridPopupCell(
                                         popup: popup,
-                                        isLiked: isLiked(popup: popup),
+                                        isLiked: popup.isFavorited,
                                         cellWidth: Self.gridCellWidth,
                                         toggleLike: { store.send(.toggleLike(popup)) }
                                     )
                                 }
-                                .equatableToken("\(popup.popupUuid)-\(isLiked(popup: popup))")
+                                .equatableToken("\(popup.popupUuid)-\(popup.isFavorited)")
                                 .onSelect { _ in
                                     store.send(.popupSelected(popup))
                                 }
@@ -190,10 +190,17 @@ public struct HomeFeatureView: View {
                 .contentInsets(LKEdgeInsets(top: 0, left: 0, bottom: 50, right: 0))
                 .listProxy(listProxy)
                 .onScroll { context in
-                    currentScrollOffset = context.contentOffset.y
+                    // 지금 스크롤 위치가 기준값보다 크면
+                    let shouldShowTopAnchor = context.contentOffset.y > Self.topAnchorVisibilityThreshold
+                    
+                    // 지금 계산한 결과가 현재 상태와 같으면 아무것도 하지 않고 종료
+                    guard shouldShowTopAnchor != isTopAnchorVisible else { return }
+                    
+                    // 숨김 -> 보임, 또는 보임 -> 숨김으로 바뀌는 순간에만 상태를 변경ㄱ
+                    isTopAnchorVisible = shouldShowTopAnchor
                 }
                 .overlay(alignment: Alignment.bottomTrailing) {
-                    HomeTopAnchorButton(isVisible: currentScrollOffset > 650) {
+                    HomeTopAnchorButton(isVisible: isTopAnchorVisible) {
                         listProxy.scrollToSection(id: "grid", position: .top, animated: true)
                     }
                 }
@@ -255,6 +262,7 @@ public struct HomeFeatureView: View {
 
 private extension HomeFeatureView {
     static let gridCellHeight: CGFloat = 302
+    static let topAnchorVisibilityThreshold: CGFloat = 650
 
     static var gridCellWidth: CGFloat {
         (UIScreen.main.bounds.width - CGFloat.contentPadding * 2 - 15) / 2
@@ -453,10 +461,6 @@ private extension HomeFeatureView {
         case .regionSheet, .sortSheet:
             store.send(.refreshFilteredPopupList)
         }
-    }
-
-    func isLiked(popup: Popup) -> Bool {
-        store.gridPopups.first { $0.popupUuid == popup.popupUuid }?.isFavorited ?? popup.isFavorited
     }
 }
 
