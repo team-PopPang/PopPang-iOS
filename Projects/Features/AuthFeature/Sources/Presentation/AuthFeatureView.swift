@@ -1,20 +1,15 @@
 import AuthenticationServices
+import ComposableArchitecture
 import Domain
 import DSKit
 import SwiftUI
 import UIKit
 
 public struct AuthFeatureView: View {
-    @State private var compound: AuthFeatureCompound
+    let store: StoreOf<AuthFeature>
 
-    public init(
-        onLoginSuccess: @escaping @MainActor (User) -> Void = { _ in }
-    ) {
-        _compound = State(
-            wrappedValue: AuthFeatureCompound(
-                onLoginSuccess: onLoginSuccess
-            )
-        )
+    public init(store: StoreOf<AuthFeature>) {
+        self.store = store
     }
 
     public var body: some View {
@@ -26,31 +21,42 @@ public struct AuthFeatureView: View {
 
             VStack {
                 SocialLoginButton(type: .kakao) {
-                    compound.send(.kakaoLogin)
+                    store.send(.kakaoLoginTapped)
                 }
+                .disabled(store.isSubmitting)
 
                 ZStack {
                     SignInWithAppleButton { _ in
                     } onCompletion: { result in
                         switch result {
                         case .success(let authorization):
-                            compound.send(.appleLogin(.init(authorization)))
+                            store.send(.appleLoginTapped(.init(authorization)))
                         case .failure(let error):
                             print("[LoginView] 애플 로그인 에러: \(error.localizedDescription)")
                         }
                     }
                     .frame(maxWidth: 375, maxHeight: 52)
+                    .disabled(store.isSubmitting)
 
                     SocialLoginButton(type: .apple) {
                         triggerAppleLoginBtnTap()
                     }
+                    .disabled(store.isSubmitting)
                 }
 
                 SocialLoginButton(type: .google) {
-                    compound.send(.googleLogin)
+                    store.send(.googleLoginTapped)
                 }
+                .disabled(store.isSubmitting)
             }
             .padding(.top, 120)
+
+            if let errorMessage = store.errorMessage {
+                Text(errorMessage)
+                    .font(.scdream(.medium, size: 12))
+                    .foregroundStyle(Color.mainRed)
+                    .padding(.top, 24)
+            }
         }
         .padding(.horizontal, 24)
     }

@@ -2,6 +2,7 @@ import ComposableArchitecture
 import Core
 import Foundation
 import HomeFeature
+import AuthFeature
 import PopupDetailFeature
 import PopupRequestFeature
 import PopupRequestManagementFeature
@@ -70,6 +71,12 @@ struct AppBootstrap {
             $0.popupDetailClient = popupDetailClient
             $0.popupRequestClient = popupRequestClient
             $0.popupRequestManagementClient = popupRequestManagementClient
+            $0.authFeatureClient = .live(
+                kakaoAuthUsecase: dependencies.usecases.kakaoAuthUsecase,
+                googleAuthUsecase: dependencies.usecases.googleAuthUsecase,
+                appleAuthUsecase: dependencies.usecases.appleAuthUsecase,
+                userUsecase: dependencies.usecases.userUsecase
+            )
         }
     }
 }

@@ -28,19 +28,14 @@ struct AppRootFlowView: View {
                 }
 
             case .auth:
-                AuthFeatureView(
-                    onLoginSuccess: { user in
-                        store.send(.authCompleted(user))
-                    }
-                )
+                AuthFeatureView(store: store.scope(state: \.auth, action: \.auth))
 
             case .register:
-                RegisterFlowFeatureView(
-                    user: store.session.user,
-                    onComplete: { user in
-                        store.send(.registerCompleted(user))
-                    }
-                )
+                if let registerStore = store.scope(state: \.registerFlow, action: \.registerFlow) {
+                    RegisterFlowFeatureView(store: registerStore)
+                } else {
+                    EmptyView()
+                }
 
             case .main:
                 if let mainTabStore = store.scope(state: \.mainTab, action: \.mainTab) {
@@ -56,14 +51,10 @@ struct AppRootFlowView: View {
 private struct OnboardingAuthScene: View {
     @Environment(\.dismiss) private var dismiss
 
-    let store: StoreOf<OnboardingAuthDestinationFeature>
+    let store: StoreOf<AuthFeature>
 
     var body: some View {
-        AuthFeatureView(
-            onLoginSuccess: { user in
-                store.send(.loginSucceeded(user))
-            }
-        )
+        AuthFeatureView(store: store)
         .ppBackNavigationBar(title: "") {
             dismiss()
         }
