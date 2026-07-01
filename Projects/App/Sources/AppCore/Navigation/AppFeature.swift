@@ -1,6 +1,7 @@
 import ComposableArchitecture
 import Core
 import Domain
+import OnboardingFeature
 
 enum AppRootDestination: Equatable, Sendable {
     case launch
@@ -22,6 +23,8 @@ struct AppFeature {
     struct State: Equatable {
         var destination: AppRootDestination = .launch
         @Shared var session: UserSession
+        var onboarding = OnboardingFeature.State()
+        var onboardingPath = StackState<OnboardingPath.State>()
         var mainTabCore: MainTabFeature.CoreState?
 
         init(session: UserSession = .init()) {
@@ -49,6 +52,7 @@ struct AppFeature {
         static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.destination == rhs.destination
                 && lhs.session == rhs.session
+                && lhs.onboarding == rhs.onboarding
                 && lhs.mainTabCore == rhs.mainTabCore
         }
     }
@@ -56,10 +60,17 @@ struct AppFeature {
     enum Action {
         case launchTask
         case launchResolved(UserSession, AppRootDestination)
-        case onboardingCompleted
+        case onboarding(OnboardingFeature.Action)
+        case onboardingPath(StackActionOf<OnboardingPath>)
         case authCompleted(User)
         case registerCompleted(User)
+        case logoutFinished
         case mainTab(MainTabFeature.Action)
+    }
+
+    @Reducer
+    enum OnboardingPath {
+        case auth(OnboardingAuthDestinationFeature)
     }
 
     @Dependencies.Dependency(\.sessionClient) private var sessionClient: SessionClient
@@ -75,6 +86,10 @@ struct AppFeature {
     }
 
     var body: some ReducerOf<Self> {
+        Scope(state: \.onboarding, action: \.onboarding) {
+            OnboardingFeature()
+        }
+
         Reduce { state, action in
             switch action {
             case .launchTask:
@@ -89,10 +104,15 @@ struct AppFeature {
                 )
                 return .none
 
-            case .onboardingCompleted:
+            case .onboarding(.delegate(.authRequested)):
                 sessionStorage.setOnboardingCompleted(true)
-                state.destination = .auth
+                if state.onboardingPath.isEmpty {
+                    state.onboardingPath.append(.auth(.init()))
+                }
                 return .none
+
+            case let .onboardingPath(.element(_, .auth(.delegate(.loginSucceeded(user))))):
+                return .send(.authCompleted(user))
 
             case .authCompleted(let user),
                     .registerCompleted(let user):
@@ -102,17 +122,30 @@ struct AppFeature {
                 }
 
             case .mainTab(.delegate(.logout)):
-                state.$session.withLock { $0 = UserSession() }
-                state.mainTabCore = nil
-                state.destination = .auth
-                return .run { _ in
+                state.destination = .onboarding
+                return .run { send in
                     await sessionClient.clear()
+                    await send(.logoutFinished)
                 }
+
+            case .logoutFinished:
+                state.onboarding = .init()
+                state.onboardingPath = StackState()
+                state.mainTabCore = nil
+                state.$session.withLock { $0 = UserSession() }
+                return .none
+
+            case .onboardingPath:
+                return .none
+
+            case .onboarding:
+                return .none
 
             case .mainTab:
                 return .none
             }
         }
+        .forEach(\.onboardingPath, action: \.onboardingPath)
         .ifLet(\.mainTab, action: \.mainTab) {
             MainTabFeature()
         }
@@ -143,6 +176,8 @@ private extension AppFeature {
     ) {
         state.$session.withLock { $0 = session }
         state.destination = destination
+        state.onboarding = .init()
+        state.onboardingPath = StackState()
 
         if destination == .main, session.user != nil {
             state.mainTabCore = state.mainTabCore ?? .init(session: state.$session)
@@ -154,6 +189,8 @@ private extension AppFeature {
     func applyAuthenticatedUser(_ user: User, state: inout State) {
         configureAuthenticatedSession(user)
         state.$session.withLock { $0.user = user }
+        state.onboarding = .init()
+        state.onboardingPath = StackState()
 
         if user.nickname == nil {
             state.mainTabCore = nil
@@ -167,5 +204,33 @@ private extension AppFeature {
     func configureAuthenticatedSession(_ user: User) {
         sessionStorage.setOnboardingCompleted(true)
         AppNotificationManager.shared.syncStoredToken(userUuid: user.userUuid)
+    }
+}
+
+@Reducer
+struct OnboardingAuthDestinationFeature {
+    @ObservableState
+    struct State: Equatable {
+        init() {}
+    }
+
+    enum Action: Equatable {
+        case loginSucceeded(User)
+        case delegate(Delegate)
+
+        enum Delegate: Equatable {
+            case loginSucceeded(User)
+        }
+    }
+
+    var body: some ReducerOf<Self> {
+        Reduce { _, action in
+            switch action {
+            case .loginSucceeded(let user):
+                return .send(.delegate(.loginSucceeded(user)))
+            case .delegate:
+                return .none
+            }
+        }
     }
 }

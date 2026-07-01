@@ -6,11 +6,7 @@ struct AppLaunchStateResolver: Sendable {
         snapshot: LocalSessionSnapshot,
         session: UserSession
     ) -> AppRootDestination {
-        if snapshot.hasCompletedOnboarding == false {
-            return .onboarding
-        }
-
-        guard let user = session.user else { return .auth }
+        guard let user = session.user else { return .onboarding }
         return user.nickname == nil ? .register : .main
     }
 }

@@ -16,14 +16,16 @@ struct AppRootFlowView: View {
                 }
 
             case .onboarding:
-                OnboardingFeatureView(
-                    onSkip: {
-                        store.send(.onboardingCompleted)
-                    },
-                    onComplete: {
-                        store.send(.onboardingCompleted)
+                NavigationStack(path: $store.scope(state: \.onboardingPath, action: \.onboardingPath)) {
+                    OnboardingFeatureView(store: store.scope(state: \.onboarding, action: \.onboarding))
+                } destination: { pathStore in
+                    switch pathStore.state {
+                    case .auth:
+                        if let authStore = pathStore.scope(state: \.auth, action: \.auth) {
+                            OnboardingAuthScene(store: authStore)
+                        }
                     }
-                )
+                }
 
             case .auth:
                 AuthFeatureView(
@@ -47,6 +49,23 @@ struct AppRootFlowView: View {
                     EmptyView()
                 }
             }
+        }
+    }
+}
+
+private struct OnboardingAuthScene: View {
+    @Environment(\.dismiss) private var dismiss
+
+    let store: StoreOf<OnboardingAuthDestinationFeature>
+
+    var body: some View {
+        AuthFeatureView(
+            onLoginSuccess: { user in
+                store.send(.loginSucceeded(user))
+            }
+        )
+        .ppBackNavigationBar(title: "") {
+            dismiss()
         }
     }
 }

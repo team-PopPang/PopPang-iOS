@@ -278,12 +278,8 @@ public struct ProfileSettingFeatureView: View {
         }
         .padding(.top, 24)
         .padding(.horizontal, 24)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("프로필 설정")
-                    .ppStyleFont(.scdream(.medium, size: 18))
-                    .padding(.top, 10)
-            }
+        .ppBackNavigationBar(title: "프로필 설정") {
+            dismiss()
         }
         .onAppear {
             compound.send(.clearNickname)
