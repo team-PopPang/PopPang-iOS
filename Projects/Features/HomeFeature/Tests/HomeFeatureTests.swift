@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Core
 import Domain
 import DSKit
 import Foundation
@@ -25,9 +26,22 @@ struct HomeFeatureTests {
         let region = RegionList(region: "서울", districtList: ["전체", "성동구"])
         let expectedPopups = [makePopup(popupUuid: "popup-1", name: "성수 팝업")]
         var initialState = HomeFeature.State(
-            userUuid: "user-1",
-            nickname: "팝팡",
-            isAdmin: false
+            session: Shared(
+                UserSession(
+                    user: User(
+                        userUuid: "user-1",
+                        uid: "test-uid",
+                        provider: "test",
+                        email: nil,
+                        nickname: "팝팡",
+                        role: "USER",
+                        isAlerted: false,
+                        fcmToken: nil,
+                        alertKeywordList: nil,
+                        recommendList: nil
+                    )
+                )
+            )
         )
         initialState.filter.selectedRegion = region
         initialState.filter.selectedDistrict = "전체"

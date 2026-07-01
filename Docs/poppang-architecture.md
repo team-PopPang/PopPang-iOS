@@ -99,9 +99,9 @@ Projects
 - 전역 세션 상태의 source of truth는 `AppFeature.session`이다.
 - 현재 로그인 사용자는 `AppFeature.session.user`로 표현한다.
 - active main flow는 `MainTabFeature`가 TCA `StackState`와 단일 `@Presents` destination으로 소유한다.
-- `MainTabFeature`는 parent가 보유한 `session.user`와 `mainTabCore`를 projection해서 동작한다.
-- TCA-ready feature는 `session.user`를 projection해서 reducer/state에 직접 주입한다.
-- 현재 `HomeFeature`는 `userUuid`, `nickname`, `isAdmin`을 feature state로 projection해 direct scope한다.
+- `MainTabFeature`는 parent가 보유한 shared `session`과 `mainTabCore`를 기준으로 동작한다.
+- TCA-ready feature는 필요한 경우 parent가 내려주는 shared `session`을 직접 읽는다.
+- 현재 `HomeFeature`는 shared `session`을 직접 읽고, 홈 로컬 상태만 feature state가 소유한다.
 - legacy feature는 당분간 `SessionContext` 또는 primitive 값을 view init으로 주입한다.
 - 현재 `Calendar`, `Map`, `Favorites`, `Profile`은 `*LegacyBridgeFeature`가 session-derived primitive를 view init으로 넘긴다.
 - `MainTabFeature.Action`은 탭 child action, `path`, `destination`, parent delegate 중심으로 유지한다.
@@ -132,8 +132,9 @@ Projects
 
 #### Home
 
-- `MainTabFeature`가 `SessionState`에서 `userUuid`, `nickname`, `isAdmin`을 projection
-- `HomeFeature.State`가 그 값을 직접 소유
+- `AppFeature`가 shared `session` source of truth를 소유
+- `MainTabFeature`가 shared `session`을 `HomeFeature`에 전달
+- `HomeFeature.State`는 shared `session`을 읽고, `bestPopups`, `filter`, `destination` 같은 홈 로컬 상태를 직접 소유
 - `HomeFeature`가 `@Dependencies.Dependency(\.homePopupClient)`로 feature-scoped dependency 사용
 - `HomeFeature`가 홈 로컬 tree-based presentation을 소유
   - 현재 검색과 팝업 제보는 `HomeFeature.destination`에서 관리

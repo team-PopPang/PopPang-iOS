@@ -1,3 +1,4 @@
+import Core
 import Domain
 
 struct SessionState: Equatable, Sendable {
@@ -12,20 +13,10 @@ struct SessionState: Equatable, Sendable {
     }
 
     var context: SessionContext? {
-        guard let user else { return nil }
-        return SessionContext(
-            userUuid: user.userUuid,
-            nickname: user.nickname ?? "닉네임",
-            isAlerted: user.isAlerted,
-            isAdmin: user.role.uppercased() == "ADMIN"
-        )
+        userSession.context
     }
 
-}
-
-struct SessionContext: Equatable, Hashable, Sendable {
-    var userUuid: String
-    var nickname: String
-    var isAlerted: Bool
-    var isAdmin: Bool
+    var userSession: UserSession {
+        UserSession(user: user)
+    }
 }

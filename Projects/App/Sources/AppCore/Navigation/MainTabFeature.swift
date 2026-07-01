@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Core
 import Domain
 import struct HomeFeature.HomeComingPopupDetailDestinationFeature
 import struct HomeFeature.HomeFeature
@@ -55,24 +56,8 @@ struct MainTabFeature {
         var home: HomeFeature.State
         var path = StackState<Path.State>()
         
-        init(session: SessionState) {
-            guard let context = session.context else {
-                preconditionFailure("Home core requires a logged in session.")
-            }
-            self.home = .init(
-                userUuid: context.userUuid,
-                nickname: context.nickname,
-                isAdmin: context.isAdmin
-            )
-        }
-        
-        mutating func syncSession(_ session: SessionState) {
-            guard let context = session.context else { return }
-            home.syncUser(
-                userUuid: context.userUuid,
-                nickname: context.nickname,
-                isAdmin: context.isAdmin
-            )
+        init(session: Shared<UserSession>) {
+            self.home = .init(session: session)
         }
         
         static func == (lhs: Self, rhs: Self) -> Bool {
@@ -83,16 +68,15 @@ struct MainTabFeature {
     
     @ObservableState
     struct State: Equatable {
-        var session: SessionState
+        @Shared var session: UserSession
         var core: CoreState
         
         init(
-            session: SessionState,
+            session: Shared<UserSession>,
             core: CoreState? = nil
         ) {
-            self.session = session
+            self._session = session
             self.core = core ?? .init(session: session)
-            self.core.syncSession(session)
         }
         
         // Legacy tabs still own Compound/internal state, so MainTab only bridges session-derived primitives for now.
@@ -353,8 +337,7 @@ private extension MainTabFeature {
             return .send(.delegate(.logout))
             
         case .profileSetting(.delegate(.nicknameUpdated(let nickname))):
-            state.session.user?.nickname = nickname
-            state.core.syncSession(state.session)
+            state.$session.withLock { $0.user?.nickname = nickname }
             return .none
             
         default:

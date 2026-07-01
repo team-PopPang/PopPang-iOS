@@ -21,14 +21,18 @@ struct AppFeature {
     @ObservableState
     struct State: Equatable {
         var destination: AppRootDestination = .launch
-        var session = SessionState()
+        @Shared var session: UserSession
         var mainTabCore: MainTabFeature.CoreState?
+
+        init(session: UserSession = .init()) {
+            self._session = Shared(value: session)
+        }
 
         var mainTab: MainTabFeature.State? {
             get {
                 guard session.user != nil, let mainTabCore else { return nil }
                 return MainTabFeature.State(
-                    session: session,
+                    session: $session,
                     core: mainTabCore
                 )
             }
@@ -38,7 +42,6 @@ struct AppFeature {
                     return
                 }
 
-                session = newValue.session
                 mainTabCore = newValue.core
             }
         }
@@ -52,7 +55,7 @@ struct AppFeature {
 
     enum Action {
         case launchTask
-        case launchResolved(SessionState, AppRootDestination)
+        case launchResolved(UserSession, AppRootDestination)
         case onboardingCompleted
         case authCompleted(User)
         case registerCompleted(User)
@@ -99,7 +102,7 @@ struct AppFeature {
                 }
 
             case .mainTab(.delegate(.logout)):
-                state.session = SessionState()
+                state.$session.withLock { $0 = UserSession() }
                 state.mainTabCore = nil
                 state.destination = .auth
                 return .run { _ in
@@ -123,7 +126,7 @@ private extension AppFeature {
 
         return .run { send in
             let latestSnapshot = sessionStorage.loadSnapshot()
-            let session = await sessionClient.load()
+            let session = await sessionClient.load().userSession
             let destination = launchStateResolver.resolve(
                 snapshot: latestSnapshot,
                 session: session
@@ -134,15 +137,15 @@ private extension AppFeature {
     }
 
     func applyLaunchState(
-        session: SessionState,
+        session: UserSession,
         destination: AppRootDestination,
         state: inout State
     ) {
-        state.session = session
+        state.$session.withLock { $0 = session }
         state.destination = destination
 
         if destination == .main, session.user != nil {
-            state.mainTabCore = state.mainTabCore ?? .init(session: session)
+            state.mainTabCore = state.mainTabCore ?? .init(session: state.$session)
         } else {
             state.mainTabCore = nil
         }
@@ -150,13 +153,13 @@ private extension AppFeature {
 
     func applyAuthenticatedUser(_ user: User, state: inout State) {
         configureAuthenticatedSession(user)
-        state.session.user = user
+        state.$session.withLock { $0.user = user }
 
         if user.nickname == nil {
             state.mainTabCore = nil
             state.destination = .register
         } else {
-            state.mainTabCore = state.mainTabCore ?? .init(session: state.session)
+            state.mainTabCore = state.mainTabCore ?? .init(session: state.$session)
             state.destination = .main
         }
     }

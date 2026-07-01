@@ -196,7 +196,7 @@ public struct HomeFeatureView: View {
                     // 지금 계산한 결과가 현재 상태와 같으면 아무것도 하지 않고 종료
                     guard shouldShowTopAnchor != isTopAnchorVisible else { return }
                     
-                    // 숨김 -> 보임, 또는 보임 -> 숨김으로 바뀌는 순간에만 상태를 변경ㄱ
+                    // 숨김 -> 보임, 또는 보임 -> 숨김으로 바뀌는 순간에만 상태를 변경
                     isTopAnchorVisible = shouldShowTopAnchor
                 }
                 .overlay(alignment: Alignment.bottomTrailing) {
@@ -503,9 +503,22 @@ private extension HomeFeatureView {
     HomeFeatureView(
         store: Store(
             initialState: HomeFeature.State(
-                userUuid: "preview-user",
-                nickname: "팝팡",
-                isAdmin: false
+                session: Shared(
+                    value: UserSession(
+                        user: User(
+                            userUuid: "preview-user",
+                            uid: "preview-uid",
+                            provider: "preview",
+                            email: nil,
+                            nickname: "팝팡",
+                            role: "USER",
+                            isAlerted: false,
+                            fcmToken: nil,
+                            alertKeywordList: nil,
+                            recommendList: nil
+                        )
+                    )
+                )
             )
         ) {
             HomeFeature()

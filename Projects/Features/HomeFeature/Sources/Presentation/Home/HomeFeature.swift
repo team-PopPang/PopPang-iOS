@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Core
 import Domain
 import DSKit
 import Foundation
@@ -14,9 +15,7 @@ public struct HomeFeature {
 
     @ObservableState
     public struct State: Equatable {
-        var userUuid: String
-        var nickname: String
-        var isAdmin: Bool
+        @Shared var session: UserSession
         var bestPopups: [Popup] = []
         var comingPopups: [Popup] = []
         var gridPopups: [Popup] = []
@@ -26,23 +25,28 @@ public struct HomeFeature {
         @Presents var destination: Destination.State?
 
         public init(
-            userUuid: String,
-            nickname: String,
-            isAdmin: Bool
+            session: Shared<UserSession>
         ) {
-            self.userUuid = userUuid
-            self.nickname = nickname
-            self.isAdmin = isAdmin
+            self._session = session
         }
 
-        public mutating func syncUser(
-            userUuid: String,
-            nickname: String,
-            isAdmin: Bool
-        ) {
-            self.userUuid = userUuid
-            self.nickname = nickname
-            self.isAdmin = isAdmin
+        var userUuid: String {
+            sessionContext.userUuid
+        }
+
+        var nickname: String {
+            sessionContext.nickname
+        }
+
+        var isAdmin: Bool {
+            sessionContext.isAdmin
+        }
+
+        private var sessionContext: SessionContext {
+            guard let context = session.context else {
+                preconditionFailure("HomeFeature requires a logged in session.")
+            }
+            return context
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {

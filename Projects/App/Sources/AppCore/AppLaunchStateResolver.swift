@@ -4,7 +4,7 @@ import Foundation
 struct AppLaunchStateResolver: Sendable {
     func resolve(
         snapshot: LocalSessionSnapshot,
-        session: SessionState
+        session: UserSession
     ) -> AppRootDestination {
         if snapshot.hasCompletedOnboarding == false {
             return .onboarding
