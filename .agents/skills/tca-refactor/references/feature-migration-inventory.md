@@ -23,9 +23,13 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 
 ### TCA 예시가 이미 존재하는 feature
 
+- `AuthFeature`
+- `RegisterFlowFeature`
+- `OnboardingFeature`
 - `HomeFeature`
   - `HomeFeatureReducer`
   - `ComingPopupDetailReducer`
+- `ProfileFeature`
 - `PopupDetailFeature`
   - `PopupDetailFeatureReducer`
 
@@ -37,11 +41,9 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 - `CalendarFeature`
 - `FavoritesFeature`
 - `MapFeature`
-- `OnboardingFeature`
 - `PopupRequestFeature`
 - `PopupRequestManagementFeature`
 - `PopupRequestManagementDetailFeature`
-- `ProfileFeature`
 - `ReviewFeature`
 - `SearchFeature`
 

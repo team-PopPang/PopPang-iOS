@@ -17,8 +17,9 @@
 - `MainTabFeature`는 shared `session`을 child feature에 전달하고, 탭 로컬 navigation state를 소유한다.
 - direct scope가 가능한 feature는 shared `session`을 직접 읽거나 필요한 값을 projection해서 reducer/state에 주입한다.
 - 현재 `HomeFeature`는 shared `session`을 직접 읽고 홈 로컬 상태를 feature state가 소유한다.
+- 현재 `ProfileFeature`와 `ProfileSettingFeature`도 shared `session`을 직접 읽고 프로필 로컬 상태를 feature state가 소유한다.
 - legacy feature는 당분간 `SessionContext` 또는 primitive 값을 view init으로 주입한다.
-- 현재 `Calendar`, `Map`, `Favorites`, `Profile`은 `*LegacyBridgeFeature`가 session-derived primitive를 만들어 legacy view로 넘긴다.
+- 현재 `Calendar`, `Map`, `Favorites`는 `*LegacyBridgeFeature`가 session-derived primitive를 만들어 legacy view로 넘긴다.
 
 ## 용어
 
@@ -285,21 +286,19 @@ public struct HomeFeature {
 아직 내부 state/effect/navigation을 TCA reducer로 옮기지 않은 탭은 `MainTabFeature` 아래에 bridge reducer를 둔다. bridge reducer는 session-derived primitive만 만들고 실제 레거시 화면으로 전달한다.
 
 ```swift
-var profile: ProfileLegacyBridgeFeature.State {
+var favorites: FavoritesLegacyBridgeFeature.State {
     get { .init(sessionContext: sessionContext) }
     set {}
 }
 ```
 
 ```swift
-private struct ProfileLegacyBridgeView: View {
-    let store: StoreOf<ProfileLegacyBridgeFeature>
+private struct FavoritesLegacyBridgeView: View {
+    let store: StoreOf<FavoritesLegacyBridgeFeature>
 
     var body: some View {
-        ProfileFeatureView(
+        FavoritesFeatureView(
             userUuid: store.userUuid,
-            nickname: store.nickname,
-            isAlerted: store.isAlerted,
             onShowAlert: { _ in
                 store.send(.alertTapped)
             }

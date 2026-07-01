@@ -3,6 +3,7 @@ import Core
 import Foundation
 import HomeFeature
 import AuthFeature
+import ProfileFeature
 import PopupDetailFeature
 import PopupRequestFeature
 import PopupRequestManagementFeature
@@ -75,6 +76,9 @@ struct AppBootstrap {
                 kakaoAuthUsecase: dependencies.usecases.kakaoAuthUsecase,
                 googleAuthUsecase: dependencies.usecases.googleAuthUsecase,
                 appleAuthUsecase: dependencies.usecases.appleAuthUsecase,
+                userUsecase: dependencies.usecases.userUsecase
+            )
+            $0.profileFeatureClient = .live(
                 userUsecase: dependencies.usecases.userUsecase
             )
         }

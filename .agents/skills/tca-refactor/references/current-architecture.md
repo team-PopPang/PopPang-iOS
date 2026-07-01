@@ -68,7 +68,7 @@ Projects
 
 ### Features
 
-- 현재 기본 상태관리는 여전히 Compound 기반이다.
+- 현재 기본 상태관리는 TCA와 Compound가 공존하는 점진 전환 상태다.
 - TCA migration은 feature 단위 vertical slice로 진행 중이다.
 - feature는 `Domain`, `Core`, `DSKit`, `ThirdParty`를 주로 의존한다.
 - feature 간 직접 import는 예외를 줄이고 parent TCA reducer 조립을 우선한다.
@@ -102,22 +102,24 @@ Projects
 
 ### 이미 `@Reducer`가 들어간 영역
 
+- `Projects/App/Sources/AppCore/Navigation/AppFeature.swift`
+- `Projects/App/Sources/AppCore/Navigation/MainTabFeature.swift`
+- `Projects/Features/AuthFeature/Sources/Presentation/AuthFeature.swift`
+- `Projects/Features/AuthFeature/Sources/Presentation/RegisterFlowFeature.swift`
+- `Projects/Features/OnboardingFeature/Sources/Presentation/OnboardingFeature.swift`
 - `Projects/Features/HomeFeature/Sources/Presentation/HomeFeatureReducer.swift`
 - `Projects/Features/HomeFeature/Sources/Presentation/ComingPopupDetailReducer.swift`
+- `Projects/Features/ProfileFeature/Sources/Presentation/ProfileFeature.swift`
 - `Projects/Features/PopupDetailFeature/Sources/Presentation/PopupDetailFeatureReducer.swift`
 
 ### 아직 `@Compound` 중심인 주요 영역
 
 - `AlertFeature`
-- `AuthFeature`
-- `RegisterFlowFeature`
 - `CalendarFeature`
 - `FavoritesFeature`
 - `MapFeature`
-- `OnboardingFeature`
 - `PopupRequestFeature`
 - `PopupRequestManagementFeature`
-- `ProfileFeature`
 - `ReviewFeature`
 - `SearchFeature`
 

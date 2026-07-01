@@ -102,8 +102,9 @@ Projects
 - `MainTabFeature`는 parent가 보유한 shared `session`과 `mainTabCore`를 기준으로 동작한다.
 - TCA-ready feature는 필요한 경우 parent가 내려주는 shared `session`을 직접 읽는다.
 - 현재 `HomeFeature`는 shared `session`을 직접 읽고, 홈 로컬 상태만 feature state가 소유한다.
+- 현재 `ProfileFeature`도 shared `session`을 직접 읽고, 프로필 로컬 상태와 프로필 설정 path는 TCA reducer가 소유한다.
 - legacy feature는 당분간 `SessionContext` 또는 primitive 값을 view init으로 주입한다.
-- 현재 `Calendar`, `Map`, `Favorites`, `Profile`은 `*LegacyBridgeFeature`가 session-derived primitive를 view init으로 넘긴다.
+- 현재 `Calendar`, `Map`, `Favorites`는 `*LegacyBridgeFeature`가 session-derived primitive를 view init으로 넘긴다.
 - `MainTabFeature.Action`은 탭 child action, `path`, `destination`, parent delegate 중심으로 유지한다.
 - 탭 내부의 로컬 sheet/bottom sheet/selected item 상태는 각 feature가 소유한다.
 - 여러 탭에서 공통으로 여는 push/presentation 화면은 `MainTabFeature`가 소유한다.
@@ -126,49 +127,37 @@ Projects
 4. `LocalSessionSnapshot + SessionState`를 조합해 root destination 계산
 5. `AppFeature.session`과 `destination` 반영
 
-### Home vs Legacy Tabs
+### TCA-ready Tabs vs Legacy Tabs
 
 현재 PopPang은 탭별로 두 가지 연결 방식을 함께 사용한다.
 
-#### Home
+#### Home / Profile
 
 - `AppFeature`가 shared `session` source of truth를 소유
-- `MainTabFeature`가 shared `session`을 `HomeFeature`에 전달
+- `MainTabFeature`가 shared `session`을 `HomeFeature`, `ProfileFeature`, `ProfileSettingFeature`에 전달
 - `HomeFeature.State`는 shared `session`을 읽고, `bestPopups`, `filter`, `destination` 같은 홈 로컬 상태를 직접 소유
+- `ProfileFeature.State`는 shared `session`을 읽고, `localIsAlerted`, `errorMessage` 같은 프로필 로컬 상태를 직접 소유
+- `ProfileSettingFeature.State`는 shared `session`을 읽고, 닉네임 변경/회원탈퇴용 로컬 상태를 직접 소유한다.
 - `HomeFeature`가 `@Dependencies.Dependency(\.homePopupClient)`로 feature-scoped dependency 사용
+- `ProfileFeature`와 `ProfileSettingFeature`는 `@Dependencies.Dependency(\.profileFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `HomeFeature`가 홈 로컬 tree-based presentation을 소유
   - 현재 검색과 팝업 제보는 `HomeFeature.destination`에서 관리
 - 홈에서 시작하는 연속 drill-down push(`오픈예정팝업 리스트 -> 팝업 상세`)는 `MainTabFeature.path`가 소유
+- 프로필 설정 push도 `MainTabFeature.path`가 소유하고, child feature는 delegate action으로 dismiss/logout intent만 올린다.
 - 여러 탭과 공통으로 이어질 수 있는 push 흐름은 `MainTabFeature.path`가 소유
   - 현재 팝업 상세, 리뷰 상세, 관리자 팝업 제보 관리 흐름이 여기에 해당
 
 ```swift
 HomeFeatureView(store: store.scope(state: \.core.home, action: \.home))
+ProfileFeatureView(store: store.scope(state: \.core.profile, action: \.profile))
 ```
 
-#### Calendar / Map / Favorites / Profile
+#### Calendar / Map / Favorites
 
 - 아직 레거시 `Compound`/view 구조가 남아 있음
 - `MainTabFeature` 아래 `*LegacyBridgeFeature`가 session-derived primitive만 생성
 - bridge view가 기존 `FeatureView` init에 `userUuid`, `nickname`, `isAlerted` 등을 전달
 - 실제 usecase dependency는 당분간 각 레거시 feature 내부 구조를 유지
-
-```swift
-private struct ProfileLegacyBridgeView: View {
-    let store: StoreOf<ProfileLegacyBridgeFeature>
-
-    var body: some View {
-        ProfileFeatureView(
-            userUuid: store.userUuid,
-            nickname: store.nickname,
-            isAlerted: store.isAlerted,
-            onShowAlert: { _ in
-                store.send(.alertTapped)
-            }
-        )
-    }
-}
-```
 
 이 차이는 임시 타협안이다. 각 탭이 public TCA reducer/state/view entry를 갖추면 bridge를 제거하고 `Home`처럼 direct scope로 옮긴다.
 

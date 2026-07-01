@@ -5,6 +5,7 @@ import struct HomeFeature.HomeComingPopupDetailDestinationFeature
 import struct HomeFeature.HomeFeature
 import PopupDetailFeature
 import PopupRequestManagementFeature
+import ProfileFeature
 
 enum MainTab: Hashable, CaseIterable, Sendable {
     case home
@@ -54,15 +55,18 @@ struct MainTabFeature {
     struct CoreState: Equatable {
         var selectedTab: MainTab = .home
         var home: HomeFeature.State
+        var profile: ProfileFeature.State
         var path = StackState<Path.State>()
-        
+
         init(session: Shared<UserSession>) {
             self.home = .init(session: session)
+            self.profile = .init(session: session)
         }
-        
+
         static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.selectedTab == rhs.selectedTab
             && lhs.home == rhs.home
+            && lhs.profile == rhs.profile
         }
     }
     
@@ -95,11 +99,6 @@ struct MainTabFeature {
             set {}
         }
         
-        var profile: ProfileLegacyBridgeFeature.State {
-            get { .init(sessionContext: sessionContext) }
-            set {}
-        }
-        
         var currentUser: User {
             guard let user = session.user else {
                 preconditionFailure("MainTabFeature requires a logged in user.")
@@ -126,7 +125,7 @@ struct MainTabFeature {
         case calendar(CalendarLegacyBridgeFeature.Action)
         case map(MapLegacyBridgeFeature.Action)
         case favorites(FavoritesLegacyBridgeFeature.Action)
-        case profile(ProfileLegacyBridgeFeature.Action)
+        case profile(ProfileFeature.Action)
         case path(StackActionOf<Path>)
         case delegate(Delegate)
         
@@ -143,7 +142,7 @@ struct MainTabFeature {
         case popupDetail(PopupDetailDestinationFeature)
         case reviewDetail(ReviewDetailDestinationFeature)
         case alert(AlertDestinationFeature)
-        case profileSetting(ProfileSettingDestinationFeature)
+        case profileSetting(ProfileSettingFeature)
         case notifications(NotificationDestinationFeature)
         case serviceTerms(ServiceTermsDestinationFeature)
     }
@@ -161,8 +160,8 @@ struct MainTabFeature {
         Scope(state: \.favorites, action: \.favorites) {
             FavoritesLegacyBridgeFeature()
         }
-        Scope(state: \.profile, action: \.profile) {
-            ProfileLegacyBridgeFeature()
+        Scope(state: \.core.profile, action: \.profile) {
+            ProfileFeature()
         }
         
         Reduce { state, action in
@@ -184,10 +183,6 @@ struct MainTabFeature {
                 return .none
                 
             case .map(.delegate(.popupSelected(let popup))):
-                appendPopupDetail(popup, state: &state)
-                return .none
-                
-            case .profile(.delegate(.popupSelected(let popup))):
                 appendPopupDetail(popup, state: &state)
                 return .none
                 
@@ -226,15 +221,9 @@ struct MainTabFeature {
                 state.core.path.append(.alert(.init(userUuid: state.currentUser.userUuid)))
                 return .none
                 
-            case .profile(.delegate(.profileSettingRequested(let nickname, let isAlerted))):
+            case .profile(.delegate(.profileSettingRequested)):
                 state.core.path.append(
-                    .profileSetting(
-                        .init(
-                            userUuid: state.currentUser.userUuid,
-                            nickname: nickname,
-                            isAlerted: isAlerted
-                        )
-                    )
+                    .profileSetting(.init(session: state.$session))
                 )
                 return .none
                 
@@ -333,11 +322,11 @@ private extension MainTabFeature {
             state.core.path.pop(from: id)
             return .none
             
-        case .profileSetting(.delegate(.logout)):
+        case .profileSetting(.delegate(.logoutRequested)):
             return .send(.delegate(.logout))
-            
-        case .profileSetting(.delegate(.nicknameUpdated(let nickname))):
-            state.$session.withLock { $0.user?.nickname = nickname }
+
+        case .profileSetting(.delegate(.dismiss)):
+            state.core.path.pop(from: id)
             return .none
             
         default:
@@ -447,58 +436,6 @@ struct FavoritesLegacyBridgeFeature {
                 return .send(.delegate(.popupSelected(popup)))
             case .browsePopupsTapped:
                 return .send(.delegate(.browsePopupsRequested))
-            case .delegate:
-                return .none
-            }
-        }
-    }
-}
-
-@Reducer
-struct ProfileLegacyBridgeFeature {
-    @ObservableState
-    struct State: Equatable {
-        var userUuid: String
-        var nickname: String
-        var isAlerted: Bool
-        
-        init(sessionContext: SessionContext) {
-            self.userUuid = sessionContext.userUuid
-            self.nickname = sessionContext.nickname
-            self.isAlerted = sessionContext.isAlerted
-        }
-    }
-    
-    enum Action: Equatable {
-        case alertTapped
-        case popupSelected(Popup)
-        case profileSettingTapped(nickname: String, isAlerted: Bool)
-        case notificationsTapped
-        case serviceTermsTapped
-        case delegate(Delegate)
-        
-        enum Delegate: Equatable {
-            case alertRequested
-            case popupSelected(Popup)
-            case profileSettingRequested(nickname: String, isAlerted: Bool)
-            case notificationsRequested
-            case serviceTermsRequested
-        }
-    }
-    
-    var body: some ReducerOf<Self> {
-        Reduce { _, action in
-            switch action {
-            case .alertTapped:
-                return .send(.delegate(.alertRequested))
-            case .popupSelected(let popup):
-                return .send(.delegate(.popupSelected(popup)))
-            case .profileSettingTapped(let nickname, let isAlerted):
-                return .send(.delegate(.profileSettingRequested(nickname: nickname, isAlerted: isAlerted)))
-            case .notificationsTapped:
-                return .send(.delegate(.notificationsRequested))
-            case .serviceTermsTapped:
-                return .send(.delegate(.serviceTermsRequested))
             case .delegate:
                 return .none
             }
@@ -618,40 +555,6 @@ struct ReviewDetailDestinationFeature {
     
     var body: some ReducerOf<Self> {
         Reduce { _, _ in .none }
-    }
-}
-
-@Reducer
-struct ProfileSettingDestinationFeature {
-    @ObservableState
-    struct State: Equatable {
-        let userUuid: String
-        let nickname: String
-        let isAlerted: Bool
-    }
-    
-    enum Action: Equatable {
-        case logoutTapped
-        case nicknameUpdated(String)
-        case delegate(Delegate)
-        
-        enum Delegate: Equatable {
-            case logout
-            case nicknameUpdated(String)
-        }
-    }
-    
-    var body: some ReducerOf<Self> {
-        Reduce { _, action in
-            switch action {
-            case .logoutTapped:
-                return .send(.delegate(.logout))
-            case .nicknameUpdated(let nickname):
-                return .send(.delegate(.nicknameUpdated(nickname)))
-            case .delegate:
-                return .none
-            }
-        }
     }
 }
 

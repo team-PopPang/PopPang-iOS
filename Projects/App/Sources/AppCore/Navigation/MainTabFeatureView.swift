@@ -89,7 +89,7 @@ struct MainTabFeatureView: View {
         case .favorites:
             FavoritesLegacyBridgeView(store: store.scope(state: \.favorites, action: \.favorites))
         case .profile:
-            ProfileLegacyBridgeView(store: store.scope(state: \.profile, action: \.profile))
+            ProfileFeatureView(store: store.scope(state: \.core.profile, action: \.profile))
         }
     }
 }
@@ -137,30 +137,6 @@ private struct FavoritesLegacyBridgeView: View {
             },
             onBrowsePopups: {
                 store.send(.browsePopupsTapped)
-            }
-        )
-    }
-}
-
-private struct ProfileLegacyBridgeView: View {
-    let store: StoreOf<ProfileLegacyBridgeFeature>
-
-    var body: some View {
-        ProfileFeatureView(
-            userUuid: store.userUuid,
-            nickname: store.nickname,
-            isAlerted: store.isAlerted,
-            onShowAlert: { _ in
-                store.send(.alertTapped)
-            },
-            onProfileSetting: { _, nickname, isAlerted in
-                store.send(.profileSettingTapped(nickname: nickname, isAlerted: isAlerted))
-            },
-            onNotification: {
-                store.send(.notificationsTapped)
-            },
-            onServiceTerms: {
-                store.send(.serviceTermsTapped)
             }
         )
     }
@@ -225,20 +201,10 @@ private struct AlertDestinationView: View {
 }
 
 private struct ProfileSettingDestinationView: View {
-    let store: StoreOf<ProfileSettingDestinationFeature>
+    let store: StoreOf<ProfileSettingFeature>
 
     var body: some View {
-        ProfileSettingFeatureView(
-            userUuid: store.userUuid,
-            nickname: store.nickname,
-            isAlerted: store.isAlerted,
-            onLogout: {
-                store.send(.logoutTapped)
-            },
-            onNicknameUpdated: { nickname in
-                store.send(.nicknameUpdated(nickname))
-            }
-        )
+        ProfileSettingFeatureView(store: store)
     }
 }
 
