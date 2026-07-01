@@ -287,18 +287,28 @@ public struct ProfileSettingFeatureView: View {
 }
 
 public struct NotificationFeatureView: View {
+    @Environment(\.dismiss) private var dismiss
+
     public init() {}
 
     public var body: some View {
         WebView(url: ExternalLinkConfig.notificationURL)
+            .ppBackNavigationBar(title: "공지사항") {
+                dismiss()
+            }
     }
 }
 
 public struct ServiceTermsFeatureView: View {
+    @Environment(\.dismiss) private var dismiss
+
     public init() {}
 
     public var body: some View {
         WebView(url: ExternalLinkConfig.serviceTermsURL)
+            .ppBackNavigationBar(title: "서비스 이용약관") {
+                dismiss()
+            }
     }
 }
 
