@@ -1,8 +1,7 @@
 import ComposableArchitecture
 import Core
 import Domain
-import struct HomeFeature.HomeComingPopupDetailDestinationFeature
-import struct HomeFeature.HomeFeature
+import HomeFeature
 import PopupDetailFeature
 import PopupRequestManagementFeature
 import ProfileFeature
@@ -457,7 +456,7 @@ extension User {
 struct PopupDetailDestinationFeature {
     @ObservableState
     struct State: Equatable {
-        var content: PopupDetailFeatureReducer.State
+        var content: PopupDetailFeature.State
         let isAdmin: Bool
 
         init(
@@ -474,7 +473,7 @@ struct PopupDetailDestinationFeature {
     }
     
     enum Action: Equatable {
-        case content(PopupDetailFeatureReducer.Action)
+        case content(PopupDetailFeature.Action)
         case relatedPopupSelected(String, Popup)
         case deactivateCompleted
         case reviewsTapped([Review])
@@ -490,7 +489,7 @@ struct PopupDetailDestinationFeature {
     
     var body: some ReducerOf<Self> {
         Scope(state: \.content, action: \.content) {
-            PopupDetailFeatureReducer()
+            PopupDetailFeature()
         }
 
         Reduce { _, action in

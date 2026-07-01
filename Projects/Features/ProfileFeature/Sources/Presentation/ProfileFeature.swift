@@ -153,7 +153,6 @@ public struct ProfileSettingFeature {
     }
 
     public enum Action {
-        case backTapped
         case nicknameChanged(String)
         case validateNicknameTapped
         case validateNicknameResponse(Result<Bool, Error>)
@@ -177,9 +176,6 @@ public struct ProfileSettingFeature {
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case .backTapped:
-                return .send(.delegate(.dismiss))
-
             case .nicknameChanged(let nickname):
                 state.newNickname = nickname
                 state.validationState = Self.localValidationState(for: nickname)

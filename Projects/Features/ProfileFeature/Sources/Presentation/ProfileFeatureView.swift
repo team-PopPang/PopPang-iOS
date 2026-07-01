@@ -154,7 +154,9 @@ public struct ProfileFeatureView: View {
 public struct ProfileSettingFeatureView: View {
     let store: StoreOf<ProfileSettingFeature>
     @State private var showHardDeleteAlert = false
+    @State private var draftNickname = ""
     @FocusState private var isFocused: Bool
+    @Environment(\.dismiss) private var dismiss
 
     public init(store: StoreOf<ProfileSettingFeature>) {
         self.store = store
@@ -165,10 +167,7 @@ public struct ProfileSettingFeatureView: View {
             HStack(spacing: 10) {
                 RoundedTextField(
                     placeholder: "닉네임을 입력해 주세요",
-                    text: Binding(
-                        get: { store.newNickname },
-                        set: { store.send(.nicknameChanged($0)) }
-                    ),
+                    text: $draftNickname,
                     validationState: store.validationState
                 )
                 .focused($isFocused)
@@ -231,10 +230,15 @@ public struct ProfileSettingFeatureView: View {
         .padding(.top, 24)
         .padding(.horizontal, 24)
         .ppBackNavigationBar(title: "프로필 설정") {
-            store.send(.backTapped)
+            isFocused = false
+            dismiss()
         }
-        .task {
+        .onAppear {
+            draftNickname = store.newNickname
             isFocused = true
+        }
+        .onChange(of: draftNickname) { _, newValue in
+            store.send(.nicknameChanged(newValue))
         }
         .alert("회원 탈퇴", isPresented: $showHardDeleteAlert) {
             Button("탈퇴하기", role: .destructive) {
