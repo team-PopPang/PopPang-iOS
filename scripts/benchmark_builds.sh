@@ -37,6 +37,8 @@
 #   "platform=iOS Simulator,name=iPhone 16,OS=26.0"처럼 실제 시뮬레이터와 OS를 지정한다.
 #   같은 이름의 시뮬레이터가 여러 OS에 있으면 OS 또는 id를 반드시 지정해야 한다.
 #   id는 로컬 시뮬레이터마다 다르므로 xcrun simctl list devices available 출력에서 확인한다.
+#   Swift macro와 package plugin이 포함된 프로젝트를 CLI에서 재현할 수 있도록
+#   xcodebuild에는 validation skip 옵션을 기본 적용한다.
 #
 # 벤치마크 산출물 정리:
 #   ./scripts/benchmark_clean.sh
@@ -260,6 +262,14 @@ if [ ! -d "$V0_PROJECT" ]; then
   exit 1
 fi
 
+XCODEBUILD_COMMON_ARGS=(
+  -configuration "$CONFIGURATION"
+  -destination "$DESTINATION"
+  -skipPackagePluginValidation
+  -skipMacroValidation
+  COMPILER_INDEX_STORE_ENABLE=NO
+)
+
 if [ -z "$RESULT_DIR" ]; then
   RESULT_DIR="$BASE_DIR/results/$(date '+%Y%m%d-%H%M%S')"
 fi
@@ -299,10 +309,8 @@ for run in $(seq 1 "$REPEAT"); do
     xcodebuild \
       -project "$V0_PROJECT" \
       -scheme "$V0_SCHEME" \
-      -configuration "$CONFIGURATION" \
-      -destination "$DESTINATION" \
       -derivedDataPath "$V0_DERIVED_DATA" \
-      COMPILER_INDEX_STORE_ENABLE=NO \
+      "${XCODEBUILD_COMMON_ARGS[@]}" \
       clean build \
       -showBuildTimingSummary
 
@@ -311,10 +319,8 @@ for run in $(seq 1 "$REPEAT"); do
     xcodebuild \
       -project "$V0_PROJECT" \
       -scheme "$V0_SCHEME" \
-      -configuration "$CONFIGURATION" \
-      -destination "$DESTINATION" \
       -derivedDataPath "$V0_DERIVED_DATA" \
-      COMPILER_INDEX_STORE_ENABLE=NO \
+      "${XCODEBUILD_COMMON_ARGS[@]}" \
       build \
       -showBuildTimingSummary
 
@@ -323,10 +329,8 @@ for run in $(seq 1 "$REPEAT"); do
     xcodebuild \
       -workspace "$MODULAR_WORKSPACE" \
       -scheme "$MODULAR_SCHEME" \
-      -configuration "$CONFIGURATION" \
-      -destination "$DESTINATION" \
       -derivedDataPath "$MODULAR_DERIVED_DATA" \
-      COMPILER_INDEX_STORE_ENABLE=NO \
+      "${XCODEBUILD_COMMON_ARGS[@]}" \
       clean build \
       -showBuildTimingSummary
 
@@ -335,10 +339,8 @@ for run in $(seq 1 "$REPEAT"); do
     xcodebuild \
       -workspace "$MODULAR_WORKSPACE" \
       -scheme "$MODULAR_SCHEME" \
-      -configuration "$CONFIGURATION" \
-      -destination "$DESTINATION" \
       -derivedDataPath "$MODULAR_DERIVED_DATA" \
-      COMPILER_INDEX_STORE_ENABLE=NO \
+      "${XCODEBUILD_COMMON_ARGS[@]}" \
       build \
       -showBuildTimingSummary
 
