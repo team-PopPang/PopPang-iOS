@@ -70,6 +70,7 @@ final class NaverMapCoordinator: NSObject, CLLocationManagerDelegate, NMFMapView
     }
 
     func moveToUserLocation(zoomLevel: Double = 15, yOffset: CGFloat = 0) {
+        enableUserTracking()
         view.mapView.contentInset = yOffset == 0 ? .zero : UIEdgeInsets(top: yOffset, left: 0, bottom: 0, right: 0)
 
         let coord = view.mapView.locationOverlay.location
@@ -80,6 +81,7 @@ final class NaverMapCoordinator: NSObject, CLLocationManagerDelegate, NMFMapView
     }
 
     func moveToUserLocation(to coordinate: CLLocationCoordinate2D, zoomLevel: Double = 15) {
+        enableUserTracking()
         let coord = NMGLatLng(lat: coordinate.latitude, lng: coordinate.longitude)
         view.mapView.locationOverlay.location = coord
 
@@ -89,9 +91,17 @@ final class NaverMapCoordinator: NSObject, CLLocationManagerDelegate, NMFMapView
         view.mapView.moveCamera(cameraUpdate)
     }
 
-    func enableUserLocationOverlay() {
-        view.mapView.positionMode = .direction
+    func showUserLocationOverlay() {
         view.mapView.locationOverlay.hidden = false
+    }
+
+    func enableUserTracking() {
+        showUserLocationOverlay()
+        view.mapView.positionMode = .direction
+    }
+
+    func disableUserTracking() {
+        view.mapView.positionMode = .normal
     }
 
     func updateSpots(_ newPopups: [Popup]) {
@@ -102,6 +112,7 @@ final class NaverMapCoordinator: NSObject, CLLocationManagerDelegate, NMFMapView
 
     func moveCamera(to popup: Popup, zoomLevel: Double = 15, yOffset: CGFloat = 0) {
         guard let lat = popup.latitude, let lng = popup.longitude else { return }
+        disableUserTracking()
 
         view.mapView.contentInset = yOffset == 0 ? .zero : UIEdgeInsets(top: yOffset, left: 0, bottom: 0, right: 0)
 
@@ -132,7 +143,7 @@ final class NaverMapCoordinator: NSObject, CLLocationManagerDelegate, NMFMapView
         view.mapView.zoomLevel = 10
         view.mapView.minZoomLevel = 5
         view.mapView.maxZoomLevel = 20
-        view.mapView.positionMode = .direction
+        view.mapView.positionMode = .normal
         view.mapView.isNightModeEnabled = false
         view.showLocationButton = false
         view.showZoomControls = false
@@ -204,7 +215,7 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
         case .authorizedWhenInUse, .authorizedAlways:
             emitCurrentLocationIfAvailable(moveCamera: false)
             locationManager.startUpdatingLocation()
-            NaverMapCoordinator.shared.enableUserLocationOverlay()
+            NaverMapCoordinator.shared.showUserLocationOverlay()
         case .notDetermined:
             locationManager.requestWhenInUseAuthorization()
         case .denied, .restricted:
@@ -220,7 +231,7 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
             Logger.d("위치 권한 허용됨")
             emitCurrentLocationIfAvailable(moveCamera: false)
             locationManager.startUpdatingLocation()
-            NaverMapCoordinator.shared.enableUserLocationOverlay()
+            NaverMapCoordinator.shared.showUserLocationOverlay()
         case .denied, .restricted:
             Logger.e("위치 권한 거부됨")
             DispatchQueue.main.async {
