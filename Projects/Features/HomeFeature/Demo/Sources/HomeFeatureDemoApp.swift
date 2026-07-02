@@ -12,7 +12,7 @@ struct HomeFeatureDemoApp: App {
                 store: Store(
                     initialState: HomeFeature.State(
                         session: Shared(
-                            UserSession(
+                            value: UserSession(
                                 user: User(
                                     userUuid: "demo-user",
                                     uid: "demo-uid",

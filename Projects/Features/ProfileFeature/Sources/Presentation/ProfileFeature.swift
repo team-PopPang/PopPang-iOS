@@ -1,5 +1,6 @@
 import ComposableArchitecture
 import Core
+import Domain
 import DSKit
 import Foundation
 
@@ -14,22 +15,22 @@ public struct ProfileFeature {
 
         public init(session: Shared<UserSession>) {
             self._session = session
-            self.localIsAlerted = session.wrappedValue.context?.isAlerted ?? false
+            self.localIsAlerted = session.wrappedValue.user?.isAlerted ?? false
+        }
+
+        var currentUser: User {
+            guard let user = session.user else {
+                preconditionFailure("ProfileFeature requires a logged in session.")
+            }
+            return user
         }
 
         public var userUuid: String {
-            sessionContext.userUuid
+            currentUser.userUuid
         }
 
         public var nickname: String {
-            sessionContext.nickname
-        }
-
-        var sessionContext: SessionContext {
-            guard let context = session.context else {
-                preconditionFailure("ProfileFeature requires a logged in session.")
-            }
-            return context
+            currentUser.nickname ?? "닉네임"
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
@@ -127,19 +128,19 @@ public struct ProfileSettingFeature {
             self._session = session
         }
 
+        var currentUser: User {
+            guard let user = session.user else {
+                preconditionFailure("ProfileSettingFeature requires a logged in session.")
+            }
+            return user
+        }
+
         public var userUuid: String {
-            sessionContext.userUuid
+            currentUser.userUuid
         }
 
         public var nickname: String {
-            sessionContext.nickname
-        }
-
-        var sessionContext: SessionContext {
-            guard let context = session.context else {
-                preconditionFailure("ProfileSettingFeature requires a logged in session.")
-            }
-            return context
+            currentUser.nickname ?? "닉네임"
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {

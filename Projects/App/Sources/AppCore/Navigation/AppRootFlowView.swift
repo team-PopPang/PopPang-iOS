@@ -11,7 +11,7 @@ struct AppRootFlowView: View {
         Group {
             switch store.destination {
             case .launch:
-                LaunchScene {
+                AppLaunchScene {
                     store.send(.launchTask)
                 }
 
@@ -61,7 +61,7 @@ private struct OnboardingAuthScene: View {
     }
 }
 
-private struct LaunchScene: View {
+private struct AppLaunchScene: View {
     let onContinue: () -> Void
 
     var body: some View {

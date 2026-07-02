@@ -20,7 +20,7 @@
 - 현재 `FavoritesFeature`도 shared `session`을 직접 읽고 찜 로컬 상태를 feature state가 소유한다.
 - 현재 `HomeFeature`는 shared `session`을 직접 읽고 홈 로컬 상태를 feature state가 소유한다.
 - 현재 `ProfileFeature`와 `ProfileSettingFeature`도 shared `session`을 직접 읽고 프로필 로컬 상태를 feature state가 소유한다.
-- legacy feature는 당분간 `SessionContext` 또는 primitive 값을 view init으로 주입한다.
+- legacy feature는 당분간 session-derived primitive 값을 view init으로 주입한다.
 - 현재 `Map`은 `*LegacyBridgeFeature`가 session-derived primitive를 만들어 legacy view로 넘긴다.
 
 ## 용어
@@ -259,7 +259,7 @@ PopPang
 ```swift
 @ObservableState
 struct AppFeature.State: Equatable {
-    var session = SessionState()
+    @Shared var session: UserSession
     var mainTabCore: MainTabFeature.CoreState?
 }
 ```
@@ -289,7 +289,7 @@ public struct HomeFeature {
 
 ```swift
 var map: MapLegacyBridgeFeature.State {
-    get { .init(sessionContext: sessionContext) }
+    get { .init(userUuid: currentUser.userUuid) }
     set {}
 }
 ```
@@ -309,7 +309,7 @@ private struct MapLegacyBridgeView: View {
 }
 ```
 
-이 단계에서는 legacy feature 내부의 기존 `Compound`와 기존 `@Dependency`/`DIContainer` 구조를 유지한다. 즉 `SessionClient`를 억지로 레거시 feature마다 넣지 않고, root session만 parent가 projection해서 bridge에서 넘긴다.
+이 단계에서는 legacy feature 내부의 기존 `Compound`와 기존 `@Dependency`/`DIContainer` 구조를 유지한다. 즉 `LocalSessionClient`를 억지로 레거시 feature마다 넣지 않고, root session에서 계산한 primitive만 parent bridge가 넘긴다.
 
 ### 3. 점진 마이그레이션의 완료 기준
 

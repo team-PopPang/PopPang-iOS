@@ -80,7 +80,7 @@ struct AppFeature {
         case auth(AuthFeature)
     }
 
-    @Dependencies.Dependency(\.sessionClient) private var sessionClient: SessionClient
+    @Dependencies.Dependency(\.localSessionClient) private var localSessionClient: LocalSessionClient
     private let sessionStorage: LocalSessionStorage
     private let launchStateResolver: AppLaunchStateResolver
 
@@ -138,13 +138,13 @@ struct AppFeature {
                     .registerCompleted(let user):
                 applyAuthenticatedUser(user, state: &state)
                 return .run { _ in
-                    await sessionClient.saveUser(user)
+                    await localSessionClient.saveUser(user)
                 }
 
             case .mainTab(.delegate(.logout)):
                 state.destination = .onboarding
                 return .run { send in
-                    await sessionClient.clear()
+                    await localSessionClient.clear()
                     await send(.logoutFinished)
                 }
 
@@ -187,7 +187,7 @@ private extension AppFeature {
 
         return .run { send in
             let latestSnapshot = sessionStorage.loadSnapshot()
-            let session = await sessionClient.load().userSession
+            let session = await localSessionClient.load()
             let destination = launchStateResolver.resolve(
                 snapshot: latestSnapshot,
                 session: session

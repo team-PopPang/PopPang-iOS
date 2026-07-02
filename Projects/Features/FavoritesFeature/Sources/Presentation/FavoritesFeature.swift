@@ -19,15 +19,15 @@ public struct FavoritesFeature {
             self._session = session
         }
 
-        public var userUuid: String {
-            sessionContext.userUuid
-        }
-
-        private var sessionContext: SessionContext {
-            guard let context = session.context else {
+        private var currentUser: User {
+            guard let user = session.user else {
                 preconditionFailure("FavoritesFeature requires a logged in session.")
             }
-            return context
+            return user
+        }
+
+        public var userUuid: String {
+            currentUser.userUuid
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {

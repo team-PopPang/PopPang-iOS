@@ -2,13 +2,13 @@ import ComposableArchitecture
 import Core
 import Domain
 
-struct SessionClient: Sendable {
-    var load: @Sendable () async -> SessionState
+struct LocalSessionClient: Sendable {
+    var load: @Sendable () async -> UserSession
     var saveUser: @Sendable (User?) async -> Void
     var clear: @Sendable () async -> Void
 }
 
-extension SessionClient {
+extension LocalSessionClient {
     static func live(
         sessionStorage: LocalSessionStorage,
         userUsecase: UserUsecaseProtocol
@@ -17,14 +17,14 @@ extension SessionClient {
             load: {
                 let snapshot = sessionStorage.loadSnapshot()
                 guard let userID = snapshot.userID, userID.isEmpty == false else {
-                    return SessionState()
+                    return UserSession()
                 }
 
                 do {
                     let user = try await userUsecase.autoLogin(userUuid: userID)
-                    return SessionState(user: user)
+                    return UserSession(user: user)
                 } catch {
-                    return SessionState()
+                    return UserSession()
                 }
             },
             saveUser: { user in
@@ -37,17 +37,17 @@ extension SessionClient {
     }
 }
 
-extension SessionClient: DependencyKey {
-    static let liveValue = SessionClient(
-        load: { SessionState() },
+extension LocalSessionClient: DependencyKey {
+    static let liveValue = LocalSessionClient(
+        load: { UserSession() },
         saveUser: { _ in },
         clear: {}
     )
 }
 
 extension DependencyValues {
-    var sessionClient: SessionClient {
-        get { self[SessionClient.self] }
-        set { self[SessionClient.self] = newValue }
+    var localSessionClient: LocalSessionClient {
+        get { self[LocalSessionClient.self] }
+        set { self[LocalSessionClient.self] = newValue }
     }
 }

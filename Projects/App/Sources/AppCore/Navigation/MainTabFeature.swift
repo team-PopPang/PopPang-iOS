@@ -92,7 +92,7 @@ struct MainTabFeature {
         
         // Legacy tabs still own Compound/internal state, so MainTab only bridges session-derived primitives for now.
         var map: MapLegacyBridgeFeature.State {
-            get { .init(sessionContext: sessionContext) }
+            get { .init(userUuid: currentUser.userUuid) }
             set {}
         }
         
@@ -101,13 +101,6 @@ struct MainTabFeature {
                 preconditionFailure("MainTabFeature requires a logged in user.")
             }
             return user
-        }
-        
-        var sessionContext: SessionContext {
-            guard let context = session.context else {
-                preconditionFailure("MainTabFeature requires session context.")
-            }
-            return context
         }
         
         static func == (lhs: Self, rhs: Self) -> Bool {
@@ -338,8 +331,8 @@ struct MapLegacyBridgeFeature {
     struct State: Equatable {
         var userUuid: String
         
-        init(sessionContext: SessionContext) {
-            self.userUuid = sessionContext.userUuid
+        init(userUuid: String) {
+            self.userUuid = userUuid
         }
     }
     

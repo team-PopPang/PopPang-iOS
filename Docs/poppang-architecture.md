@@ -105,7 +105,7 @@ Projects
 - 현재 `FavoritesFeature`도 shared `session`을 직접 읽고, 찜 로컬 상태를 feature state가 소유한다.
 - 현재 `HomeFeature`는 shared `session`을 직접 읽고, 홈 로컬 상태만 feature state가 소유한다.
 - 현재 `ProfileFeature`도 shared `session`을 직접 읽고, 프로필 로컬 상태와 프로필 설정 path는 TCA reducer가 소유한다.
-- legacy feature는 당분간 `SessionContext` 또는 primitive 값을 view init으로 주입한다.
+- legacy feature는 당분간 session-derived primitive 값을 view init으로 주입한다.
 - 현재 `Map`은 `*LegacyBridgeFeature`가 session-derived primitive를 view init으로 넘긴다.
 - `MainTabFeature.Action`은 탭 child action, `path`, `destination`, parent delegate 중심으로 유지한다.
 - 탭 내부의 로컬 sheet/bottom sheet/selected item 상태는 각 feature가 소유한다.
@@ -116,8 +116,8 @@ Projects
 
 세션과 영속성은 아래처럼 역할을 나눈다.
 
-- `SessionState`: 앱이 지금 실제로 쓰는 세션 상태. source of truth는 `AppFeature.session`
-- `SessionClient`: 세션 load/save/clear 조합. `LocalSessionStorage`와 `autoLogin(userUuid:)`를 연결
+- `UserSession`: 앱이 지금 실제로 쓰는 세션 상태. source of truth는 `AppFeature.session`
+- `LocalSessionClient`: 세션 load/save/clear 조합. `LocalSessionStorage`와 `autoLogin(userUuid:)`를 연결
 - `LocalSessionStorage`: local storage 읽기/쓰기 도구. `userID`, `hasCompletedOnboarding` 저장
 - `LocalSessionSnapshot`: storage에서 읽어온 값 묶음. 앱 런치 시 세션 복원 힌트
 
@@ -125,8 +125,8 @@ Projects
 
 1. `AppFeature.launchTask`
 2. `LocalSessionStorage.loadSnapshot()`
-3. `SessionClient.load()`
-4. `LocalSessionSnapshot + SessionState`를 조합해 root destination 계산
+3. `LocalSessionClient.load()`
+4. `LocalSessionSnapshot + UserSession`을 조합해 root destination 계산
 5. `AppFeature.session`과 `destination` 반영
 
 ### TCA-ready Tabs vs Legacy Tabs

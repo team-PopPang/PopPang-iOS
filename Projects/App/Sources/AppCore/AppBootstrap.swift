@@ -12,7 +12,7 @@ import PopupRequestManagementFeature
 
 struct AppBootstrap {
     let sessionStorage: LocalSessionStorage
-    let sessionClient: SessionClient
+    let localSessionClient: LocalSessionClient
     let calendarFeatureClient: CalendarFeatureClient
     let favoritesFeatureClient: FavoritesFeatureClient
     let homePopupClient: HomePopupClient
@@ -27,7 +27,7 @@ struct AppBootstrap {
     ) -> AppBootstrap {
         let sessionStorage = LocalSessionStorage(store: store)
         let dependencies = AppDependencyRegistry.live()
-        let sessionClient = SessionClient.live(
+        let localSessionClient = LocalSessionClient.live(
             sessionStorage: sessionStorage,
             userUsecase: dependencies.usecases.userUsecase
         )
@@ -60,7 +60,7 @@ struct AppBootstrap {
 
         return AppBootstrap(
             sessionStorage: sessionStorage,
-            sessionClient: sessionClient,
+            localSessionClient: localSessionClient,
             calendarFeatureClient: calendarFeatureClient,
             favoritesFeatureClient: favoritesFeatureClient,
             homePopupClient: homePopupClient,
@@ -79,7 +79,7 @@ struct AppBootstrap {
                 launchStateResolver: launchStateResolver
             )
         } withDependencies: {
-            $0.sessionClient = sessionClient
+            $0.localSessionClient = localSessionClient
             $0.calendarFeatureClient = calendarFeatureClient
             $0.favoritesFeatureClient = favoritesFeatureClient
             $0.homePopupClient = homePopupClient

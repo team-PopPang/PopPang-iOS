@@ -30,23 +30,23 @@ public struct HomeFeature {
             self._session = session
         }
 
+        var currentUser: User {
+            guard let user = session.user else {
+                preconditionFailure("HomeFeature requires a logged in session.")
+            }
+            return user
+        }
+
         var userUuid: String {
-            sessionContext.userUuid
+            currentUser.userUuid
         }
 
         var nickname: String {
-            sessionContext.nickname
+            currentUser.nickname ?? "닉네임"
         }
 
         var isAdmin: Bool {
-            sessionContext.isAdmin
-        }
-
-        private var sessionContext: SessionContext {
-            guard let context = session.context else {
-                preconditionFailure("HomeFeature requires a logged in session.")
-            }
-            return context
+            currentUser.role.uppercased() == "ADMIN"
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
