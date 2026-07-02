@@ -80,10 +80,10 @@ struct MainTabFeatureView: View {
     @ViewBuilder
     private func tabView(for tab: MainTab) -> some View {
         switch tab {
+        case .calendar:
+            CalendarFeatureView(store: store.scope(state: \.core.calendar, action: \.calendar))
         case .home:
             HomeFeatureView(store: store.scope(state: \.core.home, action: \.home))
-        case .calendar:
-            CalendarLegacyBridgeView(store: store.scope(state: \.calendar, action: \.calendar))
         case .map:
             MapLegacyBridgeView(store: store.scope(state: \.map, action: \.map))
         case .favorites:
@@ -91,22 +91,6 @@ struct MainTabFeatureView: View {
         case .profile:
             ProfileFeatureView(store: store.scope(state: \.core.profile, action: \.profile))
         }
-    }
-}
-
-private struct CalendarLegacyBridgeView: View {
-    let store: StoreOf<CalendarLegacyBridgeFeature>
-
-    var body: some View {
-        CalendarFeatureView(
-            userUuid: store.userUuid,
-            onShowAlert: { _ in
-                store.send(.alertTapped)
-            },
-            onSelectPopup: { _, popup in
-                store.send(.popupSelected(popup))
-            }
-        )
     }
 }
 

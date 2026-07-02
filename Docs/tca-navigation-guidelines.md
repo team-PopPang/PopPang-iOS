@@ -16,10 +16,11 @@
 - 현재 로그인 사용자는 `AppFeature.session.user`로 표현한다.
 - `MainTabFeature`는 shared `session`을 child feature에 전달하고, 탭 로컬 navigation state를 소유한다.
 - direct scope가 가능한 feature는 shared `session`을 직접 읽거나 필요한 값을 projection해서 reducer/state에 주입한다.
+- 현재 `CalendarFeature`도 shared `session`을 직접 읽고 캘린더 로컬 상태를 feature state가 소유한다.
 - 현재 `HomeFeature`는 shared `session`을 직접 읽고 홈 로컬 상태를 feature state가 소유한다.
 - 현재 `ProfileFeature`와 `ProfileSettingFeature`도 shared `session`을 직접 읽고 프로필 로컬 상태를 feature state가 소유한다.
 - legacy feature는 당분간 `SessionContext` 또는 primitive 값을 view init으로 주입한다.
-- 현재 `Calendar`, `Map`, `Favorites`는 `*LegacyBridgeFeature`가 session-derived primitive를 만들어 legacy view로 넘긴다.
+- 현재 `Map`, `Favorites`는 `*LegacyBridgeFeature`가 session-derived primitive를 만들어 legacy view로 넘긴다.
 
 ## 용어
 
@@ -476,7 +477,8 @@ case .destination:
 - `HomeFeature`: direct scope 완료, search/popupRequest는 feature 내부 tree-based navigation으로 소유
 - `HomeFeature`에서 시작하는 연속 push(`coming popup list -> popup detail`)는 `MainTabFeature.path`가 소유
 - `popupRequestManagement`처럼 메인 공통 흐름으로 이어지는 push는 `MainTabFeature.path`가 소유
-- `Calendar/Map/Favorites/Profile`: bridge reducer를 유지하며 session primitive만 주입
+- `CalendarFeature`: direct scope 완료, region/sort sheet는 view local state로 두고 상세/알림 이동은 `MainTabFeature.path`가 소유
+- `Map/Favorites`: bridge reducer를 유지하며 session primitive만 주입
 - 각 탭이 TCA reducer entry를 갖추면 `*LegacyBridgeFeature`를 제거하고 direct scope로 전환
 
 ## Do Not
