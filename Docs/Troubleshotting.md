@@ -50,16 +50,14 @@ static/dynamic product type 선택 기준은 `Docs/static-dynamic-linking.md`를
 해결:
 
 - BottomSheet의 content에 state snapshot만 넘기지 않는다.
-- 첫 번째 시트가 `MapFeatureCompound`를 직접 받아 내부에서 `compound.state.mapPopups`, `compound.state.isLoading`, `compound.state.didPreload`를 읽게 한다.
+- 첫 번째 시트가 `MapFeature` store를 직접 받아 내부에서 `store.mapPopups`, `store.isLoading`, `store.isWaitingForUserLocation`를 읽게 한다.
 - 최초 로드 전에는 빈 배열을 곧바로 `검색 결과가 없습니다.`로 해석하지 않고 `ProgressView`를 보여준다.
 
 예시:
 
 ```swift
 FirstSheetView(
-    compound: compound,
-    selectedOption: selectedOptionBinding,
-    firstSheetPosition: $firstSheetPosition,
+    store: store,
     ...
 )
 ```
@@ -68,10 +66,10 @@ FirstSheetView(
 private struct MapListView: View {
     let popups: [Popup]
     let isLoading: Bool
-    let didPreload: Bool
+    let isWaitingForUserLocation: Bool
 
     var body: some View {
-        if !didPreload || isLoading {
+        if isWaitingForUserLocation || isLoading {
             ProgressView()
         } else if popups.isEmpty {
             Text("검색 결과가 없습니다.")

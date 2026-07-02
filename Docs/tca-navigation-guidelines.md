@@ -19,9 +19,9 @@
 - 현재 `CalendarFeature`도 shared `session`을 직접 읽고 캘린더 로컬 상태를 feature state가 소유한다.
 - 현재 `FavoritesFeature`도 shared `session`을 직접 읽고 찜 로컬 상태를 feature state가 소유한다.
 - 현재 `HomeFeature`는 shared `session`을 직접 읽고 홈 로컬 상태를 feature state가 소유한다.
+- 현재 `MapFeature`도 shared `session`을 직접 읽고 지도 로컬 상태를 feature state가 소유한다.
 - 현재 `ProfileFeature`와 `ProfileSettingFeature`도 shared `session`을 직접 읽고 프로필 로컬 상태를 feature state가 소유한다.
 - legacy feature는 당분간 session-derived primitive 값을 view init으로 주입한다.
-- 현재 `Map`은 `*LegacyBridgeFeature`가 session-derived primitive를 만들어 legacy view로 넘긴다.
 
 ## 용어
 
@@ -288,23 +288,14 @@ public struct HomeFeature {
 아직 내부 state/effect/navigation을 TCA reducer로 옮기지 않은 탭은 `MainTabFeature` 아래에 bridge reducer를 둔다. bridge reducer는 session-derived primitive만 만들고 실제 레거시 화면으로 전달한다.
 
 ```swift
-var map: MapLegacyBridgeFeature.State {
-    get { .init(userUuid: currentUser.userUuid) }
-    set {}
-}
-```
-
-```swift
-private struct MapLegacyBridgeView: View {
-    let store: StoreOf<MapLegacyBridgeFeature>
-
-    var body: some View {
-        MapFeatureView(
-            userUuid: store.userUuid,
-            onSelectPopup: { _, popup in
-                store.send(.popupSelected(popup))
-            }
-        )
+struct LegacyTabBridgeFeature {
+    @ObservableState
+    struct State: Equatable {
+        let userUuid: String
+    }
+    
+    enum Action: Equatable {
+        case popupSelected(Popup)
     }
 }
 ```

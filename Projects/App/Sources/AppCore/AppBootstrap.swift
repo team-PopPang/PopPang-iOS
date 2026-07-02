@@ -4,6 +4,7 @@ import Core
 import FavoritesFeature
 import Foundation
 import HomeFeature
+import MapFeature
 import AuthFeature
 import ProfileFeature
 import PopupDetailFeature
@@ -16,6 +17,7 @@ struct AppBootstrap {
     let calendarFeatureClient: CalendarFeatureClient
     let favoritesFeatureClient: FavoritesFeatureClient
     let homePopupClient: HomePopupClient
+    let mapFeatureClient: MapFeatureClient
     let popupDetailClient: PopupDetailClient
     let popupRequestClient: PopupRequestClient
     let popupRequestManagementClient: PopupRequestManagementClient
@@ -38,6 +40,9 @@ struct AppBootstrap {
             popupUsecase: dependencies.usecases.popupUsecase
         )
         let homePopupClient = HomePopupClient.live(
+            popupUsecase: dependencies.usecases.popupUsecase
+        )
+        let mapFeatureClient = MapFeatureClient.live(
             popupUsecase: dependencies.usecases.popupUsecase
         )
         let popupDetailClient = PopupDetailClient.live(
@@ -64,6 +69,7 @@ struct AppBootstrap {
             calendarFeatureClient: calendarFeatureClient,
             favoritesFeatureClient: favoritesFeatureClient,
             homePopupClient: homePopupClient,
+            mapFeatureClient: mapFeatureClient,
             popupDetailClient: popupDetailClient,
             popupRequestClient: popupRequestClient,
             popupRequestManagementClient: popupRequestManagementClient,
@@ -83,6 +89,7 @@ struct AppBootstrap {
             $0.calendarFeatureClient = calendarFeatureClient
             $0.favoritesFeatureClient = favoritesFeatureClient
             $0.homePopupClient = homePopupClient
+            $0.mapFeatureClient = mapFeatureClient
             $0.popupDetailClient = popupDetailClient
             $0.popupRequestClient = popupRequestClient
             $0.popupRequestManagementClient = popupRequestManagementClient

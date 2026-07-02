@@ -104,9 +104,9 @@ Projects
 - 현재 `CalendarFeature`도 shared `session`을 직접 읽고, 캘린더 로컬 상태를 feature state가 소유한다.
 - 현재 `FavoritesFeature`도 shared `session`을 직접 읽고, 찜 로컬 상태를 feature state가 소유한다.
 - 현재 `HomeFeature`는 shared `session`을 직접 읽고, 홈 로컬 상태만 feature state가 소유한다.
+- 현재 `MapFeature`도 shared `session`을 직접 읽고, 지도 로컬 상태를 feature state가 소유한다.
 - 현재 `ProfileFeature`도 shared `session`을 직접 읽고, 프로필 로컬 상태와 프로필 설정 path는 TCA reducer가 소유한다.
 - legacy feature는 당분간 session-derived primitive 값을 view init으로 주입한다.
-- 현재 `Map`은 `*LegacyBridgeFeature`가 session-derived primitive를 view init으로 넘긴다.
 - `MainTabFeature.Action`은 탭 child action, `path`, `destination`, parent delegate 중심으로 유지한다.
 - 탭 내부의 로컬 sheet/bottom sheet/selected item 상태는 각 feature가 소유한다.
 - 여러 탭에서 공통으로 여는 push/presentation 화면은 `MainTabFeature`가 소유한다.
@@ -133,17 +133,19 @@ Projects
 
 현재 PopPang은 탭별로 두 가지 연결 방식을 함께 사용한다.
 
-#### Home / Calendar / Favorites / Profile
+#### Home / Calendar / Map / Favorites / Profile
 
 - `AppFeature`가 shared `session` source of truth를 소유
-- `MainTabFeature`가 shared `session`을 `HomeFeature`, `CalendarFeature`, `FavoritesFeature`, `ProfileFeature`, `ProfileSettingFeature`에 전달
+- `MainTabFeature`가 shared `session`을 `HomeFeature`, `CalendarFeature`, `MapFeature`, `FavoritesFeature`, `ProfileFeature`, `ProfileSettingFeature`에 전달
 - `HomeFeature.State`는 shared `session`을 읽고, `bestPopups`, `filter`, `destination` 같은 홈 로컬 상태를 직접 소유
 - `CalendarFeature.State`는 shared `session`을 읽고, `selectedDate`, `calendarPopups`, `popupEventCounts` 같은 캘린더 로컬 상태를 직접 소유
+- `MapFeature.State`는 shared `session`을 읽고, 지도 팝업 목록/시트 상태/위치 상태를 직접 소유한다.
 - `FavoritesFeature.State`는 shared `session`을 읽고, `favoritePopups`, `selectedDate`, `popupEventCounts` 같은 찜 로컬 상태를 직접 소유한다.
 - `ProfileFeature.State`는 shared `session`을 읽고, `localIsAlerted`, `errorMessage` 같은 프로필 로컬 상태를 직접 소유
 - `ProfileSettingFeature.State`는 shared `session`을 읽고, 닉네임 변경/회원탈퇴용 로컬 상태를 직접 소유한다.
 - `HomeFeature`가 `@Dependencies.Dependency(\.homePopupClient)`로 feature-scoped dependency 사용
 - `CalendarFeature`는 `@Dependencies.Dependency(\.calendarFeatureClient)`로 feature-scoped dependency를 사용한다.
+- `MapFeature`는 `@Dependencies.Dependency(\.mapFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `FavoritesFeature`는 `@Dependencies.Dependency(\.favoritesFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `ProfileFeature`와 `ProfileSettingFeature`는 `@Dependencies.Dependency(\.profileFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `HomeFeature`가 홈 로컬 tree-based presentation을 소유
@@ -163,15 +165,6 @@ CalendarFeatureView(store: store.scope(state: \.core.calendar, action: \.calenda
 FavoritesFeatureView(store: store.scope(state: \.core.favorites, action: \.favorites))
 ProfileFeatureView(store: store.scope(state: \.core.profile, action: \.profile))
 ```
-
-#### Map
-
-- 아직 레거시 `Compound`/view 구조가 남아 있음
-- `MainTabFeature` 아래 `*LegacyBridgeFeature`가 session-derived primitive만 생성
-- bridge view가 기존 `FeatureView` init에 `userUuid`, `nickname`, `isAlerted` 등을 전달
-- 실제 usecase dependency는 당분간 각 레거시 feature 내부 구조를 유지
-
-이 차이는 임시 타협안이다. 각 탭이 public TCA reducer/state/view entry를 갖추면 bridge를 제거하고 `Home`처럼 direct scope로 옮긴다.
 
 ### Features
 

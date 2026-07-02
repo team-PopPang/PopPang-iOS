@@ -202,6 +202,7 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
     func requestPermission() {
         switch locationManager.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
+            emitCurrentLocationIfAvailable(moveCamera: false)
             locationManager.startUpdatingLocation()
             NaverMapCoordinator.shared.enableUserLocationOverlay()
         case .notDetermined:
@@ -217,6 +218,7 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
         switch status {
         case .authorizedWhenInUse, .authorizedAlways:
             Logger.d("위치 권한 허용됨")
+            emitCurrentLocationIfAvailable(moveCamera: false)
             locationManager.startUpdatingLocation()
             NaverMapCoordinator.shared.enableUserLocationOverlay()
         case .denied, .restricted:
@@ -235,6 +237,16 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
         guard let location = locations.last, hasMovedToUserLocation == false else { return }
         hasMovedToUserLocation = true
 
+        publishLocation(location, moveCamera: true)
+        manager.stopUpdatingLocation()
+    }
+
+    private func emitCurrentLocationIfAvailable(moveCamera: Bool) {
+        guard let location = locationManager.location else { return }
+        publishLocation(location, moveCamera: moveCamera)
+    }
+
+    private func publishLocation(_ location: CLLocation, moveCamera: Bool) {
         let coordinate = MapCoordinate(
             latitude: location.coordinate.latitude,
             longitude: location.coordinate.longitude
@@ -243,8 +255,9 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
             self.onLocationUpdated?(coordinate)
         }
 
-        NaverMapCoordinator.shared.moveToUserLocation(to: location.coordinate)
-        manager.stopUpdatingLocation()
+        if moveCamera {
+            NaverMapCoordinator.shared.moveToUserLocation(to: location.coordinate)
+        }
     }
 }
 
