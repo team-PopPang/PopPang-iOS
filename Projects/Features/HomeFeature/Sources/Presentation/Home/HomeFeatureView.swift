@@ -6,6 +6,7 @@ import DSKit
 import Kingfisher
 import ListKit
 import PopupRequestFeature
+import SearchFeature
 import SwiftUI
 import UIKit
 
@@ -225,7 +226,7 @@ public struct HomeFeatureView: View {
         .fullScreenCover(
             item: $store.scope(state: \.destination?.search, action: \.destination.search)
         ) { store in
-            HomeSearchDestinationView(store: store)
+            SearchFeatureView(store: store)
         }
         .fullScreenCover(
             item: $store.scope(state: \.destination?.popupRequest, action: \.destination.popupRequest)

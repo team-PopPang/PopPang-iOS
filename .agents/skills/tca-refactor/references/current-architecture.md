@@ -112,6 +112,7 @@ Projects
 - `Projects/Features/OnboardingFeature/Sources/Presentation/OnboardingFeature.swift`
 - `Projects/Features/HomeFeature/Sources/Presentation/HomeFeatureReducer.swift`
 - `Projects/Features/HomeFeature/Sources/Presentation/ComingPopupDetailReducer.swift`
+- `Projects/Features/SearchFeature/Sources/Presentation/SearchFeature.swift`
 - `Projects/Features/ProfileFeature/Sources/Presentation/ProfileFeature.swift`
 - `Projects/Features/PopupDetailFeature/Sources/Presentation/PopupDetailFeatureReducer.swift`
 
@@ -121,7 +122,6 @@ Projects
 - `PopupRequestFeature`
 - `PopupRequestManagementFeature`
 - `ReviewFeature`
-- `SearchFeature`
 
 ## 현재 TCA 패턴
 

@@ -4,12 +4,13 @@ import Domain
 import DSKit
 import Foundation
 import PopupRequestFeature
+import SearchFeature
 
 @Reducer
 public struct HomeFeature {
     @Reducer
     public enum Destination {
-        case search(HomeSearchDestinationFeature)
+        case search(SearchFeature)
         case popupRequest(PopupRequestFeature)
     }
 
@@ -203,10 +204,6 @@ public struct HomeFeature {
             case .destination(.presented(.search(.delegate(.dismiss)))):
                 state.destination = nil
                 return .none
-
-            case .destination(.presented(.search(.delegate(.selectPopup(let popup))))):
-                state.destination = nil
-                return .send(.delegate(.popupSelected(popup)))
 
             case .destination(.presented(.popupRequest(.delegate(.dismiss)))):
                 state.destination = nil

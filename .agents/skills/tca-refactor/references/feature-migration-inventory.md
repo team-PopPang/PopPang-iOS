@@ -35,6 +35,7 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 - `ProfileFeature`
 - `PopupDetailFeature`
   - `PopupDetailFeatureReducer`
+- `SearchFeature`
 
 ### Compound 기반 feature
 
@@ -43,7 +44,6 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 - `PopupRequestManagementFeature`
 - `PopupRequestManagementDetailFeature`
 - `ReviewFeature`
-- `SearchFeature`
 
 ## 권장 전환 순서
 

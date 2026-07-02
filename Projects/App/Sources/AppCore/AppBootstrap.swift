@@ -10,6 +10,7 @@ import ProfileFeature
 import PopupDetailFeature
 import PopupRequestFeature
 import PopupRequestManagementFeature
+import SearchFeature
 
 struct AppBootstrap {
     let sessionStorage: LocalSessionStorage
@@ -21,6 +22,7 @@ struct AppBootstrap {
     let popupDetailClient: PopupDetailClient
     let popupRequestClient: PopupRequestClient
     let popupRequestManagementClient: PopupRequestManagementClient
+    let searchFeatureClient: SearchFeatureClient
     let launchStateResolver: AppLaunchStateResolver
     let dependencies: AppDependencyRegistry
 
@@ -44,6 +46,10 @@ struct AppBootstrap {
         )
         let mapFeatureClient = MapFeatureClient.live(
             popupUsecase: dependencies.usecases.popupUsecase
+        )
+        let searchFeatureClient = SearchFeatureClient.live(
+            popupUsecase: dependencies.usecases.popupUsecase,
+            recentSearchStorage: RecentSearchStorage(store: store)
         )
         let popupDetailClient = PopupDetailClient.live(
             popupUsecase: dependencies.usecases.popupUsecase,
@@ -73,6 +79,7 @@ struct AppBootstrap {
             popupDetailClient: popupDetailClient,
             popupRequestClient: popupRequestClient,
             popupRequestManagementClient: popupRequestManagementClient,
+            searchFeatureClient: searchFeatureClient,
             launchStateResolver: AppLaunchStateResolver(),
             dependencies: dependencies
         )
@@ -93,6 +100,7 @@ struct AppBootstrap {
             $0.popupDetailClient = popupDetailClient
             $0.popupRequestClient = popupRequestClient
             $0.popupRequestManagementClient = popupRequestManagementClient
+            $0.searchFeatureClient = searchFeatureClient
             $0.authFeatureClient = .live(
                 kakaoAuthUsecase: dependencies.usecases.kakaoAuthUsecase,
                 googleAuthUsecase: dependencies.usecases.googleAuthUsecase,
