@@ -26,6 +26,7 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 - `AuthFeature`
 - `RegisterFlowFeature`
 - `CalendarFeature`
+- `FavoritesFeature`
 - `OnboardingFeature`
 - `HomeFeature`
   - `HomeFeatureReducer`
@@ -37,7 +38,6 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 ### Compound 기반 feature
 
 - `AlertFeature`
-- `FavoritesFeature`
 - `MapFeature`
 - `PopupRequestFeature`
 - `PopupRequestManagementFeature`
@@ -66,7 +66,6 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 
 - `SearchFeature`
 - `AlertFeature`
-- `FavoritesFeature`
 
 이유:
 

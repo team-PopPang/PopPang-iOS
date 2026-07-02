@@ -1,4 +1,4 @@
-import Compound
+import ComposableArchitecture
 import Core
 import Domain
 import DSKit
@@ -6,24 +6,12 @@ import Kingfisher
 import SwiftUI
 
 public struct FavoritesFeatureView: View {
-    @State private var compound: FavoritesFeatureCompound
+    let store: StoreOf<FavoritesFeature>
 
     private let segments: [String] = ["찜리스트", "찜캘린더"]
-    private let onShowAlert: (String) -> Void
-    private let onSelectPopup: (String, Popup) -> Void
-    private let onBrowsePopups: () -> Void
 
-    public init(
-        userUuid: String = "demo-user",
-        onShowAlert: @escaping (String) -> Void = { _ in },
-        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in },
-        onBrowsePopups: @escaping () -> Void = {}
-    ) {
-        let compound = FavoritesFeatureCompound(userUuid: userUuid)
-        _compound = State(wrappedValue: compound)
-        self.onShowAlert = onShowAlert
-        self.onSelectPopup = onSelectPopup
-        self.onBrowsePopups = onBrowsePopups
+    public init(store: StoreOf<FavoritesFeature>) {
+        self.store = store
     }
 
     public var body: some View {
@@ -37,7 +25,7 @@ public struct FavoritesFeatureView: View {
                 Spacer()
 
                 IconButton {
-                    onShowAlert(compound.state.userUuid)
+                    store.send(.alertTapped)
                 }
             }
 
@@ -45,33 +33,33 @@ public struct FavoritesFeatureView: View {
                 segments: segments,
                 views: [
                     FavoriteListView(
-                        userUuid: compound.state.userUuid,
-                        popups: compound.state.favoritePopups,
-                        isLoading: compound.state.isLoading,
-                        errorMessage: compound.state.errorMessage,
-                        onBrowsePopups: onBrowsePopups,
+                        popups: store.favoritePopups,
+                        isLoading: store.isLoading,
+                        errorMessage: store.errorMessage,
+                        onBrowsePopups: {
+                            store.send(.browsePopupsTapped)
+                        },
                         onSelectPopup: { popup in
-                            onSelectPopup(compound.state.userUuid, popup)
+                            store.send(.popupSelected(popup))
                         },
                         onToggleLike: { popup in
-                            compound.send(.toggleLike(popup))
+                            store.send(.toggleLike(popup))
                         }
                     ),
                     FavoriteCalendarView(
-                        userUuid: compound.state.userUuid,
-                        selectedDate: compound.state.selectedDate,
-                        selectedPopups: compound.state.selectedPopups,
-                        popupEventCounts: compound.state.popupEventCounts,
-                        isLoading: compound.state.isLoading,
-                        errorMessage: compound.state.errorMessage,
+                        selectedDate: store.selectedDate,
+                        selectedPopups: store.selectedPopups,
+                        popupEventCounts: store.popupEventCounts,
+                        isLoading: store.isLoading,
+                        errorMessage: store.errorMessage,
                         onDateSelected: { date in
-                            compound.send(.dateSelected(date))
+                            store.send(.dateSelected(date))
                         },
                         onSelectPopup: { popup in
-                            onSelectPopup(compound.state.userUuid, popup)
+                            store.send(.popupSelected(popup))
                         },
                         onToggleLike: { popup in
-                            compound.send(.toggleLike(popup))
+                            store.send(.toggleLike(popup))
                         }
                     )
                 ],
@@ -82,13 +70,12 @@ public struct FavoritesFeatureView: View {
             Spacer()
         }
         .onAppear {
-            compound.send(.onAppear)
+            store.send(.onAppear)
         }
     }
 }
 
 private struct FavoriteListView: View {
-    let userUuid: String
     let popups: [Popup]
     let isLoading: Bool
     let errorMessage: String?
@@ -223,7 +210,6 @@ private struct ListPopupCell: View {
 }
 
 private struct FavoriteCalendarView: View {
-    let userUuid: String
     let selectedDate: Date
     let selectedPopups: [Popup]
     let popupEventCounts: [Date: Int]

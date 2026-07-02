@@ -2,6 +2,7 @@ import ComposableArchitecture
 import CalendarFeature
 import Core
 import Domain
+import FavoritesFeature
 import HomeFeature
 import PopupDetailFeature
 import PopupRequestManagementFeature
@@ -55,12 +56,14 @@ struct MainTabFeature {
     struct CoreState: Equatable {
         var selectedTab: MainTab = .home
         var calendar: CalendarFeature.State
+        var favorites: FavoritesFeature.State
         var home: HomeFeature.State
         var profile: ProfileFeature.State
         var path = StackState<Path.State>()
 
         init(session: Shared<UserSession>) {
             self.calendar = .init(session: session)
+            self.favorites = .init(session: session)
             self.home = .init(session: session)
             self.profile = .init(session: session)
         }
@@ -68,6 +71,7 @@ struct MainTabFeature {
         static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.selectedTab == rhs.selectedTab
             && lhs.calendar == rhs.calendar
+            && lhs.favorites == rhs.favorites
             && lhs.home == rhs.home
             && lhs.profile == rhs.profile
         }
@@ -88,11 +92,6 @@ struct MainTabFeature {
         
         // Legacy tabs still own Compound/internal state, so MainTab only bridges session-derived primitives for now.
         var map: MapLegacyBridgeFeature.State {
-            get { .init(sessionContext: sessionContext) }
-            set {}
-        }
-        
-        var favorites: FavoritesLegacyBridgeFeature.State {
             get { .init(sessionContext: sessionContext) }
             set {}
         }
@@ -120,9 +119,9 @@ struct MainTabFeature {
     enum Action {
         case selectedTabChanged(MainTab)
         case calendar(CalendarFeature.Action)
+        case favorites(FavoritesFeature.Action)
         case home(HomeFeature.Action)
         case map(MapLegacyBridgeFeature.Action)
-        case favorites(FavoritesLegacyBridgeFeature.Action)
         case profile(ProfileFeature.Action)
         case path(StackActionOf<Path>)
         case delegate(Delegate)
@@ -155,8 +154,8 @@ struct MainTabFeature {
         Scope(state: \.map, action: \.map) {
             MapLegacyBridgeFeature()
         }
-        Scope(state: \.favorites, action: \.favorites) {
-            FavoritesLegacyBridgeFeature()
+        Scope(state: \.core.favorites, action: \.favorites) {
+            FavoritesFeature()
         }
         Scope(state: \.core.profile, action: \.profile) {
             ProfileFeature()
@@ -358,46 +357,6 @@ struct MapLegacyBridgeFeature {
             switch action {
             case .popupSelected(let popup):
                 return .send(.delegate(.popupSelected(popup)))
-            case .delegate:
-                return .none
-            }
-        }
-    }
-}
-
-@Reducer
-struct FavoritesLegacyBridgeFeature {
-    @ObservableState
-    struct State: Equatable {
-        var userUuid: String
-        
-        init(sessionContext: SessionContext) {
-            self.userUuid = sessionContext.userUuid
-        }
-    }
-    
-    enum Action: Equatable {
-        case alertTapped
-        case popupSelected(Popup)
-        case browsePopupsTapped
-        case delegate(Delegate)
-        
-        enum Delegate: Equatable {
-            case alertRequested
-            case popupSelected(Popup)
-            case browsePopupsRequested
-        }
-    }
-    
-    var body: some ReducerOf<Self> {
-        Reduce { _, action in
-            switch action {
-            case .alertTapped:
-                return .send(.delegate(.alertRequested))
-            case .popupSelected(let popup):
-                return .send(.delegate(.popupSelected(popup)))
-            case .browsePopupsTapped:
-                return .send(.delegate(.browsePopupsRequested))
             case .delegate:
                 return .none
             }

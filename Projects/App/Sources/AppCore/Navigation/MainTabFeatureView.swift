@@ -87,7 +87,7 @@ struct MainTabFeatureView: View {
         case .map:
             MapLegacyBridgeView(store: store.scope(state: \.map, action: \.map))
         case .favorites:
-            FavoritesLegacyBridgeView(store: store.scope(state: \.favorites, action: \.favorites))
+            FavoritesFeatureView(store: store.scope(state: \.core.favorites, action: \.favorites))
         case .profile:
             ProfileFeatureView(store: store.scope(state: \.core.profile, action: \.profile))
         }
@@ -102,25 +102,6 @@ private struct MapLegacyBridgeView: View {
             userUuid: store.userUuid,
             onSelectPopup: { _, popup in
                 store.send(.popupSelected(popup))
-            }
-        )
-    }
-}
-
-private struct FavoritesLegacyBridgeView: View {
-    let store: StoreOf<FavoritesLegacyBridgeFeature>
-
-    var body: some View {
-        FavoritesFeatureView(
-            userUuid: store.userUuid,
-            onShowAlert: { _ in
-                store.send(.alertTapped)
-            },
-            onSelectPopup: { _, popup in
-                store.send(.popupSelected(popup))
-            },
-            onBrowsePopups: {
-                store.send(.browsePopupsTapped)
             }
         )
     }

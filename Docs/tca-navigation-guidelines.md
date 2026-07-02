@@ -17,10 +17,11 @@
 - `MainTabFeature`는 shared `session`을 child feature에 전달하고, 탭 로컬 navigation state를 소유한다.
 - direct scope가 가능한 feature는 shared `session`을 직접 읽거나 필요한 값을 projection해서 reducer/state에 주입한다.
 - 현재 `CalendarFeature`도 shared `session`을 직접 읽고 캘린더 로컬 상태를 feature state가 소유한다.
+- 현재 `FavoritesFeature`도 shared `session`을 직접 읽고 찜 로컬 상태를 feature state가 소유한다.
 - 현재 `HomeFeature`는 shared `session`을 직접 읽고 홈 로컬 상태를 feature state가 소유한다.
 - 현재 `ProfileFeature`와 `ProfileSettingFeature`도 shared `session`을 직접 읽고 프로필 로컬 상태를 feature state가 소유한다.
 - legacy feature는 당분간 `SessionContext` 또는 primitive 값을 view init으로 주입한다.
-- 현재 `Map`, `Favorites`는 `*LegacyBridgeFeature`가 session-derived primitive를 만들어 legacy view로 넘긴다.
+- 현재 `Map`은 `*LegacyBridgeFeature`가 session-derived primitive를 만들어 legacy view로 넘긴다.
 
 ## 용어
 
@@ -287,21 +288,21 @@ public struct HomeFeature {
 아직 내부 state/effect/navigation을 TCA reducer로 옮기지 않은 탭은 `MainTabFeature` 아래에 bridge reducer를 둔다. bridge reducer는 session-derived primitive만 만들고 실제 레거시 화면으로 전달한다.
 
 ```swift
-var favorites: FavoritesLegacyBridgeFeature.State {
+var map: MapLegacyBridgeFeature.State {
     get { .init(sessionContext: sessionContext) }
     set {}
 }
 ```
 
 ```swift
-private struct FavoritesLegacyBridgeView: View {
-    let store: StoreOf<FavoritesLegacyBridgeFeature>
+private struct MapLegacyBridgeView: View {
+    let store: StoreOf<MapLegacyBridgeFeature>
 
     var body: some View {
-        FavoritesFeatureView(
+        MapFeatureView(
             userUuid: store.userUuid,
-            onShowAlert: { _ in
-                store.send(.alertTapped)
+            onSelectPopup: { _, popup in
+                store.send(.popupSelected(popup))
             }
         )
     }
@@ -478,7 +479,8 @@ case .destination:
 - `HomeFeature`에서 시작하는 연속 push(`coming popup list -> popup detail`)는 `MainTabFeature.path`가 소유
 - `popupRequestManagement`처럼 메인 공통 흐름으로 이어지는 push는 `MainTabFeature.path`가 소유
 - `CalendarFeature`: direct scope 완료, region/sort sheet는 view local state로 두고 상세/알림 이동은 `MainTabFeature.path`가 소유
-- `Map/Favorites`: bridge reducer를 유지하며 session primitive만 주입
+- `FavoritesFeature`: direct scope 완료, segmented selection은 view local state로 두고 상세/알림 이동과 홈 탭 복귀 intent만 parent로 올림
+- `Map`: bridge reducer를 유지하며 session primitive만 주입
 - 각 탭이 TCA reducer entry를 갖추면 `*LegacyBridgeFeature`를 제거하고 direct scope로 전환
 
 ## Do Not

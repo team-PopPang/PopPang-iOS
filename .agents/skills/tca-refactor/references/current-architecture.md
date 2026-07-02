@@ -107,6 +107,7 @@ Projects
 - `Projects/Features/AuthFeature/Sources/Presentation/AuthFeature.swift`
 - `Projects/Features/AuthFeature/Sources/Presentation/RegisterFlowFeature.swift`
 - `Projects/Features/CalendarFeature/Sources/Presentation/CalendarFeature.swift`
+- `Projects/Features/FavoritesFeature/Sources/Presentation/FavoritesFeature.swift`
 - `Projects/Features/OnboardingFeature/Sources/Presentation/OnboardingFeature.swift`
 - `Projects/Features/HomeFeature/Sources/Presentation/HomeFeatureReducer.swift`
 - `Projects/Features/HomeFeature/Sources/Presentation/ComingPopupDetailReducer.swift`
@@ -116,7 +117,6 @@ Projects
 ### 아직 `@Compound` 중심인 주요 영역
 
 - `AlertFeature`
-- `FavoritesFeature`
 - `MapFeature`
 - `PopupRequestFeature`
 - `PopupRequestManagementFeature`

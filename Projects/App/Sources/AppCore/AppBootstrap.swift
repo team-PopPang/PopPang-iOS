@@ -1,6 +1,7 @@
 import ComposableArchitecture
 import CalendarFeature
 import Core
+import FavoritesFeature
 import Foundation
 import HomeFeature
 import AuthFeature
@@ -13,6 +14,7 @@ struct AppBootstrap {
     let sessionStorage: LocalSessionStorage
     let sessionClient: SessionClient
     let calendarFeatureClient: CalendarFeatureClient
+    let favoritesFeatureClient: FavoritesFeatureClient
     let homePopupClient: HomePopupClient
     let popupDetailClient: PopupDetailClient
     let popupRequestClient: PopupRequestClient
@@ -30,6 +32,9 @@ struct AppBootstrap {
             userUsecase: dependencies.usecases.userUsecase
         )
         let calendarFeatureClient = CalendarFeatureClient.live(
+            popupUsecase: dependencies.usecases.popupUsecase
+        )
+        let favoritesFeatureClient = FavoritesFeatureClient.live(
             popupUsecase: dependencies.usecases.popupUsecase
         )
         let homePopupClient = HomePopupClient.live(
@@ -57,6 +62,7 @@ struct AppBootstrap {
             sessionStorage: sessionStorage,
             sessionClient: sessionClient,
             calendarFeatureClient: calendarFeatureClient,
+            favoritesFeatureClient: favoritesFeatureClient,
             homePopupClient: homePopupClient,
             popupDetailClient: popupDetailClient,
             popupRequestClient: popupRequestClient,
@@ -75,6 +81,7 @@ struct AppBootstrap {
         } withDependencies: {
             $0.sessionClient = sessionClient
             $0.calendarFeatureClient = calendarFeatureClient
+            $0.favoritesFeatureClient = favoritesFeatureClient
             $0.homePopupClient = homePopupClient
             $0.popupDetailClient = popupDetailClient
             $0.popupRequestClient = popupRequestClient
