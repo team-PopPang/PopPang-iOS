@@ -1,9 +1,10 @@
 import Foundation
+import Core
 import SwiftUI
 import UIKit
 
 private enum VersionUpdateConfig {
-    static let lookupURL = URL(string: "https://itunes.apple.com/lookup?id=6753014613&country=KR")
+    static let lookupURL = URL(string: "https://itunes.apple.com/lookup?id=6753014613&country=KR" + "&timestamp=\(Int(Date().timeIntervalSince1970))")
     static let appStoreURL = URL(string: "https://apps.apple.com/app/id6753014613")
 }
 
