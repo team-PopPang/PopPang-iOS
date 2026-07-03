@@ -114,11 +114,11 @@ Projects
 - `Projects/Features/HomeFeature/Sources/Presentation/ComingPopupDetailReducer.swift`
 - `Projects/Features/SearchFeature/Sources/Presentation/SearchFeature.swift`
 - `Projects/Features/ProfileFeature/Sources/Presentation/ProfileFeature.swift`
+- `Projects/Features/AlertFeature/Sources/Presentation/AlertFeature.swift`
 - `Projects/Features/PopupDetailFeature/Sources/Presentation/PopupDetailFeatureReducer.swift`
 
 ### 아직 `@Compound` 중심인 주요 영역
 
-- `AlertFeature`
 - `PopupRequestFeature`
 - `PopupRequestManagementFeature`
 - `ReviewFeature`

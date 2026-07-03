@@ -105,6 +105,7 @@ Projects
 - 현재 `FavoritesFeature`도 shared `session`을 직접 읽고, 찜 로컬 상태를 feature state가 소유한다.
 - 현재 `HomeFeature`는 shared `session`을 직접 읽고, 홈 로컬 상태만 feature state가 소유한다.
 - 현재 `MapFeature`도 shared `session`을 직접 읽고, 지도 로컬 상태를 feature state가 소유한다.
+- 현재 `AlertFeature`도 shared `session`을 직접 읽고, 알림 로컬 상태를 feature state가 소유한다.
 - 현재 `ProfileFeature`도 shared `session`을 직접 읽고, 프로필 로컬 상태와 프로필 설정 path는 TCA reducer가 소유한다.
 - legacy feature는 당분간 session-derived primitive 값을 view init으로 주입한다.
 - `MainTabFeature.Action`은 탭 child action, `path`, `destination`, parent delegate 중심으로 유지한다.
@@ -133,20 +134,22 @@ Projects
 
 현재 PopPang은 탭별로 두 가지 연결 방식을 함께 사용한다.
 
-#### Home / Calendar / Map / Favorites / Profile
+#### Home / Calendar / Map / Favorites / Profile / Alert
 
 - `AppFeature`가 shared `session` source of truth를 소유
-- `MainTabFeature`가 shared `session`을 `HomeFeature`, `CalendarFeature`, `MapFeature`, `FavoritesFeature`, `ProfileFeature`, `ProfileSettingFeature`에 전달
+- `MainTabFeature`가 shared `session`을 `HomeFeature`, `CalendarFeature`, `MapFeature`, `FavoritesFeature`, `AlertFeature`, `ProfileFeature`, `ProfileSettingFeature`에 전달
 - `HomeFeature.State`는 shared `session`을 읽고, `bestPopups`, `filter`, `destination` 같은 홈 로컬 상태를 직접 소유
 - `CalendarFeature.State`는 shared `session`을 읽고, `selectedDate`, `calendarPopups`, `popupEventCounts` 같은 캘린더 로컬 상태를 직접 소유
 - `MapFeature.State`는 shared `session`을 읽고, 지도 팝업 목록/시트 상태/위치 상태를 직접 소유한다.
 - `FavoritesFeature.State`는 shared `session`을 읽고, `favoritePopups`, `selectedDate`, `popupEventCounts` 같은 찜 로컬 상태를 직접 소유한다.
+- `AlertFeature.State`는 shared `session`을 읽고, alert popup/keyword/recent keyword/편집 상태를 직접 소유한다.
 - `ProfileFeature.State`는 shared `session`을 읽고, `localIsAlerted`, `errorMessage` 같은 프로필 로컬 상태를 직접 소유
 - `ProfileSettingFeature.State`는 shared `session`을 읽고, 닉네임 변경/회원탈퇴용 로컬 상태를 직접 소유한다.
 - `HomeFeature`가 `@Dependencies.Dependency(\.homePopupClient)`로 feature-scoped dependency 사용
 - `CalendarFeature`는 `@Dependencies.Dependency(\.calendarFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `MapFeature`는 `@Dependencies.Dependency(\.mapFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `FavoritesFeature`는 `@Dependencies.Dependency(\.favoritesFeatureClient)`로 feature-scoped dependency를 사용한다.
+- `AlertFeature`는 `@Dependencies.Dependency(\.alertFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `ProfileFeature`와 `ProfileSettingFeature`는 `@Dependencies.Dependency(\.profileFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `HomeFeature`가 홈 로컬 tree-based presentation을 소유
   - 현재 검색과 팝업 제보는 `HomeFeature.destination`에서 관리
@@ -155,6 +158,7 @@ Projects
 - 홈에서 시작하는 연속 drill-down push(`오픈예정팝업 리스트 -> 팝업 상세`)는 `MainTabFeature.path`가 소유
 - 캘린더에서 선택한 팝업 상세와 alert 이동도 `MainTabFeature.path`가 소유한다.
 - 찜 탭에서 선택한 팝업 상세와 alert 이동도 `MainTabFeature.path`가 소유하고, 빈 상태 CTA는 parent delegate로 홈 탭 전환 intent만 올린다.
+- 알림 화면에서 선택한 팝업 상세도 `MainTabFeature.path`가 소유하고, child feature는 delegate action으로 popup selection intent만 올린다.
 - 프로필 설정 push도 `MainTabFeature.path`가 소유하고, child feature는 delegate action으로 dismiss/logout intent만 올린다.
 - 여러 탭과 공통으로 이어질 수 있는 push 흐름은 `MainTabFeature.path`가 소유
   - 현재 팝업 상세, 리뷰 상세, 관리자 팝업 제보 관리 흐름이 여기에 해당

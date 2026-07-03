@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import AlertFeature
 import CalendarFeature
 import Core
 import FavoritesFeature
@@ -15,6 +16,7 @@ import SearchFeature
 struct AppBootstrap {
     let sessionStorage: LocalSessionStorage
     let localSessionClient: LocalSessionClient
+    let alertFeatureClient: AlertFeatureClient
     let calendarFeatureClient: CalendarFeatureClient
     let favoritesFeatureClient: FavoritesFeatureClient
     let homePopupClient: HomePopupClient
@@ -34,6 +36,11 @@ struct AppBootstrap {
         let localSessionClient = LocalSessionClient.live(
             sessionStorage: sessionStorage,
             userUsecase: dependencies.usecases.userUsecase
+        )
+        let alertFeatureClient = AlertFeatureClient.live(
+            popupUsecase: dependencies.usecases.popupUsecase,
+            userUsecase: dependencies.usecases.userUsecase,
+            recentSearchStorage: RecentSearchStorage(store: store)
         )
         let calendarFeatureClient = CalendarFeatureClient.live(
             popupUsecase: dependencies.usecases.popupUsecase
@@ -72,6 +79,7 @@ struct AppBootstrap {
         return AppBootstrap(
             sessionStorage: sessionStorage,
             localSessionClient: localSessionClient,
+            alertFeatureClient: alertFeatureClient,
             calendarFeatureClient: calendarFeatureClient,
             favoritesFeatureClient: favoritesFeatureClient,
             homePopupClient: homePopupClient,
@@ -93,6 +101,7 @@ struct AppBootstrap {
             )
         } withDependencies: {
             $0.localSessionClient = localSessionClient
+            $0.alertFeatureClient = alertFeatureClient
             $0.calendarFeatureClient = calendarFeatureClient
             $0.favoritesFeatureClient = favoritesFeatureClient
             $0.homePopupClient = homePopupClient

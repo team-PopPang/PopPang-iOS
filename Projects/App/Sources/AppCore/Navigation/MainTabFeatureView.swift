@@ -140,15 +140,10 @@ private struct ReviewDetailDestinationView: View {
 }
 
 private struct AlertDestinationView: View {
-    let store: StoreOf<AlertDestinationFeature>
+    let store: StoreOf<AlertFeature>
 
     var body: some View {
-        AlertFeatureView(
-            userUuid: store.userUuid,
-            onSelectPopup: { userUuid, popup in
-                store.send(.popupSelected(userUuid, popup))
-            }
-        )
+        AlertFeatureView(store: store)
     }
 }
 

@@ -29,6 +29,7 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 - `FavoritesFeature`
 - `MapFeature`
 - `OnboardingFeature`
+- `AlertFeature`
 - `HomeFeature`
   - `HomeFeatureReducer`
   - `ComingPopupDetailReducer`
@@ -39,7 +40,6 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 
 ### Compound 기반 feature
 
-- `AlertFeature`
 - `PopupRequestFeature`
 - `PopupRequestManagementFeature`
 - `PopupRequestManagementDetailFeature`

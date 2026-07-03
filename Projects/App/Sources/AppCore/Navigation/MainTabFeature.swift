@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import AlertFeature
 import CalendarFeature
 import Core
 import Domain
@@ -129,7 +130,7 @@ struct MainTabFeature {
         case homeComingPopupDetail(HomeComingPopupDetailDestinationFeature)
         case popupDetail(PopupDetailDestinationFeature)
         case reviewDetail(ReviewDetailDestinationFeature)
-        case alert(AlertDestinationFeature)
+        case alert(AlertFeature)
         case profileSetting(ProfileSettingFeature)
         case notifications(NotificationDestinationFeature)
         case serviceTerms(ServiceTermsDestinationFeature)
@@ -194,11 +195,11 @@ struct MainTabFeature {
                 return .none
                 
             case .home(.delegate(.alertRequested)):
-                state.core.path.append(.alert(.init(userUuid: state.currentUser.userUuid)))
+                state.core.path.append(.alert(.init(session: state.$session)))
                 return .none
                 
             case .calendar(.delegate(.alertRequested)):
-                state.core.path.append(.alert(.init(userUuid: state.currentUser.userUuid)))
+                state.core.path.append(.alert(.init(session: state.$session)))
                 return .none
                 
             case .favorites(.delegate(.browsePopupsRequested)):
@@ -206,7 +207,7 @@ struct MainTabFeature {
                 return .none
                 
             case .favorites(.delegate(.alertRequested)):
-                state.core.path.append(.alert(.init(userUuid: state.currentUser.userUuid)))
+                state.core.path.append(.alert(.init(session: state.$session)))
                 return .none
                 
             case .profile(.delegate(.profileSettingRequested)):
@@ -224,7 +225,7 @@ struct MainTabFeature {
                 return .none
                 
             case .profile(.delegate(.alertRequested)):
-                state.core.path.append(.alert(.init(userUuid: state.currentUser.userUuid)))
+                state.core.path.append(.alert(.init(session: state.$session)))
                 return .none
                 
             case .home,
@@ -291,7 +292,7 @@ private extension MainTabFeature {
             return .none
             
         case .popupDetail(.delegate(.pushPopupDetail(_, let popup))),
-                .alert(.delegate(.pushPopupDetail(_, let popup))):
+                .alert(.delegate(.popupSelected(let popup))):
             appendPopupDetail(popup, state: &state)
             return .none
             
@@ -389,34 +390,6 @@ struct PopupDetailDestinationFeature {
                 return .send(.delegate(.close))
             case .reviewsTapped(let reviews):
                 return .send(.delegate(.showReviews(reviews)))
-            case .delegate:
-                return .none
-            }
-        }
-    }
-}
-
-@Reducer
-struct AlertDestinationFeature {
-    @ObservableState
-    struct State: Equatable {
-        let userUuid: String
-    }
-    
-    enum Action: Equatable {
-        case popupSelected(String, Popup)
-        case delegate(Delegate)
-        
-        enum Delegate: Equatable {
-            case pushPopupDetail(String, Popup)
-        }
-    }
-    
-    var body: some ReducerOf<Self> {
-        Reduce { _, action in
-            switch action {
-            case .popupSelected(let userUuid, let popup):
-                return .send(.delegate(.pushPopupDetail(userUuid, popup)))
             case .delegate:
                 return .none
             }

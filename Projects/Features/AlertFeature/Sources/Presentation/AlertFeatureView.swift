@@ -1,5 +1,5 @@
+import ComposableArchitecture
 import Core
-import Compound
 import Domain
 import DSKit
 import Kingfisher
@@ -7,25 +7,13 @@ import SwiftUI
 
 public struct AlertFeatureView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var compound: AlertFeatureCompound
+    let store: StoreOf<AlertFeature>
     @State private var showKeywordLimitAlert = false
-    @State private var selectedIndex = 0
 
-    private let onSelectPopup: (String, Popup) -> Void
-    private let segments = AlertFeatureCompound.AlertTab.allCases.map(\.title)
+    private let segments = AlertFeature.AlertTab.allCases.map(\.title)
 
-    public init(
-        userUuid: String = "demo-user",
-        nickname: String = "홍길동",
-        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in }
-    ) {
-        _compound = State(
-            wrappedValue: AlertFeatureCompound(
-                userUuid: userUuid,
-                nickname: nickname
-            )
-        )
-        self.onSelectPopup = onSelectPopup
+    public init(store: StoreOf<AlertFeature>) {
+        self.store = store
     }
 
     public var body: some View {
@@ -60,26 +48,34 @@ public struct AlertFeatureView: View {
             GeometryReader { geometry in
                 HStack(spacing: 0) {
                     ActivityAlertView(
-                        state: compound.state,
-                        onDeleteAll: { compound.send(.deleteAllPopups) },
-                        onDeletePopup: { compound.send(.deletePopup($0)) },
-                        onToggleLike: { compound.send(.toggleLike($0)) },
+                        store: store,
+                        onDeleteAll: {
+                            store.send(.deleteAllPopupsTapped)
+                        },
+                        onDeletePopup: { popupUuid in
+                            store.send(.deletePopupTapped(popupUuid))
+                        },
+                        onToggleLike: { popupUuid in
+                            store.send(.toggleLikeTapped(popupUuid))
+                        },
                         onSelectPopup: { popup in
-                            onSelectPopup(compound.state.userUuid, popup)
+                            store.send(.popupSelected(popup))
                         }
                     )
                     .frame(width: geometry.size.width, height: geometry.size.height)
 
                     KeywordAlertView(
-                        state: compound.state,
-                        text: Binding(
-                            get: { compound.state.keywordText },
-                            set: { compound.send(.keywordTextChanged($0)) }
-                        ),
+                        store: store,
                         onAddKeyword: { addKeywordIfAllowed($0) },
-                        onRemoveKeyword: { compound.send(.removeKeyword($0)) },
-                        onRecentKeyword: { addKeywordIfAllowed($0) },
-                        onRemoveRecentKeyword: { compound.send(.removeRecentKeyword($0)) }
+                        onRemoveKeyword: { keyword in
+                            store.send(.removeKeywordTapped(keyword))
+                        },
+                        onRecentKeyword: { keyword in
+                            addKeywordIfAllowed(keyword)
+                        },
+                        onRemoveRecentKeyword: { keyword in
+                            store.send(.recentKeywordRemoved(keyword))
+                        }
                     )
                     .frame(width: geometry.size.width, height: geometry.size.height)
                 }
@@ -95,7 +91,7 @@ public struct AlertFeatureView: View {
                 )
             }
 
-            if let message = compound.state.message {
+            if let message = store.errorMessage {
                 Text(message)
                     .ppStyleFont(.scdream(.regular, size: 12))
                     .foregroundStyle(Color.mainRed)
@@ -109,27 +105,33 @@ public struct AlertFeatureView: View {
         ) {
             dismiss()
         } trailing: {
-            TrashButton(isEditing: compound.state.isEditing) {
-                compound.send(.toggleEditing)
+            TrashButton(isEditing: store.isEditing) {
+                store.send(.toggleEditing)
             }
         }
-        .compoundOnLoad(compound, .onAppear)
+        .onAppear {
+            store.send(.onAppear)
+        }
         .alert("키워드 개수 제한", isPresented: $showKeywordLimitAlert) {
             Button("확인", role: .cancel) {}
         } message: {
             Text("키워드는 최대 5개 까지만 등록 가능합니다.")
         }
     }
+}
 
-    private func selectSegment(_ index: Int) {
-        guard selectedIndex != index else { return }
-
-        withAnimation(.easeInOut(duration: 0.25)) {
-            selectedIndex = index
-        }
+private extension AlertFeatureView {
+    var selectedIndex: Int {
+        store.selectedTab.rawValue
     }
 
-    private func handlePageDrag(_ value: DragGesture.Value) {
+    func selectSegment(_ index: Int) {
+        guard selectedIndex != index else { return }
+        guard let tab = AlertFeature.AlertTab(rawValue: index) else { return }
+        store.send(.tabChanged(tab))
+    }
+
+    func handlePageDrag(_ value: DragGesture.Value) {
         let horizontal = value.translation.width
         let vertical = value.translation.height
         guard abs(horizontal) > abs(vertical), abs(horizontal) > 50 else { return }
@@ -140,21 +142,21 @@ public struct AlertFeatureView: View {
         selectSegment(nextIndex)
     }
 
-    private func addKeywordIfAllowed(_ keyword: String) {
+    func addKeywordIfAllowed(_ keyword: String) {
         let trimmed = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        if compound.state.keywords.count >= 5 {
+        if store.keywords.count >= 5 {
             showKeywordLimitAlert = true
             return
         }
 
-        compound.send(.addKeyword(trimmed))
+        store.send(.addKeywordTapped(trimmed))
     }
 }
 
 private struct ActivityAlertView: View {
-    let state: AlertFeatureCompound.State
+    let store: StoreOf<AlertFeature>
     let onDeleteAll: () -> Void
     let onDeletePopup: (String) -> Void
     let onToggleLike: (String) -> Void
@@ -164,7 +166,7 @@ private struct ActivityAlertView: View {
         ScrollView(showsIndicators: false) {
             LazyVStack(spacing: 0) {
                 HStack {
-                    if state.isEditing {
+                    if store.isEditing {
                         Spacer()
                         Button(action: onDeleteAll) {
                             Text("전체 삭제")
@@ -177,7 +179,7 @@ private struct ActivityAlertView: View {
                     }
                 }
 
-                ForEach(Array(state.alertPopups.enumerated()), id: \.element.id) { index, popup in
+                ForEach(Array(store.alertPopups.enumerated()), id: \.element.id) { index, popup in
                     AlertPopupCell(
                         popup: popup,
                         isLiked: popup.isFavorited,
@@ -190,7 +192,7 @@ private struct ActivityAlertView: View {
                         onSelectPopup(popup)
                     }
                     .overlay(alignment: .topTrailing) {
-                        if state.isEditing {
+                        if store.isEditing {
                             Button {
                                 onDeletePopup(popup.popupUuid)
                             } label: {
@@ -201,7 +203,7 @@ private struct ActivityAlertView: View {
                         }
                     }
 
-                    if index != state.alertPopups.count - 1 {
+                    if index != store.alertPopups.count - 1 {
                         Divider()
                             .frame(height: 1)
                             .background(Color.subWhite)
@@ -214,8 +216,7 @@ private struct ActivityAlertView: View {
 }
 
 private struct KeywordAlertView: View {
-    let state: AlertFeatureCompound.State
-    @Binding var text: String
+    let store: StoreOf<AlertFeature>
     let onAddKeyword: (String) -> Void
     let onRemoveKeyword: (Keyword) -> Void
     let onRecentKeyword: (String) -> Void
@@ -226,11 +227,11 @@ private struct KeywordAlertView: View {
             HStack(spacing: .contentPadding) {
                 KeywordTextField(
                     placeholder: "알림 받고 싶은 키워드를 입력해주세요",
-                    text: $text
+                    text: textBinding
                 )
 
                 Button {
-                    onAddKeyword(text)
+                    onAddKeyword(store.keywordText)
                 } label: {
                     DSKitResource.image("plus")
                         .resizable()
@@ -240,14 +241,14 @@ private struct KeywordAlertView: View {
             }
 
             VStack(spacing: 0) {
-                ForEach(Array(state.keywords.enumerated()), id: \.1.id) { _, keyword in
+                ForEach(Array(store.keywords.enumerated()), id: \.1.id) { _, keyword in
                     HStack {
                         Text(keyword.keyword)
                             .ppStyleFont(.scdream(.medium, size: 12))
 
                         Spacer()
 
-                        if state.isEditing {
+                        if store.isEditing {
                             Button {
                                 onRemoveKeyword(keyword)
                             } label: {
@@ -273,17 +274,17 @@ private struct KeywordAlertView: View {
 
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
-                    Text(state.nickname)
+                    Text(store.nickname)
                         .foregroundStyle(Color.mainOrange)
                         .font(.scdream(.bold, size: 12))
 
-                    Text(state.recentKeywords.isEmpty ? "님의 최근 본 검색어가 없습니다" : "님의 최근 본 검색어예요")
+                    Text(store.recentKeywords.isEmpty ? "님의 최근 본 검색어가 없습니다" : "님의 최근 본 검색어예요")
                         .font(.scdream(.regular, size: 12))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
                 SearchFlowLayout {
-                    ForEach(state.recentKeywords, id: \.self) { keyword in
+                    ForEach(store.recentKeywords, id: \.self) { keyword in
                         SearchFlowButton(title: keyword) {
                             onRecentKeyword(keyword)
                         } onRemove: {
@@ -300,6 +301,13 @@ private struct KeywordAlertView: View {
         }
         .padding(.top, 24)
         .padding(.horizontal, .contentPadding)
+    }
+
+    private var textBinding: Binding<String> {
+        Binding(
+            get: { store.keywordText },
+            set: { store.send(.keywordTextChanged($0)) }
+        )
     }
 }
 
