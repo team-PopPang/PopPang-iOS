@@ -300,7 +300,7 @@ struct LegacyTabBridgeFeature {
 }
 ```
 
-이 단계에서는 legacy feature 내부의 기존 `Compound` 구조를 유지한다. 즉 `LocalSessionClient`를 억지로 레거시 feature마다 넣지 않고, root session에서 계산한 primitive만 parent bridge가 넘긴다.
+이 단계에서는 legacy feature 내부의 기존 상태 기반 구조를 유지한다. 즉 `LocalSessionClient`를 억지로 레거시 feature마다 넣지 않고, root session에서 계산한 primitive만 parent bridge가 넘긴다.
 
 ### 3. 점진 마이그레이션의 완료 기준
 

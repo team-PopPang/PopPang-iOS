@@ -22,7 +22,7 @@ PopPang은 팝업스토어 정보를 키워드, 검색, 필터, 달력, 지도, 
 - SwiftUI 기반 iOS 앱
 - Tuist 기반 workspace/project 구성
 - Micro Feature Architecture
-- Compound 기반 Feature 상태 관리를 TCA로 점진 전환 중
+- Feature 상태를 TCA로 점진 전환 중
 - 화면 전환은 TCA tree-based / stack-based navigation 기준
 - Moya 기반 네트워크와 async/await wrapper
 - Firebase, KakaoSDK, GoogleSignIn, Google Mobile Ads, NMapsMap, Kingfisher, BottomSheet 사용
@@ -176,7 +176,7 @@ ProfileFeatureView(store: store.scope(state: \.core.profile, action: \.profile))
 역할:
 
 - 사용자 화면과 화면별 state/action/effect 구현
-- 기존 Compound 기반 `*FeatureCompound`
+- 기존 레거시 상태 기반 `*Feature` 뼈대
 - 신규/전환 대상 TCA `@Reducer`
 - SwiftUI `*FeatureView`
 - reducer action과 delegate action을 통해 상위 flow에 navigation intent 전달
@@ -192,7 +192,7 @@ ProfileFeatureView(store: store.scope(state: \.core.profile, action: \.profile))
 
 - feature가 다른 feature를 직접 import하는 구조는 기본 전략이 아니다.
 - active main flow에서 feature 간 이동은 `MainTabFeature.Path` 또는 `MainTabFeature.Destination` state로 조립한다.
-- 화면 로컬 상태는 feature compound 또는 feature view local state에 둔다.
+- 화면 로컬 상태는 feature reducer local state 또는 feature view local state에 둔다.
 - 전역 이동, 탭 바깥 push, full screen 전환은 상위 TCA parent reducer로 올린다.
 - 새 화면 전환용 `@escaping` closure를 추가하지 않는다.
 

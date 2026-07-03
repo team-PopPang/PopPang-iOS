@@ -320,7 +320,7 @@ Home Native 광고는 Domain, UseCase, Repository로 내리지 않는다.
 - 광고 로드는 비즈니스 도메인 규칙이 아니라 화면 수익화 UI 관심사다.
 - 현재는 Home 화면 한 위치에 붙는 SDK UI 컴포넌트다.
 - 서버 데이터와 섞지 않고 `HomeFeature` Presentation 안에서 끝내는 편이 변경 범위가 작다.
-- Compound 상태에는 팝업 목록, 필터, 딥링크처럼 Home 기능 상태만 유지한다.
+- 홈 화면에서만 필요한 상태(팝업 목록, 필터, 딥링크)는 feature/local store에서 처리한다.
 
 파일:
 
@@ -413,7 +413,7 @@ Projects/Features/HomeFeature/Sources/Presentation/NativeAd/HomeNativeAdGridItem
 
 ```swift
 var gridItems: [HomeGridItem] {
-    var items = compound.state.gridPopups.map(HomeGridItem.popup)
+    var items = homeNativeGridPopups.map(HomeGridItem.popup)
     guard nativeAdViewModel.nativeAd != nil, items.isEmpty == false else { return items }
 
     let insertIndex = min(4, items.count)
@@ -433,7 +433,7 @@ var gridItems: [HomeGridItem] {
 
 ```swift
 .onAppear {
-    compound.send(.onAppear)
+    loadNativeAdIfNeeded()
     nativeAdViewModel.loadAdIfNeeded()
 }
 ```

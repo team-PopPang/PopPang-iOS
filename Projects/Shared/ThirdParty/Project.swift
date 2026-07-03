@@ -12,7 +12,6 @@ let project = Project(
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: [
-                .external(name: "Compound"),
                 .external(name: "ComposableArchitecture"),
                 .external(name: "FirebaseAnalytics"),
                 .external(name: "FirebaseCore"),

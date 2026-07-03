@@ -56,15 +56,6 @@
       }
     },
     {
-      "identity" : "compound",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/indextrown/Compound",
-      "state" : {
-        "revision" : "16f23ac954a211d4244bac742803dbdc5ffd50b8",
-        "version" : "1.0.5"
-      }
-    },
-    {
       "identity" : "differencekit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ra1028/DifferenceKit.git",
