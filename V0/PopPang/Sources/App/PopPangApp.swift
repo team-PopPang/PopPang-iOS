@@ -217,6 +217,7 @@ struct VersionUpdateModifier: ViewModifier {
         let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.0.0"
         guard let latestVersion = await fetchLatestVersion() else { return }
         
+        Logger.d("버전체크: currentVersion: \(currentVersion), latestVersion: \(latestVersion)")
         if currentVersion.compare(latestVersion, options: .numeric) == .orderedAscending {
             await MainActor.run {
                 self.latestVersion = latestVersion
@@ -229,7 +230,7 @@ struct VersionUpdateModifier: ViewModifier {
         guard let url = URL(string: "https://itunes.apple.com/lookup?id=6753014613&country=KR") else {
             return nil
         }
-        
+        Logger.d("url: \(url)")
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
