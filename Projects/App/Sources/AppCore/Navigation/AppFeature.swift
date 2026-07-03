@@ -80,7 +80,7 @@ struct AppFeature {
         case auth(AuthFeature)
     }
 
-    @Dependencies.Dependency(\.localSessionClient) private var localSessionClient: LocalSessionClient
+    @Dependency(\.localSessionClient) private var localSessionClient: LocalSessionClient
     private let sessionStorage: LocalSessionStorage
     private let launchStateResolver: AppLaunchStateResolver
 

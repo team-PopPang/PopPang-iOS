@@ -72,7 +72,6 @@ Projects
 - SDK 초기화
 - 앱 bootstrap
 - repository/usecase live 조립
-- `DIContainer` 등록
 - `AppFeature` root store 생성
 - TCA root/auth/main navigation 소유
 - Info.plist, entitlements, app resources 관리
@@ -207,7 +206,6 @@ ProfileFeatureView(store: store.scope(state: \.core.profile, action: \.profile))
 - Repository protocol
 - Usecase protocol
 - Usecase implementation
-- DI container와 `@Dependency`
 
 특징:
 
@@ -221,7 +219,6 @@ ProfileFeatureView(store: store.scope(state: \.core.profile, action: \.profile))
 - `Projects/Domain/Sources/RepositoryProtocol/**`
 - `Projects/Domain/Sources/Usecase/Protocols/**`
 - `Projects/Domain/Sources/Usecase/Implementations/**`
-- `Projects/Domain/Sources/Dependency/DIContainer.swift`
 
 ### Data
 
@@ -358,26 +355,22 @@ Domain
 AppDependencyRegistry.live()
  -> RepositoryImpl 생성
  -> UsecaseImpl 생성
- -> DIContainer.shared.register(..., for: Protocol.self)
- -> legacy FeatureCompound에서 @Dependency로 resolve
  -> AppBootstrap이 TCA feature-scoped client를 조립
  -> Store.withDependencies(...)로 TCA reducer에 주입
 ```
 
 원칙:
 
-- legacy Compound는 `DIContainer`와 `@Dependency`를 유지할 수 있다.
 - TCA reducer는 `DependencyValues`만 사용한다.
-- TCA client `liveValue` 안에서 `DIContainer.shared.resolve(...)`를 직접 호출하지 않는다.
+- feature-scoped client는 composition root(`AppBootstrap`)에서 concrete usecase를 받아 조립한다.
+- TCA client `liveValue` 안에서 legacy container resolve를 직접 호출하지 않는다.
 
 DI 변경 시 함께 확인할 파일:
 
 - `Projects/App/Sources/AppCore/AppDependencyRegistry.swift`
-- `Projects/Domain/Sources/Dependency/DIContainer.swift`
 - `Projects/Domain/Sources/Usecase/Protocols/**`
 - `Projects/Domain/Sources/Usecase/Implementations/**`
 - `Projects/Domain/Sources/RepositoryProtocol/**`
-- 관련 Feature의 `*FeatureCompound.swift`
 - 관련 Demo app의 mock registration
 
 ## Navigation 기준

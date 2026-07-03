@@ -92,7 +92,7 @@ public struct AlertFeature {
         }
     }
 
-    @Dependencies.Dependency(\.alertFeatureClient) private var alertFeatureClient: AlertFeatureClient
+    @Dependency(\.alertFeatureClient) private var alertFeatureClient: AlertFeatureClient
     private let maxKeywordCount = 5
 
     public init() {}

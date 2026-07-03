@@ -65,7 +65,7 @@ public struct CalendarFeature {
         }
     }
 
-    @Dependencies.Dependency(\.calendarFeatureClient) private var calendarFeatureClient: CalendarFeatureClient
+    @Dependency(\.calendarFeatureClient) private var calendarFeatureClient: CalendarFeatureClient
 
     public init() {}
 

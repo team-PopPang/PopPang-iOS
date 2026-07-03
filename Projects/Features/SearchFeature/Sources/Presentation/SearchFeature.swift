@@ -68,8 +68,8 @@ public struct SearchFeature {
         let recentKeywords: [String]?
     }
 
-    @Dependencies.Dependency(\.searchFeatureClient) private var searchFeatureClient: SearchFeatureClient
-    @Dependencies.Dependency(\.continuousClock) private var clock
+    @Dependency(\.searchFeatureClient) private var searchFeatureClient: SearchFeatureClient
+    @Dependency(\.continuousClock) private var clock
 
     private enum CancelID {
         case search

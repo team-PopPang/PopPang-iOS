@@ -59,7 +59,7 @@ public struct ProfileFeature {
         }
     }
 
-    @Dependencies.Dependency(\.profileFeatureClient) private var profileFeatureClient: ProfileFeatureClient
+    @Dependency(\.profileFeatureClient) private var profileFeatureClient: ProfileFeatureClient
 
     public init() {}
 
@@ -170,7 +170,7 @@ public struct ProfileSettingFeature {
         }
     }
 
-    @Dependencies.Dependency(\.profileFeatureClient) private var profileFeatureClient: ProfileFeatureClient
+    @Dependency(\.profileFeatureClient) private var profileFeatureClient: ProfileFeatureClient
 
     public init() {}
 

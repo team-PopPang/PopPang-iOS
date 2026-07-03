@@ -28,7 +28,7 @@ public struct ComingPopupDetailReducer {
         case errorMessageChanged(String?)
     }
 
-    @Dependencies.Dependency(\.homePopupClient) private var popupClient: HomePopupClient
+    @Dependency(\.homePopupClient) private var popupClient: HomePopupClient
 
     public init() {}
 

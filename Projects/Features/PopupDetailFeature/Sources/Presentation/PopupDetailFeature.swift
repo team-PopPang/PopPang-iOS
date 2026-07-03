@@ -42,7 +42,7 @@ public struct PopupDetailFeature {
         }
     }
 
-    @Dependencies.Dependency(\.popupDetailClient) private var popupDetailClient: PopupDetailClient
+    @Dependency(\.popupDetailClient) private var popupDetailClient: PopupDetailClient
 
     public init() {}
 

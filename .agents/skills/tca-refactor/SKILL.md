@@ -59,7 +59,7 @@ issue 생성/assign/branch checkout의 자세한 절차는 `references/issue-bra
 
 ## TCA 패턴 기준
 
-1. feature-scoped client를 만들어 `DIContainer.shared.resolve(...)`를 `DependencyValues` bridge 뒤로 숨긴다.
+1. feature-scoped client를 만들고, concrete usecase 조립은 `AppBootstrap` 같은 composition root에서 `DependencyValues` bridge로 주입한다.
 2. reducer에는 비즈니스 상태, effect 타이밍에 직접 영향을 주는 상태, 테스트가 필요한 상태를 둔다.
 3. scroll offset, proxy, 일회성 animation 같은 순수 UI 임시 상태는 무조건 reducer로 올리지 않는다.
 4. feature 간 이동은 child delegate action으로 parent reducer에 올리고, feature가 다른 feature를 직접 조립하지 않도록 유지한다.

@@ -300,7 +300,7 @@ struct LegacyTabBridgeFeature {
 }
 ```
 
-이 단계에서는 legacy feature 내부의 기존 `Compound`와 기존 `@Dependency`/`DIContainer` 구조를 유지한다. 즉 `LocalSessionClient`를 억지로 레거시 feature마다 넣지 않고, root session에서 계산한 primitive만 parent bridge가 넘긴다.
+이 단계에서는 legacy feature 내부의 기존 `Compound` 구조를 유지한다. 즉 `LocalSessionClient`를 억지로 레거시 feature마다 넣지 않고, root session에서 계산한 primitive만 parent bridge가 넘긴다.
 
 ### 3. 점진 마이그레이션의 완료 기준
 
@@ -368,7 +368,7 @@ API, SDK, 위치, 딥링크 같은 작업 도구를 TCA dependency로 감싸는 
 - LocationClient
 - DeepLinkClient
 
-현재는 `DIContainer.shared.resolve(...)`와 `@Dependency` bridge가 섞여 있다. 새 TCA feature는 feature-scoped client를 만들고, 내부에서 기존 usecase protocol을 감싼다. 이때 TCA client의 `liveValue` 안에서 `DIContainer.shared.resolve(...)`를 직접 호출하지 않고, `AppBootstrap` 같은 composition root에서 concrete client를 조립해 `withDependencies`로 주입한다.
+현재는 feature-scoped client와 `@Dependency` bridge를 기준으로 TCA dependency를 주입한다. 새 TCA feature는 feature-scoped client를 만들고, 내부에서 기존 usecase protocol을 감싼다. 이때 TCA client의 `liveValue` 안에서 legacy container resolve를 직접 호출하지 않고, `AppBootstrap` 같은 composition root에서 concrete client를 조립해 `withDependencies`로 주입한다.
 
 ### Shared.Caches
 

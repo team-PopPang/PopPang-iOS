@@ -47,7 +47,6 @@ Projects
 
 - SDK 초기화
 - repository/usecase live 조립
-- `DIContainer` 등록
 - `AppFeature` root store 생성으로 전환 예정
 - root/auth/main TCA navigation 소유 예정
 
@@ -78,7 +77,6 @@ Projects
 - Entity
 - Repository protocol
 - Usecase protocol / implementation
-- `DIContainer`와 `@Dependency`
 
 주의:
 
@@ -129,7 +127,7 @@ Projects
 
 1. `@Reducer` + `@ObservableState`
 2. feature 전용 `Client` struct 정의
-3. `DIContainer.shared.resolve(...)`를 `DependencyValues` bridge 뒤에 숨김
+3. concrete usecase는 composition root에서 조립하고 `DependencyValues` bridge로 feature client에 주입
 4. view는 `StoreOf<Reducer>`를 `@State`로 보유
 5. navigation은 TCA `Destination` / `Path` 중심으로 전환 중
 

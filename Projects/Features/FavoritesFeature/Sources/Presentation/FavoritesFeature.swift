@@ -60,7 +60,7 @@ public struct FavoritesFeature {
         }
     }
 
-    @Dependencies.Dependency(\.favoritesFeatureClient) private var favoritesFeatureClient: FavoritesFeatureClient
+    @Dependency(\.favoritesFeatureClient) private var favoritesFeatureClient: FavoritesFeatureClient
 
     public init() {}
 

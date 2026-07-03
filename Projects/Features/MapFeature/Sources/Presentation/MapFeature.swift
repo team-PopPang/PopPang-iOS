@@ -157,7 +157,7 @@ public struct MapFeature {
         }
     }
 
-    @Dependencies.Dependency(\.mapFeatureClient) private var mapFeatureClient: MapFeatureClient
+    @Dependency(\.mapFeatureClient) private var mapFeatureClient: MapFeatureClient
 
     public init() {}
 

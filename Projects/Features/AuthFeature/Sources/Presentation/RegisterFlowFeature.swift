@@ -47,7 +47,7 @@ public struct RegisterFlowFeature {
         }
     }
 
-    @Dependencies.Dependency(\.authFeatureClient) private var authFeatureClient: AuthFeatureClient
+    @Dependency(\.authFeatureClient) private var authFeatureClient: AuthFeatureClient
 
     public init() {}
 

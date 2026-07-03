@@ -107,7 +107,7 @@ public struct HomeFeature {
         }
     }
 
-    @Dependencies.Dependency(\.homePopupClient) private var popupClient: HomePopupClient
+    @Dependency(\.homePopupClient) private var popupClient: HomePopupClient
 
     public init() {}
 

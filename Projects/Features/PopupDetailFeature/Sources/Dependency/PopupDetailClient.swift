@@ -17,6 +17,23 @@ public struct PopupDetailClient: Sendable {
     var addFavorite: @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void
     var removeFavorite: @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void
     var deactivatePopup: @Sendable (_ popupUuid: String) async throws -> Void
+
+    public init(
+        increaseViewCount: @escaping @Sendable (_ popupUuid: String) async throws -> Void,
+        getPersonalRelatedPopupList: @escaping @Sendable (
+            _ userUuid: String,
+            _ popupUuid: String
+        ) async throws -> [Popup],
+        addFavorite: @escaping @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void,
+        removeFavorite: @escaping @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void,
+        deactivatePopup: @escaping @Sendable (_ popupUuid: String) async throws -> Void
+    ) {
+        self.increaseViewCount = increaseViewCount
+        self.getPersonalRelatedPopupList = getPersonalRelatedPopupList
+        self.addFavorite = addFavorite
+        self.removeFavorite = removeFavorite
+        self.deactivatePopup = deactivatePopup
+    }
 }
 
 extension PopupDetailClient {
