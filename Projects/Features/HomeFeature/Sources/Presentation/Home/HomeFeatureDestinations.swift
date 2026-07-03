@@ -6,7 +6,7 @@ import SwiftUI
 public struct HomeComingPopupDetailDestinationFeature {
     @ObservableState
     public struct State: Equatable, Identifiable {
-        var content: ComingPopupDetailReducer.State
+        var content: ComingPopupDetailFeature.State
 
         public var id: String { "home-coming-\(content.userUuid)" }
 
@@ -22,7 +22,7 @@ public struct HomeComingPopupDetailDestinationFeature {
     }
 
     public enum Action: Equatable {
-        case content(ComingPopupDetailReducer.Action)
+        case content(ComingPopupDetailFeature.Action)
         case popupSelected(Popup)
         case delegate(Delegate)
 
@@ -35,7 +35,7 @@ public struct HomeComingPopupDetailDestinationFeature {
 
     public var body: some ReducerOf<Self> {
         Scope(state: \.content, action: \.content) {
-            ComingPopupDetailReducer()
+            ComingPopupDetailFeature()
         }
 
         Reduce { _, action in

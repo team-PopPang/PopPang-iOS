@@ -3,7 +3,7 @@ import Domain
 import Foundation
 
 @Reducer
-public struct ComingPopupDetailReducer {
+public struct ComingPopupDetailFeature {
     @ObservableState
     public struct State: Equatable, Sendable {
         var userUuid: String
@@ -82,7 +82,7 @@ public struct ComingPopupDetailReducer {
     }
 }
 
-private extension ComingPopupDetailReducer {
+private extension ComingPopupDetailFeature {
     func updateComingPopups(userUuid: String) -> Effect<Action> {
         let popupClient = popupClient
 

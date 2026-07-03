@@ -7,11 +7,11 @@ import SwiftUI
 
 public struct ComingPopupDetailFeatureView: View {
     @Environment(\.dismiss) private var dismiss
-    @Bindable var store: StoreOf<ComingPopupDetailReducer>
+    @Bindable var store: StoreOf<ComingPopupDetailFeature>
     private let onSelectPopup: (String, Popup) -> Void
 
     public init(
-        store: StoreOf<ComingPopupDetailReducer>,
+        store: StoreOf<ComingPopupDetailFeature>,
         onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in }
     ) {
         self.store = store
@@ -25,12 +25,12 @@ public struct ComingPopupDetailFeatureView: View {
     ) {
         self.init(
             store: Store(
-                initialState: ComingPopupDetailReducer.State(
+                initialState: ComingPopupDetailFeature.State(
                     userUuid: userUuid,
                     popups: popups
                 )
             ) {
-                ComingPopupDetailReducer()
+                ComingPopupDetailFeature()
             },
             onSelectPopup: onSelectPopup
         )
@@ -75,11 +75,11 @@ public struct ComingPopupDetailFeatureView: View {
         .updateEngine(.reloadData)
         .scrollIndicators(.hidden)
         .contentInsets(LKEdgeInsets(top: 0, left: 0, bottom: 0, right: 0))
-        .overlay {
-            if store.isLoading {
-                HomeFeatureLoadingOverlay()
-            }
-        }
+//        .overlay {
+//            if store.isLoading {
+//                HomeFeatureLoadingOverlay()
+//            }
+//        }
         .alert("안내", isPresented: isComingPopupErrorPresented) {
             Button("확인", role: .cancel) {
                 store.send(.errorMessageChanged(nil))
