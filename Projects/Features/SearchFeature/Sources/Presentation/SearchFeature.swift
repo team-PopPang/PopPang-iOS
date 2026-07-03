@@ -2,13 +2,14 @@ import ComposableArchitecture
 import Domain
 import Foundation
 import PopupDetailFeature
+import ReviewFeature
 
 @Reducer
 public struct SearchFeature {
     @Reducer
     public enum Path {
         case popupDetail(SearchPopupDetailDestinationFeature)
-        case reviewDetail(SearchReviewDetailDestinationFeature)
+        case reviewDetail(ReviewFeature)
     }
 
     @ObservableState
@@ -301,25 +302,5 @@ public struct SearchPopupDetailDestinationFeature {
                 return .none
             }
         }
-    }
-}
-
-@Reducer
-public struct SearchReviewDetailDestinationFeature {
-    @ObservableState
-    public struct State: Equatable {
-        public let reviews: [Review]
-
-        public init(reviews: [Review]) {
-            self.reviews = reviews
-        }
-    }
-
-    public enum Action: Equatable {}
-
-    public init() {}
-
-    public var body: some ReducerOf<Self> {
-        Reduce { _, _ in .none }
     }
 }

@@ -30,6 +30,7 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 - `MapFeature`
 - `OnboardingFeature`
 - `AlertFeature`
+- `ReviewFeature`
 - `HomeFeature`
   - `HomeFeatureReducer`
   - `ComingPopupDetailReducer`
@@ -43,7 +44,6 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 - `PopupRequestFeature`
 - `PopupRequestManagementFeature`
 - `PopupRequestManagementDetailFeature`
-- `ReviewFeature`
 
 ## 권장 전환 순서
 

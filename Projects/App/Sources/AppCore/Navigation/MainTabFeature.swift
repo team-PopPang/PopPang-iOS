@@ -9,6 +9,7 @@ import MapFeature
 import PopupDetailFeature
 import PopupRequestManagementFeature
 import ProfileFeature
+import ReviewFeature
 
 enum MainTab: Hashable, CaseIterable, Sendable {
     case home
@@ -129,7 +130,7 @@ struct MainTabFeature {
         case popupRequestManagementDetail(PopupRequestManagementDetailFeature)
         case homeComingPopupDetail(HomeComingPopupDetailDestinationFeature)
         case popupDetail(PopupDetailDestinationFeature)
-        case reviewDetail(ReviewDetailDestinationFeature)
+        case reviewDetail(ReviewFeature)
         case alert(AlertFeature)
         case profileSetting(ProfileSettingFeature)
         case notifications(NotificationDestinationFeature)
@@ -394,20 +395,6 @@ struct PopupDetailDestinationFeature {
                 return .none
             }
         }
-    }
-}
-
-@Reducer
-struct ReviewDetailDestinationFeature {
-    @ObservableState
-    struct State: Equatable {
-        let reviews: [Review]
-    }
-    
-    enum Action: Equatable {}
-    
-    var body: some ReducerOf<Self> {
-        Reduce { _, _ in .none }
     }
 }
 

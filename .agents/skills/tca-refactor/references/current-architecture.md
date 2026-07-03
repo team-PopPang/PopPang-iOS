@@ -115,13 +115,13 @@ Projects
 - `Projects/Features/SearchFeature/Sources/Presentation/SearchFeature.swift`
 - `Projects/Features/ProfileFeature/Sources/Presentation/ProfileFeature.swift`
 - `Projects/Features/AlertFeature/Sources/Presentation/AlertFeature.swift`
+- `Projects/Features/ReviewFeature/Sources/Presentation/ReviewFeature.swift`
 - `Projects/Features/PopupDetailFeature/Sources/Presentation/PopupDetailFeatureReducer.swift`
 
 ### 아직 `@Compound` 중심인 주요 영역
 
 - `PopupRequestFeature`
 - `PopupRequestManagementFeature`
-- `ReviewFeature`
 
 ## 현재 TCA 패턴
 

@@ -132,10 +132,10 @@ private struct PopupRequestManagementDetailDestinationView: View {
 }
 
 private struct ReviewDetailDestinationView: View {
-    let store: StoreOf<ReviewDetailDestinationFeature>
+    let store: StoreOf<ReviewFeature>
 
     var body: some View {
-        ReviewFeatureView(reviews: store.reviews)
+        ReviewFeatureView(store: store)
     }
 }
 

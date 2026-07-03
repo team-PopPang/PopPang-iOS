@@ -157,10 +157,10 @@ private struct SearchPopupDetailDestinationView: View {
 }
 
 private struct SearchReviewDetailDestinationView: View {
-    let store: StoreOf<SearchReviewDetailDestinationFeature>
+    let store: StoreOf<ReviewFeature>
 
     var body: some View {
-        ReviewFeatureView(reviews: store.reviews)
+        ReviewFeatureView(store: store)
     }
 }
 
