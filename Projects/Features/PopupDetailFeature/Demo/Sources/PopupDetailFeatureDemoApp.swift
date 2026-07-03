@@ -1,22 +1,32 @@
-import Data
+import ComposableArchitecture
 import Domain
 import PopupDetailFeature
 import SwiftUI
 
 @main
 struct PopupDetailFeatureDemoApp: App {
-    init() {
-        let popupRepository = PopupRepositoryImpl()
-        let popupUsecase = PopupUsecaseImpl(popupRepository: popupRepository)
-        let adminRepository = AdminRepositoryImpl()
-        let adminUsecase = AdminUsecaseImpl(adminRepository: adminRepository)
-        DIContainer.shared.register(popupUsecase, for: PopupUsecaseProtocol.self)
-        DIContainer.shared.register(adminUsecase, for: AdminUsecaseProtocol.self)
-    }
-
     var body: some Scene {
         WindowGroup {
-            PopupDetailFeatureView()
+            PopupDetailFeatureView(
+                store: Store(
+                    initialState: PopupDetailFeature.State(
+                        userUuid: "demo-user",
+                        popup: .popupMock
+                    )
+                ) {
+                    PopupDetailFeature()
+                } withDependencies: {
+                    $0.popupDetailClient = PopupDetailClient(
+                        increaseViewCount: { _ in },
+                        getPersonalRelatedPopupList: { _, _ in
+                            [.popupMock2]
+                        },
+                        addFavorite: { _, _ in },
+                        removeFavorite: { _, _ in },
+                        deactivatePopup: { _ in }
+                    )
+                }
+            )
         }
     }
 }

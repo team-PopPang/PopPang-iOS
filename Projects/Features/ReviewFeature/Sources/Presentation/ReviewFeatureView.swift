@@ -1,19 +1,20 @@
+import ComposableArchitecture
 import Domain
 import DSKit
 import SwiftUI
 
 public struct ReviewFeatureView: View {
-    @State private var compound: ReviewFeatureCompound
+    let store: StoreOf<ReviewFeature>
 
-    public init(reviews: [Review] = Review.mock) {
-        _compound = State(wrappedValue: ReviewFeatureCompound(reviews: reviews))
+    public init(store: StoreOf<ReviewFeature>) {
+        self.store = store
     }
 
     public var body: some View {
         VStack {
             ScrollView {
                 LazyVStack {
-                    ForEach(compound.state.reviews) { review in
+                    ForEach(store.reviews) { review in
                         ReviewCell(
                             nickname: review.nickname,
                             review: review.info,
@@ -30,7 +31,7 @@ public struct ReviewFeatureView: View {
                 isReversed: false,
                 height: 80
             ) {
-                compound.send(.reviewWriteButtonTapped)
+                store.send(.reviewWriteButtonTapped)
             }
         }
         .ignoresSafeArea(edges: .bottom)
@@ -39,7 +40,7 @@ public struct ReviewFeatureView: View {
                 rating: ratingBinding,
                 reviewText: reviewTextBinding,
                 onSubmit: {
-                    compound.send(.submitReview)
+                    store.send(.submitReview)
                 }
             )
             .presentationDetents([.height(320)])
@@ -50,22 +51,22 @@ public struct ReviewFeatureView: View {
 private extension ReviewFeatureView {
     var reviewSheetPresentedBinding: Binding<Bool> {
         Binding(
-            get: { compound.state.isPresentingReviewSheet },
-            set: { compound.send(.reviewSheetPresented($0)) }
+            get: { store.isPresentingReviewSheet },
+            set: { store.send(.reviewSheetPresented($0)) }
         )
     }
 
     var ratingBinding: Binding<Int> {
         Binding(
-            get: { compound.state.rating },
-            set: { compound.send(.ratingSelected($0)) }
+            get: { store.rating },
+            set: { store.send(.ratingSelected($0)) }
         )
     }
 
     var reviewTextBinding: Binding<String> {
         Binding(
-            get: { compound.state.reviewText },
-            set: { compound.send(.reviewTextChanged($0)) }
+            get: { store.reviewText },
+            set: { store.send(.reviewTextChanged($0)) }
         )
     }
 }
@@ -232,7 +233,6 @@ public struct ReviewWriteSheet: View {
 
             Button {
                 onSubmit()
-                dismiss()
             } label: {
                 Text("리뷰 쓰기")
                     .ppStyleFont(.scdream(.bold, size: 16))

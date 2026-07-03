@@ -24,10 +24,6 @@ let template = Template(
             templatePath: "FeatureView.stencil"
         ),
         .file(
-            path: "Projects/Features/\(name)Feature/Sources/Presentation/\(name)FeatureCompound.swift",
-            templatePath: "FeatureCompound.stencil"
-        ),
-        .file(
             path: "Projects/Features/\(name)Feature/Demo/Sources/\(name)FeatureDemoApp.swift",
             templatePath: "DemoApp.stencil"
         ),

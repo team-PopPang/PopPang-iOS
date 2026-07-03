@@ -47,7 +47,6 @@ Projects
 
 - SDK 초기화
 - repository/usecase live 조립
-- `DIContainer` 등록
 - `AppFeature` root store 생성으로 전환 예정
 - root/auth/main TCA navigation 소유 예정
 
@@ -68,7 +67,7 @@ Projects
 
 ### Features
 
-- 현재 기본 상태관리는 여전히 Compound 기반이다.
+- 현재 기본 상태관리는 TCA와 Compound가 공존하는 점진 전환 상태다.
 - TCA migration은 feature 단위 vertical slice로 진행 중이다.
 - feature는 `Domain`, `Core`, `DSKit`, `ThirdParty`를 주로 의존한다.
 - feature 간 직접 import는 예외를 줄이고 parent TCA reducer 조립을 우선한다.
@@ -78,7 +77,6 @@ Projects
 - Entity
 - Repository protocol
 - Usecase protocol / implementation
-- `DIContainer`와 `@Dependency`
 
 주의:
 
@@ -102,24 +100,26 @@ Projects
 
 ### 이미 `@Reducer`가 들어간 영역
 
+- `Projects/App/Sources/AppCore/Navigation/AppFeature.swift`
+- `Projects/App/Sources/AppCore/Navigation/MainTabFeature.swift`
+- `Projects/Features/AuthFeature/Sources/Presentation/AuthFeature.swift`
+- `Projects/Features/AuthFeature/Sources/Presentation/RegisterFlowFeature.swift`
+- `Projects/Features/CalendarFeature/Sources/Presentation/CalendarFeature.swift`
+- `Projects/Features/FavoritesFeature/Sources/Presentation/FavoritesFeature.swift`
+- `Projects/Features/MapFeature/Sources/Presentation/MapFeature.swift`
+- `Projects/Features/OnboardingFeature/Sources/Presentation/OnboardingFeature.swift`
 - `Projects/Features/HomeFeature/Sources/Presentation/HomeFeatureReducer.swift`
 - `Projects/Features/HomeFeature/Sources/Presentation/ComingPopupDetailReducer.swift`
+- `Projects/Features/SearchFeature/Sources/Presentation/SearchFeature.swift`
+- `Projects/Features/ProfileFeature/Sources/Presentation/ProfileFeature.swift`
+- `Projects/Features/AlertFeature/Sources/Presentation/AlertFeature.swift`
+- `Projects/Features/ReviewFeature/Sources/Presentation/ReviewFeature.swift`
 - `Projects/Features/PopupDetailFeature/Sources/Presentation/PopupDetailFeatureReducer.swift`
 
 ### 아직 `@Compound` 중심인 주요 영역
 
-- `AlertFeature`
-- `AuthFeature`
-- `RegisterFlowFeature`
-- `CalendarFeature`
-- `FavoritesFeature`
-- `MapFeature`
-- `OnboardingFeature`
 - `PopupRequestFeature`
 - `PopupRequestManagementFeature`
-- `ProfileFeature`
-- `ReviewFeature`
-- `SearchFeature`
 
 ## 현재 TCA 패턴
 
@@ -127,7 +127,7 @@ Projects
 
 1. `@Reducer` + `@ObservableState`
 2. feature 전용 `Client` struct 정의
-3. `DIContainer.shared.resolve(...)`를 `DependencyValues` bridge 뒤에 숨김
+3. concrete usecase는 composition root에서 조립하고 `DependencyValues` bridge로 feature client에 주입
 4. view는 `StoreOf<Reducer>`를 `@State`로 보유
 5. navigation은 TCA `Destination` / `Path` 중심으로 전환 중
 

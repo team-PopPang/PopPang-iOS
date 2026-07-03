@@ -1,20 +1,47 @@
 import AuthFeature
 import AuthenticationServices
+import ComposableArchitecture
 import Domain
 import SwiftUI
 
 @main
 struct AuthFeatureDemoApp: App {
-    init() {
-        DIContainer.shared.register(MockKakaoAuthUsecase(), for: KakaoAuthUsecaseProtocol.self)
-        DIContainer.shared.register(MockGoogleAuthUsecase(), for: GoogleAuthUsecaseProtocol.self)
-        DIContainer.shared.register(MockAppleAuthUsecase(), for: AppleAuthUsecaseProtocol.self)
-        DIContainer.shared.register(MockUserUsecase(), for: UserUsecaseProtocol.self)
-    }
-
     var body: some Scene {
         WindowGroup {
-            AuthFeatureView()
+            AuthFeatureView(
+                store: Store(
+                    initialState: AuthFeature.State()
+                ) {
+                    AuthFeature()
+                } withDependencies: {
+                    $0.authFeatureClient = AuthFeatureClient(
+                        kakaoLogin: {
+                            try await MockKakaoAuthUsecase().kakaoLogin()
+                        },
+                        googleLogin: {
+                            try await MockGoogleAuthUsecase().googleLogin()
+                        },
+                        appleLogin: { authorization in
+                            try await MockAppleAuthUsecase().appleLogin(authorization: authorization)
+                        },
+                        kakaoRegister: { user in
+                            try await MockKakaoAuthUsecase().kakaoRegister(user: user)
+                        },
+                        googleRegister: { user in
+                            try await MockGoogleAuthUsecase().googleRegister(user: user)
+                        },
+                        appleRegister: { user in
+                            try await MockAppleAuthUsecase().appleRegister(user: user)
+                        },
+                        checkNickname: { nickname in
+                            try await MockUserUsecase().checkNickname(nickname: nickname)
+                        },
+                        getRecommendList: {
+                            try await MockUserUsecase().getRecommandList()
+                        }
+                    )
+                }
+            )
         }
     }
 }

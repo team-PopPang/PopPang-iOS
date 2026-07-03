@@ -14,11 +14,14 @@
 - feature는 다른 feature를 직접 조립하지 않고 delegate action으로 intent만 올린다.
 - 전역 세션 상태의 source of truth는 `AppFeature.session`이다.
 - 현재 로그인 사용자는 `AppFeature.session.user`로 표현한다.
-- `MainTabFeature`는 전역 유저를 직접 저장하지 않고 parent projection state로 사용한다.
-- direct scope가 가능한 feature는 `session.user`를 projection해서 reducer/state에 주입한다.
-- 현재 `HomeFeature`는 `userUuid`, `nickname`, `isAdmin`을 feature state로 projection해서 direct scope한다.
-- legacy feature는 당분간 `SessionContext` 또는 primitive 값을 view init으로 주입한다.
-- 현재 `Calendar`, `Map`, `Favorites`, `Profile`은 `*LegacyBridgeFeature`가 session-derived primitive를 만들어 legacy view로 넘긴다.
+- `MainTabFeature`는 shared `session`을 child feature에 전달하고, 탭 로컬 navigation state를 소유한다.
+- direct scope가 가능한 feature는 shared `session`을 직접 읽거나 필요한 값을 projection해서 reducer/state에 주입한다.
+- 현재 `CalendarFeature`도 shared `session`을 직접 읽고 캘린더 로컬 상태를 feature state가 소유한다.
+- 현재 `FavoritesFeature`도 shared `session`을 직접 읽고 찜 로컬 상태를 feature state가 소유한다.
+- 현재 `HomeFeature`는 shared `session`을 직접 읽고 홈 로컬 상태를 feature state가 소유한다.
+- 현재 `MapFeature`도 shared `session`을 직접 읽고 지도 로컬 상태를 feature state가 소유한다.
+- 현재 `ProfileFeature`와 `ProfileSettingFeature`도 shared `session`을 직접 읽고 프로필 로컬 상태를 feature state가 소유한다.
+- legacy feature는 당분간 session-derived primitive 값을 view init으로 주입한다.
 
 ## 용어
 
@@ -247,7 +250,7 @@ PopPang
 
 ## Session Injection Strategy
 
-세션 source of truth는 항상 `AppFeature.session`이다. 하위 feature는 이 세션을 직접 소유하지 않고 parent가 projection한 값만 받는다.
+세션 source of truth는 항상 `AppFeature.session`이다. 하위 feature는 필요 시 parent가 explicit shared state로 내려준 `session`을 읽는다.
 
 ### 1. TCA-ready feature는 state projection + direct scope
 
@@ -256,21 +259,14 @@ PopPang
 ```swift
 @ObservableState
 struct AppFeature.State: Equatable {
-    var session = SessionState()
+    @Shared var session: UserSession
     var mainTabCore: MainTabFeature.CoreState?
 }
 ```
 
 ```swift
-init(session: SessionState) {
-    guard let context = session.context else {
-        preconditionFailure("Home core requires a logged in session.")
-    }
-    self.home = .init(
-        userUuid: context.userUuid,
-        nickname: context.nickname,
-        isAdmin: context.isAdmin
-    )
+init(session: Shared<UserSession>) {
+    self.home = .init(session: session)
 }
 ```
 
@@ -278,7 +274,7 @@ init(session: SessionState) {
 HomeFeatureView(store: store.scope(state: \.core.home, action: \.home))
 ```
 
-이 방식에서는 view가 `userUuid`, `nickname`, `isAdmin` 같은 session-derived primitive를 따로 받지 않는다. feature state가 이미 그 값을 들고 있고, reducer는 feature-scoped dependency를 직접 사용한다.
+이 방식에서는 view가 `userUuid`, `nickname`, `isAdmin` 같은 session-derived primitive를 따로 받지 않는다. feature state는 shared `session`을 통해 최신 값을 읽고, reducer는 feature-scoped dependency를 직접 사용한다.
 
 ```swift
 @Reducer
@@ -292,30 +288,19 @@ public struct HomeFeature {
 아직 내부 state/effect/navigation을 TCA reducer로 옮기지 않은 탭은 `MainTabFeature` 아래에 bridge reducer를 둔다. bridge reducer는 session-derived primitive만 만들고 실제 레거시 화면으로 전달한다.
 
 ```swift
-var profile: ProfileLegacyBridgeFeature.State {
-    get { .init(sessionContext: sessionContext) }
-    set {}
-}
-```
-
-```swift
-private struct ProfileLegacyBridgeView: View {
-    let store: StoreOf<ProfileLegacyBridgeFeature>
-
-    var body: some View {
-        ProfileFeatureView(
-            userUuid: store.userUuid,
-            nickname: store.nickname,
-            isAlerted: store.isAlerted,
-            onShowAlert: { _ in
-                store.send(.alertTapped)
-            }
-        )
+struct LegacyTabBridgeFeature {
+    @ObservableState
+    struct State: Equatable {
+        let userUuid: String
+    }
+    
+    enum Action: Equatable {
+        case popupSelected(Popup)
     }
 }
 ```
 
-이 단계에서는 legacy feature 내부의 기존 `Compound`와 기존 `@Dependency`/`DIContainer` 구조를 유지한다. 즉 `SessionClient`를 억지로 레거시 feature마다 넣지 않고, root session만 parent가 projection해서 bridge에서 넘긴다.
+이 단계에서는 legacy feature 내부의 기존 상태 기반 구조를 유지한다. 즉 `LocalSessionClient`를 억지로 레거시 feature마다 넣지 않고, root session에서 계산한 primitive만 parent bridge가 넘긴다.
 
 ### 3. 점진 마이그레이션의 완료 기준
 
@@ -383,7 +368,7 @@ API, SDK, 위치, 딥링크 같은 작업 도구를 TCA dependency로 감싸는 
 - LocationClient
 - DeepLinkClient
 
-현재는 `DIContainer.shared.resolve(...)`와 `@Dependency` bridge가 섞여 있다. 새 TCA feature는 feature-scoped client를 만들고, 내부에서 기존 usecase protocol을 감싼다. 이때 TCA client의 `liveValue` 안에서 `DIContainer.shared.resolve(...)`를 직접 호출하지 않고, `AppBootstrap` 같은 composition root에서 concrete client를 조립해 `withDependencies`로 주입한다.
+현재는 feature-scoped client와 `@Dependency` bridge를 기준으로 TCA dependency를 주입한다. 새 TCA feature는 feature-scoped client를 만들고, 내부에서 기존 usecase protocol을 감싼다. 이때 TCA client의 `liveValue` 안에서 legacy container resolve를 직접 호출하지 않고, `AppBootstrap` 같은 composition root에서 concrete client를 조립해 `withDependencies`로 주입한다.
 
 ### Shared.Caches
 
@@ -484,7 +469,9 @@ case .destination:
 - `HomeFeature`: direct scope 완료, search/popupRequest는 feature 내부 tree-based navigation으로 소유
 - `HomeFeature`에서 시작하는 연속 push(`coming popup list -> popup detail`)는 `MainTabFeature.path`가 소유
 - `popupRequestManagement`처럼 메인 공통 흐름으로 이어지는 push는 `MainTabFeature.path`가 소유
-- `Calendar/Map/Favorites/Profile`: bridge reducer를 유지하며 session primitive만 주입
+- `CalendarFeature`: direct scope 완료, region/sort sheet는 view local state로 두고 상세/알림 이동은 `MainTabFeature.path`가 소유
+- `FavoritesFeature`: direct scope 완료, segmented selection은 view local state로 두고 상세/알림 이동과 홈 탭 복귀 intent만 parent로 올림
+- `Map`: bridge reducer를 유지하며 session primitive만 주입
 - 각 탭이 TCA reducer entry를 갖추면 `*LegacyBridgeFeature`를 제거하고 direct scope로 전환
 
 ## Do Not

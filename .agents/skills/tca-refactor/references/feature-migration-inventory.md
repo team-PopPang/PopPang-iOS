@@ -23,27 +23,27 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 
 ### TCA 예시가 이미 존재하는 feature
 
-- `HomeFeature`
-  - `HomeFeatureReducer`
-  - `ComingPopupDetailReducer`
-- `PopupDetailFeature`
-  - `PopupDetailFeatureReducer`
-
-### Compound 기반 feature
-
-- `AlertFeature`
 - `AuthFeature`
 - `RegisterFlowFeature`
 - `CalendarFeature`
 - `FavoritesFeature`
 - `MapFeature`
 - `OnboardingFeature`
+- `AlertFeature`
+- `ReviewFeature`
+- `HomeFeature`
+  - `HomeFeatureReducer`
+  - `ComingPopupDetailReducer`
+- `ProfileFeature`
+- `PopupDetailFeature`
+  - `PopupDetailFeatureReducer`
+- `SearchFeature`
+
+### Compound 기반 feature
+
 - `PopupRequestFeature`
 - `PopupRequestManagementFeature`
 - `PopupRequestManagementDetailFeature`
-- `ProfileFeature`
-- `ReviewFeature`
-- `SearchFeature`
 
 ## 권장 전환 순서
 
@@ -66,8 +66,6 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 
 - `SearchFeature`
 - `AlertFeature`
-- `FavoritesFeature`
-- `CalendarFeature`
 
 이유:
 
@@ -87,19 +85,6 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 
 - user/admin flow는 popup list 계열보다 상태 책임이 다르다.
 - 세션, 인증, 관리자 동선이 묶여 있어 별도 묶음으로 보는 편이 안전하다.
-
-### 마지막
-
-- `MapFeature`
-
-이유:
-
-- 위치 정보
-- bottom sheet 두 개
-- category/filter/detail 상태
-- 지도 중심 좌표
-
-복잡도가 가장 높아 별도 대형 작업으로 다루는 편이 좋다.
 
 ## 현재 issue 매핑
 
@@ -175,6 +160,7 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 - filter state와 detail state 분리
 - parent reducer로 올릴 navigation intent와 feature 내부 state 구분
 - `NaverMapCoordinator` SDK bridge와 화면 전환 coordinator를 구분
+- feature-scoped dependency client와 SDK callback bridge 경계를 분리
 
 ## TCA 전환이 끝난 뒤 검토할 구조 변경
 

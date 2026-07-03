@@ -1,6 +1,5 @@
-import Compound
+import ComposableArchitecture
 import Core
-import Domain
 import DSKit
 import SwiftUI
 import UIKit
@@ -8,16 +7,10 @@ import UserNotifications
 import WebKit
 
 public struct ProfileFeatureView: View {
-    @State private var compound: ProfileFeatureCompound
-    @State private var tempIsOn: Bool
+    let store: StoreOf<ProfileFeature>
     @State private var showPermissionAlert = false
 
     @Environment(\.openURL) private var openURL
-
-    private let onShowAlert: (String) -> Void
-    private let onProfileSetting: (String, String, Bool) -> Void
-    private let onNotification: () -> Void
-    private let onServiceTerms: () -> Void
 
     private let email = SupportEmail(
         toAddress: "poppang.app@gmail.com",
@@ -26,26 +19,8 @@ public struct ProfileFeatureView: View {
     )
     private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
 
-    public init(
-        userUuid: String = "demo-user",
-        nickname: String = "홍길동",
-        isAlerted: Bool = false,
-        onShowAlert: @escaping (String) -> Void = { _ in },
-        onProfileSetting: @escaping (String, String, Bool) -> Void = { _, _, _ in },
-        onNotification: @escaping () -> Void = {},
-        onServiceTerms: @escaping () -> Void = {}
-    ) {
-        let compound = ProfileFeatureCompound(
-            userUuid: userUuid,
-            nickname: nickname,
-            isAlerted: isAlerted
-        )
-        _compound = State(wrappedValue: compound)
-        _tempIsOn = State(wrappedValue: compound.state.isAlerted)
-        self.onShowAlert = onShowAlert
-        self.onProfileSetting = onProfileSetting
-        self.onNotification = onNotification
-        self.onServiceTerms = onServiceTerms
+    public init(store: StoreOf<ProfileFeature>) {
+        self.store = store
     }
 
     public var body: some View {
@@ -58,22 +33,18 @@ public struct ProfileFeatureView: View {
                 Spacer()
 
                 IconButton {
-                    onShowAlert(compound.state.userUuid)
+                    store.send(.alertTapped)
                 }
             }
 
             VStack(spacing: 20) {
                 NavigationButton(
-                    title: compound.state.nickname,
+                    title: store.nickname,
                     buttonType: .navigation,
                     font: .bold,
                     size: 15
                 ) {
-                    onProfileSetting(
-                        compound.state.userUuid,
-                        compound.state.nickname,
-                        compound.state.isAlerted
-                    )
+                    store.send(.profileSettingTapped)
                 }
                 .padding(.horizontal, 24)
 
@@ -91,17 +62,21 @@ public struct ProfileFeatureView: View {
 
                     Spacer()
 
-                    Toggle("", isOn: $tempIsOn)
+                    Toggle(
+                        "",
+                        isOn: Binding(
+                            get: { store.localIsAlerted },
+                            set: { handleToggleChange($0) }
+                        )
+                    )
                         .labelsHidden()
                         .tint(.mainOrange)
-                        .onChange(of: tempIsOn) { _, newValue in
-                            handleToggleChange(newValue)
-                        }
+                        .disabled(store.isLoading)
                 }
                 .padding(.horizontal, 24)
 
                 NavigationButton(title: "공지사항", buttonType: .navigation) {
-                    onNotification()
+                    store.send(.notificationsTapped)
                 }
                 .padding(.horizontal, 24)
 
@@ -111,11 +86,11 @@ public struct ProfileFeatureView: View {
                 .padding(.horizontal, 24)
 
                 NavigationButton(title: "서비스 이용약관", buttonType: .navigation) {
-                    onServiceTerms()
+                    store.send(.serviceTermsTapped)
                 }
                 .padding(.horizontal, 24)
 
-                if let errorMessage = compound.state.errorMessage {
+                if let errorMessage = store.errorMessage {
                     Text(errorMessage)
                         .ppStyleFont(.scdream(.regular, size: 12))
                         .foregroundStyle(Color.mainRed)
@@ -133,11 +108,7 @@ public struct ProfileFeatureView: View {
                     .foregroundStyle(Color.mainGray2)
             }
             .padding(.trailing, 24)
-            .padding(.bottom, 24)
-        }
-        .compoundOnLoad(compound, .onAppear)
-        .onAppear {
-            tempIsOn = compound.state.isAlerted
+                .padding(.bottom, 24)
         }
         .alert("알림 허용", isPresented: $showPermissionAlert) {
             Button("설정으로 이동") {
@@ -157,23 +128,21 @@ public struct ProfileFeatureView: View {
             switch settings.authorizationStatus {
             case .denied:
                 DispatchQueue.main.async {
-                    tempIsOn = false
                     showPermissionAlert = true
                 }
             case .notDetermined:
                 UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
                     DispatchQueue.main.async {
                         if granted {
-                            compound.send(.alertStatus(newValue))
+                            store.send(.alertStatusChanged(newValue))
                         } else {
-                            tempIsOn = false
                             showPermissionAlert = true
                         }
                     }
                 }
             case .authorized, .provisional, .ephemeral:
                 DispatchQueue.main.async {
-                    compound.send(.alertStatus(newValue))
+                    store.send(.alertStatusChanged(newValue))
                 }
             @unknown default:
                 break
@@ -183,30 +152,14 @@ public struct ProfileFeatureView: View {
 }
 
 public struct ProfileSettingFeatureView: View {
-    @State private var compound: ProfileFeatureCompound
+    let store: StoreOf<ProfileSettingFeature>
     @State private var showHardDeleteAlert = false
+    @State private var draftNickname = ""
     @FocusState private var isFocused: Bool
     @Environment(\.dismiss) private var dismiss
 
-    private let onLogout: () -> Void
-    private let onNicknameUpdated: (String) -> Void
-
-    public init(
-        userUuid: String,
-        nickname: String,
-        isAlerted: Bool,
-        onLogout: @escaping () -> Void = {},
-        onNicknameUpdated: @escaping (String) -> Void = { _ in }
-    ) {
-        _compound = State(
-            wrappedValue: ProfileFeatureCompound(
-                userUuid: userUuid,
-                nickname: nickname,
-                isAlerted: isAlerted
-            )
-        )
-        self.onLogout = onLogout
-        self.onNicknameUpdated = onNicknameUpdated
+    public init(store: StoreOf<ProfileSettingFeature>) {
+        self.store = store
     }
 
     public var body: some View {
@@ -214,16 +167,13 @@ public struct ProfileSettingFeatureView: View {
             HStack(spacing: 10) {
                 RoundedTextField(
                     placeholder: "닉네임을 입력해 주세요",
-                    text: Binding(
-                        get: { compound.state.newNickname },
-                        set: { compound.send(.nicknameChanged($0)) }
-                    ),
-                    validationState: compound.state.validationState
+                    text: $draftNickname,
+                    validationState: store.validationState
                 )
                 .focused($isFocused)
 
                 Button {
-                    compound.send(.checkNewNickname)
+                    store.send(.validateNicknameTapped)
                 } label: {
                     Text("중복확인")
                         .font(.scdream(.medium, size: 12))
@@ -232,11 +182,12 @@ public struct ProfileSettingFeatureView: View {
                         .background(Color.mainOrange)
                         .cornerRadius(5)
                 }
+                .disabled(store.isLoading)
             }
 
             validationMessage
 
-            if let errorMessage = compound.state.errorMessage {
+            if let errorMessage = store.errorMessage {
                 Text(errorMessage)
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainRed)
@@ -244,7 +195,7 @@ public struct ProfileSettingFeatureView: View {
             }
 
             Button {
-                onLogout()
+                store.send(.logoutTapped)
             } label: {
                 Text("로그아웃")
                     .frame(height: 22)
@@ -267,42 +218,31 @@ public struct ProfileSettingFeatureView: View {
 
             MainOrangeButton(
                 buttonTitle: "닉네임 변경",
-                buttonColor: compound.state.validationState == .success ? Color.mainOrange : Color.mainGray2
+                buttonColor: store.validationState == .success ? Color.mainOrange : Color.mainGray2
             ) {
-                compound.send(.updateNewNickname)
-                UIApplication.shared.endEditing(true)
+                isFocused = false
+                store.send(.updateNicknameTapped)
             }
-            .disabled(compound.state.validationState != .success)
-            .opacity(compound.state.validationState == .success ? 1.0 : 0.8)
+            .disabled(store.validationState != .success || store.isLoading)
+            .opacity(store.validationState == .success ? 1.0 : 0.8)
             .padding(.bottom, 20)
         }
         .padding(.top, 24)
         .padding(.horizontal, 24)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("프로필 설정")
-                    .ppStyleFont(.scdream(.medium, size: 18))
-                    .padding(.top, 10)
-            }
+        .ppBackNavigationBar(title: "프로필 설정") {
+            isFocused = false
+            dismiss()
         }
         .onAppear {
-            compound.send(.clearNickname)
+            draftNickname = store.newNickname
             isFocused = true
         }
-        .onChange(of: compound.state.didUpdateNickname) { _, didUpdate in
-            guard didUpdate else { return }
-            onNicknameUpdated(compound.state.nickname)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                dismiss()
-            }
-        }
-        .onChange(of: compound.state.didDeleteUser) { _, didDelete in
-            guard didDelete else { return }
-            onLogout()
+        .onChange(of: draftNickname) { _, newValue in
+            store.send(.nicknameChanged(newValue))
         }
         .alert("회원 탈퇴", isPresented: $showHardDeleteAlert) {
             Button("탈퇴하기", role: .destructive) {
-                compound.send(.hardDeleteUser)
+                store.send(.hardDeleteTapped)
             }
             Button("취소", role: .cancel) {}
         } message: {
@@ -312,8 +252,8 @@ public struct ProfileSettingFeatureView: View {
 
     @ViewBuilder
     private var validationMessage: some View {
-        if !compound.state.newNickname.isEmpty {
-            switch compound.state.validationState {
+        if !store.newNickname.isEmpty {
+            switch store.validationState {
             case .success:
                 Text("사용 가능한 닉네임입니다.")
                     .font(.scdream(.medium, size: 12))
@@ -347,18 +287,28 @@ public struct ProfileSettingFeatureView: View {
 }
 
 public struct NotificationFeatureView: View {
+    @Environment(\.dismiss) private var dismiss
+
     public init() {}
 
     public var body: some View {
         WebView(url: ExternalLinkConfig.notificationURL)
+            .ppBackNavigationBar(title: "공지사항") {
+                dismiss()
+            }
     }
 }
 
 public struct ServiceTermsFeatureView: View {
+    @Environment(\.dismiss) private var dismiss
+
     public init() {}
 
     public var body: some View {
         WebView(url: ExternalLinkConfig.serviceTermsURL)
+            .ppBackNavigationBar(title: "서비스 이용약관") {
+                dismiss()
+            }
     }
 }
 

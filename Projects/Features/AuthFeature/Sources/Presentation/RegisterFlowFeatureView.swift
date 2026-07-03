@@ -1,23 +1,14 @@
-import Compound
+import ComposableArchitecture
 import Domain
 import DSKit
 import SwiftUI
-import UIKit
 import UserNotifications
 
 public struct RegisterFlowFeatureView: View {
-    @State private var compound: RegisterFlowFeatureCompound
+    let store: StoreOf<RegisterFlowFeature>
 
-    public init(
-        user: User?,
-        onComplete: @escaping @MainActor (User) -> Void = { _ in }
-    ) {
-        self._compound = State(
-            initialValue: RegisterFlowFeatureCompound(
-                user: user,
-                onComplete: onComplete
-            )
-        )
+    public init(store: StoreOf<RegisterFlowFeature>) {
+        self.store = store
     }
 
     public var body: some View {
@@ -26,16 +17,16 @@ public struct RegisterFlowFeatureView: View {
             progress
             stepPages
         }
-        .compoundOnLoad(compound, .onAppear)
+        .task {
+            store.send(.onAppear)
+        }
     }
 
     private var header: some View {
         HStack {
-            if compound.state.currentStep != .nickname {
+            if store.currentStep != .nickname {
                 Button {
-                    withAnimation(.easeInOut) {
-                        goBack()
-                    }
+                    store.send(.backTapped)
                 } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 20))
@@ -46,9 +37,7 @@ public struct RegisterFlowFeatureView: View {
                 Spacer()
 
                 Button {
-                    withAnimation(.easeOut) {
-                        skip()
-                    }
+                    store.send(.skipTapped)
                 } label: {
                     Text("건너뛰기")
                         .ppStyleFont(.scdream(.regular, size: 13))
@@ -64,18 +53,18 @@ public struct RegisterFlowFeatureView: View {
             }
         }
         .frame(height: 44)
-        .background(Color.white)
+        .background(Color(uiColor: .white))
     }
 
     private var progress: some View {
         ProgressView(
-            value: Double(compound.state.currentStep.index + 1),
+            value: Double(store.currentStep.index + 1),
             total: Double(RegisterRoute.allCases.count)
         )
         .progressViewStyle(.linear)
         .tint(.orange)
         .frame(height: 4)
-        .animation(.easeInOut(duration: 0.3), value: compound.state.currentStep)
+        .animation(.easeInOut(duration: 0.3), value: store.currentStep)
     }
 
     private var stepPages: some View {
@@ -83,44 +72,46 @@ public struct RegisterFlowFeatureView: View {
             ZStack {
                 NicknameSettingStepView(
                     nickname: Binding(
-                        get: { compound.state.nickname },
-                        set: { compound.send(.nicknameChanged($0)) }
+                        get: { store.nickname },
+                        set: { store.send(.nicknameChanged($0)) }
                     ),
-                    validationState: compound.state.validationState,
-                    errorMessage: compound.state.errorMessage,
-                    isSubmitting: compound.state.isSubmitting,
+                    validationState: store.validationState,
+                    errorMessage: store.errorMessage,
+                    isSubmitting: store.isSubmitting,
                     onValidate: {
-                        compound.send(.validateNickname(compound.state.nickname))
+                        store.send(.validateNicknameTapped)
                     },
                     onNext: {
-                        withAnimation(.easeInOut) {
-                            compound.send(.setStep(.category, isForward: true))
-                        }
+                        store.send(.nextFromNicknameTapped)
                     }
                 )
                 .frame(width: geo.size.width, height: geo.size.height)
                 .offset(x: offset(for: .nickname, in: geo.size.width))
 
                 CategorySettingStepView(
-                    recommendList: compound.state.recommendList,
-                    selectedCategories: compound.state.selectedCategories,
-                    onToggle: { compound.send(.categoryToggled($0)) },
+                    recommendList: store.recommendList,
+                    selectedCategories: store.selectedCategories,
+                    onToggle: { store.send(.categoryToggled($0)) },
                     onNext: {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            compound.send(.setStep(.keyword, isForward: true))
-                        }
+                        store.send(.nextFromCategoryTapped)
                     }
                 )
                 .frame(width: geo.size.width, height: geo.size.height)
                 .offset(x: offset(for: .category, in: geo.size.width))
 
                 KeywordSettingStepView(
-                    keywords: compound.state.keywords,
-                    isSubmitting: compound.state.isSubmitting,
-                    errorMessage: compound.state.errorMessage,
-                    onAddKeyword: { compound.send(.keywordAdded($0)) },
-                    onRemoveKeyword: { compound.send(.keywordRemoved($0)) },
-                    onNext: completeRegistration
+                    text: Binding(
+                        get: { store.keywordInput },
+                        set: { store.send(.keywordInputChanged($0)) }
+                    ),
+                    keywords: store.keywords,
+                    isSubmitting: store.isSubmitting,
+                    errorMessage: store.errorMessage,
+                    onAddKeyword: { store.send(.keywordAdded($0)) },
+                    onRemoveKeyword: { store.send(.keywordRemoved($0)) },
+                    onNext: {
+                        store.send(.completeRegistrationTapped)
+                    }
                 )
                 .frame(width: geo.size.width, height: geo.size.height)
                 .offset(x: offset(for: .keyword, in: geo.size.width))
@@ -129,43 +120,9 @@ public struct RegisterFlowFeatureView: View {
         .clipped()
     }
 
-    private func goBack() {
-        switch compound.state.currentStep {
-        case .keyword:
-            compound.send(.setStep(.category, isForward: false))
-        case .category:
-            compound.send(.setStep(.nickname, isForward: false))
-        case .nickname:
-            break
-        }
-    }
-
-    private func skip() {
-        switch compound.state.currentStep {
-        case .category:
-            compound.send(.setStep(.keyword, isForward: true))
-        case .keyword:
-            completeRegistration()
-        case .nickname:
-            break
-        }
-    }
-
     private func offset(for route: RegisterRoute, in width: CGFloat) -> CGFloat {
-        let diff = route.index - compound.state.currentStep.index
+        let diff = route.index - store.currentStep.index
         return CGFloat(diff) * width
-    }
-
-    private func completeRegistration() {
-        guard !compound.state.isSubmitting else { return }
-
-        compound.send(
-            .completeRegistration(
-                nickname: compound.state.nickname,
-                keywords: compound.state.keywords,
-                selectedCategories: compound.state.selectedCategories
-            )
-        )
     }
 }
 
@@ -226,12 +183,9 @@ private struct NicknameSettingStepView: View {
                 buttonTitle: "다음",
                 buttonColor: validationState == .success ? Color.mainOrange : Color.mainGray2
             ) {
-                UIApplication.shared.endEditing()
-                Task {
-                    try? await Task.sleep(nanoseconds: 700_000_000)
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        onNext()
-                    }
+                isFocused = false
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    onNext()
                 }
             }
             .disabled(validationState != .success)
@@ -330,12 +284,8 @@ private struct CategorySettingStepView: View {
                 buttonTitle: "다음",
                 buttonColor: isNextEnabled ? Color.mainOrange : Color.mainGray2
             ) {
-                UIApplication.shared.endEditing()
-                Task {
-                    try? await Task.sleep(nanoseconds: 700_000_000)
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        onNext()
-                    }
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    onNext()
                 }
             }
             .disabled(!isNextEnabled)
@@ -347,6 +297,8 @@ private struct CategorySettingStepView: View {
 }
 
 private struct KeywordSettingStepView: View {
+    @Binding var text: String
+
     let keywords: [String]
     let isSubmitting: Bool
     let errorMessage: String?
@@ -354,9 +306,9 @@ private struct KeywordSettingStepView: View {
     let onRemoveKeyword: (Int) -> Void
     let onNext: () -> Void
 
-    @State private var text = ""
     @State private var showPermissionAlert = false
     @State private var showKeywordLimitAlert = false
+
     private var isNextEnabled: Bool { !keywords.isEmpty }
 
     var body: some View {
@@ -485,7 +437,6 @@ private struct KeywordSettingStepView: View {
                     DispatchQueue.main.async {
                         if granted {
                             onAddKeyword(trimmed)
-                            text = ""
                         } else {
                             showPermissionAlert = true
                         }
@@ -494,21 +445,10 @@ private struct KeywordSettingStepView: View {
             case .authorized, .provisional, .ephemeral:
                 DispatchQueue.main.async {
                     onAddKeyword(trimmed)
-                    text = ""
                 }
             @unknown default:
                 break
             }
         }
-    }
-}
-
-private extension UIApplication {
-    func endEditing() {
-        connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .flatMap(\.windows)
-            .first(where: \.isKeyWindow)?
-            .endEditing(true)
     }
 }

@@ -51,20 +51,9 @@ struct AppDependencyRegistry {
     init(repositories: AppRepositoryRegistry) {
         self.repositories = repositories
         self.usecases = AppUsecaseRegistry(repositories: repositories)
-        registerUsecases()
     }
 
     static func live() -> AppDependencyRegistry {
         AppDependencyRegistry(repositories: .live())
-    }
-
-    private func registerUsecases() {
-        DIContainer.shared.register(usecases.adminUsecase, for: AdminUsecaseProtocol.self)
-        DIContainer.shared.register(usecases.appleAuthUsecase, for: AppleAuthUsecaseProtocol.self)
-        DIContainer.shared.register(usecases.googleAuthUsecase, for: GoogleAuthUsecaseProtocol.self)
-        DIContainer.shared.register(usecases.kakaoAuthUsecase, for: KakaoAuthUsecaseProtocol.self)
-        DIContainer.shared.register(usecases.popupUsecase, for: PopupUsecaseProtocol.self)
-        DIContainer.shared.register(usecases.popupSubmissionUsecase, for: PopupSubmissionUsecaseProtocol.self)
-        DIContainer.shared.register(usecases.userUsecase, for: UserUsecaseProtocol.self)
     }
 }

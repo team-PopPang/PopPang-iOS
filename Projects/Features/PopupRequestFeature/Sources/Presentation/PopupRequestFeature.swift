@@ -40,7 +40,7 @@ public struct PopupRequestFeature {
         }
     }
 
-    @Dependencies.Dependency(\.popupRequestClient) private var popupRequestClient: PopupRequestClient
+    @Dependency(\.popupRequestClient) private var popupRequestClient: PopupRequestClient
 
     public init() {}
 

@@ -10,7 +10,7 @@ public struct PopupDetailFeatureView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
 
-    @Bindable var store: StoreOf<PopupDetailFeatureReducer>
+    @Bindable var store: StoreOf<PopupDetailFeature>
     @State private var showDeactivateAlert = false
     @State private var showingPopup = false
 
@@ -21,7 +21,7 @@ public struct PopupDetailFeatureView: View {
     private let onShowReviews: ([Review]) -> Void
 
     public init(
-        store: StoreOf<PopupDetailFeatureReducer>,
+        store: StoreOf<PopupDetailFeature>,
         isAdmin: Bool = false,
         hidesSystemTabBar: Bool = true,
         onSelectRelatedPopup: @escaping (String, Popup) -> Void = { _, _ in },
@@ -47,12 +47,12 @@ public struct PopupDetailFeatureView: View {
     ) {
         self.init(
             store: Store(
-                initialState: PopupDetailFeatureReducer.State(
+                initialState: PopupDetailFeature.State(
                     userUuid: userUuid,
                     popup: popup
                 )
             ) {
-                PopupDetailFeatureReducer()
+                PopupDetailFeature()
             },
             isAdmin: isAdmin,
             hidesSystemTabBar: hidesSystemTabBar,

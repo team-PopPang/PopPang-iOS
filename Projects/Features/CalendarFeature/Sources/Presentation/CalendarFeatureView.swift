@@ -1,4 +1,4 @@
-import Compound
+import ComposableArchitecture
 import Core
 import Domain
 import DSKit
@@ -6,21 +6,18 @@ import Kingfisher
 import SwiftUI
 
 public struct CalendarFeatureView: View {
-    @State private var compound: CalendarFeatureCompound
-    @State private var sheetRoute: CalendarFeatureCompound.SheetRoute?
+    private enum SheetRoute: String, Identifiable {
+        case region
+        case sort
 
-    private let onShowAlert: (String) -> Void
-    private let onSelectPopup: (String, Popup) -> Void
+        var id: String { rawValue }
+    }
 
-    public init(
-        userUuid: String = "demo-user",
-        onShowAlert: @escaping (String) -> Void = { _ in },
-        onSelectPopup: @escaping (String, Popup) -> Void = { _, _ in }
-    ) {
-        let compound = CalendarFeatureCompound(userUuid: userUuid)
-        _compound = State(wrappedValue: compound)
-        self.onShowAlert = onShowAlert
-        self.onSelectPopup = onSelectPopup
+    let store: StoreOf<CalendarFeature>
+    @State private var sheetRoute: SheetRoute?
+
+    public init(store: StoreOf<CalendarFeature>) {
+        self.store = store
     }
 
     public var body: some View {
@@ -33,42 +30,38 @@ public struct CalendarFeatureView: View {
                 Spacer()
 
                 IconButton {
-                    onShowAlert(compound.state.userUuid)
+                    store.send(.alertTapped)
                 }
             }
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
                     CustomCalendar(
-                        eventCounts: compound.state.popupEventCounts,
+                        eventCounts: store.popupEventCounts,
                         onDateSelected: { date in
-                            compound.send(.dateSelected(date))
+                            store.send(.dateSelected(date))
                         }
                     )
                     .padding(.top, 24)
                     .padding(.horizontal, 15)
 
                     CalendarPopupListView(
-                        userUuid: compound.state.userUuid,
-                        date: compound.state.selectedDate,
-                        popups: compound.state.selectedPopups,
-                        regions: compound.state.regions,
-                        selectedRegion: compound.state.selectedRegion,
-                        selectedDistrict: compound.state.selectedDistrict,
-                        selectedOption: compound.state.selectedOption,
-                        isLoading: compound.state.isLoading,
-                        errorMessage: compound.state.errorMessage,
+                        date: store.selectedDate,
+                        popups: store.selectedPopups,
+                        selectedOption: store.selectedOption,
+                        isLoading: store.isLoading,
+                        errorMessage: store.errorMessage,
                         onRegionTapped: {
-                            compound.send(.regionSheetPresented(true))
+                            sheetRoute = .region
                         },
                         onSortTapped: {
-                            compound.send(.sortSheetPresented(true))
+                            sheetRoute = .sort
                         },
                         onToggleLike: { popup in
-                            compound.send(.toggleLike(popup))
+                            store.send(.toggleLike(popup))
                         },
                         onSelectPopup: { popup in
-                            onSelectPopup(compound.state.userUuid, popup)
+                            store.send(.popupSelected(popup))
                         }
                     )
                     .padding(.horizontal, 15)
@@ -100,16 +93,13 @@ public struct CalendarFeatureView: View {
             Spacer()
         }
         .onAppear {
-            compound.send(.onAppear)
-        }
-        .trigger(of: compound, \.$presentedSheet) { route in
-            sheetRoute = route
+            store.send(.onAppear)
         }
         .sheet(item: $sheetRoute) { route in
             switch route {
             case .region:
                 RegionButtonSheet(
-                    regions: compound.state.regions,
+                    regions: store.regions,
                     selectedRegion: selectedRegionBinding,
                     selectedDistrict: selectedDistrictBinding,
                     regionTitle: { $0.region },
@@ -127,39 +117,35 @@ public struct CalendarFeatureView: View {
 private extension CalendarFeatureView {
     var selectedRegionBinding: Binding<RegionList?> {
         Binding(
-            get: { compound.state.selectedRegion },
+            get: { store.selectedRegion },
             set: { region in
                 guard let region else { return }
-                compound.send(.regionSelected(region))
+                store.send(.regionSelected(region))
             }
         )
     }
 
     var selectedDistrictBinding: Binding<String?> {
         Binding(
-            get: { compound.state.selectedDistrict },
+            get: { store.selectedDistrict },
             set: { district in
                 guard let district else { return }
-                compound.send(.districtSelected(district))
+                store.send(.districtSelected(district))
             }
         )
     }
 
     var selectedOptionBinding: Binding<SortButton.SortOption> {
         Binding(
-            get: { compound.state.selectedOption },
-            set: { compound.send(.sortOptionSelected($0)) }
+            get: { store.selectedOption },
+            set: { store.send(.sortOptionSelected($0)) }
         )
     }
 }
 
 private struct CalendarPopupListView: View {
-    let userUuid: String
     let date: Date
     let popups: [Popup]
-    let regions: [RegionList]
-    let selectedRegion: RegionList?
-    let selectedDistrict: String?
     let selectedOption: SortButton.SortOption
     let isLoading: Bool
     let errorMessage: String?

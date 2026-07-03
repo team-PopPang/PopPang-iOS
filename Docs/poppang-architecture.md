@@ -22,7 +22,7 @@ PopPang은 팝업스토어 정보를 키워드, 검색, 필터, 달력, 지도, 
 - SwiftUI 기반 iOS 앱
 - Tuist 기반 workspace/project 구성
 - Micro Feature Architecture
-- Compound 기반 Feature 상태 관리를 TCA로 점진 전환 중
+- Feature 상태를 TCA로 점진 전환 중
 - 화면 전환은 TCA tree-based / stack-based navigation 기준
 - Moya 기반 네트워크와 async/await wrapper
 - Firebase, KakaoSDK, GoogleSignIn, Google Mobile Ads, NMapsMap, Kingfisher, BottomSheet 사용
@@ -72,7 +72,6 @@ Projects
 - SDK 초기화
 - 앱 bootstrap
 - repository/usecase live 조립
-- `DIContainer` 등록
 - `AppFeature` root store 생성
 - TCA root/auth/main navigation 소유
 - Info.plist, entitlements, app resources 관리
@@ -99,11 +98,15 @@ Projects
 - 전역 세션 상태의 source of truth는 `AppFeature.session`이다.
 - 현재 로그인 사용자는 `AppFeature.session.user`로 표현한다.
 - active main flow는 `MainTabFeature`가 TCA `StackState`와 단일 `@Presents` destination으로 소유한다.
-- `MainTabFeature`는 parent가 보유한 `session.user`와 `mainTabCore`를 projection해서 동작한다.
-- TCA-ready feature는 `session.user`를 projection해서 reducer/state에 직접 주입한다.
-- 현재 `HomeFeature`는 `userUuid`, `nickname`, `isAdmin`을 feature state로 projection해 direct scope한다.
-- legacy feature는 당분간 `SessionContext` 또는 primitive 값을 view init으로 주입한다.
-- 현재 `Calendar`, `Map`, `Favorites`, `Profile`은 `*LegacyBridgeFeature`가 session-derived primitive를 view init으로 넘긴다.
+- `MainTabFeature`는 parent가 보유한 shared `session`과 `mainTabCore`를 기준으로 동작한다.
+- TCA-ready feature는 필요한 경우 parent가 내려주는 shared `session`을 직접 읽는다.
+- 현재 `CalendarFeature`도 shared `session`을 직접 읽고, 캘린더 로컬 상태를 feature state가 소유한다.
+- 현재 `FavoritesFeature`도 shared `session`을 직접 읽고, 찜 로컬 상태를 feature state가 소유한다.
+- 현재 `HomeFeature`는 shared `session`을 직접 읽고, 홈 로컬 상태만 feature state가 소유한다.
+- 현재 `MapFeature`도 shared `session`을 직접 읽고, 지도 로컬 상태를 feature state가 소유한다.
+- 현재 `AlertFeature`도 shared `session`을 직접 읽고, 알림 로컬 상태를 feature state가 소유한다.
+- 현재 `ProfileFeature`도 shared `session`을 직접 읽고, 프로필 로컬 상태와 프로필 설정 path는 TCA reducer가 소유한다.
+- legacy feature는 당분간 session-derived primitive 값을 view init으로 주입한다.
 - `MainTabFeature.Action`은 탭 child action, `path`, `destination`, parent delegate 중심으로 유지한다.
 - 탭 내부의 로컬 sheet/bottom sheet/selected item 상태는 각 feature가 소유한다.
 - 여러 탭에서 공통으로 여는 push/presentation 화면은 `MainTabFeature`가 소유한다.
@@ -113,8 +116,8 @@ Projects
 
 세션과 영속성은 아래처럼 역할을 나눈다.
 
-- `SessionState`: 앱이 지금 실제로 쓰는 세션 상태. source of truth는 `AppFeature.session`
-- `SessionClient`: 세션 load/save/clear 조합. `LocalSessionStorage`와 `autoLogin(userUuid:)`를 연결
+- `UserSession`: 앱이 지금 실제로 쓰는 세션 상태. source of truth는 `AppFeature.session`
+- `LocalSessionClient`: 세션 load/save/clear 조합. `LocalSessionStorage`와 `autoLogin(userUuid:)`를 연결
 - `LocalSessionStorage`: local storage 읽기/쓰기 도구. `userID`, `hasCompletedOnboarding` 저장
 - `LocalSessionSnapshot`: storage에서 읽어온 값 묶음. 앱 런치 시 세션 복원 힌트
 
@@ -122,54 +125,49 @@ Projects
 
 1. `AppFeature.launchTask`
 2. `LocalSessionStorage.loadSnapshot()`
-3. `SessionClient.load()`
-4. `LocalSessionSnapshot + SessionState`를 조합해 root destination 계산
+3. `LocalSessionClient.load()`
+4. `LocalSessionSnapshot + UserSession`을 조합해 root destination 계산
 5. `AppFeature.session`과 `destination` 반영
 
-### Home vs Legacy Tabs
+### TCA-ready Tabs vs Legacy Tabs
 
 현재 PopPang은 탭별로 두 가지 연결 방식을 함께 사용한다.
 
-#### Home
+#### Home / Calendar / Map / Favorites / Profile / Alert
 
-- `MainTabFeature`가 `SessionState`에서 `userUuid`, `nickname`, `isAdmin`을 projection
-- `HomeFeature.State`가 그 값을 직접 소유
+- `AppFeature`가 shared `session` source of truth를 소유
+- `MainTabFeature`가 shared `session`을 `HomeFeature`, `CalendarFeature`, `MapFeature`, `FavoritesFeature`, `AlertFeature`, `ProfileFeature`, `ProfileSettingFeature`에 전달
+- `HomeFeature.State`는 shared `session`을 읽고, `bestPopups`, `filter`, `destination` 같은 홈 로컬 상태를 직접 소유
+- `CalendarFeature.State`는 shared `session`을 읽고, `selectedDate`, `calendarPopups`, `popupEventCounts` 같은 캘린더 로컬 상태를 직접 소유
+- `MapFeature.State`는 shared `session`을 읽고, 지도 팝업 목록/시트 상태/위치 상태를 직접 소유한다.
+- `FavoritesFeature.State`는 shared `session`을 읽고, `favoritePopups`, `selectedDate`, `popupEventCounts` 같은 찜 로컬 상태를 직접 소유한다.
+- `AlertFeature.State`는 shared `session`을 읽고, alert popup/keyword/recent keyword/편집 상태를 직접 소유한다.
+- `ProfileFeature.State`는 shared `session`을 읽고, `localIsAlerted`, `errorMessage` 같은 프로필 로컬 상태를 직접 소유
+- `ProfileSettingFeature.State`는 shared `session`을 읽고, 닉네임 변경/회원탈퇴용 로컬 상태를 직접 소유한다.
 - `HomeFeature`가 `@Dependencies.Dependency(\.homePopupClient)`로 feature-scoped dependency 사용
+- `CalendarFeature`는 `@Dependencies.Dependency(\.calendarFeatureClient)`로 feature-scoped dependency를 사용한다.
+- `MapFeature`는 `@Dependencies.Dependency(\.mapFeatureClient)`로 feature-scoped dependency를 사용한다.
+- `FavoritesFeature`는 `@Dependencies.Dependency(\.favoritesFeatureClient)`로 feature-scoped dependency를 사용한다.
+- `AlertFeature`는 `@Dependencies.Dependency(\.alertFeatureClient)`로 feature-scoped dependency를 사용한다.
+- `ProfileFeature`와 `ProfileSettingFeature`는 `@Dependencies.Dependency(\.profileFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `HomeFeature`가 홈 로컬 tree-based presentation을 소유
   - 현재 검색과 팝업 제보는 `HomeFeature.destination`에서 관리
+- `CalendarFeature`는 지역/정렬 시트를 view local state로 열고, 실제 필터/날짜/좋아요 상태는 reducer가 소유한다.
+- `FavoritesFeature`는 segmented selection을 view local state로 두고, 찜 목록/찜 캘린더/좋아요/에러 상태는 reducer가 소유한다.
 - 홈에서 시작하는 연속 drill-down push(`오픈예정팝업 리스트 -> 팝업 상세`)는 `MainTabFeature.path`가 소유
+- 캘린더에서 선택한 팝업 상세와 alert 이동도 `MainTabFeature.path`가 소유한다.
+- 찜 탭에서 선택한 팝업 상세와 alert 이동도 `MainTabFeature.path`가 소유하고, 빈 상태 CTA는 parent delegate로 홈 탭 전환 intent만 올린다.
+- 알림 화면에서 선택한 팝업 상세도 `MainTabFeature.path`가 소유하고, child feature는 delegate action으로 popup selection intent만 올린다.
+- 프로필 설정 push도 `MainTabFeature.path`가 소유하고, child feature는 delegate action으로 dismiss/logout intent만 올린다.
 - 여러 탭과 공통으로 이어질 수 있는 push 흐름은 `MainTabFeature.path`가 소유
   - 현재 팝업 상세, 리뷰 상세, 관리자 팝업 제보 관리 흐름이 여기에 해당
 
 ```swift
 HomeFeatureView(store: store.scope(state: \.core.home, action: \.home))
+CalendarFeatureView(store: store.scope(state: \.core.calendar, action: \.calendar))
+FavoritesFeatureView(store: store.scope(state: \.core.favorites, action: \.favorites))
+ProfileFeatureView(store: store.scope(state: \.core.profile, action: \.profile))
 ```
-
-#### Calendar / Map / Favorites / Profile
-
-- 아직 레거시 `Compound`/view 구조가 남아 있음
-- `MainTabFeature` 아래 `*LegacyBridgeFeature`가 session-derived primitive만 생성
-- bridge view가 기존 `FeatureView` init에 `userUuid`, `nickname`, `isAlerted` 등을 전달
-- 실제 usecase dependency는 당분간 각 레거시 feature 내부 구조를 유지
-
-```swift
-private struct ProfileLegacyBridgeView: View {
-    let store: StoreOf<ProfileLegacyBridgeFeature>
-
-    var body: some View {
-        ProfileFeatureView(
-            userUuid: store.userUuid,
-            nickname: store.nickname,
-            isAlerted: store.isAlerted,
-            onShowAlert: { _ in
-                store.send(.alertTapped)
-            }
-        )
-    }
-}
-```
-
-이 차이는 임시 타협안이다. 각 탭이 public TCA reducer/state/view entry를 갖추면 bridge를 제거하고 `Home`처럼 direct scope로 옮긴다.
 
 ### Features
 
@@ -178,7 +176,7 @@ private struct ProfileLegacyBridgeView: View {
 역할:
 
 - 사용자 화면과 화면별 state/action/effect 구현
-- 기존 Compound 기반 `*FeatureCompound`
+- 기존 레거시 상태 기반 `*Feature` 뼈대
 - 신규/전환 대상 TCA `@Reducer`
 - SwiftUI `*FeatureView`
 - reducer action과 delegate action을 통해 상위 flow에 navigation intent 전달
@@ -194,7 +192,7 @@ private struct ProfileLegacyBridgeView: View {
 
 - feature가 다른 feature를 직접 import하는 구조는 기본 전략이 아니다.
 - active main flow에서 feature 간 이동은 `MainTabFeature.Path` 또는 `MainTabFeature.Destination` state로 조립한다.
-- 화면 로컬 상태는 feature compound 또는 feature view local state에 둔다.
+- 화면 로컬 상태는 feature reducer local state 또는 feature view local state에 둔다.
 - 전역 이동, 탭 바깥 push, full screen 전환은 상위 TCA parent reducer로 올린다.
 - 새 화면 전환용 `@escaping` closure를 추가하지 않는다.
 
@@ -208,7 +206,6 @@ private struct ProfileLegacyBridgeView: View {
 - Repository protocol
 - Usecase protocol
 - Usecase implementation
-- DI container와 `@Dependency`
 
 특징:
 
@@ -222,7 +219,6 @@ private struct ProfileLegacyBridgeView: View {
 - `Projects/Domain/Sources/RepositoryProtocol/**`
 - `Projects/Domain/Sources/Usecase/Protocols/**`
 - `Projects/Domain/Sources/Usecase/Implementations/**`
-- `Projects/Domain/Sources/Dependency/DIContainer.swift`
 
 ### Data
 
@@ -359,26 +355,22 @@ Domain
 AppDependencyRegistry.live()
  -> RepositoryImpl 생성
  -> UsecaseImpl 생성
- -> DIContainer.shared.register(..., for: Protocol.self)
- -> legacy FeatureCompound에서 @Dependency로 resolve
  -> AppBootstrap이 TCA feature-scoped client를 조립
  -> Store.withDependencies(...)로 TCA reducer에 주입
 ```
 
 원칙:
 
-- legacy Compound는 `DIContainer`와 `@Dependency`를 유지할 수 있다.
 - TCA reducer는 `DependencyValues`만 사용한다.
-- TCA client `liveValue` 안에서 `DIContainer.shared.resolve(...)`를 직접 호출하지 않는다.
+- feature-scoped client는 composition root(`AppBootstrap`)에서 concrete usecase를 받아 조립한다.
+- TCA client `liveValue` 안에서 legacy container resolve를 직접 호출하지 않는다.
 
 DI 변경 시 함께 확인할 파일:
 
 - `Projects/App/Sources/AppCore/AppDependencyRegistry.swift`
-- `Projects/Domain/Sources/Dependency/DIContainer.swift`
 - `Projects/Domain/Sources/Usecase/Protocols/**`
 - `Projects/Domain/Sources/Usecase/Implementations/**`
 - `Projects/Domain/Sources/RepositoryProtocol/**`
-- 관련 Feature의 `*FeatureCompound.swift`
 - 관련 Demo app의 mock registration
 
 ## Navigation 기준

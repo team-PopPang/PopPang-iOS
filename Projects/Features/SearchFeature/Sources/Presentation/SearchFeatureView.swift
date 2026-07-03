@@ -1,42 +1,26 @@
-import Compound
-import Kingfisher
+import ComposableArchitecture
 import Core
 import Domain
 import DSKit
+import Kingfisher
+import PopupDetailFeature
+import ReviewFeature
 import SwiftUI
 
 public struct SearchFeatureView: View {
-    @State private var compound: SearchFeatureCompound
+    @Bindable var store: StoreOf<SearchFeature>
     @FocusState private var isFocused: Bool
 
-    private let nickname: String
-    private let onDismiss: () -> Void
-    private let onSelectPopup: (Popup) -> Void
-
-    public init(
-        userUuid: String = "demo-user",
-        nickname: String = "홍길동",
-        recentSearchStorage: RecentSearchStorage = RecentSearchStorage(store: UserDefaultsStore()),
-        onDismiss: @escaping () -> Void = {},
-        onSelectPopup: @escaping (Popup) -> Void = { _ in }
-    ) {
-        _compound = State(
-            wrappedValue: SearchFeatureCompound(
-                userUuid: userUuid,
-                recentSearchStorage: recentSearchStorage
-            )
-        )
-        self.nickname = nickname
-        self.onDismiss = onDismiss
-        self.onSelectPopup = onSelectPopup
+    public init(store: StoreOf<SearchFeature>) {
+        self.store = store
     }
 
     public var body: some View {
-        NavigationStack {
+        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
                     Button {
-                        onDismiss()
+                        store.send(.dismissTapped)
                     } label: {
                         DSKitResource.image("backButton")
                             .renderingMode(.template)
@@ -51,11 +35,8 @@ public struct SearchFeatureView: View {
                     SearchTextField(
                         placeholder: "궁금한 장소를 검색해보세요",
                         text: Binding(
-                            get: { compound.state.searchText },
-                            set: { searchText in
-                                compound.cancelAllActions()
-                                compound.send(.searchTextChanged(searchText))
-                            }
+                            get: { store.searchText },
+                            set: { store.send(.searchTextChanged($0)) }
                         )
                     )
                     .focused($isFocused)
@@ -67,9 +48,9 @@ public struct SearchFeatureView: View {
                 .padding(.bottom, 10)
 
                 VStack(spacing: 0) {
-                    if compound.state.searchPopupList.isEmpty {
+                    if store.searchPopupList.isEmpty {
                         HStack(spacing: 0) {
-                            Text(nickname)
+                            Text(store.nickname)
                                 .foregroundStyle(Color.mainOrange)
                                 .font(.scdream(.bold, size: 12))
 
@@ -79,19 +60,18 @@ public struct SearchFeatureView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                         SearchFlowLayout {
-                            ForEach(compound.state.recentKeywords, id: \.self) { keyword in
+                            ForEach(store.recentKeywords, id: \.self) { keyword in
                                 SearchFlowButton(title: keyword) {
-                                    compound.cancelAllActions()
-                                    compound.send(.recentKeywordTapped(keyword))
+                                    store.send(.recentKeywordTapped(keyword))
                                 } onRemove: {
-                                    compound.send(.recentKeywordRemoved(keyword))
+                                    store.send(.recentKeywordRemoved(keyword))
                                 }
                             }
                             .padding(4)
                         }
                         .padding(.top, 15)
 
-                        if compound.state.searchText.isEmpty == false && compound.state.isLoading == false {
+                        if store.searchText.isEmpty == false && store.isLoading == false {
                             VStack(spacing: 0) {
                                 DSKitResource.image("noResult")
                                     .resizable()
@@ -107,12 +87,12 @@ public struct SearchFeatureView: View {
                         }
                     }
 
-                    if compound.state.isLoading {
+                    if store.isLoading {
                         ProgressView()
                             .padding(.top, 24)
                     }
 
-                    if let errorMessage = compound.state.errorMessage {
+                    if let errorMessage = store.errorMessage {
                         Text(errorMessage)
                             .ppStyleFont(.scdream(.regular, size: 12))
                             .foregroundStyle(Color.mainRed)
@@ -120,8 +100,10 @@ public struct SearchFeatureView: View {
                     }
 
                     SearchGridPopupScrollView(
-                        popups: compound.state.searchPopupList,
-                        onSelect: onSelectPopup
+                        popups: store.searchPopupList,
+                        onSelect: { popup in
+                            store.send(.popupSelected(popup))
+                        }
                     )
                 }
                 .padding(.top, 20)
@@ -129,17 +111,56 @@ public struct SearchFeatureView: View {
 
                 Spacer()
             }
+        } destination: { store in
+            switch store.state {
+            case .popupDetail:
+                if let store = store.scope(state: \.popupDetail, action: \.popupDetail) {
+                    SearchPopupDetailDestinationView(store: store)
+                }
+            case .reviewDetail:
+                if let store = store.scope(state: \.reviewDetail, action: \.reviewDetail) {
+                    SearchReviewDetailDestinationView(store: store)
+                }
+            }
         }
-        .compoundOnLoad(compound, .onAppear)
+        .onAppear {
+            store.send(.onAppear)
+        }
         .task {
             isFocused = true
         }
     }
 
     private var recentKeywordTitleSuffix: String {
-        compound.state.recentKeywords.isEmpty
+        store.recentKeywords.isEmpty
             ? "님의 최근 본 검색어가 없습니다"
             : "님의 최근 본 검색어예요"
+    }
+}
+
+private struct SearchPopupDetailDestinationView: View {
+    let store: StoreOf<SearchPopupDetailDestinationFeature>
+
+    var body: some View {
+        PopupDetailFeatureView(
+            store: store.scope(state: \.content, action: \.content),
+            isAdmin: false,
+            hidesSystemTabBar: true,
+            onSelectRelatedPopup: { userUuid, popup in
+                store.send(.relatedPopupSelected(userUuid, popup))
+            },
+            onShowReviews: { reviews in
+                store.send(.reviewsTapped(reviews))
+            }
+        )
+    }
+}
+
+private struct SearchReviewDetailDestinationView: View {
+    let store: StoreOf<ReviewFeature>
+
+    var body: some View {
+        ReviewFeatureView(store: store)
     }
 }
 

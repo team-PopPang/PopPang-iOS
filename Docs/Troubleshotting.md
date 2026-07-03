@@ -44,22 +44,20 @@ static/dynamic product type 선택 기준은 `Docs/static-dynamic-linking.md`를
 원인:
 
 - `BottomSheet` 라이브러리는 `content` closure를 매 렌더링 때 다시 실행하는 구조가 아니라, `mainContent`를 값으로 보관한다.
-- 첫 번째 시트에 `popups`, `isLoading` 같은 state 값을 복사해서 넘기면, parent view의 compound state 변경만으로 BottomSheet 내부 content가 기대한 타이밍에 다시 구성되지 않을 수 있다.
+- 첫 번째 시트에 `popups`, `isLoading` 같은 state 값을 복사해서 넘기면, parent view의 state 변경만으로 BottomSheet 내부 content가 기대한 타이밍에 다시 구성되지 않을 수 있다.
 - 반면 정렬 버튼을 누르면 local sheet position/type state가 바뀌면서 parent body가 다시 평가되고, 그때 최신 데이터가 BottomSheet content에 반영되어 갑자기 목록이 나타난다.
 
 해결:
 
 - BottomSheet의 content에 state snapshot만 넘기지 않는다.
-- 첫 번째 시트가 `MapFeatureCompound`를 직접 받아 내부에서 `compound.state.mapPopups`, `compound.state.isLoading`, `compound.state.didPreload`를 읽게 한다.
+- 첫 번째 시트가 `MapFeature` store를 직접 받아 내부에서 `store.mapPopups`, `store.isLoading`, `store.isWaitingForUserLocation`를 읽게 한다.
 - 최초 로드 전에는 빈 배열을 곧바로 `검색 결과가 없습니다.`로 해석하지 않고 `ProgressView`를 보여준다.
 
 예시:
 
 ```swift
 FirstSheetView(
-    compound: compound,
-    selectedOption: selectedOptionBinding,
-    firstSheetPosition: $firstSheetPosition,
+    store: store,
     ...
 )
 ```
@@ -68,10 +66,10 @@ FirstSheetView(
 private struct MapListView: View {
     let popups: [Popup]
     let isLoading: Bool
-    let didPreload: Bool
+    let isWaitingForUserLocation: Bool
 
     var body: some View {
-        if !didPreload || isLoading {
+        if isWaitingForUserLocation || isLoading {
             ProgressView()
         } else if popups.isEmpty {
             Text("검색 결과가 없습니다.")
@@ -216,7 +214,7 @@ and
 검증:
 
 ```sh
-rg -n 'external\(name: "(Kakao|GoogleSignIn|Firebase|Moya|NMapsMap|Kingfisher|Compound)' Projects --glob 'Project.swift'
+rg -n 'external\(name: "(Kakao|GoogleSignIn|Firebase|Moya|NMapsMap|Kingfisher)' Projects --glob 'Project.swift'
 tuist generate
 xcodebuild -workspace PopPang.xcworkspace -scheme PopPangApp -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5' build
 ```

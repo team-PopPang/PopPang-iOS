@@ -46,7 +46,7 @@ public struct PopupRequestManagementListFeature {
         }
     }
 
-    @Dependencies.Dependency(\.popupRequestManagementClient) private var popupRequestManagementClient: PopupRequestManagementClient
+    @Dependency(\.popupRequestManagementClient) private var popupRequestManagementClient: PopupRequestManagementClient
 
     public init() {}
 

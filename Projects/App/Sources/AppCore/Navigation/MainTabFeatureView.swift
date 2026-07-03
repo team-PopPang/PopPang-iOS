@@ -80,89 +80,17 @@ struct MainTabFeatureView: View {
     @ViewBuilder
     private func tabView(for tab: MainTab) -> some View {
         switch tab {
+        case .calendar:
+            CalendarFeatureView(store: store.scope(state: \.core.calendar, action: \.calendar))
         case .home:
             HomeFeatureView(store: store.scope(state: \.core.home, action: \.home))
-        case .calendar:
-            CalendarLegacyBridgeView(store: store.scope(state: \.calendar, action: \.calendar))
         case .map:
-            MapLegacyBridgeView(store: store.scope(state: \.map, action: \.map))
+            MapFeatureView(store: store.scope(state: \.core.map, action: \.map))
         case .favorites:
-            FavoritesLegacyBridgeView(store: store.scope(state: \.favorites, action: \.favorites))
+            FavoritesFeatureView(store: store.scope(state: \.core.favorites, action: \.favorites))
         case .profile:
-            ProfileLegacyBridgeView(store: store.scope(state: \.profile, action: \.profile))
+            ProfileFeatureView(store: store.scope(state: \.core.profile, action: \.profile))
         }
-    }
-}
-
-private struct CalendarLegacyBridgeView: View {
-    let store: StoreOf<CalendarLegacyBridgeFeature>
-
-    var body: some View {
-        CalendarFeatureView(
-            userUuid: store.userUuid,
-            onShowAlert: { _ in
-                store.send(.alertTapped)
-            },
-            onSelectPopup: { _, popup in
-                store.send(.popupSelected(popup))
-            }
-        )
-    }
-}
-
-private struct MapLegacyBridgeView: View {
-    let store: StoreOf<MapLegacyBridgeFeature>
-
-    var body: some View {
-        MapFeatureView(
-            userUuid: store.userUuid,
-            onSelectPopup: { _, popup in
-                store.send(.popupSelected(popup))
-            }
-        )
-    }
-}
-
-private struct FavoritesLegacyBridgeView: View {
-    let store: StoreOf<FavoritesLegacyBridgeFeature>
-
-    var body: some View {
-        FavoritesFeatureView(
-            userUuid: store.userUuid,
-            onShowAlert: { _ in
-                store.send(.alertTapped)
-            },
-            onSelectPopup: { _, popup in
-                store.send(.popupSelected(popup))
-            },
-            onBrowsePopups: {
-                store.send(.browsePopupsTapped)
-            }
-        )
-    }
-}
-
-private struct ProfileLegacyBridgeView: View {
-    let store: StoreOf<ProfileLegacyBridgeFeature>
-
-    var body: some View {
-        ProfileFeatureView(
-            userUuid: store.userUuid,
-            nickname: store.nickname,
-            isAlerted: store.isAlerted,
-            onShowAlert: { _ in
-                store.send(.alertTapped)
-            },
-            onProfileSetting: { _, nickname, isAlerted in
-                store.send(.profileSettingTapped(nickname: nickname, isAlerted: isAlerted))
-            },
-            onNotification: {
-                store.send(.notificationsTapped)
-            },
-            onServiceTerms: {
-                store.send(.serviceTermsTapped)
-            }
-        )
     }
 }
 
@@ -204,41 +132,26 @@ private struct PopupRequestManagementDetailDestinationView: View {
 }
 
 private struct ReviewDetailDestinationView: View {
-    let store: StoreOf<ReviewDetailDestinationFeature>
+    let store: StoreOf<ReviewFeature>
 
     var body: some View {
-        ReviewFeatureView(reviews: store.reviews)
+        ReviewFeatureView(store: store)
     }
 }
 
 private struct AlertDestinationView: View {
-    let store: StoreOf<AlertDestinationFeature>
+    let store: StoreOf<AlertFeature>
 
     var body: some View {
-        AlertFeatureView(
-            userUuid: store.userUuid,
-            onSelectPopup: { userUuid, popup in
-                store.send(.popupSelected(userUuid, popup))
-            }
-        )
+        AlertFeatureView(store: store)
     }
 }
 
 private struct ProfileSettingDestinationView: View {
-    let store: StoreOf<ProfileSettingDestinationFeature>
+    let store: StoreOf<ProfileSettingFeature>
 
     var body: some View {
-        ProfileSettingFeatureView(
-            userUuid: store.userUuid,
-            nickname: store.nickname,
-            isAlerted: store.isAlerted,
-            onLogout: {
-                store.send(.logoutTapped)
-            },
-            onNicknameUpdated: { nickname in
-                store.send(.nicknameUpdated(nickname))
-            }
-        )
+        ProfileSettingFeatureView(store: store)
     }
 }
 

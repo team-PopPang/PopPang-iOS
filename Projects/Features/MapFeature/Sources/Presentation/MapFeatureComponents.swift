@@ -33,7 +33,7 @@ struct MapRegionButton: View {
 }
 
 struct MapSortButton: View {
-    @Binding var selectedOption: MapSortOption
+    let selectedOption: MapSortOption
     let action: () -> Void
 
     var body: some View {
@@ -65,7 +65,7 @@ struct MapSortButton: View {
 }
 
 struct MapSortButtonSheet: View {
-    @Binding var selectedOption: MapSortOption
+    let selectedOption: MapSortOption
     let onDismiss: () -> Void
     let onSortSelected: (MapSortOption) -> Void
 
@@ -90,7 +90,6 @@ struct MapSortButtonSheet: View {
             VStack(alignment: .leading, spacing: 10) {
                 ForEach(MapSortOption.allCases, id: \.self) { option in
                     Button {
-                        selectedOption = option
                         onSortSelected(option)
                     } label: {
                         DSKitResource.image(selectedOption == option ? "circle_filled" : "circle")

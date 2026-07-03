@@ -1,18 +1,12 @@
+import ComposableArchitecture
 import DSKit
 import SwiftUI
 
 public struct OnboardingFeatureView: View {
-    @State private var compound = OnboardingFeatureCompound()
+    let store: StoreOf<OnboardingFeature>
 
-    private let onSkip: () -> Void
-    private let onComplete: () -> Void
-
-    public init(
-        onSkip: @escaping () -> Void = {},
-        onComplete: @escaping () -> Void = {}
-    ) {
-        self.onSkip = onSkip
-        self.onComplete = onComplete
+    public init(store: StoreOf<OnboardingFeature>) {
+        self.store = store
     }
 
     public var body: some View {
@@ -22,8 +16,8 @@ public struct OnboardingFeatureView: View {
             VStack(spacing: 0) {
                 PageView(
                     currentStep: Binding(
-                        get: { compound.state.currentStep },
-                        set: { compound.send(.stepChanged($0)) }
+                        get: { store.currentStep },
+                        set: { store.send(.stepChanged($0)) }
                     )
                 )
 
@@ -33,15 +27,11 @@ public struct OnboardingFeatureView: View {
                         .padding(.bottom, 20)
 
                     MainOrangeButton(
-                        buttonTitle: compound.state.currentStep == .favorite
+                        buttonTitle: store.currentStep == .favorite
                             ? LocalizationKey.commonStart.localized(comment: "Primary CTA to start the app")
                             : LocalizationKey.commonNext.localized(comment: "Primary CTA to continue to the next step")
                     ) {
-                        if compound.state.currentStep == .favorite {
-                            onComplete()
-                        } else {
-                            compound.send(.nextButtonTapped(compound.state.currentStep))
-                        }
+                        store.send(.nextTapped)
                     }
                     .padding(.horizontal, 30)
                     .padding(.vertical, 20)
@@ -51,7 +41,7 @@ public struct OnboardingFeatureView: View {
             }
 
             Button {
-                onSkip()
+                store.send(.skipTapped)
             } label: {
                 Text(LocalizationKey.commonSkip.localized(comment: "Action to skip onboarding"))
                     .font(.scdream(.regular, size: 12))
@@ -66,14 +56,14 @@ public struct OnboardingFeatureView: View {
         HStack(spacing: 10) {
             ForEach(OnboardingStep.allCases, id: \.self) { step in
                 Capsule()
-                    .fill(compound.state.currentStep == step ? Color.mainBlack : .gray)
+                    .fill(store.currentStep == step ? Color.mainBlack : .gray)
                     .frame(
-                        width: compound.state.currentStep == step ? 12 : 6,
+                        width: store.currentStep == step ? 12 : 6,
                         height: 6
                     )
             }
         }
-        .animation(.easeInOut(duration: 0.5), value: compound.state.currentStep)
+        .animation(.easeInOut(duration: 0.5), value: store.currentStep)
     }
 }
 
@@ -124,7 +114,7 @@ private struct PageContentView: View {
     }
 }
 
-enum OnboardingStep: Int, CaseIterable, Sendable {
+public enum OnboardingStep: Int, CaseIterable, Sendable {
     case keyword = 0
     case map
     case favorite

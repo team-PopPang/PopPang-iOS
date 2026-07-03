@@ -1,22 +1,22 @@
 import ComposableArchitecture
+import Core
 import Domain
 import DSKit
 import Foundation
 import PopupRequestFeature
+import SearchFeature
 
 @Reducer
 public struct HomeFeature {
     @Reducer
     public enum Destination {
-        case search(HomeSearchDestinationFeature)
+        case search(SearchFeature)
         case popupRequest(PopupRequestFeature)
     }
 
     @ObservableState
     public struct State: Equatable {
-        var userUuid: String
-        var nickname: String
-        var isAdmin: Bool
+        @Shared var session: UserSession
         var bestPopups: [Popup] = []
         var comingPopups: [Popup] = []
         var gridPopups: [Popup] = []
@@ -26,23 +26,28 @@ public struct HomeFeature {
         @Presents var destination: Destination.State?
 
         public init(
-            userUuid: String,
-            nickname: String,
-            isAdmin: Bool
+            session: Shared<UserSession>
         ) {
-            self.userUuid = userUuid
-            self.nickname = nickname
-            self.isAdmin = isAdmin
+            self._session = session
         }
 
-        public mutating func syncUser(
-            userUuid: String,
-            nickname: String,
-            isAdmin: Bool
-        ) {
-            self.userUuid = userUuid
-            self.nickname = nickname
-            self.isAdmin = isAdmin
+        var currentUser: User {
+            guard let user = session.user else {
+                preconditionFailure("HomeFeature requires a logged in session.")
+            }
+            return user
+        }
+
+        var userUuid: String {
+            currentUser.userUuid
+        }
+
+        var nickname: String {
+            currentUser.nickname ?? "닉네임"
+        }
+
+        var isAdmin: Bool {
+            currentUser.role.uppercased() == "ADMIN"
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
@@ -102,7 +107,7 @@ public struct HomeFeature {
         }
     }
 
-    @Dependencies.Dependency(\.homePopupClient) private var popupClient: HomePopupClient
+    @Dependency(\.homePopupClient) private var popupClient: HomePopupClient
 
     public init() {}
 
@@ -199,10 +204,6 @@ public struct HomeFeature {
             case .destination(.presented(.search(.delegate(.dismiss)))):
                 state.destination = nil
                 return .none
-
-            case .destination(.presented(.search(.delegate(.selectPopup(let popup))))):
-                state.destination = nil
-                return .send(.delegate(.popupSelected(popup)))
 
             case .destination(.presented(.popupRequest(.delegate(.dismiss)))):
                 state.destination = nil

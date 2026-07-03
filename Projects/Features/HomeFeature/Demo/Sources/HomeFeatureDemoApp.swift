@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Core
 import Domain
 import HomeFeature
 import SwiftUI
@@ -10,9 +11,22 @@ struct HomeFeatureDemoApp: App {
             HomeFeatureView(
                 store: Store(
                     initialState: HomeFeature.State(
-                        userUuid: "demo-user",
-                        nickname: "팝팡",
-                        isAdmin: true
+                        session: Shared(
+                            value: UserSession(
+                                user: User(
+                                    userUuid: "demo-user",
+                                    uid: "demo-uid",
+                                    provider: "preview",
+                                    email: nil,
+                                    nickname: "팝팡",
+                                    role: "ADMIN",
+                                    isAlerted: false,
+                                    fcmToken: nil,
+                                    alertKeywordList: nil,
+                                    recommendList: nil
+                                )
+                            )
+                        )
                     )
                 ) {
                     HomeFeature()

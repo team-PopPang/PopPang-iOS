@@ -1,3 +1,4 @@
+import ComposableArchitecture
 import ReviewFeature
 import SwiftUI
 
@@ -5,7 +6,13 @@ import SwiftUI
 struct ReviewFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            ReviewFeatureView()
+            ReviewFeatureView(
+                store: Store(
+                    initialState: ReviewFeature.State()
+                ) {
+                    ReviewFeature()
+                }
+            )
         }
     }
 }

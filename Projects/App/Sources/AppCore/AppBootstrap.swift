@@ -1,18 +1,30 @@
 import ComposableArchitecture
+import AlertFeature
+import CalendarFeature
 import Core
+import FavoritesFeature
 import Foundation
 import HomeFeature
+import MapFeature
+import AuthFeature
+import ProfileFeature
 import PopupDetailFeature
 import PopupRequestFeature
 import PopupRequestManagementFeature
+import SearchFeature
 
 struct AppBootstrap {
     let sessionStorage: LocalSessionStorage
-    let sessionClient: SessionClient
+    let localSessionClient: LocalSessionClient
+    let alertFeatureClient: AlertFeatureClient
+    let calendarFeatureClient: CalendarFeatureClient
+    let favoritesFeatureClient: FavoritesFeatureClient
     let homePopupClient: HomePopupClient
+    let mapFeatureClient: MapFeatureClient
     let popupDetailClient: PopupDetailClient
     let popupRequestClient: PopupRequestClient
     let popupRequestManagementClient: PopupRequestManagementClient
+    let searchFeatureClient: SearchFeatureClient
     let launchStateResolver: AppLaunchStateResolver
     let dependencies: AppDependencyRegistry
 
@@ -21,12 +33,30 @@ struct AppBootstrap {
     ) -> AppBootstrap {
         let sessionStorage = LocalSessionStorage(store: store)
         let dependencies = AppDependencyRegistry.live()
-        let sessionClient = SessionClient.live(
+        let localSessionClient = LocalSessionClient.live(
             sessionStorage: sessionStorage,
             userUsecase: dependencies.usecases.userUsecase
         )
+        let alertFeatureClient = AlertFeatureClient.live(
+            popupUsecase: dependencies.usecases.popupUsecase,
+            userUsecase: dependencies.usecases.userUsecase,
+            recentSearchStorage: RecentSearchStorage(store: store)
+        )
+        let calendarFeatureClient = CalendarFeatureClient.live(
+            popupUsecase: dependencies.usecases.popupUsecase
+        )
+        let favoritesFeatureClient = FavoritesFeatureClient.live(
+            popupUsecase: dependencies.usecases.popupUsecase
+        )
         let homePopupClient = HomePopupClient.live(
             popupUsecase: dependencies.usecases.popupUsecase
+        )
+        let mapFeatureClient = MapFeatureClient.live(
+            popupUsecase: dependencies.usecases.popupUsecase
+        )
+        let searchFeatureClient = SearchFeatureClient.live(
+            popupUsecase: dependencies.usecases.popupUsecase,
+            recentSearchStorage: RecentSearchStorage(store: store)
         )
         let popupDetailClient = PopupDetailClient.live(
             popupUsecase: dependencies.usecases.popupUsecase,
@@ -48,11 +78,16 @@ struct AppBootstrap {
 
         return AppBootstrap(
             sessionStorage: sessionStorage,
-            sessionClient: sessionClient,
+            localSessionClient: localSessionClient,
+            alertFeatureClient: alertFeatureClient,
+            calendarFeatureClient: calendarFeatureClient,
+            favoritesFeatureClient: favoritesFeatureClient,
             homePopupClient: homePopupClient,
+            mapFeatureClient: mapFeatureClient,
             popupDetailClient: popupDetailClient,
             popupRequestClient: popupRequestClient,
             popupRequestManagementClient: popupRequestManagementClient,
+            searchFeatureClient: searchFeatureClient,
             launchStateResolver: AppLaunchStateResolver(),
             dependencies: dependencies
         )
@@ -65,11 +100,25 @@ struct AppBootstrap {
                 launchStateResolver: launchStateResolver
             )
         } withDependencies: {
-            $0.sessionClient = sessionClient
+            $0.localSessionClient = localSessionClient
+            $0.alertFeatureClient = alertFeatureClient
+            $0.calendarFeatureClient = calendarFeatureClient
+            $0.favoritesFeatureClient = favoritesFeatureClient
             $0.homePopupClient = homePopupClient
+            $0.mapFeatureClient = mapFeatureClient
             $0.popupDetailClient = popupDetailClient
             $0.popupRequestClient = popupRequestClient
             $0.popupRequestManagementClient = popupRequestManagementClient
+            $0.searchFeatureClient = searchFeatureClient
+            $0.authFeatureClient = .live(
+                kakaoAuthUsecase: dependencies.usecases.kakaoAuthUsecase,
+                googleAuthUsecase: dependencies.usecases.googleAuthUsecase,
+                appleAuthUsecase: dependencies.usecases.appleAuthUsecase,
+                userUsecase: dependencies.usecases.userUsecase
+            )
+            $0.profileFeatureClient = .live(
+                userUsecase: dependencies.usecases.userUsecase
+            )
         }
     }
 }
