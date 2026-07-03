@@ -4,6 +4,10 @@ import Core
 import Domain
 import Foundation
 
+private enum CancelID {
+    case mapCenterChanged
+}
+
 enum MapSecondSheetType: Equatable, Sendable {
     case region
     case sort
@@ -46,6 +50,8 @@ public enum MapSortOption: String, CaseIterable, Sendable {
 
 @Reducer
 public struct MapFeature {
+    @Dependency(\.continuousClock) var clock
+    
     @ObservableState
     public struct State: Equatable {
         @Shared var session: UserSession
@@ -151,6 +157,13 @@ public struct MapFeature {
         case waitingForUserLocationChanged(Bool)
         case errorMessageChanged(String?)
         case delegate(Delegate)
+        case refreshMapPopups(
+            userUuid: String,
+            region: String,
+            district: String,
+            mapCenter: MapCoordinate?,
+            sortOption: MapSortOption
+        )
 
         public enum Delegate: Equatable {
             case popupSelected(Popup)
@@ -178,23 +191,34 @@ public struct MapFeature {
                 return .none
 
             case .mapCenterChanged(let coordinate):
-                guard state.hasUserLocation || state.selectedOption != .closest else {
-                    return .none
-                }
-
                 state.mapCenter = coordinate
 
-                guard state.allPopups.isEmpty else {
+                guard state.selectedOption == .closest else {
                     return .none
                 }
 
+                state.selectedCategoryId = nil
                 state.isLoading = true
-                return updatePersonalMapFilteredPopupList(
-                    userUuid: state.userUuid,
-                    region: state.selectedRegion?.region ?? "전체",
-                    district: state.selectedDistrict ?? "전체",
-                    mapCenter: coordinate,
-                    sortOption: state.selectedOption
+                state.errorMessage = nil
+
+                let userUuid = state.userUuid
+                let region = state.selectedRegion?.region ?? "전체"
+                let district = state.selectedDistrict ?? "전체"
+
+                return .run { send in
+                    try await clock.sleep(for: .milliseconds(400))
+
+                    await send(.refreshMapPopups(
+                        userUuid: userUuid,
+                        region: region,
+                        district: district,
+                        mapCenter: coordinate,
+                        sortOption: .closest
+                    ))
+                }
+                .cancellable(
+                    id: CancelID.mapCenterChanged,
+                    cancelInFlight: true
                 )
 
             case .userLocationChanged(let coordinate):
@@ -373,6 +397,15 @@ public struct MapFeature {
                 }
                 state.isWaitingForUserLocation = isWaitingForUserLocation
                 return .none
+                
+            case let .refreshMapPopups(userUuid, region, district, mapCenter, sortOption):
+                return updatePersonalMapFilteredPopupList(
+                    userUuid: userUuid,
+                    region: region,
+                    district: district,
+                    mapCenter: mapCenter,
+                    sortOption: sortOption
+                )
 
             case .errorMessageChanged(let errorMessage):
                 state.errorMessage = errorMessage
