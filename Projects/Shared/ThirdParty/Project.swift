@@ -27,6 +27,7 @@ let project = Project(
                 .external(name: "Moya"),
                 .external(name: "NMapsMap"),
                 .external(name: "BottomSheet"),
+                .external(name: "FlutterNativeIntegration"),
             ],
             settings: .settings(
                 base: [

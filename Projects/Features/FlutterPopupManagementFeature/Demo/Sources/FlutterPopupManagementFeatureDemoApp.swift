@@ -1,11 +1,12 @@
 import SwiftUI
-import FlutterPopupManagementFeatureInterface
+import FlutterPopupManagementFeature
 
 @main
 struct FlutterPopupManagementFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            FlutterPopupManagementFeatureEntryView()
+            FlutterPopupManagementFeatureView()
+                .ignoresSafeArea()
         }
     }
 }

@@ -16,19 +16,6 @@ let project = Project(
             ]
         ),
         .target(
-            name: "FlutterPopupManagementFeatureInterface",
-            destinations: [.iPhone],
-            product: .framework,
-            bundleId: "com.poppang.features.flutterpopupmanagement.interface",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .default,
-            sources: ["Interface/Sources/**"],
-            dependencies: [
-                .target(name: "FlutterPopupManagementFeature"),
-                .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
-            ]
-        ),
-        .target(
             name: "FlutterPopupManagementFeatureDemo",
             destinations: [.iPhone],
             product: .app,
@@ -43,7 +30,7 @@ let project = Project(
                 ]
             ),
             sources: ["Demo/Sources/**"],
-            dependencies: [.target(name: "FlutterPopupManagementFeatureInterface")]
+            dependencies: [.target(name: "FlutterPopupManagementFeature")]
         ),
         .target(
             name: "FlutterPopupManagementFeatureTests",

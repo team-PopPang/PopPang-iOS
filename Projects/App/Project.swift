@@ -155,6 +155,8 @@ let project = Project(
                     "MARKETING_VERSION": "1.1.5",
                     "PROVISIONING_PROFILE_SPECIFIER": "",
                     "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]": "match Development kr.co.poppang.PopPang",
+
+                    "FLUTTER_SWIFT_PACKAGE_OUTPUT": "$(SRCROOT)/../../Vendor/PopPangFlutter",
                 ],
                 configurations: [
                     .debug(

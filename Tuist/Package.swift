@@ -148,5 +148,6 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture", exact: "1.25.0"),
         .package(url: "https://github.com/indextrown/Listkit.git", exact: "1.0.5"),
         .package(url: "https://github.com/lucaszischka/BottomSheet", exact: "3.1.1"),
+        .package(path: "../Vendor/PopPangFlutter/FlutterNativeIntegration"),
     ]
 )
