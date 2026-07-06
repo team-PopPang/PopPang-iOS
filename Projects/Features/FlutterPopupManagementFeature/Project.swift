@@ -27,6 +27,7 @@ let project = Project(
                         "UIColorName": "",
                         "UIImageName": "",
                     ],
+                    "UIUserInterfaceStyle": "Light",
                 ]
             ),
             sources: ["Demo/Sources/**"],
