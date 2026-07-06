@@ -8,17 +8,23 @@
 import Flutter
 import FlutterPluginRegistrant
 
-final class FlutterRuntime {
-    static let shared = FlutterRuntime()
-    
-    let engine = FlutterEngine(name: "poppang.flutter")
-    
-    func start() {
+public final class FlutterEngine {
+    public static let shared = FlutterEngine()
+
+    private var isStarted = false
+    public let engine = Flutter.FlutterEngine(name: "poppang.flutter")
+
+    private init() {}
+
+    public func start() {
+        guard !isStarted else { return }
         engine.run()
         GeneratedPluginRegistrant.register(with: engine)
+        isStarted = true
     }
-    
-    func makeViewController() -> FlutterViewController {
-        FlutterViewController(engine: engine, nibName: nil, bundle: nil)
+
+    public func makeViewController() -> FlutterViewController {
+        start()
+        return FlutterViewController(engine: engine, nibName: nil, bundle: nil)
     }
 }
