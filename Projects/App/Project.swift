@@ -156,7 +156,17 @@ let project = Project(
                     "PROVISIONING_PROFILE_SPECIFIER": "",
                     "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]": "match Development kr.co.poppang.PopPang",
 
+                    // Flutter iOS 산출물이 풀려 있는 루트 경로
                     "FLUTTER_SWIFT_PACKAGE_OUTPUT": "$(SRCROOT)/../../Vendor/PopPangFlutter",
+
+                    // Flutter 산출물 모드
+                    "FLUTTER_BUILD_MODE": "Debug",
+
+                    // Flutter 원본 프로젝트 경로
+                    "FLUTTER_APPLICATION_PATH": "$(SRCROOT)/../../PopPang-Flutter",
+
+                    // Xcode Run Script Phase에 걸리는 샌드박스를 끄는 설정
+                    "ENABLE_USER_SCRIPT_SANDBOXING": "NO",
                 ],
                 configurations: [
                     .debug(

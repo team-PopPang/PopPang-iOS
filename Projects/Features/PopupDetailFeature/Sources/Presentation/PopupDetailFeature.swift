@@ -20,6 +20,8 @@ public struct PopupDetailFeature {
             userUuid: String,
             popup: Popup
         ) {
+            print("로그 테스트(userUuid): \(userUuid)")
+            print("로그 테스트(popupUuid): \(popup.popupUuid)")
             self.userUuid = userUuid
             self.popup = popup
         }
@@ -179,8 +181,10 @@ private extension PopupDetailFeature {
         return .run { [popupDetailClient, popupUuid] send in
             do {
                 try await popupDetailClient.deactivatePopup(popupUuid)
+                print("로그 테스트: 성공")
                 await send(.deactivateCompleted)
             } catch {
+                print("로그 테스트: 에러: \(error)")
                 await send(.errorMessageChanged(error.localizedDescription))
                 await send(.deactivatingChanged(false))
             }

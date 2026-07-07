@@ -31,7 +31,15 @@ let project = Project(
                 ]
             ),
             sources: ["Demo/Sources/**"],
-            dependencies: [.target(name: "FlutterPopupManagementFeature")]
+            dependencies: [.target(name: "FlutterPopupManagementFeature")],
+            settings: .settings(
+                base: [
+                    "FLUTTER_SWIFT_PACKAGE_OUTPUT": "$(SRCROOT)/../../../Vendor/PopPangFlutter",
+                    "FLUTTER_BUILD_MODE": "Release",
+                    "FLUTTER_APPLICATION_PATH": "$(SRCROOT)/../../../PopPang-Flutter",
+                    "ENABLE_USER_SCRIPT_SANDBOXING": "NO",
+                ]
+            )
         ),
         .target(
             name: "FlutterPopupManagementFeatureTests",
