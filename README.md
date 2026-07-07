@@ -29,7 +29,7 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 | library | description |
 |:---:|:---:|
 | **Tuist** | Micro Feature Architecture 기반 workspace와 project를 구성하기 위함 |
-| **Compound** | Feature 단위 MVI 상태 관리를 구현하기 위함 |
+| **TCA** | Feature 단위 MVI 상태 관리를 위함 |
 | **FirebaseSDK** | FCM 푸시 알림과 Analytics를 구현하기 위함 |
 | **KakaoSDK** | 카카오 소셜 로그인과 카카오 공유를 구현하기 위함 |
 | **GoogleSignIn** | 구글 소셜 로그인을 구현하기 위함 |
@@ -48,15 +48,15 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 
 <br/><br/>
 
-# 4. 코디네이터 트리
+<!-- # 4. 코디네이터 트리
 
 <div align="center">
   <img src="./CoordinatorTree.png" width="100%" />
-</div>
+</div> -->
 
 <br/><br/>
 
-# 5. 핵심 성과
+# 4. 핵심 성과
 
 ### **1. 로딩 지연 문제 개선**
 > **문제**  
@@ -277,7 +277,7 @@ Projects
 
 <br/><br/>
 
-# 6. 실행 방법
+# 5. 실행 방법
 
 Tuist 버전은 `4.115.0`으로 고정합니다.
 
@@ -309,7 +309,7 @@ tuist test Data
 
 <br/><br/>
 
-# 7. 모듈 생성 명령
+# 6. 모듈 생성 명령
 
 ```bash
 make module LAYER=feature NAME=Home
@@ -323,7 +323,7 @@ make module LAYER=shared NAME=UIComponents
 
 <br/><br/>
 
-# 8. 참고
+# 7. 참고
 
 - `AGENTS.md`: 저장소 작업 규칙과 아키텍처 기준
 - `Projects/Coordinator/README.md`: Coordinator 상세 가이드
