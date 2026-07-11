@@ -3,17 +3,9 @@ import Core
 import Domain
 import DSKit
 import Foundation
-import PopupRequestFeature
-import SearchFeature
 
 @Reducer
 public struct HomeFeature {
-    @Reducer
-    public enum Destination {
-        case search(SearchFeature)
-        case popupRequest(PopupRequestFeature)
-    }
-
     @ObservableState
     public struct State: Equatable {
         @Shared var session: UserSession
@@ -23,7 +15,6 @@ public struct HomeFeature {
         var filter = HomeFilter.State()
         var isLoading = false
         var errorMessage: String?
-        @Presents var destination: Destination.State?
 
         public init(
             session: Shared<UserSession>
@@ -60,23 +51,6 @@ public struct HomeFeature {
                 && lhs.filter == rhs.filter
                 && lhs.isLoading == rhs.isLoading
                 && lhs.errorMessage == rhs.errorMessage
-                && destinationsEqual(lhs.destination, rhs.destination)
-        }
-
-        private static func destinationsEqual(
-            _ lhs: Destination.State?,
-            _ rhs: Destination.State?
-        ) -> Bool {
-            switch (lhs, rhs) {
-            case (.search(let lhsState), .search(let rhsState)):
-                lhsState == rhsState
-            case (.popupRequest(let lhsState), .popupRequest(let rhsState)):
-                lhsState == rhsState
-            case (nil, nil):
-                true
-            default:
-                false
-            }
         }
     }
 
@@ -96,13 +70,14 @@ public struct HomeFeature {
         case favoriteUpdated(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
         case loadingChanged(Bool)
         case errorMessageChanged(String?)
-        case destination(PresentationAction<Destination.Action>)
         case delegate(Delegate)
 
         public enum Delegate: Equatable {
             case popupSelected(Popup)
             case alertRequested
             case comingPopupsRequested([Popup])
+            case searchRequested
+            case popupRequestRequested
             case popupRequestManagementRequested
         }
     }
@@ -136,22 +111,13 @@ public struct HomeFeature {
                 return .send(.delegate(.alertRequested))
 
             case .searchTapped:
-                state.destination = .search(
-                    .init(
-                        userUuid: state.userUuid,
-                        nickname: state.nickname
-                    )
-                )
-                return .none
+                return .send(.delegate(.searchRequested))
 
             case .comingPopupsTapped(let popups):
                 return .send(.delegate(.comingPopupsRequested(popups)))
 
             case .popupRequestTapped:
-                state.destination = .popupRequest(
-                    .init(userUuid: state.userUuid)
-                )
-                return .none
+                return .send(.delegate(.popupRequestRequested))
 
             case .popupRequestManagementTapped:
                 return .send(.delegate(.popupRequestManagementRequested))
@@ -201,22 +167,10 @@ public struct HomeFeature {
                 state.errorMessage = errorMessage
                 return .none
 
-            case .destination(.presented(.search(.delegate(.dismiss)))):
-                state.destination = nil
-                return .none
-
-            case .destination(.presented(.popupRequest(.delegate(.dismiss)))):
-                state.destination = nil
-                return .none
-
-            case .destination:
-                return .none
-
             case .delegate:
                 return .none
             }
         }
-        .ifLet(\.$destination, action: \.destination)
     }
 }
 

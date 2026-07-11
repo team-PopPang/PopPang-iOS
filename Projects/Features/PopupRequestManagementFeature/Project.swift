@@ -19,26 +19,26 @@ let project = Project(
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]
         ),
-        .target(
-            name: "PopupRequestManagementFeatureDemo",
-            destinations: [.iPhone],
-            product: .app,
-            bundleId: "com.poppang.demo.popuprequestmanagement",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .extendingDefault(
-                with: [
-                    "UILaunchScreen": [
-                        "UIColorName": "",
-                        "UIImageName": "",
-                    ],
-                ]
-            ),
-            sources: ["Demo/Sources/**"],
-            dependencies: [
-                .target(name: "PopupRequestManagementFeature"),
-                .project(target: "Domain", path: "../../Domain"),
-            ]
-        ),
+        // .target(
+        //     name: "PopupRequestManagementFeatureDemo",
+        //     destinations: [.iPhone],
+        //     product: .app,
+        //     bundleId: "com.poppang.demo.popuprequestmanagement",
+        //     deploymentTargets: .iOS("17.0"),
+        //     infoPlist: .extendingDefault(
+        //         with: [
+        //             "UILaunchScreen": [
+        //                 "UIColorName": "",
+        //                 "UIImageName": "",
+        //             ],
+        //         ]
+        //     ),
+        //     sources: ["Demo/Sources/**"],
+        //     dependencies: [
+        //         .target(name: "PopupRequestManagementFeature"),
+        //         .project(target: "Domain", path: "../../Domain"),
+        //     ]
+        // ),
         .target(
             name: "PopupRequestManagementFeatureTests",
             destinations: [.iPhone],

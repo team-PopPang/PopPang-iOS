@@ -4,14 +4,17 @@ import CalendarFeature
 import Core
 import Domain
 import FavoritesFeature
+import Foundation
 import HomeFeature
 import MapFeature
 import PopupDetailFeature
+import PopupRequestFeature
 import PopupRequestManagementFeature
 import ProfileFeature
 import ReviewFeature
+import SearchFeature
 
-enum MainTab: Hashable, CaseIterable, Sendable {
+public enum MainTab: Hashable, CaseIterable, Sendable {
     case home
     case calendar
     case map
@@ -54,18 +57,25 @@ enum MainTab: Hashable, CaseIterable, Sendable {
 }
 
 @Reducer
-struct MainTabFeature {
+public struct MainTabFeature {
+    @Reducer
+    public enum Destination {
+        case search(SearchDestinationFeature)
+        case popupRequest(PopupRequestFeature)
+    }
+
     @ObservableState
-    struct CoreState: Equatable {
+    public struct CoreState: Equatable {
         var selectedTab: MainTab = .home
         var calendar: CalendarFeature.State
         var favorites: FavoritesFeature.State
         var home: HomeFeature.State
         var map: MapFeature.State
         var profile: ProfileFeature.State
+        @Presents var destination: Destination.State?
         var path = StackState<Path.State>()
 
-        init(session: Shared<UserSession>) {
+        public init(session: Shared<UserSession>) {
             self.calendar = .init(session: session)
             self.favorites = .init(session: session)
             self.home = .init(session: session)
@@ -73,22 +83,39 @@ struct MainTabFeature {
             self.profile = .init(session: session)
         }
 
-        static func == (lhs: Self, rhs: Self) -> Bool {
+        public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.selectedTab == rhs.selectedTab
             && lhs.calendar == rhs.calendar
             && lhs.favorites == rhs.favorites
             && lhs.home == rhs.home
             && lhs.map == rhs.map
             && lhs.profile == rhs.profile
+            && destinationsEqual(lhs.destination, rhs.destination)
+        }
+
+        private static func destinationsEqual(
+            _ lhs: Destination.State?,
+            _ rhs: Destination.State?
+        ) -> Bool {
+            switch (lhs, rhs) {
+            case (.search(let lhsState), .search(let rhsState)):
+                lhsState == rhsState
+            case (.popupRequest(let lhsState), .popupRequest(let rhsState)):
+                lhsState == rhsState
+            case (nil, nil):
+                true
+            default:
+                false
+            }
         }
     }
     
     @ObservableState
-    struct State: Equatable {
+    public struct State: Equatable {
         @Shared var session: UserSession
-        var core: CoreState
+        public var core: CoreState
         
-        init(
+        public init(
             session: Shared<UserSession>,
             core: CoreState? = nil
         ) {
@@ -103,29 +130,30 @@ struct MainTabFeature {
             return user
         }
         
-        static func == (lhs: Self, rhs: Self) -> Bool {
+        public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.session == rhs.session
             && lhs.core == rhs.core
         }
     }
     
-    enum Action {
+    public enum Action {
         case selectedTabChanged(MainTab)
         case calendar(CalendarFeature.Action)
         case favorites(FavoritesFeature.Action)
         case home(HomeFeature.Action)
         case map(MapFeature.Action)
         case profile(ProfileFeature.Action)
+        case destination(PresentationAction<Destination.Action>)
         case path(StackActionOf<Path>)
         case delegate(Delegate)
         
-        enum Delegate: Equatable {
+        public enum Delegate: Equatable {
             case logout
         }
     }
     
     @Reducer
-    enum Path {
+    public enum Path {
         case popupRequestManagement(PopupRequestManagementFlowFeature)
         case popupRequestManagementDetail(PopupRequestManagementDetailFeature)
         case homeComingPopupDetail(HomeComingPopupDetailDestinationFeature)
@@ -137,7 +165,9 @@ struct MainTabFeature {
         case serviceTerms(ServiceTermsDestinationFeature)
     }
     
-    var body: some ReducerOf<Self> {
+    public init() {}
+
+    public var body: some ReducerOf<Self> {
         Scope(state: \.core.calendar, action: \.calendar) {
             CalendarFeature()
         }
@@ -203,6 +233,21 @@ struct MainTabFeature {
                 state.core.path.append(.alert(.init(session: state.$session)))
                 return .none
                 
+            case .home(.delegate(.searchRequested)):
+                state.core.destination = .search(
+                    .init(
+                        userUuid: state.currentUser.userUuid,
+                        nickname: state.currentUser.displayNickname
+                    )
+                )
+                return .none
+
+            case .home(.delegate(.popupRequestRequested)):
+                state.core.destination = .popupRequest(
+                    .init(userUuid: state.currentUser.userUuid)
+                )
+                return .none
+
             case .favorites(.delegate(.browsePopupsRequested)):
                 state.core.selectedTab = .home
                 return .none
@@ -228,6 +273,14 @@ struct MainTabFeature {
             case .profile(.delegate(.alertRequested)):
                 state.core.path.append(.alert(.init(session: state.$session)))
                 return .none
+
+            case .destination(.presented(.search(.delegate(.dismiss)))):
+                state.core.destination = nil
+                return .none
+
+            case .destination(.presented(.popupRequest(.delegate(.dismiss)))):
+                state.core.destination = nil
+                return .none
                 
             case .home,
                     .calendar,
@@ -239,6 +292,9 @@ struct MainTabFeature {
             case .path(.element(let id, let action)):
                 return reducePathAction(id: id, action: action, state: &state)
                 
+            case .destination:
+                return .none
+
             case .path:
                 return .none
                 
@@ -247,6 +303,7 @@ struct MainTabFeature {
             }
         }
         .forEach(\.core.path, action: \.path)
+        .ifLet(\.core.$destination, action: \.destination)
     }
 }
 
@@ -336,33 +393,36 @@ extension User {
 }
 
 @Reducer
-struct PopupDetailDestinationFeature {
+public struct PopupDetailDestinationFeature {
     @ObservableState
-    struct State: Equatable {
+    public struct State: Equatable {
         var content: PopupDetailFeature.State
         let isAdmin: Bool
+        let hidesSystemTabBar: Bool
 
-        init(
+        public init(
             userUuid: String,
             popup: Popup,
-            isAdmin: Bool
+            isAdmin: Bool,
+            hidesSystemTabBar: Bool = false
         ) {
             self.content = .init(
                 userUuid: userUuid,
                 popup: popup
             )
             self.isAdmin = isAdmin
+            self.hidesSystemTabBar = hidesSystemTabBar
         }
     }
     
-    enum Action: Equatable {
+    public enum Action: Equatable {
         case content(PopupDetailFeature.Action)
         case relatedPopupSelected(String, Popup)
         case deactivateCompleted
         case reviewsTapped([Review])
         case delegate(Delegate)
         
-        enum Delegate: Equatable {
+        public enum Delegate: Equatable {
             case pushPopupDetail(String, Popup)
             case showReviews([Review])
             case favoriteChanged(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
@@ -370,7 +430,9 @@ struct PopupDetailDestinationFeature {
         }
     }
     
-    var body: some ReducerOf<Self> {
+    public init() {}
+
+    public var body: some ReducerOf<Self> {
         Scope(state: \.content, action: \.content) {
             PopupDetailFeature()
         }
@@ -399,29 +461,139 @@ struct PopupDetailDestinationFeature {
 }
 
 @Reducer
-struct NotificationDestinationFeature {
+public struct SearchDestinationFeature {
+    @Reducer
+    public enum Path {
+        case popupDetail(PopupDetailDestinationFeature)
+        case reviewDetail(ReviewFeature)
+    }
+
     @ObservableState
-    struct State: Equatable {
-        init() {}
+    public struct State: Equatable, Identifiable {
+        public var id: UUID { search.id }
+        var search: SearchFeature.State
+        var path = StackState<Path.State>()
+
+        public init(
+            userUuid: String,
+            nickname: String
+        ) {
+            self.search = .init(
+                userUuid: userUuid,
+                nickname: nickname
+            )
+        }
+
+        public static func == (lhs: Self, rhs: Self) -> Bool {
+            lhs.search == rhs.search
+        }
+    }
+
+    public enum Action {
+        case search(SearchFeature.Action)
+        case path(StackActionOf<Path>)
+        case delegate(Delegate)
+
+        public enum Delegate: Equatable {
+            case dismiss
+        }
+    }
+
+    public init() {}
+
+    public var body: some ReducerOf<Self> {
+        Scope(state: \.search, action: \.search) {
+            SearchFeature()
+        }
+
+        Reduce { state, action in
+            switch action {
+            case .search(.delegate(.dismiss)):
+                return .send(.delegate(.dismiss))
+
+            case .search(.delegate(.popupSelected(let popup))):
+                appendPopupDetail(popup, state: &state)
+                return .none
+
+            case .path(.element(let id, let action)):
+                return reducePathAction(id: id, action: action, state: &state)
+
+            case .search,
+                    .path,
+                    .delegate:
+                return .none
+            }
+        }
+        .forEach(\.path, action: \.path)
+    }
+}
+
+private extension SearchDestinationFeature {
+    func appendPopupDetail(_ popup: Popup, state: inout State) {
+        state.path.append(
+            .popupDetail(
+                .init(
+                    userUuid: state.search.userUuid,
+                    popup: popup,
+                    isAdmin: false,
+                    hidesSystemTabBar: true
+                )
+            )
+        )
+    }
+
+    func reducePathAction(
+        id: StackElementID,
+        action: Path.Action,
+        state: inout State
+    ) -> Effect<Action> {
+        switch action {
+        case .popupDetail(.delegate(.pushPopupDetail(_, let popup))):
+            appendPopupDetail(popup, state: &state)
+            return .none
+
+        case .popupDetail(.delegate(.showReviews(let reviews))):
+            state.path.append(.reviewDetail(.init(reviews: reviews)))
+            return .none
+
+        case .popupDetail(.delegate(.close)):
+            state.path.pop(from: id)
+            return .none
+
+        default:
+            return .none
+        }
+    }
+}
+
+@Reducer
+public struct NotificationDestinationFeature {
+    @ObservableState
+    public struct State: Equatable {
+        public init() {}
     }
     
-    enum Action: Equatable {}
+    public enum Action: Equatable {}
     
-    var body: some ReducerOf<Self> {
+    public init() {}
+
+    public var body: some ReducerOf<Self> {
         Reduce { _, _ in .none }
     }
 }
 
 @Reducer
-struct ServiceTermsDestinationFeature {
+public struct ServiceTermsDestinationFeature {
     @ObservableState
-    struct State: Equatable {
-        init() {}
+    public struct State: Equatable {
+        public init() {}
     }
     
-    enum Action: Equatable {}
+    public enum Action: Equatable {}
     
-    var body: some ReducerOf<Self> {
+    public init() {}
+
+    public var body: some ReducerOf<Self> {
         Reduce { _, _ in .none }
     }
 }

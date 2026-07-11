@@ -20,26 +20,26 @@ let project = Project(
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]
         ),
-        .target(
-            name: "AlertFeatureDemo",
-            destinations: [.iPhone],
-            product: .app,
-            bundleId: "com.poppang.demo.alert",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .extendingDefault(
-                with: [
-                    "UILaunchScreen": [
-                        "UIColorName": "",
-                        "UIImageName": "",
-                    ],
-                ]
-            ),
-            sources: ["Demo/Sources/**"],
-            dependencies: [
-                .target(name: "AlertFeature"),
-                .project(target: "Domain", path: "../../Domain"),
-                .project(target: "Data", path: "../../Data"),
-            ]
-        ),
+        // .target(
+        //     name: "AlertFeatureDemo",
+        //     destinations: [.iPhone],
+        //     product: .app,
+        //     bundleId: "com.poppang.demo.alert",
+        //     deploymentTargets: .iOS("17.0"),
+        //     infoPlist: .extendingDefault(
+        //         with: [
+        //             "UILaunchScreen": [
+        //                 "UIColorName": "",
+        //                 "UIImageName": "",
+        //             ],
+        //         ]
+        //     ),
+        //     sources: ["Demo/Sources/**"],
+        //     dependencies: [
+        //         .target(name: "AlertFeature"),
+        //         .project(target: "Domain", path: "../../Domain"),
+        //         .project(target: "Data", path: "../../Data"),
+        //     ]
+        // ),
     ]
 )

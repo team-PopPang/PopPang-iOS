@@ -7,15 +7,21 @@ import struct HomeFeature.HomeComingPopupDetailDestinationView
 import struct HomeFeature.HomeFeatureView
 import MapFeature
 import PopupDetailFeature
+import PopupRequestFeature
 import PopupRequestManagementFeature
 import ProfileFeature
 import ReviewFeature
+import SearchFeature
 import SwiftUI
 
-struct MainTabFeatureView: View {
+public struct MainTabFeatureView: View {
     @Bindable var store: StoreOf<MainTabFeature>
 
-    var body: some View {
+    public init(store: StoreOf<MainTabFeature>) {
+        self.store = store
+    }
+
+    public var body: some View {
         NavigationStack(path: $store.scope(state: \.core.path, action: \.path)) {
             TabView(
                 selection: Binding(
@@ -75,6 +81,16 @@ struct MainTabFeatureView: View {
                 }
             }
         }
+        .fullScreenCover(
+            item: $store.scope(state: \.core.destination?.search, action: \.destination.search)
+        ) { store in
+            SearchDestinationView(store: store)
+        }
+        .fullScreenCover(
+            item: $store.scope(state: \.core.destination?.popupRequest, action: \.destination.popupRequest)
+        ) { store in
+            PopupRequestFeatureView(store: store)
+        }
     }
 
     @ViewBuilder
@@ -101,7 +117,7 @@ private struct PopupDetailDestinationView: View {
         PopupDetailFeatureView(
             store: store.scope(state: \.content, action: \.content),
             isAdmin: store.isAdmin,
-            hidesSystemTabBar: false,
+            hidesSystemTabBar: store.hidesSystemTabBar,
             onSelectRelatedPopup: { userUuid, popup in
                 store.send(.relatedPopupSelected(userUuid, popup))
             },
@@ -112,6 +128,27 @@ private struct PopupDetailDestinationView: View {
                 store.send(.reviewsTapped(reviews))
             }
         )
+    }
+}
+
+private struct SearchDestinationView: View {
+    @Bindable var store: StoreOf<SearchDestinationFeature>
+
+    var body: some View {
+        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
+            SearchFeatureView(store: store.scope(state: \.search, action: \.search))
+        } destination: { store in
+            switch store.state {
+            case .popupDetail:
+                if let store = store.scope(state: \.popupDetail, action: \.popupDetail) {
+                    PopupDetailDestinationView(store: store)
+                }
+            case .reviewDetail:
+                if let store = store.scope(state: \.reviewDetail, action: \.reviewDetail) {
+                    ReviewDetailDestinationView(store: store)
+                }
+            }
+        }
     }
 }
 

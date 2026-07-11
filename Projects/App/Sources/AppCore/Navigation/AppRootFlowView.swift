@@ -2,6 +2,7 @@ import AuthFeature
 import ComposableArchitecture
 import DSKit
 import OnboardingFeature
+import RootFeature
 import SwiftUI
 
 struct AppRootFlowView: View {

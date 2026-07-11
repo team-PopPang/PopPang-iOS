@@ -3,8 +3,6 @@ import Core
 import Domain
 import DSKit
 import Kingfisher
-import PopupDetailFeature
-import ReviewFeature
 import SwiftUI
 
 public struct SearchFeatureView: View {
@@ -16,112 +14,99 @@ public struct SearchFeatureView: View {
     }
 
     public var body: some View {
-        NavigationStack(path: $store.scope(state: \.path, action: \.path)) {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                Button {
+                    store.send(.dismissTapped)
+                } label: {
+                    DSKitResource.image("backButton")
+                        .renderingMode(.template)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 14, height: 14)
+                        .foregroundStyle(Color.subBlack)
+                }
+                .padding(.trailing, 10)
+                .accessibilityIdentifier("home_search_backbutton")
+
+                SearchTextField(
+                    placeholder: "궁금한 장소를 검색해보세요",
+                    text: Binding(
+                        get: { store.searchText },
+                        set: { store.send(.searchTextChanged($0)) }
+                    )
+                )
+                .focused($isFocused)
+                .accessibilityIdentifier("home_search_textfield")
+            }
+            .padding(.top, 10)
+            .padding(.leading, .contentPadding)
+            .padding(.trailing, 15)
+            .padding(.bottom, 10)
+
             VStack(spacing: 0) {
-                HStack(spacing: 0) {
-                    Button {
-                        store.send(.dismissTapped)
-                    } label: {
-                        DSKitResource.image("backButton")
-                            .renderingMode(.template)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 14, height: 14)
-                            .foregroundStyle(Color.subBlack)
+                if store.searchPopupList.isEmpty {
+                    HStack(spacing: 0) {
+                        Text(store.nickname)
+                            .foregroundStyle(Color.mainOrange)
+                            .font(.scdream(.bold, size: 12))
+
+                        Text(recentKeywordTitleSuffix)
+                            .font(.scdream(.regular, size: 12))
                     }
-                    .padding(.trailing, 10)
-                    .accessibilityIdentifier("home_search_backbutton")
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-                    SearchTextField(
-                        placeholder: "궁금한 장소를 검색해보세요",
-                        text: Binding(
-                            get: { store.searchText },
-                            set: { store.send(.searchTextChanged($0)) }
-                        )
-                    )
-                    .focused($isFocused)
-                    .accessibilityIdentifier("home_search_textfield")
-                }
-                .padding(.top, 10)
-                .padding(.leading, .contentPadding)
-                .padding(.trailing, 15)
-                .padding(.bottom, 10)
-
-                VStack(spacing: 0) {
-                    if store.searchPopupList.isEmpty {
-                        HStack(spacing: 0) {
-                            Text(store.nickname)
-                                .foregroundStyle(Color.mainOrange)
-                                .font(.scdream(.bold, size: 12))
-
-                            Text(recentKeywordTitleSuffix)
-                                .font(.scdream(.regular, size: 12))
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                        SearchFlowLayout {
-                            ForEach(store.recentKeywords, id: \.self) { keyword in
-                                SearchFlowButton(title: keyword) {
-                                    store.send(.recentKeywordTapped(keyword))
-                                } onRemove: {
-                                    store.send(.recentKeywordRemoved(keyword))
-                                }
+                    SearchFlowLayout {
+                        ForEach(store.recentKeywords, id: \.self) { keyword in
+                            SearchFlowButton(title: keyword) {
+                                store.send(.recentKeywordTapped(keyword))
+                            } onRemove: {
+                                store.send(.recentKeywordRemoved(keyword))
                             }
-                            .padding(4)
                         }
-                        .padding(.top, 15)
+                        .padding(4)
+                    }
+                    .padding(.top, 15)
 
-                        if store.searchText.isEmpty == false && store.isLoading == false {
-                            VStack(spacing: 0) {
-                                DSKitResource.image("noResult")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 50, height: 50)
+                    if store.searchText.isEmpty == false && store.isLoading == false {
+                        VStack(spacing: 0) {
+                            DSKitResource.image("noResult")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 50, height: 50)
 
-                                Text("검색결과가 없습니다.")
-                                    .ppStyleFont(.scdream(.medium, size: 14))
-                                    .foregroundStyle(Color.mainBlack)
-                                    .padding(.top, 10)
-                            }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            Text("검색결과가 없습니다.")
+                                .ppStyleFont(.scdream(.medium, size: 14))
+                                .foregroundStyle(Color.mainBlack)
+                                .padding(.top, 10)
                         }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
-
-                    if store.isLoading {
-                        ProgressView()
-                            .padding(.top, 24)
-                    }
-
-                    if let errorMessage = store.errorMessage {
-                        Text(errorMessage)
-                            .ppStyleFont(.scdream(.regular, size: 12))
-                            .foregroundStyle(Color.mainRed)
-                            .padding(.top, 12)
-                    }
-
-                    SearchGridPopupScrollView(
-                        popups: store.searchPopupList,
-                        onSelect: { popup in
-                            store.send(.popupSelected(popup))
-                        }
-                    )
                 }
-                .padding(.top, 20)
-                .padding(.horizontal, .contentPadding)
 
-                Spacer()
+                if store.isLoading {
+                    ProgressView()
+                        .padding(.top, 24)
+                }
+
+                if let errorMessage = store.errorMessage {
+                    Text(errorMessage)
+                        .ppStyleFont(.scdream(.regular, size: 12))
+                        .foregroundStyle(Color.mainRed)
+                        .padding(.top, 12)
+                }
+
+                SearchGridPopupScrollView(
+                    popups: store.searchPopupList,
+                    onSelect: { popup in
+                        store.send(.popupSelected(popup))
+                    }
+                )
             }
-        } destination: { store in
-            switch store.state {
-            case .popupDetail:
-                if let store = store.scope(state: \.popupDetail, action: \.popupDetail) {
-                    SearchPopupDetailDestinationView(store: store)
-                }
-            case .reviewDetail:
-                if let store = store.scope(state: \.reviewDetail, action: \.reviewDetail) {
-                    SearchReviewDetailDestinationView(store: store)
-                }
-            }
+            .padding(.top, 20)
+            .padding(.horizontal, .contentPadding)
+
+            Spacer()
         }
         .onAppear {
             store.send(.onAppear)
@@ -135,32 +120,6 @@ public struct SearchFeatureView: View {
         store.recentKeywords.isEmpty
             ? "님의 최근 본 검색어가 없습니다"
             : "님의 최근 본 검색어예요"
-    }
-}
-
-private struct SearchPopupDetailDestinationView: View {
-    let store: StoreOf<SearchPopupDetailDestinationFeature>
-
-    var body: some View {
-        PopupDetailFeatureView(
-            store: store.scope(state: \.content, action: \.content),
-            isAdmin: false,
-            hidesSystemTabBar: true,
-            onSelectRelatedPopup: { userUuid, popup in
-                store.send(.relatedPopupSelected(userUuid, popup))
-            },
-            onShowReviews: { reviews in
-                store.send(.reviewsTapped(reviews))
-            }
-        )
-    }
-}
-
-private struct SearchReviewDetailDestinationView: View {
-    let store: StoreOf<ReviewFeature>
-
-    var body: some View {
-        ReviewFeatureView(store: store)
     }
 }
 
