@@ -12,8 +12,10 @@
 - 새 화면 전환은 TCA state/action/reducer로 모델링한다.
 - tree-based navigation과 stack-based navigation을 함께 사용한다.
 - feature는 다른 feature를 직접 조립하지 않고 delegate action으로 intent만 올린다.
+- 임시 예외로 제거 예정인 `PopupRequestFeature`, `PopupRequestManagementFeature`, `PopupSubmissionFormFeature` 조합만 직접 조립을 허용한다.
 - 전역 세션 상태의 source of truth는 `AppFeature.session`이다.
 - 현재 로그인 사용자는 `AppFeature.session.user`로 표현한다.
+- `AppFeature`는 root/auth/register 전환을 소유하고, `RootFeature` 모듈의 `MainTabFeature`는 main flow navigation owner로 동작한다.
 - `MainTabFeature`는 shared `session`을 child feature에 전달하고, 탭 로컬 navigation state를 소유한다.
 - direct scope가 가능한 feature는 shared `session`을 직접 읽거나 필요한 값을 projection해서 reducer/state에 주입한다.
 - 현재 `CalendarFeature`도 shared `session`을 직접 읽고 캘린더 로컬 상태를 feature state가 소유한다.
@@ -124,6 +126,8 @@ struct MainTabFeature {
 ```
 
 이렇게 하면 하나의 parent에서 동시에 여러 presentation이 켜지는 invalid state를 줄일 수 있다.
+
+현재 PopPang에서는 홈에서 시작하는 search / popup request fullScreen 흐름도 이 owner destination에 두고, `HomeFeature`는 delegate intent만 올리는 방향을 사용한다.
 
 ## Stack-based Navigation
 
