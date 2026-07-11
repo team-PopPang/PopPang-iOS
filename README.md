@@ -37,6 +37,7 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 | **Kingfisher** | 이미지 캐싱 처리 및 UI 성능 개선을 위함 |
 | **NMapsMap** | 지도 기반 팝업 탐색 기능을 구현하기 위함 |
 | **BottomSheet** | 지도와 상세 흐름의 바텀시트 UI를 구현하기 위함 |
+| **PopPangListKit** | SwiftUI의 선언형 문법으로 UICollectionView 기반 목록을 구성하기 위함 |
 
 <br/><br/>
 
@@ -58,7 +59,53 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 
 # 4. 핵심 성과
 
-### **1. 로딩 지연 문제 개선**
+### **1. 선언형 List DSL로 UIKit과 SwiftUI 목록 구현 통합**
+> **문제**
+>
+> SwiftUI `List`는 표준 목록을 빠르게 만들기 좋지만 복잡한 scroll lifecycle, prefetch, pagination과 업데이트 전략을 직접 제어하기 어려웠음
+>
+> 반대로 `UICollectionView`는 동작을 예측하고 튜닝할 수 있지만 화면마다 data source와 delegate 연결 코드가 반복됐음
+>
+> **해결**
+>
+> `UICollectionView`와 DifferenceKit을 Core로 유지하면서 `List`, `Section`, `Cell`로 구성하는 선언형 DSL을 구현
+>
+> 기존 UIKit `Component`와 SwiftUI `View`가 같은 diff, layout, event 경로를 공유하도록 `PopPangListKit` 모듈로 분리
+>
+> **성과**
+>
+> 🔸 UIKit의 cell reuse, compositional layout과 scroll 제어를 유지하면서 선언형 목록 작성 가능
+>
+> 🔸 UIKit Component와 SwiftUI View를 하나의 Section에서 함께 사용
+>
+> 🔸 DifferenceKit 기반 변경 중심 batch update와 `reloadData()` fallback 제공
+>
+> 🔸 Binding Cell과 최신 snapshot 병합으로 Toggle 같은 입력 상태를 안정적으로 갱신
+>
+> 🔸 framework와 tests는 **iOS 13+**, Demo app은 **iOS 17+** 지원
+
+```swift
+struct PopupListView: View {
+    @State private var popups: [Popup] = []
+
+    var body: some View {
+        PopPangList {
+            Section(id: "popups") {
+                for popup in popups {
+                    Cell(id: popup.id, item: popup) { popup in
+                        PopupRow(popup: popup)
+                    }
+                }
+            }
+            .withSectionLayout(VerticalLayout(spacing: 8))
+        }
+    }
+}
+```
+
+---
+
+### **2. 로딩 지연 문제 개선**
 > **문제**  
 > 여러 API가 순차적으로 호출되며 전체 로딩이 길어졌음  
 >
@@ -95,7 +142,7 @@ func getAllPopupData() async {
 
 ---
 
-### **2. Moya를 async/await으로 사용하기 위한 공통 async 래퍼 생성**
+### **3. Moya를 async/await으로 사용하기 위한 공통 async 래퍼 생성**
 > **문제**  
 > Moya는 completion 기반이라 async/await과 직접 호환되지 않아  
 > API마다 동일한 변환 코드가 반복됨  
@@ -128,7 +175,7 @@ let response = try await provider.asyncRequest(.getPopupList)
 
 ---
 
-### **3. 화면 이동 로직을 통일해 일관성 있는 네비게이션 확보**
+### **4. 화면 이동 로직을 통일해 일관성 있는 네비게이션 확보**
 > **문제**  
 > push / sheet / overlay 화면 전환 코드가 각 View에 흩어져 있어  
 > 네비게이션 흐름이 일관적이지 않고 유지보수가 어려웠음  
@@ -168,7 +215,7 @@ coordinator.showOverlay(.notification)
 
 ---
 
-### **4. CSV 기반 로컬라이제이션 자동화로 다국어 관리 비용 절감**
+### **5. CSV 기반 로컬라이제이션 자동화로 다국어 관리 비용 절감**
 > **문제**  
 > `Localizable.strings`를 언어별로 직접 관리하면  
 > 키 누락, 오타, 언어별 불일치가 생기기 쉽고 문자열 키를 하드코딩할 때 디버깅 비용도 커졌음  
@@ -189,7 +236,7 @@ Text(LocalizationKey.commonNext.localized(comment: "Next button"))
 
 ---
 
-### **5. 단일 타깃 구조를 Tuist 기반 Micro Feature Architecture로 전환**
+### **6. 단일 타깃 구조를 Tuist 기반 Micro Feature Architecture로 전환**
 > **문제**  
 > 기존 `V0` 앱은 `App`, `Presentation`, `Util`, `DesignSystem`이 단일 타깃에 섞여 있어  
 > 기능이 늘어날수록 변경 영향 범위가 커지고, 독립 개발과 빌드 검증이 어려웠음  
@@ -240,12 +287,13 @@ Projects
 └── Shared
     ├── Core
     ├── DSKit
+    ├── PopPangListKit
     └── ThirdParty
 ```
 
 ---
 
-### **6. 외부 SDK 의존성을 ThirdParty 링크 허브로 추적 가능하게 정리**
+### **7. 외부 SDK 의존성을 ThirdParty 링크 허브로 추적 가능하게 정리**
 > **문제**  
 > 외부 SDK가 여러 레이어에 직접 흩어지면 어떤 모듈이 어떤 SDK product를 링크하는지 파악하기 어렵고,  
 > SPM product type 문제로 빌드와 런타임 경고가 발생할 수 있었음  
@@ -327,5 +375,7 @@ make module LAYER=shared NAME=UIComponents
 
 - `AGENTS.md`: 저장소 작업 규칙과 아키텍처 기준
 - `Projects/Coordinator/README.md`: Coordinator 상세 가이드
+- [`Projects/Shared/PopPangListKit`](./Projects/Shared/PopPangListKit): PopPangListKit framework와 Core 구현
+- [`Projects/Shared/PopPangListKit/Demo`](./Projects/Shared/PopPangListKit/Demo): UIKit·SwiftUI 사용 예제
 - `V0/README.md`: 기존 단일 타깃 앱 README
 - `Tuist/Package.swift`: 외부 의존성과 product type 정책
