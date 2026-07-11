@@ -3,7 +3,7 @@ import AuthFeature
 import Core
 import Domain
 import OnboardingFeature
-import RootFeature
+import MainTabFeature
 
 enum AppRootDestination: Equatable, Sendable {
     case launch

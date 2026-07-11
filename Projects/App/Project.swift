@@ -126,7 +126,7 @@ let project = Project(
                 .project(target: "ADKit", path: "../Shared/ADKit"),
                 .project(target: "AuthFeature", path: "../Features/AuthFeature"),
                 .project(target: "OnboardingFeature", path: "../Features/OnboardingFeature"),
-                .project(target: "RootFeature", path: "../Features/RootFeature"),
+                .project(target: "MainTabFeature", path: "../Features/MainTabFeature"),
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "Data", path: "../Data"),
                 .project(target: "ThirdParty", path: "../Shared/ThirdParty"),

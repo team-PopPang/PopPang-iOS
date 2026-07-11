@@ -12,7 +12,7 @@ import PopupRequestManagementFeature
 import ProfileFeature
 import SearchFeature
 
-public struct RootFeatureDependencies {
+public struct MainTabFeatureDependencies {
     private let alertFeatureClient: AlertFeatureClient
     private let calendarFeatureClient: CalendarFeatureClient
     private let favoritesFeatureClient: FavoritesFeatureClient

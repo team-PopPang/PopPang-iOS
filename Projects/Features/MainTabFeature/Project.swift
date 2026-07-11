@@ -1,13 +1,13 @@
 import ProjectDescription
 
 let project = Project(
-    name: "RootFeature",
+    name: "MainTabFeature",
     targets: [
         .target(
-            name: "RootFeature",
+            name: "MainTabFeature",
             destinations: [.iPhone],
             product: .staticFramework,
-            bundleId: "com.poppang.features.root",
+            bundleId: "com.poppang.features.maintab",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
@@ -29,15 +29,15 @@ let project = Project(
             ]
         ),
         .target(
-            name: "RootFeatureTests",
+            name: "MainTabFeatureTests",
             destinations: [.iPhone],
             product: .unitTests,
-            bundleId: "com.poppang.features.root.tests",
+            bundleId: "com.poppang.features.maintab.tests",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Tests/**"],
             dependencies: [
-                .target(name: "RootFeature"),
+                .target(name: "MainTabFeature"),
                 .project(target: "Core", path: "../../Shared/Core"),
                 .project(target: "Domain", path: "../../Domain"),
             ]

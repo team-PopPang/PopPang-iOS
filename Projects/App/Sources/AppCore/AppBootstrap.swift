@@ -2,12 +2,12 @@ import ComposableArchitecture
 import Core
 import Foundation
 import AuthFeature
-import RootFeature
+import MainTabFeature
 
 struct AppBootstrap {
     let sessionStorage: LocalSessionStorage
     let localSessionClient: LocalSessionClient
-    let rootFeatureDependencies: RootFeatureDependencies
+    let mainTabFeatureDependencies: MainTabFeatureDependencies
     let launchStateResolver: AppLaunchStateResolver
     let dependencies: AppDependencyRegistry
 
@@ -20,7 +20,7 @@ struct AppBootstrap {
             sessionStorage: sessionStorage,
             userUsecase: dependencies.usecases.userUsecase
         )
-        let rootFeatureDependencies = RootFeatureDependencies(
+        let mainTabFeatureDependencies = MainTabFeatureDependencies(
             store: store,
             adminUsecase: dependencies.usecases.adminUsecase,
             popupUsecase: dependencies.usecases.popupUsecase,
@@ -37,7 +37,7 @@ struct AppBootstrap {
         return AppBootstrap(
             sessionStorage: sessionStorage,
             localSessionClient: localSessionClient,
-            rootFeatureDependencies: rootFeatureDependencies,
+            mainTabFeatureDependencies: mainTabFeatureDependencies,
             launchStateResolver: AppLaunchStateResolver(),
             dependencies: dependencies
         )
@@ -51,7 +51,7 @@ struct AppBootstrap {
             )
         } withDependencies: {
             $0.localSessionClient = localSessionClient
-            rootFeatureDependencies.configure(&$0)
+            mainTabFeatureDependencies.configure(&$0)
             $0.authFeatureClient = .live(
                 kakaoAuthUsecase: dependencies.usecases.kakaoAuthUsecase,
                 googleAuthUsecase: dependencies.usecases.googleAuthUsecase,

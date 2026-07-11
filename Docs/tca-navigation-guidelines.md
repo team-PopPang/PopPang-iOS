@@ -15,7 +15,7 @@
 - 임시 예외로 제거 예정인 `PopupRequestFeature`, `PopupRequestManagementFeature`, `PopupSubmissionFormFeature` 조합만 직접 조립을 허용한다.
 - 전역 세션 상태의 source of truth는 `AppFeature.session`이다.
 - 현재 로그인 사용자는 `AppFeature.session.user`로 표현한다.
-- `AppFeature`는 root/auth/register 전환을 소유하고, `RootFeature` 모듈의 `MainTabFeature`는 main flow navigation owner로 동작한다.
+- `AppFeature`는 root/auth/register 전환을 소유하고, `MainTabFeature` 모듈은 로그인 이후 main flow navigation owner로 동작한다.
 - `MainTabFeature`는 shared `session`을 child feature에 전달하고, 탭 로컬 navigation state를 소유한다.
 - direct scope가 가능한 feature는 shared `session`을 직접 읽거나 필요한 값을 projection해서 reducer/state에 주입한다.
 - 현재 `CalendarFeature`도 shared `session`을 직접 읽고 캘린더 로컬 상태를 feature state가 소유한다.

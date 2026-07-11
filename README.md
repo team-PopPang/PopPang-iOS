@@ -175,13 +175,13 @@ let response = try await provider.asyncRequest(.getPopupList)
 
 ---
 
-### **4. RootFeature에서 Feature 조립과 TCA 네비게이션 통합**
+### **4. MainTabFeature에서 Feature 조립과 TCA 네비게이션 통합**
 > **문제**  
 > Feature가 다른 Feature를 직접 의존하면 화면 이동 하나를 변경해도 여러 모듈이 함께 영향을 받고,
 > 각 Feature의 독립성과 재사용성이 낮아짐
 >
 > **해결**  
-> 메인 탭 하위 Feature의 조립과 화면 이동 책임을 `RootFeature`로 모으고,
+> 메인 탭 하위 Feature의 조립과 화면 이동 책임을 `MainTabFeature`로 모으고,
 > 자식 Feature는 delegate action으로 이동 의도만 전달하도록 구성
 >
 > **성과**  
@@ -192,14 +192,13 @@ let response = try await provider.asyncRequest(.getPopupList)
 
 ```text
 PopPangApp
-└── RootFeature
-    └── MainTabFeature
-        ├── HomeFeature
-        ├── CalendarFeature
-        ├── MapFeature
-        ├── FavoritesFeature
-        ├── ProfileFeature
-        └── Search / PopupDetail / Review / Alert
+└── MainTabFeature
+    ├── HomeFeature
+    ├── CalendarFeature
+    ├── MapFeature
+    ├── FavoritesFeature
+    ├── ProfileFeature
+    └── Search / PopupDetail / Review / Alert
 ```
 
 `MainTabFeature`는 자식 Feature의 상태와 화면 전환 규칙을 관리하는 reducer이고,
@@ -287,7 +286,7 @@ Projects
 ├── Features
 │   ├── AuthFeature
 │   ├── OnboardingFeature
-│   ├── RootFeature
+│   ├── MainTabFeature
 │   ├── HomeFeature
 │   ├── SearchFeature
 │   ├── PopupDetailFeature
@@ -360,7 +359,7 @@ make regen
 
 ```bash
 tuist build PopPangApp
-tuist build RootFeature
+tuist build MainTabFeature
 ```
 
 Core/Data 테스트는 아래 명령으로 실행합니다.
@@ -389,7 +388,7 @@ make module LAYER=shared NAME=UIComponents
 # 7. 참고
 
 - `AGENTS.md`: 저장소 작업 규칙과 아키텍처 기준
-- [`Docs/tca-navigation-guidelines.md`](./Docs/tca-navigation-guidelines.md): RootFeature와 TCA navigation 기준
+- [`Docs/tca-navigation-guidelines.md`](./Docs/tca-navigation-guidelines.md): MainTabFeature와 TCA navigation 기준
 - [`Projects/Shared/PopPangListKit`](./Projects/Shared/PopPangListKit): PopPangListKit framework와 Core 구현
 - [`Projects/Shared/PopPangListKit/Demo`](./Projects/Shared/PopPangListKit/Demo): UIKit·SwiftUI 사용 예제
 - `V0/README.md`: 기존 단일 타깃 앱 README

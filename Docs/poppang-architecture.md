@@ -49,7 +49,7 @@ Projects
 │   ├── PopupRequestManagementFeature
 │   ├── ProfileFeature
 │   ├── ReviewFeature
-│   ├── RootFeature
+│   ├── MainTabFeature
 │   └── SearchFeature
 └── Shared
     ├── Core
@@ -92,7 +92,7 @@ Projects
 - `Projects/Coordinator` 모듈 제거 완료
 - `RootCoordinator`, `MainTabCoordinator`, feature coordinator 제거 완료
 - root/auth flow owner는 `Projects/App/Sources/AppCore/Navigation`의 TCA feature다.
-- main flow owner는 `Projects/Features/RootFeature`의 TCA feature다.
+- main flow owner는 `Projects/Features/MainTabFeature`의 TCA feature다.
 
 핵심 원칙:
 
@@ -460,7 +460,7 @@ DI 변경 시 함께 확인할 파일:
 
 - 앱 시작, SDK, DI: `Projects/App/Sources/AppCore/**`
 - 루트 전환, 탭, 화면 이동: `Docs/tca-navigation-guidelines.md`, `Projects/App/Sources/AppCore/Navigation/**`
-- 메인 탭 navigation owner: `Projects/Features/RootFeature/**`
+- 메인 탭 navigation owner: `Projects/Features/MainTabFeature/**`
 - 화면 상태/UI: `Projects/Features/<FeatureName>/Sources/**`
 - 도메인 계약: `Projects/Domain/Sources/**`
 - API/DTO/repository: `Projects/Data/Sources/**`

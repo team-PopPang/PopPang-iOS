@@ -2,11 +2,11 @@ import ComposableArchitecture
 import Core
 import Domain
 import Testing
-@testable import RootFeature
+@testable import MainTabFeature
 
 @MainActor
-struct RootFeatureTests {
-    @Test("HomeFeature의 검색 요청을 RootFeature가 SearchFeature presentation으로 연다")
+struct MainTabFeatureTests {
+    @Test("HomeFeature의 검색 요청을 MainTabFeature가 SearchFeature presentation으로 연다")
     func presentsSearchFromHomeDelegate() async {
         let store = TestStore(initialState: MainTabFeature.State(session: makeSession())) {
             MainTabFeature()
@@ -24,7 +24,7 @@ struct RootFeatureTests {
         #expect(searchState.search.nickname == "팝팡")
     }
 
-    @Test("HomeFeature의 팝업 제보 요청을 RootFeature가 PopupRequestFeature presentation으로 연다")
+    @Test("HomeFeature의 팝업 제보 요청을 MainTabFeature가 PopupRequestFeature presentation으로 연다")
     func presentsPopupRequestFromHomeDelegate() async {
         let store = TestStore(initialState: MainTabFeature.State(session: makeSession())) {
             MainTabFeature()
@@ -41,7 +41,7 @@ struct RootFeatureTests {
         #expect(popupRequestState.userUuid == "user-1")
     }
 
-    @Test("SearchFeature가 dismiss delegate를 보내면 RootFeature가 presentation을 닫는다")
+    @Test("SearchFeature가 dismiss delegate를 보내면 MainTabFeature가 presentation을 닫는다")
     func clearsSearchDestinationWhenDismissed() async {
         var initialState = MainTabFeature.State(session: makeSession())
         initialState.core.destination = .search(
@@ -60,7 +60,7 @@ struct RootFeatureTests {
         }
     }
 
-    @Test("SearchDestinationFeature가 팝업 선택 intent를 받으면 RootFeature 내부 상세 path를 연다")
+    @Test("SearchDestinationFeature가 팝업 선택 intent를 받으면 MainTabFeature 내부 상세 path를 연다")
     func searchDestinationPushesPopupDetail() async {
         let popup = Popup.popupMock
         let store = TestStore(
