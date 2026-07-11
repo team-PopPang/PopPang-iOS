@@ -192,6 +192,8 @@ let response = try await provider.asyncRequest(.getPopupList)
 
 ```text
 PopPangApp
+├── AuthFeature
+├── OnboardingFeature
 └── MainTabFeature
     ├── HomeFeature
     ├── CalendarFeature
@@ -200,6 +202,9 @@ PopPangApp
     ├── ProfileFeature
     └── Search / PopupDetail / Review / Alert
 ```
+
+`AppFeature`는 launch, onboarding, auth, register, main 전환을 소유하고,
+`MainTabFeature`는 로그인 이후 자식 Feature와 탭 공통 화면 전환을 조립한다.
 
 `MainTabFeature`는 자식 Feature의 상태와 화면 전환 규칙을 관리하는 reducer이고,
 `MainTabFeatureView`는 해당 상태를 `TabView`, `NavigationStack`, `fullScreenCover`에 연결하는 View다.
