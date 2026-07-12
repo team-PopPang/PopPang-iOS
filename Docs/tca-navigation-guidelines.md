@@ -264,7 +264,7 @@ PopPang
 @ObservableState
 struct AppFeature.State: Equatable {
     @Shared var session: UserSession
-    var mainTabCore: MainTabFeature.CoreState?
+    var mainTab: MainTabFeature.State?
 }
 ```
 

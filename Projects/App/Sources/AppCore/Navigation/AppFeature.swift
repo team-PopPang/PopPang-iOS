@@ -29,28 +29,10 @@ struct AppFeature {
         var registerFlow: RegisterFlowFeature.State?
         var onboarding = OnboardingFeature.State()
         var onboardingPath = StackState<OnboardingPath.State>()
-        var mainTabCore: MainTabFeature.CoreState?
+        var mainTab: MainTabFeature.State?
 
         init(session: UserSession = .init()) {
             self._session = Shared(value: session)
-        }
-
-        var mainTab: MainTabFeature.State? {
-            get {
-                guard session.user != nil, let mainTabCore else { return nil }
-                return MainTabFeature.State(
-                    session: $session,
-                    core: mainTabCore
-                )
-            }
-            set {
-                guard let newValue else {
-                    mainTabCore = nil
-                    return
-                }
-
-                mainTabCore = newValue.core
-            }
         }
 
         static func == (lhs: Self, rhs: Self) -> Bool {
@@ -59,7 +41,7 @@ struct AppFeature {
                 && lhs.auth == rhs.auth
                 && lhs.registerFlow == rhs.registerFlow
                 && lhs.onboarding == rhs.onboarding
-                && lhs.mainTabCore == rhs.mainTabCore
+                && lhs.mainTab == rhs.mainTab
         }
     }
 
@@ -154,7 +136,7 @@ struct AppFeature {
                 state.registerFlow = nil
                 state.onboarding = .init()
                 state.onboardingPath = StackState()
-                state.mainTabCore = nil
+                state.mainTab = nil
                 state.$session.withLock { $0 = UserSession() }
                 return .none
 
@@ -210,12 +192,12 @@ private extension AppFeature {
         state.onboardingPath = StackState()
 
         if destination == .main, session.user != nil {
-            state.mainTabCore = state.mainTabCore ?? .init(session: state.$session)
+            state.mainTab = state.mainTab ?? .init(session: state.$session)
         } else if destination == .register, let user = session.user {
             state.registerFlow = .init(user: user)
-            state.mainTabCore = nil
+            state.mainTab = nil
         } else {
-            state.mainTabCore = nil
+            state.mainTab = nil
         }
     }
 
@@ -227,12 +209,12 @@ private extension AppFeature {
         state.onboardingPath = StackState()
 
         if user.nickname == nil {
-            state.mainTabCore = nil
+            state.mainTab = nil
             state.registerFlow = .init(user: user)
             state.destination = .register
         } else {
             state.registerFlow = nil
-            state.mainTabCore = state.mainTabCore ?? .init(session: state.$session)
+            state.mainTab = state.mainTab ?? .init(session: state.$session)
             state.destination = .main
         }
     }

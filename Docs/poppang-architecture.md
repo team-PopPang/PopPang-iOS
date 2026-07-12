@@ -100,7 +100,7 @@ Projects
 - 전역 세션 상태의 source of truth는 `AppFeature.session`이다.
 - 현재 로그인 사용자는 `AppFeature.session.user`로 표현한다.
 - active main flow는 `MainTabFeature`가 TCA `StackState`와 단일 `@Presents` destination으로 소유한다.
-- `MainTabFeature`는 parent가 보유한 shared `session`과 `mainTabCore`를 기준으로 동작한다.
+- `AppFeature`는 `MainTabFeature.State?`를 저장하고, 메인 진입 시 shared `session`을 전달해 한 번 생성한다.
 - TCA-ready feature는 필요한 경우 parent가 내려주는 shared `session`을 직접 읽는다.
 - 현재 `CalendarFeature`도 shared `session`을 직접 읽고, 캘린더 로컬 상태를 feature state가 소유한다.
 - 현재 `FavoritesFeature`도 shared `session`을 직접 읽고, 찜 로컬 상태를 feature state가 소유한다.
