@@ -16,7 +16,7 @@ public struct PopupDetailClient: Sendable {
     ) async throws -> [Popup]
     var addFavorite: @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void
     var removeFavorite: @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void
-    var deactivatePopup: @Sendable (_ popupUuid: String) async throws -> Void
+    var deactivatePopup: @Sendable (_ adminUuid: String, _ popupUuid: String) async throws -> Void
 
     public init(
         increaseViewCount: @escaping @Sendable (_ popupUuid: String) async throws -> Void,
@@ -26,7 +26,7 @@ public struct PopupDetailClient: Sendable {
         ) async throws -> [Popup],
         addFavorite: @escaping @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void,
         removeFavorite: @escaping @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void,
-        deactivatePopup: @escaping @Sendable (_ popupUuid: String) async throws -> Void
+        deactivatePopup: @escaping @Sendable (_ adminUuid: String, _ popupUuid: String) async throws -> Void
     ) {
         self.increaseViewCount = increaseViewCount
         self.getPersonalRelatedPopupList = getPersonalRelatedPopupList
@@ -60,8 +60,11 @@ extension PopupDetailClient {
             removeFavorite: { userUuid, popupUuid in
                 try await popupUsecaseBox.usecase.removeFavorite(userUuid: userUuid, popupUuid: popupUuid)
             },
-            deactivatePopup: { popupUuid in
-                try await adminUsecaseBox.usecase.deactivatePopup(popupUuid: popupUuid)
+            deactivatePopup: { adminUuid, popupUuid in
+                try await adminUsecaseBox.usecase.deactivatePopup(
+                    adminUuid: adminUuid,
+                    popupUuid: popupUuid
+                )
             }
         )
     }
@@ -73,7 +76,7 @@ extension PopupDetailClient: DependencyKey {
         getPersonalRelatedPopupList: { _, _ in [] },
         addFavorite: { _, _ in },
         removeFavorite: { _, _ in },
-        deactivatePopup: { _ in }
+        deactivatePopup: { _, _ in }
     )
 }
 

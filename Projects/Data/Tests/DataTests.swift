@@ -388,7 +388,7 @@ struct DataTests {
         #expect(AdminAPI.getPopupSubmissionList.path == "/admin/popup-submissions")
         #expect(AdminAPI.createPopupSubmission(requestDTO: .fixture).path == "/admin/popup-submissions")
         #expect(AdminAPI.deactivatePopupByUser(userUuid: "user-1", popupUuid: "popup-1").path == "/admin/user/user-1/popup/popup-1/deactivate")
-        #expect(AdminAPI.deactivatePopup(popupUuid: "popup-1").path == "/admin/popup/popup-1/deactivate")
+        #expect(AdminAPI.deactivatePopup(adminUuid: "admin-1", popupUuid: "popup-1").path == "/admin/popup/popup-1/deactivate")
         #expect(AdminAPI.updatePopupSubmissionStatus(
             submissionId: 7,
             requestDTO: PopupSubmissionStatus.approved.toDTO()
@@ -450,7 +450,7 @@ struct DataTests {
         #expect(AdminAPI.getPopupSubmissionList.method == .get)
         #expect(AdminAPI.createPopupSubmission(requestDTO: .fixture).method == .post)
         #expect(AdminAPI.deactivatePopupByUser(userUuid: "user-1", popupUuid: "popup-1").method == .patch)
-        #expect(AdminAPI.deactivatePopup(popupUuid: "popup-1").method == .patch)
+        #expect(AdminAPI.deactivatePopup(adminUuid: "admin-1", popupUuid: "popup-1").method == .patch)
         #expect(AdminAPI.updatePopupSubmissionStatus(
             submissionId: 7,
             requestDTO: PopupSubmissionStatus.approved.toDTO()
@@ -510,6 +510,10 @@ struct DataTests {
 
     @Test("API 요청 파라미터가 현재 명세와 일치한다")
     func apiRequestParametersMatchEndpointDefinitions() {
+        #expect(stringParameter(
+            AdminAPI.deactivatePopup(adminUuid: "admin-1", popupUuid: "popup-1").task,
+            key: "uuid"
+        ) == "admin-1")
         #expect(stringParameter(PopupAPI.searchPopupList(searchText: "성수").task, key: "q") == "성수")
         #expect(stringParameter(PopupAPI.getPersonalPopupList(userUuid: "user-1").task, key: "userUuid") == "user-1")
         #expect(stringParameter(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").task, key: "region") == "서울")

@@ -82,7 +82,10 @@ public struct PopupDetailFeature {
             case .deactivatePopup:
                 state.isDeactivating = true
                 state.errorMessage = nil
-                return deactivatePopup(popupUuid: state.popup.popupUuid)
+                return deactivatePopup(
+                    adminUuid: state.userUuid,
+                    popupUuid: state.popup.popupUuid
+                )
 
             case .relatedPopupListLoaded(let popups):
                 state.relatedPopupList = popups
@@ -173,12 +176,12 @@ private extension PopupDetailFeature {
         }
     }
 
-    func deactivatePopup(popupUuid: String) -> Effect<Action> {
+    func deactivatePopup(adminUuid: String, popupUuid: String) -> Effect<Action> {
         let popupDetailClient = popupDetailClient
 
-        return .run { [popupDetailClient, popupUuid] send in
+        return .run { [popupDetailClient, adminUuid, popupUuid] send in
             do {
-                try await popupDetailClient.deactivatePopup(popupUuid)
+                try await popupDetailClient.deactivatePopup(adminUuid, popupUuid)
                 await send(.deactivateCompleted)
             } catch {
                 await send(.errorMessageChanged(error.localizedDescription))

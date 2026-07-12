@@ -23,7 +23,7 @@ struct PopupDetailFeatureDemoApp: App {
                         },
                         addFavorite: { _, _ in },
                         removeFavorite: { _, _ in },
-                        deactivatePopup: { _ in }
+                        deactivatePopup: { _, _ in }
                     )
                 }
             )
