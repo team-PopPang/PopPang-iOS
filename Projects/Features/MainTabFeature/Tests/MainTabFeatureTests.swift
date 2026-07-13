@@ -80,6 +80,25 @@ struct MainTabFeatureTests {
         }
     }
 
+    @Test("프로필 설정 로그아웃은 MainTab의 push 경로를 유지한 채 상위에 위임한다")
+    func delegatesLogoutWithoutPoppingPath() async {
+        var initialState = MainTabFeature.State(session: makeSession())
+        initialState.core.selectedTab = .profile
+        initialState.core.path.append(
+            .profileSetting(.init(session: initialState.$session))
+        )
+        let profileSettingID = try! #require(initialState.core.path.ids.last)
+
+        let store = TestStore(initialState: initialState) {
+            MainTabFeature()
+        }
+
+        await store.send(
+            .path(.element(profileSettingID, .profileSetting(.delegate(.logoutRequested))))
+        )
+        await store.receive(\.delegate.logout)
+    }
+
     @Test("SearchDestinationFeature가 팝업 선택 intent를 받으면 MainTabFeature 내부 상세 path를 연다")
     func searchDestinationPushesPopupDetail() async {
         let popup = Popup.popupMock

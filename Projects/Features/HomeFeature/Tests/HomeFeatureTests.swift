@@ -8,6 +8,17 @@ import Testing
 
 @MainActor
 struct HomeFeatureTests {
+    @Test("로그인 세션이 없으면 HomeFeature 초기 조회를 시작하지 않는다")
+    func homeFeatureDoesNotLoadWithoutSession() async {
+        let store = TestStore(
+            initialState: HomeFeature.State(session: Shared(UserSession()))
+        ) {
+            HomeFeature()
+        }
+
+        await store.send(.onAppear)
+    }
+
     @Test("HomeFilter가 지역 선택 시 첫 번째 구를 기본값으로 설정한다")
     func homeFilterSelectsFirstDistrictWhenRegionChanges() async {
         let region = RegionList(region: "서울", districtList: ["전체", "성동구", "마포구"])

@@ -222,7 +222,7 @@ public struct MainTabFeature {
             case .selectedTabChanged(let tab):
                 state.core.selectedTab = tab
                 return .none
-                
+
             case .home(.delegate(.popupSelected(let popup))):
                 appendPopupDetail(popup, state: &state)
                 return .none

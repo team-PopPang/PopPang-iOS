@@ -8,12 +8,12 @@ import Testing
 
 @MainActor
 struct AppFeatureTests {
-    @Test("로그아웃은 메인 화면이 사라진 뒤 세션을 비운다")
+    @Test("로그아웃은 메인 플로우가 사라진 뒤 세션을 비운다")
     func logoutClearsSessionAfterMainFlowDisappears() async {
         let user = makeUser()
         var initialState = AppFeature.State(session: UserSession(user: user))
         initialState.destination = .main
-        initialState.mainTab = MainTabFeature.State(session: initialState.$session)
+        initialState.mainTabCore = .init(session: initialState.$session)
 
         let store = TestStore(initialState: initialState) {
             AppFeature(
@@ -36,8 +36,10 @@ struct AppFeatureTests {
         #expect(store.state.session.user?.userUuid == user.userUuid)
         #expect(store.state.mainTab != nil)
 
+        await store.send(.mainTab(.delegate(.logout)))
+
         await store.send(.mainFlowDidDisappear) { state in
-            state.mainTab = nil
+            state.mainTabCore = nil
             state.$session.withLock { session in
                 session = UserSession()
             }
@@ -45,6 +47,7 @@ struct AppFeatureTests {
         }
 
         #expect(store.state.session.user == nil)
+        await store.finish()
     }
 }
 

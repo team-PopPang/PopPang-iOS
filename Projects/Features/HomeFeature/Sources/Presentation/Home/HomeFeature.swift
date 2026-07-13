@@ -92,9 +92,19 @@ public struct HomeFeature {
         Reduce { state, action in
             switch action {
             case .onAppear:
+                guard let userUuid = state.session.user?.userUuid else {
+                    return .none
+                }
+
                 state.isLoading = true
                 state.errorMessage = nil
-                return loadAllPopupData(state: state)
+                return loadAllPopupData(
+                    userUuid: userUuid,
+                    cachedRegions: state.filter.regions,
+                    selectedRegion: state.filter.selectedRegion,
+                    selectedDistrict: state.filter.selectedDistrict,
+                    sortOption: state.filter.selectedOption.rawValue
+                )
 
             case .filter:
                 return .none
@@ -173,41 +183,59 @@ public struct HomeFeature {
 }
 
 private extension HomeFeature {
-    func loadAllPopupData(state: State) -> Effect<Action> {
+    func loadAllPopupData(
+        userUuid: String,
+        cachedRegions: [RegionList],
+        selectedRegion: RegionList?,
+        selectedDistrict: String?,
+        sortOption: String
+    ) -> Effect<Action> {
         let popupClient = popupClient
 
-        return .run { [state, popupClient] send in
+        return .run { [cachedRegions, popupClient, selectedDistrict, selectedRegion, sortOption, userUuid] send in
             do {
-                let regions = state.filter.regions.isEmpty
+                let regions = cachedRegions.isEmpty
                     ? try await popupClient.getRegionList().sortedByHomePriority()
-                    : state.filter.regions
-                let selectedRegion = state.filter.selectedRegion ?? regions.first
-                let selectedDistrict = state.filter.selectedDistrict ?? selectedRegion?.districtList.first
+                    : cachedRegions
+                try Task.checkCancellation()
+
+                let resolvedRegion = selectedRegion ?? regions.first
+                let resolvedDistrict = selectedDistrict ?? resolvedRegion?.districtList.first
 
                 await send(.filter(.regionSelectionPrepared(HomeRegionSelection(
                     regions: regions,
-                    selectedRegion: selectedRegion,
-                    selectedDistrict: selectedDistrict
+                    selectedRegion: resolvedRegion,
+                    selectedDistrict: resolvedDistrict
                 ))))
 
-                async let bestPopups = popupClient.getPersonalRandomPopupList(state.userUuid)
-                async let comingPopups = popupClient.getPersonalUpcomingPopupList(state.userUuid)
+                async let bestPopups = popupClient.getPersonalRandomPopupList(userUuid)
+                async let comingPopups = popupClient.getPersonalUpcomingPopupList(userUuid)
                 async let gridPopups = popupClient.getPersonalFilteredPopupList(
-                    state.userUuid,
-                    selectedRegion?.region ?? "전체",
-                    selectedDistrict ?? "전체",
-                    state.filter.selectedOption.rawValue
+                    userUuid,
+                    resolvedRegion?.region ?? "전체",
+                    resolvedDistrict ?? "전체",
+                    sortOption
                 )
 
-                await send(.popupSectionsLoaded(HomePopupSections(
-                    bestPopups: try await bestPopups,
-                    comingPopups: try await comingPopups,
-                    gridPopups: try await gridPopups
-                )))
+                let resolvedBestPopups = try await bestPopups
+                let resolvedComingPopups = try await comingPopups
+                let resolvedGridPopups = try await gridPopups
+                let sections = HomePopupSections(
+                    bestPopups: resolvedBestPopups,
+                    comingPopups: resolvedComingPopups,
+                    gridPopups: resolvedGridPopups
+                )
+                try Task.checkCancellation()
+
+                await send(.popupSectionsLoaded(sections))
+            } catch is CancellationError {
+                return
             } catch {
+                guard Task.isCancelled == false else { return }
                 await send(.errorMessageChanged(error.localizedDescription))
             }
 
+            guard Task.isCancelled == false else { return }
             await send(.loadingChanged(false))
         }
     }

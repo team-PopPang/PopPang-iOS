@@ -93,9 +93,15 @@ public struct MainTabFeatureView: View {
 private struct MainTabContentView: View {
     let tab: MainTab
     let store: StoreOf<MainTabFeature>
-
+    
+    init(tab: MainTab, store: StoreOf<MainTabFeature>) {
+        self.tab = tab
+        self.store = store
+    }
+    
     @ViewBuilder
     var body: some View {
+        
         switch tab {
         case .calendar:
             CalendarFeatureView(store: store.scope(state: \.core.calendar, action: \.calendar))

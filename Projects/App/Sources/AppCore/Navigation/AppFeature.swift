@@ -29,11 +29,24 @@ struct AppFeature {
         var registerFlow: RegisterFlowFeature.State?
         var onboarding = OnboardingFeature.State()
         var onboardingPath = StackState<OnboardingPath.State>()
-        var mainTab: MainTabFeature.State?
+        var mainTabCore: MainTabFeature.CoreState?
         var isLoggingOut = false
 
         init(session: UserSession = .init()) {
             self._session = Shared(value: session)
+        }
+
+        var mainTab: MainTabFeature.State? {
+            get {
+                guard session.user != nil, let mainTabCore else { return nil }
+                return MainTabFeature.State(
+                    session: $session,
+                    core: mainTabCore
+                )
+            }
+            set {
+                mainTabCore = newValue?.core
+            }
         }
 
         static func == (lhs: Self, rhs: Self) -> Bool {
@@ -42,7 +55,7 @@ struct AppFeature {
                 && lhs.auth == rhs.auth
                 && lhs.registerFlow == rhs.registerFlow
                 && lhs.onboarding == rhs.onboarding
-                && lhs.mainTab == rhs.mainTab
+                && lhs.mainTabCore == rhs.mainTabCore
                 && lhs.isLoggingOut == rhs.isLoggingOut
         }
     }
@@ -127,27 +140,33 @@ struct AppFeature {
                 }
 
             case .mainTab(.delegate(.logout)):
-                Logger.d("로그 2")
                 guard state.isLoggingOut == false else { return .none }
-                Logger.d("로그 3")
+
                 state.isLoggingOut = true
-                Logger.d("로그 4")
                 state.destination = .onboarding
-                Logger.d("로그 5")
+                Logger.d("로그 2")
                 return .run { _ in
-                    Logger.d("로그 6")
+                    Logger.d("로그 3")
                     await localSessionClient.clear()
+                    Logger.d("로그 4")
                 }
 
             case .mainFlowDidDisappear:
                 guard state.isLoggingOut else { return .none }
 
+                Logger.d("로그 6")
                 state.auth = .init()
+                Logger.d("로그 7")
                 state.registerFlow = nil
+                Logger.d("로그 8")
                 state.onboarding = .init()
+                Logger.d("로그 9")
                 state.onboardingPath = StackState()
-                state.mainTab = nil
-                // state.$session.withLock { $0 = UserSession() }
+                Logger.d("로그 10")
+                state.mainTabCore = nil
+                Logger.d("로그 11")
+                state.$session.withLock { $0 = UserSession() }
+                Logger.d("로그 12")
                 state.isLoggingOut = false
                 return .none
 
@@ -203,12 +222,12 @@ private extension AppFeature {
         state.onboardingPath = StackState()
 
         if destination == .main, session.user != nil {
-            state.mainTab = state.mainTab ?? .init(session: state.$session)
+            state.mainTabCore = state.mainTabCore ?? .init(session: state.$session)
         } else if destination == .register, let user = session.user {
             state.registerFlow = .init(user: user)
-            state.mainTab = nil
+            state.mainTabCore = nil
         } else {
-            state.mainTab = nil
+            state.mainTabCore = nil
         }
     }
 
@@ -220,12 +239,12 @@ private extension AppFeature {
         state.onboardingPath = StackState()
 
         if user.nickname == nil {
-            state.mainTab = nil
+            state.mainTabCore = nil
             state.registerFlow = .init(user: user)
             state.destination = .register
         } else {
             state.registerFlow = nil
-            state.mainTab = state.mainTab ?? .init(session: state.$session)
+            state.mainTabCore = state.mainTabCore ?? .init(session: state.$session)
             state.destination = .main
         }
     }
