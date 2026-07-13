@@ -2,6 +2,7 @@ import Data
 import Domain
 import Foundation
 
+// repository
 struct AppRepositoryRegistry {
     let adminRepository: AdminRepositoryProtocol
     let appleAuthRepository: AppleAuthRepositoryProtocol
@@ -24,6 +25,7 @@ struct AppRepositoryRegistry {
     }
 }
 
+// usecase
 struct AppUsecaseRegistry {
     let adminUsecase: AdminUsecaseProtocol
     let appleAuthUsecase: AppleAuthUsecaseProtocol
@@ -44,6 +46,7 @@ struct AppUsecaseRegistry {
     }
 }
 
+// usecase dependency
 struct AppDependencyRegistry {
     let repositories: AppRepositoryRegistry
     let usecases: AppUsecaseRegistry

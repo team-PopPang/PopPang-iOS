@@ -31,6 +31,8 @@ enum AppSDKInitializer {
         
         // 지도 오토 레이아웃 경고 제거
         UserDefaults.standard.set(false, forKey: "_UIConstraintBasedLayoutLogUnsatisfiable")
+        
+        Logger.d("1. 라이브러리 configure 완료")
     }
 }
 
@@ -38,6 +40,5 @@ private enum FirebaseCoreBootstrap {
     static func configureIfNeeded() {
         FirebaseConfiguration.shared.setLoggerLevel(.error)
         FirebaseApp.configure()
-        Logger.d("FirebaseApp.configure 완료")
     }
 }

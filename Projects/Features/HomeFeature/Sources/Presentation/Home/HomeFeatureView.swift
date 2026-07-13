@@ -222,6 +222,7 @@ public struct HomeFeatureView: View {
             }
         }
         .onAppear {
+            Logger.d("HomeViewFeature OnAppear")
             store.send(.onAppear)
         }
         .task(id: nativeAdPlacementIDs) {

@@ -41,17 +41,17 @@ public struct HomeFeature {
             currentUser.role.uppercased() == "ADMIN"
         }
 
-        public static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.userUuid == rhs.userUuid
-                && lhs.nickname == rhs.nickname
-                && lhs.isAdmin == rhs.isAdmin
-                && lhs.bestPopups == rhs.bestPopups
-                && lhs.comingPopups == rhs.comingPopups
-                && lhs.gridPopups == rhs.gridPopups
-                && lhs.filter == rhs.filter
-                && lhs.isLoading == rhs.isLoading
-                && lhs.errorMessage == rhs.errorMessage
-        }
+//        public static func == (lhs: Self, rhs: Self) -> Bool {
+//            lhs.userUuid == rhs.userUuid
+//                && lhs.nickname == rhs.nickname
+//                && lhs.isAdmin == rhs.isAdmin
+//                && lhs.bestPopups == rhs.bestPopups
+//                && lhs.comingPopups == rhs.comingPopups
+//                && lhs.gridPopups == rhs.gridPopups
+//                && lhs.filter == rhs.filter
+//                && lhs.isLoading == rhs.isLoading
+//                && lhs.errorMessage == rhs.errorMessage
+//        }
     }
 
     public enum Action {
