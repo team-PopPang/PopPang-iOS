@@ -136,6 +136,7 @@ let project = Project(
                 .project(target: "ThirdParty", path: "../Shared/ThirdParty"),
                 .project(target: "Core", path: "../Shared/Core"),
                 .project(target: "DSKit", path: "../Shared/DSKit"),
+                .package(product: "PrebuiltReactNativeFrameworks"),
             ],
             settings: .settings(
                 base: [
