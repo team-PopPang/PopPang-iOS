@@ -24,6 +24,7 @@ let project = Project(
                 .external(name: "KakaoSDKUser"),
                 .external(name: "Kingfisher"),
                 .external(name: "ListKit"),
+                .external(name: "PopPangListKit"),
                 .external(name: "Moya"),
                 .external(name: "NMapsMap"),
                 .external(name: "BottomSheet"),

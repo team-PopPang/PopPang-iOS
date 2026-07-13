@@ -37,7 +37,7 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 | **Kingfisher** | 이미지 캐싱 처리 및 UI 성능 개선을 위함 |
 | **NMapsMap** | 지도 기반 팝업 탐색 기능을 구현하기 위함 |
 | **BottomSheet** | 지도와 상세 흐름의 바텀시트 UI를 구현하기 위함 |
-| **PopPangListKit** | SwiftUI의 선언형 문법으로 UICollectionView 기반 목록을 구성하기 위함 |
+| **PopPangListKit** | UICollectionView 기반 선언형 목록 DSL을 제공하는 외부 라이브러리 |
 
 <br/><br/>
 
@@ -70,7 +70,7 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 >
 > `UICollectionView`와 DifferenceKit을 Core로 유지하면서 `List`, `Section`, `Cell`로 구성하는 선언형 DSL을 구현
 >
-> 기존 UIKit `Component`와 SwiftUI `View`가 같은 diff, layout, event 경로를 공유하도록 `PopPangListKit` 모듈로 분리
+> 기존 UIKit `Component`와 SwiftUI `View`가 같은 diff, layout, event 경로를 공유하도록 `PopPangListKit` 외부 라이브러리로 분리
 >
 > **성과**
 >
@@ -306,7 +306,6 @@ Projects
 └── Shared
     ├── Core
     ├── DSKit
-    ├── PopPangListKit
     └── ThirdParty
 ```
 
@@ -394,7 +393,6 @@ make module LAYER=shared NAME=UIComponents
 
 - `AGENTS.md`: 저장소 작업 규칙과 아키텍처 기준
 - [`Docs/tca-navigation-guidelines.md`](./Docs/tca-navigation-guidelines.md): MainTabFeature와 TCA navigation 기준
-- [`Projects/Shared/PopPangListKit`](./Projects/Shared/PopPangListKit): PopPangListKit framework와 Core 구현
-- [`Projects/Shared/PopPangListKit/Demo`](./Projects/Shared/PopPangListKit/Demo): UIKit·SwiftUI 사용 예제
+- [PopPangListKit](https://github.com/team-PopPang/PopPangListKit): UICollectionView 기반 선언형 목록 라이브러리와 UIKit·SwiftUI 사용 예제
 - `V0/README.md`: 기존 단일 타깃 앱 README
 - `Tuist/Package.swift`: 외부 의존성과 product type 정책
