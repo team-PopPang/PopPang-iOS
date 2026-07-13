@@ -26,7 +26,12 @@ let project = Project(
                 .project(target: "ProfileFeature", path: "../ProfileFeature"),
                 .project(target: "ReviewFeature", path: "../ReviewFeature"),
                 .project(target: "SearchFeature", path: "../SearchFeature"),
-            ]
+            ],
+            settings: .settings(
+                base: [
+                    "SWIFT_UPCOMING_FEATURE_INFER_SENDABLE_FROM_CAPTURES": "YES",
+                ]
+            )
         ),
         .target(
             name: "MainTabFeatureTests",
