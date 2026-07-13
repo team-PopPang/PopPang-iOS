@@ -72,9 +72,18 @@ struct MainTabFeatureTests {
             SearchDestinationFeature()
         }
 
-        await store.send(.search(.delegate(.popupSelected(popup))))
-
-        #expect(store.state.path.count == 1)
+        await store.send(.search(.delegate(.popupSelected(popup)))) {
+            $0.path.append(
+                .popupDetail(
+                    .init(
+                        userUuid: "user-1",
+                        popup: popup,
+                        isAdmin: false,
+                        hidesSystemTabBar: true
+                    )
+                )
+            )
+        }
     }
 }
 

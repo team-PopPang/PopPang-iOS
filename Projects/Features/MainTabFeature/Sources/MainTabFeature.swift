@@ -91,6 +91,7 @@ public struct MainTabFeature {
             && lhs.map == rhs.map
             && lhs.profile == rhs.profile
             && destinationsEqual(lhs.destination, rhs.destination)
+            && pathsEqual(lhs.path, rhs.path)
         }
 
         private static func destinationsEqual(
@@ -104,6 +105,42 @@ public struct MainTabFeature {
                 lhsState == rhsState
             case (nil, nil):
                 true
+            default:
+                false
+            }
+        }
+
+        private static func pathsEqual(
+            _ lhs: StackState<Path.State>,
+            _ rhs: StackState<Path.State>
+        ) -> Bool {
+            lhs.ids == rhs.ids
+            && zip(lhs, rhs).allSatisfy(pathStatesEqual)
+        }
+
+        private static func pathStatesEqual(
+            _ lhs: Path.State,
+            _ rhs: Path.State
+        ) -> Bool {
+            switch (lhs, rhs) {
+            case (.popupRequestManagement(let lhsState), .popupRequestManagement(let rhsState)):
+                lhsState == rhsState
+            case (.popupRequestManagementDetail(let lhsState), .popupRequestManagementDetail(let rhsState)):
+                lhsState == rhsState
+            case (.homeComingPopupDetail(let lhsState), .homeComingPopupDetail(let rhsState)):
+                lhsState == rhsState
+            case (.popupDetail(let lhsState), .popupDetail(let rhsState)):
+                lhsState == rhsState
+            case (.reviewDetail(let lhsState), .reviewDetail(let rhsState)):
+                lhsState == rhsState
+            case (.alert(let lhsState), .alert(let rhsState)):
+                lhsState == rhsState
+            case (.profileSetting(let lhsState), .profileSetting(let rhsState)):
+                lhsState == rhsState
+            case (.notifications(let lhsState), .notifications(let rhsState)):
+                lhsState == rhsState
+            case (.serviceTerms(let lhsState), .serviceTerms(let rhsState)):
+                lhsState == rhsState
             default:
                 false
             }
@@ -486,6 +523,29 @@ public struct SearchDestinationFeature {
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.search == rhs.search
+            && pathsEqual(lhs.path, rhs.path)
+        }
+
+        private static func pathsEqual(
+            _ lhs: StackState<Path.State>,
+            _ rhs: StackState<Path.State>
+        ) -> Bool {
+            lhs.ids == rhs.ids
+            && zip(lhs, rhs).allSatisfy(pathStatesEqual)
+        }
+
+        private static func pathStatesEqual(
+            _ lhs: Path.State,
+            _ rhs: Path.State
+        ) -> Bool {
+            switch (lhs, rhs) {
+            case (.popupDetail(let lhsState), .popupDetail(let rhsState)):
+                lhsState == rhsState
+            case (.reviewDetail(let lhsState), .reviewDetail(let rhsState)):
+                lhsState == rhsState
+            default:
+                false
+            }
         }
     }
 
