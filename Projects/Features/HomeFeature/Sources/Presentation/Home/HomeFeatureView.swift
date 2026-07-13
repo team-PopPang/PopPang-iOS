@@ -230,11 +230,6 @@ public struct HomeFeatureView: View {
         .task(id: nativeAdPlacementIDs) {
             nativeAdSlotStore.loadAdIfNeeded(for: nativeAdPlacementIDs)
         }
-//        .overlay {
-//            if store.isLoading {
-//                HomeFeatureLoadingOverlay()
-//            }
-//        }
         .alert("안내", isPresented: isErrorPresented) {
             Button("확인", role: .cancel) {
                 store.send(.errorMessageChanged(nil))
