@@ -2,6 +2,9 @@ import ProjectDescription
 
 let project = Project(
     name: "App",
+    packages: [
+        .local(path: "../../Vendor/PrebuiltReactNativeFrameworks"),
+    ],
     targets: [
         .target(
             name: "PopPangApp",
@@ -120,7 +123,11 @@ let project = Project(
                 ]
             ),
             sources: ["Sources/**"],
-            resources: ["Resources/**"],
+            resources: [
+                "Resources/Assets.xcassets",
+                "Resources/GoogleService-Info.plist",
+                .folderReference(path: "Resources/ReactNative"),
+            ],
             entitlements: "PopPangApp.entitlements",
             dependencies: [
                 .project(target: "ADKit", path: "../Shared/ADKit"),
@@ -132,6 +139,7 @@ let project = Project(
                 .project(target: "ThirdParty", path: "../Shared/ThirdParty"),
                 .project(target: "Core", path: "../Shared/Core"),
                 .project(target: "DSKit", path: "../Shared/DSKit"),
+                .package(product: "PrebuiltReactNativeFrameworks"),
             ],
             settings: .settings(
                 base: [

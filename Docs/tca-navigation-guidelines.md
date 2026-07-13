@@ -12,7 +12,7 @@
 - 새 화면 전환은 TCA state/action/reducer로 모델링한다.
 - tree-based navigation과 stack-based navigation을 함께 사용한다.
 - feature는 다른 feature를 직접 조립하지 않고 delegate action으로 intent만 올린다.
-- 임시 예외로 제거 예정인 `PopupRequestFeature`, `PopupRequestManagementFeature`, `PopupSubmissionFormFeature` 조합만 직접 조립을 허용한다.
+- RN 팝업 제보 화면은 `PopPangRNFeature` wrapper로 감싸고, navigation owner는 계속 `MainTabFeature`가 가진다.
 - 전역 세션 상태의 source of truth는 `AppFeature.session`이다.
 - 현재 로그인 사용자는 `AppFeature.session.user`로 표현한다.
 - `AppFeature`는 root/auth/register 전환을 소유하고, `MainTabFeature` 모듈은 로그인 이후 main flow navigation owner로 동작한다.
@@ -137,7 +137,7 @@ PopPang에서 stack-based navigation을 쓰는 경우:
 - coming popup list에서 popup detail로 이어지는 drill-down
 - review detail
 - alert에서 popup detail 진입
-- popup request management detail
+- RN popup request management
 - profile setting처럼 탭 root 위로 push되는 화면
 
 ### Path 규칙

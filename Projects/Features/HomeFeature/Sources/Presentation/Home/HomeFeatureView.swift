@@ -329,17 +329,17 @@ private struct HomeNavigationBar: View {
                 onAlert(userUuid)
             }
 
-//            HomeReportButton {
-//                onReport()
-//            }
-//            .accessibilityIdentifier("home_popup_report_button")
-//
-//            if showsPopupRequestManagement {
-//                HomePopupRequestManagementButton {
-//                    onManagePopupRequests()
-//                }
-//                .accessibilityIdentifier("home_popup_request_management_button")
-//            }
+            HomeReportButton {
+                onReport()
+            }
+            .accessibilityIdentifier("home_popup_report_button")
+
+            if showsPopupRequestManagement {
+                HomePopupRequestManagementButton {
+                    onManagePopupRequests()
+                }
+                .accessibilityIdentifier("home_popup_request_management_button")
+            }
         }
         .padding(.bottom, 15)
     }
