@@ -135,8 +135,11 @@ Data sources
 | `Core` | `.framework` | 네트워크, 저장소, formatter 등 여러 레이어가 공유하는 기반 모듈이다. |
 | `DSKit` | `.framework` | Feature들이 공유하는 UI resource/API 경계다. |
 | `ThirdParty` | `.framework` | 외부 SDK product를 한 곳에서 링크하는 허브다. |
+| `PopPangRNFeature` | `.framework` | RN prebuilt static binary를 하나의 동적 경계에서 링크해 Host와 generated provider 심볼을 최종 앱에 한 번만 전달한다. |
 | demo app | `.app` | 독립 실행 샘플 앱이다. |
 | App | `.app` | 최종 앱 산출물이다. |
+
+RN prebuilt 산출물은 저장소에 커밋하지 않고 `scripts/download-rn-release.sh`로 `Vendor/PrebuiltReactNativeFrameworks`와 `Projects/App/Resources/ReactNative`에 내려받는 것을 기본값으로 둔다.
 
 ### feature는 왜 static인가
 
@@ -150,6 +153,10 @@ PopPang feature는 아래 성격이다.
 - 대부분 UI와 feature state를 가진 leaf 모듈이다.
 
 그래서 feature를 dynamic으로 만들면 이득보다 비용이 커진다.
+
+예외:
+
+- `PopPangRNFeature`는 React Native prebuilt static binary의 linker settings를 보존해야 하므로 `.framework`를 사용한다. App과 `MainTabFeature`는 RN package를 직접 의존하지 않는다.
 
 dynamic feature의 비용:
 

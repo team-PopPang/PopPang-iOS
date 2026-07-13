@@ -8,8 +8,7 @@ import Foundation
 import HomeFeature
 import MapFeature
 import PopupDetailFeature
-import PopupRequestFeature
-import PopupRequestManagementFeature
+import PopPangRNFeature
 import ProfileFeature
 import ReviewFeature
 import SearchFeature
@@ -61,7 +60,7 @@ public struct MainTabFeature {
     @Reducer
     public enum Destination {
         case search(SearchDestinationFeature)
-        case popupRequest(PopupRequestFeature)
+        case popupRequest(PopPangRNFeature)
     }
 
     @ObservableState
@@ -124,8 +123,6 @@ public struct MainTabFeature {
         ) -> Bool {
             switch (lhs, rhs) {
             case (.popupRequestManagement(let lhsState), .popupRequestManagement(let rhsState)):
-                lhsState == rhsState
-            case (.popupRequestManagementDetail(let lhsState), .popupRequestManagementDetail(let rhsState)):
                 lhsState == rhsState
             case (.homeComingPopupDetail(let lhsState), .homeComingPopupDetail(let rhsState)):
                 lhsState == rhsState
@@ -191,8 +188,7 @@ public struct MainTabFeature {
     
     @Reducer
     public enum Path {
-        case popupRequestManagement(PopupRequestManagementFlowFeature)
-        case popupRequestManagementDetail(PopupRequestManagementDetailFeature)
+        case popupRequestManagement(PopPangRNFeature)
         case homeComingPopupDetail(HomeComingPopupDetailDestinationFeature)
         case popupDetail(PopupDetailDestinationFeature)
         case reviewDetail(ReviewFeature)
@@ -257,7 +253,10 @@ public struct MainTabFeature {
             case .home(.delegate(.popupRequestManagementRequested)):
                 state.core.path.append(
                     .popupRequestManagement(
-                        .init(adminUuid: state.currentUser.userUuid)
+                        .init(
+                            screen: .popupRequestManagement,
+                            userUuid: state.currentUser.userUuid
+                        )
                     )
                 )
                 return .none
@@ -281,7 +280,10 @@ public struct MainTabFeature {
 
             case .home(.delegate(.popupRequestRequested)):
                 state.core.destination = .popupRequest(
-                    .init(userUuid: state.currentUser.userUuid)
+                    .init(
+                        screen: .popupRequest,
+                        userUuid: state.currentUser.userUuid
+                    )
                 )
                 return .none
 
@@ -363,22 +365,7 @@ private extension MainTabFeature {
         state: inout State
     ) -> Effect<Action> {
         switch action {
-        case .popupRequestManagement(.delegate(.dismiss)):
-            state.core.path.pop(from: id)
-            return .none
-            
-        case .popupRequestManagement(.delegate(.showDetail(let submissionId))):
-            state.core.path.append(
-                .popupRequestManagementDetail(
-                    .init(
-                        adminUuid: state.currentUser.userUuid,
-                        submissionId: submissionId
-                    )
-                )
-            )
-            return .none
-            
-        case .popupRequestManagementDetail(.delegate(.pop)):
+        case .popupRequestManagement(.delegate(.pop)):
             state.core.path.pop(from: id)
             return .none
             
@@ -407,6 +394,7 @@ private extension MainTabFeature {
             return .none
             
         case .profileSetting(.delegate(.logoutRequested)):
+            Logger.d("로그 1")
             return .send(.delegate(.logout))
 
         case .profileSetting(.delegate(.dismiss)):

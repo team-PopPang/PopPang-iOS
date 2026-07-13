@@ -41,6 +41,9 @@ struct AppRootFlowView: View {
             case .main:
                 if let mainTabStore = store.scope(state: \.mainTab, action: \.mainTab) {
                     MainTabFeatureView(store: mainTabStore)
+                        .onDisappear {
+                            store.send(.mainFlowDidDisappear)
+                        }
                 } else {
                     EmptyView()
                 }

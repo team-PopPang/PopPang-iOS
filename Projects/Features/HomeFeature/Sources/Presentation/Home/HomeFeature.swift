@@ -42,15 +42,13 @@ public struct HomeFeature {
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.userUuid == rhs.userUuid
-                && lhs.nickname == rhs.nickname
-                && lhs.isAdmin == rhs.isAdmin
-                && lhs.bestPopups == rhs.bestPopups
-                && lhs.comingPopups == rhs.comingPopups
-                && lhs.gridPopups == rhs.gridPopups
-                && lhs.filter == rhs.filter
-                && lhs.isLoading == rhs.isLoading
-                && lhs.errorMessage == rhs.errorMessage
+            lhs.session == rhs.session
+            && lhs.bestPopups == rhs.bestPopups
+            && lhs.comingPopups == rhs.comingPopups
+            && lhs.gridPopups == rhs.gridPopups
+            && lhs.filter == rhs.filter
+            && lhs.isLoading == rhs.isLoading
+            && lhs.errorMessage == rhs.errorMessage
         }
     }
 

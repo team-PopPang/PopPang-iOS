@@ -7,8 +7,6 @@ import FavoritesFeature
 import HomeFeature
 import MapFeature
 import PopupDetailFeature
-import PopupRequestFeature
-import PopupRequestManagementFeature
 import ProfileFeature
 import SearchFeature
 
@@ -19,8 +17,6 @@ public struct MainTabFeatureDependencies {
     private let homePopupClient: HomePopupClient
     private let mapFeatureClient: MapFeatureClient
     private let popupDetailClient: PopupDetailClient
-    private let popupRequestClient: PopupRequestClient
-    private let popupRequestManagementClient: PopupRequestManagementClient
     private let profileFeatureClient: ProfileFeatureClient
     private let searchFeatureClient: SearchFeatureClient
 
@@ -28,7 +24,6 @@ public struct MainTabFeatureDependencies {
         store: KeyValueStoring,
         adminUsecase: AdminUsecaseProtocol,
         popupUsecase: PopupUsecaseProtocol,
-        popupSubmissionUsecase: PopupSubmissionUsecaseProtocol,
         userUsecase: UserUsecaseProtocol
     ) {
         alertFeatureClient = .live(
@@ -44,13 +39,6 @@ public struct MainTabFeatureDependencies {
             popupUsecase: popupUsecase,
             adminUsecase: adminUsecase
         )
-        popupRequestClient = .live(
-            popupSubmissionUsecase: popupSubmissionUsecase,
-            userUsecase: userUsecase
-        )
-        popupRequestManagementClient = .live(
-            popupSubmissionUsecase: popupSubmissionUsecase
-        )
         profileFeatureClient = .live(userUsecase: userUsecase)
         searchFeatureClient = .live(
             popupUsecase: popupUsecase,
@@ -65,8 +53,6 @@ public struct MainTabFeatureDependencies {
         values.homePopupClient = homePopupClient
         values.mapFeatureClient = mapFeatureClient
         values.popupDetailClient = popupDetailClient
-        values.popupRequestClient = popupRequestClient
-        values.popupRequestManagementClient = popupRequestManagementClient
         values.profileFeatureClient = profileFeatureClient
         values.searchFeatureClient = searchFeatureClient
     }

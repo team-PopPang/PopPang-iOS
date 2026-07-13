@@ -219,7 +219,7 @@ Home 검색 버튼
 - `Destination`: 검색이나 팝업 제보처럼 동시에 하나만 표시하는 full-screen/tree navigation
 - `Path`: 팝업 상세나 리뷰처럼 화면이 순서대로 쌓이는 push/stack navigation
 - 일반 Feature는 다른 Feature를 직접 import하지 않고 delegate action으로 이동 의도만 전달
-- 제거 예정인 `PopupRequestFeature`, `PopupRequestManagementFeature`, `PopupSubmissionFormFeature` 조합만 임시 예외로 직접 참조 허용
+- RN 팝업 제보 화면은 `PopPangRNFeature` wrapper로 연결하고, navigation owner는 `MainTabFeature`가 유지
 
 ```swift
 case .home(.delegate(.searchRequested)):

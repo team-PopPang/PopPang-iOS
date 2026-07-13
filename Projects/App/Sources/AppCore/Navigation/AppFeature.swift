@@ -30,6 +30,7 @@ struct AppFeature {
         var onboarding = OnboardingFeature.State()
         var onboardingPath = StackState<OnboardingPath.State>()
         var mainTab: MainTabFeature.State?
+        var isLoggingOut = false
 
         init(session: UserSession = .init()) {
             self._session = Shared(value: session)
@@ -42,6 +43,7 @@ struct AppFeature {
                 && lhs.registerFlow == rhs.registerFlow
                 && lhs.onboarding == rhs.onboarding
                 && lhs.mainTab == rhs.mainTab
+                && lhs.isLoggingOut == rhs.isLoggingOut
         }
     }
 
@@ -54,7 +56,7 @@ struct AppFeature {
         case onboardingPath(StackActionOf<OnboardingPath>)
         case authCompleted(User)
         case registerCompleted(User)
-        case logoutFinished
+        case mainFlowDidDisappear
         case mainTab(MainTabFeature.Action)
     }
 
@@ -125,19 +127,28 @@ struct AppFeature {
                 }
 
             case .mainTab(.delegate(.logout)):
+                Logger.d("로그 2")
+                guard state.isLoggingOut == false else { return .none }
+                Logger.d("로그 3")
+                state.isLoggingOut = true
+                Logger.d("로그 4")
                 state.destination = .onboarding
-                return .run { send in
+                Logger.d("로그 5")
+                return .run { _ in
+                    Logger.d("로그 6")
                     await localSessionClient.clear()
-                    await send(.logoutFinished)
                 }
 
-            case .logoutFinished:
+            case .mainFlowDidDisappear:
+                guard state.isLoggingOut else { return .none }
+
                 state.auth = .init()
                 state.registerFlow = nil
                 state.onboarding = .init()
                 state.onboardingPath = StackState()
                 state.mainTab = nil
-                state.$session.withLock { $0 = UserSession() }
+                // state.$session.withLock { $0 = UserSession() }
+                state.isLoggingOut = false
                 return .none
 
             case .auth:

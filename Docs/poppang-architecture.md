@@ -44,9 +44,8 @@ Projects
 │   ├── HomeFeature
 │   ├── MapFeature
 │   ├── OnboardingFeature
+│   ├── PopPangRNFeature
 │   ├── PopupDetailFeature
-│   ├── PopupRequestFeature
-│   ├── PopupRequestManagementFeature
 │   ├── ProfileFeature
 │   ├── ReviewFeature
 │   ├── MainTabFeature
@@ -153,7 +152,7 @@ Projects
 - `AlertFeature`는 `@Dependencies.Dependency(\.alertFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `ProfileFeature`와 `ProfileSettingFeature`는 `@Dependencies.Dependency(\.profileFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `MainTabFeature`가 홈에서 시작하는 fullScreen presentation을 소유
-  - 현재 검색과 팝업 제보는 `MainTabFeature.destination`에서 관리
+  - 현재 검색과 RN 팝업 제보는 `MainTabFeature.destination`에서 관리
 - `CalendarFeature`는 지역/정렬 시트를 view local state로 열고, 실제 필터/날짜/좋아요 상태는 reducer가 소유한다.
 - `FavoritesFeature`는 segmented selection을 view local state로 두고, 찜 목록/찜 캘린더/좋아요/에러 상태는 reducer가 소유한다.
 - 홈에서 시작하는 연속 drill-down push(`오픈예정팝업 리스트 -> 팝업 상세`)는 `MainTabFeature.path`가 소유
@@ -162,7 +161,7 @@ Projects
 - 알림 화면에서 선택한 팝업 상세도 `MainTabFeature.path`가 소유하고, child feature는 delegate action으로 popup selection intent만 올린다.
 - 프로필 설정 push도 `MainTabFeature.path`가 소유하고, child feature는 delegate action으로 dismiss/logout intent만 올린다.
 - 여러 탭과 공통으로 이어질 수 있는 push 흐름은 `MainTabFeature.path`가 소유
-  - 현재 팝업 상세, 리뷰 상세, 관리자 팝업 제보 관리 흐름이 여기에 해당
+  - 현재 팝업 상세, 리뷰 상세, RN 관리자 팝업 제보 관리 흐름이 여기에 해당
 
 ```swift
 HomeFeatureView(store: store.scope(state: \.core.home, action: \.home))
@@ -193,7 +192,7 @@ ProfileFeatureView(store: store.scope(state: \.core.profile, action: \.profile))
 주의:
 
 - feature가 다른 feature를 직접 import하는 구조는 기본 전략이 아니다.
-- 예외로 `PopupRequestFeature`, `PopupRequestManagementFeature`, `PopupSubmissionFormFeature`는 제거 예정 임시 흐름이라 서로 직접 참조를 허용한다.
+- `PopPangRNFeature`는 RN host wrapper 전용 모듈이고, 홈/메인 전환은 계속 `MainTabFeature`가 소유한다.
 - active main flow에서 feature 간 이동은 `MainTabFeature.Path` 또는 `MainTabFeature.Destination` state로 조립한다.
 - 화면 로컬 상태는 feature reducer local state 또는 feature view local state에 둔다.
 - 전역 이동, 탭 바깥 push, full screen 전환은 상위 TCA parent reducer로 올린다.
@@ -418,7 +417,7 @@ DI 변경 시 함께 확인할 파일:
 
 원칙:
 
-- feature target은 기본적으로 `.staticFramework` 성격의 앱 내부 leaf feature로 본다.
+- feature target은 기본적으로 `.staticFramework` 성격의 앱 내부 leaf feature로 본다. 단, `PopPangRNFeature`는 React Native prebuilt static binary를 단일 링크 경계로 감싸기 위해 `.framework`를 사용한다.
 - `Coordinator`는 legacy 공유 경계이며 제거 대상이다.
 - `Domain`, `Data`, `Core`, `DSKit`, `ThirdParty`는 현재 공유 경계로 본다.
 - 장기적으로 `Shared.Models`, `Shared.Clients`, `Shared.Caches`, `SharedFeature` 분리를 검토한다.

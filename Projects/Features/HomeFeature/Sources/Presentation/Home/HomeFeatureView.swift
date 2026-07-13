@@ -222,6 +222,7 @@ public struct HomeFeatureView: View {
             }
         }
         .onAppear {
+            Logger.d("홈화면 OnAppear 호출 디버깅")
             store.send(.onAppear)
         }
         .task(id: nativeAdPlacementIDs) {
@@ -331,17 +332,17 @@ private struct HomeNavigationBar: View {
                 onAlert(userUuid)
             }
 
-//            HomeReportButton {
-//                onReport()
-//            }
-//            .accessibilityIdentifier("home_popup_report_button")
-//
-//            if showsPopupRequestManagement {
-//                HomePopupRequestManagementButton {
-//                    onManagePopupRequests()
-//                }
-//                .accessibilityIdentifier("home_popup_request_management_button")
-//            }
+            HomeReportButton {
+                onReport()
+            }
+            .accessibilityIdentifier("home_popup_report_button")
+
+            if showsPopupRequestManagement {
+                HomePopupRequestManagementButton {
+                    onManagePopupRequests()
+                }
+                .accessibilityIdentifier("home_popup_request_management_button")
+            }
         }
         .padding(.bottom, 15)
     }

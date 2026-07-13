@@ -24,7 +24,6 @@ struct AppBootstrap {
             store: store,
             adminUsecase: dependencies.usecases.adminUsecase,
             popupUsecase: dependencies.usecases.popupUsecase,
-            popupSubmissionUsecase: dependencies.usecases.popupSubmissionUsecase,
             userUsecase: dependencies.usecases.userUsecase
         )
         let pushTokenStorage = PushTokenStorage(store: store)

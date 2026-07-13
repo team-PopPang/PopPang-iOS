@@ -21,8 +21,7 @@ let project = Project(
                 .project(target: "HomeFeature", path: "../HomeFeature"),
                 .project(target: "MapFeature", path: "../MapFeature"),
                 .project(target: "PopupDetailFeature", path: "../PopupDetailFeature"),
-                .project(target: "PopupRequestFeature", path: "../PopupRequestFeature"),
-                .project(target: "PopupRequestManagementFeature", path: "../PopupRequestManagementFeature"),
+                .project(target: "PopPangRNFeature", path: "../PopPangRNFeature"),
                 .project(target: "ProfileFeature", path: "../ProfileFeature"),
                 .project(target: "ReviewFeature", path: "../ReviewFeature"),
                 .project(target: "SearchFeature", path: "../SearchFeature"),
@@ -45,6 +44,7 @@ let project = Project(
                 .target(name: "MainTabFeature"),
                 .project(target: "Core", path: "../../Shared/Core"),
                 .project(target: "Domain", path: "../../Domain"),
+                .project(target: "PopPangRNFeature", path: "../PopPangRNFeature"),
             ]
         ),
     ]

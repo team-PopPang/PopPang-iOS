@@ -5,6 +5,11 @@ GoogleService-Info.plist
 # codex
 .codex/logs/
 
+# React Native release artifacts
+.rn-release-temp/
+Vendor/PrebuiltReactNativeFrameworks/
+Projects/App/Resources/ReactNative/
+
 # macOS
 .DS_Store
 ._*

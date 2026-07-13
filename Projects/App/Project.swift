@@ -120,7 +120,11 @@ let project = Project(
                 ]
             ),
             sources: ["Sources/**"],
-            resources: ["Resources/**"],
+            resources: [
+                "Resources/Assets.xcassets",
+                "Resources/GoogleService-Info.plist",
+                .folderReference(path: "Resources/ReactNative"),
+            ],
             entitlements: "PopPangApp.entitlements",
             dependencies: [
                 .project(target: "ADKit", path: "../Shared/ADKit"),
@@ -157,6 +161,31 @@ let project = Project(
                     ),
                 ]
             )
+        ),
+        .target(
+            name: "PopPangAppTests",
+            destinations: [.iPhone],
+            product: .unitTests,
+            bundleId: "kr.co.poppang.PopPang.tests",
+            deploymentTargets: .iOS("17.0"),
+            infoPlist: .default,
+            sources: ["Tests/**"],
+            dependencies: [
+                .target(name: "PopPangApp"),
+                .project(target: "MainTabFeature", path: "../Features/MainTabFeature"),
+                .project(target: "Domain", path: "../Domain"),
+                .project(target: "Core", path: "../Shared/Core"),
+            ]
+        ),
+    ],
+    schemes: [
+        .scheme(
+            name: "PopPangApp",
+            shared: true,
+            buildAction: .buildAction(targets: ["PopPangApp", "PopPangAppTests"]),
+            testAction: .targets([
+                .testableTarget(target: .target("PopPangAppTests")),
+            ])
         ),
     ]
 )

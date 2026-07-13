@@ -120,6 +120,11 @@ jobs:
           ADMOB_APP_ID = cidummy
           EOF
 
+      - name: Download React Native release artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/download-rn-release.sh v0.1.0
+
       - name: Generate Tuist workspace
         run: |
           "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist install

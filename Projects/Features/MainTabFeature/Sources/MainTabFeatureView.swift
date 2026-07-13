@@ -7,8 +7,7 @@ import struct HomeFeature.HomeComingPopupDetailDestinationView
 import struct HomeFeature.HomeFeatureView
 import MapFeature
 import PopupDetailFeature
-import PopupRequestFeature
-import PopupRequestManagementFeature
+import PopPangRNFeature
 import ProfileFeature
 import ReviewFeature
 import SearchFeature
@@ -30,7 +29,7 @@ public struct MainTabFeatureView: View {
                 )
             ) {
                 ForEach(MainTab.allCases, id: \.self) { tab in
-                    tabView(for: tab)
+                    MainTabContentView(tab: tab, store: store)
                         .tabItem {
                             DSKitResource.image(tab.tabImageName(selected: store.core.selectedTab == tab))
                                 .resizable()
@@ -46,10 +45,6 @@ public struct MainTabFeatureView: View {
             case .popupRequestManagement:
                 if let store = store.scope(state: \.popupRequestManagement, action: \.popupRequestManagement) {
                     PopupRequestManagementDestinationView(store: store)
-                }
-            case .popupRequestManagementDetail:
-                if let store = store.scope(state: \.popupRequestManagementDetail, action: \.popupRequestManagementDetail) {
-                    PopupRequestManagementDetailDestinationView(store: store)
                 }
             case .homeComingPopupDetail:
                 if let store = store.scope(state: \.homeComingPopupDetail, action: \.homeComingPopupDetail) {
@@ -89,12 +84,18 @@ public struct MainTabFeatureView: View {
         .fullScreenCover(
             item: $store.scope(state: \.core.destination?.popupRequest, action: \.destination.popupRequest)
         ) { store in
-            PopupRequestFeatureView(store: store)
+            PopPangRNFeatureView(store: store)
         }
     }
 
+}
+
+private struct MainTabContentView: View {
+    let tab: MainTab
+    let store: StoreOf<MainTabFeature>
+
     @ViewBuilder
-    private func tabView(for tab: MainTab) -> some View {
+    var body: some View {
         switch tab {
         case .calendar:
             CalendarFeatureView(store: store.scope(state: \.core.calendar, action: \.calendar))
@@ -153,18 +154,10 @@ private struct SearchDestinationView: View {
 }
 
 private struct PopupRequestManagementDestinationView: View {
-    let store: StoreOf<PopupRequestManagementFlowFeature>
+    let store: StoreOf<PopPangRNFeature>
 
     var body: some View {
-        PopupRequestManagementFlowView(store: store)
-    }
-}
-
-private struct PopupRequestManagementDetailDestinationView: View {
-    let store: StoreOf<PopupRequestManagementDetailFeature>
-
-    var body: some View {
-        PopupRequestManagementDetailView(store: store)
+        PopPangRNFeatureView(store: store)
     }
 }
 
