@@ -27,6 +27,9 @@ struct AppRootFlowView: View {
                         }
                     }
                 }
+                .onDisappear {
+                    store.send(.onboardingRootDidDisappear)
+                }
 
             case .auth:
                 AuthFeatureView(store: store.scope(state: \.auth, action: \.auth))

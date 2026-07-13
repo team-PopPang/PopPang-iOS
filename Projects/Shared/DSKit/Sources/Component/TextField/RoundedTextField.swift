@@ -4,6 +4,7 @@ public struct RoundedTextField: View {
     var placeholder: String
     @Binding var text: String
     var validationState: NicknameValidationState
+    private let focus: FocusState<Bool>.Binding?
 
     private var borderColor: Color {
         switch validationState {
@@ -30,11 +31,13 @@ public struct RoundedTextField: View {
     public init(
         placeholder: String,
         text: Binding<String>,
-        validationState: NicknameValidationState = .none
+        validationState: NicknameValidationState = .none,
+        focus: FocusState<Bool>.Binding? = nil
     ) {
         self.placeholder = placeholder
         _text = text
         self.validationState = validationState
+        self.focus = focus
     }
 
     public var body: some View {
@@ -54,6 +57,7 @@ public struct RoundedTextField: View {
                     .keyboardType(.default)
                     .padding(.horizontal, 16)
                     .tint(.mainBlack)
+                    .modifier(OptionalFocusModifier(focus: focus))
 
                 if let icon = statusIcon {
                     Image(icon)
@@ -70,5 +74,18 @@ public struct RoundedTextField: View {
                 .stroke(borderColor, lineWidth: 0.8)
         }
         .animation(.easeInOut(duration: 0.15), value: borderColor)
+    }
+}
+
+private struct OptionalFocusModifier: ViewModifier {
+    let focus: FocusState<Bool>.Binding?
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if let focus {
+            content.focused(focus)
+        } else {
+            content
+        }
     }
 }

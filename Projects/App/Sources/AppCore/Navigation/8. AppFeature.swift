@@ -86,6 +86,12 @@ struct AppFeature {
 
         /// MainTab view tree 해제 이후 state를 제거
         case logoutTeardownCompleted
+
+        /// 온보딩 NavigationStack이 화면에서 사라졌음을 전달
+        case onboardingRootDidDisappear
+
+        /// 온보딩 view tree 해제 이후 navigation state를 제거
+        case onboardingTeardownCompleted
         
         /// 메인 탭 Feature의 액션
         case mainTab(MainTabFeature.Action)
@@ -203,6 +209,20 @@ struct AppFeature {
                 finishLoggedOutTransition(state: &state)
                 return .none
 
+            case .onboardingRootDidDisappear:
+                // Keep the bound path alive until SwiftUI finishes its pending write-back.
+                guard state.destination != .onboarding else { return .none }
+                return .run { send in
+                    await Task.yield()
+                    await send(.onboardingTeardownCompleted)
+                }
+
+            case .onboardingTeardownCompleted:
+                guard state.destination != .onboarding else { return .none }
+                state.onboarding = .init()
+                state.onboardingPath = StackState()
+                return .none
+
             case .auth:
                 return .none
 
@@ -298,6 +318,7 @@ private extension AppFeature {
         // A new authentication result must not reuse a MainTab state retained for logout teardown.
         state.isLoggingOut = false
         state.mainTab = nil
+        let shouldDeferOnboardingTeardown = state.destination == .onboarding
         
         // 온보딩 완료 여부와 푸시 토큰 동기화를 처리
         configureAuthenticatedSession(user)
@@ -307,8 +328,10 @@ private extension AppFeature {
         
         // 인증 관련 임시 상태를 초기화
         state.auth = .init()
-        state.onboarding = .init()
-        state.onboardingPath = StackState()
+        if !shouldDeferOnboardingTeardown {
+            state.onboarding = .init()
+            state.onboardingPath = StackState()
+        }
 
         if user.nickname == nil {
             // 닉네임이 없으면 추가 회원정보 입력 화면으로 이동

@@ -155,9 +155,9 @@ private struct NicknameSettingStepView: View {
                 RoundedTextField(
                     placeholder: "닉네임을 입력해 주세요",
                     text: $nickname,
-                    validationState: validationState
+                    validationState: validationState,
+                    focus: $isFocused
                 )
-                .focused($isFocused)
 
                 Button {
                     onValidate()
@@ -195,10 +195,6 @@ private struct NicknameSettingStepView: View {
             .frame(maxHeight: .infinity, alignment: .bottom)
         }
         .padding(.horizontal, .contentPadding)
-        .task {
-            try? await Task.sleep(for: .seconds(0.3))
-            isFocused = true
-        }
     }
 
     @ViewBuilder
