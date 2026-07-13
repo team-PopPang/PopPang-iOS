@@ -1,5 +1,4 @@
 import ComposableArchitecture
-import Core
 import Domain
 import DSKit
 import Foundation
@@ -8,7 +7,7 @@ import Foundation
 public struct CalendarFeature {
     @ObservableState
     public struct State: Equatable {
-        @Shared var session: UserSession
+        public var userUuid: String
         public var calendarPopups: [Popup] = []
         public var selectedDate: Date = Date()
         public var selectedPopups: [Popup] = []
@@ -20,19 +19,8 @@ public struct CalendarFeature {
         public var isLoading = false
         public var errorMessage: String?
 
-        public init(session: Shared<UserSession>) {
-            self._session = session
-        }
-
-        private var currentUser: User {
-            guard let user = session.user else {
-                preconditionFailure("CalendarFeature requires a logged in session.")
-            }
-            return user
-        }
-
-        public var userUuid: String {
-            currentUser.userUuid
+        public init(userUuid: String) {
+            self.userUuid = userUuid
         }
     }
 

@@ -1,5 +1,4 @@
 import ComposableArchitecture
-import Core
 import Domain
 import DSKit
 import Foundation
@@ -26,22 +25,7 @@ struct HomeFeatureTests {
         let region = RegionList(region: "서울", districtList: ["전체", "성동구"])
         let expectedPopups = [makePopup(popupUuid: "popup-1", name: "성수 팝업")]
         var initialState = HomeFeature.State(
-            session: Shared(
-                UserSession(
-                    user: User(
-                        userUuid: "user-1",
-                        uid: "test-uid",
-                        provider: "test",
-                        email: nil,
-                        nickname: "팝팡",
-                        role: "USER",
-                        isAlerted: false,
-                        fcmToken: nil,
-                        alertKeywordList: nil,
-                        recommendList: nil
-                    )
-                )
-            )
+            user: makeUser()
         )
         initialState.filter.selectedRegion = region
         initialState.filter.selectedDistrict = "전체"
@@ -67,18 +51,29 @@ struct HomeFeatureTests {
             $0.isLoading = true
         }
 
-        await store.receive(.filteredPopupListLoaded(expectedPopups)) {
+        await store.receive(\.filteredPopupListLoaded, expectedPopups) {
             $0.gridPopups = expectedPopups
             $0.errorMessage = nil
         }
 
-        await store.receive(.loadingChanged(false)) {
+        await store.receive(\.loadingChanged, false) {
             $0.isLoading = false
         }
     }
 
-    @Test("ComingPopupDetailReducer가 좋아요 요청 실패 시 optimistic update를 되돌린다")
-    func comingPopupDetailReducerRollsBackFavoriteWhenRequestFails() async {
+    @Test("HomeFeature는 사용자 snapshot의 닉네임을 자체 상태로 갱신한다")
+    func homeFeatureUpdatesNicknameWithoutSharedSession() async {
+        let store = TestStore(initialState: HomeFeature.State(user: makeUser())) {
+            HomeFeature()
+        }
+
+        await store.send(.nicknameUpdated("새 팝팡")) {
+            $0.nickname = "새 팝팡"
+        }
+    }
+
+    @Test("ComingPopupDetailFeature가 좋아요 요청 실패 시 optimistic update를 되돌린다")
+    func comingPopupDetailFeatureRollsBackFavoriteWhenRequestFails() async {
         let popup = makePopup(
             popupUuid: "popup-1",
             name: "성수 팝업",
@@ -87,12 +82,12 @@ struct HomeFeatureTests {
         )
 
         let store = TestStore(
-            initialState: ComingPopupDetailReducer.State(
+            initialState: ComingPopupDetailFeature.State(
                 userUuid: "user-1",
                 popups: [popup]
             )
         ) {
-            ComingPopupDetailReducer()
+            ComingPopupDetailFeature()
         } withDependencies: {
             $0.homePopupClient.addFavorite = { _, _ in
                 throw TestError.expectedFailure
@@ -128,6 +123,21 @@ private enum TestError: LocalizedError {
             "expected failure"
         }
     }
+}
+
+private func makeUser() -> User {
+    User(
+        userUuid: "user-1",
+        uid: "test-uid",
+        provider: "test",
+        email: nil,
+        nickname: "팝팡",
+        role: "USER",
+        isAlerted: false,
+        fcmToken: nil,
+        alertKeywordList: nil,
+        recommendList: nil
+    )
 }
 
 private func makePopup(

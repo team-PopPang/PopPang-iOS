@@ -53,6 +53,9 @@ struct AppFeature {
         /// 메인 화면에 진입했을 때 생성되는 상태
         var mainTab: MainTabFeature.State?
 
+        /// SwiftUI가 MainTab view tree를 해제하는 동안의 로그아웃 전환 여부
+        var isLoggingOut = false
+
         /// 초기 사용자 세션을 전달받아 공유 상태로 생성
         init(session: UserSession = .init()) {
             self._session = Shared(value: session)
@@ -77,9 +80,12 @@ struct AppFeature {
         
         /// 추가 회원정보 등록이 완료됐을 때 사용자 정보를 전달
         case registerCompleted(User)
-        
-        /// 저장된 세션 제거가 완료됐음
-        case logoutFinished
+
+        /// 메인 탭 루트 view가 화면에서 사라졌음을 전달
+        case mainTabViewDidDisappear
+
+        /// MainTab view tree 해제 이후 state를 제거
+        case logoutTeardownCompleted
         
         /// 메인 탭 Feature의 액션
         case mainTab(MainTabFeature.Action)
@@ -124,6 +130,12 @@ struct AppFeature {
         Scope(state: \.onboarding, action: \.onboarding) {
             OnboardingFeature()
         }
+
+        // Child logout actions must be reduced before this parent removes mainTab state.
+        EmptyReducer()
+            .ifLet(\.mainTab, action: \.mainTab) {
+                MainTabFeature()
+            }
 
         Reduce { state, action in
             switch action {
@@ -171,29 +183,24 @@ struct AppFeature {
                 }
 
             case .mainTab(.delegate(.logout)):
-                // 로그아웃 요청 즉시 온보딩 화면으로 전환
-                state.destination = .onboarding
-                
-                // 저장된 사용자 세션을 제거한 뒤 후속 액션을 전달
-                return .run { send in
-                     await localSessionClient.clear()
-                     await send(.logoutFinished)
+                // Keep mainTab alive until SwiftUI completes its pending lifecycle callbacks.
+                guard !state.isLoggingOut else { return .none }
+                beginLoggedOutTransition(state: &state)
+                return .run { [localSessionClient] _ in
+                    await localSessionClient.clear()
                 }
 
-            case .logoutFinished:
-                // 로그인과 회원가입 관련 상태를 초기화
-                state.auth = .init()
-                state.registerFlow = nil
-                
-                // 온보딩 화면과 NavigationStack 상태를 초기화
-                state.onboarding = .init()
-                state.onboardingPath = StackState()
-                
-                // 메인 화면 상태를 제거
-                state.mainTab = nil
-                
-                // 모든 하위 Feature가 공유하는 사용자 세션을 초기화
-                state.$session.withLock { $0 = UserSession() }
+            case .mainTabViewDidDisappear:
+                // Child views can finish their lifecycle callbacks before optional state is removed.
+                guard state.isLoggingOut else { return .none }
+                return .run { send in
+                    await Task.yield()
+                    await send(.logoutTeardownCompleted)
+                }
+
+            case .logoutTeardownCompleted:
+                guard state.isLoggingOut else { return .none }
+                finishLoggedOutTransition(state: &state)
                 return .none
 
             case .auth:
@@ -214,15 +221,25 @@ struct AppFeature {
         }
         // 온보딩 NavigationStack에 포함된 각 화면의 Reducer를 연결
         .forEach(\.onboardingPath, action: \.onboardingPath)
-        
-        // 메인 탭 상태가 존재할 때만 MainTabFeature를 실행
-        .ifLet(\.mainTab, action: \.mainTab) {
-            MainTabFeature()
-        }
     }
 }
 
 private extension AppFeature {
+    func beginLoggedOutTransition(state: inout State) {
+        state.isLoggingOut = true
+        state.destination = .onboarding
+        state.auth = .init()
+        state.registerFlow = nil
+        state.onboarding = .init()
+        state.onboardingPath = StackState()
+    }
+
+    func finishLoggedOutTransition(state: inout State) {
+        state.mainTab = nil
+        state.$session.withLock { $0 = UserSession() }
+        state.isLoggingOut = false
+    }
+
     /// 저장된 세션을 불러오고 앱 시작 화면을 결정
     func resolveLaunch() -> Effect<Action> {
         let sessionStorage = sessionStorage
@@ -251,6 +268,8 @@ private extension AppFeature {
         destination: AppRootDestination,
         state: inout State
     ) {
+        state.isLoggingOut = false
+
         // 공유 세션을 최신 값으로 교체
         state.$session.withLock { $0 = session }
         state.destination = destination
@@ -276,6 +295,9 @@ private extension AppFeature {
 
     /// 인증 또는 회원가입이 완료된 사용자를 앱 상태에 반영
     func applyAuthenticatedUser(_ user: User, state: inout State) {
+        // A new authentication result must not reuse a MainTab state retained for logout teardown.
+        state.isLoggingOut = false
+        state.mainTab = nil
         
         // 온보딩 완료 여부와 푸시 토큰 동기화를 처리
         configureAuthenticatedSession(user)

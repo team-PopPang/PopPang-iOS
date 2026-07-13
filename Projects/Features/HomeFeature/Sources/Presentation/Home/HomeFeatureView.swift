@@ -221,7 +221,9 @@ public struct HomeFeatureView: View {
                     .presentationDetents([.height(270)])
             }
         }
-        .onAppear {
+        .task {
+            await Task.yield()
+            guard !Task.isCancelled else { return }
             Logger.d("HomeViewFeature OnAppear")
             store.send(.onAppear)
         }
@@ -493,21 +495,17 @@ private extension HomeFeatureView {
     HomeFeatureView(
         store: Store(
             initialState: HomeFeature.State(
-                session: Shared(
-                    value: UserSession(
-                        user: User(
-                            userUuid: "preview-user",
-                            uid: "preview-uid",
-                            provider: "preview",
-                            email: nil,
-                            nickname: "팝팡",
-                            role: "USER",
-                            isAlerted: false,
-                            fcmToken: nil,
-                            alertKeywordList: nil,
-                            recommendList: nil
-                        )
-                    )
+                user: User(
+                    userUuid: "preview-user",
+                    uid: "preview-uid",
+                    provider: "preview",
+                    email: nil,
+                    nickname: "팝팡",
+                    role: "USER",
+                    isAlerted: false,
+                    fcmToken: nil,
+                    alertKeywordList: nil,
+                    recommendList: nil
                 )
             )
         ) {

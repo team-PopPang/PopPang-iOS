@@ -1,6 +1,5 @@
 import CalendarFeature
 import ComposableArchitecture
-import Core
 import Domain
 import SwiftUI
 
@@ -11,9 +10,7 @@ struct CalendarFeatureDemoApp: App {
             CalendarFeatureView(
                 store: Store(
                     initialState: CalendarFeature.State(
-                        session: Shared(
-                            value: UserSession(user: .demo)
-                        )
+                        userUuid: User.demo.userUuid
                     )
                 ) {
                     CalendarFeature()

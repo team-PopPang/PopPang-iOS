@@ -1,5 +1,4 @@
 import ComposableArchitecture
-import Core
 import Domain
 import DSKit
 import Foundation
@@ -8,7 +7,9 @@ import Foundation
 public struct HomeFeature {
     @ObservableState
     public struct State: Equatable {
-        @Shared var session: UserSession
+        public var userUuid: String
+        public var nickname: String
+        public var isAdmin: Bool
         var bestPopups: [Popup] = []
         var comingPopups: [Popup] = []
         var gridPopups: [Popup] = []
@@ -17,41 +18,12 @@ public struct HomeFeature {
         var errorMessage: String?
 
         public init(
-            session: Shared<UserSession>
+            user: User
         ) {
-            self._session = session
+            self.userUuid = user.userUuid
+            self.nickname = user.nickname ?? "닉네임"
+            self.isAdmin = user.role.uppercased() == "ADMIN"
         }
-
-        var currentUser: User {
-            guard let user = session.user else {
-                preconditionFailure("HomeFeature requires a logged in session.")
-            }
-            return user
-        }
-
-        var userUuid: String {
-            currentUser.userUuid
-        }
-
-        var nickname: String {
-            currentUser.nickname ?? "닉네임"
-        }
-
-        var isAdmin: Bool {
-            currentUser.role.uppercased() == "ADMIN"
-        }
-
-//        public static func == (lhs: Self, rhs: Self) -> Bool {
-//            lhs.userUuid == rhs.userUuid
-//                && lhs.nickname == rhs.nickname
-//                && lhs.isAdmin == rhs.isAdmin
-//                && lhs.bestPopups == rhs.bestPopups
-//                && lhs.comingPopups == rhs.comingPopups
-//                && lhs.gridPopups == rhs.gridPopups
-//                && lhs.filter == rhs.filter
-//                && lhs.isLoading == rhs.isLoading
-//                && lhs.errorMessage == rhs.errorMessage
-//        }
     }
 
     public enum Action {
@@ -70,6 +42,7 @@ public struct HomeFeature {
         case favoriteUpdated(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
         case loadingChanged(Bool)
         case errorMessageChanged(String?)
+        case nicknameUpdated(String)
         case delegate(Delegate)
 
         public enum Delegate: Equatable {
@@ -96,7 +69,10 @@ public struct HomeFeature {
             case .onAppear:
                 state.isLoading = true
                 state.errorMessage = nil
-                return loadAllPopupData(state: state)
+                return loadAllPopupData(
+                    userUuid: state.userUuid,
+                    filter: state.filter
+                )
 
             case .filter:
                 return .none
@@ -167,6 +143,10 @@ public struct HomeFeature {
                 state.errorMessage = errorMessage
                 return .none
 
+            case .nicknameUpdated(let nickname):
+                state.nickname = nickname
+                return .none
+
             case .delegate:
                 return .none
             }
@@ -175,16 +155,19 @@ public struct HomeFeature {
 }
 
 private extension HomeFeature {
-    func loadAllPopupData(state: State) -> Effect<Action> {
+    func loadAllPopupData(
+        userUuid: String,
+        filter: HomeFilter.State
+    ) -> Effect<Action> {
         let popupClient = popupClient
 
-        return .run { [state, popupClient] send in
+        return .run { [filter, popupClient, userUuid] send in
             do {
-                let regions = state.filter.regions.isEmpty
+                let regions = filter.regions.isEmpty
                     ? try await popupClient.getRegionList().sortedByHomePriority()
-                    : state.filter.regions
-                let selectedRegion = state.filter.selectedRegion ?? regions.first
-                let selectedDistrict = state.filter.selectedDistrict ?? selectedRegion?.districtList.first
+                    : filter.regions
+                let selectedRegion = filter.selectedRegion ?? regions.first
+                let selectedDistrict = filter.selectedDistrict ?? selectedRegion?.districtList.first
 
                 await send(.filter(.regionSelectionPrepared(HomeRegionSelection(
                     regions: regions,
@@ -192,13 +175,13 @@ private extension HomeFeature {
                     selectedDistrict: selectedDistrict
                 ))))
 
-                async let bestPopups = popupClient.getPersonalRandomPopupList(state.userUuid)
-                async let comingPopups = popupClient.getPersonalUpcomingPopupList(state.userUuid)
+                async let bestPopups = popupClient.getPersonalRandomPopupList(userUuid)
+                async let comingPopups = popupClient.getPersonalUpcomingPopupList(userUuid)
                 async let gridPopups = popupClient.getPersonalFilteredPopupList(
-                    state.userUuid,
+                    userUuid,
                     selectedRegion?.region ?? "전체",
                     selectedDistrict ?? "전체",
-                    state.filter.selectedOption.rawValue
+                    filter.selectedOption.rawValue
                 )
 
                 await send(.popupSectionsLoaded(HomePopupSections(

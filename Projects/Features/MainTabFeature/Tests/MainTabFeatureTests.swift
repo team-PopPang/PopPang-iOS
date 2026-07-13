@@ -85,6 +85,56 @@ struct MainTabFeatureTests {
             )
         }
     }
+
+    @Test("프로필 이름 변경을 HomeFeature에 전달하고 설정 화면을 닫는다")
+    func updatesHomeNicknameAndDismissesProfileSetting() async {
+        let session = makeSession()
+        var initialState = MainTabFeature.State(session: session)
+        initialState.core.path.append(.profileSetting(.init(user: initialState.core.user)))
+        guard let id = initialState.core.path.ids.last else {
+            Issue.record("profile setting path should be appended")
+            return
+        }
+        let store = TestStore(initialState: initialState) {
+            MainTabFeature()
+        }
+
+        await store.send(
+            .path(.element(id: id, action: .profileSetting(.delegate(.nicknameUpdated("새 팝팡")))))
+        ) {
+            $0.core.path.pop(from: id)
+            $0.core.user.nickname = "새 팝팡"
+            $0.core.home.nickname = "새 팝팡"
+            $0.core.profile.nickname = "새 팝팡"
+            $0.$session.withLock { $0.user?.nickname = "새 팝팡" }
+        }
+    }
+
+    @Test("로그아웃 전에 MainTab navigation 상태를 정리한다")
+    func clearsNavigationBeforeForwardingLogout() async {
+        var initialState = MainTabFeature.State(session: makeSession())
+        initialState.core.destination = .popupRequest(.init(userUuid: "user-1"))
+        initialState.core.path.append(.profileSetting(.init(user: initialState.core.user)))
+        guard let id = initialState.core.path.ids.last else {
+            Issue.record("profile setting path should be appended")
+            return
+        }
+        let store = TestStore(initialState: initialState) {
+            MainTabFeature()
+        }
+
+        await store.send(
+            .path(.element(id: id, action: .profileSetting(.delegate(.logoutRequested))))
+        )
+
+        await store.receive(\.logoutNavigationTeardownRequested) {
+            $0.isLoggingOut = true
+            $0.core.destination = nil
+            $0.core.path = StackState()
+        }
+        await store.receive(\.logoutNavigationTeardownCompleted)
+        await store.receive(\.delegate)
+    }
 }
 
 private func makeSession() -> Shared<UserSession> {

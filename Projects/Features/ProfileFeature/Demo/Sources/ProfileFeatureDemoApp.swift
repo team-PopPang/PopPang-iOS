@@ -1,5 +1,4 @@
 import ComposableArchitecture
-import Core
 import Domain
 import ProfileFeature
 import SwiftUI
@@ -11,9 +10,7 @@ struct ProfileFeatureDemoApp: App {
             ProfileFeatureView(
                 store: Store(
                     initialState: ProfileFeature.State(
-                        session: Shared(
-                            value: UserSession(user: .demo)
-                        )
+                        user: .demo
                     )
                 ) {
                     ProfileFeature()

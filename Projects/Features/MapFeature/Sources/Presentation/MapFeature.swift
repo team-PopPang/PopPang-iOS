@@ -1,8 +1,8 @@
 import BottomSheet
 import ComposableArchitecture
-import Core
 import Domain
 import Foundation
+import Core
 
 private enum CancelID {
     case mapCenterChanged
@@ -54,7 +54,7 @@ public struct MapFeature {
     
     @ObservableState
     public struct State: Equatable {
-        @Shared var session: UserSession
+        var userUuid: String
         var mapPopups: [Popup] = []
         var allPopups: [Popup] = []
         var categories: [Recommend] = []
@@ -73,19 +73,8 @@ public struct MapFeature {
         var isWaitingForUserLocation = false
         var errorMessage: String?
 
-        public init(session: Shared<UserSession>) {
-            self._session = session
-        }
-
-        private var currentUser: User {
-            guard let user = session.user else {
-                preconditionFailure("MapFeature requires a logged in session.")
-            }
-            return user
-        }
-
-        var userUuid: String {
-            currentUser.userUuid
+        public init(userUuid: String) {
+            self.userUuid = userUuid
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {

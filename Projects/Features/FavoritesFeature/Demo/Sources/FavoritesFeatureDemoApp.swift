@@ -1,5 +1,4 @@
 import ComposableArchitecture
-import Core
 import Domain
 import FavoritesFeature
 import SwiftUI
@@ -11,9 +10,7 @@ struct FavoritesFeatureDemoApp: App {
             FavoritesFeatureView(
                 store: Store(
                     initialState: FavoritesFeature.State(
-                        session: Shared(
-                            value: UserSession(user: .demo)
-                        )
+                        userUuid: User.demo.userUuid
                     )
                 ) {
                     FavoritesFeature()

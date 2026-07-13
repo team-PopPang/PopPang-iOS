@@ -1,5 +1,4 @@
 import ComposableArchitecture
-import Core
 import Domain
 import Foundation
 
@@ -7,7 +6,7 @@ import Foundation
 public struct FavoritesFeature {
     @ObservableState
     public struct State: Equatable {
-        @Shared var session: UserSession
+        public var userUuid: String
         public var favoritePopups: [Popup] = []
         public var selectedPopups: [Popup] = []
         public var selectedDate: Date = Date()
@@ -15,19 +14,8 @@ public struct FavoritesFeature {
         public var isLoading = false
         public var errorMessage: String?
 
-        public init(session: Shared<UserSession>) {
-            self._session = session
-        }
-
-        private var currentUser: User {
-            guard let user = session.user else {
-                preconditionFailure("FavoritesFeature requires a logged in session.")
-            }
-            return user
-        }
-
-        public var userUuid: String {
-            currentUser.userUuid
+        public init(userUuid: String) {
+            self.userUuid = userUuid
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {

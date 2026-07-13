@@ -66,6 +66,7 @@ public struct MainTabFeature {
 
     @ObservableState
     public struct CoreState: Equatable {
+        var user: User
         var selectedTab: MainTab = .home
         var calendar: CalendarFeature.State
         var favorites: FavoritesFeature.State
@@ -75,16 +76,18 @@ public struct MainTabFeature {
         @Presents var destination: Destination.State?
         var path = StackState<Path.State>()
 
-        public init(session: Shared<UserSession>) {
-            self.calendar = .init(session: session)
-            self.favorites = .init(session: session)
-            self.home = .init(session: session)
-            self.map = .init(session: session)
-            self.profile = .init(session: session)
+        public init(user: User) {
+            self.user = user
+            self.calendar = .init(userUuid: user.userUuid)
+            self.favorites = .init(userUuid: user.userUuid)
+            self.home = .init(user: user)
+            self.map = .init(userUuid: user.userUuid)
+            self.profile = .init(user: user)
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.selectedTab == rhs.selectedTab
+            lhs.user == rhs.user
+            && lhs.selectedTab == rhs.selectedTab
             && lhs.calendar == rhs.calendar
             && lhs.favorites == rhs.favorites
             && lhs.home == rhs.home
@@ -151,25 +154,27 @@ public struct MainTabFeature {
     public struct State: Equatable {
         @Shared var session: UserSession
         public var core: CoreState
+        var isLoggingOut = false
         
         public init(
             session: Shared<UserSession>,
             core: CoreState? = nil
         ) {
             self._session = session
-            self.core = core ?? .init(session: session)
-        }
-
-        var currentUser: User {
-            guard let user = session.user else {
-                preconditionFailure("MainTabFeature requires a logged in user.")
+            if let core {
+                self.core = core
+            } else {
+                guard let user = session.wrappedValue.user else {
+                    preconditionFailure("MainTabFeature requires a logged in user.")
+                }
+                self.core = .init(user: user)
             }
-            return user
         }
         
         public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.session == rhs.session
             && lhs.core == rhs.core
+            && lhs.isLoggingOut == rhs.isLoggingOut
         }
     }
     
@@ -182,6 +187,8 @@ public struct MainTabFeature {
         case profile(ProfileFeature.Action)
         case destination(PresentationAction<Destination.Action>)
         case path(StackActionOf<Path>)
+        case logoutNavigationTeardownRequested
+        case logoutNavigationTeardownCompleted
         case delegate(Delegate)
         
         public enum Delegate: Equatable {
@@ -247,7 +254,7 @@ public struct MainTabFeature {
                 state.core.path.append(
                     .homeComingPopupDetail(
                         .init(
-                            userUuid: state.currentUser.userUuid,
+                            userUuid: state.core.user.userUuid,
                             popups: popups
                         )
                     )
@@ -257,31 +264,31 @@ public struct MainTabFeature {
             case .home(.delegate(.popupRequestManagementRequested)):
                 state.core.path.append(
                     .popupRequestManagement(
-                        .init(adminUuid: state.currentUser.userUuid)
+                        .init(adminUuid: state.core.user.userUuid)
                     )
                 )
                 return .none
                 
             case .home(.delegate(.alertRequested)):
-                state.core.path.append(.alert(.init(session: state.$session)))
+                state.core.path.append(.alert(.init(user: state.core.user)))
                 return .none
                 
             case .calendar(.delegate(.alertRequested)):
-                state.core.path.append(.alert(.init(session: state.$session)))
+                state.core.path.append(.alert(.init(user: state.core.user)))
                 return .none
                 
             case .home(.delegate(.searchRequested)):
                 state.core.destination = .search(
                     .init(
-                        userUuid: state.currentUser.userUuid,
-                        nickname: state.currentUser.displayNickname
+                        userUuid: state.core.user.userUuid,
+                        nickname: state.core.user.nickname ?? "닉네임"
                     )
                 )
                 return .none
 
             case .home(.delegate(.popupRequestRequested)):
                 state.core.destination = .popupRequest(
-                    .init(userUuid: state.currentUser.userUuid)
+                    .init(userUuid: state.core.user.userUuid)
                 )
                 return .none
 
@@ -290,12 +297,17 @@ public struct MainTabFeature {
                 return .none
                 
             case .favorites(.delegate(.alertRequested)):
-                state.core.path.append(.alert(.init(session: state.$session)))
+                state.core.path.append(.alert(.init(user: state.core.user)))
                 return .none
                 
+            case .profile(.delegate(.alertStatusUpdated(let isAlerted))):
+                state.core.user.isAlerted = isAlerted
+                state.$session.withLock { $0.user?.isAlerted = isAlerted }
+                return .none
+
             case .profile(.delegate(.profileSettingRequested)):
                 state.core.path.append(
-                    .profileSetting(.init(session: state.$session))
+                    .profileSetting(.init(user: state.core.user))
                 )
                 return .none
                 
@@ -308,7 +320,7 @@ public struct MainTabFeature {
                 return .none
                 
             case .profile(.delegate(.alertRequested)):
-                state.core.path.append(.alert(.init(session: state.$session)))
+                state.core.path.append(.alert(.init(user: state.core.user)))
                 return .none
 
             case .destination(.presented(.search(.delegate(.dismiss)))):
@@ -318,6 +330,21 @@ public struct MainTabFeature {
             case .destination(.presented(.popupRequest(.delegate(.dismiss)))):
                 state.core.destination = nil
                 return .none
+
+            case .logoutNavigationTeardownRequested:
+                // Let NavigationStack observe its cleared bindings before AppFeature replaces the root.
+                guard !state.isLoggingOut else { return .none }
+                state.isLoggingOut = true
+                state.core.destination = nil
+                state.core.path = StackState()
+                return .run { send in
+                    await Task.yield()
+                    await send(.logoutNavigationTeardownCompleted)
+                }
+
+            case .logoutNavigationTeardownCompleted:
+                guard state.isLoggingOut else { return .none }
+                return .send(.delegate(.logout))
                 
             case .home,
                     .calendar,
@@ -349,9 +376,9 @@ private extension MainTabFeature {
         state.core.path.append(
             .popupDetail(
                 .init(
-                    userUuid: state.currentUser.userUuid,
+                    userUuid: state.core.user.userUuid,
                     popup: popup,
-                    isAdmin: state.currentUser.isAdminRole
+                    isAdmin: state.core.user.role.uppercased() == "ADMIN"
                 )
             )
         )
@@ -371,7 +398,7 @@ private extension MainTabFeature {
             state.core.path.append(
                 .popupRequestManagementDetail(
                     .init(
-                        adminUuid: state.currentUser.userUuid,
+                        adminUuid: state.core.user.userUuid,
                         submissionId: submissionId
                     )
                 )
@@ -407,7 +434,15 @@ private extension MainTabFeature {
             return .none
             
         case .profileSetting(.delegate(.logoutRequested)):
-            return .send(.delegate(.logout))
+            return .send(.logoutNavigationTeardownRequested)
+
+        case .profileSetting(.delegate(.nicknameUpdated(let nickname))):
+            state.core.path.pop(from: id)
+            state.core.user.nickname = nickname
+            state.core.home.nickname = nickname
+            state.core.profile.nickname = nickname
+            state.$session.withLock { $0.user?.nickname = nickname }
+            return .none
 
         case .profileSetting(.delegate(.dismiss)):
             state.core.path.pop(from: id)
@@ -416,16 +451,6 @@ private extension MainTabFeature {
         default:
             return .none
         }
-    }
-}
-
-extension User {
-    var displayNickname: String {
-        nickname ?? "닉네임"
-    }
-    
-    var isAdminRole: Bool {
-        role.uppercased() == "ADMIN"
     }
 }
 

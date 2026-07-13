@@ -1,6 +1,5 @@
 import AlertFeature
 import ComposableArchitecture
-import Core
 import Domain
 import SwiftUI
 
@@ -11,9 +10,7 @@ struct AlertFeatureDemoApp: App {
             AlertFeatureView(
                 store: Store(
                     initialState: AlertFeature.State(
-                        session: Shared(
-                            value: UserSession(user: .demo)
-                        )
+                        user: .demo
                     )
                 ) {
                     AlertFeature()

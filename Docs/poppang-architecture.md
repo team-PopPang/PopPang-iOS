@@ -101,13 +101,9 @@ Projects
 - 현재 로그인 사용자는 `AppFeature.session.user`로 표현한다.
 - active main flow는 `MainTabFeature`가 TCA `StackState`와 단일 `@Presents` destination으로 소유한다.
 - `AppFeature`는 `MainTabFeature.State?`를 저장하고, 메인 진입 시 shared `session`을 전달해 한 번 생성한다.
-- TCA-ready feature는 필요한 경우 parent가 내려주는 shared `session`을 직접 읽는다.
-- 현재 `CalendarFeature`도 shared `session`을 직접 읽고, 캘린더 로컬 상태를 feature state가 소유한다.
-- 현재 `FavoritesFeature`도 shared `session`을 직접 읽고, 찜 로컬 상태를 feature state가 소유한다.
-- 현재 `HomeFeature`는 shared `session`을 직접 읽고, 홈 로컬 상태만 feature state가 소유한다.
-- 현재 `MapFeature`도 shared `session`을 직접 읽고, 지도 로컬 상태를 feature state가 소유한다.
-- 현재 `AlertFeature`도 shared `session`을 직접 읽고, 알림 로컬 상태를 feature state가 소유한다.
-- 현재 `ProfileFeature`도 shared `session`을 직접 읽고, 프로필 로컬 상태와 프로필 설정 path는 TCA reducer가 소유한다.
+- `MainTabFeature`는 shared `session`을 root session 동기화에만 사용하고, child feature에는 로그인 사용자 snapshot만 전달한다.
+- 현재 `HomeFeature`, `CalendarFeature`, `FavoritesFeature`, `MapFeature`, `ProfileFeature`, `ProfileSettingFeature`, `AlertFeature`는 shared `session`을 직접 읽지 않는다.
+- 각 feature state는 필요한 사용자 primitive와 화면 로컬 상태를 함께 소유한다.
 - legacy feature는 당분간 session-derived primitive 값을 view init으로 주입한다.
 - `MainTabFeature.Action`은 탭 child action, `path`, `destination`, parent delegate 중심으로 유지한다.
 - 탭 내부의 로컬 sheet/bottom sheet/selected item 상태는 각 feature가 소유한다.
@@ -138,14 +134,10 @@ Projects
 #### Home / Calendar / Map / Favorites / Profile / Alert
 
 - `AppFeature`가 shared `session` source of truth를 소유
-- `MainTabFeature`가 shared `session`을 `HomeFeature`, `CalendarFeature`, `MapFeature`, `FavoritesFeature`, `AlertFeature`, `ProfileFeature`, `ProfileSettingFeature`에 전달
-- `HomeFeature.State`는 shared `session`을 읽고, `bestPopups`, `filter` 같은 홈 로컬 상태를 직접 소유
-- `CalendarFeature.State`는 shared `session`을 읽고, `selectedDate`, `calendarPopups`, `popupEventCounts` 같은 캘린더 로컬 상태를 직접 소유
-- `MapFeature.State`는 shared `session`을 읽고, 지도 팝업 목록/시트 상태/위치 상태를 직접 소유한다.
-- `FavoritesFeature.State`는 shared `session`을 읽고, `favoritePopups`, `selectedDate`, `popupEventCounts` 같은 찜 로컬 상태를 직접 소유한다.
-- `AlertFeature.State`는 shared `session`을 읽고, alert popup/keyword/recent keyword/편집 상태를 직접 소유한다.
-- `ProfileFeature.State`는 shared `session`을 읽고, `localIsAlerted`, `errorMessage` 같은 프로필 로컬 상태를 직접 소유
-- `ProfileSettingFeature.State`는 shared `session`을 읽고, 닉네임 변경/회원탈퇴용 로컬 상태를 직접 소유한다.
+- `MainTabFeature.CoreState`가 로그인 `User` snapshot을 소유하고 각 child state를 생성한다.
+- `HomeFeature.State`는 `userUuid`, `nickname`, `isAdmin`을, `CalendarFeature`, `FavoritesFeature`, `MapFeature`는 `userUuid`을 직접 소유한다.
+- `ProfileFeature`, `ProfileSettingFeature`, `AlertFeature`는 화면에 필요한 사용자 snapshot과 로컬 상태를 직접 소유한다.
+- 프로필 이름과 알림 상태 변경은 delegate로 `MainTabFeature`에 전달하고, MainTab이 child snapshot과 `AppFeature.session`을 함께 동기화한다.
 - `HomeFeature`가 `@Dependencies.Dependency(\.homePopupClient)`로 feature-scoped dependency 사용
 - `CalendarFeature`는 `@Dependencies.Dependency(\.calendarFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `MapFeature`는 `@Dependencies.Dependency(\.mapFeatureClient)`로 feature-scoped dependency를 사용한다.
