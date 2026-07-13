@@ -19,25 +19,25 @@ let project = Project(
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]
         ),
-        .target(
-            name: "AuthFeatureDemo",
-            destinations: [.iPhone],
-            product: .app,
-            bundleId: "com.poppang.demo.auth",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .extendingDefault(
-                with: [
-                    "UILaunchScreen": [
-                        "UIColorName": "",
-                        "UIImageName": "",
-                    ],
-                ]
-            ),
-            sources: ["Demo/Sources/**"],
-            dependencies: [
-                .target(name: "AuthFeature"),
-                .project(target: "Domain", path: "../../Domain"),
-            ]
-        ),
+        // .target(
+        //     name: "AuthFeatureDemo",
+        //     destinations: [.iPhone],
+        //     product: .app,
+        //     bundleId: "com.poppang.demo.auth",
+        //     deploymentTargets: .iOS("17.0"),
+        //     infoPlist: .extendingDefault(
+        //         with: [
+        //             "UILaunchScreen": [
+        //                 "UIColorName": "",
+        //                 "UIImageName": "",
+        //             ],
+        //         ]
+        //     ),
+        //     sources: ["Demo/Sources/**"],
+        //     dependencies: [
+        //         .target(name: "AuthFeature"),
+        //         .project(target: "Domain", path: "../../Domain"),
+        //     ]
+        // ),
     ]
 )

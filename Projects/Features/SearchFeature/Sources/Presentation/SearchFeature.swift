@@ -1,17 +1,9 @@
 import ComposableArchitecture
 import Domain
 import Foundation
-import PopupDetailFeature
-import ReviewFeature
 
 @Reducer
 public struct SearchFeature {
-    @Reducer
-    public enum Path {
-        case popupDetail(SearchPopupDetailDestinationFeature)
-        case reviewDetail(ReviewFeature)
-    }
-
     @ObservableState
     public struct State: Equatable, Identifiable {
         // public var id: String { "search-\(userUuid)" }
@@ -21,7 +13,6 @@ public struct SearchFeature {
         public var searchText = ""
         public var recentKeywords: [String] = []
         public var searchPopupList: [Popup] = []
-        public var path = StackState<Path.State>()
         public var isLoading = false
         public var errorMessage: String?
 
@@ -48,7 +39,6 @@ public struct SearchFeature {
         case onAppear
         case dismissTapped
         case popupSelected(Popup)
-        case path(StackActionOf<Path>)
         case searchTextChanged(String)
         case recentKeywordTapped(String)
         case recentKeywordRemoved(String)
@@ -88,15 +78,7 @@ public struct SearchFeature {
                 return .send(.delegate(.dismiss))
 
             case .popupSelected(let popup):
-                state.path.append(
-                    .popupDetail(
-                        .init(
-                            userUuid: state.userUuid,
-                            popup: popup
-                        )
-                    )
-                )
-                return .none
+                return .send(.delegate(.popupSelected(popup)))
 
             case .searchTextChanged(let searchText):
                 
@@ -163,51 +145,14 @@ public struct SearchFeature {
                 state.isLoading = false
                 return .none
 
-            case .path(.element(let id, let action)):
-                return reducePathAction(id: id, action: action, state: &state)
-
-            case .path:
-                return .none
-
             case .delegate:
                 return .none
             }
         }
-        .forEach(\.path, action: \.path)
     }
 }
 
 private extension SearchFeature {
-    func reducePathAction(
-        id: StackElementID,
-        action: Path.Action,
-        state: inout State
-    ) -> Effect<Action> {
-        switch action {
-        case .popupDetail(.delegate(.pushPopupDetail(_, let popup))):
-            state.path.append(
-                .popupDetail(
-                    .init(
-                        userUuid: state.userUuid,
-                        popup: popup
-                    )
-                )
-            )
-            return .none
-
-        case .popupDetail(.delegate(.showReviews(let reviews))):
-            state.path.append(.reviewDetail(.init(reviews: reviews)))
-            return .none
-
-        case .popupDetail(.delegate(.close)):
-            state.path.pop(from: id)
-            return .none
-
-        default:
-            return .none
-        }
-    }
-    
     func search(
         userUuid: String,
         searchText: String,
@@ -250,57 +195,5 @@ private extension SearchFeature {
             }
         }
         .cancellable(id: CancelID.search, cancelInFlight: true)
-    }
-}
-
-@Reducer
-public struct SearchPopupDetailDestinationFeature {
-    @ObservableState
-    public struct State: Equatable {
-        public var content: PopupDetailFeature.State
-
-        public init(
-            userUuid: String,
-            popup: Popup
-        ) {
-            self.content = .init(
-                userUuid: userUuid,
-                popup: popup
-            )
-        }
-    }
-
-    public enum Action: Equatable {
-        case content(PopupDetailFeature.Action)
-        case relatedPopupSelected(String, Popup)
-        case reviewsTapped([Review])
-        case delegate(Delegate)
-
-        public enum Delegate: Equatable {
-            case pushPopupDetail(String, Popup)
-            case showReviews([Review])
-            case close
-        }
-    }
-
-    public init() {}
-
-    public var body: some ReducerOf<Self> {
-        Scope(state: \.content, action: \.content) {
-            PopupDetailFeature()
-        }
-
-        Reduce { _, action in
-            switch action {
-            case .content:
-                return .none
-            case .relatedPopupSelected(let userUuid, let popup):
-                return .send(.delegate(.pushPopupDetail(userUuid, popup)))
-            case .reviewsTapped(let reviews):
-                return .send(.delegate(.showReviews(reviews)))
-            case .delegate:
-                return .none
-            }
-        }
     }
 }

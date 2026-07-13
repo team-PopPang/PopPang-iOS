@@ -15,31 +15,29 @@ let project = Project(
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
                 .project(target: "Core", path: "../../Shared/Core"),
-                .project(target: "PopupDetailFeature", path: "../PopupDetailFeature"),
-                .project(target: "ReviewFeature", path: "../ReviewFeature"),
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]
         ),
-        .target(
-            name: "SearchFeatureDemo",
-            destinations: [.iPhone],
-            product: .app,
-            bundleId: "com.poppang.demo.search",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .extendingDefault(
-                with: [
-                    "UILaunchScreen": [
-                        "UIColorName": "",
-                        "UIImageName": "",
-                    ],
-                ]
-            ),
-            sources: ["Demo/Sources/**"],
-            dependencies: [
-                .target(name: "SearchFeature"),
-                .project(target: "Domain", path: "../../Domain"),
-                .project(target: "Data", path: "../../Data"),
-            ]
-        ),
+        // .target(
+        //     name: "SearchFeatureDemo",
+        //     destinations: [.iPhone],
+        //     product: .app,
+        //     bundleId: "com.poppang.demo.search",
+        //     deploymentTargets: .iOS("17.0"),
+        //     infoPlist: .extendingDefault(
+        //         with: [
+        //             "UILaunchScreen": [
+        //                 "UIColorName": "",
+        //                 "UIImageName": "",
+        //             ],
+        //         ]
+        //     ),
+        //     sources: ["Demo/Sources/**"],
+        //     dependencies: [
+        //         .target(name: "SearchFeature"),
+        //         .project(target: "Domain", path: "../../Domain"),
+        //         .project(target: "Data", path: "../../Data"),
+        //     ]
+        // ),
     ]
 )

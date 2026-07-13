@@ -199,17 +199,18 @@ public struct RegisterFlowFeature {
                 user.recommendList = state.selectedCategories
                 user.alertKeywordList = state.keywords
                 user.isAlerted = !state.keywords.isEmpty
+                let registrationUser = user
 
-                return .run { [authFeatureClient] send in
+                return .run { [authFeatureClient, registrationUser] send in
                     do {
                         let registeredUser: User
-                        switch user.provider.uppercased() {
+                        switch registrationUser.provider.uppercased() {
                         case "APPLE":
-                            registeredUser = try await authFeatureClient.appleRegister(user)
+                            registeredUser = try await authFeatureClient.appleRegister(registrationUser)
                         case "GOOGLE":
-                            registeredUser = try await authFeatureClient.googleRegister(user)
+                            registeredUser = try await authFeatureClient.googleRegister(registrationUser)
                         default:
-                            registeredUser = try await authFeatureClient.kakaoRegister(user)
+                            registeredUser = try await authFeatureClient.kakaoRegister(registrationUser)
                         }
                         await send(.completeRegistrationResponse(.success(registeredUser)))
                     } catch {

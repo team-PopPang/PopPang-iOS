@@ -18,9 +18,6 @@ let project = Project(
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
                 .project(target: "Core", path: "../../Shared/Core"),
-                .project(target: "SearchFeature", path: "../SearchFeature"),
-                .project(target: "PopupRequestFeature", path: "../PopupRequestFeature"),
-                .project(target: "PopupRequestManagementFeature", path: "../PopupRequestManagementFeature"),
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]
         ),

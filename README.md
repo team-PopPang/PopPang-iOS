@@ -37,7 +37,7 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 | **Kingfisher** | 이미지 캐싱 처리 및 UI 성능 개선을 위함 |
 | **NMapsMap** | 지도 기반 팝업 탐색 기능을 구현하기 위함 |
 | **BottomSheet** | 지도와 상세 흐름의 바텀시트 UI를 구현하기 위함 |
-| **PopPangListKit** | SwiftUI의 선언형 문법으로 UICollectionView 기반 목록을 구성하기 위함 |
+| **PopPangListKit** | UICollectionView 기반 선언형 목록 DSL을 제공하는 외부 라이브러리 |
 
 <br/><br/>
 
@@ -70,7 +70,7 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 >
 > `UICollectionView`와 DifferenceKit을 Core로 유지하면서 `List`, `Section`, `Cell`로 구성하는 선언형 DSL을 구현
 >
-> 기존 UIKit `Component`와 SwiftUI `View`가 같은 diff, layout, event 경로를 공유하도록 `PopPangListKit` 모듈로 분리
+> 기존 UIKit `Component`와 SwiftUI `View`가 같은 diff, layout, event 경로를 공유하도록 `PopPangListKit` 외부 라이브러리로 분리
 >
 > **성과**
 >
@@ -175,42 +175,61 @@ let response = try await provider.asyncRequest(.getPopupList)
 
 ---
 
-### **4. 화면 이동 로직을 통일해 일관성 있는 네비게이션 확보**
+### **4. MainTabFeature에서 Feature 조립과 TCA 네비게이션 통합**
 > **문제**  
-> push / sheet / overlay 화면 전환 코드가 각 View에 흩어져 있어  
-> 네비게이션 흐름이 일관적이지 않고 유지보수가 어려웠음  
+> Feature가 다른 Feature를 직접 의존하면 화면 이동 하나를 변경해도 여러 모듈이 함께 영향을 받고,
+> 각 Feature의 독립성과 재사용성이 낮아짐
 >
 > **해결**  
-> Route 기반 **Generic Coordinator** 도입으로  
-> 모든 화면 이동을 **동일한 호출 형태**로 사용하도록 개선  
+> 메인 탭 하위 Feature의 조립과 화면 이동 책임을 `MainTabFeature`로 모으고,
+> 자식 Feature는 delegate action으로 이동 의도만 전달하도록 구성
 >
 > **성과**  
-> 🔸 push / sheet / overlay를 **하나의 패턴으로 호출**  
-> 🔸 화면이동 관련 상태 변수 70% 감소  
-> 🔸 **일관된 네비게이션 흐름 확보 및 View 코드 간결화**
+> 🔸 일반 Feature 사이의 직접 의존 제거
+> 🔸 화면 전환의 상태와 규칙을 `MainTabFeature`에서 한 번에 추적
+> 🔸 자식 Feature를 독립적으로 개발하고 테스트할 수 있는 경계 확보
+> 🔸 화면 이동 closure 없이 TCA state/action으로 네비게이션 표현
+
+```text
+PopPangApp
+├── AuthFeature
+├── OnboardingFeature
+└── MainTabFeature
+    ├── HomeFeature
+    ├── CalendarFeature
+    ├── MapFeature
+    ├── FavoritesFeature
+    ├── ProfileFeature
+    └── Search / PopupDetail / Review / Alert
+```
+
+`AppFeature`는 launch, onboarding, auth, register, main 전환을 소유하고,
+`MainTabFeature`는 로그인 이후 자식 Feature와 탭 공통 화면 전환을 조립한다.
+
+`MainTabFeature`는 자식 Feature의 상태와 화면 전환 규칙을 관리하는 reducer이고,
+`MainTabFeatureView`는 해당 상태를 `TabView`, `NavigationStack`, `fullScreenCover`에 연결하는 View다.
+
+```text
+Home 검색 버튼
+→ HomeFeature.delegate.searchRequested
+→ MainTabFeature가 Search 상태 생성
+→ MainTabFeatureView가 검색 화면 표시
+```
+
+- `Destination`: 검색이나 팝업 제보처럼 동시에 하나만 표시하는 full-screen/tree navigation
+- `Path`: 팝업 상세나 리뷰처럼 화면이 순서대로 쌓이는 push/stack navigation
+- 일반 Feature는 다른 Feature를 직접 import하지 않고 delegate action으로 이동 의도만 전달
+- 제거 예정인 `PopupRequestFeature`, `PopupRequestManagementFeature`, `PopupSubmissionFormFeature` 조합만 임시 예외로 직접 참조 허용
 
 ```swift
-class Coordinator<R: Hashable, S: Identifiable, O: Identifiable>: ObservableObject {
-    @Published var paths: [R] = []
-    @Published var sheet: S?
-    @Published var overlay: O?
-
-    func push(_ route: R) {
-        paths.append(route)
-    }
-
-    func present(_ sheet: S) {
-        self.sheet = sheet
-    }
-
-    func showOverlay(_ overlay: O) {
-        self.overlay = overlay
-    }
-}
-
-coordinator.push(.detail(popup))
-coordinator.present(.regionSheet)
-coordinator.showOverlay(.notification)
+case .home(.delegate(.searchRequested)):
+    state.core.destination = .search(
+        .init(
+            userUuid: state.currentUser.userUuid,
+            nickname: state.currentUser.displayNickname
+        )
+    )
+    return .none
 ```
 
 ---
@@ -242,7 +261,7 @@ Text(LocalizationKey.commonNext.localized(comment: "Next button"))
 > 기능이 늘어날수록 변경 영향 범위가 커지고, 독립 개발과 빌드 검증이 어려웠음  
 >
 > **해결**  
-> `App / Coordinator / Features / Domain / Data / Shared` 구조로 분리하고,  
+> `App / Features / Domain / Data / Shared` 구조로 분리하고,
 > `Tuist` 템플릿과 `Makefile` 래퍼로 feature, domain, data, core 모듈을 일관되게 생성하도록 구성  
 >
 > **성과**  
@@ -269,10 +288,10 @@ Text(LocalizationKey.commonNext.localized(comment: "Next button"))
 ```text
 Projects
 ├── App
-├── Coordinator
 ├── Features
 │   ├── AuthFeature
 │   ├── OnboardingFeature
+│   ├── MainTabFeature
 │   ├── HomeFeature
 │   ├── SearchFeature
 │   ├── PopupDetailFeature
@@ -287,7 +306,6 @@ Projects
 └── Shared
     ├── Core
     ├── DSKit
-    ├── PopPangListKit
     └── ThirdParty
 ```
 
@@ -345,7 +363,7 @@ make regen
 
 ```bash
 tuist build PopPangApp
-tuist build Coordinator
+tuist build MainTabFeature
 ```
 
 Core/Data 테스트는 아래 명령으로 실행합니다.
@@ -374,8 +392,7 @@ make module LAYER=shared NAME=UIComponents
 # 7. 참고
 
 - `AGENTS.md`: 저장소 작업 규칙과 아키텍처 기준
-- `Projects/Coordinator/README.md`: Coordinator 상세 가이드
-- [`Projects/Shared/PopPangListKit`](./Projects/Shared/PopPangListKit): PopPangListKit framework와 Core 구현
-- [`Projects/Shared/PopPangListKit/Demo`](./Projects/Shared/PopPangListKit/Demo): UIKit·SwiftUI 사용 예제
+- [`Docs/tca-navigation-guidelines.md`](./Docs/tca-navigation-guidelines.md): MainTabFeature와 TCA navigation 기준
+- [PopPangListKit](https://github.com/team-PopPang/PopPangListKit): UICollectionView 기반 선언형 목록 라이브러리와 UIKit·SwiftUI 사용 예제
 - `V0/README.md`: 기존 단일 타깃 앱 README
 - `Tuist/Package.swift`: 외부 의존성과 product type 정책

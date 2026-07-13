@@ -15,13 +15,16 @@ public final class AdminUsecaseImpl: AdminUsecaseProtocol {
         try await adminRepository.createPopupSubmission(request)
     }
 
-    @available(*, deprecated, message: "토큰 기반 V2 deactivatePopup(popupUuid:)를 사용하세요.")
+    @available(*, deprecated, message: "deactivatePopup(adminUuid:popupUuid:)를 사용하세요.")
     public func deactivatePopupByUser(userUuid: String, popupUuid: String) async throws {
         try await adminRepository.deactivatePopupByUser(userUuid: userUuid, popupUuid: popupUuid)
     }
 
-    public func deactivatePopup(popupUuid: String) async throws {
-        try await adminRepository.deactivatePopup(popupUuid: popupUuid)
+    public func deactivatePopup(adminUuid: String, popupUuid: String) async throws {
+        try await adminRepository.deactivatePopup(
+            adminUuid: adminUuid,
+            popupUuid: popupUuid
+        )
     }
 
     public func updatePopupSubmissionStatus(submissionId: Int, status: PopupSubmissionStatus) async throws {

@@ -88,7 +88,7 @@ public enum AdInjectedListItemBuilder {
         nativeAdId: String = "native-ad",
         id: (Item) -> String
     ) -> [AdInjectedListItem<Item>] {
-        var injectedItems = items.map { item in
+        let injectedItems = items.map { item in
             AdInjectedListItem.content(item, id: id(item))
         }
         guard

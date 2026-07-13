@@ -19,22 +19,22 @@ let project = Project(
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]
         ),
-        .target(
-            name: "OnboardingFeatureDemo",
-            destinations: [.iPhone],
-            product: .app,
-            bundleId: "com.poppang.demo.onboarding",
-            deploymentTargets: .iOS("17.0"),
-            infoPlist: .extendingDefault(
-                with: [
-                    "UILaunchScreen": [
-                        "UIColorName": "",
-                        "UIImageName": "",
-                    ],
-                ]
-            ),
-            sources: ["Demo/Sources/**"],
-            dependencies: [.target(name: "OnboardingFeature")]
-        ),
+        // .target(
+        //     name: "OnboardingFeatureDemo",
+        //     destinations: [.iPhone],
+        //     product: .app,
+        //     bundleId: "com.poppang.demo.onboarding",
+        //     deploymentTargets: .iOS("17.0"),
+        //     infoPlist: .extendingDefault(
+        //         with: [
+        //             "UILaunchScreen": [
+        //                 "UIColorName": "",
+        //                 "UIImageName": "",
+        //             ],
+        //         ]
+        //     ),
+        //     sources: ["Demo/Sources/**"],
+        //     dependencies: [.target(name: "OnboardingFeature")]
+        // ),
     ]
 )
