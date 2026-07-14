@@ -10,7 +10,7 @@ import Domain
 import Kingfisher
 import DSKit
 
-struct ListKitBestPopupCell: View {
+struct BestPopupCell: View {
     let popup: Popup
 
     var body: some View {

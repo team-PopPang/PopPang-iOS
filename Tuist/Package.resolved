@@ -1,5 +1,5 @@
 {
-  "originHash" : "75f2b3ced350ea033e455b3c1b8d1c34bcf3f71d788272341d55ea824e93cca8",
+  "originHash" : "aafa466732bde822c5009273bc02a03646d4f051e80bd7bdbd98c1909e642b87",
   "pins" : [
     {
       "identity" : "abseil-cpp-binary",
@@ -213,8 +213,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/team-PopPang/PopPangListKit.git",
       "state" : {
-        "revision" : "3689ade5952d51ea37cd2f3452f927e7206c62be",
-        "version" : "1.0.1"
+        "revision" : "100b9b679169daccc89fc64961457b11f0031f5e",
+        "version" : "1.0.2"
       }
     },
     {

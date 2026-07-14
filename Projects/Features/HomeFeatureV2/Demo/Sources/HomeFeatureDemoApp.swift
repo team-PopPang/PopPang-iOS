@@ -7,28 +7,89 @@ import SwiftUI
 struct HomeFeatureV2DemoApp: App {
     var body: some Scene {
         WindowGroup {
+//            HomeFeatureView(
+//                store: Store(
+//                    initialState: HomeFeature.State(
+//                        user: User(
+//                            userUuid: "demo-user",
+//                            uid: "demo-uid",
+//                            provider: "preview",
+//                            email: nil,
+//                            nickname: "팝팡",
+//                            role: "ADMIN",
+//                            isAlerted: false,
+//                            fcmToken: nil,
+//                            alertKeywordList: nil,
+//                            recommendList: nil
+//                        )
+//                    )
+//                ) {
+//                    HomeFeature()
+//                } withDependencies: {
+//                    $0.homePopupClient = .previewValue
+//                }
+//            )
+            
+            // HomeFeatureView()
+//            HomeFeatureView(
+//                store: Store(
+//                    initialState: HomeFeature.State(popups: [
+//                        .popupMock,
+//                        .popupMock,
+//                        .popupMock,
+//                        .popupMock,
+//                        .popupMock,
+//                        .popupMock
+//                    ])
+//                ) {
+//                    HomeFeature()
+//                }
+//            )
+            
             HomeFeatureView(
                 store: Store(
                     initialState: HomeFeature.State(
                         user: User(
-                            userUuid: "demo-user",
-                            uid: "demo-uid",
+                            userUuid: "preview-user",
+                            uid: "preview-uid",
                             provider: "preview",
                             email: nil,
                             nickname: "팝팡",
-                            role: "ADMIN",
+                            role: "USER",
                             isAlerted: false,
                             fcmToken: nil,
                             alertKeywordList: nil,
                             recommendList: nil
-                        )
+                        ), bestPopups: [
+                            .popupMock,
+                            .popupMock,
+                            .popupMock,
+                            .popupMock,
+                            .popupMock,
+                            .popupMock
+                        ]
                     )
                 ) {
                     HomeFeature()
-                } withDependencies: {
-                    $0.homePopupClient = .previewValue
                 }
             )
         }
     }
 }
+
+//#Preview {
+//    HomeFeatureView(
+//        store: Store(
+//            initialState: HomeFeature.State(popups: [
+//                .popupMock,
+//                .popupMock,
+//                .popupMock,
+//                .popupMock,
+//                .popupMock,
+//                .popupMock
+//            ])
+//        ) {
+//            HomeFeature()
+//        }
+//    )
+//}

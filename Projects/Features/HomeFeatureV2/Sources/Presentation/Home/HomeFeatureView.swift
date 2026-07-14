@@ -1,492 +1,119 @@
-import ADKit
+import SwiftUI
 import ComposableArchitecture
-import Core
+import PopPangListKit
 import Domain
 import DSKit
-import Kingfisher
-import ListKit
-import SwiftUI
-import UIKit
+
+@Reducer
+public struct HomeFeature {
+    @ObservableState
+    public struct State: Equatable {
+        public var nickname: String
+        public var bestPopups: [Popup] = []
+        
+        public init(
+            user: User,
+            bestPopups: [Popup]
+        ) {
+            self.nickname = user.nickname ?? "닉네임"
+            self.bestPopups = bestPopups
+        }
+    }
+    
+    public enum Action: Equatable {
+        case onAppear
+        case bestPopupTapped(popupUuid: String)
+    }
+    
+    public init() {}
+    
+    public var body: some ReducerOf<Self> {
+        Reduce { state, action in
+            .none
+        }
+    }
+}
 
 public struct HomeFeatureView: View {
-    @Environment(\.scenePhase) private var scenePhase
     @Bindable var store: StoreOf<HomeFeature>
-    @State private var isTopAnchorVisible = false
-    @State private var listProxy = LKListProxy()
-    @State private var lastHandledPopupId: String?
-    @State private var sheetRoute: HomeSheetRoute?
-    @State private var presentedSheetRoute: HomeSheetRoute?
-    @StateObject private var nativeAdSlotStore = AdNativeAdSlotStore()
-
-    private let deepLinkStorage: DeepLinkStorage
-    private let nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration
-    private let nativeAdCount: Int?
-
+    
     public init(
-        store: StoreOf<HomeFeature>,
-        nativeAdPlacementConfiguration: AdNativeAdPlacementConfiguration = .homeGrid,
-        nativeAdCount: Int? = nil,
-        deepLinkStorage: DeepLinkStorage = DeepLinkStorage(store: UserDefaultsStore())
+        store: StoreOf<HomeFeature>
     ) {
         self.store = store
-        self.nativeAdPlacementConfiguration = nativeAdPlacementConfiguration
-        self.nativeAdCount = nativeAdCount
-        self.deepLinkStorage = deepLinkStorage
     }
 
     public var body: some View {
         ZStack {
+            // MARK: - background
             Color.subWhite
                 .ignoresSafeArea()
-
+            
             VStack(spacing: 0) {
+                
+                // MARK: - Navigationbar
                 HomeNavigationBar(
-                    userUuid: store.userUuid,
-                    showsPopupRequestManagement: store.isAdmin,
-                    onSearch: { _ in
-                        store.send(.searchTapped)
-                    },
-                    onAlert: { _ in
-                        store.send(.alertTapped)
-                    },
-                    onReport: {
-                        store.send(.popupRequestTapped)
-                    },
-                    onManagePopupRequests: {
-                        store.send(.popupRequestManagementTapped)
+                    userUuid: "test-userUuid",
+                    showsPopupRequestManagement: true,
+                    onSearch: { _ in },
+                    onAlert: { _ in },
+                    onReport: {},
+                    onManagePopupRequests: {})
+                
+                // MARK: - List
+                PopPangList {
+                    
+                    // MARK: - BestPopup
+                    bestPopupSection(
+                        popups: store.bestPopups
+                    ) { popupUuid in
+                        store.send(.bestPopupTapped(popupUuid: popupUuid))
                     }
-                )
-
-                LKList {
-                    LKSection(id: "best") {
-                        for popup in store.bestPopups {
-                            LKRow(
-                                popup,
-                                id: \.popupUuid,
-                                reuseIdentifier: "HomeFeature.ListKitBestPopupCell"
-                            ) {
-                                ListKitBestPopupCell(popup: popup)
-                            }
-                            .onSelect { _ in
-                                store.send(.popupSelected(popup))
-                            }
-                        }
-                    } header: {
+                    .withHeader {
                         HomeBestHeader(nickname: store.nickname)
+                            .padding(.top, 16)
                             .padding(.bottom, 10)
                     }
-                    .sectionLayout(.horizontal(width: 194, height: 271))
-                    .scrollAxis(.horizontal)
-                    .orthogonalScrollingBehavior(.continuousGroupLeadingBoundary)
-                    .itemSpacing(15)
-                    .sectionContentInsets(LKEdgeInsets(
-                        top: 0,
-                        left: .contentPadding,
-                        bottom: 50,
-                        right: .contentPadding
-                    ))
-                    .pinnedHeader(background: Color.subWhite)
-
-                    LKSection(id: "coming") {
-                        for popup in store.comingPopups {
-                            LKRow(
-                                popup,
-                                id: \.popupUuid,
-                                reuseIdentifier: "HomeFeature.ListKitComingPopupCell"
-                            ) {
-                                ListKitComingPopupCell(popup: popup)
-                            }
-                            .onSelect { _ in
-                                store.send(.popupSelected(popup))
-                            }
-                        }
-                    } header: {
-                        HomeComingHeader(
-                            userUuid: store.userUuid,
-                            popups: store.comingPopups,
-                            onTap: { _, _ in
-                                store.send(.comingPopupsTapped(store.comingPopups))
-                            }
-                        )
-                        .padding(.bottom, 10)
-                    }
-                    .sectionLayout(.horizontal(width: 283, height: 138))
-                    .scrollAxis(.horizontal)
-                    .orthogonalScrollingBehavior(.groupPaging)
-                    .itemSpacing(15)
-                    .sectionContentInsets(LKEdgeInsets(
-                        top: 0,
-                        left: .contentPadding,
-                        bottom: 65,
-                        right: .contentPadding
-                    ))
-                    .pinnedHeader(background: Color.subWhite)
-
-                    LKSection(id: "grid") {
-                        for item in AdInjectedListItemBuilder.make(
-                            items: store.gridPopups,
-                            nativeAdPlacements: loadedNativeAdPlacements,
-                            id: { $0.popupUuid }
-                        ) {
-                            switch item {
-                            case .content(let popup, _):
-                                LKRow(
-                                    popup,
-                                    id: \.popupUuid,
-                                    reuseIdentifier: "HomeFeature.ListKitGridPopupCell"
-                                ) {
-                                    ListKitGridPopupCell(
-                                        popup: popup,
-                                        isLiked: popup.isFavorited,
-                                        cellWidth: Self.gridCellWidth,
-                                        toggleLike: { store.send(.toggleLike(popup)) }
-                                    )
-                                }
-                                .equatableToken("\(popup.popupUuid)-\(popup.isFavorited)")
-                                .onSelect { _ in
-                                    store.send(.popupSelected(popup))
-                                }
-
-                            case .nativeAd(let slotID):
-                                LKRow(
-                                    id: item.id,
-                                    reuseIdentifier: "HomeFeature.AdNativeAdGridCell"
-                                ) {
-                                    AdNativeAdView(
-                                        viewModel: nativeAdSlotStore.viewModel(for: slotID),
-                                        layout: .grid
-                                    )
-                                }
-                                .equatableToken(item.id)
-                            }
-                        }
-                    } header: {
-                        HomeFilterHeader(
-                            store: filterStore,
-                            onRegionTap: {
-                                presentedSheetRoute = .regionSheet
-                                sheetRoute = .regionSheet
-                            },
-                            onSortTap: {
-                                presentedSheetRoute = .sortSheet
-                                sheetRoute = .sortSheet
-                            }
-                        )
-                        .padding(.bottom, 10)
-                    }
-                    .sectionLayout(.grid(columns: 2, itemHeight: Self.gridCellHeight, columnSpacing: 15, rowSpacing: 20))
-                    .sectionContentInsets(LKEdgeInsets(
-                        top: 0,
-                        left: .contentPadding,
-                        bottom: 0,
-                        right: .contentPadding
-                    ))
-                    .pinnedHeader(background: Color.subWhite)
                 }
-                .listKitStyle(.plain)
-                .updateEngine(.reloadData)
-                .scrollIndicators(.hidden)
-                .contentInsets(LKEdgeInsets(top: 0, left: 0, bottom: 50, right: 0))
-                .listProxy(listProxy)
-                .onScroll { context in
-                    // 지금 스크롤 위치가 기준값보다 크면
-                    let shouldShowTopAnchor = context.contentOffset.y > Self.topAnchorVisibilityThreshold
-                    
-                    // 지금 계산한 결과가 현재 상태와 같으면 아무것도 하지 않고 종료
-                    guard shouldShowTopAnchor != isTopAnchorVisible else { return }
-                    
-                    // 숨김 -> 보임, 또는 보임 -> 숨김으로 바뀌는 순간에만 상태를 변경
-                    isTopAnchorVisible = shouldShowTopAnchor
-                }
-                .overlay(alignment: Alignment.bottomTrailing) {
-                    HomeTopAnchorButton(isVisible: isTopAnchorVisible) {
-                        listProxy.scrollToSection(id: "grid", position: .top, animated: true)
-                    }
-                }
-            }
-        }
-        .sheet(item: $sheetRoute, onDismiss: handleSheetDismiss) { route in
-            switch route {
-            case .regionSheet:
-                RegionButtonSheet(
-                    regions: filterStore.regions,
-                    selectedRegion: selectedRegionBinding,
-                    selectedDistrict: selectedDistrictBinding,
-                    regionTitle: { $0.region },
-                    districts: { $0.districtList }
-                )
-                .presentationDetents([.medium])
-            case .sortSheet:
-                SortButtonSheet(selectedOption: selectedOptionBinding)
-                    .presentationDetents([.height(270)])
-            }
-        }
-        .task {
-            await Task.yield()
-            guard !Task.isCancelled else { return }
-            Logger.d("HomeViewFeature OnAppear")
-            store.send(.onAppear)
-        }
-        .task(id: nativeAdPlacementIDs) {
-            nativeAdSlotStore.loadAdIfNeeded(for: nativeAdPlacementIDs)
-        }
-        .alert("안내", isPresented: isErrorPresented) {
-            Button("확인", role: .cancel) {
-                store.send(.errorMessageChanged(nil))
-            }
-        } message: {
-            Text(store.errorMessage ?? "")
-        }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    handleDeeplinkIfNeeded()
-                }
+                
             }
         }
     }
 }
 
-private extension HomeFeatureView {
-    static let gridCellHeight: CGFloat = 302
-    static let topAnchorVisibilityThreshold: CGFloat = 650
-
-    static var gridCellWidth: CGFloat {
-        (UIScreen.main.bounds.width - CGFloat.contentPadding * 2 - 15) / 2
-    }
-
-    var nativeAdPlacements: [AdNativeAdPlacement] {
-        AdNativeAdPlacementPolicy.placements(
-            contentCount: store.gridPopups.count,
-            userIdentifier: store.userUuid,
-            adCount: nativeAdCount,
-            configuration: nativeAdPlacementConfiguration
-        )
-    }
-
-    var nativeAdPlacementIDs: [String] {
-        nativeAdPlacements.map(\.id)
-    }
-
-    var loadedNativeAdPlacements: [AdNativeAdPlacement] {
-        let loadedSlotIDs = nativeAdSlotStore.loadedSlotIDs(in: nativeAdPlacementIDs)
-        return nativeAdPlacements.filter { loadedSlotIDs.contains($0.id) }
-    }
-
-    var filterStore: StoreOf<HomeFilter> {
-        store.scope(state: \.filter, action: \.filter)
-    }
-
-    var isErrorPresented: Binding<Bool> {
-        Binding(
-            get: { store.errorMessage != nil },
-            set: { isPresented in
-                if !isPresented {
-                    store.send(.errorMessageChanged(nil))
+// MARK: - BestPopup Section
+extension HomeFeatureView {
+    private func bestPopupSection(
+        popups: [Popup],
+        onTap: @escaping (String) -> Void
+    ) -> PopPangListKit.Section {
+        Section(id: "best") {
+            for popup in popups {
+                Cell(
+                    id: popup.popupUuid,
+                    item: popup,
+                    layoutMode: .fitContent(
+                        estimatedSize: CGSize(width: 194, height: 271)
+                    )
+                ) { popup in
+                    BestPopupCell(popup: popup)
+                }
+                .didSelect { _ in
+                    onTap(popup.popupUuid)
                 }
             }
+        }
+        .withSectionLayout(
+            HorizontalLayout(
+                spacing: 15,
+                scrollingBehavior: .continuousGroupLeadingBoundary
+            )
+            .insets(.init(top: 0, leading: 15, bottom: 50, trailing: 15))
         )
     }
 }
 
-struct HomeFeatureLoadingOverlay: View {
-    var body: some View {
-        ZStack {
-            Color.mainBlack.opacity(0.08)
-                .ignoresSafeArea()
-
-            ProgressView()
-                .controlSize(.large)
-                .padding(20)
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-        }
-    }
-}
-
-private struct HomeNavigationBar: View {
-    let userUuid: String
-    let showsPopupRequestManagement: Bool
-    let onSearch: (String) -> Void
-    let onAlert: (String) -> Void
-    let onReport: () -> Void
-    let onManagePopupRequests: () -> Void
-
-    var body: some View {
-        CustomNavigationBar {
-            Text("POP PANG")
-                .ppStyleFont(.scdream(.black, size: 20))
-                .foregroundStyle(Color.mainOrange)
-
-            Spacer()
-
-            IconButton(image: "SearchDark", imageSize: 25) {
-                onSearch(userUuid)
-            }
-            .accessibilityIdentifier("home_search_button")
-
-            IconButton {
-                onAlert(userUuid)
-            }
-
-            HomeReportButton {
-                onReport()
-            }
-            .accessibilityIdentifier("home_popup_report_button")
-
-            if showsPopupRequestManagement {
-                HomePopupRequestManagementButton {
-                    onManagePopupRequests()
-                }
-                .accessibilityIdentifier("home_popup_request_management_button")
-            }
-        }
-        .padding(.bottom, 15)
-    }
-}
-
-private struct HomeReportButton: View {
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: "square.and.pencil")
-                .font(.system(size: 20, weight: .light))
-                .foregroundStyle(Color.subBlack)
-                .frame(width: 21, height: 21)
-                .padding(10)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-                .contentShape(RoundedRectangle(cornerRadius: 6))
-        }
-        .offset(y: -1.5)
-        .buttonStyle(PressableButtonStyle())
-    }
-}
-
-private struct HomePopupRequestManagementButton: View {
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: "tray.full")
-                .font(.system(size: 20, weight: .light))
-                .foregroundStyle(Color.subBlack)
-                .frame(width: 21, height: 21)
-                .padding(10)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-                .contentShape(RoundedRectangle(cornerRadius: 6))
-        }
-        .buttonStyle(PressableButtonStyle())
-    }
-}
-
-private struct HomeTopAnchorButton: View {
-    let isVisible: Bool
-    let onTap: () -> Void
-
-    var body: some View {
-        Button(action: onTap) {
-            DSKitResource.image("TopAnchor")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 20, height: 20)
-                .foregroundStyle(Color.mainBlack)
-                .frame(width: 52, height: 52)
-                .background {
-                    Circle()
-                        .fill(Color.subWhite)
-                        .applyShadow(
-                            color: Color.subBlack,
-                            alpha: 0.05,
-                            x: 0,
-                            y: 4,
-                            blur: 4
-                        )
-                }
-        }
-        .padding(.trailing, 20)
-        .padding(.bottom, 20)
-        .opacity(isVisible ? 1 : 0)
-    }
-}
-
-private extension HomeFeatureView {
-    var selectedRegionBinding: Binding<RegionList?> {
-        Binding(
-            get: { filterStore.selectedRegion },
-            set: { region in
-                guard let region else { return }
-                filterStore.send(.regionSelected(region))
-            }
-        )
-    }
-
-    var selectedDistrictBinding: Binding<String?> {
-        Binding(
-            get: { filterStore.selectedDistrict },
-            set: { district in
-                guard let district else { return }
-                filterStore.send(.districtSelected(district))
-            }
-        )
-    }
-
-    var selectedOptionBinding: Binding<SortButton.SortOption> {
-        Binding(
-            get: { filterStore.selectedOption },
-            set: { option in
-                filterStore.send(.sortOptionSelected(option))
-            }
-        )
-    }
-
-    func handleSheetDismiss() {
-        guard let presentedSheetRoute else { return }
-        defer { self.presentedSheetRoute = nil }
-
-        switch presentedSheetRoute {
-        case .regionSheet, .sortSheet:
-            store.send(.refreshFilteredPopupList)
-        }
-    }
-}
-
-private extension HomeFeatureView {
-    func handleDeeplinkIfNeeded() {
-        Task {
-            guard let popupId = deepLinkStorage.loadPopupID(),
-                  lastHandledPopupId != popupId
-            else {
-                return
-            }
-
-            while store.bestPopups.isEmpty &&
-                store.comingPopups.isEmpty &&
-                store.gridPopups.isEmpty {
-                try? await Task.sleep(nanoseconds: 200_000_000)
-            }
-
-            await MainActor.run {
-                moveToPopupDetailIfExists(popupId: popupId)
-                deepLinkStorage.removePopupID()
-                lastHandledPopupId = popupId
-            }
-        }
-    }
-
-    func moveToPopupDetailIfExists(popupId: String) {
-        let allPopups = store.bestPopups
-            + store.comingPopups
-            + store.gridPopups
-
-        if let targetPopup = allPopups.first(where: { $0.popupUuid == popupId }) {
-            store.send(.popupSelected(targetPopup))
-        }
-    }
-}
-
-#if DEBUG
-#Preview("HomeFeatureView") {
+#Preview {
     HomeFeatureView(
         store: Store(
             initialState: HomeFeature.State(
@@ -495,20 +122,119 @@ private extension HomeFeatureView {
                     uid: "preview-uid",
                     provider: "preview",
                     email: nil,
-                    nickname: "팝팡",
+                    nickname: "홍길동",
                     role: "USER",
                     isAlerted: false,
                     fcmToken: nil,
                     alertKeywordList: nil,
                     recommendList: nil
-                )
+                ), bestPopups: [
+                    .popupMock,
+                    .popupMock2,
+                    .popupMock,
+                    .popupMock,
+                    .popupMock,
+                    .popupMock,
+                    .popupMock,
+                    .popupMock,
+                    .popupMock,
+                    .popupMock,
+                    .popupMock,
+                    .popupMock
+                ]
             )
         ) {
             HomeFeature()
-        } withDependencies: {
-            $0.homePopupClient = .previewValue
         }
     )
 }
-#endif
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// MARK: - BestPopup Section
+//@MainActor
+//private struct BestPopupSection {
+//    let popups: [Popup]
+//    let onTap: (String) -> Void
+//    
+//    var section: PopPangListKit.Section {
+//        Section(id: "best") {
+//            for popup in popups {
+//                Cell(
+//                    // setting
+//                    id: popup.popupUuid,
+//                    item: popup,
+//                    layoutMode: .fitContent(
+//                        estimatedSize: CGSize(width: 194, height: 271)
+//                    )
+//                ) { popup in
+//                    // conetnt
+//                    BestPopupCell(popup: popup)
+//                }
+//                .didSelect { _ in
+//                    onTap(popup.popupUuid)
+//                }
+//            }
+//        }
+//        .withSectionLayout(
+//            HorizontalLayout(spacing: 8)
+//                .insets(
+//                    .init(top: 0, leading: 20, bottom: 0, trailing: 20)
+//                )
+//        )
+//    }
+//}
+
+
+
+
+/*
+ @State private var items = Array(1...20)
+public var body: some View {
+    PopPangList {
+        Section(id: "numbers") {
+            
+            Cell(
+                id: 1,
+                item: "hello world"
+            ) { value in
+                Text("\(value)")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .background(Color.green)
+            }
+            
+            for item in items {
+                Cell(
+                    id: item,
+                    item: item
+                ) { value in
+                    Text("\(value)")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(16)
+                        .background(Color.green)
+                }
+            }
+        }
+        .withSectionLayout(.vertical(spacing: 8))
+    }
+    .background(Color.subWhite)
+}
+ */
