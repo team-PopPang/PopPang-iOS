@@ -93,6 +93,7 @@ public struct CalendarFeatureView: View {
             Spacer()
         }
         .onAppear {
+            Logger.d("CalendarFeatureView OnAppear")
             store.send(.onAppear)
         }
         .sheet(item: $sheetRoute) { route in

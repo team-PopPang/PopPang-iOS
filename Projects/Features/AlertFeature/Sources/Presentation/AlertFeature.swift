@@ -1,5 +1,4 @@
 import ComposableArchitecture
-import Core
 import Domain
 import Foundation
 
@@ -21,7 +20,8 @@ public struct AlertFeature {
 
     @ObservableState
     public struct State: Equatable {
-        @Shared var session: UserSession
+        public var userUuid: String
+        public var nickname: String
         public var selectedTab: AlertTab = .activity
         public var alertPopups: [Popup] = []
         public var keywords: [Keyword] = []
@@ -31,23 +31,9 @@ public struct AlertFeature {
         public var isLoading = false
         public var errorMessage: String?
 
-        public init(session: Shared<UserSession>) {
-            self._session = session
-        }
-
-        var currentUser: User {
-            guard let user = session.user else {
-                preconditionFailure("AlertFeature requires a logged in session.")
-            }
-            return user
-        }
-
-        public var userUuid: String {
-            currentUser.userUuid
-        }
-
-        public var nickname: String {
-            currentUser.nickname ?? "닉네임"
+        public init(user: User) {
+            self.userUuid = user.userUuid
+            self.nickname = user.nickname ?? "닉네임"
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {

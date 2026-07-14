@@ -12,17 +12,13 @@
 - 새 화면 전환은 TCA state/action/reducer로 모델링한다.
 - tree-based navigation과 stack-based navigation을 함께 사용한다.
 - feature는 다른 feature를 직접 조립하지 않고 delegate action으로 intent만 올린다.
-- 임시 예외로 제거 예정인 `PopupRequestFeature`, `PopupRequestManagementFeature`, `PopupSubmissionFormFeature` 조합만 직접 조립을 허용한다.
+- RN 팝업 제보 화면은 `PopPangRNFeature` wrapper로 감싸고, navigation owner는 계속 `MainTabFeature`가 가진다.
 - 전역 세션 상태의 source of truth는 `AppFeature.session`이다.
 - 현재 로그인 사용자는 `AppFeature.session.user`로 표현한다.
 - `AppFeature`는 root/auth/register 전환을 소유하고, `MainTabFeature` 모듈은 로그인 이후 main flow navigation owner로 동작한다.
-- `MainTabFeature`는 shared `session`을 child feature에 전달하고, 탭 로컬 navigation state를 소유한다.
-- direct scope가 가능한 feature는 shared `session`을 직접 읽거나 필요한 값을 projection해서 reducer/state에 주입한다.
-- 현재 `CalendarFeature`도 shared `session`을 직접 읽고 캘린더 로컬 상태를 feature state가 소유한다.
-- 현재 `FavoritesFeature`도 shared `session`을 직접 읽고 찜 로컬 상태를 feature state가 소유한다.
-- 현재 `HomeFeature`는 shared `session`을 직접 읽고 홈 로컬 상태를 feature state가 소유한다.
-- 현재 `MapFeature`도 shared `session`을 직접 읽고 지도 로컬 상태를 feature state가 소유한다.
-- 현재 `ProfileFeature`와 `ProfileSettingFeature`도 shared `session`을 직접 읽고 프로필 로컬 상태를 feature state가 소유한다.
+- `MainTabFeature`는 shared `session`을 root session 동기화에만 사용하고, child feature에는 사용자 snapshot을 전달하며 탭 로컬 navigation state를 소유한다.
+- direct scope가 가능한 feature는 필요한 사용자 primitive를 state에 주입하고 shared `session`을 직접 읽지 않는다.
+- 현재 `HomeFeature`, `CalendarFeature`, `FavoritesFeature`, `MapFeature`, `ProfileFeature`, `ProfileSettingFeature`, `AlertFeature`는 사용자 snapshot과 화면 로컬 상태를 feature state가 소유한다.
 - legacy feature는 당분간 session-derived primitive 값을 view init으로 주입한다.
 
 ## 용어
@@ -141,7 +137,7 @@ PopPang에서 stack-based navigation을 쓰는 경우:
 - coming popup list에서 popup detail로 이어지는 drill-down
 - review detail
 - alert에서 popup detail 진입
-- popup request management detail
+- RN popup request management
 - profile setting처럼 탭 root 위로 push되는 화면
 
 ### Path 규칙
@@ -254,11 +250,11 @@ PopPang
 
 ## Session Injection Strategy
 
-세션 source of truth는 항상 `AppFeature.session`이다. 하위 feature는 필요 시 parent가 explicit shared state로 내려준 `session`을 읽는다.
+세션 source of truth는 항상 `AppFeature.session`이다. `MainTabFeature`는 session 동기화가 필요한 parent 작업에만 shared state를 사용하고, 하위 feature에는 사용자 snapshot을 전달한다.
 
 ### 1. TCA-ready feature는 state projection + direct scope
 
-`HomeFeature`가 현재 기준선이다.
+`HomeFeature`를 포함한 TCA-ready 탭이 현재 기준선이다.
 
 ```swift
 @ObservableState
@@ -269,8 +265,9 @@ struct AppFeature.State: Equatable {
 ```
 
 ```swift
-init(session: Shared<UserSession>) {
-    self.home = .init(session: session)
+init(user: User) {
+    self.home = .init(user: user)
+    self.calendar = .init(userUuid: user.userUuid)
 }
 ```
 
@@ -278,7 +275,7 @@ init(session: Shared<UserSession>) {
 HomeFeatureView(store: store.scope(state: \.core.home, action: \.home))
 ```
 
-이 방식에서는 view가 `userUuid`, `nickname`, `isAdmin` 같은 session-derived primitive를 따로 받지 않는다. feature state는 shared `session`을 통해 최신 값을 읽고, reducer는 feature-scoped dependency를 직접 사용한다.
+이 방식에서는 view가 별도 사용자 closure를 받지 않는다. feature state가 `userUuid`, `nickname`, `isAdmin` 같은 필요한 snapshot을 직접 소유하고, reducer는 feature-scoped dependency를 직접 사용한다. 변경 가능한 사용자 값은 child delegate를 통해 MainTab이 session 원본과 각 snapshot에 반영한다.
 
 ```swift
 @Reducer
@@ -475,7 +472,7 @@ case .destination:
 - `popupRequestManagement`처럼 메인 공통 흐름으로 이어지는 push는 `MainTabFeature.path`가 소유
 - `CalendarFeature`: direct scope 완료, region/sort sheet는 view local state로 두고 상세/알림 이동은 `MainTabFeature.path`가 소유
 - `FavoritesFeature`: direct scope 완료, segmented selection은 view local state로 두고 상세/알림 이동과 홈 탭 복귀 intent만 parent로 올림
-- `Map`: bridge reducer를 유지하며 session primitive만 주입
+- `MapFeature`: direct scope로 동작하며 `userUuid` snapshot만 주입
 - 각 탭이 TCA reducer entry를 갖추면 `*LegacyBridgeFeature`를 제거하고 direct scope로 전환
 
 ## Do Not

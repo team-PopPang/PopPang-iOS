@@ -27,6 +27,9 @@ struct AppRootFlowView: View {
                         }
                     }
                 }
+                .onDisappear {
+                    store.send(.onboardingRootDidDisappear)
+                }
 
             case .auth:
                 AuthFeatureView(store: store.scope(state: \.auth, action: \.auth))
@@ -41,6 +44,9 @@ struct AppRootFlowView: View {
             case .main:
                 if let mainTabStore = store.scope(state: \.mainTab, action: \.mainTab) {
                     MainTabFeatureView(store: mainTabStore)
+                        .onDisappear {
+                            store.send(.mainTabViewDidDisappear)
+                        }
                 } else {
                     EmptyView()
                 }

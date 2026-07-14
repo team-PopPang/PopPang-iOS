@@ -221,17 +221,15 @@ public struct HomeFeatureView: View {
                     .presentationDetents([.height(270)])
             }
         }
-        .onAppear {
+        .task {
+            await Task.yield()
+            guard !Task.isCancelled else { return }
+            Logger.d("HomeViewFeature OnAppear")
             store.send(.onAppear)
         }
         .task(id: nativeAdPlacementIDs) {
             nativeAdSlotStore.loadAdIfNeeded(for: nativeAdPlacementIDs)
         }
-//        .overlay {
-//            if store.isLoading {
-//                HomeFeatureLoadingOverlay()
-//            }
-//        }
         .alert("안내", isPresented: isErrorPresented) {
             Button("확인", role: .cancel) {
                 store.send(.errorMessageChanged(nil))
@@ -331,17 +329,17 @@ private struct HomeNavigationBar: View {
                 onAlert(userUuid)
             }
 
-//            HomeReportButton {
-//                onReport()
-//            }
-//            .accessibilityIdentifier("home_popup_report_button")
-//
-//            if showsPopupRequestManagement {
-//                HomePopupRequestManagementButton {
-//                    onManagePopupRequests()
-//                }
-//                .accessibilityIdentifier("home_popup_request_management_button")
-//            }
+            HomeReportButton {
+                onReport()
+            }
+            .accessibilityIdentifier("home_popup_report_button")
+
+            if showsPopupRequestManagement {
+                HomePopupRequestManagementButton {
+                    onManagePopupRequests()
+                }
+                .accessibilityIdentifier("home_popup_request_management_button")
+            }
         }
         .padding(.bottom, 15)
     }
@@ -492,21 +490,17 @@ private extension HomeFeatureView {
     HomeFeatureView(
         store: Store(
             initialState: HomeFeature.State(
-                session: Shared(
-                    value: UserSession(
-                        user: User(
-                            userUuid: "preview-user",
-                            uid: "preview-uid",
-                            provider: "preview",
-                            email: nil,
-                            nickname: "팝팡",
-                            role: "USER",
-                            isAlerted: false,
-                            fcmToken: nil,
-                            alertKeywordList: nil,
-                            recommendList: nil
-                        )
-                    )
+                user: User(
+                    userUuid: "preview-user",
+                    uid: "preview-uid",
+                    provider: "preview",
+                    email: nil,
+                    nickname: "팝팡",
+                    role: "USER",
+                    isAlerted: false,
+                    fcmToken: nil,
+                    alertKeywordList: nil,
+                    recommendList: nil
                 )
             )
         ) {

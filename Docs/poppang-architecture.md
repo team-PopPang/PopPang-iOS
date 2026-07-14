@@ -44,9 +44,8 @@ Projects
 │   ├── HomeFeature
 │   ├── MapFeature
 │   ├── OnboardingFeature
+│   ├── PopPangRNFeature
 │   ├── PopupDetailFeature
-│   ├── PopupRequestFeature
-│   ├── PopupRequestManagementFeature
 │   ├── ProfileFeature
 │   ├── ReviewFeature
 │   ├── MainTabFeature
@@ -101,13 +100,9 @@ Projects
 - 현재 로그인 사용자는 `AppFeature.session.user`로 표현한다.
 - active main flow는 `MainTabFeature`가 TCA `StackState`와 단일 `@Presents` destination으로 소유한다.
 - `AppFeature`는 `MainTabFeature.State?`를 저장하고, 메인 진입 시 shared `session`을 전달해 한 번 생성한다.
-- TCA-ready feature는 필요한 경우 parent가 내려주는 shared `session`을 직접 읽는다.
-- 현재 `CalendarFeature`도 shared `session`을 직접 읽고, 캘린더 로컬 상태를 feature state가 소유한다.
-- 현재 `FavoritesFeature`도 shared `session`을 직접 읽고, 찜 로컬 상태를 feature state가 소유한다.
-- 현재 `HomeFeature`는 shared `session`을 직접 읽고, 홈 로컬 상태만 feature state가 소유한다.
-- 현재 `MapFeature`도 shared `session`을 직접 읽고, 지도 로컬 상태를 feature state가 소유한다.
-- 현재 `AlertFeature`도 shared `session`을 직접 읽고, 알림 로컬 상태를 feature state가 소유한다.
-- 현재 `ProfileFeature`도 shared `session`을 직접 읽고, 프로필 로컬 상태와 프로필 설정 path는 TCA reducer가 소유한다.
+- `MainTabFeature`는 shared `session`을 root session 동기화에만 사용하고, child feature에는 로그인 사용자 snapshot만 전달한다.
+- 현재 `HomeFeature`, `CalendarFeature`, `FavoritesFeature`, `MapFeature`, `ProfileFeature`, `ProfileSettingFeature`, `AlertFeature`는 shared `session`을 직접 읽지 않는다.
+- 각 feature state는 필요한 사용자 primitive와 화면 로컬 상태를 함께 소유한다.
 - legacy feature는 당분간 session-derived primitive 값을 view init으로 주입한다.
 - `MainTabFeature.Action`은 탭 child action, `path`, `destination`, parent delegate 중심으로 유지한다.
 - 탭 내부의 로컬 sheet/bottom sheet/selected item 상태는 각 feature가 소유한다.
@@ -138,14 +133,10 @@ Projects
 #### Home / Calendar / Map / Favorites / Profile / Alert
 
 - `AppFeature`가 shared `session` source of truth를 소유
-- `MainTabFeature`가 shared `session`을 `HomeFeature`, `CalendarFeature`, `MapFeature`, `FavoritesFeature`, `AlertFeature`, `ProfileFeature`, `ProfileSettingFeature`에 전달
-- `HomeFeature.State`는 shared `session`을 읽고, `bestPopups`, `filter` 같은 홈 로컬 상태를 직접 소유
-- `CalendarFeature.State`는 shared `session`을 읽고, `selectedDate`, `calendarPopups`, `popupEventCounts` 같은 캘린더 로컬 상태를 직접 소유
-- `MapFeature.State`는 shared `session`을 읽고, 지도 팝업 목록/시트 상태/위치 상태를 직접 소유한다.
-- `FavoritesFeature.State`는 shared `session`을 읽고, `favoritePopups`, `selectedDate`, `popupEventCounts` 같은 찜 로컬 상태를 직접 소유한다.
-- `AlertFeature.State`는 shared `session`을 읽고, alert popup/keyword/recent keyword/편집 상태를 직접 소유한다.
-- `ProfileFeature.State`는 shared `session`을 읽고, `localIsAlerted`, `errorMessage` 같은 프로필 로컬 상태를 직접 소유
-- `ProfileSettingFeature.State`는 shared `session`을 읽고, 닉네임 변경/회원탈퇴용 로컬 상태를 직접 소유한다.
+- `MainTabFeature.CoreState`가 로그인 `User` snapshot을 소유하고 각 child state를 생성한다.
+- `HomeFeature.State`는 `userUuid`, `nickname`, `isAdmin`을, `CalendarFeature`, `FavoritesFeature`, `MapFeature`는 `userUuid`을 직접 소유한다.
+- `ProfileFeature`, `ProfileSettingFeature`, `AlertFeature`는 화면에 필요한 사용자 snapshot과 로컬 상태를 직접 소유한다.
+- 프로필 이름과 알림 상태 변경은 delegate로 `MainTabFeature`에 전달하고, MainTab이 child snapshot과 `AppFeature.session`을 함께 동기화한다.
 - `HomeFeature`가 `@Dependencies.Dependency(\.homePopupClient)`로 feature-scoped dependency 사용
 - `CalendarFeature`는 `@Dependencies.Dependency(\.calendarFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `MapFeature`는 `@Dependencies.Dependency(\.mapFeatureClient)`로 feature-scoped dependency를 사용한다.
@@ -153,7 +144,7 @@ Projects
 - `AlertFeature`는 `@Dependencies.Dependency(\.alertFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `ProfileFeature`와 `ProfileSettingFeature`는 `@Dependencies.Dependency(\.profileFeatureClient)`로 feature-scoped dependency를 사용한다.
 - `MainTabFeature`가 홈에서 시작하는 fullScreen presentation을 소유
-  - 현재 검색과 팝업 제보는 `MainTabFeature.destination`에서 관리
+  - 현재 검색과 RN 팝업 제보는 `MainTabFeature.destination`에서 관리
 - `CalendarFeature`는 지역/정렬 시트를 view local state로 열고, 실제 필터/날짜/좋아요 상태는 reducer가 소유한다.
 - `FavoritesFeature`는 segmented selection을 view local state로 두고, 찜 목록/찜 캘린더/좋아요/에러 상태는 reducer가 소유한다.
 - 홈에서 시작하는 연속 drill-down push(`오픈예정팝업 리스트 -> 팝업 상세`)는 `MainTabFeature.path`가 소유
@@ -162,7 +153,7 @@ Projects
 - 알림 화면에서 선택한 팝업 상세도 `MainTabFeature.path`가 소유하고, child feature는 delegate action으로 popup selection intent만 올린다.
 - 프로필 설정 push도 `MainTabFeature.path`가 소유하고, child feature는 delegate action으로 dismiss/logout intent만 올린다.
 - 여러 탭과 공통으로 이어질 수 있는 push 흐름은 `MainTabFeature.path`가 소유
-  - 현재 팝업 상세, 리뷰 상세, 관리자 팝업 제보 관리 흐름이 여기에 해당
+  - 현재 팝업 상세, 리뷰 상세, RN 관리자 팝업 제보 관리 흐름이 여기에 해당
 
 ```swift
 HomeFeatureView(store: store.scope(state: \.core.home, action: \.home))
@@ -193,7 +184,7 @@ ProfileFeatureView(store: store.scope(state: \.core.profile, action: \.profile))
 주의:
 
 - feature가 다른 feature를 직접 import하는 구조는 기본 전략이 아니다.
-- 예외로 `PopupRequestFeature`, `PopupRequestManagementFeature`, `PopupSubmissionFormFeature`는 제거 예정 임시 흐름이라 서로 직접 참조를 허용한다.
+- `PopPangRNFeature`는 RN host wrapper 전용 모듈이며, 화면 전환은 계속 `MainTabFeature`가 소유한다.
 - active main flow에서 feature 간 이동은 `MainTabFeature.Path` 또는 `MainTabFeature.Destination` state로 조립한다.
 - 화면 로컬 상태는 feature reducer local state 또는 feature view local state에 둔다.
 - 전역 이동, 탭 바깥 push, full screen 전환은 상위 TCA parent reducer로 올린다.
@@ -419,6 +410,7 @@ DI 변경 시 함께 확인할 파일:
 원칙:
 
 - feature target은 기본적으로 `.staticFramework` 성격의 앱 내부 leaf feature로 본다.
+- `PopPangRNFeature`는 React Native prebuilt binary의 링크 설정을 보존하기 위해 `.framework`를 사용한다.
 - `Coordinator`는 legacy 공유 경계이며 제거 대상이다.
 - `Domain`, `Data`, `Core`, `DSKit`, `ThirdParty`는 현재 공유 경계로 본다.
 - 장기적으로 `Shared.Models`, `Shared.Clients`, `Shared.Caches`, `SharedFeature` 분리를 검토한다.

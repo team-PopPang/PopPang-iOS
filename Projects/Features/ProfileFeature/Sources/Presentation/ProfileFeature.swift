@@ -1,5 +1,4 @@
 import ComposableArchitecture
-import Core
 import Domain
 import DSKit
 import Foundation
@@ -8,29 +7,16 @@ import Foundation
 public struct ProfileFeature {
     @ObservableState
     public struct State: Equatable {
-        @Shared var session: UserSession
+        public var userUuid: String
+        public var nickname: String
         public var isLoading = false
         public var errorMessage: String?
         public var localIsAlerted: Bool
 
-        public init(session: Shared<UserSession>) {
-            self._session = session
-            self.localIsAlerted = session.wrappedValue.user?.isAlerted ?? false
-        }
-
-        var currentUser: User {
-            guard let user = session.user else {
-                preconditionFailure("ProfileFeature requires a logged in session.")
-            }
-            return user
-        }
-
-        public var userUuid: String {
-            currentUser.userUuid
-        }
-
-        public var nickname: String {
-            currentUser.nickname ?? "닉네임"
+        public init(user: User) {
+            self.userUuid = user.userUuid
+            self.nickname = user.nickname ?? "닉네임"
+            self.localIsAlerted = user.isAlerted
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
@@ -53,6 +39,7 @@ public struct ProfileFeature {
 
         public enum Delegate: Equatable {
             case alertRequested
+            case alertStatusUpdated(Bool)
             case profileSettingRequested
             case notificationsRequested
             case serviceTermsRequested
@@ -98,8 +85,7 @@ public struct ProfileFeature {
                 state.isLoading = false
                 state.localIsAlerted = resolvedValue
                 state.errorMessage = nil
-                state.$session.withLock { $0.user?.isAlerted = resolvedValue }
-                return .none
+                return .send(.delegate(.alertStatusUpdated(resolvedValue)))
 
             case .alertStatusResponse(.failure(let error), let resolvedValue):
                 state.isLoading = false
@@ -118,29 +104,16 @@ public struct ProfileFeature {
 public struct ProfileSettingFeature {
     @ObservableState
     public struct State: Equatable {
-        @Shared var session: UserSession
+        public var userUuid: String
+        public var nickname: String
         public var newNickname = ""
         public var validationState: NicknameValidationState = .none
         public var isLoading = false
         public var errorMessage: String?
 
-        public init(session: Shared<UserSession>) {
-            self._session = session
-        }
-
-        var currentUser: User {
-            guard let user = session.user else {
-                preconditionFailure("ProfileSettingFeature requires a logged in session.")
-            }
-            return user
-        }
-
-        public var userUuid: String {
-            currentUser.userUuid
-        }
-
-        public var nickname: String {
-            currentUser.nickname ?? "닉네임"
+        public init(user: User) {
+            self.userUuid = user.userUuid
+            self.nickname = user.nickname ?? "닉네임"
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
@@ -166,6 +139,7 @@ public struct ProfileSettingFeature {
 
         public enum Delegate: Equatable {
             case dismiss
+            case nicknameUpdated(String)
             case logoutRequested
         }
     }
@@ -241,8 +215,7 @@ public struct ProfileSettingFeature {
                 state.isLoading = false
                 state.errorMessage = nil
                 let nickname = state.newNickname
-                state.$session.withLock { $0.user?.nickname = nickname }
-                return .send(.delegate(.dismiss))
+                return .send(.delegate(.nicknameUpdated(nickname)))
 
             case .updateNicknameResponse(.failure(let error)):
                 state.isLoading = false

@@ -1,5 +1,4 @@
 import ComposableArchitecture
-import Core
 import Domain
 import MapFeature
 import SwiftUI
@@ -11,9 +10,7 @@ struct MapFeatureDemoApp: App {
             MapFeatureView(
                 store: Store(
                     initialState: MapFeature.State(
-                        session: Shared(
-                            value: UserSession(user: .demo)
-                        )
+                        userUuid: User.demo.userUuid
                     )
                 ) {
                     MapFeature()

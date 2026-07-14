@@ -156,7 +156,7 @@ public struct ProfileSettingFeatureView: View {
     @State private var showHardDeleteAlert = false
     @State private var draftNickname = ""
     @FocusState private var isFocused: Bool
-    @Environment(\.dismiss) private var dismiss
+    // @Environment(\.dismiss) private var dismiss
 
     public init(store: StoreOf<ProfileSettingFeature>) {
         self.store = store
@@ -230,12 +230,10 @@ public struct ProfileSettingFeatureView: View {
         .padding(.top, 24)
         .padding(.horizontal, 24)
         .ppBackNavigationBar(title: "프로필 설정") {
-            isFocused = false
-            dismiss()
+            store.send(.delegate(.dismiss))
         }
         .onAppear {
             draftNickname = store.newNickname
-            isFocused = true
         }
         .onChange(of: draftNickname) { _, newValue in
             store.send(.nicknameChanged(newValue))

@@ -2,6 +2,9 @@ import ProjectDescription
 
 let project = Project(
     name: "App",
+    packages: [
+        .local(path: "../../Vendor/PrebuiltReactNativeFrameworks"),
+    ],
     targets: [
         .target(
             name: "PopPangApp",
@@ -50,6 +53,7 @@ let project = Project(
                     "NSLocationAlwaysAndWhenInUseUsageDescription": "주변 팝업스토어를 지도에서 보여주고 거리 순으로 제공하기 위해 위치 정보가 필요합니다.",
                     "NSLocationAlwaysUsageDescription": "팝업스토어 정보 제공을 위해 사용자의 위치를 받습니다.",
                     "NSLocationWhenInUseUsageDescription": "주변 팝업스토어를 지도에서 보여주고 거리 순으로 제공하기 위해 위치 정보가 필요합니다.",
+                    "NSPhotoLibraryUsageDescription": "팝업 제보에 사용할 사진을 선택하기 위해 사진 보관함에 접근합니다.",
                     "NSAppTransportSecurity": [
                         "NSAllowsArbitraryLoads": false,
                     ],
@@ -120,7 +124,11 @@ let project = Project(
                 ]
             ),
             sources: ["Sources/**"],
-            resources: ["Resources/**"],
+            resources: [
+                "Resources/Assets.xcassets",
+                "Resources/GoogleService-Info.plist",
+                .folderReference(path: "Resources/ReactNative"),
+            ],
             entitlements: "PopPangApp.entitlements",
             dependencies: [
                 .project(target: "ADKit", path: "../Shared/ADKit"),
@@ -132,6 +140,7 @@ let project = Project(
                 .project(target: "ThirdParty", path: "../Shared/ThirdParty"),
                 .project(target: "Core", path: "../Shared/Core"),
                 .project(target: "DSKit", path: "../Shared/DSKit"),
+                .package(product: "PrebuiltReactNativeFrameworks"),
             ],
             settings: .settings(
                 base: [
@@ -141,8 +150,8 @@ let project = Project(
                     "CODE_SIGN_STYLE": "Manual",
                     "DEVELOPMENT_TEAM": "",
                     "DEVELOPMENT_TEAM[sdk=iphoneos*]": "LGX4B4WC66",
-                    "CURRENT_PROJECT_VERSION": "6",
-                    "MARKETING_VERSION": "1.1.5",
+                    "CURRENT_PROJECT_VERSION": "1",
+                    "MARKETING_VERSION": "1.1.6",
                     "PROVISIONING_PROFILE_SPECIFIER": "",
                     "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]": "match Development kr.co.poppang.PopPang",
                 ],
