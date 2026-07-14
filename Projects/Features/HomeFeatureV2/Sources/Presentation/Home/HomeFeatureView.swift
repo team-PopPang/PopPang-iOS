@@ -29,7 +29,7 @@ public struct HomeFeature {
             self.gridPopups = gridPopups
         }
     }
-    
+
     public enum Action: Equatable {
         case onAppear
         case bestPopupTapped(popupUuid: String)
@@ -51,6 +51,9 @@ public struct HomeFeature {
 public struct HomeFeatureView: View {
     @Bindable var store: StoreOf<HomeFeature>
     
+    // PopPangList에 스크롤 이동 명령을 전달하는 View 전용 객체입니다.
+    @State private var listProxy = ListProxy()
+
     public init(
         store: StoreOf<HomeFeature>
     ) {
@@ -64,7 +67,7 @@ public struct HomeFeatureView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                
+
                 // MARK: - Navigationbar
                 HomeNavigationBar(
                     userUuid: store.userUuid,
@@ -77,7 +80,7 @@ public struct HomeFeatureView: View {
                 .padding(.bottom, 16)
                 
                 // MARK: - List
-                PopPangList {
+                PopPangList(proxy: listProxy) {
                     
                     // MARK: - Best
                     bestPopupSection(
@@ -129,6 +132,19 @@ public struct HomeFeatureView: View {
                         .padding(.bottom, 10)
                     }
                     .headerBackground(UIColor(Color.subWhite))
+                }
+                .scrollOverlay(
+                    // 화면 높이의 1.5배만큼 스크롤하면 위로 가기 버튼을 표시합니다.
+                    alignment: .bottomTrailing,
+                    visibleWhen: .relativeToViewport(1.5)
+                ) { isVisible in
+                    HomeTopAnchorButton(isVisible: isVisible) {
+                        listProxy.scrollToSection(
+                            id: "grid",
+                            position: .top,
+                            animated: true
+                        )
+                    }
                 }
             }
         }
