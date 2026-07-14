@@ -11,6 +11,7 @@ import Kingfisher
 import DSKit
 
 struct BestPopupCell: View {
+    static let layoutSize = CGSize(width: 194, height: 271)
     let popup: Popup
 
     var body: some View {
@@ -18,9 +19,12 @@ struct BestPopupCell: View {
             KFImage(URL(string: popup.imageUrlList.first ?? ""))
                 .downSampled(.bestPopupCell)
                 .scaledToFill()
-                .frame(width: 194, height: 271)
+                .frame(
+                    width: Self.layoutSize.width,
+                    height: Self.layoutSize.height
+                )
                 .clipped()
-
+            
             LinearGradient(
                 gradient: Gradient(stops: [
                     .init(color: Color.mainBlack.opacity(0.0), location: 0.00),

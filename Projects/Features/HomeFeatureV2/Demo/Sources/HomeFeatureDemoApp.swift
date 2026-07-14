@@ -54,7 +54,7 @@ struct HomeFeatureV2DemoApp: App {
                             uid: "preview-uid",
                             provider: "preview",
                             email: nil,
-                            nickname: "팝팡",
+                            nickname: "홍길동",
                             role: "USER",
                             isAlerted: false,
                             fcmToken: nil,

@@ -83,25 +83,19 @@ public struct HomeFeatureView: View {
 
 // MARK: - BestPopup Section
 extension HomeFeatureView {
+    
     private func bestPopupSection(
         popups: [Popup],
         onTap: @escaping (String) -> Void
     ) -> PopPangListKit.Section {
         Section(id: "best") {
-            for popup in popups {
-                Cell(
-                    id: popup.popupUuid,
-                    item: popup,
-                    layoutMode: .fitContent(
-                        estimatedSize: CGSize(width: 194, height: 271)
-                    )
-                ) { popup in
-                    BestPopupCell(popup: popup)
-                }
-                .didSelect { _ in
-                    onTap(popup.popupUuid)
-                }
+            For(popups, id: \.popupUuid) { popup in
+                BestPopupCell(popup: popup)
             }
+            .didSelect { popup in
+                onTap(popup.popupUuid)
+            }
+            .layoutMode(.fitContent(estimatedSize: BestPopupCell.layoutSize))
         }
         .withSectionLayout(
             HorizontalLayout(
