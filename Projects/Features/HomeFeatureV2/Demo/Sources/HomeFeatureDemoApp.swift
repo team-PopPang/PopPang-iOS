@@ -46,6 +46,8 @@ struct HomeFeatureV2DemoApp: App {
 //                }
 //            )
             
+            let popups: [Popup] = Array(repeating: .popupMock, count: 20)
+            
             HomeFeatureView(
                 store: Store(
                     initialState: HomeFeature.State(
@@ -60,14 +62,9 @@ struct HomeFeatureV2DemoApp: App {
                             fcmToken: nil,
                             alertKeywordList: nil,
                             recommendList: nil
-                        ), bestPopups: [
-                            .popupMock,
-                            .popupMock,
-                            .popupMock,
-                            .popupMock,
-                            .popupMock,
-                            .popupMock
-                        ]
+                        ),
+                        bestPopups: popups,
+                        comingPopups: popups
                     )
                 ) {
                     HomeFeature()

@@ -10,14 +10,18 @@ import Domain
 import Kingfisher
 import DSKit
 
-struct ListKitComingPopupCell: View {
+struct ComingPopupCell: View {
+    static let layoutSize = CGSize(width: 283, height: 138)
     let popup: Popup
 
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 5)
                 .fill(Color.subWhite)
-                .frame(width: 283, height: 138)
+                .frame(
+                    width: Self.layoutSize.width,
+                    height: Self.layoutSize.height
+                )
                 .overlay {
                     RoundedRectangle(cornerRadius: 5)
                         .stroke(Color.mainGray3, lineWidth: 0.05)
@@ -52,7 +56,10 @@ struct ListKitComingPopupCell: View {
 
                 Spacer()
             }
-            .frame(width: 283, height: 138)
+            .frame(
+                width: Self.layoutSize.width,
+                height: Self.layoutSize.height
+            )
         }
         .contentShape(Rectangle())
     }

@@ -8,21 +8,27 @@ import DSKit
 public struct HomeFeature {
     @ObservableState
     public struct State: Equatable {
+        public var userUuid: String
         public var nickname: String
         public var bestPopups: [Popup] = []
+        public var comingPopups: [Popup] = []
         
         public init(
             user: User,
-            bestPopups: [Popup]
+            bestPopups: [Popup],
+            comingPopups: [Popup]
         ) {
+            self.userUuid = user.userUuid
             self.nickname = user.nickname ?? "닉네임"
             self.bestPopups = bestPopups
+            self.comingPopups = comingPopups
         }
     }
     
     public enum Action: Equatable {
         case onAppear
         case bestPopupTapped(popupUuid: String)
+        case comingPopupTapped(popupUuid: String)
     }
     
     public init() {}
@@ -53,17 +59,18 @@ public struct HomeFeatureView: View {
                 
                 // MARK: - Navigationbar
                 HomeNavigationBar(
-                    userUuid: "test-userUuid",
+                    userUuid: store.userUuid,
                     showsPopupRequestManagement: true,
                     onSearch: { _ in },
                     onAlert: { _ in },
                     onReport: {},
                     onManagePopupRequests: {})
+                .padding(.bottom, 16)
                 
                 // MARK: - List
                 PopPangList {
                     
-                    // MARK: - BestPopup
+                    // MARK: - Best
                     bestPopupSection(
                         popups: store.bestPopups
                     ) { popupUuid in
@@ -71,11 +78,28 @@ public struct HomeFeatureView: View {
                     }
                     .withHeader {
                         HomeBestHeader(nickname: store.nickname)
-                            .padding(.top, 16)
                             .padding(.bottom, 10)
+                            .background(.white)
+                    }
+                    
+                    // MARK: - Coming
+                    comingPopupSection(
+                        popups: store.comingPopups
+                    ) { popupUuid in
+                        store.send(.comingPopupTapped(popupUuid: popupUuid))
+                    }
+                    .withHeader {
+                        HomeComingHeader(
+                            userUuid: store.userUuid,
+                            popups: store.comingPopups,
+                            onTap: { _, _ in
+                                
+                            }
+                        )
+                        .background(.white)
+                        .padding(.bottom, 10)
                     }
                 }
-                
             }
         }
     }
@@ -102,12 +126,41 @@ extension HomeFeatureView {
                 spacing: 15,
                 scrollingBehavior: .continuousGroupLeadingBoundary
             )
-            .insets(.init(top: 0, leading: 15, bottom: 50, trailing: 15))
+            .insets(.init(top: 0, leading: .contentPadding, bottom: 50, trailing: .contentPadding))
+            .headerPinToVisibleBounds(true)
+        )
+    }
+}
+
+extension HomeFeatureView {
+    private func comingPopupSection(
+        popups: [Popup],
+        onTap: @escaping (String) -> Void
+    ) -> PopPangListKit.Section {
+        Section(id: "comming") {
+            For(popups, id: \.popupUuid) { popup in
+                ComingPopupCell(popup: popup)
+            }
+            .didSelect { popup in
+                onTap(popup.popupUuid)
+            }
+            .layoutMode(.fitContent(estimatedSize: ComingPopupCell.layoutSize))
+        }
+        .withSectionLayout(
+            HorizontalLayout(
+                spacing: 15,
+                scrollingBehavior: .groupPaging
+            )
+            .insets(.init(top: 0, leading: .contentPadding, bottom: 65, trailing: .contentPadding))
+            .headerPinToVisibleBounds(true)
         )
     }
 }
 
 #Preview {
+    
+    let popups: [Popup] = Array(repeating: .popupMock, count: 20)
+    
     HomeFeatureView(
         store: Store(
             initialState: HomeFeature.State(
@@ -122,20 +175,9 @@ extension HomeFeatureView {
                     fcmToken: nil,
                     alertKeywordList: nil,
                     recommendList: nil
-                ), bestPopups: [
-                    .popupMock,
-                    .popupMock2,
-                    .popupMock,
-                    .popupMock,
-                    .popupMock,
-                    .popupMock,
-                    .popupMock,
-                    .popupMock,
-                    .popupMock,
-                    .popupMock,
-                    .popupMock,
-                    .popupMock
-                ]
+                ),
+                bestPopups: popups,
+                comingPopups: popups
             )
         ) {
             HomeFeature()
