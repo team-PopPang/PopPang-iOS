@@ -195,6 +195,15 @@ private struct NicknameSettingStepView: View {
             .frame(maxHeight: .infinity, alignment: .bottom)
         }
         .padding(.horizontal, .contentPadding)
+        .task {
+            do {
+                try await Task.sleep(for: .seconds(0.3))
+                guard !Task.isCancelled else { return }
+                isFocused = true
+            } catch {
+                // The view disappeared before the transition animation completed.
+            }
+        }
     }
 
     @ViewBuilder
@@ -385,7 +394,7 @@ private struct KeywordSettingStepView: View {
             Spacer()
 
             MainOrangeButton(
-                buttonTitle: "다음",
+                buttonTitle: isSubmitting ? "가입 중..." : "다음",
                 buttonColor: isNextEnabled ? Color.mainOrange : Color.mainGray2
             ) {
                 onNext()
