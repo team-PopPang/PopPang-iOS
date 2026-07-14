@@ -53,6 +53,7 @@ let project = Project(
                     "NSLocationAlwaysAndWhenInUseUsageDescription": "주변 팝업스토어를 지도에서 보여주고 거리 순으로 제공하기 위해 위치 정보가 필요합니다.",
                     "NSLocationAlwaysUsageDescription": "팝업스토어 정보 제공을 위해 사용자의 위치를 받습니다.",
                     "NSLocationWhenInUseUsageDescription": "주변 팝업스토어를 지도에서 보여주고 거리 순으로 제공하기 위해 위치 정보가 필요합니다.",
+                    "NSPhotoLibraryUsageDescription": "팝업 제보에 사용할 사진을 선택하기 위해 사진 보관함에 접근합니다.",
                     "NSAppTransportSecurity": [
                         "NSAllowsArbitraryLoads": false,
                     ],
