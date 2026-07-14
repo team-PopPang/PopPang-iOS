@@ -88,9 +88,8 @@ public struct HomeFeatureView: View {
                     .withHeader {
                         HomeBestHeader(nickname: store.nickname)
                             .padding(.bottom, 10)
-                            .background(.white)
-                            .ignoresSafeArea()
                     }
+                    .headerBackground(UIColor(Color.subWhite))
                     
                     // MARK: - Coming
                     comingPopupSection(
@@ -107,9 +106,8 @@ public struct HomeFeatureView: View {
                             }
                         )
                         .padding(.bottom, 10)
-                        .background(.white)
-                        .ignoresSafeArea()
                     }
+                    .headerBackground(UIColor(Color.subWhite))
                     
                     // MARK: - Grid
                     gridPopupSection(popups: store.bestPopups) { popupUuid in
@@ -129,9 +127,8 @@ public struct HomeFeatureView: View {
                             }
                         )
                         .padding(.bottom, 10)
-                        .background(Color.subWhite)
-                        .ignoresSafeArea()
                     }
+                    .headerBackground(UIColor(Color.subWhite))
                 }
             }
         }
