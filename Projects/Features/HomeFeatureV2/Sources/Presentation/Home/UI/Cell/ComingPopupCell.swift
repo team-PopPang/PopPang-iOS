@@ -9,6 +9,7 @@ import SwiftUI
 import Domain
 import Kingfisher
 import DSKit
+import Core
 
 struct ComingPopupCell: View {
     static let layoutSize = CGSize(width: 283, height: 138)

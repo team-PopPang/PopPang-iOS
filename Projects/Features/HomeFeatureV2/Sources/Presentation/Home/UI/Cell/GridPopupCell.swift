@@ -10,10 +10,9 @@ import Domain
 import Kingfisher
 import DSKit
 
-struct ListKitGridPopupCell: View {
+struct GridPopupCell: View {
+    static let estimatedHeight: CGFloat = 302
     let popup: Popup
-    let isLiked: Bool
-    let cellWidth: CGFloat
     let toggleLike: () -> Void
 
     var body: some View {
@@ -23,27 +22,26 @@ struct ListKitGridPopupCell: View {
                     .placeholder {
                         Rectangle()
                             .fill(Color.subWhite)
-                            .frame(width: cellWidth, height: 217)
                     }
                     .downSampled(.gridPopupCell)
                     .scaledToFill()
-                    .frame(width: cellWidth, height: 217)
+                    .frame(height: 217)
                     .clipped()
 
                 Button {
                     toggleLike()
                 } label: {
-                    DSKitResource.image(isLiked ? "favorite_fill" : "favorite")
+                    DSKitResource.image(popup.isFavorited ? "favorite_fill" : "favorite")
                         .renderingMode(.template)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 25, height: 25)
-                        .foregroundStyle(isLiked ? Color.mainOrange : Color.subWhite)
+                        .foregroundStyle(popup.isFavorited ? Color.mainOrange : Color.subWhite)
                 }
                 .padding(10)
                 .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
             }
-            .frame(width: cellWidth, height: 217)
+            .frame(height: 217)
 
             Text(popup.roadAddress.shortAddress)
                 .font(.scdream(.regular, size: 12))
@@ -62,7 +60,7 @@ struct ListKitGridPopupCell: View {
                 .foregroundStyle(Color.mainGray)
                 .padding(.top, 5)
         }
-        .frame(width: cellWidth, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
     }
 }

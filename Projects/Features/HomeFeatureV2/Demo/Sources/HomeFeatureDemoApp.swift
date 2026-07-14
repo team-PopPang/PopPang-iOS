@@ -64,7 +64,8 @@ struct HomeFeatureV2DemoApp: App {
                             recommendList: nil
                         ),
                         bestPopups: popups,
-                        comingPopups: popups
+                        comingPopups: popups,
+                        gridPopups: popups
                     )
                 ) {
                     HomeFeature()

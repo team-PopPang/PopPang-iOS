@@ -12,16 +12,21 @@ public struct HomeFeature {
         public var nickname: String
         public var bestPopups: [Popup] = []
         public var comingPopups: [Popup] = []
+        public var gridPopups: [Popup] = []
+        
+        var filter = HomeFilter.State()
         
         public init(
             user: User,
             bestPopups: [Popup],
-            comingPopups: [Popup]
+            comingPopups: [Popup],
+            gridPopups: [Popup]
         ) {
             self.userUuid = user.userUuid
             self.nickname = user.nickname ?? "닉네임"
             self.bestPopups = bestPopups
             self.comingPopups = comingPopups
+            self.gridPopups = gridPopups
         }
     }
     
@@ -29,6 +34,9 @@ public struct HomeFeature {
         case onAppear
         case bestPopupTapped(popupUuid: String)
         case comingPopupTapped(popupUuid: String)
+        case gridPopupTapped(popupUuid: String)
+        
+        case filter(HomeFilter.Action)
     }
     
     public init() {}
@@ -64,7 +72,8 @@ public struct HomeFeatureView: View {
                     onSearch: { _ in },
                     onAlert: { _ in },
                     onReport: {},
-                    onManagePopupRequests: {})
+                    onManagePopupRequests: {}
+                )
                 .padding(.bottom, 16)
                 
                 // MARK: - List
@@ -80,6 +89,7 @@ public struct HomeFeatureView: View {
                         HomeBestHeader(nickname: store.nickname)
                             .padding(.bottom, 10)
                             .background(.white)
+                            .ignoresSafeArea()
                     }
                     
                     // MARK: - Coming
@@ -96,8 +106,31 @@ public struct HomeFeatureView: View {
                                 
                             }
                         )
-                        .background(.white)
                         .padding(.bottom, 10)
+                        .background(.white)
+                        .ignoresSafeArea()
+                    }
+                    
+                    // MARK: - Grid
+                    gridPopupSection(popups: store.bestPopups) { popupUuid in
+                        store.send(.gridPopupTapped(popupUuid: popupUuid))
+                    }
+                    .withHeader {
+                        HomeFilterHeader(
+                            store: store.scope(
+                                state: \.filter,
+                                action: \.filter
+                            ),
+                            onRegionTap: {
+                                // 지역 바텀시트 열기
+                            },
+                            onSortTap: {
+                                // 정렬 바텀시트 열기
+                            }
+                        )
+                        .padding(.bottom, 10)
+                        .background(Color.subWhite)
+                        .ignoresSafeArea()
                     }
                 }
             }
@@ -132,6 +165,7 @@ extension HomeFeatureView {
     }
 }
 
+// MARK: - ComingPopup Section
 extension HomeFeatureView {
     private func comingPopupSection(
         popups: [Popup],
@@ -157,6 +191,49 @@ extension HomeFeatureView {
     }
 }
 
+// MARK: - GridPopup Section
+extension HomeFeatureView {
+    private func gridPopupSection(
+        popups: [Popup],
+        onTap: @escaping (String) -> Void
+    ) -> PopPangListKit.Section {
+        Section(id: "grid") {
+            For(popups, id: \.popupUuid) { popup in
+                GridPopupCell(
+                    popup: popup,
+                    toggleLike: {
+                        onTap(popup.popupUuid)
+                    }
+                )
+            }
+            .didSelect { popup in
+                onTap(popup.popupUuid)
+            }
+            .layoutMode(
+                .flexibleHeight(
+                    estimatedHeight: GridPopupCell.estimatedHeight
+                )
+            )
+        }
+        .withSectionLayout(
+            VerticalGridLayout(
+                numberOfItemsInRow: 2,
+                itemSpacing: 15,
+                lineSpacing: 20
+            )
+            .insets(
+                .init(
+                    top: 0,
+                    leading: .contentPadding,
+                    bottom: 0,
+                    trailing: .contentPadding
+                )
+            )
+            .headerPinToVisibleBounds(true)
+        )
+    }
+}
+
 #Preview {
     
     let popups: [Popup] = Array(repeating: .popupMock, count: 20)
@@ -177,7 +254,8 @@ extension HomeFeatureView {
                     recommendList: nil
                 ),
                 bestPopups: popups,
-                comingPopups: popups
+                comingPopups: popups,
+                gridPopups: popups
             )
         ) {
             HomeFeature()

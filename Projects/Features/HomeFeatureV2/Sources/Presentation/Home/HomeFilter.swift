@@ -49,4 +49,29 @@
 //        }
 //    }
 //}
-//
+
+
+import ComposableArchitecture
+import Domain
+import DSKit
+
+@Reducer
+public struct HomeFilter {
+    @ObservableState
+    public struct State: Equatable {
+        var regions: [RegionList] = []
+        var selectedRegion: RegionList?
+        var selectedDistrict: String?
+        var selectedOption: SortButton.SortOption = .newest
+        public init() {}
+    }
+    
+    public enum Action: Equatable {
+        case regionSelected(RegionList)
+        case districtSelected(String)
+        case sortOptionSelected(SortButton.SortOption)
+        // case regionSelectionPrepared(HomeRegionSelection)
+    }
+    
+    public init() {}
+}
