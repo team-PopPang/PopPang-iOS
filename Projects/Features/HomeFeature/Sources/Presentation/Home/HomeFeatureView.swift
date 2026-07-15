@@ -325,14 +325,14 @@ private struct HomeNavigationBar: View {
             }
             .accessibilityIdentifier("home_search_button")
 
-            IconButton {
-                onAlert(userUuid)
-            }
-
             HomeReportButton {
                 onReport()
             }
             .accessibilityIdentifier("home_popup_report_button")
+
+            IconButton {
+                onAlert(userUuid)
+            }
 
             if showsPopupRequestManagement {
                 HomePopupRequestManagementButton {
