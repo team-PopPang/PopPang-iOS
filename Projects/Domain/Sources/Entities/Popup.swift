@@ -154,3 +154,40 @@ public extension Popup {
         )
     }()
 }
+
+//extension Popup: CustomDebugStringConvertible {
+//    public var debugDescription: String {
+//        """
+//        🏪 Popup
+//        ├─ UUID: \(popupUuid)
+//        ├─ 이름: \(name)
+//        ├─ 기간: \(startDate) ~ \(endDate)
+//        ├─ 지역: \(region)
+//        ├─ 주소: \(roadAddress)
+//        ├─ 미디어: \(mediaType.rawValue)
+//        ├─ 이미지: \(imageUrlList.count)개
+//        ├─ 좋아요: \(favoriteCount)
+//        ├─ 조회수: \(viewCount)
+//        └─ 좋아요 여부: \(isFavorited)
+//        """
+//    }
+//}
+
+
+extension Popup: CustomStringConvertible {
+    public var description: String {
+        """
+        🏪 Popup
+        ├─ UUID: \(popupUuid)
+        ├─ 이름: \(name)
+        ├─ 기간: \(startDate) ~ \(endDate)
+        ├─ 지역: \(region)
+        ├─ 주소: \(roadAddress)
+        ├─ 미디어: \(mediaType.rawValue)
+        ├─ 이미지: \(imageUrlList.count)개
+        ├─ 좋아요: \(favoriteCount)
+        ├─ 조회수: \(viewCount)
+        └─ 좋아요 여부: \(isFavorited)
+        """
+    }
+}

@@ -15,15 +15,15 @@ public struct HomeFeature {
         public var nickname: String
         public var isAdmin: Bool
         
-        public var bestPopups: [Popup] = []
-        public var comingPopups: [Popup] = []
-        public var gridPopups: [Popup] = []
+        var bestPopups: [Popup] = []
+        var comingPopups: [Popup] = []
+        var gridPopups: [Popup] = []
         
         var isLoading = false
         var errorMessage: String?
         
         // child state
-        var filter = HomeFilter.State()
+        var filter = HomeFilterFeature.State()
         
         public init(
             user: User
@@ -37,17 +37,38 @@ public struct HomeFeature {
     public enum Action: Equatable {
         // self action
         case onAppear
+        case nicknameUpdated(String)
         case errorMessageChanged(String?)
         case popupSectionsLoaded(HomePopupSections)
         case loadingChanged(Bool)
+        case refreshFilteredPopupList
+        case filteredGridPopupList([Popup])
         
-        // tap action
-        case bestPopupTapped(popupUuid: String)
-        case comingPopupTapped(popupUuid: String)
-        case gridPopupTapped(popupUuid: String)
+        // toggle
+        case favoriteToggleTapped(popupUuid: String)
+        case favoriteUpdateResponse(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
         
         // child action
-        case filter(HomeFilter.Action)
+        case filter(HomeFilterFeature.Action)
+        
+        // navigation action
+        case popupSelected(Popup)
+        case alertTapped
+        case searchTapped
+        case comingPopupsTapped([Popup])
+        case popupRequestTapped
+        case popupRequestManagementTapped
+        
+        // delegate
+        case delegate(Delegate)
+        public enum Delegate: Equatable {
+            case popupSelected(Popup)
+            case alertTapped
+            case searchTapped
+            case comingPopupsTapped([Popup])
+            case popupRequestTapped
+            case popupRequestManagementTapped
+        }
     }
     
     public init() {}
@@ -64,7 +85,7 @@ public struct HomeFeature {
          - 부모의 Optional 자식 State와 자식 Action을 연결하고, 자식 State가 있을 때만 자식 Reducer를 실행 가능한 상태로 구성
          */
         Scope(state: \.filter, action: \.filter) {
-            HomeFilter()
+            HomeFilterFeature()
         }
         
         Reduce { state, action in
@@ -77,6 +98,10 @@ public struct HomeFeature {
                     userUuid: state.userUuid,
                     filter: state.filter
                 )
+                
+            case .nicknameUpdated(let nickname):
+                state.nickname = nickname
+                return .none
                 
             case .errorMessageChanged(let errorMessage):
                 state.errorMessage = errorMessage
@@ -91,22 +116,105 @@ public struct HomeFeature {
                 state.errorMessage = nil
                 return .none
                 
-            case .loadingChanged: return .none
+            case .loadingChanged(let isLoading):
+                state.isLoading = isLoading
+                return .none
                 
-            case .bestPopupTapped: return .none
+            case .refreshFilteredPopupList:
+                state.isLoading = true
+                return updatePersonalFilteredPopupList(
+                    userUuid: state.userUuid,
+                    filter: state.filter
+                )
                 
-            case .comingPopupTapped: return .none
+            case .filteredGridPopupList(let popups):
+                state.gridPopups = popups
+                state.errorMessage = nil
+                return .none
                 
-            case .gridPopupTapped: return .none
+            case .popupSelected(let popup):
+                print("선택된 팝업(Delegate): \(popup)")
+                return .send(.delegate(.popupSelected(popup)))
+                
+            case .alertTapped:
+                return .send(.delegate(.alertTapped))
+                
+            case .searchTapped:
+                return .send(.delegate(.searchTapped))
+                
+            case .comingPopupsTapped(let popup):
+                return .send(.delegate(.comingPopupsTapped(popup)))
+                
+            case .popupRequestTapped:
+                return .send(.delegate(.popupRequestTapped))
+                
+            case .popupRequestManagementTapped:
+                return .send(.delegate(.popupRequestManagementTapped))
+                
+            case .favoriteToggleTapped(let popupUuid):
+                
+                guard let popup = currentPopup(
+                    in: state,
+                    popupUuid: popupUuid
+                ) else {
+                    return .none
+                }
+                
+                return requestFavoriteToggle(
+                    userUuid: state.userUuid,
+                    popup: popup
+                )
+                
+            case .favoriteUpdateResponse(let popupUuid, let isFavorited, let favoriteCount):
+                state.bestPopups.applyFavoriteUpdate(
+                    popupUuid: popupUuid,
+                    isFavorited: isFavorited,
+                    favoriteCount: favoriteCount
+                )
+
+                state.comingPopups.applyFavoriteUpdate(
+                    popupUuid: popupUuid,
+                    isFavorited: isFavorited,
+                    favoriteCount: favoriteCount
+                )
+
+                state.gridPopups.applyFavoriteUpdate(
+                    popupUuid: popupUuid,
+                    isFavorited: isFavorited,
+                    favoriteCount: favoriteCount
+                )
+                
+                return .none
                 
             case .filter:
                 return .none
                 
+            case .delegate:
+                return .none
             }
         }
     }
 }
 
+// MARK: - 현재 팝업 찾는 함수
+extension HomeFeature {
+    private func currentPopup(
+        in state: State,
+        popupUuid: String
+    ) -> Popup? {
+        state.gridPopups.first {
+            $0.popupUuid == popupUuid
+        }
+        ?? state.comingPopups.first {
+            $0.popupUuid == popupUuid
+        }
+        ?? state.bestPopups.first {
+            $0.popupUuid == popupUuid
+        }
+    }
+}
+
+// MARK: - 전체 팝업 로딩
 extension HomeFeature {
     /**
      let popupClient = self.popupClient
@@ -119,20 +227,35 @@ extension HomeFeature {
      */
     private func loadAllPopupData(
         userUuid: String,
-        filter: HomeFilter.State
+        filter: HomeFilterFeature.State
     ) -> Effect<Action> {
+        let popupClient = self.popupClient
         return Effect.run { send in
             // popupClient, userUuid, filter 캡처
             do {
+                
+                /// 1. 서버에서 지역 목록을 가져온다
                 let regions = filter.regions.isEmpty
                 ? try await popupClient.getRegionList().sortedByHomePriority()
                 : filter.regions
                 
+                /// 2. 선택된 지역을 결정한다
                 let selectedRegion = filter.selectedRegion ?? regions.first
+                
+                /// 3. 선택된 상세 지역을 결정한다
                 let selectedDistrict = filter.selectedDistrict ?? selectedRegion?.districtList.first
                 
-                // filter send
-                // await send(.filter(.))
+                /**
+                 4. 계산한 값을 자식 Reducer에 전달한다
+                 effect.run 내에서는 inout state에 접근할 수 없어서 reduce클로저의 state는 동기적으로 액션을 처리하는 동안만 사용가능하다.
+                 run은 비동기 작업이라 reducer실행이 끝난 뒤에도 계속 실행될 수 있다.
+                 대신 비동기 작업에서 결과를 계산한 다음 액션으로 보내야 한다.
+                 */
+                await send(.filter(.regionSelectionPrepared(HomeRegionSelection(
+                    regions: regions,
+                    selectedRegion: selectedRegion,
+                    selectedDistrict: selectedDistrict
+                ))))
                 
                 async let bestPopups = popupClient.getPersonalRandomPopupList(userUuid)
                 async let comingPopups = popupClient.getPersonalUpcomingPopupList(userUuid)
@@ -153,6 +276,90 @@ extension HomeFeature {
             }
             
             await send(.loadingChanged(false))
+        }
+    }
+}
+
+// MARK: - 필터링된 팝업 로딩
+extension HomeFeature {
+    private func updatePersonalFilteredPopupList(
+        userUuid: String,
+        filter: HomeFilterFeature.State
+    ) -> Effect<Action> {
+        let popupClient = self.popupClient
+        return .run { send in
+            do {
+                let popups = try await popupClient.getPersonalFilteredPopupList(
+                    userUuid,
+                    filter.selectedRegion?.region ?? "전체",
+                    filter.selectedDistrict ?? "전체",
+                    filter.selectedOption.rawValue
+                )
+                
+                await send(.filteredGridPopupList(popups))
+            } catch {
+                await send(.errorMessageChanged(error.localizedDescription))
+            }
+            
+            await send(.loadingChanged(false))
+        }
+    }
+}
+
+// MARK: - 배열 팝업 좋아요 갱신
+extension Array where Element == Popup {
+    mutating func applyFavoriteUpdate(
+        popupUuid: String,
+        isFavorited: Bool,
+        favoriteCount: Int
+    ) {
+        guard let index = firstIndex(
+            where: { $0.popupUuid == popupUuid }
+        ) else { return }
+        
+        self[index].isFavorited = isFavorited
+        self[index].favoriteCount = favoriteCount
+    }
+}
+
+// MARK: - 서버 팝업 좋아요 업데이트 요청
+extension HomeFeature {
+    private func requestFavoriteToggle(
+        userUuid: String,
+        popup: Popup
+    ) -> Effect<Action> {
+        .run { send in
+            do {
+                if popup.isFavorited {
+                    try await popupClient.removeFavorite(
+                        userUuid,
+                        popup.popupUuid
+                    )
+                } else {
+                    try await popupClient.addFavorite(
+                        userUuid,
+                        popup.popupUuid
+                    )
+                }
+                
+                let nextIsFavorited = !popup.isFavorited
+                let nextFavoriteCount = nextIsFavorited
+                ? popup.favoriteCount + 1
+                : max(0, popup.favoriteCount - 1)
+                
+                await send(
+                    .favoriteUpdateResponse(
+                        popupUuid: popup.popupUuid,
+                        isFavorited: nextIsFavorited,
+                        favoriteCount: nextFavoriteCount
+                    )
+                )
+                
+            } catch {
+                await send(
+                    .errorMessageChanged(error.localizedDescription)
+                )
+            }
         }
     }
 }
@@ -184,6 +391,9 @@ public struct HomePopupSections: Equatable, Sendable {
         self.gridPopups = gridPopups
     }
 }
+
+
+
 
 
 
@@ -236,20 +446,22 @@ public struct HomeFeatureView: View {
                     // MARK: - Best
                     bestPopupSection(
                         popups: store.bestPopups
-                    ) { popupUuid in
-                        store.send(.bestPopupTapped(popupUuid: popupUuid))
+                    ) { popup in
+                        store.send(.popupSelected(popup))
                     }
                     
                     // MARK: - Coming
                     comingPopupSection(
                         popups: store.comingPopups
-                    ) { popupUuid in
-                        store.send(.comingPopupTapped(popupUuid: popupUuid))
+                    ) { popup in
+                        store.send(.popupSelected(popup))
                     }
                     
                     // MARK: - Grid
-                    gridPopupSection(popups: store.gridPopups) { popupUuid in
-                        store.send(.gridPopupTapped(popupUuid: popupUuid))
+                    gridPopupSection(
+                        popups: store.gridPopups
+                    ) { popup in
+                        store.send(.popupSelected(popup))
                     }
                 }
                 .scrollOverlay(
@@ -279,18 +491,18 @@ extension HomeFeatureView {
     
     private func bestPopupSection(
         popups: [Popup],
-        onTap: @escaping (String) -> Void
+        onTap: @escaping (Popup) -> Void
     ) -> PopPangListKit.Section {
         Section(id: "best") {
             For(popups, id: \.popupUuid) { popup in
                 BestPopupCell(popup: popup)
             }
             .didSelect { popup in
-                onTap(popup.popupUuid)
+                onTap(popup)
             }
             .layoutMode(.fitContent(estimatedSize: BestPopupCell.layoutSize))
         }
-        .withHeader {
+        .withHeader(item: "bestPopup") { _ in
             HomeBestHeader(nickname: store.nickname)
                 .padding(.bottom, 10)
         }
@@ -310,18 +522,18 @@ extension HomeFeatureView {
 extension HomeFeatureView {
     private func comingPopupSection(
         popups: [Popup],
-        onTap: @escaping (String) -> Void
+        onTap: @escaping (Popup) -> Void
     ) -> PopPangListKit.Section {
         Section(id: "comming") {
             For(popups, id: \.popupUuid) { popup in
                 ComingPopupCell(popup: popup)
             }
             .didSelect { popup in
-                onTap(popup.popupUuid)
+                onTap(popup)
             }
             .layoutMode(.fitContent(estimatedSize: ComingPopupCell.layoutSize))
         }
-        .withHeader {
+        .withHeader(item: "comingPopup") { _ in
             HomeComingHeader(
                 userUuid: store.userUuid,
                 popups: store.comingPopups,
@@ -347,19 +559,23 @@ extension HomeFeatureView {
 extension HomeFeatureView {
     private func gridPopupSection(
         popups: [Popup],
-        onTap: @escaping (String) -> Void
+        onTap: @escaping (Popup) -> Void
     ) -> PopPangListKit.Section {
         Section(id: "grid") {
             For(popups, id: \.popupUuid) { popup in
                 GridPopupCell(
                     popup: popup,
                     toggleLike: {
-                        onTap(popup.popupUuid)
+                        store.send(
+                            .favoriteToggleTapped(
+                                popupUuid: popup.popupUuid
+                            )
+                        )
                     }
                 )
             }
             .didSelect { popup in
-                onTap(popup.popupUuid)
+                onTap(popup)
             }
             .layoutMode(
                 .flexibleHeight(
@@ -367,7 +583,7 @@ extension HomeFeatureView {
                 )
             )
         }
-        .withHeader {
+        .withHeader(item: "gridPopup") { _ in
             HomeFilterHeader(
                 store: store.scope(
                     state: \.filter,
@@ -412,7 +628,7 @@ extension HomeFeatureView {
                     provider: "preview",
                     email: nil,
                     nickname: "홍길동",
-                    role: "USER",
+                    role: "ADMIN",
                     isAlerted: false,
                     fcmToken: nil,
                     alertKeywordList: nil,
