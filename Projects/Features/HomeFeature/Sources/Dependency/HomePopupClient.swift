@@ -51,6 +51,7 @@ extension HomePopupClient {
 }
 
 extension HomePopupClient: DependencyKey {
+    // 기기와 simulator에서만 실제 네트워크를 호출합니다.
     public static let liveValue = HomePopupClient(
         getRegionList: { [] },
         getPersonalRandomPopupList: { _ in [] },
@@ -61,6 +62,7 @@ extension HomePopupClient: DependencyKey {
     )
 
 #if DEBUG
+    // Xcode Preview에서는 즉시 화면에 표시할 데이터를 돌려줍니다.
     public static var previewValue: HomePopupClient {
         let popups: [Popup] = [
             .homeFeaturePreview(

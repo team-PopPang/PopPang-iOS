@@ -7,46 +7,8 @@ import SwiftUI
 struct HomeFeatureV2DemoApp: App {
     var body: some Scene {
         WindowGroup {
-//            HomeFeatureView(
-//                store: Store(
-//                    initialState: HomeFeature.State(
-//                        user: User(
-//                            userUuid: "demo-user",
-//                            uid: "demo-uid",
-//                            provider: "preview",
-//                            email: nil,
-//                            nickname: "팝팡",
-//                            role: "ADMIN",
-//                            isAlerted: false,
-//                            fcmToken: nil,
-//                            alertKeywordList: nil,
-//                            recommendList: nil
-//                        )
-//                    )
-//                ) {
-//                    HomeFeature()
-//                } withDependencies: {
-//                    $0.homePopupClient = .previewValue
-//                }
-//            )
-            
-            // HomeFeatureView()
-//            HomeFeatureView(
-//                store: Store(
-//                    initialState: HomeFeature.State(popups: [
-//                        .popupMock,
-//                        .popupMock,
-//                        .popupMock,
-//                        .popupMock,
-//                        .popupMock,
-//                        .popupMock
-//                    ])
-//                ) {
-//                    HomeFeature()
-//                }
-//            )
-            
-            let popups: [Popup] = Array(repeating: .popupMock, count: 20)
+
+            // let popups: [Popup] = Array(repeating: .popupMock, count: 20)
             
             HomeFeatureView(
                 store: Store(
@@ -62,18 +24,25 @@ struct HomeFeatureV2DemoApp: App {
                             fcmToken: nil,
                             alertKeywordList: nil,
                             recommendList: nil
-                        ),
-                        bestPopups: popups,
-                        comingPopups: popups,
-                        gridPopups: popups
+                        )
                     )
                 ) {
                     HomeFeature()
+                } withDependencies: {
+                    $0.homePopupClient = .previewValue
+//                    $0.homePopupClient.getPersonalRandomPopupList = { _ in
+//                        Array(repeating: .popupMock, count: 20)
+//                    }
                 }
             )
         }
     }
 }
+
+
+
+
+
 
 //#Preview {
 //    HomeFeatureView(
