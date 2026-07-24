@@ -184,6 +184,7 @@ public struct MainTabFeature {
         case profile(ProfileFeature.Action)
         case destination(PresentationAction<Destination.Action>)
         case path(StackActionOf<Path>)
+        case searchDismissTeardownCompleted
         case logoutNavigationTeardownRequested
         case logoutNavigationTeardownCompleted
         case delegate(Delegate)
@@ -326,10 +327,17 @@ public struct MainTabFeature {
                 return .none
 
             case .destination(.presented(.search(.delegate(.dismiss)))):
+                return .run { send in
+                    await Task.yield()
+                    await send(.searchDismissTeardownCompleted)
+                }
+
+            case .destination(.presented(.popupRequest(.delegate(.dismiss)))):
                 state.core.destination = nil
                 return .none
 
-            case .destination(.presented(.popupRequest(.delegate(.dismiss)))):
+            case .searchDismissTeardownCompleted:
+                guard case .search = state.core.destination else { return .none }
                 state.core.destination = nil
                 return .none
 
@@ -363,7 +371,7 @@ public struct MainTabFeature {
 
             case .path:
                 return .none
-                
+
             case .delegate:
                 return .none
             }

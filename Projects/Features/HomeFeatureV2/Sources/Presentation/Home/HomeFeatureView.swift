@@ -83,7 +83,6 @@ public struct HomeFeatureView: View {
                     }
                 }
             }
-            .ignoresSafeArea(edges: .bottom)
         }
         .sheet(item: $sheetRoute, onDismiss: handleSheetDismiss) { route in
             switch route {
@@ -129,6 +128,7 @@ extension HomeFeatureView {
                 .padding(.bottom, 10)
         }
         .headerBackground(UIColor(Color.subWhite))
+        .disablesUpdateAnimation()
         .withSectionLayout(
             HorizontalLayout(
                 spacing: 15,
@@ -230,7 +230,7 @@ extension HomeFeatureView {
                 .init(
                     top: 0,
                     leading: .contentPadding,
-                    bottom: 0,
+                    bottom: 20,
                     trailing: .contentPadding
                 )
             )

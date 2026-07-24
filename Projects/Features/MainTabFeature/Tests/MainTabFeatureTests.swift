@@ -56,7 +56,9 @@ struct MainTabFeatureTests {
             MainTabFeature()
         }
 
-        await store.send(.destination(.presented(.search(.delegate(.dismiss))))) {
+        await store.send(.destination(.presented(.search(.delegate(.dismiss)))))
+
+        await store.receive(\.searchDismissTeardownCompleted) {
             $0.core.destination = nil
         }
     }

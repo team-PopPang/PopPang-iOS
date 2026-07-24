@@ -17,6 +17,7 @@ public struct SearchFeatureView: View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
                 Button {
+                    isFocused = false
                     store.send(.dismissTapped)
                 } label: {
                     DSKitResource.image("backButton")
