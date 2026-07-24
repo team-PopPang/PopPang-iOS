@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Core
 import Domain
 import DSKit
 import Foundation
@@ -20,6 +21,7 @@ public struct HomeFeature {
         public init(
             user: User //
         ) {
+            Logger.d("디버그: \(user)")
             self.userUuid = user.userUuid //
             self.nickname = user.nickname ?? "닉네임" //
             self.isAdmin = user.role.uppercased() == "ADMIN" //

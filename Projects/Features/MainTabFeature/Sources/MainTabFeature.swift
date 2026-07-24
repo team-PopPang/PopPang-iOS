@@ -5,7 +5,7 @@ import Core
 import Domain
 import FavoritesFeature
 import Foundation
-import HomeFeature
+import HomeFeatureV2
 import MapFeature
 import PopupDetailFeature
 import PopPangRNFeature
@@ -246,7 +246,7 @@ public struct MainTabFeature {
                 appendPopupDetail(popup, state: &state)
                 return .none
                 
-            case .home(.delegate(.comingPopupsRequested(let popups))):
+            case .home(.delegate(.comingPopupsTapped(let popups))):
                 state.core.path.append(
                     .homeComingPopupDetail(
                         .init(
@@ -257,7 +257,7 @@ public struct MainTabFeature {
                 )
                 return .none
                 
-            case .home(.delegate(.popupRequestManagementRequested)):
+            case .home(.delegate(.popupRequestManagementTapped)):
                 state.core.path.append(
                     .popupRequestManagement(
                         .init(
@@ -268,7 +268,7 @@ public struct MainTabFeature {
                 )
                 return .none
                 
-            case .home(.delegate(.alertRequested)):
+            case .home(.delegate(.alertTapped)):
                 state.core.path.append(.alert(.init(user: state.core.user)))
                 return .none
                 
@@ -276,7 +276,7 @@ public struct MainTabFeature {
                 state.core.path.append(.alert(.init(user: state.core.user)))
                 return .none
                 
-            case .home(.delegate(.searchRequested)):
+            case .home(.delegate(.searchTapped)):
                 state.core.destination = .search(
                     .init(
                         userUuid: state.core.user.userUuid,
@@ -285,7 +285,7 @@ public struct MainTabFeature {
                 )
                 return .none
 
-            case .home(.delegate(.popupRequestRequested)):
+            case .home(.delegate(.popupRequestTapped)):
                 state.core.destination = .popupRequest(
                     .init(
                         screen: .popupRequest,
@@ -410,7 +410,7 @@ private extension MainTabFeature {
             return .none
 
         case let .popupDetail(.delegate(.favoriteChanged(popupUuid, isFavorited, favoriteCount))):
-            return .send(.home(.favoriteUpdated(
+            return .send(.home(.favoriteUpdateResponse(
                 popupUuid: popupUuid,
                 isFavorited: isFavorited,
                 favoriteCount: favoriteCount

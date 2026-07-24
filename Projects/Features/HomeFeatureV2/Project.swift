@@ -30,6 +30,7 @@ let project = Project(
             infoPlist: .extendingDefault(
                 with: [
                     "GADApplicationIdentifier": "$(ADMOB_APP_ID)",
+                    "HOME_DEMO_USER_UUID": "$(HOME_DEMO_USER_UUID)",
                     "UILaunchScreen": [
                         "UIColorName": "",
                         "UIImageName": "",
@@ -70,4 +71,3 @@ let project = Project(
         ),
     ]
 )
-

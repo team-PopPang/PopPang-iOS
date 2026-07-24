@@ -149,7 +149,7 @@ let package = Package(
         .package(url: "https://github.com/indextrown/Listkit.git", exact: "1.0.5"),
         // 1.0.0 이상1.1.0 미만
         // .package(url: "https://github.com/team-PopPang/PopPangListKit.git", .upToNextMinor(from: "1.0.0")),     
-        .package(url: "https://github.com/team-PopPang/PopPangListKit.git", exact: "1.0.8"),
+        .package(url: "https://github.com/team-PopPang/PopPangListKit.git", exact: "1.0.9"),
         .package(url: "https://github.com/lucaszischka/BottomSheet", exact: "3.1.1"),
     ]
 )

@@ -141,8 +141,12 @@ public static var previewValue: HomePopupClient {
         getPersonalRandomPopupList: { _ in bestPopups },
         getPersonalUpcomingPopupList: { _ in comingPopups },
         getPersonalFilteredPopupList: { _, _, _, _ in gridPopups },
-        addFavorite: { _, _ in },
-        removeFavorite: { _, _ in }
+        addFavorite: { _, _ in
+            print("previewValue: 팝업 좋아요 + 1")
+        },
+        removeFavorite: { _, _ in
+            print("previewValue: 팝업 좋아요 - 1")
+        }
     )
 }
 #endif

@@ -16,13 +16,11 @@ public struct HomeComingPopupDetailDestinationView: View {
     }
 
     public var body: some View {
-//        ComingPopupDetailFeatureView(
-//            store: store.scope(state: \.content, action: \.content),
-//            onSelectPopup: { _, popup in
-//                store.send(.popupSelected(popup))
-//            }
-//        )
-        EmptyView()
+        ComingPopupDetailFeatureView(
+            store: store.scope(state: \.content, action: \.content),
+            onSelectPopup: { _, popup in
+                store.send(.popupSelected(popup))
+            }
+        )
     }
 }
-
