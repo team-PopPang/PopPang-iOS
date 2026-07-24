@@ -7,69 +7,211 @@ import Testing
 
 @MainActor
 struct HomeFeatureTests {
-    @Test("HomeFilter가 지역 선택 시 첫 번째 구를 기본값으로 설정한다")
-    func homeFilterSelectsFirstDistrictWhenRegionChanges() async {
-        let region = RegionList(region: "서울", districtList: ["전체", "성동구", "마포구"])
-        let store = TestStore(initialState: HomeFilter.State()) {
-            HomeFilter()
+    @Test("HomeFilterFeature가 서버에서 준비한 지역 선택 상태를 반영한다")
+    func homeFilterAppliesPreparedRegionSelection() async {
+        let seoul = RegionList(
+            region: "서울",
+            districtList: ["전체", "성동구", "마포구"]
+        )
+        let busan = RegionList(
+            region: "부산",
+            districtList: ["전체", "해운대구"]
+        )
+        let selection = HomeRegionSelection(
+            regions: [seoul, busan],
+            selectedRegion: seoul,
+            selectedDistrict: "성동구"
+        )
+
+        let store = TestStore(initialState: HomeFilterFeature.State()) {
+            HomeFilterFeature()
         }
 
-        await store.send(.regionSelected(region)) {
-            $0.selectedRegion = region
-            $0.selectedDistrict = "전체"
+        await store.send(.regionSelectionPrepared(selection)) {
+            $0.regions = [seoul, busan]
+            $0.selectedRegion = seoul
+            $0.selectedDistrict = "성동구"
         }
     }
 
-    @Test("HomeFeature가 정렬 변경 시 필터 목록 재조회 effect를 시작한다")
-    func homeFeatureReloadsFilteredListWhenSortChanges() async {
-        let region = RegionList(region: "서울", districtList: ["전체", "성동구"])
-        let expectedPopups = [makePopup(popupUuid: "popup-1", name: "성수 팝업")]
-        var initialState = HomeFeature.State(
-            user: makeUser()
+    @Test("HomeFeature가 onAppear 시 필터와 섹션 데이터를 함께 로드한다")
+    func homeFeatureLoadsSectionsOnAppear() async {
+        let user = makeUser()
+        let seoul = RegionList(
+            region: "서울",
+            districtList: ["전체", "성동구"]
         )
-        initialState.filter.selectedRegion = region
-        initialState.filter.selectedDistrict = "전체"
+        let busan = RegionList(
+            region: "부산",
+            districtList: ["전체", "해운대구"]
+        )
+        let bestPopups = [
+            makePopup(popupUuid: "best-1", name: "베스트 팝업")
+        ]
+        let comingLater = makePopup(
+            popupUuid: "coming-2",
+            name: "나중 오픈 팝업",
+            startDate: Date(timeIntervalSince1970: 1_718_236_800)
+        )
+        let comingSooner = makePopup(
+            popupUuid: "coming-1",
+            name: "먼저 오픈 팝업",
+            startDate: Date(timeIntervalSince1970: 1_718_150_400)
+        )
+        let gridPopups = [
+            makePopup(popupUuid: "grid-1", name: "그리드 팝업")
+        ]
 
         let store = TestStore(
-            initialState: initialState
+            initialState: HomeFeature.State(user: user)
         ) {
             HomeFeature()
         } withDependencies: {
-            $0.homePopupClient.getPersonalFilteredPopupList = { userUuid, selectedRegion, district, sort in
+            $0.homePopupClient.getRegionList = {
+                [busan, seoul]
+            }
+            $0.homePopupClient.getPersonalRandomPopupList = { userUuid in
+                #expect(userUuid == "user-1")
+                return bestPopups
+            }
+            $0.homePopupClient.getPersonalUpcomingPopupList = { userUuid in
+                #expect(userUuid == "user-1")
+                return [comingLater, comingSooner]
+            }
+            $0.homePopupClient.getPersonalFilteredPopupList = {
+                userUuid, selectedRegion, district, sort in
                 #expect(userUuid == "user-1")
                 #expect(selectedRegion == "서울")
                 #expect(district == "전체")
+                #expect(sort == SortButton.SortOption.newest.rawValue)
+                return gridPopups
+            }
+        }
+
+        await store.send(.onAppear) {
+            $0.isLoading = true
+            $0.errorMessage = nil
+        }
+
+        await store.receive(
+            .filter(
+                .regionSelectionPrepared(
+                    HomeRegionSelection(
+                        regions: [seoul, busan],
+                        selectedRegion: seoul,
+                        selectedDistrict: "전체"
+                    )
+                )
+            )
+        ) {
+            $0.filter.regions = [seoul, busan]
+            $0.filter.selectedRegion = seoul
+            $0.filter.selectedDistrict = "전체"
+        }
+
+        await store.receive(
+            .popupSectionsLoaded(
+                HomePopupSections(
+                    bestPopups: bestPopups,
+                    comingPopups: [comingLater, comingSooner],
+                    gridPopups: gridPopups
+                )
+            )
+        ) {
+            $0.bestPopups = bestPopups
+            $0.comingPopups = [comingSooner, comingLater]
+            $0.gridPopups = gridPopups
+            $0.errorMessage = nil
+        }
+
+        await store.receive(.loadingChanged(false)) {
+            $0.isLoading = false
+        }
+    }
+
+    @Test("HomeFeature가 refreshFilteredPopupList 시 현재 필터로 목록을 다시 조회한다")
+    func homeFeatureRefreshesFilteredList() async {
+        let region = RegionList(
+            region: "서울",
+            districtList: ["전체", "성동구"]
+        )
+        let expectedPopups = [
+            makePopup(popupUuid: "popup-1", name: "성수 팝업")
+        ]
+        var initialState = HomeFeature.State(user: makeUser())
+        initialState.filter.selectedRegion = region
+        initialState.filter.selectedDistrict = "성동구"
+        initialState.filter.selectedOption = .mostFavorited
+
+        let store = TestStore(initialState: initialState) {
+            HomeFeature()
+        } withDependencies: {
+            $0.homePopupClient.getPersonalFilteredPopupList = {
+                userUuid, selectedRegion, district, sort in
+                #expect(userUuid == "user-1")
+                #expect(selectedRegion == "서울")
+                #expect(district == "성동구")
                 #expect(sort == SortButton.SortOption.mostFavorited.rawValue)
                 return expectedPopups
             }
         }
 
-        store.exhaustivity = .off
-
-        await store.send(.filter(.sortOptionSelected(.mostFavorited))) {
-            $0.filter.selectedOption = .mostFavorited
+        await store.send(.refreshFilteredPopupList) {
             $0.isLoading = true
         }
 
-        await store.receive(\.filteredPopupListLoaded, expectedPopups) {
+        await store.receive(.filteredGridPopupList(expectedPopups)) {
             $0.gridPopups = expectedPopups
             $0.errorMessage = nil
         }
 
-        await store.receive(\.loadingChanged, false) {
+        await store.receive(.loadingChanged(false)) {
             $0.isLoading = false
         }
     }
 
-    @Test("HomeFeature는 사용자 snapshot의 닉네임을 자체 상태로 갱신한다")
-    func homeFeatureUpdatesNicknameWithoutSharedSession() async {
+    @Test("HomeFeature는 favoriteUpdateResponse를 모든 섹션에 반영한다")
+    func homeFeatureAppliesFavoriteUpdateAcrossSections() async {
+        let popup = makePopup(
+            popupUuid: "popup-1",
+            name: "성수 팝업",
+            favoriteCount: 1,
+            isFavorited: false
+        )
+        var initialState = HomeFeature.State(user: makeUser())
+        initialState.bestPopups = [popup]
+        initialState.comingPopups = [popup]
+        initialState.gridPopups = [popup]
+
+        let store = TestStore(initialState: initialState) {
+            HomeFeature()
+        }
+
+        await store.send(
+            .favoriteUpdateResponse(
+                popupUuid: "popup-1",
+                isFavorited: true,
+                favoriteCount: 2
+            )
+        ) {
+            $0.bestPopups[0].isFavorited = true
+            $0.bestPopups[0].favoriteCount = 2
+            $0.comingPopups[0].isFavorited = true
+            $0.comingPopups[0].favoriteCount = 2
+            $0.gridPopups[0].isFavorited = true
+            $0.gridPopups[0].favoriteCount = 2
+        }
+    }
+
+    @Test("HomeFeature는 popupSelected를 delegate로 전달한다")
+    func homeFeatureForwardsPopupSelectionDelegate() async {
+        let popup = makePopup(popupUuid: "popup-1", name: "성수 팝업")
         let store = TestStore(initialState: HomeFeature.State(user: makeUser())) {
             HomeFeature()
         }
 
-        await store.send(.nicknameUpdated("새 팝팡")) {
-            $0.nickname = "새 팝팡"
-        }
+        await store.send(.popupSelected(popup))
+        await store.receive(.delegate(.popupSelected(popup)))
     }
 
     @Test("ComingPopupDetailFeature가 좋아요 요청 실패 시 optimistic update를 되돌린다")
@@ -99,16 +241,21 @@ struct HomeFeatureTests {
             $0.popups[0].favoriteCount = 4
         }
 
-        await store.receive(.favoriteUpdated(
-            popupUuid: "popup-1",
-            isFavorited: false,
-            favoriteCount: 3
-        )) {
+        await store.receive(
+            .favoriteUpdated(
+                popupUuid: "popup-1",
+                isFavorited: false,
+                favoriteCount: 3
+            )
+        ) {
             $0.popups[0].isFavorited = false
             $0.popups[0].favoriteCount = 3
         }
 
-        await store.receive(.errorMessageChanged(TestError.expectedFailure.localizedDescription)) {
+        await store.receive(
+            .errorMessageChanged(TestError.expectedFailure.localizedDescription)
+        ) {
+            $0.isLoading = false
             $0.errorMessage = TestError.expectedFailure.localizedDescription
         }
     }
@@ -144,12 +291,13 @@ private func makePopup(
     popupUuid: String,
     name: String,
     favoriteCount: Int = 0,
-    isFavorited: Bool = false
+    isFavorited: Bool = false,
+    startDate: Date = Date(timeIntervalSince1970: 1_718_150_400)
 ) -> Popup {
     Popup(
         popupUuid: popupUuid,
         name: name,
-        startDate: Date(timeIntervalSince1970: 1_718_150_400),
+        startDate: startDate,
         endDate: Date(timeIntervalSince1970: 1_718_236_800),
         openTime: "10:00",
         closeTime: "20:00",
@@ -169,4 +317,3 @@ private func makePopup(
         recommendList: ["테스트"]
     )
 }
-
