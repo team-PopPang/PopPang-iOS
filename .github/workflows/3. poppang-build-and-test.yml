@@ -119,6 +119,10 @@ jobs:
           cat <<EOF > Projects/Features/HomeFeature/Demo/HomeFeatureDemo.xcconfig
           ADMOB_APP_ID = cidummy
           EOF
+          cat <<EOF > Projects/Features/HomeFeatureV2/Demo/HomeFeatureV2Demo.xcconfig
+          ADMOB_APP_ID = cidummy
+          HOME_DEMO_USER_UUID = cidummy
+          EOF
 
       - name: Download React Native release artifacts
         env:
