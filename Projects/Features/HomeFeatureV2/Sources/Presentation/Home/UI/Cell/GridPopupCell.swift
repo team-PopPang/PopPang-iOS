@@ -5,10 +5,11 @@
 //  Created by 김동현 on 6/15/26.
 //
 
-import SwiftUI
+import ADKit
 import Domain
-import Kingfisher
 import DSKit
+import Kingfisher
+import SwiftUI
 
 //struct GridPopupCell: View {
 //    static let estimatedHeight: CGFloat = 302
@@ -125,6 +126,26 @@ struct GridPopupCell: View {
                 .padding(.top, 5)
         }
         .frame(width: Self.cellWidth, alignment: .leading)
+        .contentShape(Rectangle())
+    }
+}
+
+struct HomeNativeAdGridCell: View {
+    private static var cellWidth: CGFloat {
+        (UIScreen.main.bounds.width - CGFloat.contentPadding * 2 - 15) / 2
+    }
+
+    let viewModel: AdNativeAdViewModel
+
+    var body: some View {
+        AdNativeAdView(
+            viewModel: viewModel,
+            layout: .grid
+        )
+        .frame(
+            width: Self.cellWidth,
+            height: GridPopupCell.estimatedHeight
+        )
         .contentShape(Rectangle())
     }
 }

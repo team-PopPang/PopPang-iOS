@@ -1,8 +1,10 @@
-import SwiftUI
+import ADKit
 import ComposableArchitecture
-import PopPangListKit
 import Domain
 import DSKit
+import Foundation
+import PopPangListKit
+import SwiftUI
 
 public struct HomeFeatureView: View {
     @Bindable var store: StoreOf<HomeFeature>
@@ -11,6 +13,8 @@ public struct HomeFeatureView: View {
     @State private var listProxy = ListProxy()
     @State private var sheetRoute: HomeSheetRoute?
     @State private var presentedSheetRoute: HomeSheetRoute?
+    @State private var nativeAdPlacementDate = Date()
+    @StateObject private var nativeAdSlotStore = AdNativeAdSlotStore()
 
     public init(
         store: StoreOf<HomeFeature>
@@ -63,9 +67,7 @@ public struct HomeFeatureView: View {
                     }
                     
                     // MARK: - Grid
-                    gridPopupSection(
-                        popups: store.gridPopups
-                    ) { popup in
+                    gridPopupSection { popup in
                         store.send(.popupSelected(popup))
                     }
                 }
@@ -103,6 +105,9 @@ public struct HomeFeatureView: View {
         }
         .onAppear {
             store.send(.onAppear)
+        }
+        .task(id: nativeAdPlacementIDs) {
+            nativeAdSlotStore.loadAdIfNeeded(for: nativeAdPlacementIDs)
         }
     }
 }
@@ -180,23 +185,31 @@ extension HomeFeatureView {
 // MARK: - GridPopup Section
 extension HomeFeatureView {
     private func gridPopupSection(
-        popups: [Popup],
         onTap: @escaping (Popup) -> Void
     ) -> PopPangListKit.Section {
         Section(id: "grid") {
-            For(popups, id: \.popupUuid) { popup in
-                GridPopupCell(
-                    popup: popup,
-                    toggleLike: {
-                        store.send(
-                            .favoriteToggleTapped(
-                                popupUuid: popup.popupUuid
+            For(gridItems, id: \.id) { item in
+                switch item {
+                case .content(let popup, _):
+                    GridPopupCell(
+                        popup: popup,
+                        toggleLike: {
+                            store.send(
+                                .favoriteToggleTapped(
+                                    popupUuid: popup.popupUuid
+                                )
                             )
-                        )
-                    }
-                )
+                        }
+                    )
+
+                case .nativeAd(let slotID):
+                    HomeNativeAdGridCell(
+                        viewModel: nativeAdSlotStore.viewModel(for: slotID)
+                    )
+                }
             }
-            .didSelect { popup in
+            .didSelect { item in
+                guard case let .content(popup, _) = item else { return }
                 onTap(popup)
             }
             .layoutMode(
@@ -240,6 +253,33 @@ extension HomeFeatureView {
 }
 
 private extension HomeFeatureView {
+    var nativeAdPlacements: [AdNativeAdPlacement] {
+        AdNativeAdPlacementPolicy.paginatedHomeGridPlacements(
+            contentCount: store.gridPopups.count,
+            userIdentifier: store.userUuid,
+            date: nativeAdPlacementDate
+        )
+    }
+
+    var nativeAdPlacementIDs: [String] {
+        nativeAdPlacements.map(\.id)
+    }
+
+    var loadedNativeAdPlacements: [AdNativeAdPlacement] {
+        let loadedSlotIDs = nativeAdSlotStore.loadedSlotIDs(
+            in: nativeAdPlacementIDs
+        )
+        return nativeAdPlacements.filter { loadedSlotIDs.contains($0.id) }
+    }
+
+    var gridItems: [AdInjectedListItem<Popup>] {
+        AdInjectedListItemBuilder.make(
+            items: store.gridPopups,
+            nativeAdPlacements: loadedNativeAdPlacements,
+            id: \.popupUuid
+        )
+    }
+
     var filterStore: StoreOf<HomeFilterFeature> {
         store.scope(state: \.filter, action: \.filter)
     }

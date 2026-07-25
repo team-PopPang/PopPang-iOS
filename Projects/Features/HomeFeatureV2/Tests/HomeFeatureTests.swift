@@ -1,3 +1,4 @@
+import ADKit
 import ComposableArchitecture
 import Domain
 import DSKit
@@ -7,6 +8,61 @@ import Testing
 
 @MainActor
 struct HomeFeatureTests {
+    @Test("V2 paginated Home grid policy preserves V1 slots and extends after the third ad")
+    func paginatedHomeGridPolicyPreservesAndExtendsSlots() {
+        let userIdentifier = "user-1"
+        let date = Date(timeIntervalSince1970: 1_720_000_000)
+
+        let noPlacements = AdNativeAdPlacementPolicy.paginatedHomeGridPlacements(
+            contentCount: 7,
+            userIdentifier: userIdentifier,
+            date: date
+        )
+        #expect(noPlacements.isEmpty)
+
+        for contentCount in [8, 20, 32] {
+            let paginatedPlacements = AdNativeAdPlacementPolicy.paginatedHomeGridPlacements(
+                contentCount: contentCount,
+                userIdentifier: userIdentifier,
+                date: date
+            )
+            let v1Placements = AdNativeAdPlacementPolicy.placements(
+                contentCount: contentCount,
+                userIdentifier: userIdentifier,
+                date: date,
+                configuration: .homeGrid
+            )
+
+            #expect(paginatedPlacements == v1Placements)
+        }
+
+        let placementsAt20 = AdNativeAdPlacementPolicy.paginatedHomeGridPlacements(
+            contentCount: 20,
+            userIdentifier: userIdentifier,
+            date: date
+        )
+
+        #expect(placementsAt20.map(\.id) == ["native-ad-1", "native-ad-2"])
+        #expect([4, 6].contains(placementsAt20[0].insertIndex))
+        #expect([14, 16].contains(placementsAt20[1].insertIndex))
+
+        let placementsAt44 = AdNativeAdPlacementPolicy.paginatedHomeGridPlacements(
+            contentCount: 44,
+            userIdentifier: userIdentifier,
+            date: date
+        )
+
+        #expect(placementsAt44.map(\.id) == [
+            "native-ad-1",
+            "native-ad-2",
+            "native-ad-3",
+            "native-ad-4",
+        ])
+        #expect(Array(placementsAt44.prefix(2)) == placementsAt20)
+        #expect([24, 26].contains(placementsAt44[2].insertIndex))
+        #expect([34, 36].contains(placementsAt44[3].insertIndex))
+    }
+
     @Test("HomeFilterFeature가 서버에서 준비한 지역 선택 상태를 반영한다")
     func homeFilterAppliesPreparedRegionSelection() async {
         let seoul = RegionList(

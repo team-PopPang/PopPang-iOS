@@ -322,10 +322,11 @@ Home Native 광고는 Domain, UseCase, Repository로 내리지 않는다.
 - 서버 데이터와 섞지 않고 `HomeFeature` Presentation 안에서 끝내는 편이 변경 범위가 작다.
 - 홈 화면에서만 필요한 상태(팝업 목록, 필터, 딥링크)는 feature/local store에서 처리한다.
 
-파일:
+구현 위치:
 
 ```text
-Projects/Features/HomeFeature/Sources/Presentation/NativeAd/HomeNativeAdViewModel.swift
+Projects/Shared/ADKit/Sources/AdNativeAdViewModel.swift
+Projects/Shared/ADKit/Sources/AdNativeAdSlotStore.swift
 ```
 
 현재 흐름:
@@ -358,15 +359,16 @@ adLoader.load(Request())
 
 ## 11. Native 광고 UI 구조
 
-파일:
+구현 위치:
 
 ```text
-Projects/Features/HomeFeature/Sources/Presentation/NativeAd/HomeNativeAdView.swift
+Projects/Shared/ADKit/Sources/AdNativeAdView.swift
+Projects/Features/HomeFeatureV2/Sources/Presentation/Home/UI/Cell/GridPopupCell.swift
 ```
 
 구조:
 
-- SwiftUI에서는 `HomeNativeAdGridCellView`를 사용한다.
+- SwiftUI에서는 `HomeNativeAdGridCell`을 사용한다.
 - 실제 Google SDK 뷰는 `UIViewRepresentable`로 감싼다.
 - UIKit 쪽 루트 뷰는 `NativeAdView`다.
 - 이미지/비디오 영역은 `MediaView`다.
@@ -387,58 +389,35 @@ nativeAdView.nativeAd = nativeAd
 - CTA 버튼은 SDK가 클릭을 처리해야 하므로 `callToActionView?.isUserInteractionEnabled = false`로 둔다.
 - 광고임을 알 수 있게 `광고` 배지를 표시한다.
 
-## 12. Home 화면 배치
+## 12. Home V2 화면 배치와 페이지 확장 규칙
 
-파일:
-
-```text
-Projects/Features/HomeFeature/Sources/Presentation/HomeFeatureView.swift
-```
-
-현재 배치:
-
-- `best` 섹션
-- `coming` 섹션
-- `grid` 섹션
-
-Native 광고는 별도 섹션으로 만들지 않고, `grid` 섹션 안에서 팝업 셀 사이에 삽입한다.
-
-광고 item 삽입 로직은 아래 파일에 둔다.
+구현 위치:
 
 ```text
-Projects/Features/HomeFeature/Sources/Presentation/NativeAd/HomeNativeAdGridItem.swift
+Projects/Features/HomeFeatureV2/Sources/Presentation/Home/HomeFeatureView.swift
+Projects/Shared/ADKit/Sources/AdNativeAdPlacementPolicy.swift
+Projects/Shared/ADKit/Sources/AdInjectedListItem.swift
 ```
 
-현재 삽입 규칙:
+Native 광고는 별도 섹션이 아니라 Home `grid` 섹션의 팝업 셀 사이에 삽입한다. `AdInjectedListItem`은 팝업과 광고 슬롯을 하나의 목록으로 만들고, Home V2는 팝업에만 선택 이벤트를 전달한다.
 
-```swift
-var gridItems: [HomeGridItem] {
-    var items = homeNativeGridPopups.map(HomeGridItem.popup)
-    guard nativeAdViewModel.nativeAd != nil, items.isEmpty == false else { return items }
+V1의 고정 규칙은 8개부터 첫 광고, 20개부터 두 번째 광고, 32개부터 세 번째 광고였다. V2는 이 결과를 유지하면서 페이지 누적에도 계속 확장되도록 아래 규칙을 사용한다.
 
-    let insertIndex = min(4, items.count)
-    items.insert(.nativeAd, at: insertIndex)
-    return items
-}
+```text
+slot k (0-based)
+
+minimum content count = 8 + (12 * k)
+candidate insert indexes = [4 + (10 * k), 6 + (10 * k)]
+slot id = native-ad-(k + 1)
 ```
 
-의미:
+따라서 첫 세 슬롯은 V1과 정확히 같은 후보 위치인 `[4, 6]`, `[14, 16]`, `[24, 26]`을 사용한다. 44개 이상이면 네 번째 슬롯 `[34, 36]`을 추가한다.
 
-- 광고가 아직 로드되지 않았으면 기존 팝업 grid만 보여준다.
-- 광고가 로드되면 팝업 4개 뒤에 `nativeAd` item을 하나 삽입한다.
-- grid가 비어 있으면 광고만 단독으로 보여주지 않는다.
-- 광고 셀도 기존 grid와 같은 `itemHeight: 302` 안에서 렌더링한다.
+각 슬롯의 최종 후보는 `userUuid`, 홈 진입 시 고정한 날짜, placement key, slot ID를 해시해 결정한다. 같은 홈 화면 세션에서는 자정이 지나도 광고가 이동하지 않고, 다음 홈 진입부터 새 날짜 기준으로 위치를 결정한다.
 
-진입 시점:
+광고 슬롯은 먼저 로드하고 성공한 슬롯만 grid item 목록에 넣는다. 로드 실패 시 빈 카드를 남기지 않는다. 광고 셀은 `HomeNativeAdGridCell`에서 일반 grid와 같은 폭과 `302` 추정 높이를 사용한다.
 
-```swift
-.onAppear {
-    loadNativeAdIfNeeded()
-    nativeAdViewModel.loadAdIfNeeded()
-}
-```
-
-광고가 로드된 경우에만 grid item 목록에 광고 셀을 끼워 넣는다.
+향후 서버 커서 페이지네이션이 추가되면 누적된 팝업 수로 동일한 규칙을 다시 계산한다. 기존 슬롯 ID와 위치는 유지되고, 새 임계치를 넘은 슬롯만 추가된다.
 
 ## 13. 테스트 광고 기준
 
