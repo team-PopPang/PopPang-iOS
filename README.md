@@ -179,10 +179,10 @@ let response = try await provider.asyncRequest(.getPopupList)
 > 자식 Feature는 delegate action으로 이동 의도만 전달하도록 구성. 
 >
 > **성과**  
-> 🔸 일반 Feature 사이의 직접 의존 제거. 
-> 🔸 화면 전환의 상태와 규칙을 `MainTabFeature`에서 한 번에 추적 
-> 🔸 자식 Feature를 독립적으로 개발하고 테스트할 수 있는 경계 확보 
-> 🔸 화면 이동 closure 없이 TCA state/action으로 네비게이션 표현  
+> 🔸 일반 Feature 사이의 직접 의존 제거    
+> 🔸 화면 전환의 상태와 규칙을 `MainTabFeature`에서 한 번에 추적  
+> 🔸 자식 Feature를 독립적으로 개발하고 테스트할 수 있는 경계 확보  
+> 🔸 화면 이동 closure 없이 TCA state/action으로 네비게이션 표현   
 
 ```text
 PopPangApp
