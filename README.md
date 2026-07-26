@@ -62,21 +62,21 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 ### **1. 선언형 List DSL로 UIKit과 SwiftUI 목록 구현 통합**
 > **문제**
 >
-> SwiftUI `List`는 표준 목록을 빠르게 만들기 좋지만 복잡한 scroll lifecycle, prefetch, pagination과 업데이트 전략을 직접 제어하기 어려웠음
+> SwiftUI `List`는 표준 목록을 빠르게 만들기 좋지만 복잡한 scroll lifecycle, prefetch, pagination과 업데이트 전략을 직접 제어하기 어려웠음. 
 > 반대로 `UICollectionView`는 동작을 예측하고 튜닝할 수 있지만 화면마다 data source와 delegate 연결 코드가 반복됐음
 >
 > **해결**
 >
-> `UICollectionView`와 DifferenceKit을 Core로 유지하면서 `List`, `Section`, `Cell`로 구성하는 선언형 DSL을 구현
+> `UICollectionView`와 DifferenceKit을 Core로 유지하면서 `List`, `Section`, `Cell`로 구성하는 선언형 DSL을 구현  
 > 기존 UIKit `Component`와 SwiftUI `View`가 같은 diff, layout, event 경로를 공유하도록 `PopPangListKit` 외부 라이브러리로 분리
 >
 > **성과**
 >
-> 🔸 UIKit의 cell reuse, compositional layout과 scroll 제어를 유지하면서 선언형 목록 작성 가능
-> 🔸 UIKit Component와 SwiftUI View를 하나의 Section에서 함께 사용
-> 🔸 DifferenceKit 기반 변경 중심 batch update와 `reloadData()` fallback 제공
-> 🔸 Binding Cell과 최신 snapshot 병합으로 Toggle 같은 입력 상태를 안정적으로 갱신
-> 🔸 framework와 tests는 **iOS 13+**, Demo app은 **iOS 17+** 지원
+> 🔸 UIKit의 cell reuse, compositional layout과 scroll 제어를 유지하면서 선언형 목록 작성 가능  
+> 🔸 UIKit Component와 SwiftUI View를 하나의 Section에서 함께 사용  
+> 🔸 DifferenceKit 기반 변경 중심 batch update와 `reloadData()` fallback 제공  
+> 🔸 Binding Cell과 최신 snapshot 병합으로 Toggle 같은 입력 상태를 안정적으로 갱신  
+> 🔸 framework와 tests는 **iOS 13+**, Demo app은 **iOS 17+** 지원  
 
 ```swift
 struct PopupListView: View {
@@ -171,18 +171,18 @@ let response = try await provider.asyncRequest(.getPopupList)
 
 ### **4. MainTabFeature에서 Feature 조립과 TCA 네비게이션 통합**
 > **문제**  
-> Feature가 다른 Feature를 직접 의존하면 화면 이동 하나를 변경해도 여러 모듈이 함께 영향을 받고,
+> Feature가 다른 Feature를 직접 의존하면 화면 이동 하나를 변경해도 여러 모듈이 함께 영향을 받고,  
 > 각 Feature의 독립성과 재사용성이 낮아짐
 >
 > **해결**  
-> 메인 탭 하위 Feature의 조립과 화면 이동 책임을 `MainTabFeature`로 모으고,
-> 자식 Feature는 delegate action으로 이동 의도만 전달하도록 구성
+> 메인 탭 하위 Feature의 조립과 화면 이동 책임을 `MainTabFeature`로 모으고,  
+> 자식 Feature는 delegate action으로 이동 의도만 전달하도록 구성. 
 >
 > **성과**  
-> 🔸 일반 Feature 사이의 직접 의존 제거
-> 🔸 화면 전환의 상태와 규칙을 `MainTabFeature`에서 한 번에 추적
-> 🔸 자식 Feature를 독립적으로 개발하고 테스트할 수 있는 경계 확보
-> 🔸 화면 이동 closure 없이 TCA state/action으로 네비게이션 표현
+> 🔸 일반 Feature 사이의 직접 의존 제거. 
+> 🔸 화면 전환의 상태와 규칙을 `MainTabFeature`에서 한 번에 추적 
+> 🔸 자식 Feature를 독립적으로 개발하고 테스트할 수 있는 경계 확보 
+> 🔸 화면 이동 closure 없이 TCA state/action으로 네비게이션 표현  
 
 ```text
 PopPangApp
