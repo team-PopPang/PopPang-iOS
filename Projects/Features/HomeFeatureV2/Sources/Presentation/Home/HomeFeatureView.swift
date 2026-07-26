@@ -15,13 +15,13 @@ public struct HomeFeatureView: View {
     @State private var presentedSheetRoute: HomeSheetRoute?
     @State private var nativeAdPlacementDate = Date()
     @StateObject private var nativeAdSlotStore = AdNativeAdSlotStore()
-
+    
     public init(
         store: StoreOf<HomeFeature>
     ) {
         self.store = store
     }
-
+    
     public var body: some View {
         ZStack {
             // MARK: - background
@@ -29,7 +29,7 @@ public struct HomeFeatureView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-
+                
                 // MARK: - Navigationbar
                 HomeNavigationBar(
                     userUuid: store.userUuid,
@@ -97,7 +97,7 @@ public struct HomeFeatureView: View {
                     districts: { $0.districtList }
                 )
                 .presentationDetents([.medium])
-
+                
             case .sortSheet:
                 SortButtonSheet(selectedOption: selectedOptionBinding)
                     .presentationDetents([.height(270)])
@@ -201,7 +201,7 @@ extension HomeFeatureView {
                             )
                         }
                     )
-
+                    
                 case .nativeAd(let slotID):
                     HomeNativeAdGridCell(
                         viewModel: nativeAdSlotStore.viewModel(for: slotID)
@@ -260,18 +260,18 @@ private extension HomeFeatureView {
             date: nativeAdPlacementDate
         )
     }
-
+    
     var nativeAdPlacementIDs: [String] {
         nativeAdPlacements.map(\.id)
     }
-
+    
     var loadedNativeAdPlacements: [AdNativeAdPlacement] {
         let loadedSlotIDs = nativeAdSlotStore.loadedSlotIDs(
             in: nativeAdPlacementIDs
         )
         return nativeAdPlacements.filter { loadedSlotIDs.contains($0.id) }
     }
-
+    
     var gridItems: [AdInjectedListItem<Popup>] {
         AdInjectedListItemBuilder.make(
             items: store.gridPopups,
@@ -279,11 +279,11 @@ private extension HomeFeatureView {
             id: \.popupUuid
         )
     }
-
+    
     var filterStore: StoreOf<HomeFilterFeature> {
         store.scope(state: \.filter, action: \.filter)
     }
-
+    
     var selectedRegionBinding: Binding<RegionList?> {
         Binding(
             get: { filterStore.selectedRegion },
@@ -293,7 +293,7 @@ private extension HomeFeatureView {
             }
         )
     }
-
+    
     var selectedDistrictBinding: Binding<String?> {
         Binding(
             get: { filterStore.selectedDistrict },
@@ -303,7 +303,7 @@ private extension HomeFeatureView {
             }
         )
     }
-
+    
     var selectedOptionBinding: Binding<SortButton.SortOption> {
         Binding(
             get: { filterStore.selectedOption },
@@ -312,11 +312,11 @@ private extension HomeFeatureView {
             }
         )
     }
-
+    
     func handleSheetDismiss() {
         guard let activeSheetRoute = presentedSheetRoute else { return }
         defer { presentedSheetRoute = nil }
-
+        
         switch activeSheetRoute {
         case .regionSheet, .sortSheet:
             store.send(.refreshFilteredPopupList)
