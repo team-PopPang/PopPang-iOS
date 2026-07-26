@@ -5,7 +5,7 @@ import Core
 import Domain
 import FavoritesFeature
 import Foundation
-import HomeFeature
+import HomeFeatureV2
 import MapFeature
 import PopupDetailFeature
 import PopPangRNFeature
@@ -184,6 +184,7 @@ public struct MainTabFeature {
         case profile(ProfileFeature.Action)
         case destination(PresentationAction<Destination.Action>)
         case path(StackActionOf<Path>)
+        case searchDismissTeardownCompleted
         case logoutNavigationTeardownRequested
         case logoutNavigationTeardownCompleted
         case delegate(Delegate)
@@ -246,7 +247,7 @@ public struct MainTabFeature {
                 appendPopupDetail(popup, state: &state)
                 return .none
                 
-            case .home(.delegate(.comingPopupsRequested(let popups))):
+            case .home(.delegate(.comingPopupsTapped(let popups))):
                 state.core.path.append(
                     .homeComingPopupDetail(
                         .init(
@@ -257,7 +258,7 @@ public struct MainTabFeature {
                 )
                 return .none
                 
-            case .home(.delegate(.popupRequestManagementRequested)):
+            case .home(.delegate(.popupRequestManagementTapped)):
                 state.core.path.append(
                     .popupRequestManagement(
                         .init(
@@ -268,7 +269,7 @@ public struct MainTabFeature {
                 )
                 return .none
                 
-            case .home(.delegate(.alertRequested)):
+            case .home(.delegate(.alertTapped)):
                 state.core.path.append(.alert(.init(user: state.core.user)))
                 return .none
                 
@@ -276,7 +277,7 @@ public struct MainTabFeature {
                 state.core.path.append(.alert(.init(user: state.core.user)))
                 return .none
                 
-            case .home(.delegate(.searchRequested)):
+            case .home(.delegate(.searchTapped)):
                 state.core.destination = .search(
                     .init(
                         userUuid: state.core.user.userUuid,
@@ -285,7 +286,7 @@ public struct MainTabFeature {
                 )
                 return .none
 
-            case .home(.delegate(.popupRequestRequested)):
+            case .home(.delegate(.popupRequestTapped)):
                 state.core.destination = .popupRequest(
                     .init(
                         screen: .popupRequest,
@@ -326,10 +327,17 @@ public struct MainTabFeature {
                 return .none
 
             case .destination(.presented(.search(.delegate(.dismiss)))):
+                return .run { send in
+                    await Task.yield()
+                    await send(.searchDismissTeardownCompleted)
+                }
+
+            case .destination(.presented(.popupRequest(.delegate(.dismiss)))):
                 state.core.destination = nil
                 return .none
 
-            case .destination(.presented(.popupRequest(.delegate(.dismiss)))):
+            case .searchDismissTeardownCompleted:
+                guard case .search = state.core.destination else { return .none }
                 state.core.destination = nil
                 return .none
 
@@ -363,7 +371,7 @@ public struct MainTabFeature {
 
             case .path:
                 return .none
-                
+
             case .delegate:
                 return .none
             }
@@ -410,7 +418,7 @@ private extension MainTabFeature {
             return .none
 
         case let .popupDetail(.delegate(.favoriteChanged(popupUuid, isFavorited, favoriteCount))):
-            return .send(.home(.favoriteUpdated(
+            return .send(.home(.favoriteUpdateResponse(
                 popupUuid: popupUuid,
                 isFavorited: isFavorited,
                 favoriteCount: favoriteCount

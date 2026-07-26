@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Core
 import Domain
 import DSKit
 import Foundation
@@ -7,55 +8,56 @@ import Foundation
 public struct HomeFeature {
     @ObservableState
     public struct State: Equatable {
-        public var userUuid: String
-        public var nickname: String
-        public var isAdmin: Bool
-        var bestPopups: [Popup] = []
-        var comingPopups: [Popup] = []
-        var gridPopups: [Popup] = []
+        public var userUuid: String //
+        public var nickname: String //
+        public var isAdmin: Bool //
+        var bestPopups: [Popup] = [] //
+        var comingPopups: [Popup] = [] //
+        var gridPopups: [Popup] = [] //
         var filter = HomeFilter.State()
-        var isLoading = false
-        var errorMessage: String?
+        var isLoading = false //
+        var errorMessage: String? //
 
         public init(
-            user: User
+            user: User //
         ) {
-            self.userUuid = user.userUuid
-            self.nickname = user.nickname ?? "닉네임"
-            self.isAdmin = user.role.uppercased() == "ADMIN"
+            Logger.d("디버그: \(user)")
+            self.userUuid = user.userUuid //
+            self.nickname = user.nickname ?? "닉네임" //
+            self.isAdmin = user.role.uppercased() == "ADMIN" //
         }
     }
 
     public enum Action {
-        case onAppear
+        case onAppear //
         case filter(HomeFilter.Action)
         case toggleLike(Popup)
-        case popupSelected(Popup)
-        case alertTapped
-        case searchTapped
-        case comingPopupsTapped([Popup])
-        case popupRequestTapped
-        case popupRequestManagementTapped
-        case refreshFilteredPopupList
-        case popupSectionsLoaded(HomePopupSections)
-        case filteredPopupListLoaded([Popup])
-        case favoriteUpdated(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
-        case loadingChanged(Bool)
-        case errorMessageChanged(String?)
-        case nicknameUpdated(String)
-        case delegate(Delegate)
+        case popupSelected(Popup) //
+        case alertTapped //
+        case searchTapped //
+        case comingPopupsTapped([Popup]) //
+        case popupRequestTapped //
+        case popupRequestManagementTapped //
+        case refreshFilteredPopupList //
+        case popupSectionsLoaded(HomePopupSections) //
+        case filteredPopupListLoaded([Popup]) //
+        case favoriteUpdated(popupUuid: String, isFavorited: Bool, favoriteCount: Int) //
+        case loadingChanged(Bool) //
+        case errorMessageChanged(String?) //
+        case nicknameUpdated(String) //
+        case delegate(Delegate) //
 
         public enum Delegate: Equatable {
-            case popupSelected(Popup)
-            case alertRequested
-            case comingPopupsRequested([Popup])
-            case searchRequested
-            case popupRequestRequested
-            case popupRequestManagementRequested
+            case popupSelected(Popup) //
+            case alertRequested //
+            case comingPopupsRequested([Popup]) //
+            case searchRequested //
+            case popupRequestRequested //
+            case popupRequestManagementRequested //
         }
     }
 
-    @Dependency(\.homePopupClient) private var popupClient: HomePopupClient
+    @Dependency(\.homePopupClient) private var popupClient: HomePopupClient//
 
     public init() {}
 

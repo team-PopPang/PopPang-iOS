@@ -51,6 +51,10 @@ jobs:
           ADMOB_APP_ID = ca-app-pub-3940256099942544~1458002511
           ADMOB_NATIVE_AD_UNIT_ID = ca-app-pub-3940256099942544/3986624511
           EOF
+          cat <<EOF > Projects/Features/HomeFeatureV2/Demo/HomeFeatureV2Demo.xcconfig
+          ADMOB_APP_ID = cidummy
+          HOME_DEMO_USER_UUID = cidummy
+          EOF
 
       - name: Resolve Tuist dependencies from manifest
         run: |

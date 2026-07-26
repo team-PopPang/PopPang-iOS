@@ -18,7 +18,7 @@ let project = Project(
                 .project(target: "Core", path: "../../Shared/Core"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
                 .project(target: "FavoritesFeature", path: "../FavoritesFeature"),
-                .project(target: "HomeFeature", path: "../HomeFeature"),
+                .project(target: "HomeFeatureV2", path: "../HomeFeatureV2"),
                 .project(target: "MapFeature", path: "../MapFeature"),
                 .project(target: "PopupDetailFeature", path: "../PopupDetailFeature"),
                 .project(target: "PopPangRNFeature", path: "../PopPangRNFeature"),

@@ -3,8 +3,8 @@ import CalendarFeature
 import ComposableArchitecture
 import DSKit
 import FavoritesFeature
-import struct HomeFeature.HomeComingPopupDetailDestinationView
-import struct HomeFeature.HomeFeatureView
+import struct HomeFeatureV2.HomeComingPopupDetailDestinationView
+import struct HomeFeatureV2.HomeFeatureView
 import MapFeature
 import PopupDetailFeature
 import PopPangRNFeature

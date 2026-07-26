@@ -13,7 +13,7 @@ struct MainTabFeatureTests {
         }
         store.exhaustivity = .off
 
-        await store.send(.home(.delegate(.searchRequested)))
+        await store.send(.home(.delegate(.searchTapped)))
 
         guard case let .search(searchState)? = store.state.core.destination else {
             Issue.record("search destination should be presented")
@@ -31,7 +31,7 @@ struct MainTabFeatureTests {
         }
         store.exhaustivity = .off
 
-        await store.send(.home(.delegate(.popupRequestRequested)))
+        await store.send(.home(.delegate(.popupRequestTapped)))
 
         guard case let .popupRequest(popupRequestState)? = store.state.core.destination else {
             Issue.record("popup request destination should be presented")
@@ -56,7 +56,9 @@ struct MainTabFeatureTests {
             MainTabFeature()
         }
 
-        await store.send(.destination(.presented(.search(.delegate(.dismiss))))) {
+        await store.send(.destination(.presented(.search(.delegate(.dismiss)))))
+
+        await store.receive(\.searchDismissTeardownCompleted) {
             $0.core.destination = nil
         }
     }

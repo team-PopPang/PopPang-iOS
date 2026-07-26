@@ -75,7 +75,11 @@ public struct SearchFeature {
                 return .none
 
             case .dismissTapped:
-                return .send(.delegate(.dismiss))
+                state.isLoading = false
+                return .merge(
+                    .cancel(id: CancelID.search),
+                    .send(.delegate(.dismiss))
+                )
 
             case .popupSelected(let popup):
                 return .send(.delegate(.popupSelected(popup)))

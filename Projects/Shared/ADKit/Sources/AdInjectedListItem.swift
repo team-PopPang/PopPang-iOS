@@ -31,6 +31,8 @@ public enum AdInjectedListItem<Item>: Identifiable {
     }
 }
 
+extension AdInjectedListItem: Equatable where Item: Equatable {}
+
 /// 기존 콘텐츠 배열에 네이티브 광고 아이템을 삽입하는 유틸리티입니다.
 public enum AdInjectedListItemBuilder {
     /// 광고 배치 목록을 기준으로 리스트 아이템 배열을 생성합니다.

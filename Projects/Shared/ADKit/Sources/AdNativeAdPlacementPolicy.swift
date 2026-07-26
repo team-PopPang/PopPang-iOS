@@ -84,9 +84,68 @@ public extension AdNativeAdPlacementConfiguration {
             ),
         ]
     )
+
+    /// Home grid pagination uses the same first three rules as `homeGrid` and
+    /// keeps adding slots with the same cadence as more content is appended.
+    static func paginatedHomeGrid(contentCount: Int) -> Self {
+        let normalizedContentCount = max(contentCount, 0)
+        let firstSlotMinimumContentCount = 8
+        let contentCountPerAdditionalSlot = 12
+
+        guard normalizedContentCount >= firstSlotMinimumContentCount else {
+            return .init(
+                placementKey: "home-grid-native-ad",
+                rules: []
+            )
+        }
+
+        let slotCount =
+            (normalizedContentCount - firstSlotMinimumContentCount)
+            / contentCountPerAdditionalSlot
+            + 1
+
+        let slots = (0..<slotCount).map { slotOffset in
+            AdNativeAdPlacementSlot(
+                id: "native-ad-\(slotOffset + 1)",
+                candidateIndexes: [
+                    4 + (10 * slotOffset),
+                    6 + (10 * slotOffset),
+                ]
+            )
+        }
+
+        return .init(
+            placementKey: "home-grid-native-ad",
+            rules: [
+                AdNativeAdPlacementRule(
+                    minimumContentCount: 0,
+                    slots: slots
+                ),
+            ]
+        )
+    }
 }
 
 public enum AdNativeAdPlacementPolicy {
+    /// Returns a pagination-safe Home grid schedule.
+    ///
+    /// The first three slots match `homeGrid` exactly. Additional slots keep
+    /// the same 12-content threshold and 10-index placement cadence.
+    public static func paginatedHomeGridPlacements(
+        contentCount: Int,
+        userIdentifier: String,
+        adCount: Int? = nil,
+        date: Date = Date()
+    ) -> [AdNativeAdPlacement] {
+        placements(
+            contentCount: contentCount,
+            userIdentifier: userIdentifier,
+            adCount: adCount,
+            date: date,
+            configuration: .paginatedHomeGrid(contentCount: contentCount)
+        )
+    }
+
     public static func placements(
         contentCount: Int,
         userIdentifier: String,

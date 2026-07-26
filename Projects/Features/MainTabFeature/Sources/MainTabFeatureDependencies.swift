@@ -4,7 +4,7 @@ import ComposableArchitecture
 import Core
 import Domain
 import FavoritesFeature
-import HomeFeature
+import HomeFeatureV2
 import MapFeature
 import PopupDetailFeature
 import ProfileFeature
