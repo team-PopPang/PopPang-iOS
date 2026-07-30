@@ -191,7 +191,10 @@ private struct ImageSliderView: View {
 
                 HStack(alignment: .bottom) {
                     Text("\(popup.viewCount)명이 봤어요")
-                        .ppStyleFont(.scdream(.regular, size: 12))
+                        .ppStyleFont(
+                            .scdream(.regular, size: 12),
+                            lineHeightPt: 16.8
+                        )
                         .foregroundStyle(Color.mainBlack)
                         .padding(.vertical, 6)
                         .padding(.horizontal, 24)
@@ -222,8 +225,12 @@ private struct TitleView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
                 Text(popup.name)
-                    .ppStyleFont(.scdream(.bold, size: 20))
+                    .ppStyleFont(
+                        .scdream(.bold, size: 18),
+                        lineHeightPt: 25.2
+                    )
                     .foregroundStyle(Color.mainBlack)
+                    .lineLimit(1)
             }
 
             if let tag = popup.recommendList.first {
@@ -242,13 +249,19 @@ private struct InfoView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 20) {
                 Text("운영 장소")
-                    .ppStyleFont(.scdream(.regular, size: 15))
+                    .ppStyleFont(
+                        .scdream(.regular, size: 15),
+                        lineHeightPt: 21
+                    )
                     .foregroundStyle(Color.mainGray)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text(popup.roadAddress)
                 }
-                .ppStyleFont(.scdream(.regular, size: 15))
+                .ppStyleFont(
+                    .scdream(.regular, size: 15),
+                    lineHeightPt: 21
+                )
                 .foregroundStyle(Color.mainBlack)
 
                 Button {
@@ -267,21 +280,29 @@ private struct InfoView: View {
 
             HStack(spacing: 20) {
                 Text("운영 날짜")
-                    .ppStyleFont(.scdream(.regular, size: 15))
+                    .ppStyleFont(
+                        .scdream(.regular, size: 15),
+                        lineHeightPt: 21
+                    )
                     .foregroundStyle(Color.mainGray)
-                HStack(spacing: 10) {
-                    Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
-                    Text("-")
-                    Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
-                }
-                .ppStyleFont(.scdream(.regular, size: 15))
+                Text(
+                    "\(popup.startDate, formatter: DateFormatter.popupDateFormat) - \(popup.endDate, formatter: DateFormatter.popupDateFormat)"
+                )
+                .ppStyleFont(
+                    .scdream(.regular, size: 15),
+                    lineHeightPt: 21,
+                    letterSpacingPt: -1
+                )
                 .foregroundStyle(Color.mainBlack)
             }
 
             HStack(spacing: 20) {
                 if popup.openTime != nil, popup.closeTime != nil {
                     Text("운영 시간")
-                        .ppStyleFont(.scdream(.regular, size: 15))
+                        .ppStyleFont(
+                            .scdream(.regular, size: 15),
+                            lineHeightPt: 21
+                        )
                         .foregroundStyle(Color.mainGray)
                 }
                 HStack(spacing: 10) {
@@ -291,7 +312,10 @@ private struct InfoView: View {
                         Text(closeTime)
                     }
                 }
-                .ppStyleFont(.scdream(.regular, size: 15))
+                .ppStyleFont(
+                    .scdream(.regular, size: 15),
+                    lineHeightPt: 21
+                )
                 .foregroundStyle(Color.mainBlack)
             }
         }
@@ -313,8 +337,7 @@ private struct BodyView: View {
             Text(popup.captionSummary)
                 .ppStyleFont(
                     .scdream(.regular, size: 15),
-                    lineHeight: 1.6,
-                    letterSpacing: 0.02
+                    lineHeightPt: 24
                 )
 
             // ReviewPreviewSection(reviews: reviews) {
@@ -327,8 +350,10 @@ private struct BodyView: View {
                 PopupDivider(padding: 20)
 
                 Text("SNS / 홈페이지")
-                    .font(.scdream(.medium, size: 15))
-                    .frame(height: 21)
+                    .ppStyleFont(
+                        .scdream(.medium, size: 15),
+                        lineHeightPt: 21
+                    )
 
                 SNSButton(
                     imageName: "insta",
@@ -344,7 +369,10 @@ private struct BodyView: View {
                 PopupDivider(padding: 20)
 
                 Text("이런 팝업은 어때?")
-                    .ppStyleFont(.scdream(.medium, size: 15))
+                    .ppStyleFont(
+                        .scdream(.medium, size: 15),
+                        lineHeightPt: 22
+                    )
 
                 RecommendPopupScrollView(
                     relatedPopupList: relatedPopupList,
@@ -374,6 +402,8 @@ private struct BottomTabBarView: View {
         HStack(spacing: 20) {
             MainOrangeButton(
                 buttonTitle: "친구에게 공유하기",
+                textFont: .scdream(.medium, size: 12),
+                textLineHeightPt: 22,
                 isReversed: false,
                 height: 40,
                 action: onShare
@@ -389,7 +419,10 @@ private struct BottomTabBarView: View {
                 )
 
                 Text("\(popup.favoriteCount)")
-                    .ppStyleFont(.scdream(.regular, size: 12))
+                    .ppStyleFont(
+                        .scdream(.medium, size: 12),
+                        lineHeightPt: 15
+                    )
             }
         }
     }
@@ -513,14 +546,20 @@ private struct RecommendPopupCell: View {
                 .clipped()
 
             Text(popup.roadAddress.shortAddress)
-                .font(.scdream(.regular, size: 12))
+                .ppStyleFont(
+                    .scdream(.regular, size: 12),
+                    lineHeightPt: 16.8
+                )
                 .foregroundStyle(Color.mainBlack)
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .padding(.top, 10)
 
             Text(popup.name)
-                .font(.scdream(.medium, size: 12))
+                .ppStyleFont(
+                    .scdream(.medium, size: 12),
+                    lineHeightPt: 16.8
+                )
                 .foregroundStyle(Color.mainBlack)
                 .lineLimit(1)
                 .truncationMode(.tail)
@@ -570,7 +609,10 @@ private struct SNSButton: View {
                     .frame(width: 12, height: 12)
 
                 Text(buttonTitle)
-                    .ppStyleFont(.scdream(.medium, size: 10))
+                    .ppStyleFont(
+                        .scdream(.medium, size: 10),
+                        lineHeightPt: 14
+                    )
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 10)

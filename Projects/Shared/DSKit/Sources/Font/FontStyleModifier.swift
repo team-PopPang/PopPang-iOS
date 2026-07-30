@@ -32,6 +32,23 @@ public struct StyleModifier: ViewModifier {
     }
 }
 
+public struct PointFontStyleModifier: ViewModifier {
+    let font: UIFont
+    let lineHeightPt: CGFloat
+    let letterSpacingPt: CGFloat
+
+    public func body(content: Content) -> some View {
+        // SwiftUI adds lineSpacing on top of the font's natural line height.
+        let lineSpacing = max(0, lineHeightPt - font.lineHeight)
+
+        return content
+            .font(Font(font))
+            .padding(.vertical, lineSpacing / 2)
+            .lineSpacing(lineSpacing)
+            .tracking(letterSpacingPt)
+    }
+}
+
 public extension View {
     func ppStyleFont(
         _ font: UIFont,
@@ -72,5 +89,19 @@ public extension View {
             .padding(.vertical, lineSpacing / 2)
             .lineSpacing(lineSpacing)
             .tracking(letterSpacingPt)
+    }
+
+    func ppStyleFont(
+        _ font: UIFont,
+        lineHeightPt: CGFloat,
+        letterSpacingPt: CGFloat = 0
+    ) -> some View {
+        modifier(
+            PointFontStyleModifier(
+                font: font,
+                lineHeightPt: lineHeightPt,
+                letterSpacingPt: letterSpacingPt
+            )
+        )
     }
 }
