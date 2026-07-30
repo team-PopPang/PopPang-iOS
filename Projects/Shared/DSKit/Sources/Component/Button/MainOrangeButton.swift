@@ -1,7 +1,11 @@
 import SwiftUI
+import UIKit
 
 public struct MainOrangeButton: View {
     var buttonTitle: String
+    var textFont: UIFont
+    var textLineHeightPt: CGFloat
+    var textLetterSpacingPt: CGFloat
     var textColor: Color
     var buttonColor: Color
     var isReversed: Bool
@@ -10,6 +14,9 @@ public struct MainOrangeButton: View {
 
     public init(
         buttonTitle: String,
+        textFont: UIFont = .scdream(.bold, size: 14),
+        textLineHeightPt: CGFloat? = nil,
+        textLetterSpacingPt: CGFloat = 0,
         textColor: Color = .mainWhite,
         buttonColor: Color = .mainOrange,
         isReversed: Bool = false,
@@ -17,6 +24,9 @@ public struct MainOrangeButton: View {
         action: @escaping () -> Void
     ) {
         self.buttonTitle = buttonTitle
+        self.textFont = textFont
+        self.textLineHeightPt = textLineHeightPt ?? textFont.lineHeight
+        self.textLetterSpacingPt = textLetterSpacingPt
         self.textColor = textColor
         self.buttonColor = buttonColor
         self.isReversed = isReversed
@@ -29,7 +39,11 @@ public struct MainOrangeButton: View {
             action()
         } label: {
             Text(buttonTitle)
-                .font(.scdream(.bold, size: 14))
+                .ppStyleFont(
+                    textFont,
+                    lineHeightPt: textLineHeightPt,
+                    letterSpacingPt: textLetterSpacingPt
+                )
                 .frame(height: height)
                 .frame(maxWidth: .infinity)
                 .foregroundStyle(isReversed ? buttonColor : textColor)

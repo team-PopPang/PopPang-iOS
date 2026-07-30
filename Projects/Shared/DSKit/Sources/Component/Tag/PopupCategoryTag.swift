@@ -9,7 +9,10 @@ public struct PopupCategoryTag: View {
 
     public var body: some View {
         Text(text)
-            .ppStyleFont(.scdream(.regular, size: 11))
+            .ppStyleFont(
+                .scdream(.regular, size: 11),
+                lineHeightPt: 15.4
+            )
             .foregroundStyle(Color.subOrange)
             .padding(.vertical, 5)
             .padding(.horizontal, 10)
