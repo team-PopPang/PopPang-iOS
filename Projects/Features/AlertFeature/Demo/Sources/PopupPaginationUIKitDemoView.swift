@@ -351,6 +351,8 @@ final class PopupPaginationUIKitCardView: UIView {
     ) {
         cancelImageLoad()
         self.imagePipeline = imagePipeline
+        thumbnailImageView.image = UIImage(systemName: "photo")
+        thumbnailImageView.tintColor = UIColor(Color.mainGray)
         regionLabel.text = item.region
         nameLabel.text = item.name
         dateLabel.text = "\(item.startDate) - \(item.endDate)"
