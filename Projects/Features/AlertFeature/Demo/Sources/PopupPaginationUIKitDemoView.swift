@@ -1,11 +1,11 @@
 import ComposableArchitecture
 import DSKit
-import Kingfisher
 import SwiftUI
 import UIKit
 
 struct PopupPaginationUIKitDemoView: View {
     @Bindable var store: StoreOf<PopupPaginationDemoFeature>
+    @State private var imagePipeline = PopupPaginationImagePipeline()
 
     var body: some View {
         PopupPaginationDemoScaffold(
@@ -45,7 +45,8 @@ private extension PopupPaginationUIKitDemoView {
                     items: store.items,
                     canLoadNextPage: store.hasNext
                         && !store.isRequesting
-                        && store.errorMessage == nil
+                        && store.errorMessage == nil,
+                    imagePipeline: imagePipeline
                 ) {
                     store.send(.reachedEnd)
                 }
@@ -66,10 +67,14 @@ private extension PopupPaginationUIKitDemoView {
 private struct PopupPaginationUIKitCollectionView: UIViewControllerRepresentable {
     let items: [PopupPaginationItem]
     let canLoadNextPage: Bool
+    let imagePipeline: PopupPaginationImagePipeline
     let onReachedEnd: () -> Void
 
     func makeUIViewController(context: Context) -> PopupPaginationUIKitViewController {
-        PopupPaginationUIKitViewController(onReachedEnd: onReachedEnd)
+        PopupPaginationUIKitViewController(
+            imagePipeline: imagePipeline,
+            onReachedEnd: onReachedEnd
+        )
     }
 
     func updateUIViewController(
@@ -90,13 +95,18 @@ private final class PopupPaginationUIKitViewController: UIViewController {
     }
 
     private let onReachedEnd: () -> Void
+    private let imagePipeline: PopupPaginationImagePipeline
     private let collectionView: UICollectionView
     private var dataSource: UICollectionViewDiffableDataSource<Section, String>!
     private var itemsByID: [String: PopupPaginationItem] = [:]
-    private var prefetchTasks: [String: DownloadTask] = [:]
+    private var prefetchTokens: [String: UUID] = [:]
     private var canLoadNextPage = false
 
-    init(onReachedEnd: @escaping () -> Void) {
+    init(
+        imagePipeline: PopupPaginationImagePipeline,
+        onReachedEnd: @escaping () -> Void
+    ) {
+        self.imagePipeline = imagePipeline
         self.onReachedEnd = onReachedEnd
         self.collectionView = UICollectionView(
             frame: .zero,
@@ -140,7 +150,7 @@ private final class PopupPaginationUIKitViewController: UIViewController {
     }
 
     deinit {
-        prefetchTasks.values.forEach { $0.cancel() }
+        prefetchTokens.values.forEach { imagePipeline.cancelPrefetch($0) }
     }
 }
 
@@ -190,8 +200,11 @@ private extension PopupPaginationUIKitViewController {
             PopupPaginationCollectionViewCell,
             String
         > { [weak self] cell, _, itemID in
-            guard let item = self?.itemsByID[itemID] else { return }
-            cell.configure(with: item)
+            guard let self, let item = itemsByID[itemID] else { return }
+            cell.configure(
+                with: item,
+                imagePipeline: imagePipeline
+            )
         }
 
         dataSource = UICollectionViewDiffableDataSource<Section, String>(
@@ -213,17 +226,13 @@ extension PopupPaginationUIKitViewController: UICollectionViewDataSourcePrefetch
     ) {
         for indexPath in indexPaths {
             guard let itemID = dataSource.itemIdentifier(for: indexPath),
-                  prefetchTasks[itemID] == nil,
+                  prefetchTokens[itemID] == nil,
                   let url = itemsByID[itemID]?.thumbnailURL
             else {
                 continue
             }
 
-            prefetchTasks[itemID] = KingfisherManager.shared.retrieveImage(
-                with: url,
-                options: [.cacheOriginalImage],
-                completionHandler: nil
-            )
+            prefetchTokens[itemID] = imagePipeline.prefetchImage(at: url)
         }
     }
 
@@ -235,12 +244,28 @@ extension PopupPaginationUIKitViewController: UICollectionViewDataSourcePrefetch
             guard let itemID = dataSource.itemIdentifier(for: indexPath) else {
                 continue
             }
-            prefetchTasks.removeValue(forKey: itemID)?.cancel()
+            guard let token = prefetchTokens.removeValue(forKey: itemID) else {
+                continue
+            }
+            imagePipeline.cancelPrefetch(token)
         }
     }
 }
 
 extension PopupPaginationUIKitViewController: UICollectionViewDelegate {
+    func collectionView(
+        _ collectionView: UICollectionView,
+        willDisplay cell: UICollectionViewCell,
+        forItemAt indexPath: IndexPath
+    ) {
+        guard let itemID = dataSource.itemIdentifier(for: indexPath),
+              let token = prefetchTokens.removeValue(forKey: itemID)
+        else {
+            return
+        }
+        imagePipeline.cancelPrefetch(token)
+    }
+
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         guard canLoadNextPage,
               scrollView.isDragging || scrollView.isDecelerating,
@@ -285,8 +310,14 @@ private final class PopupPaginationCollectionViewCell: UICollectionViewCell {
         cardView.reset()
     }
 
-    func configure(with item: PopupPaginationItem) {
-        cardView.configure(with: item)
+    func configure(
+        with item: PopupPaginationItem,
+        imagePipeline: PopupPaginationImagePipeline
+    ) {
+        cardView.configure(
+            with: item,
+            imagePipeline: imagePipeline
+        )
     }
 }
 
@@ -298,6 +329,8 @@ final class PopupPaginationUIKitCardView: UIView {
     private let nameLabel = UILabel()
     private let dateLabel = UILabel()
     private let uuidLabel = UILabel()
+    private var imagePipeline: PopupPaginationImagePipeline?
+    private var imageLoadID: UUID?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -311,7 +344,12 @@ final class PopupPaginationUIKitCardView: UIView {
         fatalError("init(coder:) has not been implemented")
     }
 
-    func configure(with item: PopupPaginationItem) {
+    func configure(
+        with item: PopupPaginationItem,
+        imagePipeline: PopupPaginationImagePipeline
+    ) {
+        cancelImageLoad()
+        self.imagePipeline = imagePipeline
         regionLabel.text = item.region
         nameLabel.text = item.name
         dateLabel.text = "\(item.startDate) - \(item.endDate)"
@@ -323,15 +361,16 @@ final class PopupPaginationUIKitCardView: UIView {
             ? UIColor(Color.mainOrange)
             : UIColor(Color.mainGray)
 
-        thumbnailImageView.kf.setImage(
-            with: item.thumbnailURL,
-            placeholder: UIImage(systemName: "photo"),
-            options: [.transition(.fade(0.15)), .cacheOriginalImage]
-        )
+        guard let thumbnailURL = item.thumbnailURL else { return }
+        imageLoadID = imagePipeline.loadImage(at: thumbnailURL) { [weak self] image in
+            self?.thumbnailImageView.image = image ?? UIImage(systemName: "photo")
+            self?.imageLoadID = nil
+        }
     }
 
     func reset() {
-        thumbnailImageView.kf.cancelDownloadTask()
+        cancelImageLoad()
+        imagePipeline = nil
         thumbnailImageView.image = UIImage(systemName: "photo")
         thumbnailImageView.tintColor = UIColor(Color.mainGray)
         regionLabel.text = nil
@@ -339,6 +378,12 @@ final class PopupPaginationUIKitCardView: UIView {
         dateLabel.text = nil
         uuidLabel.text = nil
         favoriteImageView.image = nil
+    }
+
+    private func cancelImageLoad() {
+        guard let imageLoadID else { return }
+        imagePipeline?.cancelImageLoad(imageLoadID)
+        self.imageLoadID = nil
     }
 
     override func sizeThatFits(_ size: CGSize) -> CGSize {

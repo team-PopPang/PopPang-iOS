@@ -1,9 +1,11 @@
 import ComposableArchitecture
 import DSKit
 import SwiftUI
+import UIKit
 
 struct PopupPaginationDemoView: View {
     @Bindable var store: StoreOf<PopupPaginationDemoFeature>
+    @State private var imagePipeline = PopupPaginationImagePipeline()
 
     var body: some View {
         PopupPaginationDemoScaffold(
@@ -46,7 +48,10 @@ private extension PopupPaginationDemoView {
         ScrollView {
             LazyVStack(spacing: 12) {
                 ForEach(store.items) { item in
-                    PopupPaginationCard(item: item)
+                    PopupPaginationCard(
+                        item: item,
+                        imagePipeline: imagePipeline
+                    )
                         .task(id: item.id) {
                             guard item.id == store.items.last?.id else { return }
                             store.send(.reachedEnd)
@@ -288,25 +293,14 @@ struct PopupPaginationListFooter: View {
 
 struct PopupPaginationCard: View {
     let item: PopupPaginationItem
+    let imagePipeline: PopupPaginationImagePipeline
 
     var body: some View {
         HStack(spacing: 14) {
-            AsyncImage(url: item.thumbnailURL) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .scaledToFill()
-                case .empty:
-                    ProgressView()
-                case .failure:
-                    Image(systemName: "photo")
-                        .font(.system(size: 22, weight: .light))
-                        .foregroundStyle(Color.mainGray)
-                @unknown default:
-                    EmptyView()
-                }
-            }
+            PopupPaginationRemoteImage(
+                url: item.thumbnailURL,
+                imagePipeline: imagePipeline
+            )
             .frame(width: 102, height: 126)
             .background(Color.mainGray.opacity(0.08))
             .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -355,5 +349,55 @@ struct PopupPaginationCard: View {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color.mainGray.opacity(0.12), lineWidth: 1)
         }
+    }
+}
+
+private struct PopupPaginationRemoteImage: View {
+    let url: URL?
+    let imagePipeline: PopupPaginationImagePipeline
+
+    @State private var image: UIImage?
+    @State private var loadID: UUID?
+    @State private var didFail = false
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+            } else if didFail || url == nil {
+                Image(systemName: "photo")
+                    .font(.system(size: 22, weight: .light))
+                    .foregroundStyle(Color.mainGray)
+            } else {
+                ProgressView()
+            }
+        }
+        .onAppear(perform: startLoading)
+        .onDisappear(perform: cancelLoading)
+        .onChange(of: url) {
+            cancelLoading()
+            image = nil
+            didFail = false
+            startLoading()
+        }
+    }
+}
+
+private extension PopupPaginationRemoteImage {
+    func startLoading() {
+        guard loadID == nil, image == nil, let url else { return }
+        loadID = imagePipeline.loadImage(at: url) { loadedImage in
+            image = loadedImage
+            didFail = loadedImage == nil
+            loadID = nil
+        }
+    }
+
+    func cancelLoading() {
+        guard let loadID else { return }
+        imagePipeline.cancelImageLoad(loadID)
+        self.loadID = nil
     }
 }

@@ -1,12 +1,11 @@
 import ComposableArchitecture
-import Kingfisher
 import PopPangListKit
 import SwiftUI
 import UIKit
 
 struct PopupPaginationListKitDemoView: View {
     @Bindable var store: StoreOf<PopupPaginationDemoFeature>
-    @State private var imagePrefetcher = PopupPaginationImagePrefetcher()
+    @State private var imagePipeline = PopupPaginationImagePipeline()
 
     var body: some View {
         PopupPaginationDemoScaffold(
@@ -60,7 +59,7 @@ private extension PopupPaginationListKitDemoView {
         PopPangList(
             prefetchingPlugins: [
                 RemoteImagePrefetchingPlugin(
-                    remoteImagePrefetcher: imagePrefetcher
+                    remoteImagePrefetcher: imagePipeline
                 ),
             ]
         ) {
@@ -69,7 +68,8 @@ private extension PopupPaginationListKitDemoView {
                     PopPangListKit.Cell(
                         id: item.id,
                         component: PopupPaginationListKitCardComponent(
-                            item: item
+                            item: item,
+                            imagePipeline: imagePipeline
                         )
                     )
                 }
@@ -99,6 +99,7 @@ private struct PopupPaginationListKitCardComponent:
     ComponentRemoteImagePrefetchable
 {
     let item: PopupPaginationItem
+    let imagePipeline: PopupPaginationImagePipeline
 
     var layoutMode: ContentLayoutMode {
         .flexibleHeight(estimatedHeight: 150)
@@ -118,50 +119,19 @@ private struct PopupPaginationListKitCardComponent:
         in content: PopupPaginationUIKitCardView,
         coordinator: Void
     ) {
-        content.configure(with: item)
+        content.configure(
+            with: item,
+            imagePipeline: imagePipeline
+        )
     }
 }
 
-private final class PopupPaginationImagePrefetcher:
-    RemoteImagePrefetching,
-    @unchecked Sendable
-{
-    private let lock = NSLock()
-    private var tasks: [UUID: DownloadTask] = [:]
-
+extension PopupPaginationImagePipeline: RemoteImagePrefetching {
     func prefetchImage(url: URL) -> UUID? {
-        let id = UUID()
-        guard let task = KingfisherManager.shared.retrieveImage(
-            with: url,
-            options: [.cacheOriginalImage],
-            completionHandler: { [weak self] _ in
-                _ = self?.removeTask(id: id)
-            }
-        ) else {
-            return nil
-        }
-
-        lock.lock()
-        tasks[id] = task
-        lock.unlock()
-        return id
+        prefetchImage(at: url)
     }
 
     func cancelTask(uuid: UUID) {
-        removeTask(id: uuid)?.cancel()
-    }
-
-    deinit {
-        lock.lock()
-        let activeTasks = Array(tasks.values)
-        tasks.removeAll()
-        lock.unlock()
-        activeTasks.forEach { $0.cancel() }
-    }
-
-    private func removeTask(id: UUID) -> DownloadTask? {
-        lock.lock()
-        defer { lock.unlock() }
-        return tasks.removeValue(forKey: id)
+        cancelPrefetch(uuid)
     }
 }
