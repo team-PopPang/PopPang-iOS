@@ -5,8 +5,7 @@ import Foundation
 struct PopupPaginationDemoFeature {
     @ObservableState
     struct State: Equatable {
-        var userUuidInput: String
-        var activeUserUuid = ""
+        var userUuid: String
         var items: [PopupPaginationItem] = []
         var nextCursor: Int64?
         var hasNext = true
@@ -16,8 +15,8 @@ struct PopupPaginationDemoFeature {
         var hasStarted = false
         var errorMessage: String?
 
-        init(userUuidInput: String = "") {
-            self.userUuidInput = userUuidInput
+        init(userUuid: String = "") {
+            self.userUuid = userUuid
         }
 
         var isRequesting: Bool {
@@ -25,15 +24,13 @@ struct PopupPaginationDemoFeature {
         }
 
         var canStart: Bool {
-            !userUuidInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            !userUuid.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                 && !isRequesting
         }
     }
 
     enum Action: Equatable {
         case task
-        case userUuidChanged(String)
-        case loadTapped
         case retryTapped
         case reachedEnd
         case pageLoaded(
@@ -57,14 +54,6 @@ struct PopupPaginationDemoFeature {
                 guard !state.hasStarted, state.canStart else { return .none }
                 return startInitialLoad(state: &state)
 
-            case .userUuidChanged(let userUuid):
-                state.userUuidInput = userUuid
-                return .none
-
-            case .loadTapped:
-                guard state.canStart else { return .none }
-                return startInitialLoad(state: &state)
-
             case .retryTapped:
                 guard !state.isRequesting else { return .none }
 
@@ -78,7 +67,7 @@ struct PopupPaginationDemoFeature {
                 state.errorMessage = nil
                 state.isLoadingNextPage = true
                 return requestPage(
-                    userUuid: state.activeUserUuid,
+                    userUuid: state.userUuid,
                     cursor: cursor
                 )
 
@@ -94,12 +83,12 @@ struct PopupPaginationDemoFeature {
 
                 state.isLoadingNextPage = true
                 return requestPage(
-                    userUuid: state.activeUserUuid,
+                    userUuid: state.userUuid,
                     cursor: cursor
                 )
 
             case let .pageLoaded(userUuid, requestedCursor, page):
-                guard userUuid == state.activeUserUuid else { return .none }
+                guard userUuid == state.userUuid else { return .none }
 
                 state.isInitialLoading = false
                 state.isLoadingNextPage = false
@@ -123,7 +112,7 @@ struct PopupPaginationDemoFeature {
                 return .none
 
             case let .pageFailed(userUuid, _, message):
-                guard userUuid == state.activeUserUuid else { return .none }
+                guard userUuid == state.userUuid else { return .none }
 
                 state.isInitialLoading = false
                 state.isLoadingNextPage = false
@@ -136,12 +125,12 @@ struct PopupPaginationDemoFeature {
 
 private extension PopupPaginationDemoFeature {
     func startInitialLoad(state: inout State) -> Effect<Action> {
-        let userUuid = state.userUuidInput.trimmingCharacters(
+        let userUuid = state.userUuid.trimmingCharacters(
             in: .whitespacesAndNewlines
         )
         guard !userUuid.isEmpty else { return .none }
 
-        state.activeUserUuid = userUuid
+        state.userUuid = userUuid
         state.items = []
         state.nextCursor = nil
         state.hasNext = true

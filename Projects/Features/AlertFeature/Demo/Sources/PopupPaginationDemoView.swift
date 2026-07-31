@@ -11,7 +11,6 @@ struct PopupPaginationDemoView: View {
 
             VStack(spacing: 0) {
                 header
-                userUuidForm
                 statusBar
                 content
             }
@@ -42,43 +41,6 @@ private extension PopupPaginationDemoView {
         .padding(.horizontal, 20)
         .padding(.top, 20)
         .padding(.bottom, 18)
-    }
-
-    var userUuidForm: some View {
-        HStack(spacing: 10) {
-            TextField(
-                "테스트할 userUuid",
-                text: Binding(
-                    get: { store.userUuidInput },
-                    set: { store.send(.userUuidChanged($0)) }
-                )
-            )
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .font(.scdream(.regular, size: 13))
-            .padding(.horizontal, 14)
-            .frame(height: 46)
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay {
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.mainGray.opacity(0.25), lineWidth: 1)
-            }
-
-            Button {
-                store.send(.loadTapped)
-            } label: {
-                Text(store.hasStarted ? "다시 조회" : "조회")
-                    .font(.scdream(.bold, size: 13))
-                    .foregroundStyle(Color.white)
-                    .frame(width: 82, height: 46)
-                    .background(store.canStart ? Color.mainOrange : Color.mainGray)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-            }
-            .disabled(!store.canStart)
-        }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 14)
     }
 
     var statusBar: some View {
@@ -114,8 +76,8 @@ private extension PopupPaginationDemoView {
             loadingState
         } else if !store.hasStarted {
             emptyState(
-                title: "userUuid를 입력해 주세요",
-                description: "조회 버튼을 누르면 cursor 없이 첫 페이지를 요청합니다."
+                title: "데모 UUID를 확인해 주세요",
+                description: "AlertFeatureDemo.xcconfig의 UUID가 비어 있습니다."
             )
         } else if store.items.isEmpty, let errorMessage = store.errorMessage {
             errorState(message: errorMessage)

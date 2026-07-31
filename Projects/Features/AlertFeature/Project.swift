@@ -28,6 +28,7 @@ let project = Project(
             deploymentTargets: .iOS("17.0"),
             infoPlist: .extendingDefault(
                 with: [
+                    "ALERT_DEMO_USER_UUID": "$(ALERT_DEMO_USER_UUID)",
                     "UILaunchScreen": [
                         "UIColorName": "",
                         "UIImageName": "",
@@ -39,7 +40,19 @@ let project = Project(
                 .project(target: "Core", path: "../../Shared/Core"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
-            ]
+            ],
+            settings: .settings(
+                configurations: [
+                    .debug(
+                        name: "Debug",
+                        xcconfig: .relativeToManifest("Demo/AlertFeatureDemo.xcconfig")
+                    ),
+                    .release(
+                        name: "Release",
+                        xcconfig: .relativeToManifest("Demo/AlertFeatureDemo.xcconfig")
+                    ),
+                ]
+            )
         ),
     ],
     schemes: [
