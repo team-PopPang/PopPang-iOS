@@ -1,4 +1,3 @@
-import ComposableArchitecture
 import Foundation
 import SwiftUI
 
@@ -10,15 +9,7 @@ struct AlertFeatureDemoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            PopupPaginationDemoView(
-                store: Store(
-                    initialState: PopupPaginationDemoFeature.State(
-                        userUuid: demoUserUuid
-                    )
-                ) {
-                    PopupPaginationDemoFeature()
-                }
-            )
+            PopupPaginationDemoNavigationView(userUuid: demoUserUuid)
         }
     }
 }

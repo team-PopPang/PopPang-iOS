@@ -6,6 +6,90 @@ struct PopupPaginationDemoView: View {
     @Bindable var store: StoreOf<PopupPaginationDemoFeature>
 
     var body: some View {
+        PopupPaginationDemoScaffold(
+            implementationTitle: "SWIFTUI",
+            store: store
+        ) {
+            content
+        }
+        .task {
+            store.send(.task)
+        }
+    }
+}
+
+private extension PopupPaginationDemoView {
+    @ViewBuilder
+    var content: some View {
+        if store.isInitialLoading {
+            PopupPaginationLoadingState()
+        } else if !store.hasStarted {
+            PopupPaginationEmptyState(
+                title: "데모 UUID를 확인해 주세요",
+                description: "AlertFeatureDemo.xcconfig의 UUID가 비어 있습니다."
+            )
+        } else if store.items.isEmpty, let errorMessage = store.errorMessage {
+            PopupPaginationErrorState(message: errorMessage) {
+                store.send(.retryTapped)
+            }
+        } else if store.items.isEmpty {
+            PopupPaginationEmptyState(
+                title: "표시할 팝업이 없습니다",
+                description: "API 응답의 items가 비어 있습니다."
+            )
+        } else {
+            popupList
+        }
+    }
+
+    var popupList: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                ForEach(store.items) { item in
+                    PopupPaginationCard(item: item)
+                        .task(id: item.id) {
+                            guard item.id == store.items.last?.id else { return }
+                            store.send(.reachedEnd)
+                        }
+                }
+
+                listFooter
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 4)
+            .padding(.bottom, 28)
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    @ViewBuilder
+    var listFooter: some View {
+        PopupPaginationListFooter(
+            isLoading: store.isLoadingNextPage,
+            errorMessage: store.errorMessage,
+            hasNext: store.hasNext
+        ) {
+            store.send(.retryTapped)
+        }
+    }
+}
+
+struct PopupPaginationDemoScaffold<Content: View>: View {
+    let implementationTitle: String
+    let store: StoreOf<PopupPaginationDemoFeature>
+    private let content: Content
+
+    init(
+        implementationTitle: String,
+        store: StoreOf<PopupPaginationDemoFeature>,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.implementationTitle = implementationTitle
+        self.store = store
+        self.content = content()
+    }
+
+    var body: some View {
         ZStack {
             Color.subWhite.ignoresSafeArea()
 
@@ -15,19 +99,28 @@ struct PopupPaginationDemoView: View {
                 content
             }
         }
-        .task {
-            store.send(.task)
-        }
     }
 }
 
-private extension PopupPaginationDemoView {
+private extension PopupPaginationDemoScaffold {
     var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("CURSOR LAB")
-                .font(.scdream(.bold, size: 12))
-                .tracking(2.4)
-                .foregroundStyle(Color.mainOrange)
+            HStack {
+                Text("CURSOR LAB")
+                    .font(.scdream(.bold, size: 12))
+                    .tracking(2.4)
+                    .foregroundStyle(Color.mainOrange)
+
+                Spacer()
+
+                Text(implementationTitle)
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundStyle(Color.mainOrange)
+                    .padding(.horizontal, 9)
+                    .frame(height: 24)
+                    .background(Color.mainOrange.opacity(0.1))
+                    .clipShape(Capsule())
+            }
 
             Text("팝업 페이지네이션")
                 .font(.scdream(.black, size: 26))
@@ -70,132 +163,6 @@ private extension PopupPaginationDemoView {
         .padding(.bottom, 12)
     }
 
-    @ViewBuilder
-    var content: some View {
-        if store.isInitialLoading {
-            loadingState
-        } else if !store.hasStarted {
-            emptyState(
-                title: "데모 UUID를 확인해 주세요",
-                description: "AlertFeatureDemo.xcconfig의 UUID가 비어 있습니다."
-            )
-        } else if store.items.isEmpty, let errorMessage = store.errorMessage {
-            errorState(message: errorMessage)
-        } else if store.items.isEmpty {
-            emptyState(
-                title: "표시할 팝업이 없습니다",
-                description: "API 응답의 items가 비어 있습니다."
-            )
-        } else {
-            popupList
-        }
-    }
-
-    var popupList: some View {
-        ScrollView {
-            LazyVStack(spacing: 12) {
-                ForEach(store.items) { item in
-                    PopupPaginationCard(item: item)
-                        .task(id: item.id) {
-                            guard item.id == store.items.last?.id else { return }
-                            store.send(.reachedEnd)
-                        }
-                }
-
-                listFooter
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 4)
-            .padding(.bottom, 28)
-        }
-        .scrollIndicators(.hidden)
-    }
-
-    @ViewBuilder
-    var listFooter: some View {
-        if store.isLoadingNextPage {
-            HStack(spacing: 10) {
-                ProgressView()
-                Text("다음 페이지를 불러오는 중")
-                    .font(.scdream(.regular, size: 12))
-                    .foregroundStyle(Color.mainGray)
-            }
-            .padding(.vertical, 20)
-        } else if let errorMessage = store.errorMessage {
-            VStack(spacing: 10) {
-                Text(errorMessage)
-                    .font(.scdream(.regular, size: 12))
-                    .foregroundStyle(Color.mainRed)
-                    .multilineTextAlignment(.center)
-
-                if store.hasNext {
-                    Button("다시 시도") {
-                        store.send(.retryTapped)
-                    }
-                    .font(.scdream(.bold, size: 12))
-                    .foregroundStyle(Color.mainOrange)
-                }
-            }
-            .padding(.vertical, 20)
-        } else if !store.hasNext {
-            Text("모든 팝업을 불러왔습니다")
-                .font(.scdream(.regular, size: 12))
-                .foregroundStyle(Color.mainGray)
-                .padding(.vertical, 20)
-        }
-    }
-
-    var loadingState: some View {
-        VStack(spacing: 14) {
-            ProgressView()
-                .controlSize(.large)
-            Text("첫 페이지를 불러오는 중")
-                .font(.scdream(.regular, size: 13))
-                .foregroundStyle(Color.mainGray)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    func emptyState(title: String, description: String) -> some View {
-        VStack(spacing: 8) {
-            Image(systemName: "rectangle.stack")
-                .font(.system(size: 30, weight: .light))
-                .foregroundStyle(Color.mainOrange)
-
-            Text(title)
-                .font(.scdream(.bold, size: 15))
-                .foregroundStyle(Color.mainBlack)
-
-            Text(description)
-                .font(.scdream(.regular, size: 12))
-                .foregroundStyle(Color.mainGray)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, 36)
-    }
-
-    func errorState(message: String) -> some View {
-        VStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 30, weight: .light))
-                .foregroundStyle(Color.mainRed)
-
-            Text(message)
-                .font(.scdream(.regular, size: 13))
-                .foregroundStyle(Color.mainRed)
-                .multilineTextAlignment(.center)
-
-            Button("다시 시도") {
-                store.send(.retryTapped)
-            }
-            .font(.scdream(.bold, size: 13))
-            .foregroundStyle(Color.mainOrange)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, 36)
-    }
-
     func statusPill(title: String, value: String) -> some View {
         HStack(spacing: 4) {
             Text(title)
@@ -219,7 +186,107 @@ private extension PopupPaginationDemoView {
     }
 }
 
-private struct PopupPaginationCard: View {
+struct PopupPaginationLoadingState: View {
+    var body: some View {
+        VStack(spacing: 14) {
+            ProgressView()
+                .controlSize(.large)
+            Text("첫 페이지를 불러오는 중")
+                .font(.scdream(.regular, size: 13))
+                .foregroundStyle(Color.mainGray)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+struct PopupPaginationEmptyState: View {
+    let title: String
+    let description: String
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "rectangle.stack")
+                .font(.system(size: 30, weight: .light))
+                .foregroundStyle(Color.mainOrange)
+
+            Text(title)
+                .font(.scdream(.bold, size: 15))
+                .foregroundStyle(Color.mainBlack)
+
+            Text(description)
+                .font(.scdream(.regular, size: 12))
+                .foregroundStyle(Color.mainGray)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 36)
+    }
+}
+
+struct PopupPaginationErrorState: View {
+    let message: String
+    let retry: () -> Void
+
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 30, weight: .light))
+                .foregroundStyle(Color.mainRed)
+
+            Text(message)
+                .font(.scdream(.regular, size: 13))
+                .foregroundStyle(Color.mainRed)
+                .multilineTextAlignment(.center)
+
+            Button("다시 시도", action: retry)
+                .font(.scdream(.bold, size: 13))
+                .foregroundStyle(Color.mainOrange)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.horizontal, 36)
+    }
+}
+
+struct PopupPaginationListFooter: View {
+    let isLoading: Bool
+    let errorMessage: String?
+    let hasNext: Bool
+    let retry: () -> Void
+
+    @ViewBuilder
+    var body: some View {
+        if isLoading {
+            HStack(spacing: 10) {
+                ProgressView()
+                Text("다음 페이지를 불러오는 중")
+                    .font(.scdream(.regular, size: 12))
+                    .foregroundStyle(Color.mainGray)
+            }
+            .padding(.vertical, 20)
+        } else if let errorMessage {
+            VStack(spacing: 10) {
+                Text(errorMessage)
+                    .font(.scdream(.regular, size: 12))
+                    .foregroundStyle(Color.mainRed)
+                    .multilineTextAlignment(.center)
+
+                if hasNext {
+                    Button("다시 시도", action: retry)
+                        .font(.scdream(.bold, size: 12))
+                        .foregroundStyle(Color.mainOrange)
+                }
+            }
+            .padding(.vertical, 20)
+        } else if !hasNext {
+            Text("모든 팝업을 불러왔습니다")
+                .font(.scdream(.regular, size: 12))
+                .foregroundStyle(Color.mainGray)
+                .padding(.vertical, 20)
+        }
+    }
+}
+
+struct PopupPaginationCard: View {
     let item: PopupPaginationItem
 
     var body: some View {
