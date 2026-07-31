@@ -359,6 +359,7 @@ private struct PopupPaginationRemoteImage: View {
     @State private var image: UIImage?
     @State private var loadID: UUID?
     @State private var didFail = false
+    @State private var requestGeneration = UUID()
 
     var body: some View {
         Group {
@@ -388,7 +389,10 @@ private struct PopupPaginationRemoteImage: View {
 private extension PopupPaginationRemoteImage {
     func startLoading() {
         guard loadID == nil, image == nil, let url else { return }
+        let generation = UUID()
+        requestGeneration = generation
         loadID = imagePipeline.loadImage(at: url) { loadedImage in
+            guard requestGeneration == generation else { return }
             image = loadedImage
             didFail = loadedImage == nil
             loadID = nil
@@ -396,6 +400,7 @@ private extension PopupPaginationRemoteImage {
     }
 
     func cancelLoading() {
+        requestGeneration = UUID()
         guard let loadID else { return }
         imagePipeline.cancelImageLoad(loadID)
         self.loadID = nil

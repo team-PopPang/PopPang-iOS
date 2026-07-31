@@ -331,6 +331,7 @@ final class PopupPaginationUIKitCardView: UIView {
     private let uuidLabel = UILabel()
     private var imagePipeline: PopupPaginationImagePipeline?
     private var imageLoadID: UUID?
+    private var imageLoadGeneration = UUID()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -362,9 +363,12 @@ final class PopupPaginationUIKitCardView: UIView {
             : UIColor(Color.mainGray)
 
         guard let thumbnailURL = item.thumbnailURL else { return }
+        let generation = UUID()
+        imageLoadGeneration = generation
         imageLoadID = imagePipeline.loadImage(at: thumbnailURL) { [weak self] image in
-            self?.thumbnailImageView.image = image ?? UIImage(systemName: "photo")
-            self?.imageLoadID = nil
+            guard let self, imageLoadGeneration == generation else { return }
+            thumbnailImageView.image = image ?? UIImage(systemName: "photo")
+            imageLoadID = nil
         }
     }
 
@@ -381,6 +385,7 @@ final class PopupPaginationUIKitCardView: UIView {
     }
 
     private func cancelImageLoad() {
+        imageLoadGeneration = UUID()
         guard let imageLoadID else { return }
         imagePipeline?.cancelImageLoad(imageLoadID)
         self.imageLoadID = nil

@@ -63,7 +63,7 @@ final class PopupPaginationImagePipeline: @unchecked Sendable {
         lock.unlock()
 
         if taskToResume != nil {
-            logger.debug("prefetch start: \(url.absoluteString, privacy: .public)")
+            logger.debug("prefetch start: \(url.absoluteString)")
         }
         taskToResume?.resume()
         return token
@@ -98,7 +98,7 @@ final class PopupPaginationImagePipeline: @unchecked Sendable {
 
         taskToCancel?.cancel()
         if let cancelledURL {
-            logger.debug("prefetch cancel: \(cancelledURL.absoluteString, privacy: .public)")
+            logger.debug("prefetch cancel: \(cancelledURL.absoluteString)")
         }
     }
 
@@ -135,14 +135,14 @@ final class PopupPaginationImagePipeline: @unchecked Sendable {
         lock.unlock()
 
         if let prefetchedImage {
-            logger.debug("prefetch consume: \(url.absoluteString, privacy: .public)")
+            logger.debug("prefetch consume: \(url.absoluteString)")
             Task { @MainActor in
                 completion(prefetchedImage)
             }
         } else if joinedPrefetch {
-            logger.debug("prefetch join: \(url.absoluteString, privacy: .public)")
+            logger.debug("prefetch join: \(url.absoluteString)")
         } else {
-            logger.debug("visible load: \(url.absoluteString, privacy: .public)")
+            logger.debug("visible load: \(url.absoluteString)")
             taskToResume?.resume()
         }
 
