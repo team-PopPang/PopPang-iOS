@@ -5,6 +5,8 @@ import SwiftUI
 enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
     case swiftUI
     case uiKit
+    case uiKitWillEndDragging
+    case uiKitReleaseTrigger
     case popPangListKit
 
     var title: String {
@@ -13,6 +15,10 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "SwiftUI"
         case .uiKit:
             "UIKit"
+        case .uiKitWillEndDragging:
+            "UIKit + WillEndDragging"
+        case .uiKitReleaseTrigger:
+            "UIKit + Release Trigger"
         case .popPangListKit:
             "PopPangListKit"
         }
@@ -23,7 +29,11 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
         case .swiftUI:
             "ScrollView와 LazyVStack으로 확인합니다."
         case .uiKit:
-            "Compositional, Diffable, Prefetch를 직접 연결합니다."
+            "scrollViewDidScroll로 끝에서 0.75 화면 이내를 감지합니다. 현재 스크롤 위치가 threshold 안에 들어오면 다음 페이지를 요청합니다."
+        case .uiKitWillEndDragging:
+            "scrollViewWillEndDragging으로 예상 위치의 0.75 화면 이내를 미리 감지합니다. 예상 정지 위치를 사용해 빠른 스크롤에서도 다음 페이지를 미리 요청합니다."
+        case .uiKitReleaseTrigger:
+            "scrollViewWillEndDragging을 주 경로로 사용합니다. scrollViewDidScroll은 감속과 프로그램 이동만 보완합니다."
         case .popPangListKit:
             "List DSL과 내장 pagination 흐름을 확인합니다."
         }
@@ -35,6 +45,10 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "swift"
         case .uiKit:
             "square.stack.3d.up"
+        case .uiKitWillEndDragging:
+            "scope"
+        case .uiKitReleaseTrigger:
+            "hand.tap"
         case .popPangListKit:
             "square.grid.2x2"
         }
@@ -46,8 +60,12 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "01"
         case .uiKit:
             "02"
-        case .popPangListKit:
+        case .uiKitWillEndDragging:
             "03"
+        case .uiKitReleaseTrigger:
+            "04"
+        case .popPangListKit:
+            "05"
         }
     }
 }
@@ -93,12 +111,12 @@ struct PopupPaginationDemoNavigationView: View {
 private extension PopupPaginationDemoNavigationView {
     var header: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("THREE WAYS, ONE CURSOR")
+            Text("FIVE WAYS, ONE CURSOR")
                 .font(.scdream(.bold, size: 12))
                 .tracking(2.1)
                 .foregroundStyle(Color.mainOrange)
 
-            Text("같은 API를\n세 가지 리스트로")
+            Text("같은 API를\n다섯 가지 리스트로")
                 .font(.scdream(.black, size: 30))
                 .foregroundStyle(Color.mainBlack)
                 .lineSpacing(3)
@@ -187,6 +205,18 @@ private struct PopupPaginationDemoDestinationView: View {
 
         case .uiKit:
             PopupPaginationUIKitDemoView(store: store)
+
+        case .uiKitWillEndDragging:
+            PopupPaginationUIKitDemoView(
+                store: store,
+                paginationTrigger: .projectedTargetOffset
+            )
+
+        case .uiKitReleaseTrigger:
+            PopupPaginationUIKitDemoView(
+                store: store,
+                paginationTrigger: .releaseDrivenTargetOffset
+            )
 
         case .popPangListKit:
             PopupPaginationListKitDemoView(store: store)

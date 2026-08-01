@@ -3,13 +3,39 @@ import DSKit
 import SwiftUI
 import UIKit
 
+enum PopupPaginationUIKitPaginationTrigger {
+    case didScroll
+    case projectedTargetOffset
+    case releaseDrivenTargetOffset
+
+    var implementationTitle: String {
+        switch self {
+        case .didScroll:
+            "UIKIT"
+        case .projectedTargetOffset:
+            "UIKIT PREDICT"
+        case .releaseDrivenTargetOffset:
+            "UIKIT RELEASE"
+        }
+    }
+}
+
 struct PopupPaginationUIKitDemoView: View {
     @Bindable var store: StoreOf<PopupPaginationDemoFeature>
     @State private var imagePipeline = PopupPaginationImagePipeline()
+    let paginationTrigger: PopupPaginationUIKitPaginationTrigger
+
+    init(
+        store: StoreOf<PopupPaginationDemoFeature>,
+        paginationTrigger: PopupPaginationUIKitPaginationTrigger = .didScroll
+    ) {
+        self.store = store
+        self.paginationTrigger = paginationTrigger
+    }
 
     var body: some View {
         PopupPaginationDemoScaffold(
-            implementationTitle: "UIKIT",
+            implementationTitle: paginationTrigger.implementationTitle,
             store: store
         ) {
             content
@@ -46,7 +72,8 @@ private extension PopupPaginationUIKitDemoView {
                     canLoadNextPage: store.hasNext
                         && !store.isRequesting
                         && store.errorMessage == nil,
-                    imagePipeline: imagePipeline
+                    imagePipeline: imagePipeline,
+                    paginationTrigger: paginationTrigger
                 ) {
                     store.send(.reachedEnd)
                 }
@@ -68,11 +95,13 @@ private struct PopupPaginationUIKitCollectionView: UIViewControllerRepresentable
     let items: [PopupPaginationItem]
     let canLoadNextPage: Bool
     let imagePipeline: PopupPaginationImagePipeline
+    let paginationTrigger: PopupPaginationUIKitPaginationTrigger
     let onReachedEnd: () -> Void
 
     func makeUIViewController(context: Context) -> PopupPaginationUIKitViewController {
         PopupPaginationUIKitViewController(
             imagePipeline: imagePipeline,
+            paginationTrigger: paginationTrigger,
             onReachedEnd: onReachedEnd
         )
     }
@@ -96,6 +125,7 @@ private final class PopupPaginationUIKitViewController: UIViewController {
 
     private let onReachedEnd: () -> Void
     private let imagePipeline: PopupPaginationImagePipeline
+    private let paginationTrigger: PopupPaginationUIKitPaginationTrigger
     private let collectionView: UICollectionView
     private var dataSource: UICollectionViewDiffableDataSource<Section, String>!
     private var itemsByID: [String: PopupPaginationItem] = [:]
@@ -104,9 +134,11 @@ private final class PopupPaginationUIKitViewController: UIViewController {
 
     init(
         imagePipeline: PopupPaginationImagePipeline,
+        paginationTrigger: PopupPaginationUIKitPaginationTrigger,
         onReachedEnd: @escaping () -> Void
     ) {
         self.imagePipeline = imagePipeline
+        self.paginationTrigger = paginationTrigger
         self.onReachedEnd = onReachedEnd
         self.collectionView = UICollectionView(
             frame: .zero,
@@ -195,6 +227,10 @@ private extension PopupPaginationUIKitViewController {
         ])
     }
 
+    /// Item ID를 기준으로 셀을 구성하는 Diffable Data Source를 연결합니다.
+    ///
+    /// snapshot에는 Item ID만 저장하고, 셀을 만들 때 `itemsByID`에서
+    /// 실제 팝업 모델을 찾아 카드와 표시용 이미지 요청을 구성합니다.
     func configureDataSource() {
         let registration = UICollectionView.CellRegistration<
             PopupPaginationCollectionViewCell,
@@ -219,7 +255,14 @@ private extension PopupPaginationUIKitViewController {
     }
 }
 
+// MARK: - UICollectionViewDataSourcePrefetching
+
+/// UIKit이 곧 필요할 것으로 예상한 셀의 이미지를 미리 준비합니다.
 extension PopupPaginationUIKitViewController: UICollectionViewDataSourcePrefetching {
+    /// 전달받은 IndexPath를 Item ID와 이미지 URL로 변환해 prefetch를 시작합니다.
+    ///
+    /// 같은 Item ID로 이미 시작한 작업이 있으면 중복 요청하지 않고,
+    /// 반환된 token은 취소하거나 셀이 표시될 때 정리할 수 있도록 보관합니다.
     func collectionView(
         _ collectionView: UICollectionView,
         prefetchItemsAt indexPaths: [IndexPath]
@@ -236,6 +279,11 @@ extension PopupPaginationUIKitViewController: UICollectionViewDataSourcePrefetch
         }
     }
 
+    /// UIKit이 더 이상 곧 표시되지 않을 것으로 판단한 이미지 prefetch를 취소합니다.
+    ///
+    /// IndexPath에 대응하는 Item ID의 token을 제거하고 이미지 파이프라인에
+    /// 취소를 전달합니다. 표시 중인 셀이 같은 요청을 기다리고 있다면
+    /// 이미지 파이프라인이 네트워크 작업을 유지합니다.
     func collectionView(
         _ collectionView: UICollectionView,
         cancelPrefetchingForItemsAt indexPaths: [IndexPath]
@@ -252,7 +300,15 @@ extension PopupPaginationUIKitViewController: UICollectionViewDataSourcePrefetch
     }
 }
 
+// MARK: - UICollectionViewDelegate
+
+/// 셀 표시와 실제·예상 스크롤 위치를 이용해 이미지와 다음 페이지를 관리합니다.
 extension PopupPaginationUIKitViewController: UICollectionViewDelegate {
+    /// 셀이 표시되기 직전에 해당 Item의 prefetch token을 정리합니다.
+    ///
+    /// 셀 구성 단계의 표시용 이미지 요청은 이미 완료된 이미지를 소비하거나
+    /// 진행 중인 prefetch에 합류합니다. 따라서 여기서 token을 취소해도
+    /// 표시 중인 셀이 기다리는 네트워크 작업은 이미지 파이프라인이 유지합니다.
     func collectionView(
         _ collectionView: UICollectionView,
         willDisplay cell: UICollectionViewCell,
@@ -266,15 +322,62 @@ extension PopupPaginationUIKitViewController: UICollectionViewDelegate {
         imagePipeline.cancelPrefetch(token)
     }
 
+    /// 현재 contentOffset으로 다음 페이지를 검사합니다.
+    ///
+    /// 기본·예측 모드는 드래그와 감속 중에 검사합니다. Release Trigger 모드는
+    /// PopPangListKit처럼 드래그·터치 중 검사를 건너뛰고,
+    /// 감속 또는 프로그램 스크롤의 실제 위치만 보완해서 검사합니다.
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        switch paginationTrigger {
+        case .didScroll, .projectedTargetOffset:
+            guard scrollView.isDragging || scrollView.isDecelerating else {
+                return
+            }
+
+        case .releaseDrivenTargetOffset:
+            guard !scrollView.isDragging, !scrollView.isTracking else {
+                return
+            }
+        }
+
+        loadNextPageIfNeeded(
+            in: scrollView,
+            contentOffset: scrollView.contentOffset
+        )
+    }
+
+    /// 빠른 플릭의 예상 정지 위치로 다음 페이지를 미리 검사합니다.
+    ///
+    /// 예측·Release Trigger 모드에서 `targetContentOffset`을 사용하며,
+    /// 실제 위치가 threshold에 도달하기 전에도 예상 위치가 기준을 넘으면
+    /// 다음 페이지 요청을 시작합니다.
+    func scrollViewWillEndDragging(
+        _ scrollView: UIScrollView,
+        withVelocity velocity: CGPoint,
+        targetContentOffset: UnsafeMutablePointer<CGPoint>
+    ) {
+        guard paginationTrigger != .didScroll else { return }
+        loadNextPageIfNeeded(
+            in: scrollView,
+            contentOffset: targetContentOffset.pointee
+        )
+    }
+
+    /// 전달받은 위치가 목록 끝에서 화면 높이의 0.75배 이내인지 검사합니다.
+    ///
+    /// 조건을 만족하면 `canLoadNextPage`를 먼저 false로 변경해 두 scroll
+    /// delegate의 중복 진입을 막고, `onReachedEnd`로 TCA action을 전달합니다.
+    private func loadNextPageIfNeeded(
+        in scrollView: UIScrollView,
+        contentOffset: CGPoint
+    ) {
         guard canLoadNextPage,
-              scrollView.isDragging || scrollView.isDecelerating,
               scrollView.contentSize.height > scrollView.bounds.height
         else {
             return
         }
 
-        let visibleBottom = scrollView.contentOffset.y + scrollView.bounds.height
+        let visibleBottom = contentOffset.y + scrollView.bounds.height
         let triggerOffset = scrollView.contentSize.height - scrollView.bounds.height * 0.75
         guard visibleBottom >= triggerOffset else { return }
 
