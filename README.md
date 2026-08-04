@@ -106,7 +106,6 @@ struct PopupListView: View {
 > **문제**  
 > 초기 화면에서 여러 API를 `await`로 순차 호출해, 앞선 요청이 끝난 뒤에 다음 요청이 시작됐음.  
 > 비동기 요청이었지만 호출 구조가 직렬이라 각 응답 시간이 누적돼 초기 화면 로딩이 길어졌음.  
-> <br><br>
 > **해결**  
 > 서로 의존하지 않는 API 요청을 `TaskGroup`인 `withThrowingTaskGroup`의 독립 Task로 분리하고, `addTask`로 병렬 실행하도록 전환.  
 > 부모 Task에서는 `for try await`로 완료된 결과를 수집하고, `MainActor.run`에서 각 목록 상태를 갱신해 UI 업데이트를 메인 스레드에 한정했음.  
@@ -142,11 +141,12 @@ func getAllPopupData() async {
 
 ---
 
+<br><br>
+
 ### **2. Moya를 async/await으로 사용하기 위한 공통 async 래퍼 생성**
 > **문제**  
 > Moya는 completion 기반이라 async/await과 직접 호환되지 않아  
 > API마다 동일한 변환 코드가 반복됨  
-> <br><br>
 > **해결**  
 > `withCheckedThrowingContinuation` 기반 **공통 async 변환 래퍼** 구현  
 >
@@ -237,11 +237,12 @@ case .home(.delegate(.searchRequested)):
 
 ---
 
+<br><br>
+
 ### **3. MVVM에서 TCA로 상태 관리를 마이그레이션**
 > **문제**<br>
 > 여러 View에 ViewModel 상태 변경이 분산돼 상태 흐름을 추적하기 어려웠음.  
 > 특히 Preview에서 공유 ViewModel 객체를 만들지 않거나 `.environmentObject()` 주입을 빠뜨릴 때마다 런타임 크래시를 반복적으로 겪었음.
-> <br><br>
 > **해결**<br>
 > 단방향 상태 관리 기반의 TCA로 전환해 `State → Action → Reducer` 흐름에서 상태 변경을 한 곳으로 모아 관리.
 >  
@@ -250,11 +251,14 @@ case .home(.delegate(.searchRequested)):
 > 🔸 `EnvironmentObject` 주입 누락으로 발생하던 런타임 크래시를 줄이고 상태 공유 방식을 단순화<br>
 > 🔸 상태 변경을 독립적으로 검증할 수 있어 테스트 용이성 확보
 
+---
+
+<br><br>
+
 ### **4. 단일 타깃 구조를 Tuist 기반 Micro Feature Architecture로 전환**
 > **문제**  
 > 기존 `V0` 앱은 `App`, `Presentation`, `Util`, `DesignSystem`이 단일 타깃에 섞여 있어  
 > 기능이 늘어날수록 변경 영향 범위가 커지고, 독립 개발과 빌드 검증이 어려웠음  
-> <br><br>
 > **해결**  
 > `App / Features / Domain / Data / Shared` 구조로 분리하고,
 > `Tuist` 템플릿과 `Makefile` 래퍼로 feature, domain, data, core 모듈을 일관되게 생성하도록 구성  
@@ -306,11 +310,12 @@ Projects
 
 ---
 
+<br><br>
+
 ### **5. 외부 SDK 의존성을 ThirdParty 링크 허브로 추적 가능하게 정리**
 > **문제**  
 > 외부 SDK가 여러 레이어에 직접 흩어지면 어떤 모듈이 어떤 SDK product를 링크하는지 파악하기 어렵고,  
 > SPM product type 문제로 빌드와 런타임 경고가 발생할 수 있었음  
-> <br><br>
 > **해결**  
 > 외부 SDK product는 `Projects/Shared/ThirdParty`에서만 `.external(...)`로 링크하고,  
 > 실제 SDK 타입을 사용하는 파일은 `import Moya`, `import Kingfisher`, `import KakaoSDKShare`, `import NMapsMap`처럼 실제 모듈명을 명시  
@@ -338,11 +343,12 @@ Projects
 
 ---
 
+<br><br>
+
 ### **6. CSV 기반 로컬라이제이션 자동화로 다국어 관리 비용 절감**
 > **문제**<br>
 > `Localizable.strings`를 언어별로 직접 관리하면<br>
 > 키 누락, 오타, 언어별 불일치가 생기기 쉽고 문자열 키를 하드코딩할 때 디버깅 비용도 커졌음
-> <br><br>
 > **해결**<br>
 > `Python/localizable.csv`를 기준으로<br>
 > `en/ko/ja Localizable.strings`와 `LocalizationKeys.swift`를 자동 생성하는<br>
