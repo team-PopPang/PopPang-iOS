@@ -100,8 +100,6 @@ struct PopupListView: View {
 
 -->
 
----
-
 ### **1. 로딩 지연 문제 개선**
 > **문제**  
 > 초기 화면에서 여러 API를 `await`로 순차 호출해, 앞선 요청이 끝난 뒤에 다음 요청이 시작됐음.  
@@ -140,8 +138,6 @@ func getAllPopupData() async {
 }
 ```
 
----
-
 <br><br>
 
 ### **2. Moya를 async/await으로 사용하기 위한 공통 async 래퍼 생성**
@@ -174,8 +170,6 @@ extension MoyaProvider {
 
 let response = try await provider.asyncRequest(.getPopupList)
 ```
-
----
 
 <!--
 ### **3. MainTabFeature에서 Feature 조립과 TCA 네비게이션 통합**
@@ -237,8 +231,6 @@ case .home(.delegate(.searchRequested)):
 
 -->
 
----
-
 <br><br>
 
 ### **3. MVVM에서 TCA로 상태 관리를 마이그레이션**
@@ -253,8 +245,6 @@ case .home(.delegate(.searchRequested)):
 > 🔸 상태 변경 경로를 일관되게 추적할 수 있게 구성<br>
 > 🔸 `EnvironmentObject` 주입 누락으로 발생하던 런타임 크래시를 줄이고 상태 공유 방식을 단순화<br>
 > 🔸 상태 변경을 독립적으로 검증할 수 있어 테스트 용이성 확보
-
----
 
 <br><br>
 
@@ -312,8 +302,6 @@ Projects
     └── ThirdParty
 ```
 
----
-
 <br><br>
 
 ### **5. 외부 SDK 의존성을 ThirdParty 링크 허브로 추적 가능하게 정리**
@@ -345,8 +333,6 @@ Projects
     ]
 )
 ```
-
----
 
 <br><br>
 
