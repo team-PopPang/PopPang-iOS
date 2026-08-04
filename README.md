@@ -142,8 +142,7 @@ func getAllPopupData() async {
 
 ### **2. Moya를 async/await으로 사용하기 위한 공통 async 래퍼 생성**
 > **문제**  
-> Moya는 completion 기반이라 async/await과 직접 호환되지 않아  
-> API마다 동일한 변환 코드가 반복됨  
+> Moya는 completion 기반이라 async/await과 직접 호환되지 않아 API마다 동일한 변환 코드가 반복됨  
 >
 > **해결**  
 > `withCheckedThrowingContinuation` 기반 **공통 async 변환 래퍼** 구현  
@@ -410,5 +409,6 @@ make module LAYER=shared NAME=UIComponents
 - [PopPangListKit](https://github.com/team-PopPang/PopPangListKit): UICollectionView 기반 선언형 목록 라이브러리와 UIKit·SwiftUI 사용 예제
 - `V0/README.md`: 기존 단일 타깃 앱 README
 - `Tuist/Package.swift`: 외부 의존성과 product type 정책
+&amp;nbsp;
 &amp;nbsp;
 &nbsp;
