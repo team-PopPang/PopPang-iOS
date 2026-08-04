@@ -250,28 +250,7 @@ case .home(.delegate(.searchRequested)):
 > 🔸 `EnvironmentObject` 주입 누락으로 발생하던 런타임 크래시를 줄이고 상태 공유 방식을 단순화<br>
 > 🔸 상태 변경을 독립적으로 검증할 수 있어 테스트 용이성 확보
 
-### **4. CSV 기반 로컬라이제이션 자동화로 다국어 관리 비용 절감**
-> **문제**  
-> `Localizable.strings`를 언어별로 직접 관리하면  
-> 키 누락, 오타, 언어별 불일치가 생기기 쉽고 문자열 키를 하드코딩할 때 디버깅 비용도 커졌음  
->
-> **해결**  
-> `Python/localizable.csv`를 기준으로  
-> `en/ko/ja Localizable.strings`와 `LocalizationKeys.swift`를 자동 생성하는  
-> CSV 기반 로컬라이제이션 생성 스크립트 구축  
->
-> **성과**  
-> 🔸 번역 데이터를 CSV 한 곳에서 일괄 관리  
-> 🔸 `LocalizationKey` enum 자동 생성으로 문자열 오타 위험 감소  
-> 🔸 번역 작업자, 기획자, 개발자가 같은 포맷으로 협업 가능
-
-```swift
-Text(LocalizationKey.commonNext.localized(comment: "Next button"))
-```
-
----
-
-### **5. 단일 타깃 구조를 Tuist 기반 Micro Feature Architecture로 전환**
+### **4. 단일 타깃 구조를 Tuist 기반 Micro Feature Architecture로 전환**
 > **문제**  
 > 기존 `V0` 앱은 `App`, `Presentation`, `Util`, `DesignSystem`이 단일 타깃에 섞여 있어  
 > 기능이 늘어날수록 변경 영향 범위가 커지고, 독립 개발과 빌드 검증이 어려웠음  
@@ -327,7 +306,7 @@ Projects
 
 ---
 
-### **6. 외부 SDK 의존성을 ThirdParty 링크 허브로 추적 가능하게 정리**
+### **5. 외부 SDK 의존성을 ThirdParty 링크 허브로 추적 가능하게 정리**
 > **문제**  
 > 외부 SDK가 여러 레이어에 직접 흩어지면 어떤 모듈이 어떤 SDK product를 링크하는지 파악하기 어렵고,  
 > SPM product type 문제로 빌드와 런타임 경고가 발생할 수 있었음  
@@ -355,6 +334,27 @@ Projects
         .external(name: "NMapsMap"),
     ]
 )
+```
+
+---
+
+### **6. CSV 기반 로컬라이제이션 자동화로 다국어 관리 비용 절감**
+> **문제**<br>
+> `Localizable.strings`를 언어별로 직접 관리하면<br>
+> 키 누락, 오타, 언어별 불일치가 생기기 쉽고 문자열 키를 하드코딩할 때 디버깅 비용도 커졌음
+>
+> **해결**<br>
+> `Python/localizable.csv`를 기준으로<br>
+> `en/ko/ja Localizable.strings`와 `LocalizationKeys.swift`를 자동 생성하는<br>
+> CSV 기반 로컬라이제이션 생성 스크립트 구축
+>
+> **성과**<br>
+> 🔸 번역 데이터를 CSV 한 곳에서 일괄 관리<br>
+> 🔸 `LocalizationKey` enum 자동 생성으로 문자열 오타 위험 감소<br>
+> 🔸 번역 작업자, 기획자, 개발자가 같은 포맷으로 협업 가능
+
+```swift
+Text(LocalizationKey.commonNext.localized(comment: "Next button"))
 ```
 
 <br/><br/>
