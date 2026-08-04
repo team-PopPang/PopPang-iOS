@@ -64,8 +64,8 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 > **문제**
 >
 > SwiftUI `List`는 표준 목록을 빠르게 만들기 좋지만 복잡한 scroll lifecycle, prefetch, pagination과 업데이트 전략을 직접 제어하기 어려웠음. 
-> 반대로 `UICollectionView`는 동작을 예측하고 튜닝할 수 있지만 화면마다 data source와 delegate 연결 코드가 반복됐음
->
+> 반대로 `UICollectionView`는 동작을 예측하고 튜닝할 수 있지만 화면마다 data source와 delegate 연결 코드가 반복됐음  
+>  
 > **해결**
 >
 > `UICollectionView`와 DifferenceKit을 Core로 유지하면서 `List`, `Section`, `Cell`로 구성하는 선언형 DSL을 구현  
@@ -418,4 +418,5 @@ make module LAYER=shared NAME=UIComponents
 - [PopPangListKit](https://github.com/team-PopPang/PopPangListKit): UICollectionView 기반 선언형 목록 라이브러리와 UIKit·SwiftUI 사용 예제
 - `V0/README.md`: 기존 단일 타깃 앱 README
 - `Tuist/Package.swift`: 외부 의존성과 product type 정책
+&amp;nbsp;
 &nbsp;
