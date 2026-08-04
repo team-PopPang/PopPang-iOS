@@ -40,6 +40,8 @@ let project = Project(
             sources: ["Demo/Sources/**"],
             dependencies: [
                 .target(name: "HomeFeatureV2"),
+                .project(target: "Domain", path: "../../Domain"),
+                .project(target: "Data", path: "../../Data"),
             ],
             settings: .settings(
                 configurations: [
