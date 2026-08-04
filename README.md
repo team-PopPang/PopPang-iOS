@@ -37,7 +37,7 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 | **Kingfisher** | 이미지 캐싱 처리 및 UI 성능 개선을 위함 |
 | **NMapsMap** | 지도 기반 팝업 탐색 기능을 구현하기 위함 |
 | **BottomSheet** | 지도와 상세 흐름의 바텀시트 UI를 구현하기 위함 |
-| **PopPangListKit** | UICollectionView 기반 선언형 목록 DSL을 제공하는 외부 라이브러리 |
+| **PopPangListKit** | 직접 제작한 UICollectionView 기반 선언형 목록 DSL 라이브러리 |
 
 <br/><br/>
 
@@ -59,12 +59,13 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 
 # 4. 핵심 성과
 
+<!--
 ### **1. 선언형 List DSL로 UIKit과 SwiftUI 목록 구현 통합**
 > **문제**
 >
 > SwiftUI `List`는 표준 목록을 빠르게 만들기 좋지만 복잡한 scroll lifecycle, prefetch, pagination과 업데이트 전략을 직접 제어하기 어려웠음. 
-> 반대로 `UICollectionView`는 동작을 예측하고 튜닝할 수 있지만 화면마다 data source와 delegate 연결 코드가 반복됐음
->
+> 반대로 `UICollectionView`는 동작을 예측하고 튜닝할 수 있지만 화면마다 data source와 delegate 연결 코드가 반복됐음  
+>  
 > **해결**
 >
 > `UICollectionView`와 DifferenceKit을 Core로 유지하면서 `List`, `Section`, `Cell`로 구성하는 선언형 DSL을 구현  
@@ -97,17 +98,22 @@ struct PopupListView: View {
 }
 ```
 
+-->
+
 ---
 
-### **2. 로딩 지연 문제 개선**
+### **1. 로딩 지연 문제 개선**
 > **문제**  
-> 여러 API가 순차적으로 호출되며 전체 로딩이 길어졌음  
+> 초기 화면에서 여러 API를 `await`로 순차 호출해, 앞선 요청이 끝난 뒤에 다음 요청이 시작됐음.  
+> 비동기 요청이었지만 호출 구조가 직렬이라 각 응답 시간이 누적돼 초기 화면 로딩이 길어졌음.  
 >
 > **해결**  
-> `TaskGroup`을 활용해 병렬 처리 구조로 전환  
+> 서로 의존하지 않는 API 요청을 `TaskGroup`인 `withThrowingTaskGroup`의 독립 Task로 분리하고, `addTask`로 병렬 실행하도록 전환.  
+> 부모 Task에서는 `for try await`로 완료된 결과를 수집하고, `MainActor.run`에서 각 목록 상태를 갱신해 UI 업데이트를 메인 스레드에 한정했음.  
 >
 > **성과**  
-> 🔸 **초기 로딩 시간 40% 단축**
+> 🔸 실제 API 기준 응답 시간 **1.2ms → 0.7ms**로 단축해 약 **40%** 개선<br>
+> 🔸 새 API가 추가되어도 `addTask`만 추가하면 기존 병렬 처리 구조를 유지할 수 있게 구성
 
 ```swift
 func getAllPopupData() async {
@@ -136,7 +142,9 @@ func getAllPopupData() async {
 
 ---
 
-### **3. Moya를 async/await으로 사용하기 위한 공통 async 래퍼 생성**
+<br><br>
+
+### **2. Moya를 async/await으로 사용하기 위한 공통 async 래퍼 생성**
 > **문제**  
 > Moya는 completion 기반이라 async/await과 직접 호환되지 않아  
 > API마다 동일한 변환 코드가 반복됨  
@@ -169,7 +177,8 @@ let response = try await provider.asyncRequest(.getPopupList)
 
 ---
 
-### **4. MainTabFeature에서 Feature 조립과 TCA 네비게이션 통합**
+<!--
+### **3. MainTabFeature에서 Feature 조립과 TCA 네비게이션 통합**
 > **문제**  
 > Feature가 다른 Feature를 직접 의존하면 화면 이동 하나를 변경해도 여러 모듈이 함께 영향을 받고,  
 > 각 Feature의 독립성과 재사용성이 낮아짐
@@ -226,30 +235,30 @@ case .home(.delegate(.searchRequested)):
     return .none
 ```
 
----
-
-### **5. CSV 기반 로컬라이제이션 자동화로 다국어 관리 비용 절감**
-> **문제**  
-> `Localizable.strings`를 언어별로 직접 관리하면  
-> 키 누락, 오타, 언어별 불일치가 생기기 쉽고 문자열 키를 하드코딩할 때 디버깅 비용도 커졌음  
->
-> **해결**  
-> `Python/localizable.csv`를 기준으로  
-> `en/ko/ja Localizable.strings`와 `LocalizationKeys.swift`를 자동 생성하는  
-> CSV 기반 로컬라이제이션 생성 스크립트 구축  
->
-> **성과**  
-> 🔸 번역 데이터를 CSV 한 곳에서 일괄 관리  
-> 🔸 `LocalizationKey` enum 자동 생성으로 문자열 오타 위험 감소  
-> 🔸 번역 작업자, 기획자, 개발자가 같은 포맷으로 협업 가능
-
-```swift
-Text(LocalizationKey.commonNext.localized(comment: "Next button"))
-```
+-->
 
 ---
 
-### **6. 단일 타깃 구조를 Tuist 기반 Micro Feature Architecture로 전환**
+<br><br>
+
+### **3. MVVM에서 TCA로 상태 관리를 마이그레이션**
+> **문제**<br>
+> 여러 View에 ViewModel 상태 변경이 분산돼 상태 흐름을 추적하기 어려웠음.  
+> 특히 Preview에서 공유 ViewModel 객체를 만들지 않거나 `.environmentObject()` 주입을 빠뜨릴 때마다 런타임 크래시를 반복적으로 겪었음.
+>
+> **해결**<br>
+> 단방향 상태 관리 기반의 TCA로 전환해 `State → Action → Reducer` 흐름에서 상태 변경을 한 곳으로 모아 관리.
+>  
+> **성과**<br>
+> 🔸 상태 변경 경로를 일관되게 추적할 수 있게 구성<br>
+> 🔸 `EnvironmentObject` 주입 누락으로 발생하던 런타임 크래시를 줄이고 상태 공유 방식을 단순화<br>
+> 🔸 상태 변경을 독립적으로 검증할 수 있어 테스트 용이성 확보
+
+---
+
+<br><br>
+
+### **4. 단일 타깃 구조를 Tuist 기반 Micro Feature Architecture로 전환**
 > **문제**  
 > 기존 `V0` 앱은 `App`, `Presentation`, `Util`, `DesignSystem`이 단일 타깃에 섞여 있어  
 > 기능이 늘어날수록 변경 영향 범위가 커지고, 독립 개발과 빌드 검증이 어려웠음  
@@ -305,7 +314,9 @@ Projects
 
 ---
 
-### **7. 외부 SDK 의존성을 ThirdParty 링크 허브로 추적 가능하게 정리**
+<br><br>
+
+### **5. 외부 SDK 의존성을 ThirdParty 링크 허브로 추적 가능하게 정리**
 > **문제**  
 > 외부 SDK가 여러 레이어에 직접 흩어지면 어떤 모듈이 어떤 SDK product를 링크하는지 파악하기 어렵고,  
 > SPM product type 문제로 빌드와 런타임 경고가 발생할 수 있었음  
@@ -333,6 +344,29 @@ Projects
         .external(name: "NMapsMap"),
     ]
 )
+```
+
+---
+
+<br><br>
+
+### **6. CSV 기반 로컬라이제이션 자동화로 다국어 관리 비용 절감**
+> **문제**<br>
+> `Localizable.strings`를 언어별로 직접 관리하면<br>
+> 키 누락, 오타, 언어별 불일치가 생기기 쉽고 문자열 키를 하드코딩할 때 디버깅 비용도 커졌음
+>
+> **해결**<br>
+> `Python/localizable.csv`를 기준으로<br>
+> `en/ko/ja Localizable.strings`와 `LocalizationKeys.swift`를 자동 생성하는<br>
+> CSV 기반 로컬라이제이션 생성 스크립트 구축
+>
+> **성과**<br>
+> 🔸 번역 데이터를 CSV 한 곳에서 일괄 관리<br>
+> 🔸 `LocalizationKey` enum 자동 생성으로 문자열 오타 위험 감소<br>
+> 🔸 번역 작업자, 기획자, 개발자가 같은 포맷으로 협업 가능
+
+```swift
+Text(LocalizationKey.commonNext.localized(comment: "Next button"))
 ```
 
 <br/><br/>
@@ -390,3 +424,5 @@ make module LAYER=shared NAME=UIComponents
 - [PopPangListKit](https://github.com/team-PopPang/PopPangListKit): UICollectionView 기반 선언형 목록 라이브러리와 UIKit·SwiftUI 사용 예제
 - `V0/README.md`: 기존 단일 타깃 앱 README
 - `Tuist/Package.swift`: 외부 의존성과 product type 정책
+&amp;nbsp;
+&nbsp;
