@@ -37,7 +37,7 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 | **Kingfisher** | 이미지 캐싱 처리 및 UI 성능 개선을 위함 |
 | **NMapsMap** | 지도 기반 팝업 탐색 기능을 구현하기 위함 |
 | **BottomSheet** | 지도와 상세 흐름의 바텀시트 UI를 구현하기 위함 |
-| **PopPangListKit** | UICollectionView 기반 선언형 목록 DSL을 제공하는 외부 라이브러리 |
+| **PopPangListKit** | 직접 제작한 UICollectionView 기반 선언형 목록 DSL 라이브러리 |
 
 <br/><br/>
 
