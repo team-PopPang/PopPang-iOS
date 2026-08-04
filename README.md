@@ -104,11 +104,13 @@ struct PopupListView: View {
 
 ### **1. 로딩 지연 문제 개선**
 > **문제**  
-> 초기 화면에서 여러 API를 `await`로 순차 호출해, 앞선 요청이 끝난 뒤에 다음 요청이 시작됐음.
-> 비동기 요청이었지만 호출 구조가 직렬이라 각 응답 시간이 누적돼 초기 화면 로딩이 길어졌음.
+> 초기 화면에서 여러 API를 `await`로 순차 호출해, 앞선 요청이 끝난 뒤에 다음 요청이 시작됐음.  
+> 비동기 요청이었지만 호출 구조가 직렬이라 각 응답 시간이 누적돼 초기 화면 로딩이 길어졌음.  
+>
 > **해결**  
-> 서로 의존하지 않는 API 요청을 `TaskGroup`인 `withThrowingTaskGroup`의 독립 Task로 분리하고, `addTask`로 병렬 실행하도록 전환.
-> 부모 Task에서는 `for try await`로 완료된 결과를 수집하고, `MainActor.run`에서 각 목록 상태를 갱신해 UI 업데이트를 메인 스레드에 한정했음.
+> 서로 의존하지 않는 API 요청을 `TaskGroup`인 `withThrowingTaskGroup`의 독립 Task로 분리하고, `addTask`로 병렬 실행하도록 전환.  
+> 부모 Task에서는 `for try await`로 완료된 결과를 수집하고, `MainActor.run`에서 각 목록 상태를 갱신해 UI 업데이트를 메인 스레드에 한정했음.  
+>
 > **성과**  
 > 🔸 실제 API 기준 응답 시간 **1.2ms → 0.7ms**로 단축해 약 **40%** 개선<br>
 > 🔸 새 API가 추가되어도 `addTask`만 추가하면 기존 병렬 처리 구조를 유지할 수 있게 구성
@@ -237,10 +239,12 @@ case .home(.delegate(.searchRequested)):
 
 ### **3. MVVM에서 TCA로 상태 관리를 마이그레이션**
 > **문제**<br>
-> 여러 View에 ViewModel 상태 변경이 분산돼 상태 흐름을 추적하기 어려웠음.
+> 여러 View에 ViewModel 상태 변경이 분산돼 상태 흐름을 추적하기 어려웠음.  
 > 특히 Preview에서 공유 ViewModel 객체를 만들지 않거나 `.environmentObject()` 주입을 빠뜨릴 때마다 런타임 크래시를 반복적으로 겪었음.
+> 
 > **해결**<br>
 > 단방향 상태 관리 기반의 TCA로 전환해 `State → Action → Reducer` 흐름에서 상태 변경을 한 곳으로 모아 관리.
+>  
 > **성과**<br>
 > 🔸 상태 변경 경로를 일관되게 추적할 수 있게 구성<br>
 > 🔸 `EnvironmentObject` 주입 누락으로 발생하던 런타임 크래시를 줄이고 상태 공유 방식을 단순화<br>
@@ -408,3 +412,4 @@ make module LAYER=shared NAME=UIComponents
 - [PopPangListKit](https://github.com/team-PopPang/PopPangListKit): UICollectionView 기반 선언형 목록 라이브러리와 UIKit·SwiftUI 사용 예제
 - `V0/README.md`: 기존 단일 타깃 앱 README
 - `Tuist/Package.swift`: 외부 의존성과 product type 정책
+&nbsp;
