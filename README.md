@@ -178,6 +178,7 @@ let response = try await provider.asyncRequest(.getPopupList)
 
 ---
 
+<!--
 ### **3. MainTabFeature에서 Feature 조립과 TCA 네비게이션 통합**
 > **문제**  
 > Feature가 다른 Feature를 직접 의존하면 화면 이동 하나를 변경해도 여러 모듈이 함께 영향을 받고,  
@@ -235,7 +236,24 @@ case .home(.delegate(.searchRequested)):
     return .none
 ```
 
+-->
+
 ---
+
+### **3. MVVM에서 TCA로 상태 관리를 마이그레이션**
+> **문제**
+>
+> 여러 View에 ViewModel 상태 변경이 분산돼 상태 흐름을 추적하기 어려웠음.
+> ViewModel 간 상태 공유를 위한 `EnvironmentObject` 주입이 누락되면서 런타임 크래시가 반복됐음.
+>
+> **해결**
+>
+> 단방향 상태 관리 기반의 TCA로 전환해 상태 변경을 한 방향의 흐름으로 관리.
+>
+> **성과**
+>
+> 🔸 상태 변경 경로를 일관되게 추적할 수 있게 구성
+> 🔸 상태를 독립적으로 검증할 수 있어 테스트 용이성 확보
 
 ### **4. CSV 기반 로컬라이제이션 자동화로 다국어 관리 비용 절감**
 > **문제**  
