@@ -59,6 +59,7 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 
 # 4. 핵심 성과
 
+<!--
 ### **1. 선언형 List DSL로 UIKit과 SwiftUI 목록 구현 통합**
 > **문제**
 >
@@ -97,9 +98,11 @@ struct PopupListView: View {
 }
 ```
 
+-->
+
 ---
 
-### **2. 로딩 지연 문제 개선**
+### **1. 로딩 지연 문제 개선**
 > **문제**  
 > 여러 API가 순차적으로 호출되며 전체 로딩이 길어졌음  
 >
@@ -136,7 +139,7 @@ func getAllPopupData() async {
 
 ---
 
-### **3. Moya를 async/await으로 사용하기 위한 공통 async 래퍼 생성**
+### **2. Moya를 async/await으로 사용하기 위한 공통 async 래퍼 생성**
 > **문제**  
 > Moya는 completion 기반이라 async/await과 직접 호환되지 않아  
 > API마다 동일한 변환 코드가 반복됨  
@@ -169,7 +172,7 @@ let response = try await provider.asyncRequest(.getPopupList)
 
 ---
 
-### **4. MainTabFeature에서 Feature 조립과 TCA 네비게이션 통합**
+### **3. MainTabFeature에서 Feature 조립과 TCA 네비게이션 통합**
 > **문제**  
 > Feature가 다른 Feature를 직접 의존하면 화면 이동 하나를 변경해도 여러 모듈이 함께 영향을 받고,  
 > 각 Feature의 독립성과 재사용성이 낮아짐
@@ -228,7 +231,7 @@ case .home(.delegate(.searchRequested)):
 
 ---
 
-### **5. CSV 기반 로컬라이제이션 자동화로 다국어 관리 비용 절감**
+### **4. CSV 기반 로컬라이제이션 자동화로 다국어 관리 비용 절감**
 > **문제**  
 > `Localizable.strings`를 언어별로 직접 관리하면  
 > 키 누락, 오타, 언어별 불일치가 생기기 쉽고 문자열 키를 하드코딩할 때 디버깅 비용도 커졌음  
@@ -249,7 +252,7 @@ Text(LocalizationKey.commonNext.localized(comment: "Next button"))
 
 ---
 
-### **6. 단일 타깃 구조를 Tuist 기반 Micro Feature Architecture로 전환**
+### **5. 단일 타깃 구조를 Tuist 기반 Micro Feature Architecture로 전환**
 > **문제**  
 > 기존 `V0` 앱은 `App`, `Presentation`, `Util`, `DesignSystem`이 단일 타깃에 섞여 있어  
 > 기능이 늘어날수록 변경 영향 범위가 커지고, 독립 개발과 빌드 검증이 어려웠음  
@@ -305,7 +308,7 @@ Projects
 
 ---
 
-### **7. 외부 SDK 의존성을 ThirdParty 링크 허브로 추적 가능하게 정리**
+### **6. 외부 SDK 의존성을 ThirdParty 링크 허브로 추적 가능하게 정리**
 > **문제**  
 > 외부 SDK가 여러 레이어에 직접 흩어지면 어떤 모듈이 어떤 SDK product를 링크하는지 파악하기 어렵고,  
 > SPM product type 문제로 빌드와 런타임 경고가 발생할 수 있었음  
