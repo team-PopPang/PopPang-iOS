@@ -215,7 +215,8 @@ private struct PopupPaginationDemoDestinationView: View {
         case .uiKitReleaseTrigger:
             PopupPaginationUIKitDemoView(
                 store: store,
-                paginationTrigger: .releaseDrivenTargetOffset
+                paginationTrigger: .releaseDrivenTargetOffset,
+                imageSource: .prefetchSample
             )
 
         case .popPangListKit:
