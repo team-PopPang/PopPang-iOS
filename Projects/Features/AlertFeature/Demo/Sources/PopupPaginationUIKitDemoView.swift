@@ -491,6 +491,17 @@ final class PopupPaginationUIKitCardView: UIView {
 
     func configure(
         with item: PopupPaginationItem,
+        imagePipeline: PopupPaginationImagePipeline
+    ) {
+        configure(
+            with: item,
+            thumbnailURL: item.thumbnailURL,
+            imagePipeline: imagePipeline
+        )
+    }
+
+    func configure(
+        with item: PopupPaginationItem,
         thumbnailURL: URL?,
         imagePipeline: PopupPaginationImagePipeline
     ) {
