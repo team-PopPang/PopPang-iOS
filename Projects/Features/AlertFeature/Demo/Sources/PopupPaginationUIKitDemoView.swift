@@ -20,17 +20,43 @@ enum PopupPaginationUIKitPaginationTrigger {
     }
 }
 
+enum PopupPaginationUIKitImageSource {
+    case popPang
+    case prefetchSample
+
+    func url(
+        for item: PopupPaginationItem,
+        index: Int
+    ) -> URL? {
+        switch self {
+        case .popPang:
+            item.thumbnailURL
+
+        case .prefetchSample:
+            // 예제 호스트로 팝업 UUID를 보내지 않도록 목록 순번을 고정 seed로 사용한다.
+            URL(
+                string: "https://picsum.photos/seed/basic-prefetch-"
+                    + String(index)
+                    + "/600/400"
+            )
+        }
+    }
+}
+
 struct PopupPaginationUIKitDemoView: View {
     @Bindable var store: StoreOf<PopupPaginationDemoFeature>
     @State private var imagePipeline = PopupPaginationImagePipeline()
     let paginationTrigger: PopupPaginationUIKitPaginationTrigger
+    let imageSource: PopupPaginationUIKitImageSource
 
     init(
         store: StoreOf<PopupPaginationDemoFeature>,
-        paginationTrigger: PopupPaginationUIKitPaginationTrigger = .didScroll
+        paginationTrigger: PopupPaginationUIKitPaginationTrigger = .didScroll,
+        imageSource: PopupPaginationUIKitImageSource = .popPang
     ) {
         self.store = store
         self.paginationTrigger = paginationTrigger
+        self.imageSource = imageSource
     }
 
     var body: some View {
@@ -73,7 +99,8 @@ private extension PopupPaginationUIKitDemoView {
                         && !store.isRequesting
                         && store.errorMessage == nil,
                     imagePipeline: imagePipeline,
-                    paginationTrigger: paginationTrigger
+                    paginationTrigger: paginationTrigger,
+                    imageSource: imageSource
                 ) {
                     store.send(.reachedEnd)
                 }
@@ -96,12 +123,14 @@ private struct PopupPaginationUIKitCollectionView: UIViewControllerRepresentable
     let canLoadNextPage: Bool
     let imagePipeline: PopupPaginationImagePipeline
     let paginationTrigger: PopupPaginationUIKitPaginationTrigger
+    let imageSource: PopupPaginationUIKitImageSource
     let onReachedEnd: () -> Void
 
     func makeUIViewController(context: Context) -> PopupPaginationUIKitViewController {
         PopupPaginationUIKitViewController(
             imagePipeline: imagePipeline,
             paginationTrigger: paginationTrigger,
+            imageSource: imageSource,
             onReachedEnd: onReachedEnd
         )
     }
@@ -126,19 +155,23 @@ private final class PopupPaginationUIKitViewController: UIViewController {
     private let onReachedEnd: () -> Void
     private let imagePipeline: PopupPaginationImagePipeline
     private let paginationTrigger: PopupPaginationUIKitPaginationTrigger
+    private let imageSource: PopupPaginationUIKitImageSource
     private let collectionView: UICollectionView
     private var dataSource: UICollectionViewDiffableDataSource<Section, String>!
     private var itemsByID: [String: PopupPaginationItem] = [:]
+    private var imageURLsByID: [String: URL] = [:]
     private var prefetchTokens: [String: UUID] = [:]
     private var canLoadNextPage = false
 
     init(
         imagePipeline: PopupPaginationImagePipeline,
         paginationTrigger: PopupPaginationUIKitPaginationTrigger,
+        imageSource: PopupPaginationUIKitImageSource,
         onReachedEnd: @escaping () -> Void
     ) {
         self.imagePipeline = imagePipeline
         self.paginationTrigger = paginationTrigger
+        self.imageSource = imageSource
         self.onReachedEnd = onReachedEnd
         self.collectionView = UICollectionView(
             frame: .zero,
@@ -164,6 +197,11 @@ private final class PopupPaginationUIKitViewController: UIViewController {
     ) {
         self.itemsByID = Dictionary(
             uniqueKeysWithValues: items.map { ($0.id, $0) }
+        )
+        self.imageURLsByID = Dictionary(
+            uniqueKeysWithValues: items.enumerated().compactMap { index, item in
+                imageSource.url(for: item, index: index).map { (item.id, $0) }
+            }
         )
         self.canLoadNextPage = canLoadNextPage
 
@@ -239,6 +277,7 @@ private extension PopupPaginationUIKitViewController {
             guard let self, let item = itemsByID[itemID] else { return }
             cell.configure(
                 with: item,
+                thumbnailURL: imageURLsByID[itemID],
                 imagePipeline: imagePipeline
             )
         }
@@ -270,7 +309,7 @@ extension PopupPaginationUIKitViewController: UICollectionViewDataSourcePrefetch
         for indexPath in indexPaths {
             guard let itemID = dataSource.itemIdentifier(for: indexPath),
                   prefetchTokens[itemID] == nil,
-                  let url = itemsByID[itemID]?.thumbnailURL
+                  let url = imageURLsByID[itemID]
             else {
                 continue
             }
@@ -415,10 +454,12 @@ private final class PopupPaginationCollectionViewCell: UICollectionViewCell {
 
     func configure(
         with item: PopupPaginationItem,
+        thumbnailURL: URL?,
         imagePipeline: PopupPaginationImagePipeline
     ) {
         cardView.configure(
             with: item,
+            thumbnailURL: thumbnailURL,
             imagePipeline: imagePipeline
         )
     }
@@ -452,6 +493,18 @@ final class PopupPaginationUIKitCardView: UIView {
         with item: PopupPaginationItem,
         imagePipeline: PopupPaginationImagePipeline
     ) {
+        configure(
+            with: item,
+            thumbnailURL: item.thumbnailURL,
+            imagePipeline: imagePipeline
+        )
+    }
+
+    func configure(
+        with item: PopupPaginationItem,
+        thumbnailURL: URL?,
+        imagePipeline: PopupPaginationImagePipeline
+    ) {
         cancelImageLoad()
         self.imagePipeline = imagePipeline
         thumbnailImageView.image = UIImage(systemName: "photo")
@@ -467,7 +520,7 @@ final class PopupPaginationUIKitCardView: UIView {
             ? UIColor(Color.mainOrange)
             : UIColor(Color.mainGray)
 
-        guard let thumbnailURL = item.thumbnailURL else { return }
+        guard let thumbnailURL else { return }
         let generation = UUID()
         imageLoadGeneration = generation
         imageLoadID = imagePipeline.loadImage(at: thumbnailURL) { [weak self] image in

@@ -8,6 +8,9 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
     case uiKitWillEndDragging
     case uiKitReleaseTrigger
     case popPangListKit
+    case uiKitReleaseTriggerPrefetchSample
+    case uiKitImagePreparation
+    case swiftUIImagePreparation
 
     var title: String {
         switch self {
@@ -21,6 +24,12 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "UIKit + Release Trigger"
         case .popPangListKit:
             "PopPangListKit"
+        case .uiKitReleaseTriggerPrefetchSample:
+            "UIKit + Release Trigger + Picsum"
+        case .uiKitImagePreparation:
+            "UIKit + Image Preparation"
+        case .swiftUIImagePreparation:
+            "SwiftUI iOS 17 + Image Preparation"
         }
     }
 
@@ -36,6 +45,12 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "scrollViewWillEndDragging을 주 경로로 사용합니다. scrollViewDidScroll은 감속과 프로그램 이동만 보완합니다."
         case .popPangListKit:
             "List DSL과 내장 pagination 흐름을 확인합니다."
+        case .uiKitReleaseTriggerPrefetchSample:
+            "Release Trigger와 카드 UI는 유지하고, prefetch 예제의 picsum.photos 이미지만 비교합니다."
+        case .uiKitImagePreparation:
+            "스크롤 비율로 다음 화면의 이미지를 미리 다운샘플링하고 디코드합니다."
+        case .swiftUIImagePreparation:
+            "iOS 17 GeometryReader로 스크롤 비율 prefetch를 실험합니다."
         }
     }
 
@@ -51,6 +66,12 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "hand.tap"
         case .popPangListKit:
             "square.grid.2x2"
+        case .uiKitReleaseTriggerPrefetchSample:
+            "photo.stack"
+        case .uiKitImagePreparation:
+            "rectangle.on.rectangle.angled"
+        case .swiftUIImagePreparation:
+            "swiftdata"
         }
     }
 
@@ -66,6 +87,12 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "04"
         case .popPangListKit:
             "05"
+        case .uiKitReleaseTriggerPrefetchSample:
+            "06"
+        case .uiKitImagePreparation:
+            "07"
+        case .swiftUIImagePreparation:
+            "08"
         }
     }
 }
@@ -111,12 +138,12 @@ struct PopupPaginationDemoNavigationView: View {
 private extension PopupPaginationDemoNavigationView {
     var header: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("FIVE WAYS, ONE CURSOR")
+            Text("SIX WAYS, ONE CURSOR")
                 .font(.scdream(.bold, size: 12))
                 .tracking(2.1)
                 .foregroundStyle(Color.mainOrange)
 
-            Text("같은 API를\n다섯 가지 리스트로")
+            Text("같은 API를\n여덟 가지 리스트로")
                 .font(.scdream(.black, size: 30))
                 .foregroundStyle(Color.mainBlack)
                 .lineSpacing(3)
@@ -220,6 +247,19 @@ private struct PopupPaginationDemoDestinationView: View {
 
         case .popPangListKit:
             PopupPaginationListKitDemoView(store: store)
+
+        case .uiKitReleaseTriggerPrefetchSample:
+            PopupPaginationUIKitDemoView(
+                store: store,
+                paginationTrigger: .releaseDrivenTargetOffset,
+                imageSource: .prefetchSample
+            )
+
+        case .uiKitImagePreparation:
+            PopupPaginationUIKitImagePreparationDemoView(store: store)
+
+        case .swiftUIImagePreparation:
+            PopupPaginationSwiftUIImagePreparationDemoView(store: store)
         }
     }
 }
