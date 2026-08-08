@@ -9,6 +9,8 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
     case uiKitReleaseTrigger
     case popPangListKit
     case uiKitReleaseTriggerPrefetchSample
+    case uiKitImagePreparation
+    case swiftUIImagePreparation
 
     var title: String {
         switch self {
@@ -24,6 +26,10 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "PopPangListKit"
         case .uiKitReleaseTriggerPrefetchSample:
             "UIKit + Release Trigger + Picsum"
+        case .uiKitImagePreparation:
+            "UIKit + Image Preparation"
+        case .swiftUIImagePreparation:
+            "SwiftUI iOS 17 + Image Preparation"
         }
     }
 
@@ -41,6 +47,10 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "List DSL과 내장 pagination 흐름을 확인합니다."
         case .uiKitReleaseTriggerPrefetchSample:
             "Release Trigger와 카드 UI는 유지하고, prefetch 예제의 picsum.photos 이미지만 비교합니다."
+        case .uiKitImagePreparation:
+            "스크롤 비율로 다음 화면의 이미지를 미리 다운샘플링하고 디코드합니다."
+        case .swiftUIImagePreparation:
+            "iOS 17 GeometryReader로 스크롤 비율 prefetch를 실험합니다."
         }
     }
 
@@ -58,6 +68,10 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "square.grid.2x2"
         case .uiKitReleaseTriggerPrefetchSample:
             "photo.stack"
+        case .uiKitImagePreparation:
+            "rectangle.on.rectangle.angled"
+        case .swiftUIImagePreparation:
+            "swiftdata"
         }
     }
 
@@ -75,6 +89,10 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "05"
         case .uiKitReleaseTriggerPrefetchSample:
             "06"
+        case .uiKitImagePreparation:
+            "07"
+        case .swiftUIImagePreparation:
+            "08"
         }
     }
 }
@@ -125,7 +143,7 @@ private extension PopupPaginationDemoNavigationView {
                 .tracking(2.1)
                 .foregroundStyle(Color.mainOrange)
 
-            Text("같은 API를\n여섯 가지 리스트로")
+            Text("같은 API를\n여덟 가지 리스트로")
                 .font(.scdream(.black, size: 30))
                 .foregroundStyle(Color.mainBlack)
                 .lineSpacing(3)
@@ -236,6 +254,12 @@ private struct PopupPaginationDemoDestinationView: View {
                 paginationTrigger: .releaseDrivenTargetOffset,
                 imageSource: .prefetchSample
             )
+
+        case .uiKitImagePreparation:
+            PopupPaginationUIKitImagePreparationDemoView(store: store)
+
+        case .swiftUIImagePreparation:
+            PopupPaginationSwiftUIImagePreparationDemoView(store: store)
         }
     }
 }
