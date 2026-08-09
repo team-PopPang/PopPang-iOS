@@ -11,6 +11,7 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
     case uiKitReleaseTriggerPrefetchSample
     case uiKitImagePreparation
     case swiftUIImagePreparation
+    case swiftConcurrencyImagePreparation
 
     var title: String {
         switch self {
@@ -30,6 +31,8 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "UIKit + Image Preparation"
         case .swiftUIImagePreparation:
             "SwiftUI iOS 17 + Image Preparation"
+        case .swiftConcurrencyImagePreparation:
+            "Swift Concurrency + Image Preparation"
         }
     }
 
@@ -51,6 +54,8 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "스크롤 비율로 다음 화면의 이미지를 미리 다운샘플링하고 디코드합니다."
         case .swiftUIImagePreparation:
             "iOS 17 GeometryReader로 스크롤 비율 prefetch를 실험합니다."
+        case .swiftConcurrencyImagePreparation:
+            "actor와 TaskGroup으로 이미지 선행 처리 동시성을 제한합니다."
         }
     }
 
@@ -72,6 +77,8 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "rectangle.on.rectangle.angled"
         case .swiftUIImagePreparation:
             "swiftdata"
+        case .swiftConcurrencyImagePreparation:
+            "arrow.triangle.2.circlepath"
         }
     }
 
@@ -93,6 +100,8 @@ enum PopupPaginationDemoRoute: String, CaseIterable, Hashable {
             "07"
         case .swiftUIImagePreparation:
             "08"
+        case .swiftConcurrencyImagePreparation:
+            "09"
         }
     }
 }
@@ -143,7 +152,7 @@ private extension PopupPaginationDemoNavigationView {
                 .tracking(2.1)
                 .foregroundStyle(Color.mainOrange)
 
-            Text("같은 API를\n여덟 가지 리스트로")
+            Text("같은 API를\n아홉 가지 리스트로")
                 .font(.scdream(.black, size: 30))
                 .foregroundStyle(Color.mainBlack)
                 .lineSpacing(3)
@@ -260,6 +269,9 @@ private struct PopupPaginationDemoDestinationView: View {
 
         case .swiftUIImagePreparation:
             PopupPaginationSwiftUIImagePreparationDemoView(store: store)
+
+        case .swiftConcurrencyImagePreparation:
+            PopupPaginationSwiftConcurrencyImagePreparationDemoView(store: store)
         }
     }
 }
