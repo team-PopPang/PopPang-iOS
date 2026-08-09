@@ -25,7 +25,7 @@ private struct PopupPaginationSwiftConcurrencyImageResult: Sendable {
 private actor PopupPaginationSwiftConcurrencyImagePipeline {
     static let thumbnailSize = CGSize(width: 102, height: 126)
 
-    private static let maximumConcurrentImageTasks = 2
+    private static let maximumConcurrentImageTasks = 10
     private static let maximumCachedImageCount = 36
 
     private let targetSize: CGSize
@@ -264,7 +264,7 @@ private extension PopupPaginationSwiftConcurrencyImagePipeline {
 
 private enum PopupPaginationSwiftConcurrencyPrefetchPlanner {
     private static let cardStride: CGFloat = 162
-    private static let lookAheadViewportRatio: CGFloat = 1.25
+    private static let lookAheadViewportRatio: CGFloat = 2.0
 
     static func urls(
         items: [PopupPaginationItem],
@@ -408,7 +408,7 @@ private extension PopupPaginationSwiftConcurrencyImagePreparationDemoView {
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
                 .foregroundStyle(Color.mainBlack)
 
-            Text("TASKGROUP x 2")
+            Text("TASKGROUP x 6")
                 .font(.system(size: 10, weight: .bold, design: .monospaced))
                 .foregroundStyle(Color.mainOrange)
 
