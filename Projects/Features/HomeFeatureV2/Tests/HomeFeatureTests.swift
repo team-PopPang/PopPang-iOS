@@ -185,6 +185,17 @@ struct HomeFeatureTests {
         }
     }
 
+    @Test("HomeFeature가 닉네임 갱신 action을 상태에 반영한다")
+    func homeFeatureUpdatesNickname() async {
+        let store = TestStore(initialState: HomeFeature.State(user: makeUser())) {
+            HomeFeature()
+        }
+
+        await store.send(.nicknameUpdated("새 팝팡")) {
+            $0.nickname = "새 팝팡"
+        }
+    }
+
     @Test("HomeFeature가 refreshFilteredPopupList 시 현재 필터로 목록을 다시 조회한다")
     func homeFeatureRefreshesFilteredList() async {
         let region = RegionList(
