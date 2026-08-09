@@ -128,8 +128,8 @@ extension HomeFeatureView {
             }
             .layoutMode(.fitContent(estimatedSize: BestPopupCell.layoutSize))
         }
-        .withHeader(item: "bestPopup") { _ in
-            HomeBestHeader(nickname: store.nickname)
+        .withHeader(item: store.nickname) { nickname in
+            HomeBestHeader(nickname: nickname)
                 .padding(.bottom, 10)
         }
         .headerBackground(UIColor(Color.subWhite))
