@@ -24,10 +24,11 @@ let project = Project(
             name: "MapFeatureDemo",
             destinations: [.iPhone],
             product: .app,
-            bundleId: "com.poppang.demo.map",
+            bundleId: "kr.co.poppang.PopPang",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .extendingDefault(
                 with: [
+                    "NMFClientID": "$(NMFClientID)",
                     "UILaunchScreen": [
                         "UIColorName": "",
                         "UIImageName": "",
@@ -39,7 +40,19 @@ let project = Project(
                 .target(name: "MapFeature"),
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "Data", path: "../../Data"),
-            ]
+            ],
+            settings: .settings(
+                configurations: [
+                    .debug(
+                        name: "Debug",
+                        xcconfig: .relativeToManifest("../../App/Secrets.xcconfig")
+                    ),
+                    .release(
+                        name: "Release",
+                        xcconfig: .relativeToManifest("../../App/Secrets.xcconfig")
+                    ),
+                ]
+            )
         ),
     ]
 )
