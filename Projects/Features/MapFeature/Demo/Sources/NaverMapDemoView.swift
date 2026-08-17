@@ -97,6 +97,9 @@ struct NaverMapDemoRootView: View {
                     currentLocationButton
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                 }
+                .onAppear {
+                    requestInitialLocationIfAuthorized()
+                }
                 .alert(
                     locationFailure?.title ?? "현재 위치를 가져올 수 없습니다",
                     isPresented: Binding(
@@ -157,6 +160,20 @@ struct NaverMapDemoRootView: View {
         .padding(.trailing, 20)
         .padding(.bottom, 40)
         .accessibilityLabel("내 위치로 이동")
+    }
+
+    /// 사용자 정의 메서드 - 앱 시작 시 위치 권한이 이미 허용된 경우에만 자동 위치 이동을 요청합니다.
+    private func requestInitialLocationIfAuthorized() {
+        guard locationRequestID == nil else { return }
+
+        switch CLLocationManager().authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse:
+            locationRequestID = UUID()
+        case .notDetermined, .denied, .restricted:
+            break
+        @unknown default:
+            break
+        }
     }
 
     /// 앱 설정 화면을 열어 사용자가 위치 권한을 직접 변경할 수 있게 합니다.
