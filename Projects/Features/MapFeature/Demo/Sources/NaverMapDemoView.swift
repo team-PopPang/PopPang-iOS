@@ -1,6 +1,7 @@
 import CoreLocation
 import NMapsMap
 import SwiftUI
+import UIKit
 
 /**
  // 1. SwiftUI가 현재 callback을 NaverMapDemoView에 전달
@@ -53,11 +54,12 @@ import SwiftUI
 
 /// 네이버 지도 데모와 카메라 중심 좌표 오버레이를 함께 표시하는 루트 화면입니다.
 struct NaverMapDemoRootView: View {
+    @Environment(\.openURL) private var openURL
+
     /// 마지막으로 카메라 이동이 완료된 지도 중심 좌표입니다.
     @State private var cameraCenter = MapCameraCenter.seoulCityHall
     @State private var locationRequestID: UUID?
-    @State private var locationErrorMessage = ""
-    @State private var isLocationErrorPresented = false
+    @State private var locationFailure: LocationFailure?
 
     /// 네이버 지도 키 설정 여부에 따라 지도 또는 설정 안내 화면을 표시합니다.
     var body: some View {
@@ -77,9 +79,8 @@ struct NaverMapDemoRootView: View {
                         onCameraCenterChanged: { center in
                             cameraCenter = center
                         },
-                        onLocationError: { message in
-                            locationErrorMessage = message
-                            isLocationErrorPresented = true
+                        onLocationError: { failure in
+                            locationFailure = failure
                         }
                     )
                     .ignoresSafeArea()
@@ -91,12 +92,27 @@ struct NaverMapDemoRootView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                 }
                 .alert(
-                    "현재 위치를 가져올 수 없습니다",
-                    isPresented: $isLocationErrorPresented
+                    locationFailure?.title ?? "현재 위치를 가져올 수 없습니다",
+                    isPresented: Binding(
+                        get: { locationFailure != nil },
+                        set: { isPresented in
+                            if isPresented == false {
+                                locationFailure = nil
+                            }
+                        }
+                    )
                 ) {
-                    Button("확인", role: .cancel) {}
+                    if locationFailure?.requiresSettings == true {
+                        Button("설정으로 이동") {
+                            openAppSettings()
+                        }
+                    }
+
+                    Button("확인", role: .cancel) {
+                        locationFailure = nil
+                    }
                 } message: {
-                    Text(locationErrorMessage)
+                    Text(locationFailure?.message ?? "")
                 }
             }
         }
@@ -136,6 +152,15 @@ struct NaverMapDemoRootView: View {
         .padding(.bottom, 40)
         .accessibilityLabel("내 위치로 이동")
     }
+
+    /// 앱 설정 화면을 열어 사용자가 위치 권한을 직접 변경할 수 있게 합니다.
+    private func openAppSettings() {
+        guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else {
+            return
+        }
+
+        openURL(settingsURL)
+    }
 }
 
 /// `NMFNaverMapView`의 카메라 이벤트를 SwiftUI 상태로 연결하는 UIKit 래퍼입니다.
@@ -145,8 +170,8 @@ private struct NaverMapDemoView: UIViewRepresentable {
     /// 카메라 이동이 완료된 뒤 새 중심 좌표를 상위 SwiftUI 화면으로 전달합니다.
     let onCameraCenterChanged: (MapCameraCenter) -> Void
 
-    /// 위치 권한 거부 또는 현재 위치 조회 실패 메시지를 상위 화면으로 전달합니다.
-    let onLocationError: (String) -> Void
+    /// 위치 권한 거부 또는 현재 위치 조회 실패 상태를 상위 화면으로 전달합니다.
+    let onLocationError: (LocationFailure) -> Void
 
     /// UIViewRepresentable 메서드 - 네이버 지도 delegate 이벤트를 처리할 Coordinator를 생성합니다.
     func makeCoordinator() -> Coordinator {
@@ -205,7 +230,7 @@ private struct NaverMapDemoView: UIViewRepresentable {
         var onCameraCenterChanged: (MapCameraCenter) -> Void
 
         /// 위치 권한 및 위치 조회 실패를 상위 SwiftUI 화면에 알리는 callback입니다.
-        var onLocationError: (String) -> Void
+        var onLocationError: (LocationFailure) -> Void
 
         /// 위치 권한을 요청하고 한 번의 현재 위치를 수신하는 Core Location 관리자입니다.
         private let locationManager = CLLocationManager()
@@ -222,7 +247,7 @@ private struct NaverMapDemoView: UIViewRepresentable {
         /// 초기화 메서드 - 카메라 중심과 위치 오류 callback을 보관하고 위치 관리자 delegate를 연결합니다.
         init(
             onCameraCenterChanged: @escaping (MapCameraCenter) -> Void,
-            onLocationError: @escaping (String) -> Void
+            onLocationError: @escaping (LocationFailure) -> Void
         ) {
             self.onCameraCenterChanged = onCameraCenterChanged
             self.onLocationError = onLocationError
@@ -252,9 +277,9 @@ private struct NaverMapDemoView: UIViewRepresentable {
             case .notDetermined:
                 locationManager.requestWhenInUseAuthorization()
             case .denied, .restricted:
-                reportLocationError("위치 권한을 허용한 뒤 다시 시도해 주세요.")
+                reportLocationError(.permissionDenied)
             @unknown default:
-                reportLocationError("현재 위치 권한 상태를 확인할 수 없습니다.")
+                reportLocationError(.unavailable)
             }
         }
 
@@ -265,11 +290,11 @@ private struct NaverMapDemoView: UIViewRepresentable {
         }
 
         /// 사용자 정의 메서드 - 위치 관련 오류를 다음 SwiftUI 업데이트 사이클에서 상위 화면으로 전달합니다.
-        private func reportLocationError(_ message: String) {
+        private func reportLocationError(_ failure: LocationFailure) {
             isLocationRequestPending = false
 
             DispatchQueue.main.async { [weak self] in
-                self?.onLocationError(message)
+                self?.onLocationError(failure)
             }
         }
     }
@@ -296,11 +321,11 @@ extension NaverMapDemoView.Coordinator: CLLocationManagerDelegate {
         case .authorizedAlways, .authorizedWhenInUse:
             manager.requestLocation()
         case .denied, .restricted:
-            reportLocationError("위치 권한을 허용한 뒤 다시 시도해 주세요.")
+            reportLocationError(.permissionDenied)
         case .notDetermined:
             break
         @unknown default:
-            reportLocationError("현재 위치 권한 상태를 확인할 수 없습니다.")
+            reportLocationError(.unavailable)
         }
     }
 
@@ -325,7 +350,35 @@ extension NaverMapDemoView.Coordinator: CLLocationManagerDelegate {
 
     /// CLLocationManagerDelegate 메서드 - 위치 조회 실패를 상위 SwiftUI 화면에 전달합니다.
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        reportLocationError("현재 위치를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.")
+        reportLocationError(.unavailable)
+    }
+}
+
+/// 현재 위치 이동 실패의 원인에 맞는 사용자 안내를 정의합니다.
+private enum LocationFailure {
+    case permissionDenied
+    case unavailable
+
+    var title: String {
+        switch self {
+        case .permissionDenied:
+            "위치 권한이 필요합니다"
+        case .unavailable:
+            "현재 위치를 가져올 수 없습니다"
+        }
+    }
+
+    var message: String {
+        switch self {
+        case .permissionDenied:
+            "현재 위치로 이동하려면 설정에서 위치 권한을 허용해 주세요."
+        case .unavailable:
+            "잠시 후 다시 시도해 주세요."
+        }
+    }
+
+    var requiresSettings: Bool {
+        self == .permissionDenied
     }
 }
 
