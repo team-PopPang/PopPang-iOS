@@ -1,10 +1,63 @@
+import CoreLocation
 import NMapsMap
 import SwiftUI
+
+/**
+ // 1. SwiftUI가 현재 callback을 NaverMapDemoView에 전달
+ NaverMapDemoView { center in
+     cameraCenter = center
+ }
+
+ // 2. 처음 생성 시, 그 callback을 Coordinator에 전달
+ Coordinator(onCameraCenterChanged: onCameraCenterChanged)
+
+ // 3. 지도 이벤트가 나중에 발생하면 Coordinator가 저장한 callback 실행
+ func mapViewCameraIdle(_ mapView: NMFMapView) {
+     onCameraCenterChanged(center)
+ }
+
+ Coordinator는 NaverMapDemoView보다 오래 살아남을 수 있습니다. SwiftUI는 상태가 바뀔 때 NaverMapDemoView 구조체를 새 값으로 만들지만, 기존 UIKit 지도와 Coordinator는 재사용합니다.
+
+ 그래서 [updateUIView (line 91)](/Users/kimdonghyeon/2025/develop/App/PopPang/PopPang/Projects/Features/MapFeature/Demo/Sources/NaverMapDemoView.swift:91)에서 Coordinator의 callback을 최신 값으로 교체합니다.
+
+ NaverMapDemoView의 callback: SwiftUI가 전달한 최신 입력값
+ Coordinator의 callback: UIKit delegate가 실제 이벤트 시점에 실행할 저장값
+
+ SwiftUI 상태만 UIKit에 반영한다
+ → Representable 프로퍼티 + updateUIView
+
+ UIKit 이벤트를 SwiftUI에 전달한다
+ → Representable 프로퍼티 + Coordinator 프로퍼티 + delegate
+
+ UIKit 객체를 계속 보관해야 한다
+ → Coordinator 프로퍼티
+
+
+
+ 1. UIKit 이벤트가 없다, SwiftUI 값만 지도에 적용
+    → Coordinator 없음
+    예: 줌 레벨, 지도 스타일만 SwiftUI에서 설정
+
+ 2. UIKit 이벤트가 있지만 SwiftUI에 알릴 필요가 없다
+    → Coordinator는 필요할 수 있지만 callback 프로퍼티는 없음
+    예: Coordinator 내부에서 마커 캐시만 관리
+
+ 3. UIKit 이벤트를 SwiftUI 상태에 전달해야 한다
+    → NaverMapDemoView와 Coordinator 둘 다 callback 프로퍼티 필요
+    예: 현재 카메라 중심 좌표 전달
+
+ 4. SwiftUI가 다시 렌더링될 때 callback이 바뀔 수 있다
+    → updateUIView에서 Coordinator의 callback 갱신 필요
+    예: 현재 onCameraCenterChanged
+ */
 
 /// 네이버 지도 데모와 카메라 중심 좌표 오버레이를 함께 표시하는 루트 화면입니다.
 struct NaverMapDemoRootView: View {
     /// 마지막으로 카메라 이동이 완료된 지도 중심 좌표입니다.
     @State private var cameraCenter = MapCameraCenter.seoulCityHall
+    @State private var locationRequestID: UUID?
+    @State private var locationErrorMessage = ""
+    @State private var isLocationErrorPresented = false
 
     /// 네이버 지도 키 설정 여부에 따라 지도 또는 설정 안내 화면을 표시합니다.
     var body: some View {
@@ -18,13 +71,32 @@ struct NaverMapDemoRootView: View {
                     )
                 )
             } else {
-                ZStack(alignment: .top) {
-                    NaverMapDemoView { center in
-                        cameraCenter = center
-                    }
+                ZStack {
+                    NaverMapDemoView(
+                        locationRequestID: locationRequestID,
+                        onCameraCenterChanged: { center in
+                            cameraCenter = center
+                        },
+                        onLocationError: { message in
+                            locationErrorMessage = message
+                            isLocationErrorPresented = true
+                        }
+                    )
                     .ignoresSafeArea()
 
                     cameraCenterOverlay
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+
+                    currentLocationButton
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                }
+                .alert(
+                    "현재 위치를 가져올 수 없습니다",
+                    isPresented: $isLocationErrorPresented
+                ) {
+                    Button("확인", role: .cancel) {}
+                } message: {
+                    Text(locationErrorMessage)
                 }
             }
         }
@@ -48,16 +120,40 @@ struct NaverMapDemoRootView: View {
         .padding(.top, 12)
         .allowsHitTesting(false)
     }
+
+    /// 새 위치 요청 토큰을 만들어 Coordinator에 현재 위치 이동을 요청하는 버튼입니다.
+    private var currentLocationButton: some View {
+        Button {
+            locationRequestID = UUID()
+        } label: {
+            Image(systemName: "location.fill")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.primary)
+                .padding(14)
+                .background(.regularMaterial, in: Circle())
+        }
+        .padding(.trailing, 20)
+        .padding(.bottom, 40)
+        .accessibilityLabel("내 위치로 이동")
+    }
 }
 
 /// `NMFNaverMapView`의 카메라 이벤트를 SwiftUI 상태로 연결하는 UIKit 래퍼입니다.
 private struct NaverMapDemoView: UIViewRepresentable {
+    /// SwiftUI 버튼 탭마다 새로 전달되는 현재 위치 이동 요청 식별자입니다.
+    let locationRequestID: UUID?
     /// 카메라 이동이 완료된 뒤 새 중심 좌표를 상위 SwiftUI 화면으로 전달합니다.
     let onCameraCenterChanged: (MapCameraCenter) -> Void
 
+    /// 위치 권한 거부 또는 현재 위치 조회 실패 메시지를 상위 화면으로 전달합니다.
+    let onLocationError: (String) -> Void
+
     /// 네이버 지도 delegate 이벤트를 처리할 Coordinator를 생성합니다.
     func makeCoordinator() -> Coordinator {
-        Coordinator(onCameraCenterChanged: onCameraCenterChanged)
+        Coordinator(
+            onCameraCenterChanged: onCameraCenterChanged,
+            onLocationError: onLocationError
+        )
     }
 
     /// 네이버 지도 UIKit 뷰를 생성하고 고정 옵션과 카메라 delegate를 최초 설정합니다.
@@ -90,32 +186,139 @@ private struct NaverMapDemoView: UIViewRepresentable {
     /// SwiftUI가 갱신될 때 Coordinator가 최신 중심 좌표 callback을 사용하도록 동기화합니다.
     func updateUIView(_ uiView: NMFNaverMapView, context: Context) {
         context.coordinator.onCameraCenterChanged = onCameraCenterChanged
+        context.coordinator.onLocationError = onLocationError
+        context.coordinator.requestCurrentLocationIfNeeded(
+            for: locationRequestID,
+            mapView: uiView.mapView
+        )
     }
 
     /// Representable이 제거될 때 등록했던 카메라 delegate를 해제합니다.
     static func dismantleUIView(_ uiView: NMFNaverMapView, coordinator: Coordinator) {
         uiView.mapView.removeCameraDelegate(delegate: coordinator)
+        coordinator.cancelLocationRequest()
     }
 
     /// 네이버 지도 카메라 delegate 이벤트를 SwiftUI callback으로 변환합니다.
-    final class Coordinator: NSObject, NMFMapViewCameraDelegate {
+    final class Coordinator: NSObject {
         /// 상위 SwiftUI 화면이 제공한 최신 중심 좌표 수신 callback입니다.
         var onCameraCenterChanged: (MapCameraCenter) -> Void
 
-        /// 중심 좌표 callback을 보관하는 Coordinator를 초기화합니다.
-        init(onCameraCenterChanged: @escaping (MapCameraCenter) -> Void) {
+        /// 위치 권한 및 위치 조회 실패를 상위 SwiftUI 화면에 알리는 callback입니다.
+        var onLocationError: (String) -> Void
+
+        private let locationManager = CLLocationManager()
+        private var handledLocationRequestID: UUID?
+        private var isLocationRequestPending = false
+        private weak var mapView: NMFMapView?
+
+        /// 카메라 중심과 위치 오류 callback을 보관하고 위치 관리자 delegate를 연결합니다.
+        init(
+            onCameraCenterChanged: @escaping (MapCameraCenter) -> Void,
+            onLocationError: @escaping (String) -> Void
+        ) {
             self.onCameraCenterChanged = onCameraCenterChanged
+            self.onLocationError = onLocationError
+
+            super.init()
+            locationManager.delegate = self
+            locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
         }
 
-        /// 카메라의 연속 이동과 애니메이션이 끝났을 때 최종 중심 좌표를 전달합니다.
-        func mapViewCameraIdle(_ mapView: NMFMapView) {
-            let target = mapView.cameraPosition.target
-            let center = MapCameraCenter(latitude: target.lat, longitude: target.lng)
+        /// 새로운 요청 식별자가 전달된 경우에만 권한 상태에 맞춰 현재 위치 조회를 시작합니다.
+        func requestCurrentLocationIfNeeded(
+            for requestID: UUID?,
+            mapView: NMFMapView
+        ) {
+            guard let requestID,
+                  requestID != handledLocationRequestID else {
+                return
+            }
 
-            DispatchQueue.main.async { [weak self] in
-                self?.onCameraCenterChanged(center)
+            handledLocationRequestID = requestID
+            isLocationRequestPending = true
+            self.mapView = mapView
+
+            switch locationManager.authorizationStatus {
+            case .authorizedAlways, .authorizedWhenInUse:
+                locationManager.requestLocation()
+            case .notDetermined:
+                locationManager.requestWhenInUseAuthorization()
+            case .denied, .restricted:
+                reportLocationError("위치 권한을 허용한 뒤 다시 시도해 주세요.")
+            @unknown default:
+                reportLocationError("현재 위치 권한 상태를 확인할 수 없습니다.")
             }
         }
+
+        /// 화면 제거 시 대기 중인 위치 요청과 지도 참조를 정리합니다.
+        func cancelLocationRequest() {
+            isLocationRequestPending = false
+            mapView = nil
+        }
+
+        /// 위치 관련 오류를 다음 SwiftUI 업데이트 사이클에서 상위 화면으로 전달합니다.
+        private func reportLocationError(_ message: String) {
+            isLocationRequestPending = false
+
+            DispatchQueue.main.async { [weak self] in
+                self?.onLocationError(message)
+            }
+        }
+    }
+}
+
+extension NaverMapDemoView.Coordinator: NMFMapViewCameraDelegate {
+    /// 카메라의 연속 이동과 애니메이션이 끝났을 때 최종 중심 좌표를 전달합니다.
+    func mapViewCameraIdle(_ mapView: NMFMapView) {
+        let target = mapView.cameraPosition.target
+        let center = MapCameraCenter(latitude: target.lat, longitude: target.lng)
+
+        DispatchQueue.main.async { [weak self] in
+            self?.onCameraCenterChanged(center)
+        }
+    }
+}
+
+extension NaverMapDemoView.Coordinator: CLLocationManagerDelegate {
+    /// 권한 상태가 바뀐 뒤 대기 중인 요청이 있으면 위치 조회를 재개하거나 오류를 알립니다.
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        guard isLocationRequestPending else { return }
+
+        switch manager.authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse:
+            manager.requestLocation()
+        case .denied, .restricted:
+            reportLocationError("위치 권한을 허용한 뒤 다시 시도해 주세요.")
+        case .notDetermined:
+            break
+        @unknown default:
+            reportLocationError("현재 위치 권한 상태를 확인할 수 없습니다.")
+        }
+    }
+
+    /// 현재 위치를 받은 뒤 해당 좌표로 네이버 지도 카메라를 이동합니다.
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard isLocationRequestPending,
+              let location = locations.last,
+              let mapView else {
+            return
+        }
+
+        isLocationRequestPending = false
+
+        let coordinate = NMGLatLng(
+            lat: location.coordinate.latitude,
+            lng: location.coordinate.longitude
+        )
+        let update = NMFCameraUpdate(scrollTo: coordinate, zoomTo: 15)
+        update.animation = .easeIn
+        mapView.moveCamera(update)
+    }
+
+    /// 위치 조회 실패를 사용자에게 안내할 수 있도록 상위 SwiftUI 화면에 전달합니다.
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        reportLocationError("현재 위치를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.")
     }
 }
 

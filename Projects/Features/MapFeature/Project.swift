@@ -29,6 +29,7 @@ let project = Project(
             infoPlist: .extendingDefault(
                 with: [
                     "NMFClientID": "$(NMFClientID)",
+                    "NSLocationWhenInUseUsageDescription": "현재 위치를 중심으로 지도를 이동하기 위해 위치 정보가 필요합니다.",
                     "UILaunchScreen": [
                         "UIColorName": "",
                         "UIImageName": "",
