@@ -50,6 +50,12 @@ import UIKit
  4. SwiftUI가 다시 렌더링될 때 callback이 바뀔 수 있다
     → updateUIView에서 Coordinator의 callback 갱신 필요
     예: 현재 onCameraCenterChanged
+
+ // 우리 앱 일반 설정
+ openURL(URL(string: UIApplication.openSettingsURLString)!)
+
+ // 우리 앱 알림 설정
+ openURL(URL(string: UIApplication.openNotificationSettingsURLString)!)
  */
 
 /// 네이버 지도 데모와 카메라 중심 좌표 오버레이를 함께 표시하는 루트 화면입니다.
@@ -343,6 +349,13 @@ extension NaverMapDemoView.Coordinator: CLLocationManagerDelegate {
             lat: location.coordinate.latitude,
             lng: location.coordinate.longitude
         )
+
+        // 네이버 기본 내 위치 마커를 현재 수신한 좌표로 이동합니다.
+        mapView.locationOverlay.location = coordinate
+
+        // 기본 내 위치 마커가 숨겨져 있으면 지도에 표시합니다.
+        mapView.locationOverlay.hidden = false
+
         let update = NMFCameraUpdate(scrollTo: coordinate, zoomTo: 15)
         update.animation = .easeIn
         mapView.moveCamera(update)
