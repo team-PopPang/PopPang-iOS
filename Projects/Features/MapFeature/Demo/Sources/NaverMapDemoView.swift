@@ -207,9 +207,16 @@ private struct NaverMapDemoView: UIViewRepresentable {
         /// 위치 권한 및 위치 조회 실패를 상위 SwiftUI 화면에 알리는 callback입니다.
         var onLocationError: (String) -> Void
 
+        /// 위치 권한을 요청하고 한 번의 현재 위치를 수신하는 Core Location 관리자입니다.
         private let locationManager = CLLocationManager()
+
+        /// `updateUIView`의 반복 호출로 같은 위치 요청이 중복 실행되지 않도록 보관하는 식별자입니다.
         private var handledLocationRequestID: UUID?
+
+        /// 권한 응답 또는 위치 수신을 기다리는 현재 위치 요청이 있는지 나타냅니다.
         private var isLocationRequestPending = false
+
+        /// 위치를 수신한 뒤 카메라를 이동할 지도입니다. Representable 수명주기를 넘겨 보관하지 않도록 약한 참조를 사용합니다.
         private weak var mapView: NMFMapView?
 
         /// 초기화 메서드 - 카메라 중심과 위치 오류 callback을 보관하고 위치 관리자 delegate를 연결합니다.
