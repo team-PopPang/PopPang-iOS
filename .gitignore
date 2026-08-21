@@ -1,4 +1,6 @@
+# Local secrets. MapFeatureDemo also reads NMFClientID from this file.
 *.xcconfig
+Projects/App/Secrets.xcconfig
 .env
 GoogleService-Info.plist
 

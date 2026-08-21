@@ -24,10 +24,12 @@ let project = Project(
             name: "MapFeatureDemo",
             destinations: [.iPhone],
             product: .app,
-            bundleId: "com.poppang.demo.map",
+            bundleId: "kr.co.poppang.PopPang",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .extendingDefault(
                 with: [
+                    "NMFClientID": "$(NMFClientID)",
+                    "NSLocationWhenInUseUsageDescription": "현재 위치를 중심으로 지도를 이동하기 위해 위치 정보가 필요합니다.",
                     "UILaunchScreen": [
                         "UIColorName": "",
                         "UIImageName": "",
@@ -39,7 +41,19 @@ let project = Project(
                 .target(name: "MapFeature"),
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "Data", path: "../../Data"),
-            ]
+            ],
+            settings: .settings(
+                configurations: [
+                    .debug(
+                        name: "Debug",
+                        xcconfig: .relativeToManifest("../../App/Secrets.xcconfig")
+                    ),
+                    .release(
+                        name: "Release",
+                        xcconfig: .relativeToManifest("../../App/Secrets.xcconfig")
+                    ),
+                ]
+            )
         ),
     ]
 )
