@@ -19,7 +19,7 @@ migration이 진행되면 이 문서를 함께 업데이트한다.
 - push/drill-down은 stack-based navigation으로 모델링한다.
 - tree-based navigation에서 여러 destination이 있으면 `@Reducer enum Destination`과 단일 `@Presents var destination`을 사용한다.
 - stack-based navigation은 `@Reducer enum Path`와 `StackState<Path.State>`를 사용한다.
-- 자세한 기준은 `Docs/tca-navigation-guidelines.md`를 따른다.
+- 자세한 기준은 `Docs/architecture/tca-navigation.md`를 따른다.
 
 ### TCA 예시가 이미 존재하는 feature
 

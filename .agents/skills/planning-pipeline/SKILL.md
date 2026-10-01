@@ -13,7 +13,7 @@ PopPang 저장소에서 구현 전에 Researcher, Planner, Reviewer 관점을 �
 
 이 스킬을 사용할 때는 저장소 루트 기준으로 아래 파일을 순서대로 읽고 적용한다.
 
-1. `Docs/poppang-architecture.md`
+1. `Docs/architecture/architecture.md`
 2. `.codex/prompts/researcher.md`
 3. `.codex/prompts/planner.md`
 4. `.codex/prompts/reviewer.md`
@@ -36,7 +36,7 @@ PopPang 저장소에서 구현 전에 Researcher, Planner, Reviewer 관점을 �
 ## 워크플로우
 
 1. `AGENTS.md`의 plan-first 규칙을 먼저 적용한다.
-2. `Docs/poppang-architecture.md`를 읽고 PopPang의 기본 모듈 구조, 의존성 방향, DI, navigation, 문서 동기화 규칙을 기준 맥락으로 삼는다.
+2. `Docs/architecture/architecture.md`를 읽고 PopPang의 기본 모듈 구조, 의존성 방향, DI, navigation, 문서 동기화 규칙을 기준 맥락으로 삼는다.
 3. `.codex/prompts/researcher.md`를 읽고 Researcher 관점으로 요청 관련 실제 코드와 제약을 정리한다.
 4. `.codex/prompts/planner.md`를 읽고 Planner 관점으로 접근 방법, 추천 방향, 변경 범위, 테스트 계획, 문서 업데이트 필요 여부를 정리한다.
 5. `.codex/prompts/reviewer.md`를 읽고 Reviewer 관점으로 리스크, 테스트 누락, 범위 이탈 위험, 문서 누락 위험을 검토한다.
@@ -70,4 +70,4 @@ PopPang 저장소에서 구현 전에 Researcher, Planner, Reviewer 관점을 �
 - API 계약, DTO, public protocol, DI 구조, 모듈 의존성, Tuist 설정 변경을 가볍게 제안하지 않는다.
 - `tuist generate`, `make regen`처럼 파일을 생성하거나 갱신할 수 있는 명령을 승인 없이 실행하지 않는다.
 - 구현 단계의 세부 코드 변경을 확정 사실처럼 말하지 않는다.
-- 코드 변경으로 `Docs/poppang-architecture.md`, `Docs/tca-navigation-guidelines.md`, `Docs/static-dynamic-linking.md`, `Docs/Troubleshotting.md` 같은 기준 문서가 달라져야 하는데도 문서 영향 여부를 생략하지 않는다.
+- 코드 변경으로 `Docs/architecture/architecture.md`, `Docs/architecture/tca-navigation.md`, `Docs/etc/static-dynamic-linking.md`, `Docs/etc/Troubleshotting.md` 같은 기준 문서가 달라져야 하는데도 문서 영향 여부를 생략하지 않는다.

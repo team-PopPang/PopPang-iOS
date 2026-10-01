@@ -27,7 +27,7 @@ PopPang의 Compound 기반 feature를 현재 루트 `Projects/*` 구조 안에�
 4. Coordinator 패턴은 제거 완료된 legacy 구조다. 새 navigation ownership은 TCA reducer state/action으로 둔다.
 5. `PopupUsecaseProtocol`, `AdminUsecaseProtocol`, `UserUsecaseProtocol` 같은 public contract는 issue 범위가 명확히 허용하지 않는 한 초반에 분리하지 않는다.
 6. 실제 migration으로 구조 이해가 바뀌면 reference 문서를 같은 작업 범위 안에서 갱신한다.
-7. navigation 작업 전에는 `Docs/tca-navigation-guidelines.md`를 읽고 tree-based / stack-based 기준을 따른다.
+7. navigation 작업 전에는 `Docs/architecture/tca-navigation.md`를 읽고 tree-based / stack-based 기준을 따른다.
 
 ## Issue 시작 흐름
 

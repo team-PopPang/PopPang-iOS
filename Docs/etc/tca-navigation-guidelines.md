@@ -1,5 +1,7 @@
 # TCA Navigation Guidelines
 
+> 보관 문서다. 현재 기준은 [`Docs/architecture/tca-navigation.md`](../architecture/tca-navigation.md)이며, 장기 목표 구조(`AuthFlowFeature`, `SharedFeature`, `Shared.Models` 등)와 전환 이력을 참고할 때만 읽는다.
+
 이 문서는 PopPang의 Coordinator 제거와 TCA navigation 전환 기준이다.
 
 코드와 문서가 충돌하면 현재 코드를 먼저 확인하되, 새 navigation 작업은 이 문서의 방향을 따른다.

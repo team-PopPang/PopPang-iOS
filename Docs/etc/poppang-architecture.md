@@ -1,5 +1,7 @@
 # PopPang Architecture Context
 
+> 보관 문서다. 현재 기준은 [`Docs/architecture/architecture.md`](../architecture/architecture.md)이며, 두 문서가 다르면 현재 기준 문서와 코드를 따른다.
+
 이 문서는 Codex가 PopPang 계획 단계에서 반복적으로 확인해야 하는 기본 구조를 줄이기 위한 기준 문서다.
 
 코드와 이 문서가 충돌하면 현재 코드를 우선한다. 다만 코드 변경으로 이 문서의 구조, 규칙, 흐름이 달라지면 같은 작업 범위 안에서 문서 업데이트 필요 여부를 계획에 포함한다.
@@ -58,7 +60,7 @@ Projects
 
 `V0/`는 기존 단일 타깃 구현과 참고 자료 성격이다. 모듈러 구현의 실제 변경은 기본적으로 `Projects/` 아래에서 판단한다.
 
-장기 목표 구조는 `Docs/tca-navigation-guidelines.md`의 `AppFeature`, `AuthFlowFeature`, `MainTabFeature`, `SharedFeature`, `Shared.Models`, `Shared.Clients`, `Shared.Caches` 방향을 따른다. 현재 `Domain`과 feature target을 즉시 대량 이동하지 않고, navigation ownership과 escaping routing 제거를 먼저 진행한다.
+장기 목표 구조는 `Docs/etc/tca-navigation-guidelines.md`의 `AppFeature`, `AuthFlowFeature`, `MainTabFeature`, `SharedFeature`, `Shared.Models`, `Shared.Clients`, `Shared.Caches` 방향을 따른다. 현재 `Domain`과 feature target을 즉시 대량 이동하지 않고, navigation ownership과 escaping routing 제거를 먼저 진행한다.
 
 ## 모듈 책임
 
@@ -292,7 +294,7 @@ Feature
 - 다른 모듈은 `ThirdParty` target에 의존하되 source에서는 실제 SDK module을 직접 import한다.
 - `ThirdParty`는 `@_exported import`로 SDK를 재노출하지 않는다.
 - 다만 AdMob 관련 런타임 구현은 `Projects/Shared/ADKit`이 직접 `GoogleMobileAds`를 링크하고 초기화한다.
-- SDK product type 정책은 `Tuist/Package.swift`와 `Docs/static-dynamic-linking.md`를 먼저 확인한다.
+- SDK product type 정책은 `Tuist/Package.swift`와 `Docs/etc/static-dynamic-linking.md`를 먼저 확인한다.
 
 ## 의존성 방향
 
@@ -369,7 +371,7 @@ DI 변경 시 함께 확인할 파일:
 
 ## Navigation 기준
 
-자세한 기준은 `Docs/tca-navigation-guidelines.md`를 우선한다.
+자세한 기준은 `Docs/etc/tca-navigation-guidelines.md`를 우선한다.
 
 계획 단계 체크:
 
@@ -404,8 +406,8 @@ DI 변경 시 함께 확인할 파일:
 
 참고 문서:
 
-- `Docs/static-dynamic-linking.md`
-- `Docs/Troubleshotting.md`
+- `Docs/etc/static-dynamic-linking.md`
+- `Docs/etc/Troubleshotting.md`
 
 원칙:
 
@@ -433,11 +435,11 @@ DI 변경 시 함께 확인할 파일:
 
 문서 업데이트 후보:
 
-- `Docs/tca-navigation-guidelines.md`
-- `Docs/poppang-architecture.md`
-- `Docs/static-dynamic-linking.md`
-- `Docs/Troubleshotting.md`
-- `Docs/logger.md`
+- `Docs/etc/tca-navigation-guidelines.md`
+- `Docs/etc/poppang-architecture.md`
+- `Docs/etc/static-dynamic-linking.md`
+- `Docs/etc/Troubleshotting.md`
+- `Docs/etc/logger.md`
 - 기능별 새 문서가 이미 있으면 해당 문서
 
 문서와 코드가 어긋나는데 이번 작업 범위에서 문서 수정까지 할 수 없다면, 계획 또는 최종 응답에 문서 후속 작업으로 명시한다.
@@ -451,7 +453,7 @@ DI 변경 시 함께 확인할 파일:
 요청별 기본 탐색 예:
 
 - 앱 시작, SDK, DI: `Projects/App/Sources/AppCore/**`
-- 루트 전환, 탭, 화면 이동: `Docs/tca-navigation-guidelines.md`, `Projects/App/Sources/AppCore/Navigation/**`
+- 루트 전환, 탭, 화면 이동: `Docs/etc/tca-navigation-guidelines.md`, `Projects/App/Sources/AppCore/Navigation/**`
 - 메인 탭 navigation owner: `Projects/Features/MainTabFeature/**`
 - 화면 상태/UI: `Projects/Features/<FeatureName>/Sources/**`
 - 도메인 계약: `Projects/Domain/Sources/**`

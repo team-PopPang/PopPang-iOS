@@ -44,7 +44,7 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 # 3. 모듈 의존성 그래프
 
 <div align="center">
-  <img src="./Docs/images/module-dependency-graph.png" width="100%" />
+  <img src="./Docs/etc/images/module-dependency-graph.png" width="100%" />
 </div>
 
 <br/><br/>
@@ -358,7 +358,7 @@ Text(LocalizationKey.commonNext.localized(comment: "Next button"))
 
 # 5. 실행 방법
 
-Tuist 버전은 `4.115.0`으로 고정합니다.
+Tuist 버전은 `4.115.0`으로 고정합니다(`mise.toml`, `.tuist-version`). 설치 방법은 [`Docs/development/tuist.md`](./Docs/development/tuist.md)를 참고합니다.
 
 ```bash
 tuist version
@@ -390,6 +390,8 @@ tuist test Data
 
 # 6. 모듈 생성 명령
 
+> feature 외 layer 템플릿은 현재 모듈 경로와 맞지 않습니다. 사용 전 [`Docs/architecture/modules.md`](./Docs/architecture/modules.md#새-모듈-만들기)를 확인합니다.
+
 ```bash
 make module LAYER=feature NAME=Home
 make module LAYER=feature NAME=PopupDetail INTERFACE=true
@@ -404,10 +406,12 @@ make module LAYER=shared NAME=UIComponents
 
 # 7. 참고
 
-- `AGENTS.md`: 저장소 작업 규칙과 아키텍처 기준
-- [`Docs/tca-navigation-guidelines.md`](./Docs/tca-navigation-guidelines.md): MainTabFeature와 TCA navigation 기준
+- [`AGENTS.md`](./AGENTS.md): AI 에이전트 공통 작업 규칙과 문서 길잡이 (`CLAUDE.md`는 이 파일을 불러옵니다)
+- [`Docs/architecture/architecture.md`](./Docs/architecture/architecture.md): 모듈 구조와 의존성 방향
+- [`Docs/architecture/tca-navigation.md`](./Docs/architecture/tca-navigation.md): MainTabFeature와 TCA navigation 기준
+- `Docs/etc/`: 트러블슈팅, 링크 정책, AdMob 설정 등 참고 문서
 - [PopPangListKit](https://github.com/team-PopPang/PopPangListKit): UICollectionView 기반 선언형 목록 라이브러리와 UIKit·SwiftUI 사용 예제
-- `V0/README.md`: 기존 단일 타깃 앱 README
+- `Legacy/V0/README.md`: 기존 단일 타깃 앱 README
 - `Tuist/Package.swift`: 외부 의존성과 product type 정책
 &amp;nbsp;
 &amp;nbsp;
