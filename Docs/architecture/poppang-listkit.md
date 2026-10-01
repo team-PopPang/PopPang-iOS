@@ -19,6 +19,7 @@
 - [UIKit Component 작성](#uikit-component-작성)
 - [파일 배치와 이름](#파일-배치와-이름)
 - [검증](#검증)
+- [라이브러리를 고쳐야 할 때](#라이브러리를-고쳐야-할-때)
 - [알려진 문제](#알려진-문제)
 
 ## 개요
@@ -26,7 +27,8 @@
 | 항목 | 값 |
 | --- | --- |
 | 저장소 | `team-PopPang/PopPangListKit` |
-| 버전 | `1.1.0` (`Tuist/Package.swift`에서 `exact`로 고정) |
+| 버전 | 앱은 `1.1.0`을 쓴다(`Tuist/Package.swift`에서 `exact`로 고정). 라이브러리 최신 릴리즈는 `1.1.1`이다(2026-10-01 확인). |
+| 관리 | 우리 팀이 만들고 관리하는 라이브러리다. 문제가 라이브러리에 있으면 [라이브러리를 고쳐야 할 때](#라이브러리를-고쳐야-할-때) 절차로 직접 고친다. |
 | 의존성 | DifferenceKit |
 | 연결 위치 | `Projects/Shared/ThirdParty/Project.swift`의 `.external(name: "PopPangListKit")` |
 | 사용하는 곳 | `HomeFeatureV2`(앱), `AlertFeature` Demo(페이지네이션 실험) |
@@ -259,7 +261,73 @@ Sources/Presentation/<Screen>/
 
 - 목록 자체에는 앱 저장소의 unit test가 없다. reducer 상태 변화는 TestStore로 테스트한다. ([테스트](../development/testing.md))
 - 화면 동작은 `HomeFeatureV2Demo` 앱이나 AlertFeature Demo의 "05 PopPangListKit" 경로에서 확인한다.
-- 라이브러리 동작 자체를 바꿔야 하면 PopPangListKit 저장소에서 고치고 버전을 올린다. 이 저장소에서 라이브러리 동작을 우회하지 않는다.
+- 라이브러리 동작 자체를 바꿔야 하면 앱 코드로 우회하지 않고 아래 [라이브러리를 고쳐야 할 때](#라이브러리를-고쳐야-할-때) 절차를 따른다.
+
+## 라이브러리를 고쳐야 할 때
+
+PopPangListKit은 우리 라이브러리다. 앱을 개발하다가 원인이 라이브러리 안에 있으면, 앱에서 우회하지 않고 라이브러리를 고친다. 라이브러리 수정과 PR도 이 프로젝트 작업 안에서 진행한다.
+
+### 1. 원인이 라이브러리에 있는지 가린다
+
+| 앱에서 고친다 | 라이브러리에서 고친다 |
+| --- | --- |
+| 셀 id 중복, `layoutMode`와 레이아웃 불일치, header `item` 누락처럼 사용법이 이 문서와 다른 경우 | 사용법이 맞는데 diff·갱신·레이아웃·크기 측정·이벤트 전달이 잘못 동작하는 경우 |
+| reducer 상태나 데이터 문제 | 같은 문제가 라이브러리 Demo나 테스트에서도 재현되는 경우 |
+
+`reloadData` 강제, 의미 없는 id 변경, 지연 호출처럼 라이브러리 버그를 앱 코드로 덮는 우회는 하지 않는다.
+
+원인을 확인할 때는 읽기만 한다. 앱이 쓰는 버전(`1.1.0`)의 소스는 GitHub에서 볼 수 있다.
+
+```bash
+gh api "repos/team-PopPang/PopPangListKit/contents/Sources/PopPangListKit?ref=1.1.0" --jq '.[].name'
+```
+
+### 2. 멈추고 승인을 받는다
+
+라이브러리에서 고쳐야 한다고 판단하면 작업을 멈추고 아래 형식으로 묻는다. 승인 전에는 라이브러리 저장소에 브랜치·커밋·이슈를 만들지 않는다.
+
+```text
+PopPangListKit에서 고쳐야 할 부분을 찾았습니다.
+
+- 증상: <앱에서 보이는 문제와 재현 조건>
+- 원인: <라이브러리 파일과 동작> (앱이 쓰는 버전 1.1.0 기준)
+- 수정 방향: <라이브러리에서 바꿀 내용>
+- 앱 영향: 라이브러리 PR 병합 → 새 버전 릴리즈 → 앱의 Tuist/Package.swift 버전 변경이 필요합니다.
+- 이슈: 라이브러리 저장소에 이슈를 만들까요? (만들면 브랜치가 자동 생성됩니다)
+
+이 부분을 고쳐야 합니다. 승인하시겠습니까?
+```
+
+### 3. 승인 후 이 프로젝트에서 진행한다
+
+| 단계 | 할 일 |
+| --- | --- |
+| 저장소 받기 | 앱 저장소 밖(옆 폴더)에 받는다: `gh repo clone team-PopPang/PopPangListKit ../PopPangListKit`. 이미 있으면 `git -C ../PopPangListKit switch main && git -C ../PopPangListKit pull --ff-only`. 앱 저장소 안에 받지 않는다. |
+| 이슈·브랜치 | 라이브러리도 앱과 같은 규칙을 쓴다(`.github/issue-branch.yml`). 이슈를 assign하면 `fix/#<번호>` 같은 브랜치가 자동 생성되고, 받아서 작업한다. 이슈 없이 진행하기로 했으면 `fix/<짧은-설명>` 브랜치를 만든다. |
+| 수정 | 라이브러리 README의 규칙과 기존 코드를 따른다. 동작을 바꾸면 라이브러리 README도 함께 고친다. |
+| 라이브러리 테스트 | 라이브러리에는 테스트 CI가 없다. 로컬에서 실행한다. iOS 전용 패키지라 `swift test`는 쓰지 않는다. |
+| 앱에서 확인 | 필요하면 앱의 `Tuist/Package.swift`에서 PopPangListKit 줄을 잠시 `.package(path: "../../PopPangListKit")`로 바꾸고 `tuist install` → `tuist generate` 후 화면을 확인한다. 확인이 끝나면 원래 `exact` 버전으로 되돌린다. 이 임시 변경은 커밋하지 않는다. |
+| 커밋·PR | 라이브러리 저장소에서 [Git 작업 흐름](../development/gitflow.md)과 같은 규칙으로 커밋한다. 라이브러리의 `.github/PULL_REQUEST_TEMPLATE.md`로 본문을 쓰고 `gh pr create --repo team-PopPang/PopPangListKit --base main`으로 올린다. AI 작성 표기는 넣지 않는다. |
+| 릴리즈 | PR이 병합되면 라이브러리의 `new-release.yml` workflow(수동 실행, version 입력)로 새 버전 태그를 만든다. 사용자가 요청할 때만 실행한다. |
+| 앱 반영 | 앱의 `Tuist/Package.swift`에서 `exact:` 버전을 새 버전으로 바꾸고 `tuist install`로 `Tuist/Package.resolved`를 갱신한다. 의존성 변경이므로 앱 저장소에서 따로 계획·승인·커밋·PR한다. 이 문서의 버전도 고친다. |
+
+라이브러리 테스트 명령(라이브러리 폴더에서 실행):
+
+```bash
+xcodebuild test -scheme PopPangListKit -destination 'platform=iOS Simulator,name=iPhone 17'
+```
+
+- 2026-10-01에 Xcode 27.0, iPhone 17(iOS 27.0) 시뮬레이터로 실행해 107개 테스트(15개 suite)가 통과했다.
+- 시뮬레이터는 설치된 Xcode의 iOS SDK 버전으로 고른다. 같은 Mac에서 iOS 18.3 시뮬레이터(`iPhone 16`)를 지정하면 `Unable to find a device matching the provided destination specifier`로 실패했다.
+- 사용할 수 있는 시뮬레이터는 `xcrun simctl list devices available`로 확인한다.
+- 화면 동작은 라이브러리의 `Demo/PopPangListKitDemo.xcodeproj`에서도 확인할 수 있다.
+
+### 하지 않는 것
+
+- 승인 없이 라이브러리 저장소에 push하거나 PR을 만들지 않는다.
+- 라이브러리 소스를 앱 저장소에 복사하거나 앱 저장소 안에 clone하지 않는다.
+- 로컬 경로(`.package(path:)`)로 바꾼 `Tuist/Package.swift`를 커밋하지 않는다.
+- 라이브러리 수정과 앱 기능 변경을 한 PR에 섞지 않는다.
 
 ## 알려진 문제
 

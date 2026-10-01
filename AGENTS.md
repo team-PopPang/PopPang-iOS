@@ -110,6 +110,7 @@
 | 모듈 책임, navigation, DI, API·DTO 흐름, ThirdParty·Tuist 정책을 바꿨다. | 해당 `Docs/architecture/` 문서를 같은 작업에서 갱신한다. |
 | API 계약, DTO, Domain entity, public protocol, DI 등록, TCA path·destination, 모듈 의존성, Tuist 설정, Info.plist·entitlements·signing을 바꾼다. | 작은 수정처럼 보여도 계획에 영향 범위를 명시하고 승인을 받는다. |
 | 기능 방향, 구현 방향, 리팩터링 방향, 버그 수정 방향을 묻는다. | 구현하지 않고 Role Prompt Workflow를 적용한다. |
+| 원인이 PopPangListKit(우리 라이브러리) 안에 있다. | 앱 코드로 우회하지 않는다. 작업을 멈추고 증상·원인·수정 방향을 설명한 뒤 "이 부분을 고쳐야 합니다. 승인하시겠습니까?"라고 묻는다. 승인하면 [PopPangListKit](Docs/architecture/poppang-listkit.md#라이브러리를-고쳐야-할-때) 절차로 라이브러리 저장소에서 고치고 PR을 만든다. |
 | 커밋 메시지나 PR 본문을 쓴다. | [Git 작업 흐름](Docs/development/gitflow.md)을 따른다. PR 제목은 이슈 제목과 같게 쓴다. AI 공동 작성자 트레일러, 생성 문구, 세션 링크를 넣지 않는다. |
 | 한국어 문서나 PR 설명을 쓰거나 다듬는다. | [한국어 윤문 원칙](Docs/development/korean-editing.md)을 따른다. 원문의 의미·사실·보호 구간을 유지하고, `Projects/` 코드로 확인한 내용만 쓴다. |
 | push 전 리뷰 hook이 설정되어 있지 않다. | `git config core.hooksPath`가 `.githooks`가 아니고 `git config project-docs.gitHooks`가 `declined`가 아니면, 작업을 시작할 때 사용자에게 설정할지 한 번 묻는다. 승낙하면 `npx --yes --package=github:indextrown/codex-skillbook -- project-docs hooks ios-uikit --apply`를 실행한다. 거절하면 `git config project-docs.gitHooks declined`로 기록하고 다시 묻지 않는다. |
