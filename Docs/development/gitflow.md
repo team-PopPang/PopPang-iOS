@@ -87,7 +87,7 @@ git switch feature/#93
 npx --yes --package=github:indextrown/codex-skillbook -- project-docs hooks ios-uikit
 ```
 
-이 명령은 `.githooks/pre-push`를 만들고 `git config core.hooksPath .githooks`를 설정한다. 설정 여부는 아래로 확인한다.
+이 명령은 설정할지 물은 뒤 `.githooks/pre-push`를 만들고 `git config core.hooksPath .githooks`를 설정한다. 확인 질문 없이 바로 적용하려면 `--apply`를 붙이고(에이전트가 실행할 때), 바뀔 내용만 보려면 `--dry-run`을 붙인다. 설정 여부는 아래로 확인한다.
 
 ```bash
 git config core.hooksPath    # .githooks 이면 설정됨
