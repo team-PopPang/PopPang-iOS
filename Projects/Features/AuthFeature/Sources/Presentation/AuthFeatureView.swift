@@ -50,13 +50,6 @@ public struct AuthFeatureView: View {
                 .disabled(store.isSubmitting)
             }
             .padding(.top, 120)
-
-            if let errorMessage = store.errorMessage {
-                Text(errorMessage)
-                    .font(.scdream(.medium, size: 12))
-                    .foregroundStyle(Color.mainRed)
-                    .padding(.top, 24)
-            }
         }
         .padding(.horizontal, 24)
     }

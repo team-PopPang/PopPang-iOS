@@ -16,7 +16,6 @@ public struct AuthFeature {
     @ObservableState
     public struct State: Equatable {
         public var isSubmitting = false
-        public var errorMessage: String?
 
         public init() {}
     }
@@ -42,7 +41,6 @@ public struct AuthFeature {
             switch action {
             case .kakaoLoginTapped:
                 state.isSubmitting = true
-                state.errorMessage = nil
                 return .run { [authFeatureClient] send in
                     do {
                         let user = try await authFeatureClient.kakaoLogin()
@@ -54,7 +52,6 @@ public struct AuthFeature {
 
             case .googleLoginTapped:
                 state.isSubmitting = true
-                state.errorMessage = nil
                 return .run { [authFeatureClient] send in
                     do {
                         let user = try await authFeatureClient.googleLogin()
@@ -66,7 +63,6 @@ public struct AuthFeature {
 
             case .appleLoginTapped(let authorization):
                 state.isSubmitting = true
-                state.errorMessage = nil
                 return .run { [authFeatureClient] send in
                     do {
                         let user = try await authFeatureClient.appleLogin(authorization.value)
@@ -80,9 +76,8 @@ public struct AuthFeature {
                 state.isSubmitting = false
                 return .send(.delegate(.authenticated(user)))
 
-            case .loginResponse(.failure(let error)):
+            case .loginResponse(.failure):
                 state.isSubmitting = false
-                state.errorMessage = error.localizedDescription
                 return .none
 
             case .delegate:
