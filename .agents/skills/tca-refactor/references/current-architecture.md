@@ -59,7 +59,7 @@ Projects
 ### Navigation
 
 - `RootCoordinator -> MainTabCoordinator -> FeatureCoordinator` 구조는 제거 완료되었다.
-- 새 navigation은 `Docs/tca-navigation-guidelines.md`의 TCA tree-based / stack-based 기준을 따른다.
+- 새 navigation은 `Docs/architecture/tca-navigation.md`의 TCA tree-based / stack-based 기준을 따른다.
 - active main flow는 App 모듈의 `MainTabFeature`가 `StackState`와 `@Presents` destination으로 소유한다.
 - 탭 root view는 중첩 `NavigationStack`을 만들지 않는다.
 - feature는 화면 전환용 escaping closure 대신 reducer delegate action으로 navigation intent를 올린다.

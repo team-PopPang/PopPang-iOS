@@ -6,7 +6,7 @@
 
 Researcher와 Planner의 방향 또는 구현 결과를 검토해 위험, 누락, 범위 이탈을 찾는다.
 
-검토 기준에는 `Docs/poppang-architecture.md`의 모듈 책임, 의존성 방향, DI, navigation, ThirdParty 링크 정책, 문서 동기화 규칙을 포함한다.
+검토 기준에는 `Docs/architecture/architecture.md`의 모듈 책임, 의존성 방향, DI, navigation, ThirdParty 링크 정책, 문서 동기화 규칙을 포함한다.
 
 ## 해야 할 일
 

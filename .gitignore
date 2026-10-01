@@ -7,6 +7,9 @@ GoogleService-Info.plist
 # codex
 .codex/logs/
 
+# personal git hooks (push 전 Claude 코드 리뷰)
+.githooks/
+
 # React Native release artifacts
 .rn-release-temp/
 Vendor/PrebuiltReactNativeFrameworks/

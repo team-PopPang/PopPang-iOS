@@ -2,7 +2,7 @@
 
 이 문서는 Tuist + SPM + 모듈러 구조에서 외부 라이브러리 링크 문제가 다시 생겼을 때 확인할 기준이다.
 
-static/dynamic product type 선택 기준은 `Docs/static-dynamic-linking.md`를 먼저 본다.
+static/dynamic product type 선택 기준은 `Docs/etc/static-dynamic-linking.md`를 먼저 본다.
 
 ## 탭바가 숨겨진 상세 화면에서 뒤로가기 시 탭바가 늦게 복귀하는 문제
 
@@ -377,7 +377,7 @@ clang: error: linker command failed with exit code 1
 - `Projects/App/Sources/AppCore/AppSDKInitializer.swift`
 - `Projects/App/Sources/AppCore/FirebaseLogger.swift`
 - `Projects/App/Sources/AppCore/AppNotificationManager.swift`
-- `Docs/logger.md`
+- `Docs/etc/logger.md`
 
 주의:
 
