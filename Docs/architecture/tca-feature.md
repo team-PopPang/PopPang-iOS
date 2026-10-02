@@ -2,7 +2,7 @@
 
 이 문서는 PopPang에서 TCA reducer와 SwiftUI view를 작성하는 기준이다. 현재 코드에서 가장 많이 쓰는 관례를 기준으로 삼고, 섞여 있는 부분은 새 코드에서 따를 쪽을 적었다. 화면 전환은 [TCA Navigation](tca-navigation.md), client와 주입은 [의존성 주입](dependency-injection.md)을 본다.
 
-TCA 버전은 `1.25.0`이다(`Tuist/Package.swift`).
+TCA 버전은 `1.26.2`다(`Tuist/Package.swift`). Xcode 27에서 컴파일되려면 1.26.0 이상이어야 한다.
 
 ## 목차
 

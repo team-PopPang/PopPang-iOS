@@ -145,7 +145,7 @@ let package = Package(
         .package(url: "https://github.com/onevcat/Kingfisher", exact: "8.6.2"),
         .package(url: "https://github.com/Moya/Moya.git", exact: "15.0.3"),
         .package(url: "https://github.com/navermaps/SPM-NMapsMap", exact: "3.23.2"),
-        .package(url: "https://github.com/pointfreeco/swift-composable-architecture", exact: "1.25.0"),
+        .package(url: "https://github.com/pointfreeco/swift-composable-architecture", exact: "1.26.2"),
         .package(url: "https://github.com/indextrown/Listkit.git", exact: "1.0.5"),
         // 1.0.0 이상1.1.0 미만
         // .package(url: "https://github.com/team-PopPang/PopPangListKit.git", .upToNextMinor(from: "1.0.0")),     
