@@ -82,7 +82,7 @@ tuist version
 ./scripts/download-rn-release.sh v0.1.0
 ```
 
-스크립트는 `Projects/App/Resources/ReactNative`(번들)와 `Vendor/PrebuiltReactNativeFrameworks`(SPM 패키지)를 채운다. 두 경로 모두 `.gitignore`에 들어 있다.
+스크립트는 `Projects/App/Resources/ReactNative`(번들)와 `Vendor/PrebuiltReactNativeFrameworks`(SPM 패키지)를 채운다. 두 경로 모두 `.gitignore`에 들어 있다. 산출물 내용과 버전 변경 방법은 [React Native 산출물](react-native.md)을 본다.
 
 ### 3. 패키지 설치와 workspace 생성
 
