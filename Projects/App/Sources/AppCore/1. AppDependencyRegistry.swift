@@ -9,6 +9,7 @@ struct AppRepositoryRegistry {
     let googleAuthRepository: GoogleAuthRepositoryProtocol
     let kakaoAuthRepository: KakaoAuthRepositoryProtocol
     let popupRepository: PopupRepositoryProtocol
+    let serverHealthRepository: ServerHealthRepositoryProtocol
     let userRepository: UserRepositoryProtocol
 
     static func live() -> AppRepositoryRegistry {
@@ -18,6 +19,7 @@ struct AppRepositoryRegistry {
             googleAuthRepository: GoogleAuthRepositoryImpl(),
             kakaoAuthRepository: KakaoAuthRepositoryImpl(),
             popupRepository: PopupRepositoryImpl(),
+            serverHealthRepository: ServerHealthRepositoryImpl(),
             userRepository: UserRepositoryImpl()
         )
     }
@@ -30,6 +32,7 @@ struct AppUsecaseRegistry {
     let googleAuthUsecase: GoogleAuthUsecaseProtocol
     let kakaoAuthUsecase: KakaoAuthUsecaseProtocol
     let popupUsecase: PopupUsecaseProtocol
+    let serverHealthUsecase: ServerHealthUsecaseProtocol
     let userUsecase: UserUsecaseProtocol
 
     init(repositories: AppRepositoryRegistry) {
@@ -38,6 +41,7 @@ struct AppUsecaseRegistry {
         self.googleAuthUsecase = GoogleAuthUsecaseImpl(googleAuthRepository: repositories.googleAuthRepository)
         self.kakaoAuthUsecase = KakaoAuthUsecaseImpl(kakaoAuthRepository: repositories.kakaoAuthRepository)
         self.popupUsecase = PopupUsecaseImpl(popupRepository: repositories.popupRepository)
+        self.serverHealthUsecase = ServerHealthUsecaseImpl(serverHealthRepository: repositories.serverHealthRepository)
         self.userUsecase = UserUsecaseImpl(userRepository: repositories.userRepository)
     }
 }

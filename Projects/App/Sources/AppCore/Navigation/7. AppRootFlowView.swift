@@ -1,6 +1,7 @@
 import AuthFeature
 import ComposableArchitecture
 import DSKit
+import MaintenanceFeature
 import OnboardingFeature
 import MainTabFeature
 import SwiftUI
@@ -15,6 +16,15 @@ struct AppRootFlowView: View {
                 AppLaunchScene {
                     store.send(.launchTask)
                 }
+
+            case .maintenance:
+                MaintenanceFeatureView(
+                    reason: store.maintenanceReason,
+                    isRetrying: store.isCheckingServerHealth,
+                    onRetry: {
+                        store.send(.maintenanceRetryTapped)
+                    }
+                )
 
             case .onboarding:
                 NavigationStack(path: $store.scope(state: \.onboardingPath, action: \.onboardingPath)) {
@@ -71,15 +81,32 @@ private struct OnboardingAuthScene: View {
 private struct AppLaunchScene: View {
     let onContinue: () -> Void
 
+    /// 앱 시작 확인이 오래 걸릴 때만 로딩 표시를 보여 준다
+    @State private var showsProgress = false
+
     var body: some View {
         ZStack {
             DSKitResource.image("Launch")
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
+
+            if showsProgress {
+                VStack {
+                    Spacer()
+
+                    ProgressView()
+                        .padding(.bottom, 80)
+                }
+            }
         }
         .task {
             onContinue()
+
+            // 서버 확인이 1.5초를 넘기면 멈춘 것처럼 보이지 않도록 로딩 표시를 띄운다
+            try? await Task.sleep(for: .milliseconds(1500))
+            guard !Task.isCancelled else { return }
+            showsProgress = true
         }
     }
 }

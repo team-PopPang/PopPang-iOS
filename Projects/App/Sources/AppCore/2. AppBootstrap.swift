@@ -68,6 +68,9 @@ struct AppBootstrap {
             )
         } withDependencies: {
             $0.localSessionClient = localSessionClient
+            $0.serverHealthClient = .live(
+                serverHealthUsecase: dependencies.usecases.serverHealthUsecase
+            )
             mainTabFeatureDependencies.configure(&$0)
             $0.authFeatureClient = .live(
                 kakaoAuthUsecase: dependencies.usecases.kakaoAuthUsecase,
