@@ -76,23 +76,26 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.pr_number == ''
         uses: actions/checkout@v4
 
+      # Tuist 버전마다 Tuist/.build와 생성 project 구조가 달라 아래 두 캐시 키에 .tuist-version을 넣는다.
+      # 4.210.0부터 Tuist/.build/checkouts가 ~/.cache/swifterpm을 가리키는 링크라 함께 캐시한다.
       - name: Cache Tuist and SwiftPM
         uses: actions/cache@v4
         with:
           path: |
             Tuist/.build
+            ~/.cache/swifterpm
             ~/Library/Caches/org.swift.swiftpm
-          key: tuist-spm-${{ runner.os }}-${{ hashFiles('Tuist/Package.resolved') }}
+          key: tuist-spm-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist/Package.resolved') }}
           restore-keys: |
-            tuist-spm-${{ runner.os }}-
+            tuist-spm-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-
 
       - name: Cache DerivedData
         uses: actions/cache@v4
         with:
           path: DerivedData/${{ matrix.scheme }}
-          key: deriveddata-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('Tuist/Package.resolved', 'Projects/**/*.swift') }}
+          key: deriveddata-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist/Package.resolved', 'Projects/**/*.swift') }}
           restore-keys: |
-            deriveddata-${{ runner.os }}-${{ matrix.scheme }}-
+            deriveddata-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_26.2.app
