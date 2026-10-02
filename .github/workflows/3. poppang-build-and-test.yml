@@ -79,6 +79,7 @@ jobs:
       # Tuist 버전마다 Tuist/.build와 생성 project 구조가 달라 아래 캐시 키에는 모두 .tuist-version을 넣는다.
       # 4.210.0부터 Tuist/.build/checkouts가 ~/.cache/swifterpm을 가리키는 링크라 함께 캐시한다.
       - name: Cache Tuist and SwiftPM
+        id: spm_cache
         uses: actions/cache@v4
         with:
           path: |
@@ -89,25 +90,17 @@ jobs:
           restore-keys: |
             tuist-spm-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-
 
-      # 체크아웃한 소스는 수정 시각이 새로 찍혀 우리 모듈은 매번 다시 컴파일된다.
-      # 그래서 키는 외부 패키지(Package.resolved)와 Tuist 버전만 보고, 의존성이 같으면 캐시를 새로 저장하지 않는다.
-      # arm64만 빌드하면서 캐시 내용이 달라져 키에 arm64를 넣는다.
-      - name: Cache DerivedData
-        uses: actions/cache@v4
+      # DerivedData의 외부 라이브러리 빌드 결과는 패키지 파일의 수정 시각이 기록과 같아야 다시 쓰인다.
+      # 그래서 위 패키지 캐시를 그대로 받은 실행에서 만든 DerivedData만 저장한다(Save DerivedData 단계).
+      # 우리 모듈은 체크아웃할 때마다 수정 시각이 새로 찍혀 어차피 다시 컴파일되므로, 키는 Package.resolved와 Tuist 버전만 본다.
+      - name: Restore DerivedData
+        id: deriveddata_cache
+        uses: actions/cache/restore@v4
         with:
           path: DerivedData/${{ matrix.scheme }}
-          key: deriveddata-arm64-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist/Package.resolved') }}
+          key: deriveddata-v2-arm64-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist/Package.resolved') }}
           restore-keys: |
-            deriveddata-arm64-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-
-
-      # tuist generate가 Project.swift 같은 설정 파일을 매번 새로 컴파일하지 않도록 Tuist 캐시를 보관한다.
-      - name: Cache Tuist manifests
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/tuist
-          key: tuist-manifests-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist.swift', 'Workspace.swift', 'Tuist/Package.swift', 'Projects/**/Project.swift') }}
-          restore-keys: |
-            tuist-manifests-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-
+            deriveddata-v2-arm64-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_26.2.app
@@ -183,6 +176,13 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             ARCHS=arm64 \
             | xcpretty
+
+      - name: Save DerivedData
+        if: steps.spm_cache.outputs.cache-hit == 'true' && steps.deriveddata_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: DerivedData/${{ matrix.scheme }}
+          key: ${{ steps.deriveddata_cache.outputs.cache-primary-key }}
 
   notify:
     name: Notify CI result
