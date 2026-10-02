@@ -61,7 +61,7 @@ App과 PopPangRNFeature는 Vendor/PrebuiltReactNativeFrameworks를 참조한다.
 2. `gh auth login` 상태에서 React Native 산출물을 받는다.
 
    ```bash
-   ./scripts/download-rn-release.sh v0.1.0
+   ./scripts/download-rn-release.sh v1.0.0
    ```
 
 3. `tuist install`과 `tuist generate`를 실행한다.

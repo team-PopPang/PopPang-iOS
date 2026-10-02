@@ -79,7 +79,7 @@ tuist version
 `App`과 `PopPangRNFeature`는 `Vendor/PrebuiltReactNativeFrameworks` local package를 참조한다. 이 폴더가 없으면 `tuist install`과 `tuist generate`가 실패하므로 먼저 받는다. `gh auth login`이 되어 있고 `team-PopPang/PopPang-RN` 저장소에 접근할 수 있어야 한다.
 
 ```bash
-./scripts/download-rn-release.sh v0.1.0
+./scripts/download-rn-release.sh v1.0.0
 ```
 
 스크립트는 `Projects/App/Resources/ReactNative`(번들)와 `Vendor/PrebuiltReactNativeFrameworks`(SPM 패키지)를 채운다. 두 경로 모두 `.gitignore`에 들어 있다. 산출물 내용과 버전 변경 방법은 [React Native 산출물](react-native.md)을 본다.
