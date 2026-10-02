@@ -39,6 +39,8 @@ App, Domain, DSKit, 다른 feature에는 테스트 타깃이 없다.
 
 PR 댓글 `/팝팡 빌드하고테스트`는 3번 workflow를 실행한다.
 
+3번 workflow는 시뮬레이터용 arm64만 빌드한다(`ARCHS=arm64`). CI 러너가 Apple Silicon이라 x86_64 시뮬레이터 빌드는 확인하지 않는다.
+
 **feature 테스트(`HomeFeatureV2Tests`, `MainTabFeatureTests` 등)는 CI에서 실행되지 않는다.** reducer나 navigation을 바꿨다면 로컬에서 해당 테스트를 실행하고 결과를 PR에 적는다.
 
 ## 변경별로 확인할 테스트
