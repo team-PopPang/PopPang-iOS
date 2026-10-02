@@ -156,7 +156,6 @@ Domain·Data·Shared 기능은 기존 모듈 안에 파일을 추가한다. 새 
 | Moya | 15.0.3 |
 | SPM-NMapsMap | 3.23.2 |
 | swift-composable-architecture | 1.26.2 (Xcode 27 지원은 1.26.0부터) |
-| indextrown/Listkit | 1.0.5 (`HomeFeature`만 사용) |
 | PopPangListKit | 1.1.0 |
 | BottomSheet | 3.1.1 |
 

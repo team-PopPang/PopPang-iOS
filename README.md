@@ -284,7 +284,7 @@ Projects
 │   ├── AuthFeature
 │   ├── OnboardingFeature
 │   ├── MainTabFeature
-│   ├── HomeFeature
+│   ├── HomeFeatureV2
 │   ├── SearchFeature
 │   ├── PopupDetailFeature
 │   ├── MapFeature

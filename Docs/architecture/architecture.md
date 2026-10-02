@@ -37,7 +37,6 @@ Projects
 ├── Features
 │   ├── MainTabFeature        로그인 이후 탭과 탭 공통 push·fullScreen 소유
 │   ├── HomeFeatureV2         홈 탭 (MainTabFeature가 사용하는 홈)
-│   ├── HomeFeature           앱에서 쓰지 않는 홈 구현 (자체 Demo·Tests만 있음)
 │   ├── CalendarFeature, MapFeature, FavoritesFeature, ProfileFeature
 │   ├── AuthFeature, OnboardingFeature
 │   ├── PopupDetailFeature, ReviewFeature, SearchFeature, AlertFeature
@@ -65,7 +64,6 @@ Projects
 | Shared/ThirdParty | framework | 외부 패키지만 | 없음 |
 | MainTabFeature | staticFramework | Alert, Calendar, Favorites, HomeFeatureV2, Map, PopupDetail, PopPangRN, Profile, Review, Search Feature, Domain, Core, DSKit | `MainTabFeatureTests` |
 | HomeFeatureV2 | staticFramework | ADKit, Domain, DSKit, Core, ThirdParty | Demo, `HomeFeatureV2Tests` |
-| HomeFeature | staticFramework | ADKit, Domain, DSKit, Core, ThirdParty | Demo, `HomeFeatureTests` |
 | Alert, Calendar, Favorites, PopupDetail, Profile Feature | staticFramework | Domain, Core, DSKit, ThirdParty | Demo |
 | MapFeature, SearchFeature | staticFramework | Domain, DSKit, Core, ThirdParty | Map만 Demo |
 | Auth, Onboarding, Review Feature | staticFramework | Domain, DSKit, ThirdParty | 없음 (Demo 주석 처리) |

@@ -119,9 +119,6 @@ jobs:
           ADMOB_APP_ID = cidummy
           ADMOB_NATIVE_AD_UNIT_ID = cidummy
           EOF
-          cat <<EOF > Projects/Features/HomeFeature/Demo/HomeFeatureDemo.xcconfig
-          ADMOB_APP_ID = cidummy
-          EOF
           cat <<EOF > Projects/Features/HomeFeatureV2/Demo/HomeFeatureV2Demo.xcconfig
           ADMOB_APP_ID = cidummy
           HOME_DEMO_USER_UUID = cidummy
