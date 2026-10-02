@@ -43,6 +43,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Domain 타깃은 app-build가 PopPangApp을 빌드할 때 함께 빌드되어 따로 job을 두지 않는다.
         include:
           - job_name: app-build
             scheme: PopPangApp
@@ -56,10 +57,6 @@ jobs:
             scheme: Data
             xcode_action: test
             destination: platform=iOS Simulator
-          - job_name: domain-build
-            scheme: Domain
-            xcode_action: build
-            destination: generic/platform=iOS Simulator
           - job_name: dskit-build
             scheme: DSKit
             xcode_action: build
@@ -135,9 +132,10 @@ jobs:
         run: ./scripts/download-rn-release.sh v1.0.0
 
       - name: Generate Tuist workspace
+        # 바이너리 캐시를 쓰지 않아(Tuist 서버 미연결) 타깃마다 내용 해시를 계산해 캐시를 찾는 단계를 건너뛴다.
         run: |
           "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist install
-          "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist generate
+          "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist generate --no-binary-cache
 
       - name: Resolve test simulator
         if: matrix.xcode_action == 'test'
@@ -202,7 +200,6 @@ jobs:
             - app-build: PopPangApp
             - core-test: Core
             - data-test: Data
-            - domain-build: Domain
             - dskit-build: DSKit
 
       - name: Comment failure
@@ -228,7 +225,6 @@ jobs:
             - app-build: PopPangApp
             - core-test: Core
             - data-test: Data
-            - domain-build: Domain
             - dskit-build: DSKit
 
             Repository: ${{ github.repository }}
