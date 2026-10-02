@@ -358,7 +358,7 @@ Text(LocalizationKey.commonNext.localized(comment: "Next button"))
 
 # 5. 실행 방법
 
-Tuist 버전은 `4.115.0`으로 고정합니다(`mise.toml`, `.tuist-version`). 설치 방법은 [`Docs/development/tuist.md`](./Docs/development/tuist.md)를 참고합니다.
+Tuist 버전은 `4.210.0`으로 고정합니다(`mise.toml`, `.tuist-version`). 설치 방법은 [`Docs/development/tuist.md`](./Docs/development/tuist.md)를 참고합니다.
 
 ```bash
 tuist version

@@ -73,8 +73,8 @@ App과 PopPangRNFeature는 Vendor/PrebuiltReactNativeFrameworks를 참조한다.
 
 확인한 자료가 다음과 같다.
 
-- `mise.toml`의 `tuist = "4.115.0"`은 로컬에서 쓰는 버전이다.
-- `.tuist-version`의 `4.115.0`은 CI workflow가 `mise install tuist@$(cat .tuist-version)`으로 읽는다.
+- `mise.toml`의 `tuist = "4.210.0"`은 로컬에서 쓰는 버전이다.
+- `.tuist-version`의 `4.210.0`은 CI workflow가 `mise install tuist@$(cat .tuist-version)`으로 읽는다.
 - 두 값은 같아야 한다.
 
 버전을 찾는 독자에게는 파일·값·읽는 곳을 빠르게 볼 수 있는 참조 형식이 맞다.
@@ -82,12 +82,12 @@ App과 PopPangRNFeature는 Vendor/PrebuiltReactNativeFrameworks를 참조한다.
 ```markdown
 ## 기준 버전
 
-Tuist 버전은 `4.115.0`으로 고정한다.
+Tuist 버전은 `4.210.0`으로 고정한다.
 
 | 파일 | 값 | 읽는 곳 |
 | --- | --- | --- |
-| `mise.toml` | `4.115.0` | 로컬 |
-| `.tuist-version` | `4.115.0` | CI |
+| `mise.toml` | `4.210.0` | 로컬 |
+| `.tuist-version` | `4.210.0` | CI |
 ```
 
 버전을 설명하려고 mise 설치 과정이나 Tuist 도입 배경까지 붙이지 않는다. 두 파일을 함께 고쳐야 한다는 조건은 짧더라도 남긴다.
