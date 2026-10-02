@@ -104,6 +104,8 @@ Projects
 
 두 모양은 DSKit 데모의 탭바 비교 화면에서 비교한다. 실행 인자 `-tabBarStyle system` 또는 `-tabBarStyle classic`으로 고른다. 탭바 높이가 필요한 화면은 `@Environment(\.popPangTabBarStyle)`로 스타일을 확인한다(예: `MapFeatureView`의 목록 보기 버튼).
 
+내비게이션 바는 시스템 바를 그대로 쓴다. Xcode 27로 빌드하면 툴바 항목 뒤에 유리 배경이 붙으므로 DSKit `ppHidesGlassBackground()`로 끈다. 공통 뒤로가기 바 `ppBackNavigationBar`에는 이미 적용되어 있고, 툴바 항목을 직접 넣는 화면에만 따로 붙인다(예: `PopupDetailFeatureView`의 뒤로가기 버튼).
+
 ### Domain
 
 위치: `Projects/Domain`

@@ -122,6 +122,7 @@ private struct BackNavigationBarModifier: ViewModifier {
                 ToolbarItem(placement: .topBarLeading) {
                     BackNavigationButton(action: onBack)
                 }
+                .ppHidesGlassBackground()
             }
             .navigationBarBackground(isVisible: showsSeparator)
             .navigationBarSeparator(isVisible: showsSeparator)
@@ -148,10 +149,12 @@ private struct BackNavigationBarWithTrailingModifier<Trailing: View>: ViewModifi
                 ToolbarItem(placement: .topBarLeading) {
                     BackNavigationButton(action: onBack)
                 }
+                .ppHidesGlassBackground()
 
                 ToolbarItem(placement: .topBarTrailing) {
                     trailing()
                 }
+                .ppHidesGlassBackground()
             }
             .navigationBarBackground(isVisible: showsSeparator)
             .navigationBarSeparator(isVisible: showsSeparator)
@@ -239,5 +242,18 @@ public extension View {
             showsSeparator: showsSeparator,
             trailing: trailing
         ))
+    }
+}
+
+public extension ToolbarContent {
+    /// iOS 26부터 툴바 항목 뒤에 붙는 유리(Liquid Glass) 배경을 끈다.
+    /// iOS 26 미만에는 유리 배경이 없어서 아무것도 바꾸지 않는다.
+    @ToolbarContentBuilder
+    func ppHidesGlassBackground() -> some ToolbarContent {
+        if #available(iOS 26.0, *) {
+            sharedBackgroundVisibility(.hidden)
+        } else {
+            self
+        }
     }
 }
