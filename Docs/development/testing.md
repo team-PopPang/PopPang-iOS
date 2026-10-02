@@ -22,7 +22,7 @@
 | 모듈 | 타깃 | 파일 수 | `@Test` 수 | 내용 |
 | --- | --- | --- | --- | --- |
 | Core | `CoreTests` | 7 | 15 | 네트워크(Moya stub), 로컬 저장소 |
-| Data | `DataTests` | 1 | 14 | DTO 변환, 계약 |
+| Data | `DataTests` | 2 | 23 | DTO 변환, 계약, 서버 헬스 체크 판정(`URLProtocol` stub) |
 | HomeFeatureV2 | `HomeFeatureV2Tests` (`Tests/HomeFeatureTests.swift`) | 1 | 8 | TCA `TestStore`, 광고 배치 정책 |
 | MainTabFeature | `MainTabFeatureTests` | 1 | 6 | delegate → path·destination 전환, 해제 순서 |
 | HomeFeature | `HomeFeatureTests` | 1 | 4 | 앱에서 쓰지 않는 홈 구현 |

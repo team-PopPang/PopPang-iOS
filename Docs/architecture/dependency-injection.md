@@ -25,6 +25,8 @@ PopPangApp.init
    └─ AppNotificationManager.shared.configure(...)
 → AppBootstrap.makeAppStore()
    └─ Store(initialState:) { AppFeature(...) } withDependencies: { ... }
+      ├─ ServerHealthClient.live(...)    앱 시작 헬스 체크
+      └─ AuthFeatureClient.live(...)     로그인
 → 모든 하위 reducer가 @Dependency로 client를 읽음
 ```
 
@@ -48,6 +50,9 @@ Store(initialState: AppFeature.State()) {
     )
 } withDependencies: {
     $0.localSessionClient = localSessionClient
+    $0.serverHealthClient = .live(
+        serverHealthUsecase: dependencies.usecases.serverHealthUsecase
+    )
     mainTabFeatureDependencies.configure(&$0)
     $0.authFeatureClient = .live(
         kakaoAuthUsecase: dependencies.usecases.kakaoAuthUsecase,
