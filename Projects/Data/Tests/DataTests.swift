@@ -14,6 +14,7 @@ struct DataTests {
         let appleRepository: AppleAuthRepositoryProtocol = AppleAuthRepositoryImpl()
         let googleRepository: GoogleAuthRepositoryProtocol = GoogleAuthRepositoryImpl()
         let kakaoRepository: KakaoAuthRepositoryProtocol = KakaoAuthRepositoryImpl()
+        let serverHealthRepository: ServerHealthRepositoryProtocol = ServerHealthRepositoryImpl()
 
         let popupUsecase: PopupUsecaseProtocol = PopupUsecaseImpl(popupRepository: popupRepository)
         let popupSubmissionUsecase: PopupSubmissionUsecaseProtocol = PopupSubmissionUsecaseImpl(repository: popupSubmissionRepository)
@@ -22,6 +23,7 @@ struct DataTests {
         let appleUsecase: AppleAuthUsecaseProtocol = AppleAuthUsecaseImpl(appleAuthRepository: appleRepository)
         let googleUsecase: GoogleAuthUsecaseProtocol = GoogleAuthUsecaseImpl(googleAuthRepository: googleRepository)
         let kakaoUsecase: KakaoAuthUsecaseProtocol = KakaoAuthUsecaseImpl(kakaoAuthRepository: kakaoRepository)
+        let serverHealthUsecase: ServerHealthUsecaseProtocol = ServerHealthUsecaseImpl(serverHealthRepository: serverHealthRepository)
 
         #expect(contractTypeName(of: popupUsecase) == "PopupUsecaseImpl")
         #expect(contractTypeName(of: popupSubmissionUsecase) == "PopupSubmissionUsecaseImpl")
@@ -30,6 +32,7 @@ struct DataTests {
         #expect(contractTypeName(of: appleUsecase) == "AppleAuthUsecaseImpl")
         #expect(contractTypeName(of: googleUsecase) == "GoogleAuthUsecaseImpl")
         #expect(contractTypeName(of: kakaoUsecase) == "KakaoAuthUsecaseImpl")
+        #expect(contractTypeName(of: serverHealthUsecase) == "ServerHealthUsecaseImpl")
     }
 
     @Test("팝업 DTO가 V0 필드와 이미지 URL을 도메인 모델로 변환한다")
