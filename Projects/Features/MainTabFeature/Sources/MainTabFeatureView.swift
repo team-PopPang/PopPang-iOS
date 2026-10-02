@@ -15,30 +15,29 @@ import SwiftUI
 
 public struct MainTabFeatureView: View {
     @Bindable var store: StoreOf<MainTabFeature>
+    private let tabBarStyle: PopPangTabBarStyle
 
-    public init(store: StoreOf<MainTabFeature>) {
+    /// - Parameter tabBarStyle: `.classic`은 기존 모양의 커스텀 탭바, `.system`은 시스템 탭바(Xcode 27부터 Liquid Glass)다.
+    public init(store: StoreOf<MainTabFeature>, tabBarStyle: PopPangTabBarStyle = .classic) {
         self.store = store
+        self.tabBarStyle = tabBarStyle
     }
 
     public var body: some View {
         NavigationStack(path: $store.scope(state: \.core.path, action: \.path)) {
-            TabView(
+            PopPangTabView(
                 selection: Binding(
                     get: { store.core.selectedTab },
                     set: { store.send(.selectedTabChanged($0)) }
-                )
-            ) {
-                ForEach(MainTab.allCases, id: \.self) { tab in
-                    tabView(for: tab)
-                        .tabItem {
-                            DSKitResource.image(tab.tabImageName(selected: store.core.selectedTab == tab))
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 25, height: 25)
-                            Text(tab.title)
-                        }
-                        .tag(tab)
+                ),
+                tabs: MainTab.allCases,
+                style: tabBarStyle,
+                title: \.title,
+                image: { tab, isSelected in
+                    DSKitResource.image(tab.tabImageName(selected: isSelected))
                 }
+            ) { tab in
+                tabView(for: tab)
             }
         } destination: { store in
             switch store.state {

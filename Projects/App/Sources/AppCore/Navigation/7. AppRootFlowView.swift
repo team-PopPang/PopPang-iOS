@@ -53,7 +53,8 @@ struct AppRootFlowView: View {
 
             case .main:
                 if let mainTabStore = store.scope(state: \.mainTab, action: \.mainTab) {
-                    MainTabFeatureView(store: mainTabStore)
+                    // 탭바 모양은 여기서 바꾼다. `.classic`은 기존 모양, `.system`은 시스템 탭바(Xcode 27부터 Liquid Glass)다.
+                    MainTabFeatureView(store: mainTabStore, tabBarStyle: .classic)
                         .onDisappear {
                             store.send(.mainTabViewDidDisappear)
                         }

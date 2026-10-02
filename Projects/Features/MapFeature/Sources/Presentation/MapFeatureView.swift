@@ -7,6 +7,7 @@ import UIKit
 
 public struct MapFeatureView: View {
     @Bindable var store: StoreOf<MapFeature>
+    @Environment(\.popPangTabBarStyle) private var tabBarStyle
     @State private var tabBarHeight: CGFloat = 0
     @State private var searchBarFrame: CGRect = .zero
     @State private var sheetTop: CGFloat = 400
@@ -35,7 +36,7 @@ public struct MapFeatureView: View {
                     if isFirstSheetHidden(store.firstSheetPosition) {
                         listButton
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                            .padding(.bottom, 20 + tabBarHeight)
+                            .padding(.bottom, 20 + bottomTabBarHeight)
                     }
                 }
                 .background {
@@ -232,6 +233,11 @@ private extension MapFeatureView {
             get: { store.secondSheetPosition },
             set: { store.send(.secondSheetPositionChanged($0)) }
         )
+    }
+
+    /// 클래식 탭바는 시스템 탭바를 숨기고 하단 safe area 위에 붙으므로 그 높이를 직접 더한다.
+    var bottomTabBarHeight: CGFloat {
+        tabBarStyle == .classic ? PopPangTabBarMetrics.height + safeAreaInsets.bottom : tabBarHeight
     }
 
     var safeAreaInsets: UIEdgeInsets {

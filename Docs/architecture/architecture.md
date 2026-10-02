@@ -59,7 +59,7 @@ Projects
 | Domain | framework | 없음 | 없음 |
 | Data | framework | Domain, Core, ThirdParty | `DataTests` |
 | Shared/Core | framework | Domain, ThirdParty | `CoreTests` |
-| Shared/DSKit | framework | Core, ThirdParty | 없음 |
+| Shared/DSKit | framework | Core, ThirdParty | Demo (컴포넌트 카탈로그, 탭바 비교) |
 | Shared/ADKit | framework | Core, GoogleMobileAds, JavaScriptCore | 없음 |
 | Shared/ThirdParty | framework | 외부 패키지만 | 없음 |
 | MainTabFeature | staticFramework | Alert, Calendar, Favorites, HomeFeatureV2, Map, PopupDetail, PopPangRN, Profile, Review, Search Feature, Domain, Core, DSKit | `MainTabFeatureTests` |
@@ -96,6 +96,13 @@ Projects
 넣지 않을 것: 다른 feature 조립(`MainTabFeature` 제외), 화면 전환용 escaping closure, DTO·Moya 타입.
 
 `MainTabFeature`는 navigation owner라서 예외적으로 탭 feature와 상세 feature를 import한다. 다른 feature끼리는 서로 의존하지 않는다.
+
+탭바 모양은 `MainTabFeatureView`의 `tabBarStyle`(DSKit `PopPangTabBarStyle`)로 고르고, 값은 `AppRootFlowView`에서 정한다.
+
+- `.classic`: 시스템 탭바를 숨기고, 기존 모양을 그대로 옮긴 `PopPangTabBar`를 붙인다.
+- `.system`: 시스템 탭바를 쓴다. Xcode 27부터는 `UIDesignRequiresCompatibility`가 무시되어 Liquid Glass로 그려진다.
+
+두 모양은 DSKit 데모의 탭바 비교 화면에서 비교한다. 실행 인자 `-tabBarStyle system` 또는 `-tabBarStyle classic`으로 고른다. 탭바 높이가 필요한 화면은 `@Environment(\.popPangTabBarStyle)`로 스타일을 확인한다(예: `MapFeatureView`의 목록 보기 버튼).
 
 ### Domain
 
