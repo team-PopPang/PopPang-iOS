@@ -37,10 +37,10 @@ Projects
 ├── Features
 │   ├── MainTabFeature        로그인 이후 탭과 탭 공통 push·fullScreen 소유
 │   ├── HomeFeatureV2         홈 탭 (MainTabFeature가 사용하는 홈)
-│   ├── HomeFeature           앱에서 쓰지 않는 홈 구현 (자체 Demo·Tests만 있음)
 │   ├── CalendarFeature, MapFeature, FavoritesFeature, ProfileFeature
 │   ├── AuthFeature, OnboardingFeature
 │   ├── PopupDetailFeature, ReviewFeature, SearchFeature, AlertFeature
+│   ├── MaintenanceFeature    앱 시작 헬스 체크 실패 시 점검·오프라인 안내 화면
 │   └── PopPangRNFeature      React Native 화면 호스트 (팝업 제보·관리)
 ├── Domain                    Entity, Repository 계약, Usecase 계약과 구현
 ├── Data                      Repository 구현, Moya API target, DTO, DTO↔Entity 변환
@@ -55,19 +55,19 @@ Projects
 
 | 모듈 | product | 프로젝트 의존성 | 추가 타깃 |
 | --- | --- | --- | --- |
-| App (`PopPangApp`) | app | ADKit, AuthFeature, OnboardingFeature, MainTabFeature, Domain, Data, ThirdParty, Core, DSKit, React Native local package | 없음 |
+| App (`PopPangApp`) | app | ADKit, AuthFeature, OnboardingFeature, MainTabFeature, MaintenanceFeature, Domain, Data, ThirdParty, Core, DSKit, React Native local package | 없음 |
 | Domain | framework | 없음 | 없음 |
 | Data | framework | Domain, Core, ThirdParty | `DataTests` |
 | Shared/Core | framework | Domain, ThirdParty | `CoreTests` |
-| Shared/DSKit | framework | Core, ThirdParty | 없음 |
+| Shared/DSKit | framework | Core, ThirdParty | Demo (컴포넌트 카탈로그, 탭바 비교) |
 | Shared/ADKit | framework | Core, GoogleMobileAds, JavaScriptCore | 없음 |
 | Shared/ThirdParty | framework | 외부 패키지만 | 없음 |
 | MainTabFeature | staticFramework | Alert, Calendar, Favorites, HomeFeatureV2, Map, PopupDetail, PopPangRN, Profile, Review, Search Feature, Domain, Core, DSKit | `MainTabFeatureTests` |
 | HomeFeatureV2 | staticFramework | ADKit, Domain, DSKit, Core, ThirdParty | Demo, `HomeFeatureV2Tests` |
-| HomeFeature | staticFramework | ADKit, Domain, DSKit, Core, ThirdParty | Demo, `HomeFeatureTests` |
 | Alert, Calendar, Favorites, PopupDetail, Profile Feature | staticFramework | Domain, Core, DSKit, ThirdParty | Demo |
 | MapFeature, SearchFeature | staticFramework | Domain, DSKit, Core, ThirdParty | Map만 Demo |
 | Auth, Onboarding, Review Feature | staticFramework | Domain, DSKit, ThirdParty | 없음 (Demo 주석 처리) |
+| MaintenanceFeature | staticFramework | DSKit | Demo |
 | PopPangRNFeature | framework | ThirdParty, React Native local package | 없음 |
 
 ## 계층별 책임
@@ -97,6 +97,15 @@ Projects
 
 `MainTabFeature`는 navigation owner라서 예외적으로 탭 feature와 상세 feature를 import한다. 다른 feature끼리는 서로 의존하지 않는다.
 
+탭바 모양은 `MainTabFeatureView`의 `tabBarStyle`(DSKit `PopPangTabBarStyle`)로 고르고, 값은 `AppRootFlowView`에서 정한다.
+
+- `.classic`: 시스템 탭바를 숨기고, 기존 모양을 그대로 옮긴 `PopPangTabBar`를 붙인다.
+- `.system`: 시스템 탭바를 쓴다. Xcode 27부터는 `UIDesignRequiresCompatibility`가 무시되어 Liquid Glass로 그려진다.
+
+두 모양은 DSKit 데모의 탭바 비교 화면에서 비교한다. 실행 인자 `-tabBarStyle system` 또는 `-tabBarStyle classic`으로 고른다. 탭바 높이가 필요한 화면은 `@Environment(\.popPangTabBarStyle)`로 스타일을 확인한다(예: `MapFeatureView`의 목록 보기 버튼).
+
+내비게이션 바는 시스템 바를 그대로 쓴다. Xcode 27로 빌드하면 툴바 항목 뒤에 유리 배경이 붙으므로 DSKit `ppHidesGlassBackground()`로 끈다. 공통 뒤로가기 바 `ppBackNavigationBar`에는 이미 적용되어 있고, 툴바 항목을 직접 넣는 화면에만 따로 붙인다(예: `PopupDetailFeatureView`의 뒤로가기 버튼).
+
 ### Domain
 
 위치: `Projects/Domain`
@@ -116,6 +125,7 @@ Projects
 
 - `Sources/Remote/<Name>API.swift`: Moya `TargetType`. `Core`의 `BaseAPI`를 채택해 base URL과 header를 공유한다.
 - `Sources/RepositoryImpl/<Name>RepositoryImpl.swift`: Domain 계약을 구현한다. `NetworkProvider.shared`로 `MoyaProvider`를 만들고 `asyncRequest(_:decodeTo:)`로 요청한다.
+  - 예외: `ServerHealthRepositoryImpl`(앱 시작 헬스 체크)은 `URLSession`으로 직접 요청한다. 오프라인 여부를 `URLError` 코드로 구분하고 요청 전체를 5초로 제한하기 위해서다. 요청 주소와 헤더는 `ServerHealthAPI`(`BaseAPI`)로 만든다.
 - `Sources/DTO`: 서버 응답·요청 형식
 - `Sources/Mapping/<Entity>+DataMapping.swift`: DTO↔Entity 변환. 일부 DTO는 DTO 파일 안의 `toEntity()` extension으로 변환한다.
 - 카카오·구글·애플 로그인 SDK 연동 구현
@@ -191,9 +201,12 @@ HomeFeatureView (HomeFeatureV2)
 1. `PopPangApp.init`이 `AppSDKInitializer.configure()`를 호출한다.
 2. `AppBootstrap.live()`가 `LocalSessionStorage`, `AppDependencyRegistry`, `LocalSessionClient`, `MainTabFeatureDependencies`를 만들고 `AppNotificationManager`를 설정한다.
 3. `makeAppStore()`가 `AppFeature` store를 만들고 의존성을 주입한다.
-4. `AppRootFlowView`가 `.launch`에서 `launchTask`를 보낸다.
-5. `AppFeature`가 `LocalSessionStorage.loadSnapshot()`과 `LocalSessionClient.load()`로 저장된 세션을 읽고 `AppLaunchStateResolver`로 시작 화면을 정한다.
-6. `launchResolved`에서 `session`과 `destination`을 반영하고, main이면 `MainTabFeature.State`를 만든다.
+4. `AppRootFlowView`가 `.launch`에서 `launchTask`를 보낸다. 확인이 1.5초를 넘기면 시작 이미지 위에 로딩 표시를 띄운다.
+5. `AppFeature.resolveLaunch()`가 서버 헬스 체크(`ServerHealthClient`, `GET /api/v1/health`, 최대 5초)와 자동 로그인(`LocalSessionClient.load()`)을 동시에 시작한다.
+6. 헬스 체크 결과에 따라 갈라진다.
+   - 정상: `LocalSessionStorage.loadSnapshot()`과 세션으로 `AppLaunchStateResolver`가 시작 화면을 정하고, `launchResolved`에서 `session`과 `destination`을 반영한다. main이면 `MainTabFeature.State`를 만든다.
+   - 서버 이상·오프라인: `serverHealthCheckFailed`로 `.maintenance` 화면(`MaintenanceFeatureView`)을 띄운다. 저장된 로그인 정보는 지우지 않는다.
+7. 점검 화면의 다시 시도(`maintenanceRetryTapped`)는 5번부터 다시 실행한다. 확인 중에 누른 버튼은 무시한다.
 
 ## 주요 기술
 

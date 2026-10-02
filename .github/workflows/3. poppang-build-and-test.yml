@@ -76,23 +76,26 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.pr_number == ''
         uses: actions/checkout@v4
 
+      # Tuist 버전마다 Tuist/.build와 생성 project 구조가 달라 아래 두 캐시 키에 .tuist-version을 넣는다.
+      # 4.210.0부터 Tuist/.build/checkouts가 ~/.cache/swifterpm을 가리키는 링크라 함께 캐시한다.
       - name: Cache Tuist and SwiftPM
         uses: actions/cache@v4
         with:
           path: |
             Tuist/.build
+            ~/.cache/swifterpm
             ~/Library/Caches/org.swift.swiftpm
-          key: tuist-spm-${{ runner.os }}-${{ hashFiles('Tuist/Package.resolved') }}
+          key: tuist-spm-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist/Package.resolved') }}
           restore-keys: |
-            tuist-spm-${{ runner.os }}-
+            tuist-spm-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-
 
       - name: Cache DerivedData
         uses: actions/cache@v4
         with:
           path: DerivedData/${{ matrix.scheme }}
-          key: deriveddata-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('Tuist/Package.resolved', 'Projects/**/*.swift') }}
+          key: deriveddata-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist/Package.resolved', 'Projects/**/*.swift') }}
           restore-keys: |
-            deriveddata-${{ runner.os }}-${{ matrix.scheme }}-
+            deriveddata-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_26.2.app
@@ -116,9 +119,6 @@ jobs:
           ADMOB_APP_ID = cidummy
           ADMOB_NATIVE_AD_UNIT_ID = cidummy
           EOF
-          cat <<EOF > Projects/Features/HomeFeature/Demo/HomeFeatureDemo.xcconfig
-          ADMOB_APP_ID = cidummy
-          EOF
           cat <<EOF > Projects/Features/HomeFeatureV2/Demo/HomeFeatureV2Demo.xcconfig
           ADMOB_APP_ID = cidummy
           HOME_DEMO_USER_UUID = cidummy
@@ -127,7 +127,7 @@ jobs:
       - name: Download React Native release artifacts
         env:
           GH_TOKEN: ${{ github.token }}
-        run: ./scripts/download-rn-release.sh v0.1.0
+        run: ./scripts/download-rn-release.sh v1.0.0
 
       - name: Generate Tuist workspace
         run: |

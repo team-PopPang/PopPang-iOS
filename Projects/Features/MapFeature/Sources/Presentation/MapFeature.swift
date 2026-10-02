@@ -282,7 +282,8 @@ public struct MapFeature {
                 return .send(.delegate(.popupSelected(popup)))
 
             case .firstSheetPositionChanged(let position):
-                state.firstSheetPosition = position
+                // `.absolute(0)`은 드래그 막대와 배경이 남아 Liquid Glass 탭바 아래로 보이므로 `.hidden`으로 접는다.
+                state.firstSheetPosition = Self.isFirstSheetHidden(position) ? .hidden : position
                 return .none
 
             case .secondSheetPositionChanged(let position):

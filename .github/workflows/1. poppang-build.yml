@@ -64,7 +64,7 @@ jobs:
       - name: Download React Native release artifacts
         env:
           GH_TOKEN: ${{ github.token }}
-        run: ./scripts/download-rn-release.sh v0.1.0
+        run: ./scripts/download-rn-release.sh v1.0.0
 
       - name: Generate Tuist workspace
         run: |

@@ -6,19 +6,21 @@
 
 ## 기준 버전
 
-Tuist 버전은 `4.115.0`으로 고정한다. 같은 값이 두 파일에 있다.
+Tuist 버전은 `4.210.0`으로 고정한다. 같은 값이 두 파일에 있다.
 
 | 파일 | 값 | 읽는 곳 |
 | --- | --- | --- |
-| `mise.toml` | `4.115.0` | 로컬. `tuist`를 실행하면 mise가 이 파일을 보고 버전을 고른다. Makefile, fastlane, scripts도 모두 `tuist`를 그대로 부른다. |
-| `.tuist-version` | `4.115.0` | CI. `.github/workflows/0~3`이 `mise install tuist@$(cat .tuist-version)`으로 설치한다. |
+| `mise.toml` | `4.210.0` | 로컬. `tuist`를 실행하면 mise가 이 파일을 보고 버전을 고른다. Makefile, fastlane, scripts도 모두 `tuist`를 그대로 부른다. |
+| `.tuist-version` | `4.210.0` | CI. `.github/workflows/0~3`이 `mise install tuist@$(cat .tuist-version)`으로 설치한다. |
 
 두 파일의 값은 항상 같아야 한다. 버전을 바꿀 때는 `mise.toml`, `.tuist-version`, README를 함께 고치고, 빌드 영향이 있으므로 계획에 적고 승인을 받는다.
+
+4.210.0은 Xcode 27(Swift 6.4)에서 패키지 타깃의 최소 버전을 iOS 15.0 이상으로 올려 생성하고, SwiftPM trait(swift-dependencies의 `Clocks` 등)를 컴파일 조건과 의존성으로 옮긴다. 4.115.0은 둘 다 하지 않아 Xcode 27에서 패키지 최소 버전 오류와 `continuousClock` 누락 오류가 난다. 버전을 바꾼 뒤 오류가 나면 [문제 해결](#문제-해결)을 본다.
 
 ```toml
 # mise.toml
 [tools]
-tuist = "4.115.0"
+tuist = "4.210.0"
 ```
 
 ## 설치 순서
@@ -54,11 +56,11 @@ mise install
 성공하면 아래처럼 출력된다.
 
 ```text
-mise ✓ tuist@4.115.0  13.7s  tuist.zip
+mise ✓ tuist@4.210.0  13.7s  tuist.zip
 mise ████████████████ 1/1 · installed 1 tool in 14.2s
 ```
 
-다른 버전(예: 4.197.0)이 이미 설치되어 있어도 이 폴더에서는 `mise.toml`의 버전만 쓴다.
+다른 버전(예: 이전에 쓰던 4.115.0)이 이미 설치되어 있어도 이 폴더에서는 `mise.toml`의 버전만 쓴다.
 
 ### 4. 버전 확인
 
@@ -66,7 +68,7 @@ mise ████████████████ 1/1 · installed 1 tool in
 tuist version
 ```
 
-`4.115.0`이 나오면 설치가 끝난 것이다.
+`4.210.0`이 나오면 설치가 끝난 것이다.
 
 ## workspace 만들기
 
@@ -79,10 +81,10 @@ tuist version
 `App`과 `PopPangRNFeature`는 `Vendor/PrebuiltReactNativeFrameworks` local package를 참조한다. 이 폴더가 없으면 `tuist install`과 `tuist generate`가 실패하므로 먼저 받는다. `gh auth login`이 되어 있고 `team-PopPang/PopPang-RN` 저장소에 접근할 수 있어야 한다.
 
 ```bash
-./scripts/download-rn-release.sh v0.1.0
+./scripts/download-rn-release.sh v1.0.0
 ```
 
-스크립트는 `Projects/App/Resources/ReactNative`(번들)와 `Vendor/PrebuiltReactNativeFrameworks`(SPM 패키지)를 채운다. 두 경로 모두 `.gitignore`에 들어 있다.
+스크립트는 `Projects/App/Resources/ReactNative`(번들)와 `Vendor/PrebuiltReactNativeFrameworks`(SPM 패키지)를 채운다. 두 경로 모두 `.gitignore`에 들어 있다. 산출물 내용과 버전 변경 방법은 [React Native 산출물](react-native.md)을 본다.
 
 ### 3. 패키지 설치와 workspace 생성
 
@@ -128,10 +130,22 @@ fastlane에는 `build`(PopPangApp 시뮬레이터 빌드), `test`(Core·Data 테
 
 | 원인 | 확인 | 해결 |
 | --- | --- | --- |
-| Tuist를 아직 설치하지 않았거나 다운로드 중이다. | `mise ls`에 `tuist 4.115.0 (missing)`이 보인다. | 저장소 루트에서 `mise install`을 실행하고 끝날 때까지 기다린다. |
+| Tuist를 아직 설치하지 않았거나 다운로드 중이다. | `mise ls`에 `tuist 4.210.0 (missing)`이 보인다. | 저장소 루트에서 `mise install`을 실행하고 끝날 때까지 기다린다. |
 | 셸에 mise가 등록되지 않았다. | `grep mise ~/.zshrc` 결과가 비어 있다. | [2단계](#2-zsh에-mise-등록)를 실행한다. |
 | 등록했지만 현재 탭에 아직 적용되지 않았다. | 새 탭에서는 동작한다. | `source ~/.zshrc`를 실행하거나 새 탭을 연다. |
 | 저장소 밖 폴더에 있다. | `pwd`가 저장소 루트가 아니다. | 저장소 루트로 이동한다. |
+
+### Tuist 버전을 바꾼 뒤 `module map file ... not found`
+
+`Tuist/.build`는 Tuist 버전마다 구조가 다르다. 4.210.0은 패키지 project를 `Tuist/.build/tuist-derived/Projects/<패키지>/`에 만들고, `Tuist/.build/checkouts/<패키지>`를 `~/.cache/swifterpm/sources/` 아래 공용 캐시를 가리키는 심볼릭 링크로 만든다. 다른 버전이 만든 `Tuist/.build`가 섞여 있으면 모듈맵 상대 경로가 깨져 `module map file '.../checkouts/<패키지>/../../tuist-derived/...' not found` 같은 오류가 난다.
+
+`Tuist/.build`를 지우고 현재 버전으로 다시 받는다.
+
+```bash
+rm -rf Tuist/.build
+tuist install
+tuist generate
+```
 
 ### AI 에이전트 창에서 실행할 때
 

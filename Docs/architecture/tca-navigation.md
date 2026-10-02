@@ -32,7 +32,7 @@
 
 | 소유자 | 위치 | 소유하는 전환 | 방식 |
 | --- | --- | --- | --- |
-| `AppFeature` | `Projects/App/Sources/AppCore/Navigation/8. AppFeature.swift` | launch → onboarding → auth → register → main 루트 전환 | `AppRootDestination` enum과 optional child state(`registerFlow`, `mainTab`) |
+| `AppFeature` | `Projects/App/Sources/AppCore/Navigation/8. AppFeature.swift` | launch → onboarding → auth → register → main 루트 전환. 앱 시작 헬스 체크에 실패하면 `maintenance` | `AppRootDestination` enum과 optional child state(`registerFlow`, `mainTab`) |
 | `AppFeature` | 같은 파일 | 온보딩에서 로그인으로 push | `StackState<OnboardingPath.State>` |
 | `MainTabFeature` | `Projects/Features/MainTabFeature/Sources/MainTabFeature.swift` | 탭 선택, 여러 탭에서 공통으로 쓰는 push | `StackState<Path.State>` |
 | `MainTabFeature` | 같은 파일 | 검색, RN 팝업 제보 fullScreen | `@Presents var destination: Destination.State?` |

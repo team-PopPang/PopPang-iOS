@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-VERSION="${1:-v0.1.0}"
+VERSION="${1:-v1.0.0}"
 REPO="team-PopPang/PopPang-RN"
 BUNDLE_ASSET_NAME="poppang-rn-ios-bundle-$VERSION.zip"
 FRAMEWORK_ASSET_NAME="poppang-rn-spm-$VERSION.zip"

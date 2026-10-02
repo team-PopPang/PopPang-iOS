@@ -2,12 +2,14 @@ import ComposableArchitecture
 import AuthFeature
 import Core
 import Domain
+import MaintenanceFeature
 import OnboardingFeature
 import MainTabFeature
 
 /// 앱 최상위에서 표시할 화면
 enum AppRootDestination: Equatable, Sendable {
     case launch     /// 시작
+    case maintenance /// 서버 헬스 체크 실패 안내
     case onboarding /// 온보딩
     case auth       /// 로그인
     case register   /// 회원정보 입력 화면
@@ -37,7 +39,13 @@ struct AppFeature {
         
         /// 현재 앱 루트에 표시할 화면
         var destination: AppRootDestination = .launch
-        
+
+        /// 점검 화면을 띄운 이유
+        var maintenanceReason: MaintenanceReason = .serverUnavailable
+
+        /// 점검 화면에서 서버 헬스 체크를 다시 확인하는 중인지 여부
+        var isCheckingServerHealth = false
+
         /// 기본 로그인 화면의 상태
         var auth = AuthFeature.State()
         
@@ -66,9 +74,15 @@ struct AppFeature {
         /// 앱 실행 시 저장된 세션과 초기 화면을 확인
         case launchTask
         
+        /// 점검 화면에서 다시 시도를 눌렀을 때 전달
+        case maintenanceRetryTapped
+
         /// 앱 실행 상태 확인이 완료됐을 때 전달
         case launchResolved(UserSession, AppRootDestination)
-        
+
+        /// 서버 헬스 체크에 실패했을 때 전달
+        case serverHealthCheckFailed(MaintenanceReason)
+
         /// Actions
         case auth(AuthFeature.Action)
         case registerFlow(RegisterFlowFeature.Action)
@@ -105,7 +119,10 @@ struct AppFeature {
 
     /// 사용자 세션을 불러오고 저장하거나 제거하는 TCA 의존성
     @Dependency(\.localSessionClient) private var localSessionClient: LocalSessionClient
-    
+
+    /// 앱 시작 시 서버 헬스 체크를 요청하는 TCA 의존성
+    @Dependency(\.serverHealthClient) private var serverHealthClient: ServerHealthClient
+
     /// 온보딩 완료 여부 등의 로컬 값을 동기적으로 관리
     private let sessionStorage: LocalSessionStorage
     
@@ -150,13 +167,31 @@ struct AppFeature {
                 guard state.destination == .launch else { return .none }
                 return resolveLaunch()
 
+            case .maintenanceRetryTapped:
+                // 다시 확인하는 중에 누른 버튼은 무시
+                guard state.destination == .maintenance,
+                      !state.isCheckingServerHealth
+                else {
+                    return .none
+                }
+                state.isCheckingServerHealth = true
+                return resolveLaunch()
+
             case .launchResolved(let session, let destination):
                 // 확인한 세션과 목적지를 앱 루트 상태에 반영
+                state.isCheckingServerHealth = false
                 applyLaunchState(
                     session: session,
                     destination: destination,
                     state: &state
                 )
+                return .none
+
+            case .serverHealthCheckFailed(let reason):
+                // 로그인 흐름으로 가지 않고 점검 화면을 표시
+                state.isCheckingServerHealth = false
+                state.maintenanceReason = reason
+                state.destination = .maintenance
                 return .none
 
             case .onboarding(.delegate(.authRequested)):
@@ -260,18 +295,36 @@ private extension AppFeature {
         state.isLoggingOut = false
     }
 
-    /// 저장된 세션을 불러오고 앱 시작 화면을 결정
+    /// 서버 헬스 체크와 저장된 세션 확인을 함께 시작하고 앱 시작 화면을 결정
     func resolveLaunch() -> Effect<Action> {
         let sessionStorage = sessionStorage
         let launchStateResolver = launchStateResolver
 
-        return .run { send in
+        return .run { [localSessionClient, serverHealthClient] send in
+            // 서버가 정상일 때 기다림이 늘지 않도록 헬스 체크와 자동 로그인을 동시에 시작
+            async let serverHealth = serverHealthClient.check()
+            async let loadedSession = localSessionClient.load()
+
             // 온보딩 완료 여부 등 동기 저장 정보 확인
             let latestSnapshot = sessionStorage.loadSnapshot()
-            
+
+            switch await serverHealth {
+            case .healthy:
+                break
+
+            case .unhealthy:
+                // 저장된 로그인 정보는 지우지 않고 점검 화면으로 이동
+                await send(.serverHealthCheckFailed(.serverUnavailable))
+                return
+
+            case .offline:
+                await send(.serverHealthCheckFailed(.offline))
+                return
+            }
+
             // 저장된 사용자 세션을 비동기로 불러옴
-            let session = await localSessionClient.load()
-            
+            let session = await loadedSession
+
             // 저장 정보와 세션을 조합해 앱 최초 화면을 결정
             let destination = launchStateResolver.resolve(
                 snapshot: latestSnapshot,

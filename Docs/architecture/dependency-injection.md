@@ -25,6 +25,8 @@ PopPangApp.init
    └─ AppNotificationManager.shared.configure(...)
 → AppBootstrap.makeAppStore()
    └─ Store(initialState:) { AppFeature(...) } withDependencies: { ... }
+      ├─ ServerHealthClient.live(...)    앱 시작 헬스 체크
+      └─ AuthFeatureClient.live(...)     로그인
 → 모든 하위 reducer가 @Dependency로 client를 읽음
 ```
 
@@ -48,6 +50,9 @@ Store(initialState: AppFeature.State()) {
     )
 } withDependencies: {
     $0.localSessionClient = localSessionClient
+    $0.serverHealthClient = .live(
+        serverHealthUsecase: dependencies.usecases.serverHealthUsecase
+    )
     mainTabFeatureDependencies.configure(&$0)
     $0.authFeatureClient = .live(
         kakaoAuthUsecase: dependencies.usecases.kakaoAuthUsecase,
@@ -186,7 +191,7 @@ Demo 앱은 `Store(initialState:) { Feature() } withDependencies: { ... }`로 cl
 | 방식 | 예 | 쓰는 때 |
 | --- | --- | --- |
 | inline stub | `CalendarFeatureDemoApp`의 `CalendarFeatureClient(getRegionList: { ... }, ...)` | 서버 없이 화면만 확인할 때 |
-| `previewValue` | `HomeFeatureDemoApp`의 `$0.homePopupClient = .previewValue` | 미리 만든 샘플 데이터가 있을 때. DEBUG 빌드에서만 쓸 수 있다. |
+| `previewValue` | HomeFeatureV2 데모(`HomeFeatureDemoApp`)에 주석으로 남겨 둔 `$0.homePopupClient = .previewValue` | 미리 만든 샘플 데이터가 있을 때. DEBUG 빌드에서만 쓸 수 있다. |
 | 실제 네트워크 | `HomeFeatureV2Demo`의 `HomePopupClient.live(popupUsecase: PopupUsecaseImpl(popupRepository: PopupRepositoryImpl()))` | 실제 API로 확인할 때. Demo 타깃이 `Data`에 의존한다. |
 
 - Demo에 필요한 사용자 UUID 같은 값은 Demo 전용 `.xcconfig`(예: `HOME_DEMO_USER_UUID`)에서 읽는다. xcconfig 파일 내용은 열람하거나 커밋하지 않는다.

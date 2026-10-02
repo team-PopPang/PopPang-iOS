@@ -4,6 +4,7 @@ import DSKit
 import SwiftUI
 
 public struct ReviewFeatureView: View {
+    @Environment(\.dismiss) private var dismiss
     let store: StoreOf<ReviewFeature>
 
     public init(store: StoreOf<ReviewFeature>) {
@@ -35,6 +36,9 @@ public struct ReviewFeatureView: View {
             }
         }
         .ignoresSafeArea(edges: .bottom)
+        .ppBackNavigationBar(title: "") {
+            dismiss()
+        }
         .sheet(isPresented: reviewSheetPresentedBinding) {
             ReviewWriteSheet(
                 rating: ratingBinding,

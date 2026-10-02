@@ -47,8 +47,6 @@ PopPangList (SwiftUI View)
 - 변경이 많거나(기본 100개 초과) 화면에 붙어 있지 않으면 전체 reload로 바꾼다.
 - 갱신 중에 새 snapshot이 오면 가장 최신 것 하나만 대기열에 남긴다.
 
-`HomeFeature`는 다른 라이브러리인 `ListKit`(`indextrown/Listkit`)을 쓰고, 앱에서는 쓰이지 않는다. 새 목록 화면은 PopPangListKit으로 만든다.
-
 ## 연결 방법
 
 - feature는 `ThirdParty`에 의존하고 view 파일에서만 `import PopPangListKit`한다. feature `Project.swift`에 `.external(name: "PopPangListKit")`을 직접 추가하지 않는다.
@@ -335,7 +333,6 @@ xcodebuild test -scheme PopPangListKit -destination 'platform=iOS Simulator,name
 | --- | --- |
 | `HomeFeatureView.swift` coming section | section id가 `"comming"`으로 적혀 있다. 이 id로 스크롤할 때 철자를 맞춘다. |
 | `HomeFeature` grid | 서버 응답의 `gridPopups`에서 중복 `popupUuid`를 제거하지 않는다. 중복이 오면 Debug assertion이 날 수 있다. |
-| `ThirdParty` | `HomeFeature`가 쓰는 `ListKit`도 함께 링크되어 있다. |
 | HomeFeatureV2 셀 파일 | 파일 헤더 주석의 파일 이름(`ListKit*Cell.swift`)이 실제 이름과 다르고, `GridPopupCell.swift`에 주석 처리된 코드가 있다. |
 
 ## 관련 문서
