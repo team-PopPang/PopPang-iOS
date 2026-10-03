@@ -32,12 +32,14 @@ App, Domain, DSKit, 다른 feature에는 테스트 타깃이 없다.
 
 | workflow | 실행 시점 | 하는 일 |
 | --- | --- | --- |
-| `3. poppang-build-and-test.yml` | `main` 대상 PR(opened, synchronize, reopened, ready_for_review), 매일 22:00 UTC, 수동 | `PopPangApp`·`Domain`·`DSKit` 빌드, `Core`·`Data` 테스트 |
+| `3. poppang-build-and-test.yml` | `main` 대상 PR(opened, synchronize, reopened, ready_for_review), 매일 22:00 UTC, 수동 | `PopPangApp`(`Domain` 포함)·`DSKit` 빌드, `Core`·`Data` 테스트 |
 | `2. poppang-test.yml` | 수동, PR 댓글 `/팝팡 테스트` | `Core`·`Data` 테스트 |
 | `1. poppang-build.yml` | 수동, PR 댓글 `/팝팡 빌드` | `PopPangApp` clean build |
 | `0. poppang-dependency-canary.yml` | 매주 월요일 03:00 UTC, PR 댓글 `/팝팡 버전점검` | `Package.resolved`를 지우고 최신 해석으로 `PopPangApp` 빌드 |
 
 PR 댓글 `/팝팡 빌드하고테스트`는 3번 workflow를 실행한다.
+
+3번 workflow는 시뮬레이터용 arm64만 빌드한다(`ARCHS=arm64`). CI 러너가 Apple Silicon이라 x86_64 시뮬레이터 빌드는 확인하지 않는다. `Domain`은 `PopPangApp`을 빌드할 때 함께 빌드되어 따로 job을 두지 않는다.
 
 **feature 테스트(`HomeFeatureV2Tests`, `MainTabFeatureTests` 등)는 CI에서 실행되지 않는다.** reducer나 navigation을 바꿨다면 로컬에서 해당 테스트를 실행하고 결과를 PR에 적는다.
 

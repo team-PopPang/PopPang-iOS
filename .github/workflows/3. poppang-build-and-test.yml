@@ -43,6 +43,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Domain 타깃은 app-build가 PopPangApp을 빌드할 때 함께 빌드되어 따로 job을 두지 않는다.
         include:
           - job_name: app-build
             scheme: PopPangApp
@@ -56,10 +57,6 @@ jobs:
             scheme: Data
             xcode_action: test
             destination: platform=iOS Simulator
-          - job_name: domain-build
-            scheme: Domain
-            xcode_action: build
-            destination: generic/platform=iOS Simulator
           - job_name: dskit-build
             scheme: DSKit
             xcode_action: build
@@ -76,29 +73,56 @@ jobs:
         if: github.event_name != 'workflow_dispatch' || github.event.inputs.pr_number == ''
         uses: actions/checkout@v4
 
-      # Tuist 버전마다 Tuist/.build와 생성 project 구조가 달라 아래 두 캐시 키에 .tuist-version을 넣는다.
+      # 새 러너에서는 Xcode와 시뮬레이터(CoreSimulator)를 처음 부를 때 시뮬레이터 디스크 이미지를 붙이느라 1~2분이 걸린다.
+      # 캐시를 받는 동안 백그라운드로 미리 깨워 두면 테스트 job의 시뮬레이터 준비(Resolve test simulator)가 짧아진다.
+      - name: Select Xcode and warm up simulators
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.2.app
+          nohup sh -c '
+            for sdk in iphoneos iphonesimulator macosx appletvos appletvsimulator watchos watchsimulator xros xrsimulator; do
+              xcrun --sdk "$sdk" --show-sdk-platform-version
+            done
+            xcrun simctl list runtimes
+            date "+warm-up done %H:%M:%S"
+          ' > "$RUNNER_TEMP/xcode-warmup.log" 2>&1 &
+
+      # Tuist 버전마다 Tuist/.build와 생성 project 구조가 달라 아래 캐시 키에는 모두 .tuist-version을 넣는다.
       # 4.210.0부터 Tuist/.build/checkouts가 ~/.cache/swifterpm을 가리키는 링크라 함께 캐시한다.
+      # 이 키가 맞으면 tuist install을 건너뛰므로 Package.swift와 Package.resolved를 모두 본다.
       - name: Cache Tuist and SwiftPM
+        id: spm_cache
         uses: actions/cache@v4
         with:
           path: |
             Tuist/.build
             ~/.cache/swifterpm
             ~/Library/Caches/org.swift.swiftpm
-          key: tuist-spm-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist/Package.resolved') }}
+          key: tuist-spm-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist/Package.swift', 'Tuist/Package.resolved') }}
           restore-keys: |
             tuist-spm-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-
 
-      - name: Cache DerivedData
-        uses: actions/cache@v4
+      # DerivedData의 외부 라이브러리 빌드 결과는 패키지 파일의 수정 시각이 기록과 같아야 다시 쓰인다.
+      # 그래서 위 패키지 캐시를 그대로 받은 실행에서 만든 DerivedData만 저장한다(Save DerivedData 단계).
+      # 우리 모듈은 체크아웃할 때마다 수정 시각이 새로 찍혀 어차피 다시 컴파일되므로, 키는 패키지 캐시와 같은 입력만 본다.
+      # 패키지 캐시 키가 바뀌면 DerivedData 키도 함께 바뀌어야 새 패키지 캐시에 맞는 DerivedData를 다시 저장한다.
+      - name: Restore DerivedData
+        id: deriveddata_cache
+        uses: actions/cache/restore@v4
         with:
           path: DerivedData/${{ matrix.scheme }}
-          key: deriveddata-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist/Package.resolved', 'Projects/**/*.swift') }}
+          key: deriveddata-v2-arm64-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist/Package.swift', 'Tuist/Package.resolved') }}
           restore-keys: |
-            deriveddata-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-
+            deriveddata-v2-arm64-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_26.2.app
+      # tuist generate가 Project.swift 같은 설정 파일을 다시 실행하지 않도록 Tuist 캐시를 보관한다.
+      # 내용 기준 캐시라 다른 머신에서 만든 캐시도 쓰인다.
+      - name: Cache Tuist
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/tuist
+          key: tuist-cache-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist.swift', 'Workspace.swift', 'Tuist/Package.swift', 'Projects/**/Project.swift') }}
+          restore-keys: |
+            tuist-cache-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-
 
       - name: Install CI tools
         run: |
@@ -129,10 +153,25 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: ./scripts/download-rn-release.sh v1.0.0
 
+      # 패키지 캐시가 키와 정확히 맞으면 tuist install 결과가 캐시와 같으므로 건너뛴다.
+      # install을 건너뛴 경우에만, 생성에 실패하면 install 후 한 번 더 생성한다.
+      # 바이너리 캐시를 쓰지 않아(Tuist 서버 미연결) 타깃마다 내용 해시를 계산해 캐시를 찾는 단계를 건너뛴다.
       - name: Generate Tuist workspace
+        id: generate
+        env:
+          SPM_CACHE_HIT: ${{ steps.spm_cache.outputs.cache-hit }}
         run: |
-          "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist install
-          "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist generate
+          cat "$RUNNER_TEMP/xcode-warmup.log" || true
+          run_tuist() { "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist "$@"; }
+          if [ "$SPM_CACHE_HIT" != "true" ]; then
+            run_tuist install
+            run_tuist generate --no-binary-cache
+          elif ! run_tuist generate --no-binary-cache; then
+            echo "패키지 캐시만으로 생성하지 못해 tuist install 후 다시 생성한다."
+            echo "reinstalled=true" >> "$GITHUB_OUTPUT"
+            run_tuist install
+            run_tuist generate --no-binary-cache
+          fi
 
       - name: Resolve test simulator
         if: matrix.xcode_action == 'test'
@@ -161,21 +200,59 @@ jobs:
           fi
 
           echo "Using destination: $XCODE_DESTINATION"
+          # generic 시뮬레이터 대상은 ONLY_ACTIVE_ARCH를 무시하고 arm64와 x86_64를 모두 빌드한다.
+          # CI 러너는 Apple Silicon이라 ARCHS=arm64로 시뮬레이터용 arm64만 빌드한다.
           xcodebuild "$XCODE_ACTION" \
             -workspace PopPang.xcworkspace \
             -scheme "$XCODE_SCHEME" \
             -destination "$XCODE_DESTINATION" \
             -derivedDataPath "DerivedData/$XCODE_SCHEME" \
             CODE_SIGNING_ALLOWED=NO \
+            ARCHS=arm64 \
             | xcpretty
+
+      # 재시도로 tuist install을 다시 했다면 패키지 파일이 캐시와 달라졌으므로 저장하지 않는다.
+      - name: Save DerivedData
+        if: steps.spm_cache.outputs.cache-hit == 'true' && steps.deriveddata_cache.outputs.cache-hit != 'true' && steps.generate.outputs.reinstalled != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: DerivedData/${{ matrix.scheme }}
+          key: ${{ steps.deriveddata_cache.outputs.cache-primary-key }}
 
   notify:
     name: Notify CI result
     runs-on: ubuntu-latest
     needs: module_ci
     if: always()
+    # 아래 Check replaced 단계가 같은 workflow의 다른 실행을 조회하려고 actions: read가 필요하다.
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+      pull-requests: write
 
     steps:
+      # 같은 PR에 새 커밋이 올라오면 진행 중이던 실행은 cancelled로 끝난다. 이 경우만 실패 메일을 보내지 않는다.
+      # 60분 제한을 넘긴 job이나 손으로 취소한 실행도 cancelled로 끝나므로, 더 새로운 실행이 있는지로 구분한다.
+      # 조회가 실패해도 다음 단계가 건너뛰어지지 않게 해서, 확인하지 못하면 실패 메일을 보낸다.
+      - name: Check replaced by a newer run
+        id: replaced
+        if: needs.module_ci.result == 'cancelled' && github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          run=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID")
+          created=$(jq -r .created_at <<< "$run")
+          workflow_id=$(jq -r .workflow_id <<< "$run")
+          newer=$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/workflows/$workflow_id/runs" \
+            -f event=pull_request -f branch="$HEAD_REF" -f per_page=20 \
+            --jq "[.workflow_runs[] | select(.id != $GITHUB_RUN_ID and .created_at > \"$created\")] | length")
+          if [ "$newer" -gt 0 ]; then
+            echo "value=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Comment success
         if: needs.module_ci.result == 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
         uses: peter-evans/create-or-update-comment@v4
@@ -187,7 +264,6 @@ jobs:
             - app-build: PopPangApp
             - core-test: Core
             - data-test: Data
-            - domain-build: Domain
             - dskit-build: DSKit
 
       - name: Comment failure
@@ -213,7 +289,6 @@ jobs:
             - app-build: PopPangApp
             - core-test: Core
             - data-test: Data
-            - domain-build: Domain
             - dskit-build: DSKit
 
             Repository: ${{ github.repository }}
@@ -224,7 +299,7 @@ jobs:
           from: GitHub CI <${{ secrets.MAIL_USERNAME }}>
 
       - name: Send email on failure
-        if: needs.module_ci.result != 'success'
+        if: needs.module_ci.result != 'success' && steps.replaced.outputs.value != 'true'
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
