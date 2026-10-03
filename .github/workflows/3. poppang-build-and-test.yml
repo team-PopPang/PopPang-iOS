@@ -88,6 +88,7 @@ jobs:
 
       # Tuist 버전마다 Tuist/.build와 생성 project 구조가 달라 아래 캐시 키에는 모두 .tuist-version을 넣는다.
       # 4.210.0부터 Tuist/.build/checkouts가 ~/.cache/swifterpm을 가리키는 링크라 함께 캐시한다.
+      # 이 키가 맞으면 tuist install을 건너뛰므로 Package.swift와 Package.resolved를 모두 본다.
       - name: Cache Tuist and SwiftPM
         id: spm_cache
         uses: actions/cache@v4
@@ -96,19 +97,20 @@ jobs:
             Tuist/.build
             ~/.cache/swifterpm
             ~/Library/Caches/org.swift.swiftpm
-          key: tuist-spm-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist/Package.resolved') }}
+          key: tuist-spm-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist/Package.swift', 'Tuist/Package.resolved') }}
           restore-keys: |
             tuist-spm-${{ runner.os }}-${{ hashFiles('.tuist-version') }}-
 
       # DerivedData의 외부 라이브러리 빌드 결과는 패키지 파일의 수정 시각이 기록과 같아야 다시 쓰인다.
       # 그래서 위 패키지 캐시를 그대로 받은 실행에서 만든 DerivedData만 저장한다(Save DerivedData 단계).
-      # 우리 모듈은 체크아웃할 때마다 수정 시각이 새로 찍혀 어차피 다시 컴파일되므로, 키는 Package.resolved와 Tuist 버전만 본다.
+      # 우리 모듈은 체크아웃할 때마다 수정 시각이 새로 찍혀 어차피 다시 컴파일되므로, 키는 패키지 캐시와 같은 입력만 본다.
+      # 패키지 캐시 키가 바뀌면 DerivedData 키도 함께 바뀌어야 새 패키지 캐시에 맞는 DerivedData를 다시 저장한다.
       - name: Restore DerivedData
         id: deriveddata_cache
         uses: actions/cache/restore@v4
         with:
           path: DerivedData/${{ matrix.scheme }}
-          key: deriveddata-v2-arm64-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist/Package.resolved') }}
+          key: deriveddata-v2-arm64-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-${{ hashFiles('Tuist/Package.swift', 'Tuist/Package.resolved') }}
           restore-keys: |
             deriveddata-v2-arm64-${{ runner.os }}-${{ matrix.scheme }}-${{ hashFiles('.tuist-version') }}-
 
@@ -151,7 +153,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: ./scripts/download-rn-release.sh v1.0.0
 
-      # 패키지 캐시가 키와 정확히 맞으면 tuist install 결과가 캐시와 같으므로 건너뛴다. 생성에 실패하면 install 후 다시 생성한다.
+      # 패키지 캐시가 키와 정확히 맞으면 tuist install 결과가 캐시와 같으므로 건너뛴다.
+      # install을 건너뛴 경우에만, 생성에 실패하면 install 후 한 번 더 생성한다.
       # 바이너리 캐시를 쓰지 않아(Tuist 서버 미연결) 타깃마다 내용 해시를 계산해 캐시를 찾는 단계를 건너뛴다.
       - name: Generate Tuist workspace
         env:
@@ -161,8 +164,8 @@ jobs:
           run_tuist() { "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist "$@"; }
           if [ "$SPM_CACHE_HIT" != "true" ]; then
             run_tuist install
-          fi
-          if ! run_tuist generate --no-binary-cache; then
+            run_tuist generate --no-binary-cache
+          elif ! run_tuist generate --no-binary-cache; then
             echo "패키지 캐시만으로 생성하지 못해 tuist install 후 다시 생성한다."
             run_tuist install
             run_tuist generate --no-binary-cache
