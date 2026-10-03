@@ -157,6 +157,7 @@ jobs:
       # install을 건너뛴 경우에만, 생성에 실패하면 install 후 한 번 더 생성한다.
       # 바이너리 캐시를 쓰지 않아(Tuist 서버 미연결) 타깃마다 내용 해시를 계산해 캐시를 찾는 단계를 건너뛴다.
       - name: Generate Tuist workspace
+        id: generate
         env:
           SPM_CACHE_HIT: ${{ steps.spm_cache.outputs.cache-hit }}
         run: |
@@ -167,6 +168,7 @@ jobs:
             run_tuist generate --no-binary-cache
           elif ! run_tuist generate --no-binary-cache; then
             echo "패키지 캐시만으로 생성하지 못해 tuist install 후 다시 생성한다."
+            echo "reinstalled=true" >> "$GITHUB_OUTPUT"
             run_tuist install
             run_tuist generate --no-binary-cache
           fi
@@ -209,8 +211,9 @@ jobs:
             ARCHS=arm64 \
             | xcpretty
 
+      # 재시도로 tuist install을 다시 했다면 패키지 파일이 캐시와 달라졌으므로 저장하지 않는다.
       - name: Save DerivedData
-        if: steps.spm_cache.outputs.cache-hit == 'true' && steps.deriveddata_cache.outputs.cache-hit != 'true'
+        if: steps.spm_cache.outputs.cache-hit == 'true' && steps.deriveddata_cache.outputs.cache-hit != 'true' && steps.generate.outputs.reinstalled != 'true'
         uses: actions/cache/save@v4
         with:
           path: DerivedData/${{ matrix.scheme }}
