@@ -50,6 +50,9 @@ public struct PopPangTabView<Tab: Hashable, Content: View>: View {
         TabView(selection: $selection) {
             ForEach(tabs, id: \.self) { tab in
                 content(tab)
+                    // TabView는 바깥에서 더한 safe area를 탭 화면에 전달하지 않는다.
+                    // 시스템 탭바처럼 탭 화면의 하단 safe area에 커스텀 탭바 높이를 직접 더한다.
+                    .safeAreaPadding(.bottom, style == .classic ? PopPangTabBarMetrics.height : 0)
                     .tabItem {
                         image(tab, selection == tab)
                             .resizable()
@@ -61,7 +64,8 @@ public struct PopPangTabView<Tab: Hashable, Content: View>: View {
                     .toolbar(style == .classic ? .hidden : .automatic, for: .tabBar)
             }
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
+        // 탭 화면의 여백은 위에서 더했으므로, 탭바는 레이아웃에 영향을 주지 않도록 overlay로 그린다.
+        .overlay(alignment: .bottom) {
             if style == .classic {
                 PopPangTabBar(tabs: tabs, selection: $selection, title: title, image: image)
             }
