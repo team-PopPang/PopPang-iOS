@@ -48,28 +48,76 @@ struct DSKitCatalogView: View {
         catalogSection(
             title: "Design Tokens",
             items: [
-                "Color.hex / uiColor",
-                "UIFont.scdream / Font.scdream",
-                "ppStyleFont / ppStyle / ppStyleFontFixedSpacing",
-                "CGFloat.contentPadding / cornerRadius",
-                "Font.title1 / caption1 / largeTitle"
+                "PPColor: 역할별 색 (UIKit은 .uiColor)",
+                "PPTextStyle / ppTextStyle: 글자 크기·행간·자간",
+                "PPSpacing: 여백·간격",
+                "PPRadius: 모서리"
             ]
         ) {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(spacing: 12) {
-                    colorSwatch("mainOrange", color: .mainOrange)
-                    colorSwatch("mainGreen", color: .mainGreen)
-                    colorSwatch("mainGray5", color: .mainGray5)
-                    colorSwatch("categoryOrange", color: .categoryOrange)
+            VStack(alignment: .leading, spacing: 24) {
+                colorTokens
+                textStyleTokens
+                spacingTokens
+                radiusTokens
+            }
+        }
+    }
+
+    private var colorTokens: some View {
+        LazyVGrid(
+            columns: [GridItem(.adaptive(minimum: 88), alignment: .top)],
+            alignment: .leading,
+            spacing: 12
+        ) {
+            ForEach(Self.colorTokenItems) { token in
+                colorSwatch(token.name, color: token.color)
+            }
+        }
+    }
+
+    private var textStyleTokens: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(PPTextStyle.allCases, id: \.self) { style in
+                Text("\(String(describing: style)) · \(Int(style.size))pt 팝업스토어")
+                    .ppTextStyle(style)
+                    .foregroundStyle(PPColor.textPrimary)
+            }
+        }
+    }
+
+    private var spacingTokens: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            ForEach(Self.spacingTokenItems) { token in
+                HStack(spacing: PPSpacing.s8) {
+                    Text(token.name)
+                        .ppTextStyle(.caption1)
+                        .foregroundStyle(PPColor.textSecondary)
+                        .frame(width: 120, alignment: .leading)
+
+                    Rectangle()
+                        .fill(PPColor.brand)
+                        .frame(width: token.value, height: 12)
                 }
+            }
+        }
+    }
 
-                Text("S-CoreDream Bold 17")
-                    .ppStyleFont(.scdream(.bold, size: 17))
-                    .foregroundStyle(Color.mainBlack)
+    private var radiusTokens: some View {
+        HStack(spacing: PPSpacing.s12) {
+            ForEach(Self.radiusTokenItems) { token in
+                VStack(spacing: PPSpacing.s5) {
+                    RoundedRectangle(cornerRadius: token.value)
+                        .fill(PPColor.backgroundSecondary)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: token.value)
+                                .stroke(PPColor.border, lineWidth: 1)
+                        }
+                        .frame(width: 64, height: 64)
 
-                Text("팝팡 스타일 본문 샘플")
-                    .ppStyleFont(.scdream(.regular, size: 15))
-                    .foregroundStyle(Color.mainGray)
+                    Text(token.name)
+                        .ppTextStyle(.caption1)
+                        .foregroundStyle(PPColor.textSecondary)
+                }
             }
         }
     }
@@ -78,6 +126,7 @@ struct DSKitCatalogView: View {
         catalogSection(
             title: "Buttons",
             items: [
+                "PPButtonStyle (.ppPrimary / .ppOutline / .ppText / .pp)",
                 "MainOrangeButton",
                 "IconButton",
                 "DropDownView",
@@ -86,6 +135,31 @@ struct DSKitCatalogView: View {
             ]
         ) {
             VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 12) {
+                    Button("ppPrimary") {}
+                        .buttonStyle(.ppPrimary)
+
+                    Button("ppOutline") {}
+                        .buttonStyle(.ppOutline)
+
+                    HStack(spacing: PPSpacing.s8) {
+                        Button("medium") {}
+                            .buttonStyle(.pp(.primary, size: .medium, fillsWidth: false))
+
+                        Button("small") {}
+                            .buttonStyle(.pp(.outline, size: .small, fillsWidth: false))
+
+                        Button("ppText") {}
+                            .buttonStyle(.ppText)
+                    }
+
+                    Button("비활성") {}
+                        .buttonStyle(.ppPrimary)
+                        .disabled(true)
+                }
+
+                Divider()
+
                 MainOrangeButton(buttonTitle: "다음") {}
 
                 MainOrangeButton(
@@ -348,6 +422,11 @@ struct DSKitCatalogView: View {
         VStack(alignment: .leading, spacing: 6) {
             RoundedRectangle(cornerRadius: 10)
                 .fill(color)
+                .overlay {
+                    // 흰색 계열 색도 카드 배경과 구분되게 테두리를 그린다.
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.mainGray5, lineWidth: 1)
+                }
                 .frame(width: 64, height: 64)
 
             Text(name)
@@ -366,4 +445,54 @@ struct DSKitCatalogView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
+}
+
+private struct ColorToken: Identifiable {
+    let name: String
+    let color: Color
+
+    var id: String { name }
+}
+
+private struct ValueToken: Identifiable {
+    let name: String
+    let value: CGFloat
+
+    var id: String { name }
+}
+
+private extension DSKitCatalogView {
+    static let colorTokenItems: [ColorToken] = [
+        ColorToken(name: "brand", color: PPColor.brand),
+        ColorToken(name: "brandSubtle", color: PPColor.brandSubtle),
+        ColorToken(name: "textPrimary", color: PPColor.textPrimary),
+        ColorToken(name: "textStrong", color: PPColor.textStrong),
+        ColorToken(name: "textSecondary", color: PPColor.textSecondary),
+        ColorToken(name: "textTertiary", color: PPColor.textTertiary),
+        ColorToken(name: "textOnBrand", color: PPColor.textOnBrand),
+        ColorToken(name: "background", color: PPColor.background),
+        ColorToken(name: "backgroundSecondary", color: PPColor.backgroundSecondary),
+        ColorToken(name: "border", color: PPColor.border),
+        ColorToken(name: "divider", color: PPColor.divider),
+        ColorToken(name: "error", color: PPColor.error),
+        ColorToken(name: "success", color: PPColor.success),
+    ]
+
+    static let spacingTokenItems: [ValueToken] = [
+        ValueToken(name: "s4", value: PPSpacing.s4),
+        ValueToken(name: "s5", value: PPSpacing.s5),
+        ValueToken(name: "s8", value: PPSpacing.s8),
+        ValueToken(name: "s10", value: PPSpacing.s10),
+        ValueToken(name: "s12", value: PPSpacing.s12),
+        ValueToken(name: "s15", value: PPSpacing.s15),
+        ValueToken(name: "s20", value: PPSpacing.s20),
+        ValueToken(name: "s24", value: PPSpacing.s24),
+        ValueToken(name: "screenHorizontal", value: PPSpacing.screenHorizontal),
+    ]
+
+    static let radiusTokenItems: [ValueToken] = [
+        ValueToken(name: "small", value: PPRadius.small),
+        ValueToken(name: "medium", value: PPRadius.medium),
+        ValueToken(name: "large", value: PPRadius.large),
+    ]
 }
