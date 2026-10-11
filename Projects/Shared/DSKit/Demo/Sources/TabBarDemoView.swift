@@ -77,7 +77,8 @@ private enum DemoTab: Hashable, CaseIterable {
     }
 }
 
-/// 탭바 아래로 콘텐츠가 가려지지 않는지, 키보드가 올라올 때 탭바가 어떻게 되는지 확인하는 화면.
+/// 목록 끝과 화면 아래에 떠 있는 버튼이 탭바에 가려지지 않는지,
+/// 키보드가 올라올 때 탭바가 어떻게 되는지 확인하는 화면.
 private struct DemoTabContent: View {
     let tab: DemoTab
     @State private var text = ""
@@ -92,6 +93,21 @@ private struct DemoTabContent: View {
                     Text("행 \(index)")
                 }
             }
+        }
+        .overlay(alignment: .bottomTrailing) {
+            // 홈의 위로 가기 버튼과 같은 위치에 둔다.
+            DSKitResource.image("TopAnchor")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 20, height: 20)
+                .frame(width: 52, height: 52)
+                .background {
+                    Circle()
+                        .fill(Color.subWhite)
+                        .applyShadow(color: Color.subBlack, alpha: 0.05, x: 0, y: 4, blur: 4)
+                }
+                .padding(.trailing, 20)
+                .padding(.bottom, 20)
         }
     }
 }
