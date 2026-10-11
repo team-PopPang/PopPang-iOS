@@ -118,11 +118,10 @@ private struct BackNavigationBarModifier: ViewModifier {
             .navigationBarBackButtonHidden(true)
             .toolbarRole(.editor)
             .tint(Color.subBlack)
-            .toolbar {
+            .ppToolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     BackNavigationButton(action: onBack)
                 }
-                .ppHidesGlassBackground()
             }
             .navigationBarBackground(isVisible: showsSeparator)
             .navigationBarSeparator(isVisible: showsSeparator)
@@ -145,16 +144,14 @@ private struct BackNavigationBarWithTrailingModifier<Trailing: View>: ViewModifi
             .navigationBarBackButtonHidden(true)
             .toolbarRole(.editor)
             .tint(Color.subBlack)
-            .toolbar {
+            .ppToolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     BackNavigationButton(action: onBack)
                 }
-                .ppHidesGlassBackground()
 
                 ToolbarItem(placement: .topBarTrailing) {
                     trailing()
                 }
-                .ppHidesGlassBackground()
             }
             .navigationBarBackground(isVisible: showsSeparator)
             .navigationBarSeparator(isVisible: showsSeparator)
@@ -245,15 +242,24 @@ public extension View {
     }
 }
 
-public extension ToolbarContent {
-    /// iOS 26부터 툴바 항목 뒤에 붙는 유리(Liquid Glass) 배경을 끈다.
-    /// iOS 26 미만에는 유리 배경이 없어서 아무것도 바꾸지 않는다.
-    @ToolbarContentBuilder
-    func ppHidesGlassBackground() -> some ToolbarContent {
+public extension View {
+    /// `toolbar(content:)`처럼 툴바를 붙이고, iOS 26부터 툴바 항목 뒤에 붙는 유리(Liquid Glass) 배경을 끈다.
+    /// iOS 26 미만에는 유리 배경이 없어서 툴바만 붙인다.
+    ///
+    /// iOS 26 분기는 툴바 내용 안이 아니라 화면 단계에서 한다. 툴바 내용 안에서 `if #available`을 쓰면
+    /// SDK에 심볼이 없는 `ToolbarContentBuilder.buildLimitedAvailability`를 거쳐서,
+    /// 다른 모듈에서 쓸 때 Release 빌드의 링크가 실패한다.
+    @ViewBuilder
+    func ppToolbar<Content: ToolbarContent>(
+        @ToolbarContentBuilder content: () -> Content
+    ) -> some View {
         if #available(iOS 26.0, *) {
-            sharedBackgroundVisibility(.hidden)
+            toolbar {
+                content()
+                    .sharedBackgroundVisibility(.hidden)
+            }
         } else {
-            self
+            toolbar(content: content)
         }
     }
 }

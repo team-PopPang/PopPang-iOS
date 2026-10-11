@@ -657,7 +657,7 @@ private struct PopupDetailNavigationBackModifier: ViewModifier {
         content
             .navigationBarBackButtonHidden(true)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .ppToolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
                         onBack()
@@ -672,7 +672,6 @@ private struct PopupDetailNavigationBackModifier: ViewModifier {
                     }
                     .applyShadow(color: .mainBlack, alpha: 0.25, x: 0, y: 1, blur: 3)
                 }
-                .ppHidesGlassBackground()
             }
     }
 }
