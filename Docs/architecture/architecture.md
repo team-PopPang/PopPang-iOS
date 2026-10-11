@@ -137,7 +137,7 @@ Projects
 | 모듈 | 맡는 일 | 주의 |
 | --- | --- | --- |
 | `Core` | `Network`(BaseAPI, NetworkProvider, MoyaProvider+Async, NetworkError), `LocalStorage`(Session, PushToken, RecentSearch, DeepLink), `Logging`, `Support`(AppConfig, `UserSession` 등), Foundation 확장 | `BaseAPI`, `NetworkProvider`, `MoyaProvider+Async`를 바꾸면 모든 네트워크 호출에 영향이 있다. |
-| `DSKit` | 디자인 시스템, 공통 컴포넌트, 폰트·색상·이미지(`DSKitResource`) | 두 개 이상의 feature에서 쓰거나 디자인 시스템 성격이 분명할 때만 올린다. |
+| `DSKit` | 디자인 시스템(색·글자·여백·모서리 토큰, 버튼 스타일), 공통 컴포넌트, 폰트·색상·이미지(`DSKitResource`) | 두 개 이상의 feature에서 쓰거나 디자인 시스템 성격이 분명할 때만 올린다. 토큰과 화면 코드 규칙은 [디자인 시스템](design-system.md)을 본다. |
 | `ADKit` | Google Mobile Ads 초기화와 네이티브 광고, 목록에 광고를 끼워 넣는 `AdInjectedListItem` | `GoogleMobileAds`를 직접 링크한다. 광고 ID는 `Secrets.xcconfig`의 `ADMOB_APP_ID`, `ADMOB_NATIVE_AD_UNIT_ID`에서 읽는다. |
 | `ThirdParty` | 외부 SDK product 선언을 모으는 허브 | `@_exported import`로 재노출하지 않는다. 사용하는 파일에서 실제 SDK 모듈을 import한다. 자세한 기준은 [모듈 구조](modules.md)를 본다. |
 
