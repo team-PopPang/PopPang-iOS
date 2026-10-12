@@ -104,7 +104,9 @@ Projects
 
 두 모양 모두 safe area를 따르는 탭 화면은 탭바 위까지만 그려진다. 두 모양은 DSKit 데모의 탭바 비교 화면에서 비교한다. 실행 인자 `-tabBarStyle system` 또는 `-tabBarStyle classic`으로 고른다. safe area를 무시하고 그리는 화면만 탭바 높이를 직접 더하고, 이때 `@Environment(\.popPangTabBarStyle)`로 스타일을 확인한다(예: `MapFeatureView`의 목록 보기 버튼).
 
-내비게이션 바는 시스템 바를 그대로 쓴다. Xcode 27로 빌드하면 툴바 항목 뒤에 유리 배경이 붙으므로 DSKit `ppHidesGlassBackground()`로 끈다. 공통 뒤로가기 바 `ppBackNavigationBar`에는 이미 적용되어 있고, 툴바 항목을 직접 넣는 화면에만 따로 붙인다(예: `PopupDetailFeatureView`의 뒤로가기 버튼).
+내비게이션 바는 시스템 바를 그대로 쓴다. Xcode 27로 빌드하면 툴바 항목 뒤에 유리 배경이 붙으므로, 툴바는 `toolbar` 대신 DSKit `ppToolbar`로 붙여 유리 배경을 끈다. 공통 뒤로가기 바 `ppBackNavigationBar`는 이미 `ppToolbar`를 쓰고, 툴바 항목을 직접 넣는 화면만 따로 쓴다(예: `PopupDetailFeatureView`의 뒤로가기 버튼).
+
+툴바 내용 안에서 `if #available`로 분기하지 않는다. 이렇게 하면 SDK에 심볼이 없는 `ToolbarContentBuilder.buildLimitedAvailability`를 거쳐서, 다른 모듈에서 쓸 때 Release 빌드의 링크가 실패한다. Debug 빌드와 CI는 통과하므로, 툴바를 바꾸면 Release·기기용 빌드로 확인한다.
 
 ### Domain
 
