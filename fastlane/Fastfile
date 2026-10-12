@@ -174,10 +174,14 @@ platform :ios do
 
     # 승인된 버전(출시됨 또는 출시 대기)과 같거나 낮은 버전으로는 새 빌드를 올릴 수 없다.
     approved = [live, pending].compact.map(&:version_string).max_by { |version| Gem::Version.new(version) }
+    # 심사를 기다리는 버전은 get_in_review_app_store_version이 아니라 get_edit_app_store_version으로 온다.
+    waiting_for_review = Spaceship::ConnectAPI::AppStoreVersion::AppVersionState::WAITING_FOR_REVIEW
+    waiting = editing if editing && (editing.app_version_state || editing.app_store_state) == waiting_for_review
+    submitted = [in_review, waiting].compact.find { |version| version.version_string == project_version }
     status =
       if approved && Gem::Version.new(project_version) <= Gem::Version.new(approved)
         "BUMP_REQUIRED"
-      elsif in_review&.version_string == project_version
+      elsif submitted
         "IN_REVIEW"
       else
         "READY"

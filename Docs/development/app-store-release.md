@@ -46,7 +46,7 @@ APP_STORE_CONNECT_API_KEY_CONTENT="-----BEGIN PRIVATE KEY-----
 | `release version:x.y.z` | 버전을 바꿔 `beta`를 실행하고 심사 제출까지 한다. | 심사 제출 |
 
 - `RELEASE_STATUS=BUMP_REQUIRED`는 프로젝트 버전과 같거나 높은 버전이 이미 승인됐다는 뜻이다. 이 버전으로는 TestFlight에 올릴 수 없으므로 `MARKETING_VERSION`을 올린다.
-- `IN_REVIEW`는 같은 버전이 심사 중이라는 뜻이다. 새 빌드를 쓰려면 App Store Connect에서 심사를 취소하거나 버전을 올린다.
+- `IN_REVIEW`는 같은 버전이 심사 중이거나 심사를 기다리고 있다는 뜻이다. 이 상태에서는 스토어 문구를 고칠 수 없다. 새 빌드를 쓰려면 App Store Connect에서 심사를 취소하거나 버전을 올린다.
 
 ## 스토어 문구와 스크린샷
 
