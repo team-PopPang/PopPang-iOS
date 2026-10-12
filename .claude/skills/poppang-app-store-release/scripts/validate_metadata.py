@@ -8,6 +8,8 @@ import sys
 from pathlib import Path
 
 
+# 팝팡 스토어가 쓰는 언어다. 스킬은 두 언어의 출시 문구를 모두 쓴다.
+REQUIRED_RELEASE_NOTE_LOCALES = ("ko", "en-US")
 REVIEW_NOTES_PATH = Path("review_information/notes.txt")
 KOREAN_LOGIN_HEADING = "[로그인 안내]"
 KOREAN_UPDATE_HEADING = "[업데이트 내용 안내]"
@@ -94,8 +96,9 @@ def main() -> int:
     warnings: list[str] = []
 
     locales = sorted(path.parent.name for path in root.glob("*/release_notes.txt"))
-    if "ko" not in locales:
-        errors.append(f"한국어 출시 문구가 없습니다: {root / 'ko/release_notes.txt'}")
+    for locale in REQUIRED_RELEASE_NOTE_LOCALES:
+        if locale not in locales:
+            errors.append(f"{locale} 출시 문구가 없습니다: {root / locale / 'release_notes.txt'}")
 
     bullets_by_locale: dict[str, list[str]] = {}
     for locale in locales:
