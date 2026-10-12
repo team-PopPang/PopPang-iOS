@@ -84,6 +84,7 @@
 | Swift 코드 작성 규칙 | [Swift 스타일](Docs/development/swiftstyle.md) |
 | 테스트 타깃과 실행 명령 | [테스트](Docs/development/testing.md) |
 | 이슈·브랜치·커밋·PR 규칙, push 전 리뷰 hook | [Git 작업 흐름](Docs/development/gitflow.md) |
+| TestFlight 업로드, 스토어 문구·스크린샷, 출시 준비 스킬 | [앱스토어 출시](Docs/development/app-store-release.md) |
 | 커밋·PR의 AI 작성 표기 | [AI 작성 표기 규칙](Docs/development/ai-attribution.md) |
 | 한국어 문서 윤문 | [한국어 윤문 원칙](Docs/development/korean-editing.md) · [문서 윤문 예시](Docs/development/examples/korean-editing-examples.md) |
 | PR 제목·본문 작성 | [한국어 윤문 원칙](Docs/development/korean-editing.md) · [PR 작성 예시](Docs/development/examples/pr-writing-examples.md) |

@@ -45,5 +45,6 @@ graph.png
 
 # fastlane
 fastlane/metadata/
+fastlane/screenshots/
 fastlane/Preview.html
 fastlane/report.xml

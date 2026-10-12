@@ -55,6 +55,30 @@ Archive and upload the modular app to TestFlight
 
 Release a new modular app version to the App Store
 
+### ios release_status
+
+```sh
+[bundle exec] fastlane ios release_status
+```
+
+Compare the App Store versions with the project version without changing anything
+
+### ios download_store_metadata
+
+```sh
+[bundle exec] fastlane ios download_store_metadata
+```
+
+Download App Store metadata, and screenshots with screenshots:true, without changing App Store Connect
+
+### ios upload_store_metadata
+
+```sh
+[bundle exec] fastlane ios upload_store_metadata
+```
+
+Upload the edited App Store metadata without uploading a build or submitting for review
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
