@@ -100,6 +100,12 @@
 | `auto-pr` | "PR 올려줘", "pr 생성해", "풀리퀘 만들어줘" | `.github/PULL_REQUEST_TEMPLATE.md`와 git log·diff로 본문을 쓰고 `gh pr create`로 게시한다. PR 생성 요청에는 현재 브랜치 push가 포함된다. |
 | `tca-refactor` | 기존 feature를 TCA로 옮기는 작업 | [TCA Navigation](../architecture/tca-navigation.md) 기준을 따른다. |
 
+Claude Code 전용 스킬은 `.claude/skills/<name>/SKILL.md`에 있다. Claude Code가 자동으로 불러오고 `/<name>`으로 실행할 수 있다.
+
+| 스킬 | 사용하는 요청 | 핵심 규칙 |
+| --- | --- | --- |
+| `poppang-app-store-release` | "출시 준비해줘", "TestFlight 올려줘", "릴리즈 노트 써줘" | 버전 확인부터 출시 문구·심사 노트 작성, 스토어 문구 반영, `fastlane beta` 업로드까지 한다. 버전 번호, 출시 범위, 최종 문구는 사용자 확인을 받는다. 심사 제출은 하지 않는다. [앱스토어 출시](app-store-release.md)를 따른다. |
+
 커밋·PR 세부 규칙은 [Git 작업 흐름](gitflow.md)을 따른다.
 
 ## 에이전트별 차이
@@ -107,7 +113,7 @@
 | 항목 | Codex | Claude Code |
 | --- | --- | --- |
 | 작업 지침 | 루트 `AGENTS.md`를 자동으로 읽는다. | 루트 `CLAUDE.md`가 `@AGENTS.md`로 같은 지침을 불러온다. |
-| 프로젝트 스킬 | `.agents/skills/`를 repo-scoped skill로 자동 감지한다. | `.agents/skills/`를 자동으로 불러오지 않는다. 요청이 스킬에 해당하면 `SKILL.md`를 직접 읽고 따른다. |
+| 프로젝트 스킬 | `.agents/skills/`를 repo-scoped skill로 자동 감지한다. `.claude/skills/`의 스킬은 쓰지 않는다. | `.agents/skills/`를 자동으로 불러오지 않는다. 요청이 스킬에 해당하면 `SKILL.md`를 직접 읽고 따른다. `.claude/skills/`의 스킬은 자동으로 불러온다. |
 | 작업 로그 hook | `.codex/hooks.json`이 로그를 남긴다. | `.codex/hooks.json`을 쓰지 않는다. |
 | 운영 검증 체크리스트 | [`.codex/guideline.md`](../../.codex/guideline.md) | 해당 없음 |
 

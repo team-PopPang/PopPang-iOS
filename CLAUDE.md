@@ -7,6 +7,7 @@
 ## Claude Code에만 해당하는 내용
 
 - 프로젝트 스킬은 Codex 경로인 `.agents/skills/`에 있고, Claude Code는 이 경로를 자동으로 불러오지 않는다. 요청이 스킬에 해당하면 `.agents/skills/<name>/SKILL.md`를 직접 읽고 따른다.
+- 출시 준비 스킬 `poppang-app-store-release`는 Claude Code 전용으로 `.claude/skills/`에 있다. `/poppang-app-store-release`나 "출시 준비해줘"로 실행한다. 세팅과 lane은 [앱스토어 출시](Docs/development/app-store-release.md)를 본다.
 - `.codex/hooks.json`의 작업 로그는 Claude Code 세션에서 기록되지 않는다.
 - 커밋 메시지와 PR 본문에 `Co-Authored-By: Claude ...` 트레일러와 `Generated with Claude Code` 문구를 넣지 않는다. 자동 표기를 끄는 설정은 [AI 작성 표기 규칙](Docs/development/ai-attribution.md#claude-code-설정)을 본다.
 - `!`로 실행하는 셸에는 `mise activate`가 적용되지 않을 수 있다. Tuist 명령은 `mise exec -- tuist <명령>`으로 실행한다.
