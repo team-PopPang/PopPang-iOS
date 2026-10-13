@@ -14,6 +14,7 @@ let project = Project(
             resources: ["Resources/**"],
             dependencies: [
                 .project(target: "Core", path: "../Core"),
+                .project(target: "SheetKit", path: "../SheetKit"),
                 .project(target: "ThirdParty", path: "../ThirdParty"),
             ]
         ),
@@ -32,7 +33,10 @@ let project = Project(
                 ]
             ),
             sources: ["Demo/Sources/**"],
-            dependencies: [.target(name: "DSKit")],
+            dependencies: [
+                .target(name: "DSKit"),
+                .project(target: "SheetKit", path: "../SheetKit"),
+            ],
             settings: .settings(
                 base: [
                     "CODE_SIGN_STYLE": "Automatic",
