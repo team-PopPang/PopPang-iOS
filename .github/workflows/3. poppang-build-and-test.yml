@@ -167,13 +167,23 @@ jobs:
         run: |
           cat "$RUNNER_TEMP/xcode-warmup.log" || true
           run_tuist() { "$HOME/.local/bin/mise" x tuist@$(cat .tuist-version) -- tuist "$@"; }
+          # 의존성에서 뺀 패키지가 복원한 캐시에 남아 있으면, SwiftPM이 그 checkout을 지우지 못해 install이 실패한다.
+          # (예: BottomSheet를 뺀 PR #111에서 "repository ... has uncommitted changes")
+          # 이때는 패키지 캐시를 비우고 처음부터 다시 받는다.
+          install_packages() {
+            if ! run_tuist install; then
+              echo "복원한 패키지 캐시로 tuist install에 실패해, 패키지 캐시를 비우고 다시 받는다."
+              rm -rf Tuist/.build ~/.cache/swifterpm
+              run_tuist install
+            fi
+          }
           if [ "$SPM_CACHE_HIT" != "true" ]; then
-            run_tuist install
+            install_packages
             run_tuist generate --no-binary-cache
           elif ! run_tuist generate --no-binary-cache; then
             echo "패키지 캐시만으로 생성하지 못해 tuist install 후 다시 생성한다."
             echo "reinstalled=true" >> "$GITHUB_OUTPUT"
-            run_tuist install
+            install_packages
             run_tuist generate --no-binary-cache
           fi
 
