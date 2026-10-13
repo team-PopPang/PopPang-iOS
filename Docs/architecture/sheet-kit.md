@@ -155,6 +155,8 @@ PopPang에서는 시트 높이처럼 그 화면 안에서만 쓰는 상태를 vi
 4. 기능은 modifier를 더하는 방식으로 늘린다. 기존 함수의 인자를 바꾸지 않는다.
 5. 탭바 높이나 한국어 문구 같은 앱 전용 가정을 넣지 않는다. 화면에 보이거나 읽히는 문구는 `Localizable.xcstrings`에 둔다.
 6. 높이 계산과 멈출 높이 계산은 `BottomSheetLayout`의 순수 함수로 두고 `SheetKitTests`로 검사한다.
+7. 시트를 `GeometryReader` 클로저 안에서 그리지 않는다. 지도 화면처럼 상위 뷰가 `GeometryReader` 안에 있으면, 바인딩이 바뀌어도 클로저가 다시 실행되지 않아 시트가 나타나지 않았다. 높이는 배경의 `GeometryReader`로 재서 `@State`에 둔다.
+8. 끄는 거리는 `@GestureState`로 둔다. 끌기가 취소돼도(알림 센터, 앱 전환) 0으로 돌아간다.
 
 아직 하지 않은 것:
 

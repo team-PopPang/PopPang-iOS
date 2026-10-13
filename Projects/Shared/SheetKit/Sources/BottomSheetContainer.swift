@@ -13,21 +13,40 @@ struct BottomSheetContainer<Content: View>: View {
     @Environment(\.bottomSheetCornerRadius) private var cornerRadius
     /// 손잡이를 끄는 동안 움직인 거리.
     /// 끄는 동안에는 시트 안에서만 높이를 바꾸고, 손을 뗄 때 한 번만 `detent`를 바꾼다.
-    @State private var dragTranslation: CGFloat = 0
+    /// 끌기가 취소돼도(알림 센터를 내리거나 앱이 백그라운드로 갈 때) 0으로 돌아가도록 `@GestureState`로 둔다.
+    @GestureState(resetTransaction: Transaction(animation: BottomSheetMetrics.animation))
+    private var dragTranslation: CGFloat = 0
+    /// 시트를 붙인 뷰의 높이.
+    @State private var containerHeight: CGFloat = 0
 
     var body: some View {
-        GeometryReader { proxy in
-            let layout = BottomSheetLayout(containerHeight: proxy.size.height, topInset: topInset)
-            if let detent {
-                sheet(detent: detent, layout: layout)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        // 시트는 GeometryReader 클로저 밖에서 그린다.
+        // 클로저 안에서 그리면, 상위 뷰 구조에 따라 바인딩이 바뀌어도 클로저가 다시 실행되지 않아 시트가 나타나지 않는다.
+        Color.clear
+            .overlay(alignment: .bottom) {
+                if let detent, containerHeight > 0 {
+                    sheet(
+                        detent: detent,
+                        layout: BottomSheetLayout(containerHeight: containerHeight, topInset: topInset)
+                    )
                     .transition(.move(edge: .bottom))
+                }
             }
-        }
-        // 키보드가 올라와도 시트를 밀어 올리지 않는다.
-        .ignoresSafeArea(.keyboard)
-        // 높이 단계가 바뀔 때만 애니메이션을 건다. 화면이 다시 그려진다고 시트 전체에 애니메이션을 걸지 않는다.
-        .animation(BottomSheetMetrics.animation, value: detent)
+            .background {
+                GeometryReader { proxy in
+                    Color.clear
+                        .onAppear {
+                            containerHeight = proxy.size.height
+                        }
+                        .onChange(of: proxy.size.height) { _, height in
+                            containerHeight = height
+                        }
+                }
+            }
+            // 키보드가 올라와도 시트를 밀어 올리지 않는다.
+            .ignoresSafeArea(.keyboard)
+            // 높이 단계가 바뀔 때만 애니메이션을 건다. 화면이 다시 그려진다고 시트 전체에 애니메이션을 걸지 않는다.
+            .animation(BottomSheetMetrics.animation, value: detent)
     }
 
     private func sheet(detent: BottomSheetDetent, layout: BottomSheetLayout) -> some View {
@@ -82,8 +101,8 @@ struct BottomSheetContainer<Content: View>: View {
         sortedDetents: [BottomSheetDetent]
     ) -> some Gesture {
         DragGesture(coordinateSpace: .global)
-            .onChanged { value in
-                dragTranslation = value.translation.height
+            .updating($dragTranslation) { value, translation, _ in
+                translation = value.translation.height
             }
             .onEnded { value in
                 let target = layout.targetDetent(
@@ -91,8 +110,8 @@ struct BottomSheetContainer<Content: View>: View {
                     in: sortedDetents,
                     canHide: canHide
                 )
+                // 끈 거리는 `@GestureState`가 같은 애니메이션으로 0으로 되돌린다.
                 withAnimation(BottomSheetMetrics.animation) {
-                    dragTranslation = 0
                     detent = target
                 }
             }
