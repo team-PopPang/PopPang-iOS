@@ -1,17 +1,38 @@
-import BottomSheet
 import ComposableArchitecture
 import Domain
 import DSKit
+import SheetKit
 import SwiftUI
 import UIKit
+
+/// 두 번째 시트에 띄우는 내용.
+private enum MapSecondSheet: Identifiable {
+    case region
+    case sort
+    case detail(Popup)
+
+    var id: String {
+        switch self {
+        case .region:
+            "region"
+        case .sort:
+            "sort"
+        case .detail(let popup):
+            "detail-\(popup.id)"
+        }
+    }
+}
 
 public struct MapFeatureView: View {
     @Bindable var store: StoreOf<MapFeature>
     @Environment(\.popPangTabBarStyle) private var tabBarStyle
     @State private var tabBarHeight: CGFloat = 0
     @State private var searchBarFrame: CGRect = .zero
-    @State private var sheetTop: CGFloat = 400
     @State private var showLocationPermissionAlert = false
+    // 시트는 이 화면 안에서만 쓰는 상태라 리듀서가 아니라 view에 둔다.
+    @State private var firstSheetDetent: BottomSheetDetent? = .medium
+    @State private var secondSheet: MapSecondSheet?
+    @State private var secondSheetDetent: BottomSheetDetent = .medium
 
     public init(store: StoreOf<MapFeature>) {
         self.store = store
@@ -19,107 +40,85 @@ public struct MapFeatureView: View {
 
     public var body: some View {
         GeometryReader { _ in
-            ZStack {
-                ZStack(alignment: .trailing) {
-                    NaverMapView(popups: store.mapPopups)
-                        .ignoresSafeArea()
+            ZStack(alignment: .trailing) {
+                NaverMapView(popups: store.mapPopups)
+                    .ignoresSafeArea()
 
-                    topControls
-                        .frame(maxHeight: .infinity, alignment: .top)
-                        .padding(.top, safeAreaInsets.top + 10)
-                        .padding(.horizontal, 15)
+                topControls
+                    .frame(maxHeight: .infinity, alignment: .top)
+                    .padding(.top, safeAreaInsets.top + 10)
+                    .padding(.horizontal, 15)
 
-                    currentLocationButton
-                        .padding(.trailing, 20)
-                        .padding(.bottom, 50)
+                currentLocationButton
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 50)
 
-                    if isFirstSheetHidden(store.firstSheetPosition) {
-                        listButton
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                            .padding(.bottom, 20 + bottomTabBarHeight)
-                    }
+                if firstSheetDetent == nil {
+                    listButton
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                        .padding(.bottom, 20 + bottomTabBarHeight)
                 }
-                .background {
-                    TabBarProxy { _, tabBar in
-                        tabBarHeight = tabBar.bounds.height
-                    }
+            }
+            .background {
+                TabBarProxy { _, tabBar in
+                    tabBarHeight = tabBar.bounds.height
                 }
-                .alert("위치 권한이 필요합니다", isPresented: $showLocationPermissionAlert) {
-                    Button("설정으로 이동") {
-                        guard let url = URL(string: UIApplication.openSettingsURLString),
-                              UIApplication.shared.canOpenURL(url)
-                        else { return }
-                        UIApplication.shared.open(url)
-                    }
-                    Button("취소", role: .cancel) {}
-                } message: {
-                    Text("주변 팝업스토어를 지도에서 보여주고 내 위치로 이동하려면 위치 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.")
+            }
+            .alert("위치 권한이 필요합니다", isPresented: $showLocationPermissionAlert) {
+                Button("설정으로 이동") {
+                    guard let url = URL(string: UIApplication.openSettingsURLString),
+                          UIApplication.shared.canOpenURL(url)
+                    else { return }
+                    UIApplication.shared.open(url)
                 }
-                .bottomSheet(
-                    bottomSheetPosition: firstSheetPositionBinding,
-                    switchablePositions: [
-                        .absolute(0),
-                        .relative(0.5),
-                        .absoluteTop(sheetTop),
-                    ],
-                    content: {
-                        FirstSheetView(
-                            store: store,
-                            onSortTap: {
-                                store.send(.sortButtonTapped)
-                            },
-                            onPopupTap: { index, popup in
-                                moveCamera(to: popup, markerIndex: index)
-                                store.send(.popupPreviewRequested(popup))
-                            },
-                            onToggleLike: { popup in
-                                store.send(.toggleLike(popup))
-                            }
-                        )
+                Button("취소", role: .cancel) {}
+            } message: {
+                Text("주변 팝업스토어를 지도에서 보여주고 내 위치로 이동하려면 위치 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.")
+            }
+            .bottomSheet(detent: $firstSheetDetent) {
+                FirstSheetView(
+                    store: store,
+                    onSortTap: {
+                        openSecondSheet(.sort)
+                    },
+                    onPopupTap: { index, popup in
+                        moveCamera(to: popup, markerIndex: index)
+                        openSecondSheet(.detail(popup))
+                    },
+                    onToggleLike: { popup in
+                        store.send(.toggleLike(popup))
                     }
                 )
-                .sheetWidth(.relative(1.0))
-                .customBackground(
-                    Color.subWhite
-                        .cornerRadius(30)
+            }
+            .bottomSheet(item: $secondSheet, detent: $secondSheetDetent) { sheet in
+                SecondSheetView(
+                    store: store,
+                    sheet: sheet,
+                    onDismiss: {
+                        secondSheet = nil
+                    },
+                    onRegionSelected: { region in
+                        store.send(.regionSelected(region))
+                    },
+                    onDistrictSelected: { district in
+                        secondSheet = nil
+                        store.send(.districtSelected(district))
+                    },
+                    onSortSelected: { option in
+                        secondSheet = nil
+                        store.send(.sortOptionSelected(option))
+                    },
+                    onPopupDetailTap: { popup in
+                        store.send(.popupDetailTapped(popup))
+                    }
                 )
-
-                Color.clear
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .bottomSheet(
-                        bottomSheetPosition: secondSheetPositionBinding,
-                        switchablePositions: [
-                            .relative(0.5),
-                            .absoluteTop(sheetTop),
-                        ],
-                        content: {
-                            SecondSheetView(
-                                store: store,
-                                onDismiss: {
-                                    store.send(.dismissSecondSheet)
-                                },
-                                onRegionSelected: { region in
-                                    store.send(.regionSelected(region))
-                                },
-                                onDistrictSelected: { district in
-                                    store.send(.districtSelected(district))
-                                },
-                                onSortSelected: { option in
-                                    store.send(.sortOptionSelected(option))
-                                },
-                                onPopupDetailTap: { popup in
-                                    store.send(.popupDetailTapped(popup))
-                                }
-                            )
-                        }
-                    )
-                    .sheetWidth(.relative(1.0))
-                    .customBackground(
-                        Color.subWhite
-                            .cornerRadius(30)
-                    )
-                    .allowsHitTesting(store.secondSheetPosition != .hidden)
-                    .zIndex(1)
+            }
+            // 시트를 끝까지 올려도 검색창은 보이게 한다.
+            .bottomSheetTopInset(searchBarFrame.maxY + 20)
+            .ppBottomSheetStyle()
+            .onChange(of: secondSheetDetent) { _, detent in
+                // 두 번째 시트를 끌면 뒤에 있는 첫 번째 시트도 같은 높이로 따라간다.
+                firstSheetDetent = detent
             }
             .onAppear {
                 configureCallbacks()
@@ -138,7 +137,7 @@ private extension MapFeatureView {
         VStack(spacing: 12) {
             HStack(spacing: 0) {
                 MapRegionButton(text: store.selectedRegion?.region ?? "전체") {
-                    store.send(.regionButtonTapped)
+                    openSecondSheet(.region)
                 }
 
                 Divider()
@@ -174,7 +173,7 @@ private extension MapFeatureView {
 
     var currentLocationButton: some View {
         Button {
-            if isFirstSheetHidden(store.firstSheetPosition) {
+            if firstSheetDetent == nil {
                 NaverMapCoordinator.shared.moveToUserLocation()
             } else {
                 NaverMapCoordinator.shared.moveToUserLocation(yOffset: -300)
@@ -193,7 +192,7 @@ private extension MapFeatureView {
 
     var listButton: some View {
         Button {
-            store.send(.listButtonTapped)
+            firstSheetDetent = .medium
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "list.bullet")
@@ -218,20 +217,6 @@ private extension MapFeatureView {
         Binding(
             get: { store.searchText },
             set: { store.send(.searchTextChanged($0)) }
-        )
-    }
-
-    var firstSheetPositionBinding: Binding<BottomSheetPosition> {
-        Binding(
-            get: { store.firstSheetPosition },
-            set: { store.send(.firstSheetPositionChanged($0)) }
-        )
-    }
-
-    var secondSheetPositionBinding: Binding<BottomSheetPosition> {
-        Binding(
-            get: { store.secondSheetPosition },
-            set: { store.send(.secondSheetPositionChanged($0)) }
         )
     }
 
@@ -279,7 +264,7 @@ private extension MapFeatureView {
     }
 
     func moveCamera(to popup: Popup, markerIndex: Int) {
-        if isFirstSheetHidden(store.firstSheetPosition) {
+        if firstSheetDetent == nil {
             NaverMapCoordinator.shared.moveCamera(to: popup)
         } else {
             NaverMapCoordinator.shared.moveCamera(to: popup, yOffset: -300)
@@ -290,24 +275,18 @@ private extension MapFeatureView {
 
     func updateSearchBarFrame(_ frame: CGRect) {
         DispatchQueue.main.async {
-            searchBarFrame = frame
-            let top = UIScreen.main.bounds.height - (frame.maxY + 20)
-            let nextSheetTop = max(top, 200)
-            if abs(sheetTop - nextSheetTop) > 0.5 {
-                sheetTop = nextSheetTop
+            if abs(searchBarFrame.maxY - frame.maxY) > 0.5 {
+                searchBarFrame = frame
             }
         }
     }
 
-    func isFirstSheetHidden(_ position: BottomSheetPosition) -> Bool {
-        switch position {
-        case .hidden:
-            true
-        case .absolute(let value):
-            value == 0
-        default:
-            false
-        }
+    /// 두 번째 시트를 첫 번째 시트와 같은 높이로 연다. 첫 번째 시트가 숨어 있으면 중간 높이로 함께 꺼낸다.
+    func openSecondSheet(_ sheet: MapSecondSheet) {
+        let detent = firstSheetDetent ?? .medium
+        firstSheetDetent = detent
+        secondSheetDetent = detent
+        secondSheet = sheet
     }
 }
 
@@ -393,6 +372,7 @@ private struct MapListView: View {
 
 private struct SecondSheetView: View {
     @Bindable var store: StoreOf<MapFeature>
+    let sheet: MapSecondSheet
     let onDismiss: () -> Void
     let onRegionSelected: (RegionList) -> Void
     let onDistrictSelected: (String) -> Void
@@ -401,7 +381,7 @@ private struct SecondSheetView: View {
 
     var body: some View {
         ScrollView {
-            switch store.secondSheetType {
+            switch sheet {
             case .region:
                 MapRegionSheet(
                     regions: store.regions,
@@ -429,9 +409,6 @@ private struct SecondSheetView: View {
                         onPopupDetailTap(popup)
                     }
                 )
-
-            case .none:
-                EmptyView()
             }
         }
         .ignoresSafeArea(edges: .top)
