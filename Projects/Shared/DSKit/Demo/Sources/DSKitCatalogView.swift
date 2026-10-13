@@ -342,37 +342,32 @@ struct DSKitCatalogView: View {
         ) {
             // 시트는 붙인 뷰 안에서 움직이므로, 작은 화면 틀에 붙여 모양과 높이 단계를 확인한다.
             ZStack {
-                Color.mainGray4
+                PPColor.backgroundSecondary
 
                 if catalogSheetDetent == nil {
                     Button("시트 열기") {
                         catalogSheetDetent = .medium
                     }
-                    .ppStyleFont(.systemFont(ofSize: 16, weight: .semibold), lineHeight: 1.2)
-                    .foregroundStyle(Color.mainWhite)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(Color.mainBlack)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .buttonStyle(PPButtonStyle(.primary, size: .medium, fillsWidth: false))
                 }
             }
             .frame(height: 320)
             .bottomSheet(detent: $catalogSheetDetent, detents: [.fraction(0.3), .medium, .large]) {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: PPSpacing.s8) {
                     Text("ppBottomSheetStyle")
-                        .ppStyleFont(.scdream(.bold, size: 18))
-                        .foregroundStyle(Color.mainBlack)
+                        .ppTextStyle(.title2)
+                        .foregroundStyle(PPColor.textPrimary)
 
                     Text("손잡이를 끌거나 눌러 높이를 바꾸고, 아래로 끝까지 내리면 닫힙니다.")
-                        .ppStyleFont(.scdream(.regular, size: 13))
-                        .foregroundStyle(Color.mainGray)
+                        .ppTextStyle(.body3)
+                        .foregroundStyle(PPColor.textSecondary)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
+                .padding(.horizontal, PPSpacing.s20)
+                .padding(.top, PPSpacing.s8)
             }
             .ppBottomSheetStyle()
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: PPRadius.medium))
         }
     }
 

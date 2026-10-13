@@ -1,6 +1,29 @@
 import SheetKit
 import SwiftUI
 
+/// 목록 시트 위에 겹쳐 띄우는 옵션 시트의 내용.
+private enum OptionSheet: Identifiable {
+    case region
+    case sort
+    case detail(Int)
+
+    var id: String {
+        switch self {
+        case .region: "region"
+        case .sort: "sort"
+        case .detail(let index): "detail-\(index)"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .region: "지역"
+        case .sort: "정렬"
+        case .detail(let index): "팝업 \(index)"
+        }
+    }
+}
+
 /// 지도 화면처럼 목록 시트 위에 옵션 시트를 겹쳐 띄우는 데모.
 ///
 /// 아래를 확인한다.
@@ -9,28 +32,6 @@ import SwiftUI
 /// - 검색창 키보드가 올라와도 시트가 밀리지 않는다.
 /// - 목록 끝이 탭바에 가리지 않는다.
 struct MapSheetDemoView: View {
-    fileprivate enum OptionSheet: Identifiable {
-        case region
-        case sort
-        case detail(Int)
-
-        var id: String {
-            switch self {
-            case .region: "region"
-            case .sort: "sort"
-            case .detail(let index): "detail-\(index)"
-            }
-        }
-
-        var title: String {
-            switch self {
-            case .region: "지역"
-            case .sort: "정렬"
-            case .detail(let index): "팝업 \(index)"
-            }
-        }
-    }
-
     private static let coordinateSpace = "map"
     private static let regions = ["전체", "서울", "경기", "인천", "부산", "대구", "광주", "대전", "울산", "세종", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주"]
     private static let sortOptions = ["가까운순", "최신순", "마감순", "찜순", "조회순"]
