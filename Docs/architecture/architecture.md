@@ -47,6 +47,7 @@ Projects
 └── Shared
     ├── Core                  네트워크 공통, 로컬 저장소, 로깅, 세션 모델, 확장
     ├── DSKit                 디자인 시스템, 공통 UI, 폰트·색상·이미지 리소스
+    ├── SheetKit              화면 위에 겹쳐 띄우는 하단 시트 (SwiftUI만 의존)
     ├── ADKit                 AdMob 네이티브 광고 런타임
     └── ThirdParty            외부 SDK product를 모으는 링크 허브
 ```
@@ -59,13 +60,15 @@ Projects
 | Domain | framework | 없음 | 없음 |
 | Data | framework | Domain, Core, ThirdParty | `DataTests` |
 | Shared/Core | framework | Domain, ThirdParty | `CoreTests` |
-| Shared/DSKit | framework | Core, ThirdParty | Demo (컴포넌트 카탈로그, 탭바 비교) |
+| Shared/DSKit | framework | Core, SheetKit, ThirdParty | Demo (컴포넌트 카탈로그, 탭바 비교) |
+| Shared/SheetKit | framework | 없음 | Demo (지도 모양 시트), `SheetKitTests` |
 | Shared/ADKit | framework | Core, GoogleMobileAds, JavaScriptCore | 없음 |
 | Shared/ThirdParty | framework | 외부 패키지만 | 없음 |
 | MainTabFeature | staticFramework | Alert, Calendar, Favorites, HomeFeatureV2, Map, PopupDetail, PopPangRN, Profile, Review, Search Feature, Domain, Core, DSKit | `MainTabFeatureTests` |
 | HomeFeatureV2 | staticFramework | ADKit, Domain, DSKit, Core, ThirdParty | Demo, `HomeFeatureV2Tests` |
 | Alert, Calendar, Favorites, PopupDetail, Profile Feature | staticFramework | Domain, Core, DSKit, ThirdParty | Demo |
-| MapFeature, SearchFeature | staticFramework | Domain, DSKit, Core, ThirdParty | Map만 Demo |
+| MapFeature | staticFramework | Domain, DSKit, Core, SheetKit, ThirdParty | Demo |
+| SearchFeature | staticFramework | Domain, DSKit, Core, ThirdParty | 없음 |
 | Auth, Onboarding, Review Feature | staticFramework | Domain, DSKit, ThirdParty | 없음 (Demo 주석 처리) |
 | MaintenanceFeature | staticFramework | DSKit | Demo |
 | PopPangRNFeature | framework | ThirdParty, React Native local package | 없음 |
@@ -140,6 +143,7 @@ Projects
 | --- | --- | --- |
 | `Core` | `Network`(BaseAPI, NetworkProvider, MoyaProvider+Async, NetworkError), `LocalStorage`(Session, PushToken, RecentSearch, DeepLink), `Logging`, `Support`(AppConfig, `UserSession` 등), Foundation 확장 | `BaseAPI`, `NetworkProvider`, `MoyaProvider+Async`를 바꾸면 모든 네트워크 호출에 영향이 있다. |
 | `DSKit` | 디자인 시스템(색·글자·여백·모서리 토큰, 버튼 스타일), 공통 컴포넌트, 폰트·색상·이미지(`DSKitResource`) | 두 개 이상의 feature에서 쓰거나 디자인 시스템 성격이 분명할 때만 올린다. 토큰과 화면 코드 규칙은 [디자인 시스템](design-system.md)을 본다. |
+| `SheetKit` | 화면 위에 겹쳐 띄우는 하단 시트(`bottomSheet(detent:)`, `bottomSheet(item:detent:)`)와 높이 단계(`BottomSheetDetent`) | 다른 앱에서도 쓸 수 있게 SwiftUI 말고는 의존하지 않는다. PopPang 모양은 DSKit `ppBottomSheetStyle()`로 입힌다. 사용법은 [SheetKit](sheet-kit.md)을 본다. |
 | `ADKit` | Google Mobile Ads 초기화와 네이티브 광고, 목록에 광고를 끼워 넣는 `AdInjectedListItem` | `GoogleMobileAds`를 직접 링크한다. 광고 ID는 `Secrets.xcconfig`의 `ADMOB_APP_ID`, `ADMOB_NATIVE_AD_UNIT_ID`에서 읽는다. |
 | `ThirdParty` | 외부 SDK product 선언을 모으는 허브 | `@_exported import`로 재노출하지 않는다. 사용하는 파일에서 실제 SDK 모듈을 import한다. 자세한 기준은 [모듈 구조](modules.md)를 본다. |
 
@@ -156,11 +160,13 @@ flowchart TD
     MainTabFeature --> TabFeatures["Tab·상세 Features"]
     TabFeatures --> Domain
     TabFeatures --> DSKit
+    TabFeatures --> SheetKit
     TabFeatures --> Core
     Data --> Domain
     Data --> Core
     Data --> ThirdParty
     DSKit --> Core
+    DSKit --> SheetKit
     Core --> Domain
     Core --> ThirdParty
 ```
@@ -168,10 +174,11 @@ flowchart TD
 | 사용하는 쪽 | 참조할 수 있는 모듈 | 참조하지 않는 모듈 |
 | --- | --- | --- |
 | `Domain` | 표준 라이브러리 | 모든 프로젝트 모듈 |
-| Feature | `Domain`, `Core`, `DSKit`, `ThirdParty`, 필요하면 `ADKit` | `Data`, 다른 Feature(`MainTabFeature` 제외) |
+| Feature | `Domain`, `Core`, `DSKit`, `SheetKit`, `ThirdParty`, 필요하면 `ADKit` | `Data`, 다른 Feature(`MainTabFeature` 제외) |
 | `MainTabFeature` | 위 목록과 탭·상세 Feature | `Data` |
 | `Data` | `Domain`, `Core`, `ThirdParty` | Feature, `App` |
-| `DSKit` | `Core`, `ThirdParty` | Feature, `Data` |
+| `DSKit` | `Core`, `SheetKit`, `ThirdParty` | Feature, `Data` |
+| `SheetKit` | SwiftUI | 모든 프로젝트 모듈 |
 | `Core` | `Domain`, `ThirdParty` | Feature, `Data` |
 | `App` | 조립에 필요한 모든 모듈 | 다른 모듈이 `App`을 참조하지 않는다. |
 
@@ -222,7 +229,6 @@ HomeFeatureView (HomeFeatureV2)
 | KakaoSDK, GoogleSignIn, AuthenticationServices | 소셜 로그인 |
 | Google Mobile Ads | `ADKit` 네이티브 광고 |
 | NMapsMap | 지도 탭 |
-| BottomSheet | 지도·상세 바텀시트 |
 | React Native | `PopPangRNFeature`의 팝업 제보·관리 화면 |
 
 외부 패키지의 버전과 product type은 `Tuist/Package.swift`에서 확인한다.

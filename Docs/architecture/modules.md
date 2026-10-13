@@ -29,7 +29,7 @@ Tuist 설치와 명령은 [Tuist 설치와 실행](../development/tuist.md)을 �
 | 모듈 | product | 이유 |
 | --- | --- | --- |
 | `App` (`PopPangApp`) | `.app` | 앱 타깃 |
-| `Domain`, `Data`, `Core`, `DSKit`, `ThirdParty`, `ADKit` | `.framework` | 여러 모듈이 공유하는 경계다. |
+| `Domain`, `Data`, `Core`, `DSKit`, `SheetKit`, `ThirdParty`, `ADKit` | `.framework` | 여러 모듈이 공유하는 경계다. `SheetKit`은 DSKit과 feature가 함께 링크하므로 `.framework`여야 코드가 두 번 들어가지 않는다. |
 | `Features/*Feature` | `.staticFramework` | 앱 안에서만 쓰는 leaf feature다. 실행 시점에 따로 로드할 framework 수를 줄인다. |
 | `PopPangRNFeature` | `.framework` | React Native prebuilt 패키지(`Vendor/PrebuiltReactNativeFrameworks`)를 링크한다. feature 중 유일하게 `.framework`다(이유는 코드에 적혀 있지 않음, `확인 필요`). |
 | `*Tests` | `.unitTests` | |
@@ -66,7 +66,8 @@ bundle id 형식:
 
 scheme:
 
-- 명시적 scheme은 `Core`, `Data`, `AlertFeatureDemo`에만 있다. 나머지는 Tuist가 자동으로 만든다.
+- 명시적 scheme은 `Core`, `Data`, `SheetKit`, `SheetKitDemo`, `AlertFeatureDemo`에만 있다. 나머지는 Tuist가 자동으로 만든다.
+- 한 project에 scheme을 직접 정의하면 그 project의 데모 scheme은 자동으로 생기지 않는다. `SheetKit`처럼 데모 scheme도 함께 정의한다.
 - 테스트를 CI에서 돌리려면 test action이 있는 scheme이 필요하다. ([테스트](../development/testing.md))
 
 Swift 설정:
@@ -157,13 +158,12 @@ Domain·Data·Shared 기능은 기존 모듈 안에 파일을 추가한다. 새 
 | SPM-NMapsMap | 3.23.2 |
 | swift-composable-architecture | 1.26.2 (Xcode 27 지원은 1.26.0부터) |
 | PopPangListKit | 1.1.0 |
-| BottomSheet | 3.1.1 |
 
 product type override 원칙(`Tuist/Package.swift` 주석 기준):
 
 - 기본은 override하지 않는다. 목록에 없는 product는 `.staticFramework`로 통합된다.
 - `no such module`, explicit module 실패, 링크 실패가 실제로 재현될 때만 문제 product와 그 product가 직접 기대하는 하위 product까지 좁게 override한다.
-- 현재 `.framework`로 고정한 product: Alamofire, Moya, GoogleSignIn과 전이 product(AppAuth, AppCheckCore, GTM*, GoogleUtilities-*, GUL*, FBLPromises), KakaoSDK(Auth, Common, Share, Template, User), BottomSheet, Kingfisher, GoogleMobileAds, third-party-IsAppEncrypted
+- 현재 `.framework`로 고정한 product: Alamofire, Moya, GoogleSignIn과 전이 product(AppAuth, AppCheckCore, GTM*, GoogleUtilities-*, GUL*, FBLPromises), KakaoSDK(Auth, Common, Share, Template, User), Kingfisher, GoogleMobileAds, third-party-IsAppEncrypted
 - Firebase는 override하지 않는다. `.framework`로 강제하면 auto-link 링크 에러가 재현됐다.
 - App은 `FirebaseCore`(`0. AppSDKInitializer.swift`), `FirebaseMessaging`(`AppNotificationManager.swift`), `FirebaseAnalytics`(`FirebaseLogger.swift`)를 직접 import한다.
 

@@ -36,7 +36,7 @@ PopPang은 관심있는 팝업 정보를 놓치지 않도록, 실시간으로 �
 | **Moya** | 추상화된 네트워크 레이어를 보다 간편하게 사용하기 위함 |
 | **Kingfisher** | 이미지 캐싱 처리 및 UI 성능 개선을 위함 |
 | **NMapsMap** | 지도 기반 팝업 탐색 기능을 구현하기 위함 |
-| **BottomSheet** | 지도와 상세 흐름의 바텀시트 UI를 구현하기 위함 |
+| **SheetKit** | 직접 제작한 SwiftUI 하단 시트 모듈. 지도 화면의 목록·옵션 시트에 쓴다 |
 | **PopPangListKit** | 직접 제작한 UICollectionView 기반 선언형 목록 DSL 라이브러리 |
 
 <br/><br/>

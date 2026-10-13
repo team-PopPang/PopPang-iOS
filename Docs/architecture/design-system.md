@@ -19,6 +19,7 @@
 | 토큰 | 색(`PPColor`), 텍스트 스타일(`PPTextStyle`), 여백(`PPSpacing`), 모서리(`PPRadius`) | `Projects/Shared/DSKit/Sources/Token/` |
 | 스타일 | 버튼 모양(`PPButtonStyle`), 눌림 효과(`PressableButtonStyle`) | `Projects/Shared/DSKit/Sources/Component/Button/` |
 | 구성 요소 | `MainOrangeButton`, `SocialLoginButton`, 텍스트필드 등 | `Projects/Shared/DSKit/Sources/Component/` |
+| 하단 시트 모양 | SheetKit 시트에 PopPang 모양(흰 배경, 위쪽 모서리 30)을 입히는 `ppBottomSheetStyle()` | `Projects/Shared/DSKit/Sources/Component/Sheet/` |
 
 토큰과 버튼 스타일은 DSKit 데모(`DSKit` 스킴의 `DSKitDemo`) 카탈로그 화면에서 확인한다.
 
@@ -88,6 +89,7 @@ Text("서울 성수동")
 | `PPRadius.large` | 16 | 시트·큰 카드 |
 
 - 알약 모양은 `Capsule()`을 쓴다.
+- SheetKit 하단 시트의 모서리는 지도 시트에서 쓰던 30이다. `PPRadius`에 없는 값이라 `ppBottomSheetStyle()` 안에 둔다.
 - 목록에 없는 값이 필요하면 화면에 숫자를 쓰지 않고 먼저 토큰을 추가한다.
 
 ## 버튼 스타일
