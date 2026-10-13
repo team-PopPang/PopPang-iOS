@@ -409,6 +409,8 @@ private struct SecondSheetView: View {
                         onPopupDetailTap(popup)
                     }
                 )
+                // 시트가 탭바 아래까지 깔리므로, 지역·정렬 시트처럼 아래 여백을 둬 끝까지 스크롤되게 한다.
+                .padding(.bottom, 100)
             }
         }
         .ignoresSafeArea(edges: .top)
