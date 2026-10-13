@@ -61,6 +61,10 @@ jobs:
             scheme: DSKit
             xcode_action: build
             destination: generic/platform=iOS Simulator
+          - job_name: sheetkit-test
+            scheme: SheetKit
+            xcode_action: test
+            destination: platform=iOS Simulator
 
     steps:
       - name: Checkout PR branch
@@ -265,6 +269,7 @@ jobs:
             - core-test: Core
             - data-test: Data
             - dskit-build: DSKit
+            - sheetkit-test: SheetKit
 
       - name: Comment failure
         if: needs.module_ci.result != 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.triggered_by_command == 'true' && github.event.inputs.pr_number != ''
@@ -290,6 +295,7 @@ jobs:
             - core-test: Core
             - data-test: Data
             - dskit-build: DSKit
+            - sheetkit-test: SheetKit
 
             Repository: ${{ github.repository }}
             Branch: ${{ github.ref_name }}
