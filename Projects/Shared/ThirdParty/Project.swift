@@ -26,7 +26,6 @@ let project = Project(
                 .external(name: "PopPangListKit"),
                 .external(name: "Moya"),
                 .external(name: "NMapsMap"),
-                .external(name: "BottomSheet"),
             ],
             settings: .settings(
                 base: [
