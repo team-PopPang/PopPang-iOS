@@ -3,24 +3,23 @@ import CoreGraphics
 import Testing
 
 struct BottomSheetLinkTests {
-    @Test("위에 겹친 시트가 없으면 이 시트를 끄는 거리만 아래 시트로 넘긴다")
-    func translationWithoutLinkAbove() {
-        let link = BottomSheetLink()
-        link.ownTranslation = 30
+    @Test("위에 겹친 시트가 없으면 같이 움직일 거리가 없다")
+    func totalTranslationWithoutLinks() {
+        let links: [BottomSheetLink] = []
 
-        #expect(link.translation == 30)
+        #expect(links.totalTranslation == 0)
     }
 
-    @Test("위에 겹친 시트를 끄는 거리는 그 아래 시트들까지 이어진다")
-    func translationAddsLinkAbove() {
+    @Test("위에 겹친 시트들을 끄는 거리를 모두 더한다")
+    func totalTranslationAddsAllLinks() {
         let top = BottomSheetLink()
         let middle = BottomSheetLink()
-        middle.linkAbove = top
+        let links = [top, middle]
 
-        top.ownTranslation = 30
-        #expect(middle.translation == 30)
+        top.translation = 30
+        #expect(links.totalTranslation == 30)
 
-        middle.ownTranslation = 10
-        #expect(middle.translation == 40)
+        middle.translation = 10
+        #expect(links.totalTranslation == 40)
     }
 }

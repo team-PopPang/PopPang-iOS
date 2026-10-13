@@ -64,13 +64,15 @@ public extension View {
 private struct BottomSheetModifier<Sheet: View>: ViewModifier {
     let sheet: (BottomSheetLink) -> Sheet
 
+    /// 이 시트 위에 겹친 시트(나중에 붙인 시트)들의 연결.
+    @Environment(\.bottomSheetLinksAbove) private var linksAbove
     @State private var link = BottomSheetLink()
 
     func body(content: Content) -> some View {
         content
             // 먼저 붙인 시트들은 이 시트 아래에 그려진다.
-            // 이 시트를 끌 때 그 시트들도 같이 움직이도록 연결을 넘긴다.
-            .environment(link)
+            // 이 시트와 그 위의 시트들을 끌 때 같이 움직이도록, 받은 연결 목록에 이 시트의 연결을 더해 넘긴다.
+            .environment(\.bottomSheetLinksAbove, linksAbove + [link])
             .overlay {
                 sheet(link)
             }
