@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// 시트를 붙인 뷰 위에 하단 시트를 그리고, 손잡이로 높이를 바꾼다.
-struct BottomSheetContainer<Content: View>: View {
+struct BottomSheetContainer<Content: View, Accessory: View>: View {
     /// 지금 높이 단계. `nil`이면 시트를 숨긴다.
     let detent: BottomSheetDetent?
     let detents: Set<BottomSheetDetent>
@@ -12,6 +12,8 @@ struct BottomSheetContainer<Content: View>: View {
     /// 손잡이로 높이 단계를 바꿀 때 부른다. 숨기면 `nil`을 넘긴다.
     let setDetent: (BottomSheetDetent?) -> Void
     let content: Content
+    /// 시트 위쪽 끝에 붙어 시트와 같이 움직이는 뷰. 없으면 `EmptyView`다.
+    let accessory: Accessory
 
     @Environment(\.bottomSheetTopInset) private var topInset
     @Environment(\.bottomSheetBackground) private var background
@@ -73,6 +75,7 @@ struct BottomSheetContainer<Content: View>: View {
             max(baseHeight - translation, BottomSheetMetrics.grabberAreaHeight),
             layout.maxHeight
         )
+        let accessoryOpacity = layout.accessoryOpacity(sheetHeight: height, in: sortedDetents)
         let shape = UnevenRoundedRectangle(
             topLeadingRadius: cornerRadius,
             topTrailingRadius: cornerRadius,
@@ -80,6 +83,40 @@ struct BottomSheetContainer<Content: View>: View {
         )
 
         return VStack(spacing: 0) {
+            // 액세서리는 시트 위쪽 끝에 붙여 같은 높이 값으로 그린다.
+            // 시트를 붙인 화면이 매 프레임 시트 위치를 받아 다시 그리지 않아도 시트와 같은 프레임에 움직인다.
+            accessory
+                .opacity(accessoryOpacity)
+                .allowsHitTesting(accessoryOpacity > 0)
+                .accessibilityHidden(accessoryOpacity == 0)
+
+            sheetBody(
+                detent: detent,
+                layout: layout,
+                sortedDetents: sortedDetents,
+                baseHeight: baseHeight
+            )
+            // 가로 길이는 따로 계산하지 않고 시트를 붙인 뷰의 너비를 그대로 쓴다.
+            .frame(maxWidth: .infinity)
+            .frame(height: height, alignment: .top)
+            .clipShape(shape)
+            .background {
+                // 내용은 safe area 안에 두고, 배경만 탭바와 홈 인디케이터 아래 화면 끝까지 깐다.
+                shape
+                    .fill(background)
+                    .ignoresSafeArea(.container, edges: .bottom)
+            }
+        }
+    }
+
+    /// 손잡이 줄과 내용.
+    private func sheetBody(
+        detent: BottomSheetDetent,
+        layout: BottomSheetLayout,
+        sortedDetents: [BottomSheetDetent],
+        baseHeight: CGFloat
+    ) -> some View {
+        VStack(spacing: 0) {
             BottomSheetGrabber(
                 onTap: {
                     setDetent(layout.detentAfterTap(from: detent, in: sortedDetents))
@@ -101,16 +138,6 @@ struct BottomSheetContainer<Content: View>: View {
 
             content
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        }
-        // 가로 길이는 따로 계산하지 않고 시트를 붙인 뷰의 너비를 그대로 쓴다.
-        .frame(maxWidth: .infinity)
-        .frame(height: height, alignment: .top)
-        .clipShape(shape)
-        .background {
-            // 내용은 safe area 안에 두고, 배경만 탭바와 홈 인디케이터 아래 화면 끝까지 깐다.
-            shape
-                .fill(background)
-                .ignoresSafeArea(.container, edges: .bottom)
         }
     }
 

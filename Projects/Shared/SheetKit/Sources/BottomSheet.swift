@@ -23,13 +23,42 @@ public extension View {
         detents: Set<BottomSheetDetent> = [.medium, .large],
         @ViewBuilder content: @escaping () -> Content
     ) -> some View {
+        bottomSheet(detent: detent, detents: detents, content: content) {
+            EmptyView()
+        }
+    }
+
+    /// 하단 시트와 함께, 시트 위쪽 끝에 붙어 시트와 같이 움직이는 뷰(`accessory`)를 그린다.
+    ///
+    /// 지도의 내 위치 버튼처럼 시트 바로 위에 띄울 뷰를 넘긴다. 끄는 동안에도 시트와 같은 프레임에 움직인다.
+    /// 시트를 가장 높은 단계로 올리면 숨고, 바로 아래 단계에서 가장 높은 단계로 가는 동안 점점 흐려진다.
+    /// 시트를 숨기면 같이 숨으므로, 그때 보일 뷰는 쓰는 쪽에서 따로 둔다.
+    /// 가로 위치와 시트와의 간격은 `accessory` 쪽에서 정한다.
+    ///
+    /// ```swift
+    /// Map()
+    ///     .bottomSheet(detent: $detent) {
+    ///         PlaceList()
+    ///     } accessory: {
+    ///         LocationButton()
+    ///             .frame(maxWidth: .infinity, alignment: .trailing)
+    ///             .padding([.trailing, .bottom], 12)
+    ///     }
+    /// ```
+    func bottomSheet<Content: View, Accessory: View>(
+        detent: Binding<BottomSheetDetent?>,
+        detents: Set<BottomSheetDetent> = [.medium, .large],
+        @ViewBuilder content: @escaping () -> Content,
+        @ViewBuilder accessory: @escaping () -> Accessory
+    ) -> some View {
         modifier(
             BottomSheetModifier { link in
                 DetentBottomSheet(
                     detent: detent,
                     detents: detents,
                     link: link,
-                    content: content
+                    content: content,
+                    accessory: accessory
                 )
             }
         )
@@ -84,11 +113,12 @@ private struct BottomSheetModifier<Sheet: View>: ViewModifier {
 // 상태가 바뀌어도 시트가 다시 그려지지 않아 두 번째 시트가 열리지 않았다.
 
 /// `bottomSheet(detent:)`: 높이 단계가 `nil`이면 숨긴다.
-private struct DetentBottomSheet<Content: View>: View {
+private struct DetentBottomSheet<Content: View, Accessory: View>: View {
     @Binding var detent: BottomSheetDetent?
     let detents: Set<BottomSheetDetent>
     let link: BottomSheetLink
     let content: () -> Content
+    let accessory: () -> Accessory
 
     var body: some View {
         BottomSheetContainer(
@@ -97,7 +127,8 @@ private struct DetentBottomSheet<Content: View>: View {
             canHide: true,
             link: link,
             setDetent: { detent = $0 },
-            content: content()
+            content: content(),
+            accessory: accessory()
         )
     }
 }
@@ -124,7 +155,8 @@ private struct ItemBottomSheet<Item: Identifiable, Content: View>: View {
             },
             content: item.map { value in
                 content(value).id(value.id)
-            }
+            },
+            accessory: EmptyView()
         )
     }
 }

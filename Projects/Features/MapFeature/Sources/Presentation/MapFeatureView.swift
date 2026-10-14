@@ -49,14 +49,17 @@ public struct MapFeatureView: View {
                     .padding(.top, safeAreaInsets.top + 10)
                     .padding(.horizontal, 15)
 
-                currentLocationButton
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 50)
-
                 if firstSheetDetent == nil {
-                    listButton
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                        .padding(.bottom, 20 + bottomTabBarHeight)
+                    // 목록 시트를 숨기면 시트에 붙어 있던 내 위치 버튼을 목록 보기 버튼 오른쪽에 둔다.
+                    ZStack {
+                        listButton
+
+                        currentLocationButton
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .padding(.trailing, 20)
+                    }
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .padding(.bottom, 20 + bottomTabBarHeight)
                 }
             }
             .background {
@@ -89,6 +92,12 @@ public struct MapFeatureView: View {
                         store.send(.toggleLike(popup))
                     }
                 )
+            } accessory: {
+                // 내 위치 버튼은 목록 시트 오른쪽 위에 붙어 시트와 같이 움직이고, 시트를 끝까지 올리면 숨는다.
+                currentLocationButton
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.trailing, 20)
+                    .padding(.bottom, 12)
             }
             .bottomSheet(item: $secondSheet, detent: $secondSheetDetent) { sheet in
                 SecondSheetView(

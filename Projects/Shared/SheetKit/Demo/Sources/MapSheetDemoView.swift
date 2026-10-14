@@ -31,6 +31,7 @@ private enum OptionSheet: Identifiable {
 /// - 시트를 열고 닫거나 내용을 바꿔도 가로 길이가 그대로다.
 /// - 검색창 키보드가 올라와도 시트가 밀리지 않는다.
 /// - 목록 끝이 탭바에 가리지 않는다.
+/// - 내 위치 버튼이 목록 시트 위에 붙어 같이 움직이고, 시트를 끝까지 올리면 숨는다.
 struct MapSheetDemoView: View {
     private static let coordinateSpace = "map"
     private static let regions = ["전체", "서울", "경기", "인천", "부산", "대구", "광주", "대전", "울산", "세종", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주"]
@@ -42,6 +43,7 @@ struct MapSheetDemoView: View {
     @State private var searchText = ""
     @State private var searchBarBottom: CGFloat = 0
     @State private var mapTapCount = 0
+    @State private var locateTapCount = 0
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -50,7 +52,7 @@ struct MapSheetDemoView: View {
             VStack(spacing: 12) {
                 searchBar
 
-                Text("지도 터치 \(mapTapCount)회")
+                Text("지도 터치 \(mapTapCount)회 · 내 위치 \(locateTapCount)회")
                     .font(.caption)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
@@ -71,6 +73,11 @@ struct MapSheetDemoView: View {
         .coordinateSpace(name: Self.coordinateSpace)
         .bottomSheet(detent: $listDetent) {
             popupList
+        } accessory: {
+            locateButton
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.trailing, 16)
+                .padding(.bottom, 12)
         }
         .bottomSheet(item: $optionSheet, detent: $optionDetent) { sheet in
             optionContent(sheet)
@@ -122,6 +129,18 @@ private extension MapSheetDemoView {
                         }
                 }
             }
+    }
+
+    var locateButton: some View {
+        Button {
+            locateTapCount += 1
+        } label: {
+            Image(systemName: "location.fill")
+                .frame(width: 44, height: 44)
+                .background(.background, in: Circle())
+                .shadow(radius: 4)
+        }
+        .accessibilityLabel("내 위치")
     }
 
     var popupList: some View {

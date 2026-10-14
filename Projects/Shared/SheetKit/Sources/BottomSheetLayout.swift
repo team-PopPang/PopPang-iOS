@@ -70,6 +70,20 @@ struct BottomSheetLayout {
         }
     }
 
+    /// 시트 위에 붙인 뷰(액세서리)의 불투명도.
+    ///
+    /// 가장 높은 단계 바로 아래 단계까지는 1이고, 가장 높은 단계에 가까워질수록 흐려져 그 단계에서 0이 된다.
+    /// 단계가 하나뿐이면 높이 0에서 1, 그 단계에서 0이다.
+    func accessoryOpacity(sheetHeight: CGFloat, in sortedDetents: [BottomSheetDetent]) -> CGFloat {
+        guard let highest = sortedDetents.last else { return 1 }
+        let top = height(for: highest)
+        let bottom = sortedDetents.dropLast().last.map { height(for: $0) } ?? 0
+        guard top > bottom else {
+            return sheetHeight < top ? 1 : 0
+        }
+        return min(max((top - sheetHeight) / (top - bottom), 0), 1)
+    }
+
     /// 손잡이를 눌렀을 때 갈 단계. 위로 한 단계 가고, 맨 위에서는 아래로 한 단계 간다.
     func detentAfterTap(
         from current: BottomSheetDetent,
