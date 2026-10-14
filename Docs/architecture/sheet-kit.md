@@ -133,7 +133,7 @@ Map()
 - 시트를 여러 장 겹치면 가장 높이 올라온 시트의 높이를 넘긴다. 위에 겹친 시트를 끌 때도 버튼이 따라간다.
 - 프레임마다 불리므로 받은 값을 화면의 `@State`에 담지 않는다. 작은 `@Observable` 객체에 담아 그 값을 읽는 뷰만 다시 그려지게 한다. 지도 화면은 `MapSheetPosition`에 담고 `MapLocationButtonLayer`만 다시 그린다.
 - 시트를 숨겼을 때 버튼이 멈출 자리와 끝까지 올렸을 때 숨기는 방법은 쓰는 쪽이 정한다. 지도 화면은 시트를 숨기면 목록 보기 버튼 오른쪽에 멈추고, 끝까지 올리기 150pt 전부터 흐려지다 끝에서 숨는다.
-- 시트를 붙인 화면은 그리는 도중 `UIWindow.safeAreaInsets` 같은 UIKit 값을 읽지 않는다. UIKit이 상태 바 설정을 SwiftUI에 되물어 그래프 순환이 생기고, 순환이 끊긴 자리의 화면이 갱신되지 않는다. 지도 화면은 창의 safe area를 읽다가 시트를 숨겨도 목록 보기 버튼이 나타나지 않았다. safe area는 `GeometryReader`의 `safeAreaInsets`로 읽는다.
+- 시트를 붙인 화면은 그리는 도중 `UIWindow.safeAreaInsets` 같은 UIKit 값을 읽지 않는다. UIKit이 상태 바 설정을 SwiftUI에 되물어 그래프 순환이 생기고, 순환이 끊긴 자리의 화면이 갱신되지 않는다. 지도 화면은 창의 safe area를 읽다가 시트를 숨겨도 목록 보기 버튼이 나타나지 않았다. safe area는 `GeometryReader`의 `safeAreaInsets`로 읽는다. 이 값의 아래쪽에는 키보드 높이가 들어가므로, 키보드와 상관없는 창 값이 필요하면 `onChange`처럼 그리기가 끝난 뒤 불리는 곳에서 읽어 둔다. 지도 화면은 탭바 높이를 이렇게 구한다.
 
 ## 시트 안에서 끌기
 

@@ -42,14 +42,16 @@ public struct MapFeatureView: View {
     @State private var secondSheet: MapSecondSheet?
     @State private var secondSheetDetent: BottomSheetDetent = .medium
     @State private var sheetPosition = MapSheetPosition()
+    /// 창의 safe area. 키보드가 올라와도 바뀌지 않는다. 화면을 그리는 도중에는 읽지 않고 `onChange`에서 읽어 둔다.
+    @State private var windowSafeAreaInsets: UIEdgeInsets?
 
     public init(store: StoreOf<MapFeature>) {
         self.store = store
     }
 
     public var body: some View {
-        // safe area는 창(`UIWindow`)이 아니라 GeometryReader에서 읽는다.
-        // 화면을 그리는 도중 창의 safe area를 읽으면 UIKit이 상태 바 설정을 SwiftUI에 되물어 그래프 순환이 생기고,
+        // 화면을 그리는 도중에는 창(`UIWindow`)의 safe area를 읽지 않는다.
+        // 읽으면 UIKit이 상태 바 설정을 SwiftUI에 되물어 그래프 순환이 생기고,
         // 순환이 끊긴 자리의 화면이 갱신되지 않는다(시트를 숨겨도 목록 보기 버튼이 나타나지 않았다).
         GeometryReader { proxy in
             let bottomBarHeight = bottomTabBarHeight(safeArea: proxy.safeAreaInsets)
@@ -146,6 +148,10 @@ public struct MapFeatureView: View {
             .onDisappear {
                 clearCallbacks()
             }
+            // 창의 safe area는 그리기가 끝난 뒤 읽어 둔다. 키보드가 올라와 크기가 바뀌어도 값은 그대로다.
+            .onChange(of: proxy.size, initial: true) {
+                windowSafeAreaInsets = keyWindowSafeAreaInsets
+            }
             .ignoresSafeArea(edges: [.top, .bottom])
         }
     }
@@ -229,9 +235,26 @@ private extension MapFeatureView {
     }
 
     /// 지도 아래쪽을 가리는 탭바 높이. 홈 인디케이터 영역을 포함한다.
-    /// 클래식 탭바는 `PopPangTabView`가 탭 화면의 하단 safe area에 탭바 높이를 더해 두므로 하단 safe area와 같다.
+    /// 클래식 탭바는 시스템 탭바를 숨기고 하단 safe area 위에 붙으므로, 창의 하단 safe area에 그 높이를 더한다.
+    /// GeometryReader의 하단 safe area는 키보드가 올라오면 키보드 높이가 되므로 창 값을 쓴다.
+    /// 창 값을 읽기 전 첫 화면에서만 GeometryReader 값을 쓴다. 키보드가 없으면 두 값이 같다.
     func bottomTabBarHeight(safeArea: EdgeInsets) -> CGFloat {
-        tabBarStyle == .classic ? safeArea.bottom : tabBarHeight
+        guard tabBarStyle == .classic else { return tabBarHeight }
+        guard let windowSafeAreaInsets else { return safeArea.bottom }
+        return PopPangTabBarMetrics.height + windowSafeAreaInsets.bottom
+    }
+
+    /// 키 윈도우의 safe area. 화면을 그리는 도중에는 부르지 않는다.
+    var keyWindowSafeAreaInsets: UIEdgeInsets? {
+        guard let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first,
+            let window = scene.windows.first(where: { $0.isKeyWindow })
+        else {
+            return nil
+        }
+
+        return window.safeAreaInsets
     }
 
     func configureCallbacks() {
