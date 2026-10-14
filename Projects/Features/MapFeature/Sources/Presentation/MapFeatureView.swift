@@ -39,14 +39,18 @@ public struct MapFeatureView: View {
     }
 
     public var body: some View {
-        GeometryReader { _ in
+        // safe area는 창(`UIWindow`)이 아니라 GeometryReader에서 읽는다.
+        // 화면을 그리는 도중 창의 safe area를 읽으면 UIKit이 상태 바 설정을 SwiftUI에 되물어 그래프 순환이 생기고,
+        // 순환이 끊긴 자리의 화면이 갱신되지 않는다(시트를 숨겨도 목록 보기 버튼이 나타나지 않았다).
+        GeometryReader { proxy in
+            let bottomBarHeight = bottomTabBarHeight(safeArea: proxy.safeAreaInsets)
             ZStack(alignment: .trailing) {
                 NaverMapView(popups: store.mapPopups)
                     .ignoresSafeArea()
 
                 topControls
                     .frame(maxHeight: .infinity, alignment: .top)
-                    .padding(.top, safeAreaInsets.top + 10)
+                    .padding(.top, proxy.safeAreaInsets.top + 10)
                     .padding(.horizontal, 15)
 
                 if firstSheetDetent == nil {
@@ -59,7 +63,7 @@ public struct MapFeatureView: View {
                             .padding(.trailing, 20)
                     }
                     .frame(maxHeight: .infinity, alignment: .bottom)
-                    .padding(.bottom, 20 + bottomTabBarHeight)
+                    .padding(.bottom, 20 + bottomBarHeight)
                     // 시트에 붙은 내 위치 버튼이 시트와 함께 내려간 뒤에 나타나게 해, 버튼이 두 개 보이지 않게 한다.
                     // 목록을 다시 띄울 때는 시트가 올라오기 전에 바로 사라진다.
                     .transition(
@@ -237,21 +241,10 @@ private extension MapFeatureView {
         )
     }
 
-    /// 클래식 탭바는 시스템 탭바를 숨기고 하단 safe area 위에 붙으므로 그 높이를 직접 더한다.
-    var bottomTabBarHeight: CGFloat {
-        tabBarStyle == .classic ? PopPangTabBarMetrics.height + safeAreaInsets.bottom : tabBarHeight
-    }
-
-    var safeAreaInsets: UIEdgeInsets {
-        guard let scene = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .first,
-            let window = scene.windows.first(where: { $0.isKeyWindow })
-        else {
-            return .zero
-        }
-
-        return window.safeAreaInsets
+    /// 지도 아래쪽을 가리는 탭바 높이. 홈 인디케이터 영역을 포함한다.
+    /// 클래식 탭바는 `PopPangTabView`가 탭 화면의 하단 safe area에 탭바 높이를 더해 두므로 하단 safe area와 같다.
+    func bottomTabBarHeight(safeArea: EdgeInsets) -> CGFloat {
+        tabBarStyle == .classic ? safeArea.bottom : tabBarHeight
     }
 
     func configureCallbacks() {
