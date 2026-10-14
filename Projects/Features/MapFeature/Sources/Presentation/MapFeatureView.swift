@@ -391,10 +391,11 @@ private struct SecondSheetView: View {
     let onPopupDetailTap: (Popup) -> Void
 
     var body: some View {
+        // 세 시트 모두 제목 줄로 시트를 끌고, 그 아래 내용은 스크롤만 한다.
+        // 작은 화면의 가운데 높이에서는 내용이 다 들어가지 않으므로 목록이 아닌 내용도 스크롤로 둔다.
         Group {
             switch sheet {
             case .region:
-                // 제목 줄로 시트를 끌고, 지역·구 목록은 목록만 스크롤한다.
                 MapRegionSheet(
                     regions: store.regions,
                     selectedRegion: store.selectedRegion,
@@ -405,16 +406,13 @@ private struct SecondSheetView: View {
                 )
 
             case .sort:
-                // 목록이 아니고 가운데 높이에 다 들어가므로, 스크롤하지 않고 어디를 끌어도 시트가 움직인다.
                 MapSortButtonSheet(
                     selectedOption: store.selectedOption,
                     onDismiss: onDismiss,
                     onSortSelected: onSortSelected
                 )
-                .bottomSheetDragHandle()
 
             case .detail(let popup):
-                // 정렬 시트처럼 스크롤하지 않고 어디를 끌어도 시트가 움직인다. 누르면 상세로 간다.
                 DetailSheetView(
                     popup: popup,
                     onDismiss: onDismiss,
@@ -422,7 +420,6 @@ private struct SecondSheetView: View {
                         onPopupDetailTap(popup)
                     }
                 )
-                .bottomSheetDragHandle()
             }
         }
         .ignoresSafeArea(edges: .top)

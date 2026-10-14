@@ -72,6 +72,7 @@ struct MapSortButtonSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            // 제목 줄을 끌면 시트가 움직인다. 아래 옵션은 스크롤 영역이라 스크롤만 한다.
             HStack(spacing: 0) {
                 Text("정렬")
                     .foregroundStyle(Color.mainBlack)
@@ -87,28 +88,31 @@ struct MapSortButtonSheet: View {
                         .font(.system(size: 21, weight: .regular))
                 }
             }
+            .bottomSheetDragHandle()
 
-            VStack(alignment: .leading, spacing: 10) {
-                ForEach(MapSortOption.allCases, id: \.self) { option in
-                    Button {
-                        onSortSelected(option)
-                    } label: {
-                        DSKitResource.image(selectedOption == option ? "circle_filled" : "circle")
-                            .resizable()
-                            .frame(width: 15, height: 15)
-                            .foregroundColor(selectedOption == option ? .orange : .gray)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 10) {
+                    ForEach(MapSortOption.allCases, id: \.self) { option in
+                        Button {
+                            onSortSelected(option)
+                        } label: {
+                            DSKitResource.image(selectedOption == option ? "circle_filled" : "circle")
+                                .resizable()
+                                .frame(width: 15, height: 15)
+                                .foregroundColor(selectedOption == option ? .orange : .gray)
 
-                        Text(option.title)
-                            .foregroundStyle(Color.mainBlack)
-                            .ppStyleFont(.scdream(.regular, size: 15))
+                            Text(option.title)
+                                .foregroundStyle(Color.mainBlack)
+                                .ppStyleFont(.scdream(.regular, size: 15))
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(height: 40)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .frame(height: 40)
                 }
+                .padding(.top, 28)
+                // 작은 화면의 가운데 높이에서도 마지막 옵션까지 보이도록, 탭바 아래 여백을 두고 스크롤되게 한다.
+                .padding(.bottom, 100)
             }
-            .padding(.top, 28)
-
-            Spacer()
         }
         .padding(.top, 8)
         .padding(.horizontal, 28)
@@ -352,6 +356,7 @@ struct DetailSheetView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            // X가 있는 첫 줄을 끌면 시트가 움직인다. 아래 내용은 스크롤 영역이라 스크롤만 한다.
             HStack(alignment: .firstTextBaseline) {
                 Text(popup.recommendList.first ?? "")
                     .ppStyleFont(.scdream(.regular, size: 12))
@@ -372,68 +377,73 @@ struct DetailSheetView: View {
                 .buttonStyle(.plain)
             }
             .padding(.top, 10)
+            .bottomSheetDragHandle()
 
-            HStack(spacing: 0) {
-                Text(popup.name)
-                    .ppStyleFont(.scdream(.bold, size: 18))
-                    .foregroundStyle(Color.mainBlack)
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 0) {
+                    HStack(spacing: 0) {
+                        Text(popup.name)
+                            .ppStyleFont(.scdream(.bold, size: 18))
+                            .foregroundStyle(Color.mainBlack)
 
-                Spacer()
-            }
-
-            VStack(spacing: 5) {
-                detailRow(title: "운영 장소", value: popup.roadAddress)
-
-                HStack(spacing: 5) {
-                    Text("운영 날짜")
-                        .ppStyleFont(.scdream(.light, size: 12))
-                        .foregroundStyle(Color.mainGray)
-
-                    HStack(spacing: 3) {
-                        Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
-                        Text("-")
-                        Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
-                    }
-                    .ppStyleFontFixedSpacing(.scdream(.regular, size: 12), letterSpacingPt: -1)
-                    .foregroundStyle(Color.mainBlack)
-
-                    Spacer()
-                }
-
-                HStack(spacing: 5) {
-                    if popup.openTime != nil, popup.closeTime != nil {
-                        Text("운영 시간")
-                            .ppStyleFont(.scdream(.light, size: 12))
-                            .foregroundStyle(Color.mainGray)
+                        Spacer()
                     }
 
-                    HStack(spacing: 2) {
-                        if let openTime = popup.openTime, let closeTime = popup.closeTime {
-                            Text(openTime)
-                            Text("-")
-                            Text(closeTime)
+                    VStack(spacing: 5) {
+                        detailRow(title: "운영 장소", value: popup.roadAddress)
+
+                        HStack(spacing: 5) {
+                            Text("운영 날짜")
+                                .ppStyleFont(.scdream(.light, size: 12))
+                                .foregroundStyle(Color.mainGray)
+
+                            HStack(spacing: 3) {
+                                Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
+                                Text("-")
+                                Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
+                            }
+                            .ppStyleFontFixedSpacing(.scdream(.regular, size: 12), letterSpacingPt: -1)
+                            .foregroundStyle(Color.mainBlack)
+
+                            Spacer()
+                        }
+
+                        HStack(spacing: 5) {
+                            if popup.openTime != nil, popup.closeTime != nil {
+                                Text("운영 시간")
+                                    .ppStyleFont(.scdream(.light, size: 12))
+                                    .foregroundStyle(Color.mainGray)
+                            }
+
+                            HStack(spacing: 2) {
+                                if let openTime = popup.openTime, let closeTime = popup.closeTime {
+                                    Text(openTime)
+                                    Text("-")
+                                    Text(closeTime)
+                                }
+                            }
+                            .ppStyleFont(.scdream(.regular, size: 12))
+                            .foregroundStyle(Color.mainBlack)
+
+                            Spacer()
                         }
                     }
-                    .ppStyleFont(.scdream(.regular, size: 12))
-                    .foregroundStyle(Color.mainBlack)
+                    .padding(.top, 10)
 
-                    Spacer()
+                    KFImage(URL(string: popup.imageUrlList.first ?? ""))
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: imageWidth, height: 182)
+                        .clipped()
+                        .allowsHitTesting(false)
+                        .padding(.top, 20)
                 }
+                // 작은 화면의 가운데 높이에서도 사진 끝까지 보이도록, 탭바 아래 여백을 두고 스크롤되게 한다.
+                .padding(.bottom, 100)
             }
-            .padding(.top, 10)
-
-            KFImage(URL(string: popup.imageUrlList.first ?? ""))
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: imageWidth, height: 182)
-                .clipped()
-                .allowsHitTesting(false)
-                .padding(.top, 20)
         }
         .padding(.horizontal, .contentPadding)
-        // 시트에 다 들어가는 크기라 스크롤하지 않는다. 빈 곳을 눌러도 상세로 가도록 영역 전체를 누를 수 있게 한다.
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .contentShape(Rectangle())
+        // 제목 줄이나 내용을 누르면 상세로 간다.
         .onTapGesture(perform: onDetailTap)
     }
 
