@@ -1,3 +1,4 @@
+import Observation
 import SheetKit
 import SwiftUI
 
@@ -24,6 +25,12 @@ private enum OptionSheet: Identifiable {
     }
 }
 
+/// 시트 높이를 담는 작은 객체. 이 값을 읽는 내 위치 버튼만 프레임마다 다시 그려진다.
+@Observable
+private final class SheetPosition {
+    var geometry: BottomSheetGeometry?
+}
+
 /// 지도 화면처럼 목록 시트 위에 옵션 시트를 겹쳐 띄우는 데모.
 ///
 /// 아래를 확인한다.
@@ -31,7 +38,7 @@ private enum OptionSheet: Identifiable {
 /// - 시트를 열고 닫거나 내용을 바꿔도 가로 길이가 그대로다.
 /// - 검색창 키보드가 올라와도 시트가 밀리지 않는다.
 /// - 목록 끝이 탭바에 가리지 않는다.
-/// - 내 위치 버튼이 목록 시트 위에 붙어 같이 움직이고, 시트를 끝까지 올리면 숨는다.
+/// - 내 위치 버튼이 시트 위를 따라 움직이고, 시트를 숨기면 바닥으로 내려가며, 끝까지 올리면 숨는다.
 /// - 목록 위에서 끌면 목록만 스크롤되고, 머리 줄과 빈 곳을 끌면 시트가 움직인다.
 struct MapSheetDemoView: View {
     private static let coordinateSpace = "map"
@@ -45,6 +52,7 @@ struct MapSheetDemoView: View {
     @State private var searchBarBottom: CGFloat = 0
     @State private var mapTapCount = 0
     @State private var locateTapCount = 0
+    @State private var sheetPosition = SheetPosition()
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -72,19 +80,22 @@ struct MapSheetDemoView: View {
             }
         }
         .coordinateSpace(name: Self.coordinateSpace)
+        .overlay {
+            LocateButtonLayer(position: sheetPosition, restingBottomPadding: 20) {
+                locateTapCount += 1
+            }
+        }
         .bottomSheet(detent: $listDetent) {
             popupList
-        } accessory: {
-            locateButton
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.trailing, 16)
-                .padding(.bottom, 12)
         }
         .bottomSheet(item: $optionSheet, detent: $optionDetent) { sheet in
             optionContent(sheet)
         }
         // 시트를 끝까지 올려도 검색창은 보이게 한다.
         .bottomSheetTopInset(searchBarBottom + 20)
+        .onBottomSheetGeometryChange { geometry in
+            sheetPosition.geometry = geometry
+        }
         .onChange(of: optionDetent) { _, detent in
             // 옵션 시트를 끌면 뒤의 목록 시트도 같은 높이로 따라간다.
             listDetent = detent
@@ -130,18 +141,6 @@ private extension MapSheetDemoView {
                         }
                 }
             }
-    }
-
-    var locateButton: some View {
-        Button {
-            locateTapCount += 1
-        } label: {
-            Image(systemName: "location.fill")
-                .frame(width: 44, height: 44)
-                .background(.background, in: Circle())
-                .shadow(radius: 4)
-        }
-        .accessibilityLabel("내 위치")
     }
 
     var popupList: some View {
@@ -255,5 +254,44 @@ private extension MapSheetDemoView {
         listDetent = detent
         optionDetent = detent
         optionSheet = sheet
+    }
+}
+
+/// 내 위치 버튼. 시트 위쪽 끝을 따라 움직이고, 시트를 숨기면 바닥에 멈춘다. 시트를 끝까지 올리면 흐려지며 숨는다.
+private struct LocateButtonLayer: View {
+    /// 시트 위쪽 끝과 버튼 사이 간격.
+    private static let spacing: CGFloat = 12
+    /// 시트를 끝까지 올리기 전 이만큼 남았을 때부터 버튼이 흐려진다.
+    private static let fadeDistance: CGFloat = 150
+
+    let position: SheetPosition
+    /// 시트를 숨겼을 때 버튼이 멈출 바닥 여백.
+    let restingBottomPadding: CGFloat
+    let action: () -> Void
+
+    var body: some View {
+        let geometry = position.geometry
+        let opacity = Self.opacity(for: geometry)
+
+        Button(action: action) {
+            Image(systemName: "location.fill")
+                .frame(width: 44, height: 44)
+                .background(.background, in: Circle())
+                .shadow(radius: 4)
+        }
+        .accessibilityLabel("내 위치")
+        .opacity(opacity)
+        .allowsHitTesting(opacity > 0)
+        .accessibilityHidden(opacity == 0)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        .padding(.trailing, 16)
+        .padding(.bottom, max((geometry?.height ?? 0) + Self.spacing, restingBottomPadding))
+    }
+
+    /// 시트 높이를 받기 전에는 숨기고, 끝까지 올라가기 직전부터 흐려진다.
+    private static func opacity(for geometry: BottomSheetGeometry?) -> CGFloat {
+        guard let geometry else { return 0 }
+        guard geometry.maxHeight > 0 else { return 1 }
+        return min(max((geometry.maxHeight - geometry.height) / fadeDistance, 0), 1)
     }
 }

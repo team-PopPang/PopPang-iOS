@@ -1,6 +1,7 @@
 import ComposableArchitecture
 import Domain
 import DSKit
+import Observation
 import SheetKit
 import SwiftUI
 import UIKit
@@ -23,6 +24,13 @@ private enum MapSecondSheet: Identifiable {
     }
 }
 
+/// 시트 높이를 담는 작은 객체. 이 값을 읽는 내 위치 버튼만 프레임마다 다시 그려진다.
+/// 화면의 `@State`에 바로 담으면 끄는 동안 지도 화면 전체가 프레임마다 다시 그려진다.
+@Observable
+private final class MapSheetPosition {
+    var geometry: BottomSheetGeometry?
+}
+
 public struct MapFeatureView: View {
     @Bindable var store: StoreOf<MapFeature>
     @Environment(\.popPangTabBarStyle) private var tabBarStyle
@@ -33,6 +41,7 @@ public struct MapFeatureView: View {
     @State private var firstSheetDetent: BottomSheetDetent? = .medium
     @State private var secondSheet: MapSecondSheet?
     @State private var secondSheetDetent: BottomSheetDetent = .medium
+    @State private var sheetPosition = MapSheetPosition()
 
     public init(store: StoreOf<MapFeature>) {
         self.store = store
@@ -54,25 +63,17 @@ public struct MapFeatureView: View {
                     .padding(.horizontal, 15)
 
                 if firstSheetDetent == nil {
-                    // 목록 시트를 숨기면 시트에 붙어 있던 내 위치 버튼을 목록 보기 버튼 오른쪽에 둔다.
-                    ZStack {
-                        listButton
-
-                        currentLocationButton
-                            .frame(maxWidth: .infinity, alignment: .trailing)
-                            .padding(.trailing, 20)
-                    }
-                    .frame(maxHeight: .infinity, alignment: .bottom)
-                    .padding(.bottom, 20 + bottomBarHeight)
-                    // 시트에 붙은 내 위치 버튼이 시트와 함께 내려간 뒤에 나타나게 해, 버튼이 두 개 보이지 않게 한다.
-                    // 목록을 다시 띄울 때는 시트가 올라오기 전에 바로 사라진다.
-                    .transition(
-                        .asymmetric(
-                            insertion: .opacity.animation(.easeOut(duration: 0.2).delay(0.35)),
-                            removal: .identity
-                        )
-                    )
+                    listButton
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                        .padding(.bottom, 20 + bottomBarHeight)
                 }
+
+                // 내 위치 버튼은 하나만 둔다. 시트 위를 따라 움직이고, 시트를 숨기면 목록 보기 버튼 오른쪽에 멈춘다.
+                MapLocationButtonLayer(
+                    position: sheetPosition,
+                    restingBottomPadding: 20 + bottomBarHeight,
+                    action: moveToUserLocation
+                )
             }
             .background {
                 TabBarProxy { _, tabBar in
@@ -104,12 +105,6 @@ public struct MapFeatureView: View {
                         store.send(.toggleLike(popup))
                     }
                 )
-            } accessory: {
-                // 내 위치 버튼은 목록 시트 오른쪽 위에 붙어 시트와 같이 움직이고, 시트를 끝까지 올리면 숨는다.
-                currentLocationButton
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.trailing, 20)
-                    .padding(.bottom, 12)
             }
             .bottomSheet(item: $secondSheet, detent: $secondSheetDetent) { sheet in
                 SecondSheetView(
@@ -137,6 +132,9 @@ public struct MapFeatureView: View {
             // 시트를 끝까지 올려도 검색창은 보이게 한다.
             .bottomSheetTopInset(searchBarFrame.maxY + 20)
             .ppBottomSheetStyle()
+            .onBottomSheetGeometryChange { geometry in
+                sheetPosition.geometry = geometry
+            }
             .onChange(of: secondSheetDetent) { _, detent in
                 // 두 번째 시트를 끌면 뒤에 있는 첫 번째 시트도 같은 높이로 따라간다.
                 firstSheetDetent = detent
@@ -192,23 +190,12 @@ private extension MapFeatureView {
         }
     }
 
-    var currentLocationButton: some View {
-        Button {
-            if firstSheetDetent == nil {
-                NaverMapCoordinator.shared.moveToUserLocation()
-            } else {
-                NaverMapCoordinator.shared.moveToUserLocation(yOffset: -300)
-            }
-        } label: {
-            DSKitResource.image("location")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 40, height: 40)
-                .background(Color.white)
-                .clipShape(Circle())
-                .shadow(radius: 4)
+    func moveToUserLocation() {
+        if firstSheetDetent == nil {
+            NaverMapCoordinator.shared.moveToUserLocation()
+        } else {
+            NaverMapCoordinator.shared.moveToUserLocation(yOffset: -300)
         }
-        .buttonStyle(.plain)
     }
 
     var listButton: some View {
@@ -297,6 +284,50 @@ private extension MapFeatureView {
         firstSheetDetent = detent
         secondSheetDetent = detent
         secondSheet = sheet
+    }
+}
+
+/// 내 위치 버튼. 시트 위쪽 끝을 따라 움직이고, 시트를 숨기면 목록 보기 버튼 오른쪽에 멈춘다.
+/// 시트를 끝까지 올리면 흐려지며 숨는다.
+/// 시트 높이는 끄는 동안 프레임마다 바뀌므로, 화면 body가 아니라 이 뷰에서 읽어 이 뷰만 다시 그려지게 한다.
+private struct MapLocationButtonLayer: View {
+    /// 시트 위쪽 끝과 버튼 사이 간격.
+    private static let spacing: CGFloat = 12
+    /// 시트를 끝까지 올리기 전 이만큼 남았을 때부터 버튼이 흐려진다.
+    private static let fadeDistance: CGFloat = 150
+
+    let position: MapSheetPosition
+    /// 시트를 숨겼을 때 버튼이 멈출 바닥 여백. 목록 보기 버튼과 같은 높이다.
+    let restingBottomPadding: CGFloat
+    let action: () -> Void
+
+    var body: some View {
+        let geometry = position.geometry
+        let opacity = Self.opacity(for: geometry)
+
+        Button(action: action) {
+            DSKitResource.image("location")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 40, height: 40)
+                .background(Color.white)
+                .clipShape(Circle())
+                .shadow(radius: 4)
+        }
+        .buttonStyle(.plain)
+        .opacity(opacity)
+        .allowsHitTesting(opacity > 0)
+        .accessibilityHidden(opacity == 0)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        .padding(.trailing, 20)
+        .padding(.bottom, max((geometry?.height ?? 0) + Self.spacing, restingBottomPadding))
+    }
+
+    /// 시트 높이를 받기 전에는 숨기고, 끝까지 올라가기 직전부터 흐려진다.
+    private static func opacity(for geometry: BottomSheetGeometry?) -> CGFloat {
+        guard let geometry else { return 0 }
+        guard geometry.maxHeight > 0 else { return 1 }
+        return min(max((geometry.maxHeight - geometry.height) / fadeDistance, 0), 1)
     }
 }
 

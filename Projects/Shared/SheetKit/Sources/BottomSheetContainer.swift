@@ -4,7 +4,7 @@ import SwiftUI
 ///
 /// 손잡이 줄, 내용이 터치를 받지 않는 빈 곳, `bottomSheetDragHandle(_:)`로 지정한 뷰를 끌면 시트가 움직인다.
 /// 목록(스크롤뷰, `List`)에는 시트 제스처를 붙이지 않으므로, 목록 위에서 시작한 끌기는 목록만 스크롤한다.
-struct BottomSheetContainer<Content: View, Accessory: View>: View {
+struct BottomSheetContainer<Content: View>: View {
     /// 지금 높이 단계. `nil`이면 시트를 숨긴다.
     let detent: BottomSheetDetent?
     let detents: Set<BottomSheetDetent>
@@ -15,8 +15,6 @@ struct BottomSheetContainer<Content: View, Accessory: View>: View {
     /// 손잡이로 높이 단계를 바꿀 때 부른다. 숨기면 `nil`을 넘긴다.
     let setDetent: (BottomSheetDetent?) -> Void
     let content: Content
-    /// 시트 위쪽 끝에 붙어 시트와 같이 움직이는 뷰. 없으면 `EmptyView`다.
-    let accessory: Accessory
 
     @Environment(\.bottomSheetTopInset) private var topInset
     @Environment(\.bottomSheetBackground) private var background
@@ -37,16 +35,15 @@ struct BottomSheetContainer<Content: View, Accessory: View>: View {
     @State private var containerHeight: CGFloat = 0
 
     var body: some View {
+        let layout = BottomSheetLayout(containerHeight: containerHeight, topInset: topInset)
+
         // 시트는 GeometryReader 클로저 밖에서 그린다.
         // 클로저 안에서 그리면, 상위 뷰 구조에 따라 바인딩이 바뀌어도 클로저가 다시 실행되지 않아 시트가 나타나지 않는다.
-        Color.clear
+        return Color.clear
             .overlay(alignment: .bottom) {
                 if let detent, containerHeight > 0 {
-                    sheet(
-                        detent: detent,
-                        layout: BottomSheetLayout(containerHeight: containerHeight, topInset: topInset)
-                    )
-                    .transition(.move(edge: .bottom))
+                    sheet(detent: detent, layout: layout)
+                        .transition(.move(edge: .bottom))
                 }
             }
             .background {
@@ -60,6 +57,15 @@ struct BottomSheetContainer<Content: View, Accessory: View>: View {
                         }
                 }
             }
+            // 시트 높이를 바깥(`onBottomSheetGeometryChange`)에 알린다. 숨으면 0이다.
+            // 아래 `.animation`보다 안쪽에 둬야 높이 단계가 바뀔 때 중간 높이까지 알린다.
+            .modifier(
+                BottomSheetGeometryReporter(
+                    height: detent.map { sheetHeight(detent: $0, layout: layout) } ?? 0,
+                    maxHeight: layout.maxHeight,
+                    isActive: containerHeight > 0
+                )
+            )
             .onChange(of: isGrabberDragging) { _, isDragging in
                 guard !isDragging else { return }
                 dragAbandoned(source: .grabber)
@@ -74,16 +80,20 @@ struct BottomSheetContainer<Content: View, Accessory: View>: View {
             .animation(BottomSheetMetrics.animation, value: detent)
     }
 
+    /// 지금 그릴 시트 높이.
+    private func sheetHeight(detent: BottomSheetDetent, layout: BottomSheetLayout) -> CGFloat {
+        // 이 시트를 끄는 거리에, 위에 겹친 시트들을 끄는 거리를 더한다.
+        let translation = dragTranslation + linksAbove.totalTranslation
+        return min(
+            max(layout.height(for: detent) - translation, BottomSheetMetrics.grabberAreaHeight),
+            layout.maxHeight
+        )
+    }
+
     private func sheet(detent: BottomSheetDetent, layout: BottomSheetLayout) -> some View {
         let sortedDetents = layout.sortedDetents(detents)
         let baseHeight = layout.height(for: detent)
-        // 이 시트를 끄는 거리에, 위에 겹친 시트들을 끄는 거리를 더한다.
-        let translation = dragTranslation + linksAbove.totalTranslation
-        let height = min(
-            max(baseHeight - translation, BottomSheetMetrics.grabberAreaHeight),
-            layout.maxHeight
-        )
-        let accessoryOpacity = layout.accessoryOpacity(sheetHeight: height, in: sortedDetents)
+        let height = sheetHeight(detent: detent, layout: layout)
         let shape = UnevenRoundedRectangle(
             topLeadingRadius: cornerRadius,
             topTrailingRadius: cornerRadius,
@@ -108,34 +118,25 @@ struct BottomSheetContainer<Content: View, Accessory: View>: View {
             }
         )
 
-        return VStack(spacing: 0) {
-            // 액세서리는 시트 위쪽 끝에 붙여 같은 높이 값으로 그린다.
-            // 시트를 붙인 화면이 매 프레임 시트 위치를 받아 다시 그리지 않아도 시트와 같은 프레임에 움직인다.
-            accessory
-                .opacity(accessoryOpacity)
-                .allowsHitTesting(accessoryOpacity > 0)
-                .accessibilityHidden(accessoryOpacity == 0)
-
-            sheetBody(
-                detent: detent,
-                layout: layout,
-                sortedDetents: sortedDetents,
-                sink: sink
-            )
-            // 가로 길이는 따로 계산하지 않고 시트를 붙인 뷰의 너비를 그대로 쓴다.
-            .frame(maxWidth: .infinity)
-            .frame(height: height, alignment: .top)
-            .clipShape(shape)
-            .background {
-                // 내용은 safe area 안에 두고, 배경만 탭바와 홈 인디케이터 아래 화면 끝까지 깐다.
-                // 내용이 터치를 받지 않는 빈 곳(여백, Spacer)을 끌어도 시트가 움직이도록 배경에 끌기를 붙인다.
-                // 배경 색이 투명해도 잡히도록 모양으로 판정한다.
-                shape
-                    .fill(background)
-                    .contentShape(shape)
-                    .gesture(dragGesture(source: .background, isActive: $isBackgroundDragging, sink: sink))
-                    .ignoresSafeArea(.container, edges: .bottom)
-            }
+        return sheetBody(
+            detent: detent,
+            layout: layout,
+            sortedDetents: sortedDetents,
+            sink: sink
+        )
+        // 가로 길이는 따로 계산하지 않고 시트를 붙인 뷰의 너비를 그대로 쓴다.
+        .frame(maxWidth: .infinity)
+        .frame(height: height, alignment: .top)
+        .clipShape(shape)
+        .background {
+            // 내용은 safe area 안에 두고, 배경만 탭바와 홈 인디케이터 아래 화면 끝까지 깐다.
+            // 내용이 터치를 받지 않는 빈 곳(여백, Spacer)을 끌어도 시트가 움직이도록 배경에 끌기를 붙인다.
+            // 배경 색이 투명해도 잡히도록 모양으로 판정한다.
+            shape
+                .fill(background)
+                .contentShape(shape)
+                .gesture(dragGesture(source: .background, isActive: $isBackgroundDragging, sink: sink))
+                .ignoresSafeArea(.container, edges: .bottom)
         }
     }
 

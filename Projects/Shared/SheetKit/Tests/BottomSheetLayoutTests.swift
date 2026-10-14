@@ -98,25 +98,6 @@ struct BottomSheetLayoutTests {
         #expect(layout.targetDetent(releasedHeight: releasedHeight, velocity: 0, in: detents, canHide: true) == .medium)
     }
 
-    @Test("액세서리는 가장 높은 단계 바로 아래 단계까지 보이고, 가장 높은 단계로 갈수록 흐려져 숨는다")
-    func accessoryFadesOutTowardHighestDetent() {
-        let detents = layout.sortedDetents([.medium, .large])
-
-        #expect(layout.accessoryOpacity(sheetHeight: 300, in: detents) == 1)
-        #expect(layout.accessoryOpacity(sheetHeight: 400, in: detents) == 1)
-        #expect(layout.accessoryOpacity(sheetHeight: 550, in: detents) == 0.5)
-        #expect(layout.accessoryOpacity(sheetHeight: 700, in: detents) == 0)
-    }
-
-    @Test("단계가 하나뿐이면 액세서리는 높이 0부터 그 단계까지 흐려진다")
-    func accessoryFadesFromZeroWithSingleDetent() {
-        let detents = layout.sortedDetents([.large])
-
-        #expect(layout.accessoryOpacity(sheetHeight: 0, in: detents) == 1)
-        #expect(layout.accessoryOpacity(sheetHeight: 350, in: detents) == 0.5)
-        #expect(layout.accessoryOpacity(sheetHeight: 700, in: detents) == 0)
-    }
-
     @Test("손잡이를 누르면 위로 한 단계, 맨 위에서는 아래로 한 단계 간다")
     func tapMovesOneStep() {
         let detents = layout.sortedDetents([.fraction(0.25), .medium, .large])
