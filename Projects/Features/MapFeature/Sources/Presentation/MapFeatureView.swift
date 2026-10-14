@@ -60,6 +60,14 @@ public struct MapFeatureView: View {
                     }
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .padding(.bottom, 20 + bottomTabBarHeight)
+                    // 시트에 붙은 내 위치 버튼이 시트와 함께 내려간 뒤에 나타나게 해, 버튼이 두 개 보이지 않게 한다.
+                    // 목록을 다시 띄울 때는 시트가 올라오기 전에 바로 사라진다.
+                    .transition(
+                        .asymmetric(
+                            insertion: .opacity.animation(.easeOut(duration: 0.2).delay(0.35)),
+                            removal: .identity
+                        )
+                    )
                 }
             }
             .background {
