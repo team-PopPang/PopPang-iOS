@@ -38,43 +38,64 @@ struct BottomSheetLayoutTests {
         #expect(layout.sortedDetents([]) == [.large])
     }
 
-    @Test("손을 뗀 예상 높이에서 가장 가까운 단계에 멈춘다")
+    @Test("멈춘 채로 손을 떼면 그 높이에서 가장 가까운 단계에 멈춘다")
     func targetIsNearestDetent() {
         let detents = layout.sortedDetents([.medium, .large])
 
-        #expect(layout.targetDetent(projectedHeight: 520, in: detents, canHide: true) == .medium)
-        #expect(layout.targetDetent(projectedHeight: 580, in: detents, canHide: true) == .large)
+        #expect(layout.targetDetent(releasedHeight: 520, velocity: 0, in: detents, canHide: true) == .medium)
+        #expect(layout.targetDetent(releasedHeight: 580, velocity: 0, in: detents, canHide: true) == .large)
     }
 
-    @Test("빠르게 튕겨 예상 높이가 범위를 넘으면 끝 단계로 간다")
-    func flickGoesToEdges() {
+    @Test("손을 뗀 속도는 초속 1,000pt마다 약 99pt만 더 가게 반영한다")
+    func projectedDistanceIsShort() {
+        #expect(abs(BottomSheetLayout.projectedDistance(for: 1_000) - 99) < 0.001)
+        #expect(abs(BottomSheetLayout.projectedDistance(for: -2_000) + 198) < 0.001)
+    }
+
+    @Test("튕기면 속도만큼 더 간 높이에서 가장 가까운 단계에 멈춘다")
+    func flickMovesTowardVelocity() {
         let detents = layout.sortedDetents([.medium, .large])
 
-        #expect(layout.targetDetent(projectedHeight: 1_500, in: detents, canHide: true) == .large)
-        #expect(layout.targetDetent(projectedHeight: -800, in: detents, canHide: false) == .medium)
+        #expect(layout.targetDetent(releasedHeight: 450, velocity: -2_000, in: detents, canHide: true) == .large)
+        #expect(layout.targetDetent(releasedHeight: 650, velocity: 2_000, in: detents, canHide: true) == .medium)
+    }
+
+    @Test("끝까지 올린 시트를 살짝 튕겨 내리면 숨지 않고 가운데 단계에 멈춘다")
+    func shortFlickFromTopStopsAtMedium() {
+        let detents = layout.sortedDetents([.medium, .large])
+
+        // 700에서 60pt 내리고 초속 2,500pt로 놓은 경우. 예상 높이는 약 392.5다.
+        #expect(layout.targetDetent(releasedHeight: 640, velocity: 2_500, in: detents, canHide: true) == .medium)
+    }
+
+    @Test("가장 낮은 단계에서 세게 튕겨 내리면 숨긴다")
+    func strongFlickFromLowestDetentHides() {
+        let detents = layout.sortedDetents([.medium, .large])
+
+        #expect(layout.targetDetent(releasedHeight: 400, velocity: 3_000, in: detents, canHide: true) == nil)
     }
 
     @Test("숨길 수 있으면 가장 낮은 단계의 절반보다 아래에서 숨긴다")
     func hidesBelowHalfOfLowestDetent() {
         let detents = layout.sortedDetents([.medium, .large])
 
-        #expect(layout.targetDetent(projectedHeight: 199, in: detents, canHide: true) == nil)
-        #expect(layout.targetDetent(projectedHeight: 201, in: detents, canHide: true) == .medium)
+        #expect(layout.targetDetent(releasedHeight: 199, velocity: 0, in: detents, canHide: true) == nil)
+        #expect(layout.targetDetent(releasedHeight: 201, velocity: 0, in: detents, canHide: true) == .medium)
     }
 
     @Test("숨길 수 없으면 아무리 내려도 가장 낮은 단계에 멈춘다")
     func staysAtLowestDetentWhenCannotHide() {
         let detents = layout.sortedDetents([.medium, .large])
 
-        #expect(layout.targetDetent(projectedHeight: 0, in: detents, canHide: false) == .medium)
+        #expect(layout.targetDetent(releasedHeight: 0, velocity: 3_000, in: detents, canHide: false) == .medium)
     }
 
     @Test("목록에 없는 높이에서 놓아도 가까운 단계에 멈춘다")
     func unknownHeightSnapsToNearestDetent() {
         let detents = layout.sortedDetents([.medium, .large])
-        let projectedHeight = layout.height(for: .height(450))
+        let releasedHeight = layout.height(for: .height(450))
 
-        #expect(layout.targetDetent(projectedHeight: projectedHeight, in: detents, canHide: true) == .medium)
+        #expect(layout.targetDetent(releasedHeight: releasedHeight, velocity: 0, in: detents, canHide: true) == .medium)
     }
 
     @Test("손잡이를 누르면 위로 한 단계, 맨 위에서는 아래로 한 단계 간다")

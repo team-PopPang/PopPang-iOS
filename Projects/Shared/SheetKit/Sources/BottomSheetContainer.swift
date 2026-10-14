@@ -128,8 +128,10 @@ struct BottomSheetContainer<Content: View>: View {
                 link.translation = value.translation.height
             }
             .onEnded { value in
+                // `predictedEndTranslation`은 너무 멀리 예측하므로 속도는 `BottomSheetLayout`이 짧게 반영한다.
                 let target = layout.targetDetent(
-                    projectedHeight: baseHeight - value.predictedEndTranslation.height,
+                    releasedHeight: baseHeight - value.translation.height,
+                    velocity: value.velocity.height,
                     in: sortedDetents,
                     canHide: canHide
                 )
