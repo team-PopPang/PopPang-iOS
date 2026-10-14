@@ -315,6 +315,8 @@ private struct FirstSheetView: View {
                 }
             }
             .padding(.horizontal, .contentPadding)
+            // 가까운순 줄을 끌어도 시트가 움직인다. 아래 목록은 목록만 스크롤한다.
+            .bottomSheetDragHandle()
 
             MapListView(
                 popups: store.mapPopups,
@@ -389,9 +391,10 @@ private struct SecondSheetView: View {
     let onPopupDetailTap: (Popup) -> Void
 
     var body: some View {
-        ScrollView {
+        Group {
             switch sheet {
             case .region:
+                // 제목 줄로 시트를 끌고, 지역·구 목록은 목록만 스크롤한다.
                 MapRegionSheet(
                     regions: store.regions,
                     selectedRegion: store.selectedRegion,
@@ -400,17 +403,18 @@ private struct SecondSheetView: View {
                     onRegionSelected: onRegionSelected,
                     onDistrictSelected: onDistrictSelected
                 )
-                .padding(.bottom, 100)
 
             case .sort:
+                // 목록이 아니고 가운데 높이에 다 들어가므로, 스크롤하지 않고 어디를 끌어도 시트가 움직인다.
                 MapSortButtonSheet(
                     selectedOption: store.selectedOption,
                     onDismiss: onDismiss,
                     onSortSelected: onSortSelected
                 )
-                .padding(.bottom, 100)
+                .bottomSheetDragHandle()
 
             case .detail(let popup):
+                // 정렬 시트처럼 스크롤하지 않고 어디를 끌어도 시트가 움직인다. 누르면 상세로 간다.
                 DetailSheetView(
                     popup: popup,
                     onDismiss: onDismiss,
@@ -418,8 +422,7 @@ private struct SecondSheetView: View {
                         onPopupDetailTap(popup)
                     }
                 )
-                // 시트가 탭바 아래까지 깔리므로, 지역·정렬 시트처럼 아래 여백을 둬 끝까지 스크롤되게 한다.
-                .padding(.bottom, 100)
+                .bottomSheetDragHandle()
             }
         }
         .ignoresSafeArea(edges: .top)

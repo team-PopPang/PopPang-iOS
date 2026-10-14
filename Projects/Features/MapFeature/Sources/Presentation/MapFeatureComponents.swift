@@ -2,6 +2,7 @@ import Core
 import Domain
 import DSKit
 import Kingfisher
+import SheetKit
 import SwiftUI
 import UIKit
 
@@ -127,87 +128,99 @@ struct MapRegionSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                Text("지역")
-                    .foregroundStyle(Color.mainBlack)
-                    .ppStyleFont(.scdream(.bold, size: 17))
+            // 제목 줄과 구분선을 끌면 시트가 움직인다. 아래 지역·구 목록은 목록만 스크롤한다.
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    Text("지역")
+                        .foregroundStyle(Color.mainBlack)
+                        .ppStyleFont(.scdream(.bold, size: 17))
 
-                Spacer()
+                    Spacer()
 
-                Button {
-                    onDismiss()
-                } label: {
-                    Image(systemName: "xmark")
-                        .foregroundStyle(.black)
-                        .font(.system(size: 17, weight: .bold))
-                }
-            }
-
-            Rectangle()
-                .frame(height: dividerHeight)
-                .foregroundStyle(Color.mainGray3)
-                .padding(.top, 30)
-
-            HStack(spacing: 0) {
-                List(regions) { region in
                     Button {
-                        onRegionSelected(region)
+                        onDismiss()
                     } label: {
-                        HStack(spacing: 0) {
-                            Spacer()
-                            Text(region.region)
-                                .foregroundStyle(selectedRegion == region ? Color.mainOrange : Color.mainGray)
-                                .font(.scdream(.regular, size: 12))
-                            Spacer()
-                        }
+                        Image(systemName: "xmark")
+                            .foregroundStyle(.black)
+                            .font(.system(size: 17, weight: .bold))
                     }
-                    .frame(height: rowHeight)
-                    .listRowBackground(selectedRegion == region ? Color.subWhite : Color.mainGray4)
-                    .listRowInsets(EdgeInsets())
-                    .listRowSeparator(.hidden)
                 }
-                .frame(width: 65)
-                .listStyle(.plain)
-                .scrollIndicators(.hidden)
 
-                Divider()
-
-                if let selectedRegion {
-                    List(selectedRegion.districtList, id: \.self) { district in
-                        VStack(spacing: 0) {
-                            Button {
-                                Logger.d("선택된 지역: \(selectedRegion.region), 구: \(district)")
-                                onDistrictSelected(district)
-                            } label: {
-                                HStack(spacing: 0) {
-                                    Text(district)
-                                        .foregroundStyle(selectedDistrict == district ? Color.mainOrange : .primary)
-                                        .font(.scdream(.regular, size: 12))
-                                        .padding(.leading, 20)
-                                    Spacer()
-                                }
-                            }
-                            .frame(height: rowHeight)
-
-                            Divider()
-                        }
-                        .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.hidden)
-                    }
-                    .listStyle(.plain)
-                    .scrollIndicators(.hidden)
-                }
+                Rectangle()
+                    .frame(height: dividerHeight)
+                    .foregroundStyle(Color.mainGray3)
+                    .padding(.top, 30)
             }
-            .frame(height: CGFloat(max(regions.count, 1)) * rowHeight)
+            .bottomSheetDragHandle()
 
-            Rectangle()
-                .frame(height: dividerHeight)
-                .foregroundStyle(Color.mainGray3)
+            ScrollView {
+                VStack(spacing: 0) {
+                    regionLists
 
-            Spacer()
+                    Rectangle()
+                        .frame(height: dividerHeight)
+                        .foregroundStyle(Color.mainGray3)
+                }
+                // 시트가 탭바 아래까지 깔리므로 아래 여백을 둬 끝까지 스크롤되게 한다.
+                .padding(.bottom, 100)
+            }
         }
         .padding(.top, 8)
         .padding(.horizontal, 28)
+    }
+
+    private var regionLists: some View {
+        HStack(spacing: 0) {
+            List(regions) { region in
+                Button {
+                    onRegionSelected(region)
+                } label: {
+                    HStack(spacing: 0) {
+                        Spacer()
+                        Text(region.region)
+                            .foregroundStyle(selectedRegion == region ? Color.mainOrange : Color.mainGray)
+                            .font(.scdream(.regular, size: 12))
+                        Spacer()
+                    }
+                }
+                .frame(height: rowHeight)
+                .listRowBackground(selectedRegion == region ? Color.subWhite : Color.mainGray4)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+            }
+            .frame(width: 65)
+            .listStyle(.plain)
+            .scrollIndicators(.hidden)
+
+            Divider()
+
+            if let selectedRegion {
+                List(selectedRegion.districtList, id: \.self) { district in
+                    VStack(spacing: 0) {
+                        Button {
+                            Logger.d("선택된 지역: \(selectedRegion.region), 구: \(district)")
+                            onDistrictSelected(district)
+                        } label: {
+                            HStack(spacing: 0) {
+                                Text(district)
+                                    .foregroundStyle(selectedDistrict == district ? Color.mainOrange : .primary)
+                                    .font(.scdream(.regular, size: 12))
+                                    .padding(.leading, 20)
+                                Spacer()
+                            }
+                        }
+                        .frame(height: rowHeight)
+
+                        Divider()
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                }
+                .listStyle(.plain)
+                .scrollIndicators(.hidden)
+            }
+        }
+        .frame(height: CGFloat(max(regions.count, 1)) * rowHeight)
     }
 }
 
@@ -338,88 +351,89 @@ struct DetailSheetView: View {
     private let imageWidth: CGFloat = UIScreen.main.bounds.width - 30
 
     var body: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(spacing: 0) {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(popup.recommendList.first ?? "")
-                        .ppStyleFont(.scdream(.regular, size: 12))
-                        .foregroundStyle(Color.mainGray9)
+        VStack(spacing: 0) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(popup.recommendList.first ?? "")
+                    .ppStyleFont(.scdream(.regular, size: 12))
+                    .foregroundStyle(Color.mainGray9)
 
-                    Spacer()
+                Spacer()
 
-                    Button {
-                        onDismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .foregroundStyle(.black)
-                            .font(.system(size: 11, weight: .regular))
-                            .frame(width: 27, height: 27)
-                            .background(Color.mainGray5)
-                            .clipShape(Circle())
+                Button {
+                    onDismiss()
+                } label: {
+                    Image(systemName: "xmark")
+                        .foregroundStyle(.black)
+                        .font(.system(size: 11, weight: .regular))
+                        .frame(width: 27, height: 27)
+                        .background(Color.mainGray5)
+                        .clipShape(Circle())
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.top, 10)
+
+            HStack(spacing: 0) {
+                Text(popup.name)
+                    .ppStyleFont(.scdream(.bold, size: 18))
+                    .foregroundStyle(Color.mainBlack)
+
+                Spacer()
+            }
+
+            VStack(spacing: 5) {
+                detailRow(title: "운영 장소", value: popup.roadAddress)
+
+                HStack(spacing: 5) {
+                    Text("운영 날짜")
+                        .ppStyleFont(.scdream(.light, size: 12))
+                        .foregroundStyle(Color.mainGray)
+
+                    HStack(spacing: 3) {
+                        Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
+                        Text("-")
+                        Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
                     }
-                    .buttonStyle(.plain)
-                }
-                .padding(.top, 10)
-
-                HStack(spacing: 0) {
-                    Text(popup.name)
-                        .ppStyleFont(.scdream(.bold, size: 18))
-                        .foregroundStyle(Color.mainBlack)
+                    .ppStyleFontFixedSpacing(.scdream(.regular, size: 12), letterSpacingPt: -1)
+                    .foregroundStyle(Color.mainBlack)
 
                     Spacer()
                 }
 
-                VStack(spacing: 5) {
-                    detailRow(title: "운영 장소", value: popup.roadAddress)
-
-                    HStack(spacing: 5) {
-                        Text("운영 날짜")
+                HStack(spacing: 5) {
+                    if popup.openTime != nil, popup.closeTime != nil {
+                        Text("운영 시간")
                             .ppStyleFont(.scdream(.light, size: 12))
                             .foregroundStyle(Color.mainGray)
+                    }
 
-                        HStack(spacing: 3) {
-                            Text(popup.startDate, formatter: DateFormatter.popupDateFormat)
+                    HStack(spacing: 2) {
+                        if let openTime = popup.openTime, let closeTime = popup.closeTime {
+                            Text(openTime)
                             Text("-")
-                            Text(popup.endDate, formatter: DateFormatter.popupDateFormat)
+                            Text(closeTime)
                         }
-                        .ppStyleFontFixedSpacing(.scdream(.regular, size: 12), letterSpacingPt: -1)
-                        .foregroundStyle(Color.mainBlack)
-
-                        Spacer()
                     }
+                    .ppStyleFont(.scdream(.regular, size: 12))
+                    .foregroundStyle(Color.mainBlack)
 
-                    HStack(spacing: 5) {
-                        if popup.openTime != nil, popup.closeTime != nil {
-                            Text("운영 시간")
-                                .ppStyleFont(.scdream(.light, size: 12))
-                                .foregroundStyle(Color.mainGray)
-                        }
-
-                        HStack(spacing: 2) {
-                            if let openTime = popup.openTime, let closeTime = popup.closeTime {
-                                Text(openTime)
-                                Text("-")
-                                Text(closeTime)
-                            }
-                        }
-                        .ppStyleFont(.scdream(.regular, size: 12))
-                        .foregroundStyle(Color.mainBlack)
-
-                        Spacer()
-                    }
+                    Spacer()
                 }
-                .padding(.top, 10)
-
-                KFImage(URL(string: popup.imageUrlList.first ?? ""))
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: imageWidth, height: 182)
-                    .clipped()
-                    .allowsHitTesting(false)
-                    .padding(.top, 20)
             }
-            .padding(.horizontal, .contentPadding)
+            .padding(.top, 10)
+
+            KFImage(URL(string: popup.imageUrlList.first ?? ""))
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: imageWidth, height: 182)
+                .clipped()
+                .allowsHitTesting(false)
+                .padding(.top, 20)
         }
+        .padding(.horizontal, .contentPadding)
+        // 시트에 다 들어가는 크기라 스크롤하지 않는다. 빈 곳을 눌러도 상세로 가도록 영역 전체를 누를 수 있게 한다.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .contentShape(Rectangle())
         .onTapGesture(perform: onDetailTap)
     }
 

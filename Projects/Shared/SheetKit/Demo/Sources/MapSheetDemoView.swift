@@ -32,6 +32,7 @@ private enum OptionSheet: Identifiable {
 /// - 검색창 키보드가 올라와도 시트가 밀리지 않는다.
 /// - 목록 끝이 탭바에 가리지 않는다.
 /// - 내 위치 버튼이 목록 시트 위에 붙어 같이 움직이고, 시트를 끝까지 올리면 숨는다.
+/// - 목록 위에서 끌면 목록만 스크롤되고, 머리 줄과 빈 곳을 끌면 시트가 움직인다.
 struct MapSheetDemoView: View {
     private static let coordinateSpace = "map"
     private static let regions = ["전체", "서울", "경기", "인천", "부산", "대구", "광주", "대전", "울산", "세종", "강원", "충북", "충남", "전북", "전남", "경북", "경남", "제주"]
@@ -161,6 +162,8 @@ private extension MapSheetDemoView {
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 8)
+            // 머리 줄을 끌어도 시트가 움직인다. 버튼은 탭을 그대로 받는다.
+            .bottomSheetDragHandle()
 
             ScrollView {
                 LazyVStack(spacing: 0) {
@@ -205,9 +208,11 @@ private extension MapSheetDemoView {
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 8)
+            .bottomSheetDragHandle()
 
             switch sheet {
             case .region:
+                // 목록 위에서 끌면 목록만 스크롤된다.
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         ForEach(Self.regions, id: \.self) { region in
@@ -216,12 +221,17 @@ private extension MapSheetDemoView {
                     }
                 }
             case .sort:
-                ForEach(Self.sortOptions, id: \.self) { option in
-                    optionRow(option)
+                // 목록이 아니므로 옵션 사이 어디를 끌어도 시트가 움직인다.
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Self.sortOptions, id: \.self) { option in
+                        optionRow(option)
+                    }
                 }
+                .bottomSheetDragHandle()
             case .detail(let index):
                 Text("팝업 \(index) 미리보기. 시트를 연 채로 다른 팝업을 누르면 높이는 그대로 두고 내용만 바뀐다.")
                     .padding(.horizontal, 16)
+                    .bottomSheetDragHandle()
             }
         }
     }
