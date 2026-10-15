@@ -27,13 +27,27 @@ public extension UIFont {
             case .black: "SCDream9"
             }
         }
+
+        fileprivate var systemWeight: UIFont.Weight {
+            switch self {
+            case .thin: .thin
+            case .extraLight: .ultraLight
+            case .light: .light
+            case .regular: .regular
+            case .medium: .medium
+            case .bold: .bold
+            case .extraBold: .heavy
+            case .heavy: .heavy
+            case .black: .black
+            }
+        }
     }
 
     static func scdream(_ weight: SCDream, size: CGFloat) -> UIFont {
         SCDreamFontRegistrar.registerIfNeeded()
 
         if let font = UIFont(name: weight.rawValue, size: size) {
-            return font
+            return SCDreamFallback.font(font, weight: weight)
         }
 
         assertionFailure("Failed to load S-CoreDream font: \(weight.rawValue)")
@@ -44,6 +58,29 @@ public extension UIFont {
 public extension Font {
     static func scdream(_ weight: UIFont.SCDream, size: CGFloat) -> Font {
         Font(UIFont.scdream(weight, size: size))
+    }
+}
+
+/// SCDream에 없는 글자(한자, 장음 기호 ー 등)를 시스템 고딕 글꼴로 채운다.
+/// 글꼴 파일이 스스로를 세리프체로 분류해서, 그대로 두면 iOS가 명조체(일본어는 히라기노 명조)로 채운다.
+private enum SCDreamFallback {
+    private static let cache = NSCache<NSString, UIFont>()
+
+    /// 화면 문구의 언어. 한자를 이 언어의 글자 모양으로 고른다. 예: ja는 히라기노 고딕, ko는 Apple SD Gothic Neo
+    private static let language = Bundle.module.preferredLocalizations.first ?? "ko"
+
+    static func font(_ font: UIFont, weight: UIFont.SCDream) -> UIFont {
+        let key = "\(weight.rawValue)-\(font.pointSize)" as NSString
+        if let cached = cache.object(forKey: key) {
+            return cached
+        }
+
+        let system = UIFont.systemFont(ofSize: font.pointSize, weight: weight.systemWeight)
+        let cascadeList = CTFontCopyDefaultCascadeListForLanguages(system as CTFont, [language] as CFArray) as? [UIFontDescriptor] ?? []
+        let descriptor = font.fontDescriptor.addingAttributes([.cascadeList: cascadeList])
+        let fallbackFont = UIFont(descriptor: descriptor, size: font.pointSize)
+        cache.setObject(fallbackFont, forKey: key)
+        return fallbackFont
     }
 }
 
