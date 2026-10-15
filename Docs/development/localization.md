@@ -21,6 +21,7 @@ PopPang 화면 문구는 모듈마다 `Resources/Localizable.xcstrings`(String C
 | 다른 언어 | ko·en·ja가 아닌 언어의 기기에서는 영어로 보여요. 앱 `Info.plist`의 `CFBundleDevelopmentRegion`이 `en`이에요. |
 | 카탈로그 위치 | 문구가 있는 모듈의 `Resources/Localizable.xcstrings` |
 | 권한 안내 문구 | `Projects/App/Resources/InfoPlist.xcstrings` |
+| 앱 이름 | 바탕화면 아이콘과 권한 창에 보이는 이름이에요. ko는 `팝팡`, en·ja는 `PopPang`이에요. `InfoPlist.xcstrings`의 `CFBundleDisplayName`에 있어요. |
 | 원문 언어 | `sourceLanguage`는 `ko`예요. |
 | 키 | 한국어 원문을 그대로 키로 써요. 예: `"다음"`, `"리뷰 %lld개"` |
 | 항목 관리 | 모든 항목을 직접 관리해요(`extractionState: manual`). ko·en·ja 값을 모두 넣어요. |
