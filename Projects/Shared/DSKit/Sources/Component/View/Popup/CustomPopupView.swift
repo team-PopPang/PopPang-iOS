@@ -38,7 +38,7 @@ public struct CustomPopupView: View {
                 Button {
                     onDismiss()
                 } label: {
-                    Text("확인")
+                    Text("확인", bundle: .module)
                         .ppStyleFont(.scdream(.medium, size: 15))
                         .frame(maxWidth: .infinity)
                         .padding()

@@ -82,16 +82,16 @@ public struct MapFeatureView: View {
                     tabBarHeight = tabBar.bounds.height
                 }
             }
-            .alert("위치 권한이 필요합니다", isPresented: $showLocationPermissionAlert) {
-                Button("설정으로 이동") {
+            .alert(Text("위치 권한이 필요합니다", bundle: .module), isPresented: $showLocationPermissionAlert) {
+                Button(String(localized: "설정으로 이동", bundle: .module)) {
                     guard let url = URL(string: UIApplication.openSettingsURLString),
                           UIApplication.shared.canOpenURL(url)
                     else { return }
                     UIApplication.shared.open(url)
                 }
-                Button("취소", role: .cancel) {}
+                Button(String(localized: "취소", bundle: .module), role: .cancel) {}
             } message: {
-                Text("주변 팝업스토어를 지도에서 보여주고 내 위치로 이동하려면 위치 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.")
+                Text("주변 팝업스토어를 지도에서 보여주고 내 위치로 이동하려면 위치 접근 권한이 필요합니다. 설정에서 권한을 허용해주세요.", bundle: .module)
             }
             .bottomSheet(detent: $firstSheetDetent) {
                 FirstSheetView(
@@ -170,7 +170,7 @@ private extension MapFeatureView {
                     .background(Color.mainGray8)
 
                 MapSearchTextField(
-                    placeholder: "궁금한 팝업을 검색해보세요",
+                    placeholder: String(localized: "궁금한 팝업을 검색해보세요", bundle: .module),
                     text: searchTextBinding
                 )
             }
@@ -214,7 +214,7 @@ private extension MapFeatureView {
                     .frame(width: 12, height: 12)
                     .padding(.bottom, 3)
 
-                Text("목록 보기")
+                Text("목록 보기", bundle: .module)
                     .foregroundStyle(Color.mainBlack)
                     .font(.scdream(.regular, size: 12))
             }
@@ -403,7 +403,7 @@ private struct MapListView: View {
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 24)
         } else if popups.isEmpty {
-            Text("검색 결과가 없습니다.")
+            Text("검색 결과가 없습니다.", bundle: .module)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 24)
         } else {

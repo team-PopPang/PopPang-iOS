@@ -23,7 +23,7 @@ public struct CalendarFeatureView: View {
     public var body: some View {
         VStack(spacing: 0) {
             CustomNavigationBar {
-                Text("캘린더")
+                Text("캘린더", bundle: .module)
                     .ppStyleFont(.scdream(.medium, size: 18))
                     .foregroundStyle(Color.mainBlack)
 
@@ -164,7 +164,7 @@ private struct CalendarPopupListView: View {
 
                 Spacer()
 
-                RegionButton(text: "지역") {
+                RegionButton(text: String(localized: "지역", bundle: .module)) {
                     onRegionTapped()
                 }
                 .padding(.leading, -10)
@@ -185,7 +185,7 @@ private struct CalendarPopupListView: View {
             }
 
             if popups.isEmpty && !isLoading {
-                Text("선택한 날짜에 팝업이 없습니다")
+                Text("선택한 날짜에 팝업이 없습니다", bundle: .module)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.top, 24)
             } else {
@@ -218,8 +218,9 @@ private struct CalendarPopupListView: View {
 
     private func formattedDate(_ date: Date) -> String {
         let dayFormatter = DateFormatter()
-        dayFormatter.locale = Locale(identifier: "ko_KR")
-        dayFormatter.dateFormat = "d일 (E)"
+        // 기기 지역이 아니라 화면 문구와 같은 언어로 쓴다. 예: 15일 (목), Thu 15, 15日(木)
+        dayFormatter.locale = Locale(identifier: Bundle.module.preferredLocalizations.first ?? "ko")
+        dayFormatter.setLocalizedDateFormatFromTemplate("dE")
         return dayFormatter.string(from: date)
     }
 }

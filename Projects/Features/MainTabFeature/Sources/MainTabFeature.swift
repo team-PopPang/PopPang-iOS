@@ -23,15 +23,15 @@ public enum MainTab: Hashable, CaseIterable, Sendable {
     var title: String {
         switch self {
         case .home:
-            "홈"
+            String(localized: "홈", bundle: .module)
         case .calendar:
-            "캘린더"
+            String(localized: "캘린더", bundle: .module)
         case .map:
-            "팝팡지도"
+            String(localized: "팝팡지도", bundle: .module)
         case .favorites:
-            "팝팡"
+            String(localized: "팝팡", bundle: .module)
         case .profile:
-            "마이"
+            String(localized: "마이", bundle: .module)
         }
     }
     
@@ -281,7 +281,7 @@ public struct MainTabFeature {
                 state.core.destination = .search(
                     .init(
                         userUuid: state.core.user.userUuid,
-                        nickname: state.core.user.nickname ?? "닉네임"
+                        nickname: state.core.user.nickname ?? String(localized: "닉네임", bundle: .module)
                     )
                 )
                 return .none

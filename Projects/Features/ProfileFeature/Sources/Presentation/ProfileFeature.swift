@@ -15,7 +15,7 @@ public struct ProfileFeature {
 
         public init(user: User) {
             self.userUuid = user.userUuid
-            self.nickname = user.nickname ?? "닉네임"
+            self.nickname = user.nickname ?? String(localized: "닉네임", bundle: .module)
             self.localIsAlerted = user.isAlerted
         }
 
@@ -113,7 +113,7 @@ public struct ProfileSettingFeature {
 
         public init(user: User) {
             self.userUuid = user.userUuid
-            self.nickname = user.nickname ?? "닉네임"
+            self.nickname = user.nickname ?? String(localized: "닉네임", bundle: .module)
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {

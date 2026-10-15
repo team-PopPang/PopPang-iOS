@@ -14,8 +14,8 @@ public struct ProfileFeatureView: View {
 
     private let email = SupportEmail(
         toAddress: "poppang.app@gmail.com",
-        title: "팝팡 문의사항",
-        messageHeader: "문의사항을 입력해주세요."
+        title: String(localized: "팝팡 문의사항", bundle: .module),
+        messageHeader: String(localized: "문의사항을 입력해주세요.", bundle: .module)
     )
     private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
 
@@ -26,7 +26,7 @@ public struct ProfileFeatureView: View {
     public var body: some View {
         VStack(spacing: 0) {
             CustomNavigationBar {
-                Text("마이페이지")
+                Text("마이페이지", bundle: .module)
                     .ppStyleFont(.scdream(.medium, size: 18))
                     .foregroundStyle(Color.mainBlack)
 
@@ -54,9 +54,9 @@ public struct ProfileFeatureView: View {
 
                 HStack(spacing: 0) {
                     VStack(alignment: .leading, spacing: 0) {
-                        Text("키워드 알림")
+                        Text("키워드 알림", bundle: .module)
                             .ppStyleFont(.scdream(.regular, size: 12))
-                        Text("키워드의 팝업이 등록되면 안내해 드립니다.")
+                        Text("키워드의 팝업이 등록되면 안내해 드립니다.", bundle: .module)
                             .ppStyleFont(.scdream(.light, size: 10))
                     }
 
@@ -75,17 +75,17 @@ public struct ProfileFeatureView: View {
                 }
                 .padding(.horizontal, 24)
 
-                NavigationButton(title: "공지사항", buttonType: .navigation) {
+                NavigationButton(title: String(localized: "공지사항", bundle: .module), buttonType: .navigation) {
                     store.send(.notificationsTapped)
                 }
                 .padding(.horizontal, 24)
 
-                NavigationButton(title: "문의하기", buttonType: .navigation) {
+                NavigationButton(title: String(localized: "문의하기", bundle: .module), buttonType: .navigation) {
                     email.send(openURL: openURL)
                 }
                 .padding(.horizontal, 24)
 
-                NavigationButton(title: "서비스 이용약관", buttonType: .navigation) {
+                NavigationButton(title: String(localized: "서비스 이용약관", bundle: .module), buttonType: .navigation) {
                     store.send(.serviceTermsTapped)
                 }
                 .padding(.horizontal, 24)
@@ -103,23 +103,23 @@ public struct ProfileFeatureView: View {
 
             HStack {
                 Spacer()
-                Text("버전: \(appVersion)")
+                Text("버전: \(appVersion)", bundle: .module)
                     .ppStyleFont(.scdream(.regular, size: 12))
                     .foregroundStyle(Color.mainGray2)
             }
             .padding(.trailing, 24)
                 .padding(.bottom, 24)
         }
-        .alert("알림 허용", isPresented: $showPermissionAlert) {
-            Button("설정으로 이동") {
+        .alert(Text("알림 허용", bundle: .module), isPresented: $showPermissionAlert) {
+            Button(String(localized: "설정으로 이동", bundle: .module)) {
                 guard let url = URL(string: UIApplication.openSettingsURLString),
                       UIApplication.shared.canOpenURL(url)
                 else { return }
                 UIApplication.shared.open(url)
             }
-            Button("다음에 하기", role: .cancel) {}
+            Button(String(localized: "다음에 하기", bundle: .module), role: .cancel) {}
         } message: {
-            Text("팝업스토어 키워드 알림을 받으려면 알림 권한을 허용해 주세요.")
+            Text("팝업스토어 키워드 알림을 받으려면 알림 권한을 허용해 주세요.", bundle: .module)
         }
     }
 
@@ -166,7 +166,7 @@ public struct ProfileSettingFeatureView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 10) {
                 RoundedTextField(
-                    placeholder: "닉네임을 입력해 주세요",
+                    placeholder: String(localized: "닉네임을 입력해 주세요", bundle: .module),
                     text: $draftNickname,
                     validationState: store.validationState
                 )
@@ -175,7 +175,7 @@ public struct ProfileSettingFeatureView: View {
                 Button {
                     store.send(.validateNicknameTapped)
                 } label: {
-                    Text("중복확인")
+                    Text("중복확인", bundle: .module)
                         .font(.scdream(.medium, size: 12))
                         .frame(width: 100, height: 48)
                         .foregroundStyle(Color.mainWhite)
@@ -197,7 +197,7 @@ public struct ProfileSettingFeatureView: View {
             Button {
                 store.send(.logoutTapped)
             } label: {
-                Text("로그아웃")
+                Text("로그아웃", bundle: .module)
                     .frame(height: 22)
                     .ppStyleFont(.scdream(.regular, size: 12))
                     .foregroundStyle(Color.subBlack)
@@ -207,7 +207,7 @@ public struct ProfileSettingFeatureView: View {
             Button {
                 showHardDeleteAlert = true
             } label: {
-                Text("회원탈퇴")
+                Text("회원탈퇴", bundle: .module)
                     .frame(height: 22)
                     .ppStyleFont(.scdream(.regular, size: 10))
                     .foregroundStyle(Color.mainGray2)
@@ -217,7 +217,7 @@ public struct ProfileSettingFeatureView: View {
             Spacer()
 
             MainOrangeButton(
-                buttonTitle: "닉네임 변경",
+                buttonTitle: String(localized: "닉네임 변경", bundle: .module),
                 buttonColor: store.validationState == .success ? Color.mainOrange : Color.mainGray2
             ) {
                 isFocused = false
@@ -229,7 +229,7 @@ public struct ProfileSettingFeatureView: View {
         }
         .padding(.top, 24)
         .padding(.horizontal, 24)
-        .ppBackNavigationBar(title: "프로필 설정") {
+        .ppBackNavigationBar(title: String(localized: "프로필 설정", bundle: .module)) {
             store.send(.delegate(.dismiss))
         }
         .onAppear {
@@ -238,13 +238,13 @@ public struct ProfileSettingFeatureView: View {
         .onChange(of: draftNickname) { _, newValue in
             store.send(.nicknameChanged(newValue))
         }
-        .alert("회원 탈퇴", isPresented: $showHardDeleteAlert) {
-            Button("탈퇴하기", role: .destructive) {
+        .alert(Text("회원 탈퇴", bundle: .module), isPresented: $showHardDeleteAlert) {
+            Button(String(localized: "탈퇴하기", bundle: .module), role: .destructive) {
                 store.send(.hardDeleteTapped)
             }
-            Button("취소", role: .cancel) {}
+            Button(String(localized: "취소", bundle: .module), role: .cancel) {}
         } message: {
-            Text("탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.")
+            Text("탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.", bundle: .module)
         }
     }
 
@@ -253,27 +253,27 @@ public struct ProfileSettingFeatureView: View {
         if !store.newNickname.isEmpty {
             switch store.validationState {
             case .success:
-                Text("사용 가능한 닉네임입니다.")
+                Text("사용 가능한 닉네임입니다.", bundle: .module)
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainGreen)
                     .padding(.top, 5)
             case .duplicate:
-                Text("이미 사용 중인 닉네임입니다.")
+                Text("이미 사용 중인 닉네임입니다.", bundle: .module)
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainRed)
                     .padding(.top, 5)
             case .invalidSpace:
-                Text("공백은 사용할 수 없습니다.")
+                Text("공백은 사용할 수 없습니다.", bundle: .module)
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainRed)
                     .padding(.top, 5)
             case .tooShort:
-                Text("2글자 이하는 사용할 수 없습니다.")
+                Text("2글자 이하는 사용할 수 없습니다.", bundle: .module)
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainRed)
                     .padding(.top, 5)
             case .checking:
-                Text("확인 중입니다.")
+                Text("확인 중입니다.", bundle: .module)
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainGray)
                     .padding(.top, 5)
@@ -291,7 +291,7 @@ public struct NotificationFeatureView: View {
 
     public var body: some View {
         WebView(url: ExternalLinkConfig.notificationURL)
-            .ppBackNavigationBar(title: "공지사항") {
+            .ppBackNavigationBar(title: String(localized: "공지사항", bundle: .module)) {
                 dismiss()
             }
     }
@@ -304,7 +304,7 @@ public struct ServiceTermsFeatureView: View {
 
     public var body: some View {
         WebView(url: ExternalLinkConfig.serviceTermsURL)
-            .ppBackNavigationBar(title: "서비스 이용약관") {
+            .ppBackNavigationBar(title: String(localized: "서비스 이용약관", bundle: .module)) {
                 dismiss()
             }
     }

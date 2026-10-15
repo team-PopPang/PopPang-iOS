@@ -1,0 +1,100 @@
+{
+  "sourceLanguage" : "ko",
+  "strings" : {
+    "검색결과가 없습니다." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "No results found."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "検索結果がありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색결과가 없습니다."
+          }
+        }
+      }
+    },
+    "궁금한 장소를 검색해보세요" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Search for places"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "気になる場所を検索"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "궁금한 장소를 검색해보세요"
+          }
+        }
+      }
+    },
+    "님의 최근 본 검색어가 없습니다" : {
+      "comment" : "Follows the user's nickname. Keep the leading space in English.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : " has no recent searches"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "さんの最近の検索キーワードはありません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "님의 최근 본 검색어가 없습니다"
+          }
+        }
+      }
+    },
+    "님의 최근 본 검색어예요" : {
+      "comment" : "Follows the user's nickname",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "'s recent searches"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "さんの最近の検索キーワードです"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "님의 최근 본 검색어예요"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

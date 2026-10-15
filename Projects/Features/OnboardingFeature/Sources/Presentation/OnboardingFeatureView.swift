@@ -28,8 +28,8 @@ public struct OnboardingFeatureView: View {
 
                     MainOrangeButton(
                         buttonTitle: store.currentStep == .favorite
-                            ? LocalizationKey.commonStart.localized(comment: "Primary CTA to start the app")
-                            : LocalizationKey.commonNext.localized(comment: "Primary CTA to continue to the next step")
+                            ? String(localized: "시작하기", bundle: .module, comment: "Primary CTA to start the app")
+                            : String(localized: "다음", bundle: .module, comment: "Primary CTA to continue to the next step")
                     ) {
                         store.send(.nextTapped)
                     }
@@ -43,7 +43,7 @@ public struct OnboardingFeatureView: View {
             Button {
                 store.send(.skipTapped)
             } label: {
-                Text(LocalizationKey.commonSkip.localized(comment: "Action to skip onboarding"))
+                Text("건너뛰기", bundle: .module, comment: "Action to skip onboarding")
                     .font(.scdream(.regular, size: 12))
                     .foregroundColor(Color.mainBlack)
             }
@@ -138,22 +138,22 @@ public enum OnboardingStep: Int, CaseIterable, Sendable {
     var title: String {
         switch self {
         case .keyword:
-            LocalizationKey.onboardingKeywordTitle.localized(comment: "Onboarding title for keyword notifications")
+            String(localized: "팝업스토어 알림", bundle: .module, comment: "Onboarding title for keyword notifications")
         case .map:
-            LocalizationKey.onboardingMapTitle.localized(comment: "Onboarding title for map-based service")
+            String(localized: "위치 기반 서비스", bundle: .module, comment: "Onboarding title for map-based service")
         case .favorite:
-            LocalizationKey.onboardingFavoriteTitle.localized(comment: "Onboarding title for favorites calendar")
+            String(localized: "캘린더형 찜 리스트", bundle: .module, comment: "Onboarding title for favorites calendar")
         }
     }
 
     var content: String {
         switch self {
         case .keyword:
-            LocalizationKey.onboardingKeywordContent.localized(comment: "Onboarding body for keyword notifications")
+            String(localized: "키워드를 등록하여 원하는 팝업 알림을 받아보세요.", bundle: .module, comment: "Onboarding body for keyword notifications")
         case .map:
-            LocalizationKey.onboardingMapContent.localized(comment: "Onboarding body for nearby popup map")
+            String(localized: "내 주변에서 열리는 팝업을 바로 확인하세요.", bundle: .module, comment: "Onboarding body for nearby popup map")
         case .favorite:
-            LocalizationKey.onboardingFavoriteContent.localized(comment: "Onboarding body for favorites calendar")
+            String(localized: "찜한 팝업을 날짜별로 확인할 수 있어요.", bundle: .module, comment: "Onboarding body for favorites calendar")
         }
     }
 
@@ -166,21 +166,5 @@ public enum OnboardingStep: Int, CaseIterable, Sendable {
         case .favorite:
             "Onboarding3"
         }
-    }
-}
-
-private enum LocalizationKey: String {
-    case commonNext = "common.next"
-    case commonSkip = "common.skip"
-    case commonStart = "common.start"
-    case onboardingKeywordTitle = "onboarding.keyword.title"
-    case onboardingKeywordContent = "onboarding.keyword.content"
-    case onboardingMapTitle = "onboarding.map.title"
-    case onboardingMapContent = "onboarding.map.content"
-    case onboardingFavoriteTitle = "onboarding.favorite.title"
-    case onboardingFavoriteContent = "onboarding.favorite.content"
-
-    func localized(comment: String) -> String {
-        DSKitLocalization.localized(rawValue, comment: comment)
     }
 }

@@ -11,6 +11,12 @@
             "value" : "Double-tap to change the height. Swipe up or down to adjust it."
           }
         },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ダブルタップすると高さが変わります。上下にスワイプして高さを調整できます。"
+          }
+        },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
@@ -27,6 +33,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sheet grabber"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "シートのハンドル"
           }
         },
         "ko" : {

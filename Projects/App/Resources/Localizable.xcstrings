@@ -1,0 +1,76 @@
+{
+  "sourceLanguage" : "ko",
+  "strings" : {
+    "새로운 기능과 성능 개선을 위해 최신 버전 (%@)을 사용해 보세요!" : {
+      "comment" : "%@ is the latest app version, for example 1.2.0",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update to the latest version (%@) for new features and better performance!"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "新機能とパフォーマンス改善のため、最新バージョン(%@)をご利用ください！"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "새로운 기능과 성능 개선을 위해 최신 버전 (%@)을 사용해 보세요!"
+          }
+        }
+      }
+    },
+    "앱 업데이트 필요" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update Required"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "アップデートが必要です"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "앱 업데이트 필요"
+          }
+        }
+      }
+    },
+    "업데이트" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Update"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "アップデート"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "업데이트"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

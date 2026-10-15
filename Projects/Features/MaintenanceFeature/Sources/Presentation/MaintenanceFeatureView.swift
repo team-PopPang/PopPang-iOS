@@ -52,7 +52,9 @@ public struct MaintenanceFeatureView: View {
 
                 if let onRetry {
                     MainOrangeButton(
-                        buttonTitle: isRetrying ? "확인 중..." : "다시 시도",
+                        buttonTitle: isRetrying
+                            ? String(localized: "확인 중...", bundle: .module)
+                            : String(localized: "다시 시도", bundle: .module),
                         action: onRetry
                     )
                     .disabled(isRetrying)
@@ -98,36 +100,36 @@ private extension MaintenanceReason {
     var badge: String {
         switch self {
         case .serverUnavailable:
-            "서비스 점검 안내"
+            String(localized: "서비스 점검 안내", bundle: .module)
         case .offline:
-            "네트워크 안내"
+            String(localized: "네트워크 안내", bundle: .module)
         }
     }
 
     var title: String {
         switch self {
         case .serverUnavailable:
-            "잠시 점검 중이에요"
+            String(localized: "잠시 점검 중이에요", bundle: .module)
         case .offline:
-            "인터넷 연결을 확인해 주세요"
+            String(localized: "인터넷 연결을 확인해 주세요", bundle: .module)
         }
     }
 
     var message: String {
         switch self {
         case .serverUnavailable:
-            "더 나은 팝팡을 위해 개선하고 있어요."
+            String(localized: "더 나은 팝팡을 위해 개선하고 있어요.", bundle: .module)
         case .offline:
-            "와이파이나 모바일 데이터가 켜져 있는지 확인해 주세요."
+            String(localized: "와이파이나 모바일 데이터가 켜져 있는지 확인해 주세요.", bundle: .module)
         }
     }
 
     var notice: String {
         switch self {
         case .serverUnavailable:
-            "잠시 후 다시 이용해 주세요."
+            String(localized: "잠시 후 다시 이용해 주세요.", bundle: .module)
         case .offline:
-            "연결된 뒤 다시 시도해 주세요."
+            String(localized: "연결된 뒤 다시 시도해 주세요.", bundle: .module)
         }
     }
 

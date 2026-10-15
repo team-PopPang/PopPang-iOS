@@ -28,7 +28,7 @@ struct HomeFilterHeader: View {
 
             Spacer()
 
-            RegionButton(text: "지역", action: onRegionTap)
+            RegionButton(text: String(localized: "지역", bundle: .module), action: onRegionTap)
                 .padding(.leading, -10)
                 .accessibilityIdentifier("home_region_dropdown")
 

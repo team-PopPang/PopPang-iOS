@@ -28,7 +28,7 @@ public struct ReviewFeatureView: View {
             }
 
             MainOrangeButton(
-                buttonTitle: "리뷰 남기기",
+                buttonTitle: String(localized: "리뷰 남기기", bundle: .module),
                 isReversed: false,
                 height: 80
             ) {
@@ -89,7 +89,7 @@ public struct ReviewPreviewSection: View {
 
     public var body: some View {
         HStack {
-            Text("리뷰 \(reviews.count)개")
+            Text("리뷰 \(reviews.count)개", bundle: .module)
                 .font(.scdream(.medium, size: 15))
 
             Spacer()
@@ -150,7 +150,7 @@ public struct ReviewCell: View {
                 Text("|")
                     .font(.scdream(.light, size: 12))
 
-                Text("신고")
+                Text("신고", bundle: .module)
                     .font(.scdream(.light, size: 12))
             }
 
@@ -188,7 +188,7 @@ public struct ReviewWriteSheet: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 15) {
             HStack {
-                Text("이 팝업을 추천하시나요?")
+                Text("이 팝업을 추천하시나요?", bundle: .module)
                     .ppStyleFont(.scdream(.bold, size: 20))
                     .foregroundStyle(Color.mainBlack)
 
@@ -220,7 +220,7 @@ public struct ReviewWriteSheet: View {
 
             ZStack(alignment: .topLeading) {
                 if reviewText.isEmpty {
-                    Text("리뷰를 남겨주세요")
+                    Text("리뷰를 남겨주세요", bundle: .module)
                         .foregroundStyle(Color.gray.opacity(0.8))
                         .padding(.top, 10)
                         .padding(.leading, 10)
@@ -238,7 +238,7 @@ public struct ReviewWriteSheet: View {
             Button {
                 onSubmit()
             } label: {
-                Text("리뷰 쓰기")
+                Text("리뷰 쓰기", bundle: .module)
                     .ppStyleFont(.scdream(.bold, size: 16))
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)

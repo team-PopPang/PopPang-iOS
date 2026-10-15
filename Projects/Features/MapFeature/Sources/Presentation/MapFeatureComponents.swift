@@ -52,7 +52,7 @@ struct MapSortButton: View {
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 10)
-            .frame(width: 80)
+            .frame(minWidth: 80)
             .background(Color.subWhite)
             .cornerRadius(17)
             .overlay {
@@ -74,7 +74,7 @@ struct MapSortButtonSheet: View {
         VStack(alignment: .leading, spacing: 0) {
             // 제목 줄을 끌면 시트가 움직인다. 아래 옵션은 스크롤 영역이라 스크롤만 한다.
             HStack(spacing: 0) {
-                Text("정렬")
+                Text("정렬", bundle: .module)
                     .foregroundStyle(Color.mainBlack)
                     .ppStyleFont(.scdream(.bold, size: 17))
 
@@ -135,7 +135,7 @@ struct MapRegionSheet: View {
             // 제목 줄과 구분선을 끌면 시트가 움직인다. 아래 지역·구 목록은 목록만 스크롤한다.
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
-                    Text("지역")
+                    Text("지역", bundle: .module)
                         .foregroundStyle(Color.mainBlack)
                         .ppStyleFont(.scdream(.bold, size: 17))
 
@@ -390,10 +390,10 @@ struct DetailSheetView: View {
                     }
 
                     VStack(spacing: 5) {
-                        detailRow(title: "운영 장소", value: popup.roadAddress)
+                        detailRow(title: String(localized: "운영 장소", bundle: .module), value: popup.roadAddress)
 
                         HStack(spacing: 5) {
-                            Text("운영 날짜")
+                            Text("운영 날짜", bundle: .module)
                                 .ppStyleFont(.scdream(.light, size: 12))
                                 .foregroundStyle(Color.mainGray)
 
@@ -410,7 +410,7 @@ struct DetailSheetView: View {
 
                         HStack(spacing: 5) {
                             if popup.openTime != nil, popup.closeTime != nil {
-                                Text("운영 시간")
+                                Text("운영 시간", bundle: .module)
                                     .ppStyleFont(.scdream(.light, size: 12))
                                     .foregroundStyle(Color.mainGray)
                             }

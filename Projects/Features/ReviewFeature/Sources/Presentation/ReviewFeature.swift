@@ -51,7 +51,7 @@ public struct ReviewFeature {
                 guard reviewText.isEmpty == false else { return .none }
 
                 let review = Review(
-                    nickname: "나",
+                    nickname: String(localized: "나", bundle: .module),
                     info: reviewText,
                     starCount: state.rating
                 )

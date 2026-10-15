@@ -21,7 +21,7 @@ struct HomeComingHeader: View {
                     .font(.scdream(.medium, size: 11))
                     .foregroundStyle(Color.mainOrange)
 
-                Text("오픈 예정 팝업")
+                Text("오픈 예정 팝업", bundle: .module)
                     .font(.scdream(.bold, size: 15))
                     .foregroundStyle(Color.mainBlack)
             }

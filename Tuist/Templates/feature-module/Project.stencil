@@ -11,6 +11,7 @@ let project = Project(
             deploymentTargets: .iOS("{{ deploymentTarget }}"),
             infoPlist: .default,
             sources: ["Sources/**"],
+            resources: ["Resources/**"],
             dependencies: [
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]

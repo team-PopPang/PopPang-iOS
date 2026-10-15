@@ -127,6 +127,8 @@ let project = Project(
             resources: [
                 "Resources/Assets.xcassets",
                 "Resources/GoogleService-Info.plist",
+                "Resources/InfoPlist.xcstrings",
+                "Resources/Localizable.xcstrings",
                 .folderReference(path: "Resources/ReactNative"),
             ],
             entitlements: "PopPangApp.entitlements",

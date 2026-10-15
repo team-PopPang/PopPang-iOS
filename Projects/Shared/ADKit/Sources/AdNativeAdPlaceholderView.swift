@@ -71,7 +71,7 @@ public struct AdNativeAdPlaceholderView: View {
     }
 
     private var adBadge: some View {
-        Text("광고")
+        Text("광고", bundle: .module)
             .font(.system(size: layout.badgeFontSize, weight: .semibold))
             .foregroundStyle(.white)
             .padding(.horizontal, 6)

@@ -55,14 +55,14 @@ public struct ComingPopupDetailFeatureView: View {
             )
         }
         .scrollIndicators(.hidden)
-        .alert("안내", isPresented: isErrorPresented) {
-            Button("확인", role: .cancel) {
+        .alert(Text("안내", bundle: .module), isPresented: isErrorPresented) {
+            Button(String(localized: "확인", bundle: .module), role: .cancel) {
                 store.send(.errorMessageChanged(nil))
             }
         } message: {
             Text(store.errorMessage ?? "")
         }
-        .ppBackNavigationBar(title: "오픈 예정 팝업") {
+        .ppBackNavigationBar(title: String(localized: "오픈 예정 팝업", bundle: .module)) {
             dismiss()
         }
         .onAppear {

@@ -72,9 +72,9 @@ struct ComingPopupCell: View {
 
         if let diff = calendar.dateComponents([.day], from: today, to: target).day {
             if diff > 0 {
-                return "오픈 D-\(diff)"
+                return String(localized: "오픈 D-\(diff)", bundle: .module)
             } else {
-                return "오늘 오픈"
+                return String(localized: "오늘 오픈", bundle: .module)
             }
         }
         return ""

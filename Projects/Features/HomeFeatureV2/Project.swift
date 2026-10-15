@@ -13,6 +13,7 @@ let project = Project(
             sources: [
                 "Sources/**",
             ],
+            resources: ["Resources/**"],
             dependencies: [
                 .project(target: "ADKit", path: "../../Shared/ADKit"),
                 .project(target: "Domain", path: "../../Domain"),

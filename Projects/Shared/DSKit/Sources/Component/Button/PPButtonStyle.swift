@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// PopPang 버튼 모양. `Button("다음") { }.buttonStyle(.ppPrimary)`처럼 쓴다.
+/// PopPang 버튼 모양. `Button(String(localized: "다음", bundle: .module)) { }.buttonStyle(.ppPrimary)`처럼 쓴다.
 /// `primary`와 `outline`은 `MainOrangeButton`의 기본·반전 모양과 같고, 눌림 효과는 `PressableButtonStyle`과 같다.
 public struct PPButtonStyle: ButtonStyle {
     /// 버튼 종류

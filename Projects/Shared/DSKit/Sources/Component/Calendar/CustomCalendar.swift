@@ -66,13 +66,9 @@ private struct MonthHeaderView: View {
 
             Spacer()
 
-            let parts = extractYearAndMonth()
-            HStack(spacing: 5) {
-                Text("\(parts[0])년")
-                Text(parts[1])
-            }
-            .ppStyleFont(.scdream(.medium, size: 17))
-            .foregroundStyle(Color.mainBlack)
+            Text(yearMonthTitle())
+                .ppStyleFont(.scdream(.medium, size: 17))
+                .foregroundStyle(Color.mainBlack)
 
             Spacer()
 
@@ -86,16 +82,23 @@ private struct MonthHeaderView: View {
         }
     }
 
-    private func extractYearAndMonth() -> [String] {
+    /// 화면 문구와 같은 언어로 연월을 쓴다. 예: 2026년 10월, October 2026, 2026年10月
+    private func yearMonthTitle() -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
-        formatter.dateFormat = "yyyy MMMM"
-        return formatter.string(from: currentDate).components(separatedBy: " ")
+        formatter.locale = .displayLanguage
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.setLocalizedDateFormatFromTemplate("yyyyMMMM")
+        return formatter.string(from: currentDate)
     }
 }
 
 private struct WeekHeaderView: View {
-    let days: [String] = ["일", "월", "화", "수", "목", "금", "토"]
+    /// 일요일부터 시작하는 짧은 요일 이름. 화면 문구와 같은 언어로 쓴다. 예: 일, Sun, 日
+    let days: [String] = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = .displayLanguage
+        return calendar.shortWeekdaySymbols
+    }()
 
     var body: some View {
         HStack(spacing: 0) {
@@ -188,7 +191,7 @@ private struct DateCardView: View {
                 }
 
                 if eventCount > 0 {
-                    Text("+\(eventCount)건")
+                    Text("+\(eventCount)건", bundle: .module)
                         .ppStyleFont(.scdream(.medium, size: 8))
                         .foregroundStyle(Color.mainOrange)
                         .frame(height: 10)
@@ -223,5 +226,12 @@ extension Date {
 
     func stripTime() -> Date {
         Calendar.current.startOfDay(for: self)
+    }
+}
+
+private extension Locale {
+    /// DSKit 번들이 문구를 보여 주는 언어. 기기 지역과 앱 언어가 달라도 날짜가 문구와 같은 언어로 나온다.
+    static var displayLanguage: Locale {
+        Locale(identifier: Bundle.module.preferredLocalizations.first ?? "ko")
     }
 }
