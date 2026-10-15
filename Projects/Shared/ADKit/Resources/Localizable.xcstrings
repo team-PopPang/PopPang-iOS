@@ -1,0 +1,30 @@
+{
+  "sourceLanguage" : "ko",
+  "strings" : {
+    "광고" : {
+      "comment" : "Badge on an ad",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Ad"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "広告"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "광고"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

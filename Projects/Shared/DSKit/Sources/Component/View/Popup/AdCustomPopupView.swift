@@ -53,7 +53,7 @@ public struct AdCustomPopupView: View {
                         Button {
                             onDontShowToday()
                         } label: {
-                            Text("오늘 하루 보지 않기")
+                            Text("오늘 하루 보지 않기", bundle: .module)
                                 .font(.scdream(.bold, size: 14))
                                 .foregroundStyle(Color.mainBlack)
                                 .frame(maxWidth: .infinity)
@@ -63,7 +63,7 @@ public struct AdCustomPopupView: View {
                         Button {
                             onDismiss()
                         } label: {
-                            Text("닫기")
+                            Text("닫기", bundle: .module)
                                 .font(.scdream(.bold, size: 14))
                                 .foregroundStyle(Color.mainOrange)
                                 .frame(maxWidth: .infinity)

@@ -39,7 +39,7 @@ public struct RegisterFlowFeatureView: View {
                 Button {
                     store.send(.skipTapped)
                 } label: {
-                    Text("건너뛰기")
+                    Text("건너뛰기", bundle: .module)
                         .ppStyleFont(.scdream(.regular, size: 13))
                         .foregroundStyle(Color.mainGray)
                         .padding()
@@ -141,9 +141,9 @@ private struct NicknameSettingStepView: View {
         VStack(alignment: .leading) {
             HStack {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("닉네임을\n설정해주세요.")
+                    Text("닉네임을\n설정해주세요.", bundle: .module)
                         .font(.scdream(.bold, size: 17))
-                    Text("닉네임은 나중에 변경할 수 있습니다.")
+                    Text("닉네임은 나중에 변경할 수 있습니다.", bundle: .module)
                         .font(.scdream(.medium, size: 12))
                         .foregroundStyle(Color.mainGray)
                 }
@@ -153,7 +153,7 @@ private struct NicknameSettingStepView: View {
 
             HStack(spacing: 10) {
                 RoundedTextField(
-                    placeholder: "닉네임을 입력해 주세요",
+                    placeholder: String(localized: "닉네임을 입력해 주세요", bundle: .module),
                     text: $nickname,
                     validationState: validationState,
                     focus: $isFocused
@@ -162,7 +162,7 @@ private struct NicknameSettingStepView: View {
                 Button {
                     onValidate()
                 } label: {
-                    Text("중복확인")
+                    Text("중복확인", bundle: .module)
                         .font(.scdream(.medium, size: 12))
                         .frame(width: 100)
                         .frame(height: 48)
@@ -180,7 +180,7 @@ private struct NicknameSettingStepView: View {
             Spacer()
 
             MainOrangeButton(
-                buttonTitle: "다음",
+                buttonTitle: String(localized: "다음", bundle: .module),
                 buttonColor: validationState == .success ? Color.mainOrange : Color.mainGray2
             ) {
                 isFocused = false
@@ -211,27 +211,27 @@ private struct NicknameSettingStepView: View {
         if !nickname.isEmpty {
             switch validationState {
             case .success:
-                Text("사용 가능한 닉네임입니다.")
+                Text("사용 가능한 닉네임입니다.", bundle: .module)
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainGreen)
                     .padding(.top, 5)
             case .duplicate:
-                Text("이미 사용 중인 닉네임입니다.")
+                Text("이미 사용 중인 닉네임입니다.", bundle: .module)
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainRed)
                     .padding(.top, 5)
             case .invalidSpace:
-                Text("공백은 사용할 수 없습니다.")
+                Text("공백은 사용할 수 없습니다.", bundle: .module)
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainRed)
                     .padding(.top, 5)
             case .tooShort:
-                Text("2글자 이하는 사용할 수 없습니다.")
+                Text("2글자 이하는 사용할 수 없습니다.", bundle: .module)
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainRed)
                     .padding(.top, 5)
             case .checking:
-                Text("닉네임을 확인 중입니다.")
+                Text("닉네임을 확인 중입니다.", bundle: .module)
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainGray)
                     .padding(.top, 5)
@@ -263,9 +263,9 @@ private struct CategorySettingStepView: View {
         VStack(alignment: .leading) {
             HStack {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("추천 받고 싶은 항목을\n선택해주세요.")
+                    Text("추천 받고 싶은 항목을\n선택해주세요.", bundle: .module)
                         .font(.scdream(.bold, size: 17))
-                    Text("선택하신 항목에 맞게 추천해드려요")
+                    Text("선택하신 항목에 맞게 추천해드려요", bundle: .module)
                         .font(.scdream(.medium, size: 12))
                         .foregroundStyle(Color.mainGray)
                 }
@@ -286,7 +286,7 @@ private struct CategorySettingStepView: View {
             Spacer()
 
             MainOrangeButton(
-                buttonTitle: "다음",
+                buttonTitle: String(localized: "다음", bundle: .module),
                 buttonColor: isNextEnabled ? Color.mainOrange : Color.mainGray2
             ) {
                 withAnimation(.easeInOut(duration: 0.3)) {
@@ -320,13 +320,13 @@ private struct KeywordSettingStepView: View {
         VStack(alignment: .leading) {
             HStack {
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("키워드를\n입력해주세요.")
+                    Text("키워드를\n입력해주세요.", bundle: .module)
                         .font(.scdream(.bold, size: 17))
 
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("등록된 키워드에 맞춰 알림을 받아볼 수 있어요.")
+                        Text("등록된 키워드에 맞춰 알림을 받아볼 수 있어요.", bundle: .module)
                             .foregroundStyle(Color.mainGray)
-                        Text("(최대 5개 등록 가능)")
+                        Text("(최대 5개 등록 가능)", bundle: .module)
                     }
                     .font(.scdream(.medium, size: 12))
                     .foregroundStyle(Color.mainGray)
@@ -338,14 +338,14 @@ private struct KeywordSettingStepView: View {
 
             HStack(spacing: 10) {
                 KeywordTextField(
-                    placeholder: "ex) 화장품, 애니메이션",
+                    placeholder: String(localized: "ex) 화장품, 애니메이션", bundle: .module),
                     text: $text
                 )
 
                 Button {
                     addKeywordIfAllowed()
                 } label: {
-                    Text("등록")
+                    Text("등록", bundle: .module)
                         .font(.scdream(.medium, size: 12))
                         .frame(width: 70)
                         .frame(height: 48)
@@ -394,7 +394,9 @@ private struct KeywordSettingStepView: View {
             Spacer()
 
             MainOrangeButton(
-                buttonTitle: isSubmitting ? "가입 중..." : "다음",
+                buttonTitle: isSubmitting
+                    ? String(localized: "가입 중...", bundle: .module)
+                    : String(localized: "다음", bundle: .module),
                 buttonColor: isNextEnabled ? Color.mainOrange : Color.mainGray2
             ) {
                 onNext()
@@ -404,21 +406,21 @@ private struct KeywordSettingStepView: View {
             .padding(.bottom, 20)
         }
         .padding(.horizontal, .contentPadding)
-        .alert("알림 허용", isPresented: $showPermissionAlert) {
-            Button("설정으로 이동") {
+        .alert(Text("알림 허용", bundle: .module), isPresented: $showPermissionAlert) {
+            Button(String(localized: "설정으로 이동", bundle: .module)) {
                 guard let url = URL(string: UIApplication.openSettingsURLString),
                       UIApplication.shared.canOpenURL(url)
                 else { return }
                 UIApplication.shared.open(url)
             }
-            Button("다음에 하기", role: .cancel) {}
+            Button(String(localized: "다음에 하기", bundle: .module), role: .cancel) {}
         } message: {
-            Text("팝업스토어 키워드 알림을 받으려면 알림 권한을 허용해 주세요.")
+            Text("팝업스토어 키워드 알림을 받으려면 알림 권한을 허용해 주세요.", bundle: .module)
         }
-        .alert("키워드 개수 제한", isPresented: $showKeywordLimitAlert) {
-            Button("확인", role: .cancel) {}
+        .alert(Text("키워드 개수 제한", bundle: .module), isPresented: $showKeywordLimitAlert) {
+            Button(String(localized: "확인", bundle: .module), role: .cancel) {}
         } message: {
-            Text("키워드는 최대 5개 까지만 등록 가능합니다.")
+            Text("키워드는 최대 5개 까지만 등록 가능합니다.", bundle: .module)
         }
     }
 

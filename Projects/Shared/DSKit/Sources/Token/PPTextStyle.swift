@@ -3,7 +3,7 @@ import UIKit
 
 /// 글자 크기·행간·자간을 묶은 텍스트 스타일.
 /// 크기 단계는 기존 화면에서 쓰는 S-CoreDream 크기를 기준으로 정했다. 굵기는 스타일마다 기본값이 있고 바꿀 수 있다.
-/// `Text("제목").ppTextStyle(.title3)`처럼 쓴다.
+/// `Text("제목", bundle: .module).ppTextStyle(.title3)`처럼 쓴다.
 public enum PPTextStyle: CaseIterable, Sendable {
     /// 26pt. 큰 강조 문구
     case display

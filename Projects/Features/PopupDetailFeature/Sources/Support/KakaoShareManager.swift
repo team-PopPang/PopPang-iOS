@@ -27,7 +27,7 @@ final class KakaoShareManager {
             mobileWebUrl: URL(string: appStoreURL),
             iosExecutionParams: ["popupId": popupId]
         )
-        let button = Button(title: "앱으로 보기", link: link)
+        let button = Button(title: String(localized: "앱으로 보기", bundle: .module), link: link)
         let content = Content(
             title: title,
             imageUrl: imageURL,

@@ -91,7 +91,7 @@ lhs.user == rhs.user
 Button {
     store.send(.alertTapped)
 } label: {
-    Text("알림")
+    Text("알림", bundle: .module)
 }
 
 Store(initialState: AppFeature.State()) {

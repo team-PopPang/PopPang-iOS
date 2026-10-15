@@ -27,15 +27,15 @@ public enum MapSortOption: String, CaseIterable, Sendable {
     var title: String {
         switch self {
         case .closest:
-            "가까운순"
+            String(localized: "가까운순", bundle: .module)
         case .newest:
-            "최신순"
+            String(localized: "최신순", bundle: .module)
         case .closingSoon:
-            "마감순"
+            String(localized: "마감순", bundle: .module)
         case .mostFavorited:
-            "찜순"
+            String(localized: "찜순", bundle: .module)
         case .mostViewed:
-            "조회순"
+            String(localized: "조회순", bundle: .module)
         }
     }
 }

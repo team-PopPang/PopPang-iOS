@@ -31,7 +31,7 @@ public struct SearchFeatureView: View {
                 .accessibilityIdentifier("home_search_backbutton")
 
                 SearchTextField(
-                    placeholder: "궁금한 장소를 검색해보세요",
+                    placeholder: String(localized: "궁금한 장소를 검색해보세요", bundle: .module),
                     text: Binding(
                         get: { store.searchText },
                         set: { store.send(.searchTextChanged($0)) }
@@ -76,7 +76,7 @@ public struct SearchFeatureView: View {
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: 50, height: 50)
 
-                            Text("검색결과가 없습니다.")
+                            Text("검색결과가 없습니다.", bundle: .module)
                                 .ppStyleFont(.scdream(.medium, size: 14))
                                 .foregroundStyle(Color.mainBlack)
                                 .padding(.top, 10)
@@ -119,8 +119,8 @@ public struct SearchFeatureView: View {
 
     private var recentKeywordTitleSuffix: String {
         store.recentKeywords.isEmpty
-            ? "님의 최근 본 검색어가 없습니다"
-            : "님의 최근 본 검색어예요"
+            ? String(localized: "님의 최근 본 검색어가 없습니다", bundle: .module)
+            : String(localized: "님의 최근 본 검색어예요", bundle: .module)
     }
 }
 

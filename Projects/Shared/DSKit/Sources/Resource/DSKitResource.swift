@@ -10,9 +10,3 @@ public enum DSKitResource {
         UIImage(named: name, in: .module, compatibleWith: nil)
     }
 }
-
-public enum DSKitLocalization {
-    public static func localized(_ key: String, comment: String = "") -> String {
-        NSLocalizedString(key, bundle: .module, comment: comment)
-    }
-}

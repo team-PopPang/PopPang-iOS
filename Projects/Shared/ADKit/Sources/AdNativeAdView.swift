@@ -165,7 +165,7 @@ private extension AdNativeAdContainer {
 
     func makeBadgeLabel() -> UILabel {
         let label = UILabel()
-        label.text = "광고"
+        label.text = String(localized: "광고", bundle: .module)
         label.font = .systemFont(ofSize: layout.badgeFontSize, weight: .semibold)
         label.textColor = .white
         label.textAlignment = .center

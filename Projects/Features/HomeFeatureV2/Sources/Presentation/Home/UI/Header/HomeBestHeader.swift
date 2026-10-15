@@ -16,7 +16,7 @@ struct HomeBestHeader: View {
                 .foregroundStyle(Color.mainOrange)
                 .font(.scdream(.bold, size: 15))
 
-            Text("님을 위한 팝업")
+            Text("님을 위한 팝업", bundle: .module)
                 .font(.scdream(.bold, size: 15))
                 .foregroundStyle(Color.mainBlack)
 

@@ -100,7 +100,7 @@ public struct AlertFeatureView: View {
             }
         }
         .ppBackNavigationBar(
-            title: "알림",
+            title: String(localized: "알림", bundle: .module),
             showsSeparator: false
         ) {
             dismiss()
@@ -112,10 +112,10 @@ public struct AlertFeatureView: View {
         .onAppear {
             store.send(.onAppear)
         }
-        .alert("키워드 개수 제한", isPresented: $showKeywordLimitAlert) {
-            Button("확인", role: .cancel) {}
+        .alert(Text("키워드 개수 제한", bundle: .module), isPresented: $showKeywordLimitAlert) {
+            Button(String(localized: "확인", bundle: .module), role: .cancel) {}
         } message: {
-            Text("키워드는 최대 5개 까지만 등록 가능합니다.")
+            Text("키워드는 최대 5개 까지만 등록 가능합니다.", bundle: .module)
         }
     }
 }
@@ -169,7 +169,7 @@ private struct ActivityAlertView: View {
                     if store.isEditing {
                         Spacer()
                         Button(action: onDeleteAll) {
-                            Text("전체 삭제")
+                            Text("전체 삭제", bundle: .module)
                                 .ppStyleFont(.scdream(.regular, size: 12))
                                 .foregroundStyle(Color.mainBlack)
                         }
@@ -226,7 +226,7 @@ private struct KeywordAlertView: View {
         VStack {
             HStack(spacing: .contentPadding) {
                 KeywordTextField(
-                    placeholder: "알림 받고 싶은 키워드를 입력해주세요",
+                    placeholder: String(localized: "알림 받고 싶은 키워드를 입력해주세요", bundle: .module),
                     text: textBinding
                 )
 
@@ -278,7 +278,11 @@ private struct KeywordAlertView: View {
                         .foregroundStyle(Color.mainOrange)
                         .font(.scdream(.bold, size: 12))
 
-                    Text(store.recentKeywords.isEmpty ? "님의 최근 본 검색어가 없습니다" : "님의 최근 본 검색어예요")
+                    Text(
+                        store.recentKeywords.isEmpty
+                            ? String(localized: "님의 최근 본 검색어가 없습니다", bundle: .module)
+                            : String(localized: "님의 최근 본 검색어예요", bundle: .module)
+                    )
                         .font(.scdream(.regular, size: 12))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -388,11 +392,11 @@ private struct TrashButton: View {
     var body: some View {
         Button(action: action) {
             ZStack {
-                Text("완료")
+                Text("완료", bundle: .module)
                     .ppStyleFont(.scdream(.medium, size: 15))
                     .opacity(isEditing ? 1 : 0)
 
-                Text("편집")
+                Text("편집", bundle: .module)
                     .ppStyleFont(.scdream(.medium, size: 15))
                     .opacity(isEditing ? 0 : 1)
             }

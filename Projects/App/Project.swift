@@ -15,7 +15,7 @@ let project = Project(
             infoPlist: .extendingDefault(
                 with: [
                     "CFBundleAllowMixedLocalizations": true,
-                    "CFBundleDevelopmentRegion": "ko",
+                    "CFBundleDevelopmentRegion": "en",
                     "CFBundleDisplayName": "팝팡",
                     "CFBundleShortVersionString": "$(MARKETING_VERSION)",
                     "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
@@ -127,6 +127,8 @@ let project = Project(
             resources: [
                 "Resources/Assets.xcassets",
                 "Resources/GoogleService-Info.plist",
+                "Resources/InfoPlist.xcstrings",
+                "Resources/Localizable.xcstrings",
                 .folderReference(path: "Resources/ReactNative"),
             ],
             entitlements: "PopPangApp.entitlements",

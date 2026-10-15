@@ -11,9 +11,9 @@ public struct AlertFeature {
         var title: String {
             switch self {
             case .activity:
-                "활동"
+                String(localized: "활동", bundle: .module)
             case .keyword:
-                "키워드 설정"
+                String(localized: "키워드 설정", bundle: .module)
             }
         }
     }
@@ -33,7 +33,7 @@ public struct AlertFeature {
 
         public init(user: User) {
             self.userUuid = user.userUuid
-            self.nickname = user.nickname ?? "닉네임"
+            self.nickname = user.nickname ?? String(localized: "닉네임", bundle: .module)
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {

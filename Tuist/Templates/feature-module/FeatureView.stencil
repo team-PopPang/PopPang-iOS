@@ -14,7 +14,7 @@ public struct {{ name }}FeatureView: View {
                 ProgressView()
             }
 
-            Button("새로고침") {
+            Button(String(localized: "새로고침", bundle: .module)) {
                 isLoading.toggle()
             }
         }

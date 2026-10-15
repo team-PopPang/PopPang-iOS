@@ -8,7 +8,10 @@ import SwiftUI
 public struct FavoritesFeatureView: View {
     let store: StoreOf<FavoritesFeature>
 
-    private let segments: [String] = ["찜리스트", "찜캘린더"]
+    private let segments: [String] = [
+        String(localized: "찜리스트", bundle: .module),
+        String(localized: "찜캘린더", bundle: .module),
+    ]
 
     public init(store: StoreOf<FavoritesFeature>) {
         self.store = store
@@ -17,7 +20,7 @@ public struct FavoritesFeatureView: View {
     public var body: some View {
         VStack(spacing: 0) {
             CustomNavigationBar {
-                Text("찜")
+                Text("찜", bundle: .module)
                     .ppStyleFont(.scdream(.medium, size: 18))
                     .foregroundStyle(Color.mainBlack)
                     .frame(height: 45)
@@ -102,13 +105,13 @@ private struct FavoriteListView: View {
                 .padding(.top, 24)
             } else if !isLoading {
                 VStack {
-                    Text("찜한 팝업스토어가 없어요")
+                    Text("찜한 팝업스토어가 없어요", bundle: .module)
                         .ppStyleFont(.scdream(.medium, size: 15))
 
                     Button {
                         onBrowsePopups()
                     } label: {
-                        Text("팝업스토어 구경가기")
+                        Text("팝업스토어 구경가기", bundle: .module)
                             .ppStyleFont(.scdream(.medium, size: 12))
                             .frame(width: 206, height: 32)
                             .foregroundStyle(Color.subWhite)
@@ -291,7 +294,7 @@ private struct FavoriteCalendarPopupListView: View {
             }
 
             if popups.isEmpty && !isLoading {
-                Text("선택한 날짜에 팝업이 없습니다")
+                Text("선택한 날짜에 팝업이 없습니다", bundle: .module)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.top, 24)
             } else {
@@ -323,8 +326,9 @@ private struct FavoriteCalendarPopupListView: View {
 
     private func formattedDate(_ date: Date) -> String {
         let dayFormatter = DateFormatter()
-        dayFormatter.locale = Locale(identifier: "ko_KR")
-        dayFormatter.dateFormat = "d일 (E)"
+        // 기기 지역이 아니라 화면 문구와 같은 언어로 쓴다. 예: 15일 (목), Thu 15, 15日(木)
+        dayFormatter.locale = Locale(identifier: Bundle.module.preferredLocalizations.first ?? "ko")
+        dayFormatter.setLocalizedDateFormatFromTemplate("dE")
         return dayFormatter.string(from: date)
     }
 }

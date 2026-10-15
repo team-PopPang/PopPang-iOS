@@ -26,9 +26,9 @@ private struct VersionUpdateModifier: ViewModifier {
             }
             .alert(isPresented: $showAlert) {
                 Alert(
-                    title: Text("앱 업데이트 필요"),
-                    message: Text("새로운 기능과 성능 개선을 위해 최신 버전 (\(latestVersion ?? ""))을 사용해 보세요!"),
-                    dismissButton: .default(Text("업데이트")) {
+                    title: Text("앱 업데이트 필요", bundle: .module),
+                    message: Text("새로운 기능과 성능 개선을 위해 최신 버전 (\(latestVersion ?? ""))을 사용해 보세요!", bundle: .module),
+                    dismissButton: .default(Text("업데이트", bundle: .module)) {
                         guard let url = VersionUpdateConfig.appStoreURL else { return }
                         UIApplication.shared.open(url)
                     }

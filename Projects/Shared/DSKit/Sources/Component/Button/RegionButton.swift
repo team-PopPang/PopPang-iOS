@@ -24,7 +24,7 @@ public struct RegionButton: View {
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 10)
-            .frame(width: 60)
+            .frame(minWidth: 60)
             .background(Color.subWhite)
             .cornerRadius(17)
             .overlay {
@@ -72,7 +72,7 @@ public struct RegionButtonSheet<Region: Identifiable & Equatable>: View {
         ScrollView {
             VStack(spacing: 0) {
                 HStack(spacing: 0) {
-                    Text("지역")
+                    Text("지역", bundle: .module)
                         .foregroundStyle(Color.mainBlack)
                         .ppStyleFont(.scdream(.bold, size: 17))
                     Spacer()

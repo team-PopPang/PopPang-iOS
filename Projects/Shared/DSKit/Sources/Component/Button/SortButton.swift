@@ -31,7 +31,7 @@ public struct SortButton: View {
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 10)
-            .frame(width: 80)
+            .frame(minWidth: 80)
             .background(bgColor)
             .cornerRadius(17)
             .overlay {
@@ -51,13 +51,13 @@ public struct SortButton: View {
         public var title: String {
             switch self {
             case .newest:
-                return "최신순"
+                return String(localized: "최신순", bundle: .module)
             case .closingSoon:
-                return "마감순"
+                return String(localized: "마감순", bundle: .module)
             case .mostFavorited:
-                return "찜순"
+                return String(localized: "찜순", bundle: .module)
             case .mostViewed:
-                return "조회순"
+                return String(localized: "조회순", bundle: .module)
             }
         }
     }
@@ -76,7 +76,7 @@ public struct SortButtonSheet: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 0) {
-                Text("정렬")
+                Text("정렬", bundle: .module)
                     .foregroundStyle(Color.mainBlack)
                     .ppStyleFont(.scdream(.bold, size: 17))
                 Spacer()

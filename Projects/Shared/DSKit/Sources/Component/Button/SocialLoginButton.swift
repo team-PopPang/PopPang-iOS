@@ -20,11 +20,11 @@ public struct SocialLoginButton: View {
         var title: String {
             switch self {
             case .kakao:
-                return DSKitLocalization.localized("login.social.kakao", comment: "Login button title for Kakao")
+                return String(localized: "카카오 로그인", bundle: .module, comment: "Login button title for Kakao")
             case .apple:
-                return DSKitLocalization.localized("login.social.apple", comment: "Login button title for Apple")
+                return String(localized: "Apple 로그인", bundle: .module, comment: "Login button title for Apple")
             case .google:
-                return DSKitLocalization.localized("login.social.google", comment: "Login button title for Google")
+                return String(localized: "Google 로그인", bundle: .module, comment: "Login button title for Google")
             }
         }
 

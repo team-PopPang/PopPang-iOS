@@ -131,7 +131,7 @@ public struct PopupDetailFeatureView: View {
         .topShadowGradient()
         .overlay(alignment: .top) {
             if showingPopup {
-                Text("복사되었습니다.")
+                Text("복사되었습니다.", bundle: .module)
                     .frame(width: 200, height: 30)
                     .background(Color.mainWhite)
                     .cornerRadius(10.0)
@@ -147,14 +147,14 @@ public struct PopupDetailFeatureView: View {
                 }
             }
         }
-        .alert("팝업 비활성화", isPresented: $showDeactivateAlert) {
-            Button("취소", role: .cancel) {}
+        .alert(Text("팝업 비활성화", bundle: .module), isPresented: $showDeactivateAlert) {
+            Button(String(localized: "취소", bundle: .module), role: .cancel) {}
 
-            Button("비활성화", role: .destructive) {
+            Button(String(localized: "비활성화", bundle: .module), role: .destructive) {
                 store.send(.deactivatePopup)
             }
         } message: {
-            Text("정말로 이 팝업을 비활성화하시겠습니까?\n비활성화된 팝업은 사용자에게 노출되지 않습니다.")
+            Text("정말로 이 팝업을 비활성화하시겠습니까?\n비활성화된 팝업은 사용자에게 노출되지 않습니다.", bundle: .module)
         }
         .onChange(of: store.didDeactivate) { _, didDeactivate in
             guard didDeactivate else { return }
@@ -190,7 +190,7 @@ private struct ImageSliderView: View {
                 .offset(y: (offset > 0 ? -offset : 0))
 
                 HStack(alignment: .bottom) {
-                    Text("\(popup.viewCount)명이 봤어요")
+                    Text("\(popup.viewCount)명이 봤어요", bundle: .module)
                         .ppStyleFont(
                             .scdream(.regular, size: 12),
                             lineHeightPt: 16.8
@@ -248,7 +248,7 @@ private struct InfoView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 20) {
-                Text("운영 장소")
+                Text("운영 장소", bundle: .module)
                     .ppStyleFont(
                         .scdream(.regular, size: 15),
                         lineHeightPt: 21
@@ -279,7 +279,7 @@ private struct InfoView: View {
             }
 
             HStack(spacing: 20) {
-                Text("운영 날짜")
+                Text("운영 날짜", bundle: .module)
                     .ppStyleFont(
                         .scdream(.regular, size: 15),
                         lineHeightPt: 21
@@ -298,7 +298,7 @@ private struct InfoView: View {
 
             HStack(spacing: 20) {
                 if popup.openTime != nil, popup.closeTime != nil {
-                    Text("운영 시간")
+                    Text("운영 시간", bundle: .module)
                         .ppStyleFont(
                             .scdream(.regular, size: 15),
                             lineHeightPt: 21
@@ -349,7 +349,7 @@ private struct BodyView: View {
             if let instagramURL {
                 PopupDivider(padding: 20)
 
-                Text("SNS / 홈페이지")
+                Text("SNS / 홈페이지", bundle: .module)
                     .ppStyleFont(
                         .scdream(.medium, size: 15),
                         lineHeightPt: 21
@@ -357,7 +357,7 @@ private struct BodyView: View {
 
                 SNSButton(
                     imageName: "insta",
-                    buttonTitle: "인스타그램"
+                    buttonTitle: String(localized: "인스타그램", bundle: .module)
                 ) {
                     openURL(instagramURL)
                 }
@@ -368,7 +368,7 @@ private struct BodyView: View {
             if !relatedPopupList.isEmpty {
                 PopupDivider(padding: 20)
 
-                Text("이런 팝업은 어때?")
+                Text("이런 팝업은 어때?", bundle: .module)
                     .ppStyleFont(
                         .scdream(.medium, size: 15),
                         lineHeightPt: 22
@@ -401,7 +401,7 @@ private struct BottomTabBarView: View {
     var body: some View {
         HStack(spacing: 20) {
             MainOrangeButton(
-                buttonTitle: "친구에게 공유하기",
+                buttonTitle: String(localized: "친구에게 공유하기", bundle: .module),
                 textFont: .scdream(.medium, size: 12),
                 textLineHeightPt: 22,
                 isReversed: false,
@@ -444,7 +444,7 @@ private struct ReviewPreviewSection: View {
 
     var body: some View {
         HStack {
-            Text("리뷰 \(reviews.count)개")
+            Text("리뷰 \(reviews.count)개", bundle: .module)
                 .font(.scdream(.medium, size: 15))
 
             Spacer()
@@ -495,7 +495,7 @@ private struct ReviewCell: View {
                 Text("|")
                     .font(.scdream(.light, size: 12))
 
-                Text("신고")
+                Text("신고", bundle: .module)
                     .font(.scdream(.light, size: 12))
             }
 
@@ -631,7 +631,7 @@ private struct AdminDisablePopupButton: View {
     var body: some View {
         if isAdmin {
             Button(action: action) {
-                Text("팝업 비활성화")
+                Text("팝업 비활성화", bundle: .module)
                     .foregroundStyle(Color.mainRed)
                     .ppStyleFont(.scdream(.bold, size: 17))
                     .padding(.vertical, 10)
