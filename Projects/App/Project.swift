@@ -15,7 +15,7 @@ let project = Project(
             infoPlist: .extendingDefault(
                 with: [
                     "CFBundleAllowMixedLocalizations": true,
-                    "CFBundleDevelopmentRegion": "ko",
+                    "CFBundleDevelopmentRegion": "en",
                     "CFBundleDisplayName": "팝팡",
                     "CFBundleShortVersionString": "$(MARKETING_VERSION)",
                     "CFBundleVersion": "$(CURRENT_PROJECT_VERSION)",
