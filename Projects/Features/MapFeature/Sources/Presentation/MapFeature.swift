@@ -1,4 +1,3 @@
-import BottomSheet
 import ComposableArchitecture
 import Domain
 import Foundation
@@ -6,13 +5,6 @@ import Core
 
 private enum CancelID {
     case mapCenterChanged
-}
-
-enum MapSecondSheetType: Equatable, Sendable {
-    case region
-    case sort
-    case detail(Popup)
-    case none
 }
 
 public struct MapCoordinate: Equatable, Sendable {
@@ -66,9 +58,6 @@ public struct MapFeature {
         var searchText = ""
         var mapCenter: MapCoordinate?
         var hasUserLocation = false
-        var firstSheetPosition: BottomSheetPosition = .relative(0.5)
-        var secondSheetPosition: BottomSheetPosition = .hidden
-        var secondSheetType: MapSecondSheetType = .none
         var isLoading = false
         var isWaitingForUserLocation = false
         var errorMessage: String?
@@ -90,9 +79,6 @@ public struct MapFeature {
                 && lhs.searchText == rhs.searchText
                 && lhs.mapCenter == rhs.mapCenter
                 && lhs.hasUserLocation == rhs.hasUserLocation
-                && lhs.firstSheetPosition == rhs.firstSheetPosition
-                && lhs.secondSheetPosition == rhs.secondSheetPosition
-                && lhs.secondSheetType == rhs.secondSheetType
                 && lhs.isLoading == rhs.isLoading
                 && lhs.isWaitingForUserLocation == rhs.isWaitingForUserLocation
                 && lhs.errorMessage == rhs.errorMessage
@@ -125,15 +111,8 @@ public struct MapFeature {
         case userLocationChanged(MapCoordinate)
         case locationPermissionDenied
         case categoryTapped(Recommend)
-        case regionButtonTapped
-        case sortButtonTapped
-        case listButtonTapped
-        case popupPreviewRequested(Popup)
         case mapMarkerTapped(Popup)
         case popupDetailTapped(Popup)
-        case firstSheetPositionChanged(BottomSheetPosition)
-        case secondSheetPositionChanged(BottomSheetPosition)
-        case dismissSecondSheet
         case regionSelected(RegionList)
         case districtSelected(String)
         case sortOptionSelected(MapSortOption)
@@ -253,52 +232,9 @@ public struct MapFeature {
                     recommendId: category.id
                 )
 
-            case .regionButtonTapped:
-                let firstPosition = Self.visibleFirstSheetPosition(from: state.firstSheetPosition)
-                state.firstSheetPosition = firstPosition
-                state.secondSheetType = .region
-                state.secondSheetPosition = firstPosition
-                return .none
-
-            case .sortButtonTapped:
-                let firstPosition = Self.visibleFirstSheetPosition(from: state.firstSheetPosition)
-                state.secondSheetType = .sort
-                state.secondSheetPosition = firstPosition
-                return .none
-
-            case .listButtonTapped:
-                state.firstSheetPosition = .relative(0.5)
-                return .none
-
-            case .popupPreviewRequested(let popup):
-                let firstPosition = Self.visibleFirstSheetPosition(from: state.firstSheetPosition)
-                state.firstSheetPosition = firstPosition
-                state.secondSheetType = .detail(popup)
-                state.secondSheetPosition = firstPosition
-                return .none
-
             case .mapMarkerTapped(let popup),
                     .popupDetailTapped(let popup):
                 return .send(.delegate(.popupSelected(popup)))
-
-            case .firstSheetPositionChanged(let position):
-                // `.absolute(0)`은 드래그 막대와 배경이 남아 Liquid Glass 탭바 아래로 보이므로 `.hidden`으로 접는다.
-                state.firstSheetPosition = Self.isFirstSheetHidden(position) ? .hidden : position
-                return .none
-
-            case .secondSheetPositionChanged(let position):
-                if position == .hidden {
-                    state.secondSheetPosition = .hidden
-                } else {
-                    state.secondSheetPosition = position
-                    state.firstSheetPosition = position
-                }
-                return .none
-
-            case .dismissSecondSheet:
-                state.secondSheetPosition = .hidden
-                state.secondSheetType = .none
-                return .none
 
             case .regionSelected(let region):
                 state.selectedRegion = region
@@ -308,8 +244,6 @@ public struct MapFeature {
             case .districtSelected(let district):
                 state.selectedDistrict = district
                 state.selectedCategoryId = nil
-                state.secondSheetPosition = .hidden
-                state.secondSheetType = .none
                 state.isLoading = true
                 state.errorMessage = nil
                 return updatePersonalMapFilteredPopupList(
@@ -323,8 +257,6 @@ public struct MapFeature {
             case .sortOptionSelected(let option):
                 state.selectedOption = option
                 state.selectedCategoryId = nil
-                state.secondSheetPosition = .hidden
-                state.secondSheetType = .none
                 state.isLoading = true
                 state.errorMessage = nil
                 return updatePersonalMapFilteredPopupList(
@@ -558,10 +490,6 @@ private extension MapFeature {
         }
     }
 
-    static func visibleFirstSheetPosition(from position: BottomSheetPosition) -> BottomSheetPosition {
-        isFirstSheetHidden(position) ? .relative(0.5) : position
-    }
-
     static func fetchMapPopups(
         mapFeatureClient: MapFeatureClient,
         userUuid: String,
@@ -617,17 +545,6 @@ private extension MapFeature {
             mapCenter?.longitude,
             MapSortOption.newest.rawValue
         )
-    }
-
-    static func isFirstSheetHidden(_ position: BottomSheetPosition) -> Bool {
-        switch position {
-        case .hidden:
-            true
-        case .absolute(let value):
-            value == 0
-        default:
-            false
-        }
     }
 }
 

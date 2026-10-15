@@ -61,7 +61,7 @@
 | 동시에 하나만 떠 있어야 하나요? | 앱 루트, auth 단계, sheet, fullScreenCover, alert, confirmationDialog | tree-based |
 | 같은 종류의 화면이 계속 쌓일 수 있나요? | 팝업 상세 → 관련 팝업 상세 → 리뷰 | stack-based |
 | 여러 탭에서 같은 화면으로 이동하나요? | 팝업 상세, 알림, 프로필 설정 | `MainTabFeature.Path` |
-| 한 화면 안에서만 의미가 있는 상태인가요? | 지역·정렬 sheet, segmented 선택, BottomSheet 높이 | feature state 또는 view local state |
+| 한 화면 안에서만 의미가 있는 상태인가요? | 지역·정렬 sheet, segmented 선택, 하단 시트(SheetKit) 높이 | feature state 또는 view local state |
 
 ## Tree-based Navigation
 

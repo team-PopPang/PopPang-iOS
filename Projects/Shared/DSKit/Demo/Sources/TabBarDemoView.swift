@@ -1,4 +1,5 @@
 import DSKit
+import SheetKit
 import SwiftUI
 
 /// 앱 메인 탭과 같은 5개 탭으로 시스템 탭바와 `PopPangTabBar`(기존 모양)를 바꿔 보며 비교한다.
@@ -18,9 +19,12 @@ struct TabBarDemoView: View {
             }
         ) { tab in
             Group {
-                if tab == .home {
+                switch tab {
+                case .home:
                     DSKitCatalogView()
-                } else {
+                case .map:
+                    MapTabSheetDemo()
+                default:
                     DemoTabContent(tab: tab)
                 }
             }
@@ -109,5 +113,43 @@ private struct DemoTabContent: View {
                 .padding(.trailing, 20)
                 .padding(.bottom, 20)
         }
+    }
+}
+
+/// 지도 탭처럼 화면 전체에 깔린 배경 위에 시트를 띄운다.
+/// 두 탭바 모양에서 시트 배경이 탭바 아래까지 깔리고, 목록 끝이 탭바에 가리지 않는지 확인한다.
+private struct MapTabSheetDemo: View {
+    @State private var detent: BottomSheetDetent? = .medium
+
+    var body: some View {
+        ZStack {
+            Color.mainGray4
+                .ignoresSafeArea()
+
+            if detent == nil {
+                Button("목록 보기") {
+                    detent = .medium
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.mainOrange)
+                .frame(maxHeight: .infinity, alignment: .bottom)
+                .padding(.bottom, 20)
+            }
+        }
+        .bottomSheet(detent: $detent) {
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    ForEach(1...30, id: \.self) { index in
+                        Text("팝업 \(index)")
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, .contentPadding)
+                            .padding(.vertical, 14)
+
+                        Divider()
+                    }
+                }
+            }
+        }
+        .ppBottomSheetStyle()
     }
 }

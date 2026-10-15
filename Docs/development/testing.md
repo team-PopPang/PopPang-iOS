@@ -12,6 +12,7 @@
 | 로컬 실행(Core, Data) | `tuist test Core`, `tuist test Data` | `README.md` 5장 |
 | CI 실행(Core, Data) | `xcodebuild test -workspace PopPang.xcworkspace -scheme Core`(또는 `Data`) `-destination 'platform=iOS Simulator,id=<첫 번째 iPhone 시뮬레이터>'` | `.github/workflows/2. poppang-test.yml`, `3. poppang-build-and-test.yml` |
 | fastlane | `bundle exec fastlane test` (Core → Data, iPhone 16, 코드 커버리지) | `fastlane/Fastfile` |
+| SheetKit 테스트 | `xcodebuild test -workspace PopPang.xcworkspace -scheme SheetKit -destination 'id=<시뮬레이터 UDID>'` | 2026-10-14 로컬에서 실행해 24개 통과. CI는 `3. poppang-build-and-test.yml`의 `sheetkit-test` job |
 | feature 테스트 실행 | `xcodebuild test -workspace PopPang.xcworkspace -scheme HomeFeatureV2 -destination 'id=<시뮬레이터 UDID>' -only-testing:HomeFeatureV2Tests` (MainTab은 `-scheme MainTabFeature -only-testing:MainTabFeatureTests`) | PR #92 검증 명령. scheme은 Tuist가 모듈 이름으로 자동 생성한다. |
 | 시뮬레이터·환경 | CI는 macOS 15 + Xcode 26.2에서 사용 가능한 첫 번째 iPhone 시뮬레이터를 쓴다. | CI workflow |
 
@@ -22,6 +23,7 @@
 | 모듈 | 타깃 | 파일 수 | `@Test` 수 | 내용 |
 | --- | --- | --- | --- | --- |
 | Core | `CoreTests` | 7 | 15 | 네트워크(Moya stub), 로컬 저장소 |
+| SheetKit | `SheetKitTests` | 4 | 24 | 하단 시트 높이 계산, 손을 뗀 높이와 속도로 고르는 멈출 높이, 손잡이 탭·VoiceOver 조절, 겹친 시트 가운데 더 높이 올라온 시트의 높이 고르기, 겹친 시트가 끄는 거리의 합, 끌기를 받을 곳 판단 |
 | Data | `DataTests` | 2 | 23 | DTO 변환, 계약, 서버 헬스 체크 판정(`URLProtocol` stub) |
 | HomeFeatureV2 | `HomeFeatureV2Tests` (`Tests/HomeFeatureTests.swift`) | 1 | 8 | TCA `TestStore`, 광고 배치 정책 |
 | MainTabFeature | `MainTabFeatureTests` | 1 | 6 | delegate → path·destination 전환, 해제 순서 |
@@ -32,7 +34,7 @@ App, Domain, DSKit, 다른 feature에는 테스트 타깃이 없다.
 
 | workflow | 실행 시점 | 하는 일 |
 | --- | --- | --- |
-| `3. poppang-build-and-test.yml` | `main` 대상 PR(opened, synchronize, reopened, ready_for_review), 매일 22:00 UTC, 수동 | `PopPangApp`(`Domain` 포함)·`DSKit` 빌드, `Core`·`Data` 테스트 |
+| `3. poppang-build-and-test.yml` | `main` 대상 PR(opened, synchronize, reopened, ready_for_review), 매일 22:00 UTC, 수동 | `PopPangApp`(`Domain` 포함)·`DSKit` 빌드, `Core`·`Data`·`SheetKit` 테스트 |
 | `2. poppang-test.yml` | 수동, PR 댓글 `/팝팡 테스트` | `Core`·`Data` 테스트 |
 | `1. poppang-build.yml` | 수동, PR 댓글 `/팝팡 빌드` | `PopPangApp` clean build |
 | `0. poppang-dependency-canary.yml` | 매주 월요일 03:00 UTC, PR 댓글 `/팝팡 버전점검` | `Package.resolved`를 지우고 최신 해석으로 `PopPangApp` 빌드 |
@@ -52,6 +54,7 @@ PR 댓글 `/팝팡 빌드하고테스트`는 3번 workflow를 실행한다.
 | DTO, Mapping, API | `DataTests` |
 | 네트워크 공통, 로컬 저장소 | `CoreTests` |
 | 목록 UI(PopPangListKit) | reducer 테스트 + Demo 앱에서 화면 확인. 목록 자체의 unit test는 없다. |
+| 하단 시트(SheetKit) | `SheetKitTests` + `SheetKitDemo`와 DSKit 데모의 지도 탭에서 두 탭바 모양으로 화면 확인 |
 | 모듈·Tuist 설정 | `PopPangApp` 빌드 |
 
 ## TCA 테스트 작성 방식

@@ -77,6 +77,7 @@
 | 화면 전환 소유권, Path·Destination | [TCA Navigation](Docs/architecture/tca-navigation.md) |
 | Repository·Usecase 조립, feature-scoped client, Demo 주입 | [의존성 주입](Docs/architecture/dependency-injection.md) |
 | PopPangListKit으로 목록 화면 만들기 | [PopPangListKit](Docs/architecture/poppang-listkit.md) |
+| SheetKit으로 하단 시트 붙이기 | [SheetKit](Docs/architecture/sheet-kit.md) |
 | 색·글자·여백·모서리 토큰, 버튼 스타일, 화면 코드 규칙 | [디자인 시스템](Docs/architecture/design-system.md) |
 | Tuist 모듈 추가, product type, ThirdParty 정책 | [모듈 구조](Docs/architecture/modules.md) |
 | Tuist 설치, workspace 생성, 빌드 명령 | [Tuist 설치와 실행](Docs/development/tuist.md) |

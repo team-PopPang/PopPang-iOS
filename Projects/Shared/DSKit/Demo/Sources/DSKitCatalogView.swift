@@ -1,4 +1,5 @@
 import DSKit
+import SheetKit
 import SwiftUI
 
 struct DSKitCatalogView: View {
@@ -6,7 +7,7 @@ struct DSKitCatalogView: View {
     @State private var searchText: String = ""
     @State private var keywordText: String = ""
     @State private var mapSearchText: String = ""
-    @State private var showsMapSheet = false
+    @State private var catalogSheetDetent: BottomSheetDetent? = .medium
     @State private var dropdownSelection: String? = "전체"
     @State private var sortOption: SortButton.SortOption = .mostFavorited
 
@@ -335,34 +336,38 @@ struct DSKitCatalogView: View {
         catalogSection(
             title: "Sheet",
             items: [
-                "mapSheet",
+                "SheetKit bottomSheet(detent:)",
+                "ppBottomSheetStyle",
             ]
         ) {
-            Button("맵 시트 샘플 열기") {
-                showsMapSheet = true
-            }
-            .ppStyleFont(.systemFont(ofSize: 16, weight: .semibold), lineHeight: 1.2)
-            .foregroundStyle(Color.mainWhite)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .background(Color.mainBlack)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .sheet(isPresented: $showsMapSheet) {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("MapSheet Sample")
-                        .ppStyleFont(.scdream(.bold, size: 18))
-                        .foregroundStyle(Color.mainBlack)
+            // 시트는 붙인 뷰 안에서 움직이므로, 작은 화면 틀에 붙여 모양과 높이 단계를 확인한다.
+            ZStack {
+                PPColor.backgroundSecondary
 
-                    Text("탭바와 safe area를 고려해 하단 영역을 보정하는 DSKit modifier입니다.")
-                        .ppStyleFont(.scdream(.regular, size: 13))
-                        .foregroundStyle(Color.mainGray)
-
-                    Spacer()
+                if catalogSheetDetent == nil {
+                    Button("시트 열기") {
+                        catalogSheetDetent = .medium
+                    }
+                    .buttonStyle(PPButtonStyle(.primary, size: .medium, fillsWidth: false))
                 }
-                .padding(24)
-                .presentationDetents([.medium])
-                .modifier(MapSheetModifier())
             }
+            .frame(height: 320)
+            .bottomSheet(detent: $catalogSheetDetent, detents: [.fraction(0.3), .medium, .large]) {
+                VStack(alignment: .leading, spacing: PPSpacing.s8) {
+                    Text("ppBottomSheetStyle")
+                        .ppTextStyle(.title2)
+                        .foregroundStyle(PPColor.textPrimary)
+
+                    Text("손잡이를 끌거나 눌러 높이를 바꾸고, 아래로 끝까지 내리면 닫힙니다.")
+                        .ppTextStyle(.body3)
+                        .foregroundStyle(PPColor.textSecondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, PPSpacing.s20)
+                .padding(.top, PPSpacing.s8)
+            }
+            .ppBottomSheetStyle()
+            .clipShape(RoundedRectangle(cornerRadius: PPRadius.medium))
         }
     }
 

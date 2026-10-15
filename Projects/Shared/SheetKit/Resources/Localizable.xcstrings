@@ -1,0 +1,42 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "bottomSheet.grabber.hint" : {
+      "comment" : "VoiceOver hint for the bottom sheet grabber.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double-tap to change the height. Swipe up or down to adjust it."
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "두 번 탭하면 높이가 바뀝니다. 위나 아래로 쓸어서 높이를 조절할 수 있습니다."
+          }
+        }
+      }
+    },
+    "bottomSheet.grabber.label" : {
+      "comment" : "VoiceOver label for the bottom sheet grabber.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sheet grabber"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시트 손잡이"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}
