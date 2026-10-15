@@ -27,6 +27,7 @@
 | product | `.framework`. DSKit과 feature가 함께 링크하므로 코드가 두 번 들어가지 않게 동적 framework로 둔다. |
 | 의존성 | 없음(SwiftUI만). 다른 앱에서도 쓸 수 있게 DSKit, TCA, Core를 import하지 않는다. |
 | 타깃 | `SheetKit`, `SheetKitTests`, `SheetKitDemo` |
+| 폴더 | `Sources/Public/`(쓰는 쪽이 보는 API), `Sources/Internal/`(구현), `Resources/`(VoiceOver 문구) |
 | 쓰는 곳 | `MapFeatureView`의 팝업 목록 시트와 지역·정렬·미리보기 시트, 시트 위를 따라 움직이는 내 위치 버튼 |
 
 지도 화면은 서드파티 라이브러리 BottomSheet를 쓰다가 SheetKit으로 바꿨다(이슈 #110). BottomSheet는 숨김과 높이를 한 enum에 섞어 쓰고, 화면이 다시 그려질 때마다 시트 전체에 애니메이션을 걸었다. SheetKit은 이 두 가지를 하지 않는다.
@@ -34,6 +35,19 @@
 ## 공개 API
 
 SheetKit 밖에서 쓰는 것은 아래뿐이다. 높이 계산, 끌기 처리, 겹친 시트 연결 같은 나머지 타입은 모두 `internal`이라 SheetKit 밖에서는 보이지 않는다. 쓰는 쪽은 이 표만 알면 된다.
+
+코드에서는 `Sources/Public/` 폴더만 보면 된다. 파일마다 공개 선언과 `Internal/` 타입에 넘기는 짧은 본문만 있다.
+
+```text
+Sources/
+├── Public/      쓰는 쪽이 보는 API
+│   ├── View+BottomSheet.swift            bottomSheet(detent:...), bottomSheet(item:detent:...)
+│   ├── BottomSheetDetent.swift           .medium, .large, .fraction(_:), .height(_:)
+│   ├── View+BottomSheetAppearance.swift  bottomSheetTopInset(_:), bottomSheetBackground(_:), bottomSheetCornerRadius(_:)
+│   ├── View+BottomSheetDragHandle.swift  bottomSheetDragHandle(_:)
+│   └── BottomSheetGeometry.swift         BottomSheetGeometry, onBottomSheetGeometryChange(_:)
+└── Internal/    구현. 쓰는 쪽은 몰라도 된다.
+```
 
 | 분류 | API | 하는 일 | 설명 |
 | --- | --- | --- | --- |
@@ -254,7 +268,7 @@ PopPang에서는 시트 높이처럼 그 화면 안에서만 쓰는 상태를 vi
 11. 멈출 단계는 `DragGesture`의 `predictedEndTranslation`으로 고르지 않는다. `UIScrollView`처럼 멀리 미끄러지게 예측해서, 끝까지 올린 시트를 살짝 튕겨도 중간 단계를 건너뛰고 숨었다. 손을 뗀 높이와 `velocity`로 `BottomSheetLayout.targetDetent`가 고르고, 속도는 감속률 0.99로 짧게 반영한다.
 12. 시트 높이는 `BottomSheetGeometryReporter`가 preference로 알린다. `Animatable`이어서 높이 단계를 옮기는 애니메이션 동안에도 중간 높이를 알리므로, 컨테이너의 `.animation(_:value:)`보다 안쪽에 둔다. 도착 높이만 알리면 받는 쪽 버튼이 애니메이션 없이 도착점으로 튄다. 시트 컨테이너 안에 버튼을 같이 그리는 방식은, 시트를 숨기면 버튼도 같이 숨어 쓰는 쪽이 같은 버튼을 하나 더 둬야 해서 쓰지 않는다.
 13. 목록(스크롤뷰, `List`)에는 시트 제스처를 붙이지 않는다. 내용 전체에 끌기를 붙이면 SwiftUI는 그중 목록 위 끌기만 골라 뺄 수 없어, 목록을 스크롤할 때 시트도 같이 움직인다.
-14. 밖에서 쓸 것만 `public`으로 두고 나머지 타입은 `internal`로 둔다. 쓰는 쪽은 [공개 API](#공개-api) 표만 보고 시트를 붙일 수 있어야 한다. 공개 API를 더하거나 바꾸면 그 표도 같은 작업에서 고친다.
+14. 밖에서 쓸 것만 `public`으로 두고 `Sources/Public/`에 모은다. `Public/` 파일에는 공개 선언과 `Internal/` 타입에 넘기는 짧은 본문만 두고, 구현은 `Sources/Internal/`에 둔다. `Internal/`에는 `public`을 쓰지 않는다. 쓰는 쪽은 [공개 API](#공개-api) 표나 `Public/` 폴더만 보고 시트를 붙일 수 있어야 한다. 공개 API를 더하거나 바꾸면 그 표와 폴더 그림도 같은 작업에서 고친다.
 
 아직 하지 않은 것:
 

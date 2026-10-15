@@ -5,12 +5,7 @@ import CoreGraphics
 /// SwiftUI의 `PresentationDetent`처럼 enum이 아니라 struct로 둔다.
 /// 쓰는 쪽은 값을 넘기기만 하므로, 나중에 높이 종류를 더해도 쓰는 쪽 코드가 깨지지 않는다.
 public struct BottomSheetDetent: Hashable, Sendable {
-    enum Kind: Hashable, Sendable {
-        case fraction(CGFloat)
-        case height(CGFloat)
-        case large
-    }
-
+    /// 높이를 계산하는 방식. SheetKit 안에서만 쓴다.
     let kind: Kind
 
     /// 시트를 붙인 뷰 높이의 절반.
