@@ -79,6 +79,7 @@
 | PopPangListKit으로 목록 화면 만들기 | [PopPangListKit](Docs/architecture/poppang-listkit.md) |
 | SheetKit으로 하단 시트 붙이기 | [SheetKit](Docs/architecture/sheet-kit.md) |
 | 색·글자·여백·모서리 토큰, 버튼 스타일, 화면 코드 규칙 | [디자인 시스템](Docs/architecture/design-system.md) |
+| 화면 문구 추가와 번역(String Catalog), 날짜 표기 | [다국어 문구](Docs/development/localization.md) |
 | Tuist 모듈 추가, product type, ThirdParty 정책 | [모듈 구조](Docs/architecture/modules.md) |
 | Tuist 설치, workspace 생성, 빌드 명령 | [Tuist 설치와 실행](Docs/development/tuist.md) |
 | React Native 산출물 받기와 버전 (팝업 제보 화면) | [React Native 산출물](Docs/development/react-native.md) |

@@ -335,24 +335,26 @@ Projects
 
 <br><br>
 
-### **6. CSV 기반 로컬라이제이션 자동화로 다국어 관리 비용 절감**
+### **6. 다국어 문구를 모듈별 String Catalog로 관리**
 > **문제**<br>
-> `Localizable.strings`를 언어별로 직접 관리하면<br>
-> 키 누락, 오타, 언어별 불일치가 생기기 쉽고 문자열 키를 하드코딩할 때 디버깅 비용도 커졌음
+> 화면 문구 대부분이 feature 코드에 한국어로 직접 들어 있어 영어·일본어 화면을 제공하지 못했고,<br>
+> 일부 문구만 DSKit의 언어별 `Localizable.strings`와 점 표기 키(`common.next`)로 따로 관리했음
 >
 > **해결**<br>
-> `Python/localizable.csv`를 기준으로<br>
-> `en/ko/ja Localizable.strings`와 `LocalizationKeys.swift`를 자동 생성하는<br>
-> CSV 기반 로컬라이제이션 생성 스크립트 구축
+> 문구가 있는 모듈마다 `Resources/Localizable.xcstrings`(String Catalog)를 두고 한국어 원문을 키로 사용<br>
+> 코드에서는 `bundle: .module`로 각 모듈 번들의 문구를 읽음
 >
 > **성과**<br>
-> 🔸 번역 데이터를 CSV 한 곳에서 일괄 관리<br>
-> 🔸 `LocalizationKey` enum 자동 생성으로 문자열 오타 위험 감소<br>
-> 🔸 번역 작업자, 기획자, 개발자가 같은 포맷으로 협업 가능
+> 🔸 모듈 16곳의 화면 문구 171개와 위치·사진 권한 안내를 ko·en·ja로 제공<br>
+> 🔸 언어별 번역과 검토 상태를 카탈로그 파일 하나에서 관리<br>
+> 🔸 키가 한국어 원문이라 코드만 읽어도 화면 문구를 알 수 있고, 번역이 빠지면 한국어가 그대로 보임
 
 ```swift
-Text(LocalizationKey.commonNext.localized(comment: "Next button"))
+Text("오픈 예정 팝업", bundle: .module)
+String(localized: "리뷰 \(count)개", bundle: .module)  // 카탈로그 키: 리뷰 %lld개
 ```
+
+자세한 규칙은 [`Docs/development/localization.md`](./Docs/development/localization.md)를 봅니다.
 
 <br/><br/>
 
@@ -410,6 +412,7 @@ make module LAYER=shared NAME=UIComponents
 - [`Docs/architecture/architecture.md`](./Docs/architecture/architecture.md): 모듈 구조와 의존성 방향
 - [`Docs/architecture/tca-navigation.md`](./Docs/architecture/tca-navigation.md): MainTabFeature와 TCA navigation 기준
 - [`Docs/architecture/sheet-kit.md`](./Docs/architecture/sheet-kit.md): SheetKit 하단 시트 사용법(공개 API와 예제)
+- [`Docs/development/localization.md`](./Docs/development/localization.md): 다국어 문구 추가와 String Catalog 규칙
 - `Docs/etc/`: 트러블슈팅, 링크 정책, AdMob 설정 등 참고 문서
 - [PopPangListKit](https://github.com/team-PopPang/PopPangListKit): UICollectionView 기반 선언형 목록 라이브러리와 UIKit·SwiftUI 사용 예제
 - `Legacy/V0/README.md`: 기존 단일 타깃 앱 README

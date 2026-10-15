@@ -46,6 +46,7 @@ product type을 바꾸면 링크와 런타임 동작이 바뀐다(duplicate clas
 - `destinations: [.iPhone]`
 - `deploymentTargets: .iOS("17.0")`
 - `infoPlist: .default` 또는 `.extendingDefault(with:)`
+- 화면 문구가 있는 모듈은 `resources: ["Resources/**"]`로 `Resources/Localizable.xcstrings`를 포함한다. 앱 타깃은 리소스 파일을 하나씩 적는다. ([다국어 문구](../development/localization.md))
 
 bundle id 형식:
 
@@ -90,6 +91,7 @@ let project = Project(
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: ["Sources/**"],
+            resources: ["Resources/**"],
             dependencies: [
                 .project(target: "ADKit", path: "../../Shared/ADKit"),
                 .project(target: "Domain", path: "../../Domain"),
@@ -119,6 +121,7 @@ Projects/Features/NoticeFeature/
 ├── Project.swift                              NoticeFeature(staticFramework), NoticeFeatureDemo(app)
 ├── Interface/Sources/NoticeFeatureEntryView.swift   INTERFACE 값과 관계없이 항상 생성
 ├── Sources/Presentation/NoticeFeatureView.swift
+├── Resources/Localizable.xcstrings             화면 문구 카탈로그(ko·en·ja)
 └── Demo/Sources/NoticeFeatureDemoApp.swift
 ```
 

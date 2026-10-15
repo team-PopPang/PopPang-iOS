@@ -53,10 +53,10 @@ Figma 같은 디자인 원본이 없다. 그래서 토큰의 역할과 단계는
 `PPTextStyle`은 글자 크기·행간·자간을 정한다. 굵기는 스타일의 기본값을 쓰고, 다르게 써야 하면 `weight:`로 바꾼다.
 
 ```swift
-Text("오픈 예정 팝업")
+Text("오픈 예정 팝업", bundle: .module)
     .ppTextStyle(.title3)
 
-Text("서울 성수동")
+Text(popup.roadAddress)
     .ppTextStyle(.body4, weight: .medium)
 ```
 
@@ -95,7 +95,7 @@ Text("서울 성수동")
 ## 버튼 스타일
 
 ```swift
-Button("다음") { store.send(.nextTapped) }
+Button(String(localized: "다음", bundle: .module)) { store.send(.nextTapped) }
     .buttonStyle(.ppPrimary)
 ```
 
@@ -117,6 +117,7 @@ Button("다음") { store.send(.nextTapped) }
 - 새로 쓰거나 고치는 화면은 `PPColor`, `ppTextStyle`, `PPSpacing`, `PPRadius`, `PPButtonStyle`을 쓴다.
 - 화면 코드에 hex 색, `.scdream(...)`, 여백·모서리 숫자를 직접 쓰지 않는다. DSKit 안의 토큰 정의와 구성 요소 구현은 예외다.
 - 누르는 영역은 `onTapGesture` 대신 `Button`으로 만든다. 그래야 VoiceOver가 버튼으로 읽고 눌림 효과도 적용된다.
+- 화면 문구는 모듈의 `Resources/Localizable.xcstrings`에 두고 `bundle: .module`로 읽는다. ([다국어 문구](../development/localization.md))
 - 기존 이름(`Color.mainOrange`, `ppStyleFont`, `MainOrangeButton` 등)은 그대로 동작한다. 기존 화면을 옮기는 작업은 아래 기준으로 따로 한다.
 
 ## 기존 화면 옮기기
@@ -144,3 +145,4 @@ Button("다음") { store.send(.nextTapped) }
 - [아키텍처](architecture.md)
 - [모듈 구조](modules.md)
 - [Swift 스타일](../development/swiftstyle.md)
+- [다국어 문구](../development/localization.md)
