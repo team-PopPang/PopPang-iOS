@@ -9,6 +9,7 @@ PopPang 화면 문구는 모듈마다 `Resources/Localizable.xcstrings`(String C
 - [새 문구 추가하기](#새-문구-추가하기)
 - [번역하지 않는 문자열](#번역하지-않는-문자열)
 - [날짜 표기](#날짜-표기)
+- [글꼴](#글꼴)
 - [언어별로 확인하기](#언어별로-확인하기)
 - [관련 문서](#관련-문서)
 
@@ -17,6 +18,7 @@ PopPang 화면 문구는 모듈마다 `Resources/Localizable.xcstrings`(String C
 | 항목 | 기준 |
 | --- | --- |
 | 지원 언어 | ko(원문), en, ja. 앱 `Info.plist`의 `CFBundleLocalizations`와 같아요. |
+| 다른 언어 | ko·en·ja가 아닌 언어의 기기에서는 영어로 보여요. 앱 `Info.plist`의 `CFBundleDevelopmentRegion`이 `en`이에요. |
 | 카탈로그 위치 | 문구가 있는 모듈의 `Resources/Localizable.xcstrings` |
 | 권한 안내 문구 | `Projects/App/Resources/InfoPlist.xcstrings` |
 | 원문 언어 | `sourceLanguage`는 `ko`예요. |
@@ -108,6 +110,18 @@ formatter.setLocalizedDateFormatFromTemplate("dE")  // 15일 (목), Thu 15, 15�
 - `Locale.current`는 앱 언어가 아니라 기기의 지역 설정을 따라요. 지역이 `ko_KR`인 시뮬레이터에서 `-AppleLanguages (en)`으로 실행하면, 문구는 영어인데 `Locale.current`로 만든 날짜는 한국어로 나와요. 그래서 문구를 읽는 번들이 고른 언어(`Bundle.module.preferredLocalizations`)로 정해요.
 - 서버와 주고받는 날짜(`yyyy-MM-dd`)나 숫자만 쓰는 형식(`yy.MM.dd`)은 `ko_KR`을 고정해 그대로 둬요.
 
+## 글꼴
+
+SCDream 글꼴에는 한자와 장음 기호(`ー`)가 없어요. `UIFont.scdream`이 빠진 글자를 화면 언어에 맞는 시스템 고딕 글꼴로 채워요.
+
+| 화면 언어 | 빠진 글자를 채우는 글꼴 |
+| --- | --- |
+| ja | 히라기노 고딕 |
+| ko | Apple SD Gothic Neo |
+
+- 글꼴 파일이 스스로를 세리프체로 분류해요. 그래서 이 처리가 없으면 iOS가 빠진 글자를 명조체(일본어는 히라기노 명조)로 채워요.
+- 앱의 모든 글꼴이 `UIFont.scdream`을 거치므로 화면 코드에서 따로 할 일은 없어요.
+
 ## 언어별로 확인하기
 
 - Xcode: scheme의 Run → Options → App Language에서 언어를 골라 실행해요.
@@ -117,7 +131,13 @@ formatter.setLocalizedDateFormatFromTemplate("dE")  // 15일 (목), Thu 15, 15�
   xcrun simctl launch --terminate-running-process <시뮬레이터 UDID> kr.co.poppang.PopPang -AppleLanguages "(en)"
   ```
 
-지원하지 않는 언어(예: 프랑스어)만 쓰는 기기에서는 feature·DSKit 문구가 영어로 나와요. 모듈 번들의 개발 언어가 Tuist 기본값인 en이라서예요. 앱 본체의 개발 언어(`CFBundleDevelopmentRegion`)는 ko라서, 앱 본체 문구(권한 안내, 업데이트 안내)는 한국어로 나올 수 있어요(`확인 필요`: 권한 안내 창이 뜨는 상태에서 프랑스어로 실행해 확인).
+지원하지 않는 언어(예: 프랑스어)만 쓰는 기기에서는 앱 전체가 영어로 나와요. 앱 본체의 개발 언어(`Projects/App/Project.swift`의 `CFBundleDevelopmentRegion`)와 모듈 번들의 개발 언어(Tuist 기본값)가 모두 `en`이라서예요.
+
+권한 안내처럼 앱 본체에 있는 문구는 화면에서 확인하기 어려워요. 실행 중인 앱에 디버거를 붙여 실제로 고른 문구를 읽어요.
+
+```bash
+xcrun lldb -p <앱 pid> --batch -o 'expr -l objc -O -- [[NSBundle mainBundle] localizedStringForKey:@"NSLocationWhenInUseUsageDescription" value:@"MISSING" table:@"InfoPlist"]' -o detach
+```
 
 ## 관련 문서
 

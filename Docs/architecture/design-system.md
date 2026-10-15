@@ -76,6 +76,7 @@ Text(popup.roadAddress)
 
 - 행간은 글자 크기의 1.4배, 자간은 글자 크기의 0.02배다. `ppStyleFont`의 기본값과 같다.
 - UIKit에서는 `PPTextStyle.body1.uiFont()`로 글꼴을 얻는다.
+- SCDream에는 한자와 장음 기호(`ー`)가 없다. `UIFont.scdream`이 빠진 글자를 화면 언어에 맞는 시스템 고딕(일본어는 히라기노 고딕, 한국어는 Apple SD Gothic Neo)으로 채운다. ([다국어 문구](../development/localization.md#글꼴))
 - 예전 글꼴 토큰(`Font.largeTitle`, `title1`~`title3`, `caption1`~`caption3`, `bottomBtn`, `homeTitle`)은 쓰는 곳이 없어 지웠다. 이 가운데 `largeTitle`, `title2`, `title3`, `caption2`는 SwiftUI 기본 글꼴 이름과 겹쳤다.
 
 ## 여백과 모서리
