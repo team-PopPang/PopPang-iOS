@@ -1,6 +1,30 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
+    "CFBundleDisplayName" : {
+      "comment" : "App name under the home screen icon and in system permission alerts",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PopPang"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PopPang"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "팝팡"
+          }
+        }
+      }
+    },
     "NSLocationAlwaysAndWhenInUseUsageDescription" : {
       "extractionState" : "manual",
       "localizations" : {
