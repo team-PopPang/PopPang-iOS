@@ -111,7 +111,7 @@ git config core.hooksPath    # .githooks 이면 설정됨
 ## 5. PR
 
 - 본문은 `.github/PULL_REQUEST_TEMPLATE.md`의 섹션 순서를 유지한다: `💡 PR 유형`, `✏️ 변경 사항`, `🚨 관련 이슈`(`- close #이슈번호`), `🎨 스크린샷`, `✅ 체크리스트`, `🔥 추가 설명`.
-- 변경 사항은 `- ...했습니다.` 문체의 bullet로 쓴다. 문체와 예시는 `.agents/skills/auto-pr/references/pr-writing-style.md`를 따른다.
+- 본문은 해요체로 쓰고, 변경 사항은 `- ...했어요.` 형식의 bullet로 쓴다. 문체와 예시는 [한국어 윤문 원칙](korean-editing.md)과 `.agents/skills/auto-pr/references/pr-writing-style.md`를 따른다.
 - 체크리스트는 실제로 확인한 항목만 체크한다. 검증하지 못했으면 추가 설명에 이유를 적는다.
 - 게시는 `gh pr create --base main --head <branch> --title "<제목>" --body-file <파일> --assignee @me --label "<라벨>"`로 한다.
 - 같은 브랜치의 열린 PR이 있으면 새로 만들지 않는다.
