@@ -409,6 +409,7 @@ make module LAYER=shared NAME=UIComponents
 - [`AGENTS.md`](./AGENTS.md): AI 에이전트 공통 작업 규칙과 문서 길잡이 (`CLAUDE.md`는 이 파일을 불러옵니다)
 - [`Docs/architecture/architecture.md`](./Docs/architecture/architecture.md): 모듈 구조와 의존성 방향
 - [`Docs/architecture/tca-navigation.md`](./Docs/architecture/tca-navigation.md): MainTabFeature와 TCA navigation 기준
+- [`Docs/architecture/sheet-kit.md`](./Docs/architecture/sheet-kit.md): SheetKit 하단 시트 사용법(공개 API와 예제)
 - `Docs/etc/`: 트러블슈팅, 링크 정책, AdMob 설정 등 참고 문서
 - [PopPangListKit](https://github.com/team-PopPang/PopPangListKit): UICollectionView 기반 선언형 목록 라이브러리와 UIKit·SwiftUI 사용 예제
 - `Legacy/V0/README.md`: 기존 단일 타깃 앱 README
