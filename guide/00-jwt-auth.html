@@ -841,7 +841,7 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
 
 <span class="kw">public func</span> replaceTokens(_ tokens: AuthTokens, ifRefreshTokenIs expectedRefreshToken: String) <span class="kw">throws</span> -&gt; Bool {
     <span class="kw">try</span> withLock {
-        <span class="kw">guard</span> (store.value(forKey: Key.refreshToken) <span class="kw">as</span> String?) == expectedRefreshToken <span class="kw">else</span> { <span class="kw">return false</span> }
+        <span class="kw">guard</span> loadTokens()?.refreshToken == expectedRefreshToken <span class="kw">else</span> { <span class="kw">return false</span> }
         <span class="kw">try</span> saveTokens(tokens)
         <span class="kw">return true</span>
     }
@@ -875,6 +875,7 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
     <span class="kw">return try</span> replacedAccessToken(in: storage)   <span class="cm">// 재로그인한 토큰을 따라요</span>
 }</code></pre>
 <p>저장된 Refresh Token이 서버가 거절한 그 토큰이면 지우고(<code>true</code>) <code>loginRequired</code>를 던져요. 그사이 재로그인으로 다른 토큰이 저장돼 있으면(<code>false</code>) 지우지 않고 그 새 토큰을 따라가요. Access Token 없이 Refresh Token만 남아 있어도 같은 방식으로 비교해요.</p>
+<p>토큰 쌍이 다 갖춰지지 않은 상태(예: Refresh Token만 남음)는 <strong>로그아웃 상태</strong>로 봐요. 이 상태를 만나면 <code>removeIncompleteTokens()</code>가 lock 안에서 "쌍이 정말 없는지" 확인하고 남은 토큰을 지워요. 그사이 로그인으로 쌍이 생겼으면 지우지 않고(<code>false</code>) 그 새 토큰을 써요. 확인과 삭제를 따로 하면 그 사이에 로그인한 토큰을 지울 수 있어서, 한 번에 처리해요.</p>
 </section>
 
 <section id="keychain-fail">
@@ -997,7 +998,7 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
   <tbody>
     <tr><td>헤더</td><td>인증 종류에 맞는 Bearer 헤더, V1·공개 API는 헤더 없음, 토큰이 없으면 헤더 없음</td></tr>
     <tr><td>Refresher</td><td>동시 만료 다섯 개에 갱신 한 번, 이미 갱신됐으면 생략, 401이면 삭제와 로그인 요구, 다른 실패(400·403·429·503·500 등)는 토큰 유지, 갱신 중 로그아웃·재로그인, 갱신한 토큰의 저장 실패, 보낸 토큰을 모를 때, Refresh Token 없음</td></tr>
-    <tr><td>재요청</td><td>만료 뒤 새 토큰으로 한 번 재요청, 두 번째 만료는 재갱신 없음, 5002가 아닌 401은 삭제, 옛 토큰의 401은 새 토큰을 지우지 않고 새 토큰으로 한 번 재요청(두 번째는 없음), Refresh Token만 남은 상태의 401은 남은 토큰 유지, 토큰이 하나도 없으면 <code>loginRequired</code>, 갱신 일시 실패는 원래 오류, 403과 비 access target은 갱신 없음</td></tr>
+    <tr><td>재요청</td><td>만료 뒤 새 토큰으로 한 번 재요청, 두 번째 만료는 재갱신 없음, 5002가 아닌 401은 삭제, 옛 토큰의 401은 새 토큰을 지우지 않고 새 토큰으로 한 번 재요청(두 번째는 없음), 토큰 없이 보낸 요청의 401은 쌍이 없으면 남은 토큰을 지우고 <code>loginRequired</code>, 그사이 로그인했으면 새 토큰으로 한 번 재요청, 갱신 일시 실패는 원래 오류, 403과 비 access target은 갱신 없음</td></tr>
   </tbody>
 </table></div>
 <p>저장소는 <code>InMemoryStore</code>를 써요. 저장 실패는 <code>store.failingKeys = [AuthTokenStorage.Key.refreshToken]</code>처럼 키를 지정해 만들어요. 읽기·삭제 실패는 만들 수 없어서, Keychain 읽기 실패 중 갱신·요청, 갱신 거절 뒤 삭제 실패 같은 테스트는 지웠어요(<a href="#keychain-fail">18절</a>).</p>
@@ -1007,7 +1008,9 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
   <li>토큰 쌍과 Signup Token 저장·삭제</li>
   <li>하나라도 저장 실패하면 둘 다 지움</li>
   <li>기대한 값일 때만 바꾸거나 지움</li>
-  <li>Refresh Token만 남아 있어도 <code>hasAnyToken()</code>이 <code>true</code></li>
+  <li>Refresh Token만 남아 있어도 그 값으로 비교해 지움 (<code>removesLoneRefreshTokenWhenItMatches</code>)</li>
+  <li>토큰 쌍이 없으면 남은 토큰을 지우고, 쌍이 있으면 그대로 둠 (<code>removesOnlyIncompleteTokens</code>)</li>
+  <li>Refresh Token만 남아 있으면 갱신 결과로 바꾸지 않음 (<code>doesNotReplaceIncompleteTokens</code>)</li>
   <li>실제 Keychain 저장·덮어쓰기·삭제(<code>KeychainStore</code>를 직접 확인). CoreTests는 앱 없이 실행돼 Keychain entitlement가 없어서(-34018) 이 테스트는 건너뛰어요. 토큰 저장과는 관계없는 테스트예요.</li>
 </ul>
 </section>
@@ -1038,7 +1041,7 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
   <details><summary>2. Access Token만 길게 쓰면 안 되는 이유는 뭔가요?</summary>
     <p>요청마다 네트워크를 타서 새기 쉽고, 서명만으로 검증하면 중간에 무르기 어려워요. 짧게 살리고, 서버가 통제하는 Refresh Token으로 갱신해요.</p></details>
   <details><summary>3. PopPang이 401을 받았는데 코드가 5001이면 어떻게 되나요?</summary>
-    <p>갱신하지 않아요. 보낸 토큰이 아직 저장된 토큰이면 지우고 <code>loginRequired</code>를 던져요. 그사이 다른 요청이 갱신했으면 지우지 않고 새 토큰으로 한 번만 다시 보내요. 저장소가 오류를 던지면 지우지 않고 받은 오류를 던져요(UserDefaults에서는 일어나지 않아요). 토큰 없이 보낸 요청이면 저장된 토큰이 하나도 없을 때만 <code>loginRequired</code>를 던져요.</p></details>
+    <p>갱신하지 않아요. 보낸 토큰이 아직 저장된 토큰이면 지우고 <code>loginRequired</code>를 던져요. 그사이 다른 요청이 갱신했으면 지우지 않고 새 토큰으로 한 번만 다시 보내요. 토큰 없이 보낸 요청이면 토큰 쌍이 없을 때 남은 토큰을 지우고 <code>loginRequired</code>를 던져요. 그사이 로그인으로 쌍이 생겼으면 새 토큰으로 한 번만 다시 보내요.</p></details>
   <details><summary>4. 갱신 뒤 다시 보낸 요청이 또 5002를 받으면요?</summary>
     <p>다시 갱신하지 않고 그 오류를 던져요. 토큰은 지우지 않아요. 재요청은 구조상 한 번이에요.</p></details>
   <details><summary>5. 다섯 요청이 동시에 만료되면 갱신 API는 몇 번 불리나요? 무엇이 그렇게 만드나요?</summary>
