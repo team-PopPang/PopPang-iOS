@@ -12,6 +12,8 @@ public extension MoyaProvider {
     }
 
     /// 성공 응답이 `APIResponse`로 감싸진 V2 API를 요청하고 `data`만 돌려준다.
+    ///
+    /// `data`가 항상 null인 API(`ApiResponse[null]`)는 돌려받을 값이 없으므로 `asyncRequestVoid(_:)`로 요청한다.
     func asyncRequest<T: Decodable>(
         _ target: Target,
         decodeDataTo type: T.Type,

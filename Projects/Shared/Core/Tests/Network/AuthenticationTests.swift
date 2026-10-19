@@ -198,6 +198,21 @@ struct AuthenticationTests {
         #expect(try storage.loadTokens() == nil)
     }
 
+    @Test("갱신 API가 401을 준 뒤 토큰을 지우지 못해도 다시 로그인해야 한다고 알린다")
+    func requiresLoginWhenRemovingRejectedTokensFails() async throws {
+        let store = InMemoryKeychainStore()
+        let storage = AuthTokenStorage(store: store)
+        try storage.saveTokens(.oldTokens)
+        store.undeletableKeys = [AuthTokenStorage.Key.accessToken]
+        let refresher = AccessTokenRefresher(storage: storage) { _ in
+            throw NetworkError.invalidStatusCode(401, message: errorBody(code: 5007))
+        }
+
+        await #expect(throws: AuthSessionError.loginRequired) {
+            _ = try await refresher.refreshAccessToken(expired: "old-access")
+        }
+    }
+
     @Test("Refresh Token이 없으면 다시 로그인해야 한다고 알린다")
     func requiresLoginWithoutRefreshToken() async {
         let storage = AuthTokenStorage(store: InMemoryKeychainStore())

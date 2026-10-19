@@ -90,6 +90,20 @@ struct AuthTokenStorageTests {
         #expect(try store.value(forKey: AuthTokenStorage.Key.accessToken) == "access")
     }
 
+    @Test("Access Token 저장에 실패하고 되돌리기도 실패하면 새 Refresh Token이 남는다")
+    func keepsNewRefreshTokenWhenRollbackFails() throws {
+        let store = InMemoryKeychainStore()
+        let storage = AuthTokenStorage(store: store)
+        try storage.saveTokens(AuthTokens(accessToken: "old-access", refreshToken: "old-refresh"))
+        store.failingKeys = [AuthTokenStorage.Key.accessToken]
+        store.undeletableKeys = [AuthTokenStorage.Key.accessToken, AuthTokenStorage.Key.refreshToken]
+
+        #expect(throws: InMemoryKeychainStore.SaveError.self) {
+            try storage.saveTokens(AuthTokens(accessToken: "new-access", refreshToken: "new-refresh"))
+        }
+        #expect(try storage.loadTokens() == AuthTokens(accessToken: "old-access", refreshToken: "new-refresh"))
+    }
+
     /// 앱 없이 실행하는 CoreTests에는 Keychain entitlement가 없어(-34018) 이 테스트를 건너뛴다.
     @Test(
         "Keychain에 문자열을 저장하고 덮어쓰고 지운다",

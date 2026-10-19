@@ -33,11 +33,14 @@ public struct AuthTokenStorage: Sendable {
     }
 
     /// 새 토큰 쌍을 함께 저장한다. 하나라도 저장하지 못하면 둘 다 지운다.
+    ///
+    /// Refresh Token을 먼저 쓴다. 지우는 것까지 실패해 한쪽만 남더라도 새 Refresh Token과 옛 Access Token이 남아,
+    /// 옛 Access Token이 만료되면 새 Refresh Token으로 다시 갱신할 수 있다.
     public func saveTokens(_ tokens: AuthTokens) throws {
         try withLock {
             do {
-                try store.set(tokens.accessToken, forKey: Key.accessToken)
                 try store.set(tokens.refreshToken, forKey: Key.refreshToken)
+                try store.set(tokens.accessToken, forKey: Key.accessToken)
             } catch {
                 try? removeTokens()
                 throw error
