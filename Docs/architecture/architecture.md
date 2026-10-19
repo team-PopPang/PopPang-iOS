@@ -128,7 +128,7 @@ Projects
 
 위치: `Projects/Data`
 
-- `Sources/Remote/<Name>API.swift`: Moya `TargetType`. `Core`의 `BaseAPI`를 채택해 base URL과 header를 공유한다.
+- `Sources/Remote/<Name>API.swift`: Moya `TargetType`. `Core`의 `BaseAPI`를 채택해 base URL과 header를 공유한다. `apiVersion`(기본 `.v1`)으로 서버 API 버전을, `authorization`(기본 `.none`)으로 V2 인증 헤더 종류를 정한다. V1·V2 전환 계획은 [V2 API 마이그레이션](api-v2-migration.md)을 본다.
 - `Sources/RepositoryImpl/<Name>RepositoryImpl.swift`: Domain 계약을 구현한다. `NetworkProvider.shared`로 `MoyaProvider`를 만들고 `asyncRequest(_:decodeTo:)`로 요청한다.
   - 예외: `ServerHealthRepositoryImpl`(앱 시작 헬스 체크)은 `URLSession`으로 직접 요청한다. 오프라인 여부를 `URLError` 코드로 구분하고 요청 전체를 5초로 제한하기 위해서다. 요청 주소와 헤더는 `ServerHealthAPI`(`BaseAPI`)로 만든다.
 - `Sources/DTO`: 서버 응답·요청 형식
@@ -141,7 +141,7 @@ Projects
 
 | 모듈 | 맡는 일 | 주의 |
 | --- | --- | --- |
-| `Core` | `Network`(BaseAPI, NetworkProvider, MoyaProvider+Async, NetworkError), `LocalStorage`(Session, PushToken, RecentSearch, DeepLink), `Logging`, `Support`(AppConfig, `UserSession` 등), Foundation 확장 | `BaseAPI`, `NetworkProvider`, `MoyaProvider+Async`를 바꾸면 모든 네트워크 호출에 영향이 있다. |
+| `Core` | `Network`(BaseAPI, NetworkProvider, MoyaProvider+Async, NetworkError, APIResponse, V2 인증 plugin과 토큰 갱신), `LocalStorage`(Session, PushToken, RecentSearch, DeepLink, Keychain 토큰 저장소), `Logging`, `Support`(AppConfig, `UserSession` 등), Foundation 확장 | `BaseAPI`, `NetworkProvider`, `MoyaProvider+Async`를 바꾸면 모든 네트워크 호출에 영향이 있다. |
 | `DSKit` | 디자인 시스템(색·글자·여백·모서리 토큰, 버튼 스타일), 공통 컴포넌트, 폰트·색상·이미지(`DSKitResource`) | 두 개 이상의 feature에서 쓰거나 디자인 시스템 성격이 분명할 때만 올린다. 토큰과 화면 코드 규칙은 [디자인 시스템](design-system.md)을 본다. |
 | `SheetKit` | 화면 위에 겹쳐 띄우는 하단 시트(`bottomSheet(detent:)`, `bottomSheet(item:detent:)`), 높이 단계(`BottomSheetDetent`), 시트를 끄는 곳을 정하는 `bottomSheetDragHandle()`, 시트 높이를 알리는 `onBottomSheetGeometryChange(_:)` | 다른 앱에서도 쓸 수 있게 SwiftUI 말고는 의존하지 않는다. PopPang 모양은 DSKit `ppBottomSheetStyle()`로 입힌다. 사용법은 [SheetKit](sheet-kit.md)을 본다. |
 | `ADKit` | Google Mobile Ads 초기화와 네이티브 광고, 목록에 광고를 끼워 넣는 `AdInjectedListItem` | `GoogleMobileAds`를 직접 링크한다. 광고 ID는 `Secrets.xcconfig`의 `ADMOB_APP_ID`, `ADMOB_NATIVE_AD_UNIT_ID`에서 읽는다. |
@@ -201,7 +201,7 @@ HomeFeatureView (HomeFeatureV2)
   → send(.popupSectionsLoaded(HomePopupSections(...))) → reducer가 state 갱신 → view 다시 그림
 ```
 
-- 실패는 `Core`의 `NetworkError.invalidStatusCode(_:message:)` 또는 Moya 오류로 올라온다. reducer는 `send(.errorMessageChanged(error.localizedDescription))`처럼 화면 상태로 바꾼다.
+- 실패는 `Core`의 `NetworkError.invalidStatusCode(_:message:)` 또는 Moya 오류로 올라온다. 서버 에러 코드는 `NetworkError.serverErrorCode`로 읽는다. V2 인증 토큰을 쓸 수 없게 되면 `AuthSessionError.loginRequired`가 올라온다. reducer는 `send(.errorMessageChanged(error.localizedDescription))`처럼 화면 상태로 바꾼다.
 - 성공·실패와 관계없이 마지막에 `send(.loadingChanged(false))`로 로딩을 끝낸다.
 - 이 흐름에서 feature reducer는 Repository, Moya, DTO를 모른다.
 

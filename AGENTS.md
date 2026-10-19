@@ -76,6 +76,7 @@
 | Reducer·State·Action·Effect·View 작성 규칙 | [TCA Feature 작성 규칙](Docs/architecture/tca-feature.md) |
 | 화면 전환 소유권, Path·Destination | [TCA Navigation](Docs/architecture/tca-navigation.md) |
 | Repository·Usecase 조립, feature-scoped client, Demo 주입 | [의존성 주입](Docs/architecture/dependency-injection.md) |
+| 서버 API V1→V2 전환 단계, V2 인증 헤더·토큰 처리 | [V2 API 마이그레이션](Docs/architecture/api-v2-migration.md) |
 | PopPangListKit으로 목록 화면 만들기 | [PopPangListKit](Docs/architecture/poppang-listkit.md) |
 | SheetKit으로 하단 시트 붙이기 | [SheetKit](Docs/architecture/sheet-kit.md) |
 | 색·글자·여백·모서리 토큰, 버튼 스타일, 화면 코드 규칙 | [디자인 시스템](Docs/architecture/design-system.md) |

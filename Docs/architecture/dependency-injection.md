@@ -181,6 +181,7 @@ private final class PopupUsecaseBox: @unchecked Sendable {
 | `LocalSessionStorage` | `Core/Sources/LocalStorage/Session/` | `userID`, 온보딩 완료 여부 같은 로컬 값 읽기·쓰기 |
 | `KeyValueStoring` / `UserDefaultsStore` | `Core/Sources/LocalStorage/Support/` | 저장소 추상화. `AppBootstrap.live(store:)`가 하나를 만들어 여러 저장소에 나눠 준다. |
 | `RecentSearchStorage`, `PushTokenStorage` | `Core/Sources/LocalStorage/` | 최근 검색어, 푸시 토큰 |
+| `AuthTokenStorage` / `SecureStoring`·`KeychainStore` | `Core/Sources/LocalStorage/AuthToken/`, `Core/Sources/LocalStorage/Support/` | V2 Access·Refresh·Signup Token. Keychain에만 저장한다. 아직 앱에서 조립하지 않는다([V2 API 마이그레이션](api-v2-migration.md) 2단계). |
 
 reducer는 UserDefaults나 Keychain에 직접 접근하지 않는다. client나 저장소 타입을 통해 접근한다.
 
