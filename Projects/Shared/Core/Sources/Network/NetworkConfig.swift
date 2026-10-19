@@ -3,7 +3,7 @@ import Foundation
 public enum NetworkConfig {
     public static let serverURLString = "https://poppang.co.kr"
     public static let apiURLString = apiURLString(for: .v1)
-    public static let imageURLString = "https://poppang.co.kr"
+    public static let imageURLString = serverURLString
 
     public static var apiBaseURL: URL {
         apiBaseURL(for: .v1)

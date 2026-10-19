@@ -17,15 +17,21 @@ public enum NetworkError: LocalizedError, Equatable, Sendable {
         }
     }
 
-    /// 실패 본문의 서버 에러 코드. 본문이 `ErrorResponse` 형식이 아니면(5xx 기본 오류 본문 등) `nil`이다.
+    /// 실패 본문의 서버 에러 코드. 본문에 정수 `code`가 없으면(5xx 기본 오류 본문 등) `nil`이다.
+    ///
+    /// `ErrorResponse`의 다른 필드가 빠져도 코드는 읽도록 `code`만 디코딩한다.
     public var serverErrorCode: Int? {
         switch self {
         case let .invalidStatusCode(_, message):
             return try? JSONDecoder()
-                .decode(ErrorResponse.self, from: Data(message.utf8))
+                .decode(ServerErrorCodeBody.self, from: Data(message.utf8))
                 .code
         }
     }
+}
+
+private struct ServerErrorCodeBody: Decodable {
+    let code: Int
 }
 
 public extension NetworkError {

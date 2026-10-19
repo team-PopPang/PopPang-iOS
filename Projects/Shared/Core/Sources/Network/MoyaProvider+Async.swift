@@ -23,6 +23,7 @@ public extension MoyaProvider {
     /// 요청을 보낸다.
     ///
     /// Access Token이 필요한 요청이 401 5002(만료)를 받으면 토큰을 한 번 갱신하고 원래 요청을 한 번만 다시 보낸다.
+    /// 다시 보낸 요청도 실패하면 받은 오류를 그대로 던진다.
     /// 5002가 아닌 401은 같은 토큰으로 다시 성공할 수 없으므로 토큰을 지우고 `AuthSessionError.loginRequired`를 던진다.
     /// 403에는 갱신하지 않는다.
     func asyncRequest(_ target: Target) async throws -> Response {
@@ -32,12 +33,18 @@ public extension MoyaProvider {
             return try await sendRequest(target)
         }
 
-        let usedAccessToken = authentication.token(for: target)
-        do {
-            return try await sendAccessRequest(target, authentication: authentication)
-        } catch let error as NetworkError where error.isExpiredToken {
-            _ = try await authentication.refresher.refreshAccessToken(expired: usedAccessToken)
-            return try await sendAccessRequest(target, authentication: authentication)
+        switch try await sendAccessRequest(target, authentication: authentication) {
+        case let .success(response):
+            return response
+
+        case let .expired(sentAccessToken, _):
+            _ = try await authentication.refresher.refreshAccessToken(expired: sentAccessToken)
+            switch try await sendAccessRequest(target, authentication: authentication) {
+            case let .success(response):
+                return response
+            case let .expired(_, error):
+                throw error
+            }
         }
     }
 
@@ -46,41 +53,73 @@ public extension MoyaProvider {
     }
 }
 
+private enum AccessRequestResult {
+    case success(Response)
+    /// 401 5002를 받았다. `sentAccessToken`은 그 요청에 실제로 담았던 토큰이다.
+    case expired(sentAccessToken: String?, error: NetworkError)
+}
+
 private extension MoyaProvider {
     func sendAccessRequest(
         _ target: Target,
         authentication: AuthenticationPlugin
-    ) async throws -> Response {
-        do {
-            return try await sendRequest(target)
-        } catch let error as NetworkError where error.statusCode == 401 && !error.isExpiredToken {
-            authentication.storage.removeTokens()
-            throw AuthSessionError.loginRequired
+    ) async throws -> AccessRequestResult {
+        let response = try await sendRawRequest(target)
+        guard let error = NetworkError(response: response) else {
+            return .success(response)
         }
+
+        let sentAccessToken = response.request?.bearerToken
+        if error.isExpiredToken {
+            return .expired(sentAccessToken: sentAccessToken, error: error)
+        }
+
+        guard error.statusCode == 401 else { throw error }
+
+        // 보낸 뒤에 다른 요청이 토큰을 갱신했다면, 옛 토큰의 실패로 새 토큰을 지우지 않는다.
+        guard authentication.storage.loadTokens()?.accessToken == sentAccessToken else {
+            throw error
+        }
+
+        authentication.storage.removeTokens()
+        throw AuthSessionError.loginRequired
     }
 
     func sendRequest(_ target: Target) async throws -> Response {
+        let response = try await sendRawRequest(target)
+        if let error = NetworkError(response: response) {
+            throw error
+        }
+        return response
+    }
+
+    /// 상태 코드와 관계없이 서버 응답을 돌려준다. 응답을 받지 못하면 Moya 오류를 던진다.
+    func sendRawRequest(_ target: Target) async throws -> Response {
         try await withCheckedThrowingContinuation { continuation in
             request(target) { result in
-                switch result {
-                case let .success(response):
-                    guard (200..<300).contains(response.statusCode) else {
-                        let message = String(data: response.data, encoding: .utf8) ?? "Unknown error"
-                        continuation.resume(
-                            throwing: NetworkError.invalidStatusCode(
-                                response.statusCode,
-                                message: message
-                            )
-                        )
-                        return
-                    }
-
-                    continuation.resume(returning: response)
-
-                case let .failure(error):
-                    continuation.resume(throwing: error)
-                }
+                continuation.resume(with: result)
             }
         }
+    }
+}
+
+private extension NetworkError {
+    /// 2xx가 아닌 응답이면 오류를 만든다.
+    init?(response: Response) {
+        guard (200..<300).contains(response.statusCode) == false else { return nil }
+
+        let message = String(data: response.data, encoding: .utf8) ?? "Unknown error"
+        self = .invalidStatusCode(response.statusCode, message: message)
+    }
+}
+
+private extension URLRequest {
+    var bearerToken: String? {
+        guard let value = value(forHTTPHeaderField: "Authorization"),
+              value.hasPrefix("Bearer ")
+        else {
+            return nil
+        }
+        return String(value.dropFirst("Bearer ".count))
     }
 }

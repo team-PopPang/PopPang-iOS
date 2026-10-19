@@ -33,6 +33,7 @@ struct NetworkTests {
         arguments: [
             (401, #"{"success":false,"code":5002,"message":"만료","data":null}"#, 5002 as Int?),
             (500, #"{"success":false,"code":6000,"message":"서버 에러","data":null}"#, 6000),
+            (401, #"{"code":5002}"#, 5002),
             (502, "<html>Bad Gateway</html>", nil),
             (503, "", nil),
         ]

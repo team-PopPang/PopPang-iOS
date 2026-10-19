@@ -63,16 +63,32 @@ private extension AccessTokenRefresher {
         do {
             tokens = try await refresh(refreshToken)
         } catch let error as NetworkError where error.statusCode == 401 {
+            guard storage.loadTokens()?.refreshToken == refreshToken else {
+                return try replacedAccessToken(in: storage)
+            }
             storage.removeTokens()
             throw AuthSessionError.loginRequired
         }
 
-        // 갱신하는 동안 로그아웃 등으로 토큰이 바뀌었으면 늦게 온 응답으로 덮어쓰지 않는다.
+        // 갱신하는 동안 로그아웃·재로그인으로 토큰이 바뀌었으면 늦게 온 응답으로 덮어쓰지 않는다.
         guard storage.loadTokens()?.refreshToken == refreshToken else {
-            throw AuthSessionError.loginRequired
+            return try replacedAccessToken(in: storage)
         }
 
-        try storage.saveTokens(tokens)
+        do {
+            try storage.saveTokens(tokens)
+        } catch {
+            // 서버는 이미 이전 Refresh Token을 폐기했으므로 저장하지 못한 토큰으로는 세션을 이어 갈 수 없다.
+            throw AuthSessionError.loginRequired
+        }
         return tokens.accessToken
+    }
+
+    /// 갱신하는 동안 바뀐 토큰을 따른다. 재로그인으로 새 토큰이 있으면 그 Access Token을, 로그아웃으로 없으면 로그인을 요구한다.
+    static func replacedAccessToken(in storage: AuthTokenStorage) throws -> String {
+        guard let accessToken = storage.loadTokens()?.accessToken else {
+            throw AuthSessionError.loginRequired
+        }
+        return accessToken
     }
 }
