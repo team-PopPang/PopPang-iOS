@@ -577,8 +577,8 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
 <span class="kw">func</span> token(for target: TargetType) -&gt; String? {
     <span class="kw">switch</span> Self.authorization(of: target) {
     <span class="kw">case</span> .none:   <span class="kw">return nil</span>
-    <span class="kw">case</span> .access: <span class="kw">return</span> (<span class="kw">try?</span> storage.loadTokens())?.accessToken
-    <span class="kw">case</span> .signup: <span class="kw">return</span> (<span class="kw">try?</span> storage.loadSignupToken()) ?? <span class="kw">nil</span>
+    <span class="kw">case</span> .access: <span class="kw">return</span> storage.loadTokens()?.accessToken
+    <span class="kw">case</span> .signup: <span class="kw">return</span> storage.loadSignupToken()
     }
 }
 
@@ -805,7 +805,7 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
 <pre><code><span class="kw">public func</span> refreshAccessToken(expired expiredAccessToken: String?) <span class="kw">async throws</span> -&gt; String {
     <span class="cm">// ① 다른 요청이 이미 갱신했으면 저장된 새 토큰을 써요</span>
     <span class="kw">if let</span> expiredAccessToken,
-       <span class="kw">let</span> currentAccessToken = <span class="kw">try</span> storage.loadTokens()?.accessToken,
+       <span class="kw">let</span> currentAccessToken = storage.loadTokens()?.accessToken,
        currentAccessToken != expiredAccessToken {
         <span class="kw">return</span> currentAccessToken
     }
@@ -841,7 +841,7 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
 
 <span class="kw">public func</span> replaceTokens(_ tokens: AuthTokens, ifRefreshTokenIs expectedRefreshToken: String) <span class="kw">throws</span> -&gt; Bool {
     <span class="kw">try</span> withLock {
-        <span class="kw">guard try</span> loadTokens()?.refreshToken == expectedRefreshToken <span class="kw">else</span> { <span class="kw">return false</span> }
+        <span class="kw">guard</span> (store.value(forKey: Key.refreshToken) <span class="kw">as</span> String?) == expectedRefreshToken <span class="kw">else</span> { <span class="kw">return false</span> }
         <span class="kw">try</span> saveTokens(tokens)
         <span class="kw">return true</span>
     }
@@ -868,13 +868,13 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
 <p>UserDefaults는 문자열 저장이 사실상 실패하지 않아서 이 줄은 거의 일어나지 않아요. 그래도 <code>catch</code>의 <code>storage.removeTokens()</code> 정리 코드는 그대로 두기로 했어요. 저장 함수(<code>saveTokens</code>, <code>replaceTokens</code>)는 <code>throws</code>라서, 실패했을 때 폐기된 토큰을 남기지 않는 쪽이 안전해요.</p>
 <span class="src">AccessTokenRefresher.swift · performRefresh</span>
 <pre><code><span class="kw">catch let</span> error <span class="kw">as</span> NetworkError <span class="kw">where</span> error.statusCode == 401 {
-    <span class="cm">// 비교·삭제에 실패해도 이 Refresh Token은 더 쓸 수 없으므로 로그인을 요구한다.</span>
-    <span class="kw">guard</span> storage.removeTokens(ifRefreshTokenIs: refreshToken) == <span class="kw">false else</span> {
+    <span class="cm">// 갱신하는 동안 재로그인으로 토큰이 바뀌었으면 새 토큰을 지우지 않는다.</span>
+    <span class="kw">if</span> storage.removeTokens(ifRefreshTokenIs: refreshToken) {
         <span class="kw">throw</span> AuthSessionError.loginRequired
     }
     <span class="kw">return try</span> replacedAccessToken(in: storage)   <span class="cm">// 재로그인한 토큰을 따라요</span>
 }</code></pre>
-<p><code>== false</code>를 보세요. 결과가 <code>true</code>(지움)이면 <code>loginRequired</code>예요. 서버가 거절한 Refresh Token은 어떤 경우든 다시 쓸 수 없어서예요. 확실히 "바뀌었다"(<code>false</code>)고 확인된 경우만 새 토큰을 따라가요.</p>
+<p>저장된 Refresh Token이 서버가 거절한 그 토큰이면 지우고(<code>true</code>) <code>loginRequired</code>를 던져요. 그사이 재로그인으로 다른 토큰이 저장돼 있으면(<code>false</code>) 지우지 않고 그 새 토큰을 따라가요. Access Token 없이 Refresh Token만 남아 있어도 같은 방식으로 비교해요.</p>
 </section>
 
 <section id="keychain-fail">
@@ -892,17 +892,17 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
     <span class="kw">throw</span> KeychainStoreError.unhandledStatus(status)  <span class="cm">// 읽지 못함</span>
 }</code></pre>
 <p>이 구분이 필요한 이유는 iOS의 실행 조건 때문이에요. 기기를 재부팅하고 아직 잠금 해제하지 않았는데 푸시 같은 이유로 앱이 백그라운드에서 깨어나면, Keychain을 읽지 못할 수 있어요. 이것을 "토큰 없음"으로 처리하면 멀쩡한 사용자를 로그아웃시켜요.</p>
-<p>저장소가 읽기 오류를 던지면 각 지점은 이렇게 처리해요. 이 코드는 지금도 그대로 있어요.</p>
+<p>Keychain으로 되돌린다면 아래 지점에서 읽기 오류를 따로 처리해야 해요. 지금 코드에는 이 처리가 없어요. UserDefaults는 읽기·삭제가 실패하지 않아서, <code>AuthTokenStorage</code>의 읽기·삭제 함수에서 <code>throws</code>를 지웠기 때문이에요.</p>
 <div class="table-wrap"><table>
-  <thead><tr><th>지점</th><th>저장소가 오류를 던질 때</th></tr></thead>
+  <thead><tr><th>지점</th><th>Keychain을 쓸 때 해야 할 처리</th></tr></thead>
   <tbody>
-    <tr><td><code>AuthenticationPlugin.token(for:)</code></td><td>헤더 없이 보내요(<code>try?</code>). 서버가 401을 주면 아래 줄로 가요</td></tr>
-    <tr><td>토큰 없이 보낸 요청의 401</td><td><code>hasAnyToken()</code>이 <code>false</code>일 때만 <code>loginRequired</code>예요. 오류면 토큰을 지우지 않고 받은 오류를 던져요</td></tr>
-    <tr><td><code>sendAccessRequest</code>의 다른 401</td><td><code>removeTokens(ifAccessTokenIs:)</code>가 throw → <code>true</code>가 아니니 토큰을 지우지 않고 받은 오류를 던져요</td></tr>
-    <tr><td><code>refreshAccessToken</code> ①의 비교</td><td><code>try</code>로 오류를 그대로 던져요. 토큰은 그대로예요</td></tr>
+    <tr><td><code>AuthenticationPlugin.token(for:)</code></td><td>읽지 못하면 헤더 없이 보내고, 401을 받아도 토큰이 없다고 단정하지 않아요</td></tr>
+    <tr><td>토큰 없이 보낸 요청의 401</td><td>남은 토큰이 있는지 확인하지 못하면 지우지 않고 받은 오류를 던져요</td></tr>
+    <tr><td><code>sendAccessRequest</code>의 다른 401</td><td>비교·삭제에 실패하면 토큰을 지우지 않고 받은 오류를 던져요</td></tr>
+    <tr><td><code>refreshAccessToken</code>의 비교</td><td>읽지 못하면 오류를 그대로 던지고 토큰은 그대로 둬요</td></tr>
   </tbody>
 </table></div>
-<div class="note"><span class="tag why">지금은</span>UserDefaults는 이런 실패가 없어서 <code>Storing.value(forKey:)</code>와 <code>removeValue(forKey:)</code>는 throw하지 않아요. 그래서 위 표의 오류 경로는 지금 실행되지 않고, 이 경로를 만들던 테스트(Keychain 읽기·삭제 실패)도 지웠어요. Keychain으로 되돌리면 이 경로가 다시 살아나니, 그때는 테스트도 다시 만들어야 해요(<a href="#layers">20절</a>).</div>
+<div class="note"><span class="tag why">지금은</span>위 처리를 만들던 코드와 테스트(Keychain 읽기·삭제 실패)는 지웠어요. Keychain으로 되돌리면 <code>AuthTokenStorage</code> 함수에 <code>throws</code>를 다시 붙이고, 이 처리와 테스트를 다시 만들어야 해요(<a href="#layers">20절</a>).</div>
 </section>
 
 <section id="save-order">
@@ -919,7 +919,7 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
             <span class="kw">try</span> store.set(tokens.refreshToken, forKey: Key.refreshToken)   <span class="cm">// 먼저</span>
             <span class="kw">try</span> store.set(tokens.accessToken, forKey: Key.accessToken)
         } <span class="kw">catch</span> {
-            <span class="kw">try?</span> removeTokens()
+            removeTokens()
             <span class="kw">throw</span> error
         }
     }
