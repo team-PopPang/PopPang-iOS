@@ -103,7 +103,7 @@ private extension MoyaProvider {
         let storage = authentication.storage
         guard let sentAccessToken else {
             // 토큰 없이 보냈다. 저장된 토큰이 하나도 없으면 로그인이 필요하고, 남은 토큰이 있으면 지우지 않는다.
-            guard storage.hasAnyToken() == false else { throw error }
+            if storage.hasAnyToken() { throw error }
             throw AuthSessionError.loginRequired
         }
 

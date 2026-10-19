@@ -65,7 +65,7 @@ private extension AccessTokenRefresher {
             tokens = try await refresh(refreshToken)
         } catch let error as NetworkError where error.statusCode == 401 {
             // 갱신하는 동안 재로그인으로 토큰이 바뀌었으면 새 토큰을 지우지 않는다.
-            guard storage.removeTokens(ifRefreshTokenIs: refreshToken) == false else {
+            if storage.removeTokens(ifRefreshTokenIs: refreshToken) {
                 throw AuthSessionError.loginRequired
             }
             return try replacedAccessToken(in: storage)

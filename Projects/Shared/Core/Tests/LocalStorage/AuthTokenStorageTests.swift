@@ -58,6 +58,18 @@ struct AuthTokenStorageTests {
         #expect(storage.loadTokens() == nil)
     }
 
+    @Test("Refresh Token만 남아 있어도 그 값으로 비교해 지운다")
+    func removesLoneRefreshTokenWhenItMatches() throws {
+        let store = InMemoryStore()
+        let storage = AuthTokenStorage(store: store)
+        try store.set("refresh", forKey: AuthTokenStorage.Key.refreshToken)
+
+        #expect(storage.removeTokens(ifRefreshTokenIs: "other") == false)
+        #expect(storage.hasAnyToken())
+        #expect(storage.removeTokens(ifRefreshTokenIs: "refresh"))
+        #expect(storage.hasAnyToken() == false)
+    }
+
     @Test("Refresh Token만 남아 있어도 남은 토큰이 있다고 알려 준다")
     func reportsLoneRefreshToken() throws {
         let store = InMemoryStore()

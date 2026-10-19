@@ -55,7 +55,7 @@ public struct AuthTokenStorage: Sendable {
     /// - Returns: 바꿨으면 `true`. 그사이 로그아웃·재로그인으로 토큰이 바뀌었으면 저장하지 않고 `false`
     public func replaceTokens(_ tokens: AuthTokens, ifRefreshTokenIs expectedRefreshToken: String) throws -> Bool {
         try withLock {
-            guard loadTokens()?.refreshToken == expectedRefreshToken else { return false }
+            guard (store.value(forKey: Key.refreshToken) as String?) == expectedRefreshToken else { return false }
             try saveTokens(tokens)
             return true
         }
@@ -73,6 +73,8 @@ public struct AuthTokenStorage: Sendable {
     }
 
     /// 저장된 Refresh Token이 `refreshToken`일 때만 토큰 쌍을 지운다.
+    ///
+    /// Access Token 없이 Refresh Token만 남아 있어도 비교한다. 서버가 거절한 Refresh Token이 혼자 남지 않게 하기 위해서다.
     ///
     /// - Returns: 지웠으면 `true`. 그사이 토큰이 바뀌었으면 지우지 않고 `false`
     public func removeTokens(ifRefreshTokenIs refreshToken: String) -> Bool {
