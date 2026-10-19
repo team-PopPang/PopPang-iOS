@@ -65,7 +65,7 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 | `access` API가 401 5002(만료)를 받아요. | 그 요청에 실제로 담았던 토큰을 기준으로 한 번 갱신하고, 새 토큰으로 원래 요청을 한 번만 다시 보내요. 다시 보낸 요청이 다시 5002를 받으면 받은 오류를 그대로 던지고 토큰은 지우지 않아요(명세가 정하지 않은 경우예요). 다시 보낸 요청이 5002가 아닌 401을 받으면 아래 줄처럼 처리해요. |
 | 여러 요청이 동시에 만료돼요. | 갱신 요청은 하나만 보내요. 나머지 요청은 그 결과를 기다렸다가 새 토큰으로 다시 보내요. |
 | `access` API가 5002가 아닌 401을 받아요. | 같은 토큰으로는 다시 성공할 수 없어서 Access·Refresh Token을 지우고 `AuthSessionError.loginRequired`를 던져요. 다만 요청을 보낸 뒤 다른 요청이 토큰을 갱신했으면 새 토큰은 지우지 않고 받은 오류만 던져요. |
-| 갱신 API가 401을 주거나 Refresh Token이 없어요. | 토큰을 지우고 `AuthSessionError.loginRequired`를 던져요. |
+| 갱신 API가 401을 주거나 Refresh Token이 없어요. | 토큰을 지우고 `AuthSessionError.loginRequired`를 던져요. 지우다 실패해도 그 토큰은 더 쓸 수 없으므로 `loginRequired`를 던져요. |
 | 갱신이 401이 아닌 이유로 실패해요 (400, 403, 429, 500, 503, 네트워크 오류). | 토큰을 그대로 두고, 원래 요청이 받은 401 5002 오류를 던져요. 다음 요청이 만료되면 다시 갱신해요. 이 정책은 [정해야 할 것](#정해야-할-것) 3번이 정해지면 다시 봐요. |
 | 갱신하는 동안 로그아웃으로 토큰이 지워져요. | 늦게 온 응답을 저장하지 않고 `AuthSessionError.loginRequired`를 던져요. |
 | 갱신하는 동안 다시 로그인해서 새 토큰이 저장돼요. | 늦게 온 응답(성공이든 401이든)으로 새 로그인 토큰을 덮어쓰거나 지우지 않고, 새 로그인의 Access Token을 써요. |
@@ -101,7 +101,7 @@ extension UserAPI: BaseAPI {
 }
 ```
 
-case마다 인증 종류가 다르면 `switch`로 나눠요. 응답이 `APIResponse`로 감싸진 API는 `asyncRequest(_:decodeDataTo:)`로, 감싸지 않은 API는 지금처럼 `asyncRequest(_:decodeTo:)`로 요청해요.
+case마다 인증 종류가 다르면 `switch`로 나눠요. 응답이 `APIResponse`로 감싸진 API는 `asyncRequest(_:decodeDataTo:)`로, 감싸지 않은 API는 지금처럼 `asyncRequest(_:decodeTo:)`로 요청해요. 성공 본문이 없거나 `data`가 늘 null인 API(`ApiResponse[null]`)는 `asyncRequestVoid(_:)`로 요청해요.
 
 ### 2단계로 넘기는 일
 
