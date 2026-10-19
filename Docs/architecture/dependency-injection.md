@@ -180,8 +180,9 @@ private final class PopupUsecaseBox: @unchecked Sendable {
 | `LocalSessionClient` | `App/Sources/AppCore/LocalSessionClient.swift` | 세션 load·save·clear. `LocalSessionStorage`와 `UserUsecaseProtocol`을 조합한다. |
 | `LocalSessionStorage` | `Core/Sources/LocalStorage/Storage/Session/` | `userID`, 온보딩 완료 여부 같은 로컬 값 읽기·쓰기 |
 | `Storing` / `UserDefaultsStore` | `Core/Sources/LocalStorage/Store/` | 키로 값을 저장·조회·삭제하는 공통 저장소 protocol과 UserDefaults 구현. `AppBootstrap.live(store:)`가 하나를 만들어 여러 저장소에 나눠 준다. 저장소마다 더 필요한 기능은 그 저장소 타입의 `public extension`으로 추가한다. |
-| `RecentSearchStorage`, `PushTokenStorage`, `DeepLinkStorage` | `Core/Sources/LocalStorage/Storage/` | 최근 검색어, 푸시 토큰 |
-| `AuthTokenStorage` / `KeychainStoring`·`KeychainStore` | `Core/Sources/LocalStorage/Storage/AuthToken/`, `Core/Sources/LocalStorage/Store/Keychain/` | V2 Access·Refresh·Signup Token. Keychain에만 저장한다. 아직 앱에서 조립하지 않는다([V2 API 마이그레이션](api-v2-migration.md) 2단계). |
+| `RecentSearchStorage`, `PushTokenStorage`, `DeepLinkStorage` | `Core/Sources/LocalStorage/Storage/` | 최근 검색어, 푸시 토큰, 딥링크 팝업 ID |
+| `AuthTokenStorage` | `Core/Sources/LocalStorage/Storage/AuthToken/` | V2 Access·Refresh·Signup Token. `Storing`(기본 `UserDefaultsStore`)에 저장한다. 명세와 다른 결정이며 이유는 [V2 API 마이그레이션](api-v2-migration.md#정해야-할-것) 8번에 있다. 아직 앱에서 조립하지 않는다([V2 API 마이그레이션](api-v2-migration.md) 2단계). |
+| `KeychainStoring` / `KeychainStore` | `Core/Sources/LocalStorage/Store/Keychain/` | Keychain 저장 구현. 지금은 쓰는 곳이 없다. |
 
 로컬 저장소는 두 층으로 나눈다.
 

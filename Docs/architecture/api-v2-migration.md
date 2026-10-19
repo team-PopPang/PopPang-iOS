@@ -52,7 +52,8 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 | `APIResponse<T>`, `ErrorResponse` | `Core/Sources/Network/APIResponse.swift` | V2 성공 응답 래퍼와 V1·V2 공통 실패 응답 형식 |
 | `asyncRequest(_:decodeDataTo:)` | `Core/Sources/Network/MoyaProvider+Async.swift` | `APIResponse`로 감싼 API만 이 함수로 요청하고 `data`를 돌려받아요. |
 | `NetworkError.statusCode`, `serverErrorCode`, `isExpiredToken` | `Core/Sources/Network/NetworkError.swift` | 실패 본문에서 서버 에러 코드를 읽어요. 5xx 기본 오류 본문처럼 형식이 다르면 `serverErrorCode`는 `nil`이고, HTTP 상태로 처리해요. |
-| `AuthTokenStorage`, `KeychainStoring`·`KeychainStore` | `Core/Sources/LocalStorage/Storage/AuthToken/`, `Core/Sources/LocalStorage/Store/Keychain/` | Access·Refresh·Signup Token을 Keychain에 저장해요. 이 기기에서만 쓰고, 처음 잠금 해제한 뒤부터 읽을 수 있어요. |
+| `AuthTokenStorage` | `Core/Sources/LocalStorage/Storage/AuthToken/` | Access·Refresh·Signup Token을 UserDefaults(`UserDefaultsStore`)에 저장해요. 키는 `auth.accessToken`, `auth.refreshToken`, `auth.signupToken`이에요. 명세와 다른 결정이라 [정해야 할 것](#정해야-할-것) 8번에 이유를 적었어요. |
+| `KeychainStoring`, `KeychainStore` | `Core/Sources/LocalStorage/Store/Keychain/` | Keychain 저장 구현이에요. 지금은 쓰지 않고 남겨 둬요. |
 | `AccessTokenRefresher` | `Core/Sources/Network/Auth/AccessTokenRefresher.swift` | 만료된 Access Token을 갱신해요. 동시에 여러 요청이 만료돼도 갱신 요청은 하나만 보내요. |
 | `AuthenticationPlugin` | `Core/Sources/Network/Auth/AuthenticationPlugin.swift` | V2 요청에 `Authorization` 헤더를 붙이는 Moya plugin이에요. `NetworkProvider(authentication:)`로 넣어요. |
 
@@ -69,9 +70,7 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 | 갱신이 401이 아닌 이유로 실패해요 (400, 403, 429, 500, 503, 네트워크 오류). | 토큰을 그대로 두고, 원래 요청이 받은 401 5002 오류를 던져요. 다음 요청이 만료되면 다시 갱신해요. 이 정책은 [정해야 할 것](#정해야-할-것) 3번이 정해지면 다시 봐요. |
 | 갱신하는 동안 로그아웃으로 토큰이 지워져요. | 늦게 온 응답을 저장하지 않고 `AuthSessionError.loginRequired`를 던져요. |
 | 갱신하는 동안 다시 로그인해서 새 토큰이 저장돼요. | 늦게 온 응답(성공이든 401이든)으로 새 로그인 토큰을 덮어쓰거나 지우지 않고, 새 로그인의 Access Token을 써요. |
-| 갱신한 토큰을 Keychain에 저장하지 못해요. | 서버는 이미 이전 Refresh Token을 폐기했으므로, 남은 옛 토큰을 지우고 `AuthSessionError.loginRequired`를 던져요. |
-| Keychain을 읽지 못해요 (처음 잠금 해제하기 전 백그라운드 실행 등). | 토큰이 없는 것으로 보지 않아요. 토큰을 지우지 않고 받은 오류를 던져요. |
-| Keychain에서 토큰을 지우지 못해요. | 나머지 토큰은 지우고 실패를 오류로 알려요. 지운 것처럼 넘어가지 않아요. |
+| 갱신한 토큰을 저장하지 못해요. | 서버는 이미 이전 Refresh Token을 폐기했으므로, 남은 옛 토큰을 지우고 `AuthSessionError.loginRequired`를 던져요. |
 | 만료 응답을 받은 요청에 어떤 토큰을 담았는지 알 수 없어요. | 다른 요청이 갱신했다고 보지 않고 갱신해요. |
 | 403을 받아요. | 갱신하지 않아요. |
 | `signup` API가 401 5002를 받아요. | 갱신하지 않아요. Signup Token이 만료된 것이라 소셜 로그인부터 다시 해요(2단계에서 처리). |
@@ -80,8 +79,6 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 ### 동시에 일어나는 토큰 변경
 
 토큰 갱신, 로그아웃, 재로그인은 서로 다른 스레드에서 겹칠 수 있어요. `AuthTokenStorage`는 모든 동작을 lock 하나로 묶고, "저장된 토큰이 내가 쓴 토큰일 때만 바꾸거나 지우는" 동작을 한 번에 처리해요(`replaceTokens(_:ifRefreshTokenIs:)`, `removeTokens(ifAccessTokenIs:)`, `removeTokens(ifRefreshTokenIs:)`). 그래서 늦게 온 갱신 응답이 로그아웃으로 지운 토큰을 되살리거나, 옛 토큰으로 보낸 요청의 실패가 새 토큰을 지우지 않아요.
-
-매 요청마다 Keychain을 읽어요. 요청이 많아 느려지면 lock 안에 토큰을 메모리로 캐시하는 방법을 검토해요(2단계 이후, 확인 필요: 실제 앱에서 측정).
 
 토큰 갱신과 재요청은 `MoyaProvider.asyncRequest(_:)` 안에서만 일어나요. V2 `access` API를 `provider.request`의 callback으로 직접 부르면 갱신되지 않으니, Repository는 지금처럼 `asyncRequest` 계열 함수만 써요. Alamofire `AuthenticationInterceptor`로 옮기면 모든 요청 경로에 적용되지만, 401 본문의 서버 코드(5002)로 갱신 여부를 나눠야 해서 이번에는 직접 구현했어요.
 
@@ -107,8 +104,7 @@ case마다 인증 종류가 다르면 `switch`로 나눠요. 응답이 `APIRespo
 
 - `NetworkProvider.shared`에 `AuthenticationPlugin`을 넣는 일. 갱신 API target(`POST /api/v2/auth/refresh`)이 `Data`에 생겨야 `AccessTokenRefresher`의 갱신 함수를 만들 수 있어서, 2단계에서 `AppBootstrap`이 조립해요.
 - `AuthSessionError.loginRequired`를 받았을 때 로그인 화면으로 보내는 일
-- 앱을 지웠다 다시 설치한 경우. Keychain 항목은 앱을 지워도 남지만 UserDefaults 세션은 지워져요. 설치 뒤 처음 실행할 때 UserDefaults 표시로 판단해 `AuthTokenStorage.clear()`를 불러야 이전 계정 토큰으로 시작하지 않아요.
-- Keychain 실제 저장 확인. CoreTests는 앱 없이 실행되는 테스트 번들이라 Keychain entitlement가 없어(-34018) Keychain 테스트를 건너뛰어요. 2단계에서 앱으로 저장·삭제를 확인해요.
+- 앱에서 토큰 저장·삭제를 실제로 확인하는 일
 
 ## 2단계: 로그인 모듈과 유저 엔티티
 
@@ -175,6 +171,7 @@ case마다 인증 종류가 다르면 `switch`로 나눠요. 응답이 `APIRespo
 | 5 | 지금 앱은 가입 요청에 `signupOs`를 보내지 않고, V2도 가입 OS를 저장하지 않아요. 가입 OS 통계가 필요한지 | 2 | 미정 |
 | 6 | 로그인 전 화면이 부르는 V1 조회 API가 있는지 | 4 | 확인 필요: `OnboardingFeature`, `AuthFeature`의 client 호출 |
 | 7 | 토큰 유효기간과 요청 제한 횟수의 운영 값. 앱에 하드코딩하지 않아요. | 2 | 확인 필요: 서버 운영 설정 |
+| 8 | 토큰 저장 위치. 명세는 iOS Keychain에만 두라고 해요. 하지만 Keychain 항목은 앱을 지워도 남아서, 재설치 뒤 이전 계정 토큰이 요청에 실릴 수 있어요. 그래서 앱을 지우면 함께 지워지는 UserDefaults에 두기로 했어요. 대신 UserDefaults는 암호화되지 않은 파일이라 기기 백업이나 탈옥 기기에서 토큰이 보일 수 있어요. `KeychainStore` 구현은 남겨 둬서 나중에 다시 바꿀 수 있어요. | 1 | 결정함 (2026-10-19) |
 
 ## 관련 문서
 
