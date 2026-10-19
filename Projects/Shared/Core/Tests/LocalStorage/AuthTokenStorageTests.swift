@@ -69,7 +69,7 @@ struct AuthTokenStorageTests {
             _ = try storage.loadTokens()
         }
         #expect(throws: InMemoryKeychainStore.ReadError.self) {
-            _ = try storage.removeTokens(ifAccessTokenIs: nil)
+            _ = try storage.removeTokens(ifAccessTokenIs: "access")
         }
 
         store.unreadableKeys = []
@@ -102,6 +102,19 @@ struct AuthTokenStorageTests {
             try storage.saveTokens(AuthTokens(accessToken: "new-access", refreshToken: "new-refresh"))
         }
         #expect(try storage.loadTokens() == AuthTokens(accessToken: "old-access", refreshToken: "new-refresh"))
+    }
+
+    @Test("Refresh Token만 남아 있어도 남은 토큰이 있다고 알려 준다")
+    func reportsLoneRefreshToken() throws {
+        let store = InMemoryKeychainStore()
+        let storage = AuthTokenStorage(store: store)
+        try store.set("refresh", forKey: AuthTokenStorage.Key.refreshToken)
+
+        #expect(try storage.loadTokens() == nil)
+        #expect(try storage.hasAnyToken())
+
+        try store.removeValue(forKey: AuthTokenStorage.Key.refreshToken)
+        #expect(try storage.hasAnyToken() == false)
     }
 
     /// 앱 없이 실행하는 CoreTests에는 Keychain entitlement가 없어(-34018) 이 테스트를 건너뛴다.

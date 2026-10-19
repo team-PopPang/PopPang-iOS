@@ -270,17 +270,60 @@ struct AuthenticationTests {
         #expect(try context.storage.loadTokens() == nil)
     }
 
-    @Test("보낸 뒤에 다른 요청이 토큰을 갱신했으면 옛 토큰의 401이 새 토큰을 지우지 않는다")
-    func keepsRefreshedTokensWhenStaleRequestFails() async throws {
-        let context = try RequestContext(responses: [(401, errorBody(code: 5001))]) { storage in
+    @Test("보낸 뒤에 다른 요청이 토큰을 갱신했으면 옛 토큰의 401로 새 토큰을 지우지 않고 새 토큰으로 다시 보낸다")
+    func retriesWithRefreshedTokenWhenStaleRequestFails() async throws {
+        let context = try RequestContext(responses: [
+            (401, errorBody(code: 5001)),
+            (200, #"{"message":"ok"}"#),
+        ]) { storage in
             try? storage.saveTokens(.newTokens)
         }
 
-        await #expect(throws: NetworkError.invalidStatusCode(401, message: errorBody(code: 5001))) {
+        let response = try await context.provider.asyncRequest(.access, decodeTo: AuthTestResponse.self)
+
+        #expect(response.message == "ok")
+        #expect(context.responses.authorizationHeaders == ["Bearer old-access", "Bearer new-access"])
+        #expect(try context.storage.loadTokens() == .newTokens)
+        #expect(await context.counter.count == 0)
+    }
+
+    @Test("새 토큰으로 다시 보낸 요청도 401을 받으면 더 다시 보내지 않는다")
+    func doesNotRetryStaleRequestTwice() async throws {
+        let context = try RequestContext(responses: [
+            (401, errorBody(code: 5001)),
+            (401, errorBody(code: 5002)),
+        ]) { storage in
+            try? storage.saveTokens(.newTokens)
+        }
+
+        await #expect(throws: NetworkError.invalidStatusCode(401, message: errorBody(code: 5002))) {
             _ = try await context.provider.asyncRequest(.access)
         }
-        #expect(context.responses.authorizationHeaders == ["Bearer old-access"])
-        #expect(try context.storage.loadTokens() == .newTokens)
+        #expect(context.responses.authorizationHeaders.count == 2)
+        #expect(await context.counter.count == 0)
+    }
+
+    @Test("Refresh Token만 남은 상태에서 토큰 없이 보낸 요청이 401을 받아도 남은 토큰을 지우지 않는다")
+    func keepsLoneRefreshTokenWhenRequestWithoutTokenFails() async throws {
+        let store = InMemoryKeychainStore()
+        let context = try RequestContext(store: store, responses: [(401, errorBody(code: 5006))])
+        try store.removeValue(forKey: AuthTokenStorage.Key.accessToken)
+
+        await #expect(throws: NetworkError.invalidStatusCode(401, message: errorBody(code: 5006))) {
+            _ = try await context.provider.asyncRequest(.access)
+        }
+        #expect(context.responses.authorizationHeaders == [nil])
+        #expect(try store.value(forKey: AuthTokenStorage.Key.refreshToken) == "old-refresh")
+    }
+
+    @Test("저장된 토큰이 하나도 없는데 401을 받으면 다시 로그인해야 한다고 알린다")
+    func requiresLoginWhenRequestWithoutAnyTokenFails() async throws {
+        let context = try RequestContext(responses: [(401, errorBody(code: 5006))])
+        try context.storage.removeTokens()
+
+        await #expect(throws: AuthSessionError.loginRequired) {
+            _ = try await context.provider.asyncRequest(.access)
+        }
     }
 
     @Test("Keychain을 읽지 못해 헤더 없이 보낸 요청이 401을 받아도 토큰을 지우지 않는다")

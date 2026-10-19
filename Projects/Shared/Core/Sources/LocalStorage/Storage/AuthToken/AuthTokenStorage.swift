@@ -59,12 +59,12 @@ public struct AuthTokenStorage: Sendable {
         }
     }
 
-    /// 저장된 Access Token이 `accessToken`일 때만 토큰 쌍을 지운다. 둘 다 없을 때도 같은 것으로 본다.
+    /// 저장된 Access Token이 `accessToken`일 때만 토큰 쌍을 지운다.
     ///
     /// - Returns: 지웠으면 `true`. 그사이 토큰이 바뀌었으면 지우지 않고 `false`
-    public func removeTokens(ifAccessTokenIs accessToken: String?) throws -> Bool {
+    public func removeTokens(ifAccessTokenIs accessToken: String) throws -> Bool {
         try withLock {
-            guard try loadTokens()?.accessToken == accessToken else { return false }
+            guard try store.value(forKey: Key.accessToken) == accessToken else { return false }
             try removeTokens()
             return true
         }
@@ -78,6 +78,14 @@ public struct AuthTokenStorage: Sendable {
             guard try loadTokens()?.refreshToken == refreshToken else { return false }
             try removeTokens()
             return true
+        }
+    }
+
+    /// Access·Refresh Token 가운데 하나라도 있으면 `true`. 쌍이 다 갖춰지지 않아도 남은 토큰이 있는지 본다.
+    public func hasAnyToken() throws -> Bool {
+        try withLock {
+            try store.value(forKey: Key.accessToken) != nil
+                || store.value(forKey: Key.refreshToken) != nil
         }
     }
 
