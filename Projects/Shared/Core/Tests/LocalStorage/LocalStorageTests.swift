@@ -12,11 +12,11 @@ struct LocalStorageTests {
         let store = UserDefaultsStore(userDefaults: userDefaults)
         store.set("hello", forKey: "greeting")
 
-        #expect(store.object(forKey: "greeting") as? String == "hello")
+        #expect(store.value(forKey: "greeting") == "hello")
 
-        store.removeObject(forKey: "greeting")
+        store.removeValue(forKey: "greeting")
 
-        #expect(store.object(forKey: "greeting") == nil)
+        #expect((store.value(forKey: "greeting") as String?) == nil)
     }
 
     @Test("최근 검색어 저장소가 중복을 제거하고 최신 다섯 개만 유지한다")

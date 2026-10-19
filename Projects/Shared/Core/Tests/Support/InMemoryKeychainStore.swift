@@ -2,7 +2,7 @@ import Foundation
 @testable import Core
 
 /// Keychain 대신 메모리에 값을 두는 테스트용 저장소.
-final class InMemorySecureStore: SecureStoring, @unchecked Sendable {
+final class InMemoryKeychainStore: KeychainStoring, @unchecked Sendable {
     struct SaveError: Error {}
 
     private let lock = NSLock()
@@ -15,7 +15,7 @@ final class InMemorySecureStore: SecureStoring, @unchecked Sendable {
         set { lock.withLock { _failingKeys = newValue } }
     }
 
-    func string(forKey key: String) -> String? {
+    func value(forKey key: String) -> String? {
         lock.withLock { values[key] }
     }
 

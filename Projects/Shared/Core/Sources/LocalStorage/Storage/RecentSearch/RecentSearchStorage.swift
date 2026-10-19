@@ -1,12 +1,12 @@
 import Foundation
 
 public struct RecentSearchStorage: Sendable {
-    private let store: KeyValueStoring
+    private let store: Storing
     private let key: String
     private let maximumCount: Int
 
     public init(
-        store: KeyValueStoring,
+        store: Storing,
         key: String = "recentCategories",
         maximumCount: Int = 5
     ) {
@@ -16,11 +16,11 @@ public struct RecentSearchStorage: Sendable {
     }
 
     public func load() -> [String] {
-        store.object(forKey: key) as? [String] ?? []
+        store.value(forKey: key) ?? []
     }
 
     public func save(_ keywords: [String]) {
-        store.set(Array(keywords.prefix(maximumCount)), forKey: key)
+        try? store.set(Array(keywords.prefix(maximumCount)), forKey: key)
     }
 
     public func add(_ keyword: String) {
@@ -32,10 +32,10 @@ public struct RecentSearchStorage: Sendable {
 
     public func remove(_ keyword: String) {
         let filteredKeywords = load().filter { $0 != keyword }
-        store.set(filteredKeywords, forKey: key)
+        try? store.set(filteredKeywords, forKey: key)
     }
 
     public func removeAll() {
-        store.removeObject(forKey: key)
+        store.removeValue(forKey: key)
     }
 }

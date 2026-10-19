@@ -19,7 +19,7 @@ struct AuthenticationTests {
 
     @Test("저장된 토큰이 없으면 헤더를 붙이지 않는다")
     func skipsHeaderWithoutToken() {
-        let storage = AuthTokenStorage(store: InMemorySecureStore())
+        let storage = AuthTokenStorage(store: InMemoryKeychainStore())
         let plugin = AuthenticationPlugin(storage: storage, refresher: makeRefresher(storage: storage))
         let request = URLRequest(url: NetworkConfig.apiBaseURL(for: .v2))
 
@@ -106,9 +106,53 @@ struct AuthenticationTests {
         #expect(storage.loadTokens() == nil)
     }
 
+    @Test("갱신하는 동안 다시 로그인했으면 늦게 온 응답 대신 새 로그인 토큰을 쓴다")
+    func usesReloginTokensWhenRefreshSucceedsLate() async throws {
+        let storage = try makeStorage()
+        let refresher = AccessTokenRefresher(storage: storage) { _ in
+            try storage.saveTokens(.reloginTokens)
+            return .newTokens
+        }
+
+        let accessToken = try await refresher.refreshAccessToken(expired: "old-access")
+
+        #expect(accessToken == "relogin-access")
+        #expect(storage.loadTokens() == .reloginTokens)
+    }
+
+    @Test("갱신하는 동안 다시 로그인했으면 늦게 온 401이 새 로그인 토큰을 지우지 않는다")
+    func keepsReloginTokensWhenRefreshFailsLate() async throws {
+        let storage = try makeStorage()
+        let refresher = AccessTokenRefresher(storage: storage) { _ in
+            try storage.saveTokens(.reloginTokens)
+            throw NetworkError.invalidStatusCode(401, message: errorBody(code: 5007))
+        }
+
+        let accessToken = try await refresher.refreshAccessToken(expired: "old-access")
+
+        #expect(accessToken == "relogin-access")
+        #expect(storage.loadTokens() == .reloginTokens)
+    }
+
+    @Test("갱신한 토큰을 저장하지 못하면 다시 로그인해야 한다고 알린다")
+    func requiresLoginWhenSavingRefreshedTokensFails() async throws {
+        let store = InMemoryKeychainStore()
+        let storage = AuthTokenStorage(store: store)
+        try storage.saveTokens(.oldTokens)
+        let refresher = AccessTokenRefresher(storage: storage) { _ in
+            store.failingKeys = [AuthTokenStorage.Key.refreshToken]
+            return .newTokens
+        }
+
+        await #expect(throws: AuthSessionError.loginRequired) {
+            _ = try await refresher.refreshAccessToken(expired: "old-access")
+        }
+        #expect(storage.loadTokens() == nil)
+    }
+
     @Test("Refresh Token이 없으면 다시 로그인해야 한다고 알린다")
     func requiresLoginWithoutRefreshToken() async {
-        let storage = AuthTokenStorage(store: InMemorySecureStore())
+        let storage = AuthTokenStorage(store: InMemoryKeychainStore())
         let counter = CallCounter()
         let refresher = makeRefresher(storage: storage, counter: counter)
 
@@ -163,6 +207,19 @@ struct AuthenticationTests {
         #expect(context.storage.loadTokens() == nil)
     }
 
+    @Test("보낸 뒤에 다른 요청이 토큰을 갱신했으면 옛 토큰의 401이 새 토큰을 지우지 않는다")
+    func keepsRefreshedTokensWhenStaleRequestFails() async throws {
+        let context = try RequestContext(responses: [(401, errorBody(code: 5001))]) { storage in
+            try? storage.saveTokens(.newTokens)
+        }
+
+        await #expect(throws: NetworkError.invalidStatusCode(401, message: errorBody(code: 5001))) {
+            _ = try await context.provider.asyncRequest(.access)
+        }
+        #expect(context.responses.authorizationHeaders == ["Bearer old-access"])
+        #expect(context.storage.loadTokens() == .newTokens)
+    }
+
     @Test("403에는 갱신하지 않고 토큰을 그대로 둔다")
     func doesNotRefreshForForbidden() async throws {
         let context = try RequestContext(responses: [(403, errorBody(code: 5008))])
@@ -196,7 +253,7 @@ private func errorBody(code: Int) -> String {
 }
 
 private func makeStorage(signupToken: String? = nil) throws -> AuthTokenStorage {
-    let storage = AuthTokenStorage(store: InMemorySecureStore())
+    let storage = AuthTokenStorage(store: InMemoryKeychainStore())
     try storage.saveTokens(.oldTokens)
     if let signupToken {
         try storage.saveSignupToken(signupToken)
@@ -217,6 +274,7 @@ private func makeRefresher(
 private extension AuthTokens {
     static let oldTokens = AuthTokens(accessToken: "old-access", refreshToken: "old-refresh")
     static let newTokens = AuthTokens(accessToken: "new-access", refreshToken: "new-refresh")
+    static let reloginTokens = AuthTokens(accessToken: "relogin-access", refreshToken: "relogin-refresh")
 }
 
 private extension URLRequest {
@@ -242,9 +300,12 @@ private final class StubResponses: PluginType, @unchecked Sendable {
     private let lock = NSLock()
     private var responses: [(Int, String)]
     private var headers: [String?] = []
+    private var onFirstSend: (@Sendable () -> Void)?
 
-    init(_ responses: [(Int, String)]) {
+    /// - Parameter onFirstSend: 첫 요청을 보낸 직후, 응답을 받기 전에 실행한다. 다른 요청이 끼어든 상황을 만든다.
+    init(_ responses: [(Int, String)], onFirstSend: (@Sendable () -> Void)? = nil) {
         self.responses = responses
+        self.onFirstSend = onFirstSend
     }
 
     var authorizationHeaders: [String?] {
@@ -259,7 +320,12 @@ private final class StubResponses: PluginType, @unchecked Sendable {
     }
 
     func willSend(_ request: RequestType, target: TargetType) {
-        lock.withLock { headers.append(request.request?.value(forHTTPHeaderField: "Authorization")) }
+        let onFirstSend = lock.withLock {
+            headers.append(request.request?.value(forHTTPHeaderField: "Authorization"))
+            defer { self.onFirstSend = nil }
+            return self.onFirstSend
+        }
+        onFirstSend?()
     }
 }
 
@@ -269,9 +335,12 @@ private struct RequestContext {
     let responses: StubResponses
     let provider: MoyaProvider<AuthTestAPI>
 
-    init(responses: [(Int, String)]) throws {
+    init(
+        responses: [(Int, String)],
+        onFirstSend: (@Sendable (AuthTokenStorage) -> Void)? = nil
+    ) throws {
         let storage = try makeStorage(signupToken: "signup")
-        let stubResponses = StubResponses(responses)
+        let stubResponses = StubResponses(responses, onFirstSend: onFirstSend.map { hook in { hook(storage) } })
         let counter = CallCounter()
         let authentication = AuthenticationPlugin(
             storage: storage,

@@ -5,7 +5,7 @@ import Testing
 struct AuthTokenStorageTests {
     @Test("토큰 쌍과 Signup Token을 저장하고 지운다")
     func storesAndClearsTokens() throws {
-        let storage = AuthTokenStorage(store: InMemorySecureStore())
+        let storage = AuthTokenStorage(store: InMemoryKeychainStore())
         let tokens = AuthTokens(accessToken: "access", refreshToken: "refresh")
 
         try storage.saveTokens(tokens)
@@ -28,12 +28,12 @@ struct AuthTokenStorageTests {
 
     @Test("토큰 쌍 가운데 하나라도 저장하지 못하면 둘 다 지운다")
     func removesBothTokensWhenSavingFails() throws {
-        let store = InMemorySecureStore()
+        let store = InMemoryKeychainStore()
         let storage = AuthTokenStorage(store: store)
         try storage.saveTokens(AuthTokens(accessToken: "old-access", refreshToken: "old-refresh"))
         store.failingKeys = [AuthTokenStorage.Key.refreshToken]
 
-        #expect(throws: InMemorySecureStore.SaveError.self) {
+        #expect(throws: InMemoryKeychainStore.SaveError.self) {
             try storage.saveTokens(AuthTokens(accessToken: "new-access", refreshToken: "new-refresh"))
         }
         #expect(storage.loadTokens() == nil)
@@ -50,13 +50,13 @@ struct AuthTokenStorageTests {
         defer { store.removeValue(forKey: key) }
 
         try store.set("first", forKey: key)
-        #expect(store.string(forKey: key) == "first")
+        #expect(store.value(forKey: key) == "first")
 
         try store.set("second", forKey: key)
-        #expect(store.string(forKey: key) == "second")
+        #expect(store.value(forKey: key) == "second")
 
         store.removeValue(forKey: key)
-        #expect(store.string(forKey: key) == nil)
+        #expect(store.value(forKey: key) == nil)
     }
 }
 

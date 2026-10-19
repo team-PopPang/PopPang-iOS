@@ -14,8 +14,8 @@ struct AppDeepLinkHandler {
     /// 딥링크 정보를 저장할 저장소를 생성합니다.
     ///
     /// 기본적으로 `UserDefaultsStore`를 사용하며,
-    /// 테스트 시 별도의 `KeyValueStoring` 구현체를 주입할 수 있습니다.
-    init(store: KeyValueStoring = UserDefaultsStore()) {
+    /// 테스트 시 별도의 `Storing` 구현체를 주입할 수 있습니다.
+    init(store: Storing = UserDefaultsStore()) {
         self.storage = DeepLinkStorage(store: store)
     }
 

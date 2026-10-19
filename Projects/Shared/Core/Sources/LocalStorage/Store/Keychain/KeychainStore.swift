@@ -9,14 +9,14 @@ public enum KeychainStoreError: Error, Equatable, Sendable {
 ///
 /// 이 기기가 처음 잠금 해제된 뒤부터 읽을 수 있고(백그라운드 요청에서도 토큰을 쓰기 위해서다),
 /// 백업으로 다른 기기에 옮겨지지 않는다.
-public struct KeychainStore: SecureStoring {
+public struct KeychainStore: KeychainStoring {
     private let service: String
 
     public init(service: String = "com.poppang.auth") {
         self.service = service
     }
 
-    public func string(forKey key: String) -> String? {
+    public func value(forKey key: String) -> String? {
         var query = baseQuery(forKey: key)
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne

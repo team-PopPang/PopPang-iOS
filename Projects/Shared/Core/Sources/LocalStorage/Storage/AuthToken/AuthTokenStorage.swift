@@ -10,16 +10,16 @@ public struct AuthTokenStorage: Sendable {
         static let signupToken = "signupToken"
     }
 
-    private let store: SecureStoring
+    private let store: KeychainStoring
 
-    public init(store: SecureStoring = KeychainStore()) {
+    public init(store: KeychainStoring = KeychainStore()) {
         self.store = store
     }
 
     /// Access·Refresh Token이 모두 있을 때만 토큰 쌍을 돌려준다.
     public func loadTokens() -> AuthTokens? {
-        guard let accessToken = store.string(forKey: Key.accessToken),
-              let refreshToken = store.string(forKey: Key.refreshToken)
+        guard let accessToken = store.value(forKey: Key.accessToken),
+              let refreshToken = store.value(forKey: Key.refreshToken)
         else {
             return nil
         }
@@ -38,7 +38,7 @@ public struct AuthTokenStorage: Sendable {
     }
 
     public func loadSignupToken() -> String? {
-        store.string(forKey: Key.signupToken)
+        store.value(forKey: Key.signupToken)
     }
 
     public func saveSignupToken(_ token: String) throws {
