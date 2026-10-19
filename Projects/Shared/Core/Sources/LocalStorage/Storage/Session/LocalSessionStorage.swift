@@ -6,15 +6,15 @@ public struct LocalSessionStorage: Sendable {
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
     }
 
-    private let store: KeyValueStoring
+    private let store: Storing
 
-    public init(store: KeyValueStoring) {
+    public init(store: Storing) {
         self.store = store
     }
 
     public func loadSnapshot() -> LocalSessionSnapshot {
-        let userID = store.object(forKey: Key.userID) as? String
-        let hasCompletedOnboarding = store.object(forKey: Key.hasCompletedOnboarding) as? Bool ?? false
+        let userID: String? = store.value(forKey: Key.userID)
+        let hasCompletedOnboarding: Bool = store.value(forKey: Key.hasCompletedOnboarding) ?? false
 
         return LocalSessionSnapshot(
             userID: userID,
@@ -24,18 +24,18 @@ public struct LocalSessionStorage: Sendable {
 
     public func saveUserID(_ userID: String?) {
         guard let userID, userID.isEmpty == false else {
-            store.removeObject(forKey: Key.userID)
+            store.removeValue(forKey: Key.userID)
             return
         }
 
-        store.set(userID, forKey: Key.userID)
+        try? store.set(userID, forKey: Key.userID)
     }
 
     public func setOnboardingCompleted(_ isCompleted: Bool) {
-        store.set(isCompleted, forKey: Key.hasCompletedOnboarding)
+        try? store.set(isCompleted, forKey: Key.hasCompletedOnboarding)
     }
 
     public func clearSession() {
-        store.removeObject(forKey: Key.userID)
+        store.removeValue(forKey: Key.userID)
     }
 }

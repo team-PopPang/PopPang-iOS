@@ -21,7 +21,7 @@ public struct MainTabFeatureDependencies {
     private let searchFeatureClient: SearchFeatureClient
 
     public init(
-        store: KeyValueStoring,
+        store: Storing,
         adminUsecase: AdminUsecaseProtocol,
         popupUsecase: PopupUsecaseProtocol,
         userUsecase: UserUsecaseProtocol

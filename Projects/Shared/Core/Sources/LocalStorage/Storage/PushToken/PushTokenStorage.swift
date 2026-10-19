@@ -1,11 +1,11 @@
 import Foundation
 
 public struct PushTokenStorage: Sendable {
-    private let store: KeyValueStoring
+    private let store: Storing
     private let key: String
 
     public init(
-        store: KeyValueStoring,
+        store: Storing,
         key: String = "fcmToken"
     ) {
         self.store = store
@@ -13,14 +13,14 @@ public struct PushTokenStorage: Sendable {
     }
 
     public func load() -> String? {
-        store.object(forKey: key) as? String
+        store.value(forKey: key)
     }
 
     public func save(_ token: String) {
-        store.set(token, forKey: key)
+        try? store.set(token, forKey: key)
     }
 
     public func remove() {
-        store.removeObject(forKey: key)
+        store.removeValue(forKey: key)
     }
 }

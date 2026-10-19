@@ -37,7 +37,7 @@ reducer는 `DependencyValues`로만 의존성을 받는다. 실제 구현은 com
 | 파일 | 하는 일 |
 | --- | --- |
 | `Projects/App/Sources/AppCore/1. AppDependencyRegistry.swift` | `AppRepositoryRegistry`가 `PopupRepositoryImpl()` 같은 Repository를, `AppUsecaseRegistry`가 `PopupUsecaseImpl(popupRepository:)` 같은 Usecase를 만든다. |
-| `Projects/App/Sources/AppCore/2. AppBootstrap.swift` | 같은 `KeyValueStoring` 저장소와 Usecase 인스턴스를 여러 객체에 나눠 주고, `makeAppStore()`에서 `withDependencies`로 주입한다. |
+| `Projects/App/Sources/AppCore/2. AppBootstrap.swift` | 같은 `Storing` 저장소와 Usecase 인스턴스를 여러 객체에 나눠 주고, `makeAppStore()`에서 `withDependencies`로 주입한다. |
 | `Projects/Features/MainTabFeature/Sources/MainTabFeatureDependencies.swift` | 탭과 상세 feature client(`alertFeatureClient`, `calendarFeatureClient`, `homePopupClient` 등)의 `.live(...)`를 만들고 `configure(_:)`로 `DependencyValues`에 넣는다. |
 
 `makeAppStore()`의 주입 코드:
@@ -178,9 +178,16 @@ private final class PopupUsecaseBox: @unchecked Sendable {
 | --- | --- | --- |
 | `UserSession` | `Core/Sources/Support/UserSession.swift` | 앱이 지금 쓰는 세션. source of truth는 `AppFeature.State.session`(`@Shared`)이다. |
 | `LocalSessionClient` | `App/Sources/AppCore/LocalSessionClient.swift` | 세션 load·save·clear. `LocalSessionStorage`와 `UserUsecaseProtocol`을 조합한다. |
-| `LocalSessionStorage` | `Core/Sources/LocalStorage/Session/` | `userID`, 온보딩 완료 여부 같은 로컬 값 읽기·쓰기 |
-| `KeyValueStoring` / `UserDefaultsStore` | `Core/Sources/LocalStorage/Support/` | 저장소 추상화. `AppBootstrap.live(store:)`가 하나를 만들어 여러 저장소에 나눠 준다. |
-| `RecentSearchStorage`, `PushTokenStorage` | `Core/Sources/LocalStorage/` | 최근 검색어, 푸시 토큰 |
+| `LocalSessionStorage` | `Core/Sources/LocalStorage/Storage/Session/` | `userID`, 온보딩 완료 여부 같은 로컬 값 읽기·쓰기 |
+| `Storing` / `UserDefaultsStore` | `Core/Sources/LocalStorage/Store/` | 키로 값을 저장·조회·삭제하는 공통 저장소 protocol과 UserDefaults 구현. `AppBootstrap.live(store:)`가 하나를 만들어 여러 저장소에 나눠 준다. 저장소마다 더 필요한 기능은 그 저장소 타입의 `public extension`으로 추가한다. |
+| `RecentSearchStorage`, `PushTokenStorage`, `DeepLinkStorage` | `Core/Sources/LocalStorage/Storage/` | 최근 검색어, 푸시 토큰, 딥링크 팝업 ID |
+| `AuthTokenStorage` | `Core/Sources/LocalStorage/Storage/AuthToken/` | V2 Access·Refresh·Signup Token. `Storing`(기본 `UserDefaultsStore`)에 저장한다. 명세와 다른 결정이며 이유는 [V2 API 마이그레이션](api-v2-migration.md#정해야-할-것) 8번에 있다. 아직 앱에서 조립하지 않는다([V2 API 마이그레이션](api-v2-migration.md) 2단계). |
+| `KeychainStoring` / `KeychainStore` | `Core/Sources/LocalStorage/Store/Keychain/` | Keychain 저장 구현. 지금은 쓰는 곳이 없다. |
+
+로컬 저장소는 두 층으로 나눈다.
+
+- 저장 수단(Store, `LocalStorage/Store/`): 어디에 어떻게 저장할지만 안다. `UserDefaultsStore`는 `Storing`을, `KeychainStore`는 `KeychainStoring`을 채택한다.
+- 용도별 저장소(Storage, `LocalStorage/Storage/<용도>/`): 무엇을 어떤 키와 타입으로 저장할지 정한다. 저장 수단을 생성자로 받아 쓰고, 저장 수단 protocol을 채택하지 않는다. 앱 코드는 이 층만 쓴다.
 
 reducer는 UserDefaults나 Keychain에 직접 접근하지 않는다. client나 저장소 타입을 통해 접근한다.
 

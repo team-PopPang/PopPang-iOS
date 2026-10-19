@@ -15,7 +15,7 @@ struct AppBootstrap {
     /// 동일한 `store`와 UseCase 인스턴스를 여러 객체에 전달하여
     /// 앱 내부에서 같은 저장소와 비즈니스 로직 인스턴스를 공유하도록 합니다.
     static func live(
-        store: KeyValueStoring = UserDefaultsStore()
+        store: Storing = UserDefaultsStore()
     ) -> AppBootstrap {
         // 로컬 세션 저장소
         let sessionStorage = LocalSessionStorage(store: store)

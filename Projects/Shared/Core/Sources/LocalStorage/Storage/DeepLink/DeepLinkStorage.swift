@@ -1,11 +1,11 @@
 import Foundation
 
 public struct DeepLinkStorage: Sendable {
-    private let store: KeyValueStoring
+    private let store: Storing
     private let key: String
 
     public init(
-        store: KeyValueStoring,
+        store: Storing,
         key: String = "deeplinkPopupId"
     ) {
         self.store = store
@@ -13,14 +13,14 @@ public struct DeepLinkStorage: Sendable {
     }
 
     public func loadPopupID() -> String? {
-        store.object(forKey: key) as? String
+        store.value(forKey: key)
     }
 
     public func savePopupID(_ popupID: String) {
-        store.set(popupID, forKey: key)
+        try? store.set(popupID, forKey: key)
     }
 
     public func removePopupID() {
-        store.removeObject(forKey: key)
+        store.removeValue(forKey: key)
     }
 }

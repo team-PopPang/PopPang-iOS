@@ -4,19 +4,39 @@ import Testing
 
 struct LocalStorageTests {
     @Test("UserDefaultsStore가 값을 저장하고 삭제한다")
-    func storesAndRemovesValueInUserDefaultsStore() {
+    func storesAndRemovesValueInUserDefaultsStore() throws {
         let suiteName = "CoreTests.UserDefaultsStore"
         let userDefaults = UserDefaults(suiteName: suiteName)!
         userDefaults.removePersistentDomain(forName: suiteName)
 
         let store = UserDefaultsStore(userDefaults: userDefaults)
-        store.set("hello", forKey: "greeting")
+        try store.set("hello", forKey: "greeting")
 
-        #expect(store.object(forKey: "greeting") as? String == "hello")
+        #expect(store.value(forKey: "greeting") == "hello")
 
-        store.removeObject(forKey: "greeting")
+        store.removeValue(forKey: "greeting")
 
-        #expect(store.object(forKey: "greeting") == nil)
+        #expect((store.value(forKey: "greeting") as String?) == nil)
+    }
+
+    @Test("UserDefaultsStore는 nil을 넣으면 키를 지우고, 저장할 수 없는 타입은 오류를 던진다")
+    func userDefaultsStoreRemovesNilAndRejectsUnsupportedType() throws {
+        let suiteName = "CoreTests.UserDefaultsStoreValues"
+        let userDefaults = UserDefaults(suiteName: suiteName)!
+        userDefaults.removePersistentDomain(forName: suiteName)
+        let store = UserDefaultsStore(userDefaults: userDefaults)
+
+        try store.set(Optional("hello"), forKey: "greeting")
+        #expect(store.value(forKey: "greeting") == "hello")
+
+        try store.set(String?.none, forKey: "greeting")
+        #expect((store.value(forKey: "greeting") as String?) == nil)
+
+        struct Unsupported {}
+        #expect(throws: UserDefaultsStoreError.self) {
+            try store.set(Unsupported(), forKey: "unsupported")
+        }
+        #expect(userDefaults.object(forKey: "unsupported") == nil)
     }
 
     @Test("최근 검색어 저장소가 중복을 제거하고 최신 다섯 개만 유지한다")

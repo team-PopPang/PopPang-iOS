@@ -1,0 +1,1124 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JWT 인증 가이드</title>
+<meta name="description" content="JWT 기반 인증 개념과 PopPang iOS 앱의 V2 토큰 처리 구현을 함께 정리한 학습 문서">
+<style>
+/* Layout: 넓은 화면은 왼쪽 고정 목차 + 본문 한 열, 좁은 화면은 접히는 목차 + 본문 한 열 */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --sunken: #eef0f4;
+  --fg: #1b2230;
+  --muted: #5a6475;
+  --line: #d9dde5;
+  --accent: #2f5bd3;
+  --accent-soft: #e6ecfb;
+  --ok: #1f7a4d;
+  --ok-soft: #e3f3ea;
+  --warn: #9a5b00;
+  --warn-soft: #fbf0dc;
+  --bad: #b3261e;
+  --bad-soft: #fbe6e4;
+  --seg-header: #c2410c;
+  --seg-payload: #7c3aed;
+  --seg-sig: #0e7490;
+  --code-bg: #f1f3f7;
+  --font-body: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Segoe UI", "Malgun Gothic", "Noto Sans KR", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "D2Coding", monospace;
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.1875rem;
+  --step-2: 1.5rem;
+  --step-3: 2rem;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12151b;
+    --surface: #191d25;
+    --sunken: #20252f;
+    --fg: #e4e8ef;
+    --muted: #9aa3b2;
+    --line: #2e3542;
+    --accent: #8aa8ff;
+    --accent-soft: #1f2a47;
+    --ok: #6fd3a0;
+    --ok-soft: #173326;
+    --warn: #f0b85a;
+    --warn-soft: #3a2c12;
+    --bad: #ff8a80;
+    --bad-soft: #3d1b19;
+    --seg-header: #fb923c;
+    --seg-payload: #b794ff;
+    --seg-sig: #4fc7dc;
+    --code-bg: #1d222b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12151b;
+  --surface: #191d25;
+  --sunken: #20252f;
+  --fg: #e4e8ef;
+  --muted: #9aa3b2;
+  --line: #2e3542;
+  --accent: #8aa8ff;
+  --accent-soft: #1f2a47;
+  --ok: #6fd3a0;
+  --ok-soft: #173326;
+  --warn: #f0b85a;
+  --warn-soft: #3a2c12;
+  --bad: #ff8a80;
+  --bad-soft: #3d1b19;
+  --seg-header: #fb923c;
+  --seg-payload: #b794ff;
+  --seg-sig: #4fc7dc;
+  --code-bg: #1d222b;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.75;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 32px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-block: 40px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+@media (min-width: 1100px) {
+  .shell { grid-template-columns: 250px minmax(0, 1fr); gap: 56px; }
+}
+
+/* 목차 */
+.toc { font-size: var(--step--1); line-height: 1.5; min-width: 0; }
+.toc details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+.toc summary { cursor: pointer; font-weight: 600; color: var(--fg); }
+.toc ol { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 2px; }
+.toc .part { margin-top: 12px; color: var(--muted); font-size: 0.75rem; letter-spacing: 0.06em; font-weight: 600; }
+.toc a { display: block; padding: 4px 8px; border-radius: 6px; color: var(--muted); text-decoration: none; }
+.toc a:hover { background: var(--sunken); color: var(--fg); }
+@media (min-width: 1100px) {
+  .toc { position: sticky; top: 24px; align-self: start; max-height: calc(100vh - 48px); overflow-y: auto; }
+  .toc details { border: none; background: transparent; padding: 0; }
+  .toc summary { list-style: none; pointer-events: none; margin-bottom: 4px; }
+  .toc summary::-webkit-details-marker { display: none; }
+}
+
+main { min-width: 0; max-width: 760px; }
+
+/* 머리말 */
+.masthead { display: grid; gap: 12px; padding-bottom: 28px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.eyebrow { font-family: var(--font-mono); font-size: var(--step--1); color: var(--accent); letter-spacing: 0.04em; }
+h1 { font-size: var(--step-3); line-height: 1.3; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.lede { color: var(--muted); margin: 0; font-size: var(--step-1); line-height: 1.6; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: var(--step--1); color: var(--muted); }
+.meta span { background: var(--sunken); border-radius: 999px; padding: 2px 10px; }
+
+.part-title {
+  margin: 56px 0 0;
+  font-size: var(--step--1);
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 600;
+  display: flex; align-items: center; gap: 12px;
+}
+.part-title::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+section { scroll-margin-top: 24px; }
+h2 { font-size: var(--step-2); line-height: 1.35; margin: 40px 0 12px; text-wrap: balance; }
+h2 .num { font-family: var(--font-mono); color: var(--accent); font-size: 0.75em; margin-right: 8px; font-weight: 500; }
+h3 { font-size: var(--step-1); margin: 28px 0 8px; text-wrap: balance; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 14px; padding-left: 1.4em; }
+li { margin: 4px 0; }
+a { color: var(--accent); }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+strong { font-weight: 650; }
+
+code { font-family: var(--font-mono); font-size: 0.875em; background: var(--code-bg); border-radius: 4px; padding: 1px 5px; }
+pre {
+  margin: 0 0 16px;
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-size: var(--step--1);
+  line-height: 1.6;
+}
+pre code { background: none; padding: 0; font-size: inherit; word-break: normal; overflow-wrap: normal; white-space: pre; }
+.src { display: block; font-family: var(--font-mono); font-size: 0.75rem; color: var(--muted); margin: -4px 0 6px; }
+.cm { color: var(--muted); }
+.kw { color: var(--accent); }
+
+.table-wrap { overflow-x: auto; margin: 0 0 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: var(--step--1); line-height: 1.6; }
+th, td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+th { background: var(--sunken); font-weight: 600; white-space: nowrap; }
+tr:last-child td { border-bottom: none; }
+td code { white-space: nowrap; }
+
+.note, .warn, .check {
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 0 0 16px;
+  font-size: 0.95rem;
+}
+.note { background: var(--accent-soft); }
+.warn { background: var(--warn-soft); }
+.check { background: var(--bad-soft); }
+.note > :last-child, .warn > :last-child, .check > :last-child { margin-bottom: 0; }
+.tag {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 4px;
+  padding: 0 6px;
+  margin-right: 6px;
+  vertical-align: 1px;
+}
+.tag.why { background: var(--accent); color: var(--surface); }
+.tag.todo { background: var(--bad); color: var(--surface); }
+.tag.caution { background: var(--warn); color: var(--surface); }
+
+/* JWT 구조 */
+.jwt {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin: 0 0 12px;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.seg-h { color: var(--seg-header); font-weight: 600; }
+.seg-p { color: var(--seg-payload); font-weight: 600; }
+.seg-s { color: var(--seg-sig); font-weight: 600; }
+.dot { color: var(--muted); }
+.jwt-parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 0 0 18px; }
+.jwt-part { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; font-size: var(--step--1); line-height: 1.6; }
+.jwt-part h4 { margin: 0 0 6px; font-size: var(--step-0); }
+.jwt-part pre { margin: 8px 0 0; padding: 8px 10px; }
+
+/* 다이어그램 */
+figure { margin: 0 0 20px; }
+.diagram { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.diagram svg { display: block; min-width: 680px; width: 100%; height: auto; }
+figcaption { font-size: var(--step--1); color: var(--muted); margin-top: 8px; }
+svg text { font-family: var(--font-body); fill: var(--fg); }
+svg .mono { font-family: var(--font-mono); }
+svg .sub { fill: var(--muted); font-size: 11px; }
+svg .t { font-size: 13px; }
+svg .lbl { font-size: 11px; fill: var(--muted); }
+svg .box { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+svg .box-main { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+svg .box-dec { fill: var(--sunken); stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 4 3; }
+svg .box-ok { fill: var(--ok-soft); stroke: var(--ok); stroke-width: 1.5; }
+svg .box-bad { fill: var(--bad-soft); stroke: var(--bad); stroke-width: 1.5; }
+svg .box-warn { fill: var(--warn-soft); stroke: var(--warn); stroke-width: 1.5; }
+svg .edge { stroke: var(--muted); stroke-width: 1.4; fill: none; }
+svg .edge-ret { stroke: var(--ok); stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; }
+svg .life { stroke: var(--line); stroke-width: 1.4; stroke-dasharray: 3 4; }
+svg .ah { fill: var(--muted); }
+svg .ah-ok { fill: var(--ok); }
+
+/* 복습 */
+.quiz { display: grid; gap: 10px; margin: 0 0 18px; }
+.quiz details { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; }
+.quiz summary { cursor: pointer; font-weight: 600; line-height: 1.6; }
+.quiz details[open] summary { margin-bottom: 8px; }
+.quiz details > :last-child { margin-bottom: 0; }
+
+.files { font-family: var(--font-mono); font-size: var(--step--1); line-height: 1.7; }
+.files li { margin: 2px 0; }
+.files .d { color: var(--muted); font-family: var(--font-body); }
+
+footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: var(--step--1); }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<nav class="toc" aria-label="목차">
+  <details open>
+    <summary>목차</summary>
+    <ol>
+      <li class="part">1부 · 개념</li>
+      <li><a href="#jwt-structure">1. JWT의 구조</a></li>
+      <li><a href="#signature">2. 서명과 검증</a></li>
+      <li><a href="#claims">3. 표준 claim</a></li>
+      <li><a href="#bearer">4. Bearer 헤더</a></li>
+      <li><a href="#access-refresh">5. Access와 Refresh를 나누는 이유</a></li>
+      <li><a href="#expiry">6. 짧은 만료와 갱신</a></li>
+      <li><a href="#rotation">7. Refresh Token 회전과 재사용 탐지</a></li>
+      <li><a href="#purpose-token">8. 용도별 토큰</a></li>
+      <li><a href="#storage">9. 토큰을 둘 곳</a></li>
+      <li><a href="#mistakes">10. 흔한 실수</a></li>
+      <li class="part">2부 · PopPang 적용</li>
+      <li><a href="#overview">11. 전체 그림</a></li>
+      <li><a href="#version-auth">12. API 버전과 인증 종류</a></li>
+      <li><a href="#response-error">13. 응답과 오류 코드</a></li>
+      <li><a href="#plugin">14. 헤더를 붙이는 plugin</a></li>
+      <li><a href="#request-flow">15. 요청 흐름과 한 번만 재요청</a></li>
+      <li><a href="#single-flight">16. 동시 만료를 갱신 하나로</a></li>
+      <li><a href="#races">17. 늦은 응답·로그아웃·재로그인</a></li>
+      <li><a href="#keychain-fail">18. Keychain을 쓰면: 실패는 토큰 없음이 아니에요</a></li>
+      <li><a href="#save-order">19. Refresh Token을 먼저 저장하는 이유</a></li>
+      <li><a href="#layers">20. Store와 Storage 두 층</a></li>
+      <li><a href="#tests">21. 테스트로 확인하기</a></li>
+      <li><a href="#next">22. 2단계에서 할 일</a></li>
+      <li class="part">3부 · 정리</li>
+      <li><a href="#quiz">23. 복습 질문</a></li>
+      <li><a href="#unknowns">24. 확인 필요 목록</a></li>
+      <li><a href="#files">25. 관련 파일</a></li>
+    </ol>
+  </details>
+</nav>
+
+<main>
+<header class="masthead">
+  <div class="eyebrow">guide / 00</div>
+  <h1>JWT 인증 개념과 PopPang 토큰 처리</h1>
+  <p class="lede">JWT로 로그인 상태를 유지하는 원리를 먼저 정리하고, PopPang 앱이 V2 API에서 토큰을 붙이고 갱신하고 저장하는 코드를 따라가요.</p>
+  <div class="meta">
+    <span>기준 브랜치 refactor/#116</span>
+    <span>V2 마이그레이션 1단계</span>
+    <span>근거: Projects/ 코드와 Docs/ 문서</span>
+  </div>
+</header>
+
+<p style="margin-top:20px">1부는 일반론이에요. PopPang 서버가 어떤 서명 알고리즘과 claim을 쓰는지는 이 저장소에 없어서 다루지 않아요. 2부는 <code>Projects/Shared/Core</code>의 실제 코드만 근거로 써요. 코드에서 확인하지 못한 내용은 <strong>확인 필요</strong>로 표시했어요.</p>
+
+<!-- ================= 1부 ================= -->
+<div class="part-title">1부 · 개념</div>
+
+<section id="jwt-structure">
+<h2><span class="num">01</span>JWT의 구조</h2>
+<p>JWT(JSON Web Token)는 점(<code>.</code>) 두 개로 나눈 세 조각짜리 문자열이에요. 각 조각은 JSON이나 바이트를 <strong>Base64URL</strong>로 인코딩한 값이에요.</p>
+<div class="jwt" aria-label="JWT 세 조각 예시">
+  <span class="seg-h">eyJhbGciOi...(예시 header)</span><span class="dot">.</span><span class="seg-p">eyJzdWIiOi...(예시 payload)</span><span class="dot">.</span><span class="seg-s">c2lnbmF0dX...(예시 signature)</span>
+</div>
+<div class="jwt-parts">
+  <div class="jwt-part">
+    <h4 class="seg-h">header</h4>
+    서명 알고리즘(<code>alg</code>)과 토큰 종류(<code>typ</code>)를 담아요.
+    <pre><code>{ "alg": "HS256", "typ": "JWT" }</code></pre>
+  </div>
+  <div class="jwt-part">
+    <h4 class="seg-p">payload</h4>
+    누구의 토큰인지, 언제 만료되는지 같은 주장(claim)을 담아요.
+    <pre><code>{ "sub": "user-123(예시)",
+  "exp": 1700000000 }</code></pre>
+  </div>
+  <div class="jwt-part">
+    <h4 class="seg-s">signature</h4>
+    앞 두 조각을 서버의 키로 서명한 값이에요. 위조를 막는 부분이에요.
+    <pre><code>sign(header + "." + payload)</code></pre>
+  </div>
+</div>
+<h3>Base64URL</h3>
+<p>Base64에서 URL에 문제를 일으키는 <code>+</code>와 <code>/</code>를 <code>-</code>와 <code>_</code>로 바꾸고, 끝의 <code>=</code> 패딩을 뺀 형식이에요. 그래서 토큰을 URL이나 HTTP 헤더에 그대로 넣을 수 있어요.</p>
+<div class="warn"><span class="tag caution">주의</span>Base64URL은 <strong>인코딩</strong>이지 암호화가 아니에요. 누구나 header와 payload를 디코딩해서 읽을 수 있어요. 그래서 payload에 비밀번호나 개인정보를 넣으면 안 돼요.</div>
+</section>
+
+<section id="signature">
+<h2><span class="num">02</span>서명과 검증</h2>
+<p>서버는 토큰을 받으면 header와 payload로 서명을 다시 계산해서 signature와 같은지 봐요. 한 글자라도 바뀌었으면 서명이 맞지 않아서 거절해요. 이 덕분에 서버는 세션 저장소를 찾지 않고도 토큰만 보고 "우리가 발급한 그대로인지"를 알 수 있어요.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>방식</th><th>예</th><th>키</th><th>특징</th></tr></thead>
+  <tbody>
+    <tr><td>대칭키 HMAC</td><td><code>HS256</code></td><td>서명과 검증에 같은 비밀키</td><td>단순하고 빨라요. 검증하는 쪽도 비밀키를 알아야 해요.</td></tr>
+    <tr><td>비대칭키</td><td><code>RS256</code>, <code>ES256</code></td><td>개인키로 서명, 공개키로 검증</td><td>검증하는 서비스가 많아도 개인키는 발급 서버에만 두면 돼요.</td></tr>
+  </tbody>
+</table></div>
+<p>검증할 때는 서명뿐 아니라 <code>exp</code>(만료), <code>iss</code>(발급자), <code>aud</code>(대상) 같은 claim도 함께 확인해요. 서명이 맞아도 만료된 토큰은 거절해야 해요.</p>
+<div class="note"><span class="tag why">앱 관점</span>서명 검증은 <strong>서버의 일</strong>이에요. 앱은 비밀키를 갖고 있지 않아서 토큰을 검증할 수 없고, 검증할 필요도 없어요. 앱에게 토큰은 받은 그대로 보관했다가 헤더에 실어 보내는 불투명한 문자열이에요. PopPang 앱 코드도 토큰을 디코딩하지 않고 <code>String</code>으로만 다뤄요.</div>
+<div class="check"><span class="tag todo">확인 필요</span>PopPang V2 토큰이 JWT 형식인지, 어떤 서명 알고리즘을 쓰는지는 저장소에 근거가 없어요. 확인할 곳: 서버 팀 V2 명세(저장소 밖 내부 문서).</div>
+</section>
+
+<section id="claims">
+<h2><span class="num">03</span>표준 claim</h2>
+<p>RFC 7519가 정한 등록 claim이에요. 모두 선택 사항이고, 서비스마다 고르는 조합이 달라요. 시간 값은 1970-01-01 UTC부터 센 초(NumericDate)예요.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>claim</th><th>이름</th><th>뜻</th></tr></thead>
+  <tbody>
+    <tr><td><code>iss</code></td><td>Issuer</td><td>토큰을 발급한 주체</td></tr>
+    <tr><td><code>sub</code></td><td>Subject</td><td>토큰의 주인. 보통 사용자 식별자</td></tr>
+    <tr><td><code>aud</code></td><td>Audience</td><td>이 토큰을 받아야 하는 대상 서비스</td></tr>
+    <tr><td><code>exp</code></td><td>Expiration Time</td><td>이 시각 이후로는 거절해요</td></tr>
+    <tr><td><code>nbf</code></td><td>Not Before</td><td>이 시각 전에는 거절해요</td></tr>
+    <tr><td><code>iat</code></td><td>Issued At</td><td>발급 시각</td></tr>
+    <tr><td><code>jti</code></td><td>JWT ID</td><td>토큰마다 고유한 ID. 재사용 탐지나 폐기 목록에 써요</td></tr>
+  </tbody>
+</table></div>
+<p>이 밖에 역할(role)이나 토큰 용도처럼 서비스가 정한 비공개 claim을 더할 수 있어요. PopPang 서버가 어떤 claim을 넣는지는 다루지 않아요(<a href="#unknowns">확인 필요</a>).</p>
+</section>
+
+<section id="bearer">
+<h2><span class="num">04</span>Bearer 헤더</h2>
+<p>토큰은 HTTP <code>Authorization</code> 헤더에 <code>Bearer</code> 방식(RFC 6750)으로 실어 보내요.</p>
+<pre><code>GET /api/v2/... HTTP/1.1
+Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
+<p>Bearer는 "가진 사람"이라는 뜻이에요. 토큰을 <strong>가진 사람이 곧 주인</strong>으로 취급돼요. 그래서 토큰이 새면 다른 사람이 그대로 쓸 수 있어요. 저장 위치와 로그에 남기지 않는 규칙이 중요한 이유예요.</p>
+</section>
+
+<section id="access-refresh">
+<h2><span class="num">05</span>Access Token과 Refresh Token을 나누는 이유</h2>
+<p>서버가 JWT를 서명만으로 검증하면 빠르지만, 한 번 발급한 토큰을 중간에 무르기 어려워요. 만료 전에는 계속 유효해요. 그래서 토큰을 두 가지로 나눠요.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th></th><th>Access Token</th><th>Refresh Token</th></tr></thead>
+  <tbody>
+    <tr><td>쓰는 곳</td><td>모든 API 요청</td><td>토큰 갱신 API 하나</td></tr>
+    <tr><td>만료</td><td>짧게</td><td>길게</td></tr>
+    <tr><td>노출 빈도</td><td>요청마다 네트워크를 타요</td><td>갱신할 때만 보내요</td></tr>
+    <tr><td>서버 확인</td><td>보통 서명과 claim만 봐요</td><td>보통 서버 저장소와 대조해서 폐기 여부를 봐요</td></tr>
+    <tr><td>새면</td><td>만료까지 짧은 시간만 악용돼요</td><td>서버에서 폐기하면 막을 수 있어요</td></tr>
+  </tbody>
+</table></div>
+<p>정리하면, 자주 쓰는 토큰은 짧게 살려 새도 피해를 줄이고, 오래 사는 토큰은 드물게 쓰고 서버가 통제해요.</p>
+</section>
+
+<section id="expiry">
+<h2><span class="num">06</span>짧은 만료와 갱신</h2>
+<p>Access Token이 만료되면 서버는 401을 줘요. 클라이언트는 Refresh Token으로 갱신 API를 불러 새 토큰을 받고, 실패했던 요청을 다시 보내요. 사용자는 이 과정을 모르고 지나가요.</p>
+<p>이때 클라이언트가 지켜야 할 것이 있어요.</p>
+<ul>
+  <li><strong>만료와 다른 401을 구분해요.</strong> 서명이 틀렸거나 계정이 정지된 401은 갱신해도 성공하지 않아요.</li>
+  <li><strong>재요청은 한 번만 해요.</strong> 갱신 뒤에도 실패하면 반복하지 않아야 무한 루프가 생기지 않아요.</li>
+  <li><strong>갱신 요청을 합쳐요.</strong> 화면 하나가 API 다섯 개를 동시에 부르면 다섯 요청이 함께 만료될 수 있어요. 갱신을 다섯 번 보내면 안 돼요(<a href="#rotation">회전</a>을 쓰면 특히 그래요).</li>
+</ul>
+<div class="check"><span class="tag todo">확인 필요</span>PopPang 토큰의 운영 유효기간은 앱에 하드코딩하지 않아요. 값은 서버 운영 설정에서 확인해야 해요(<code>api-v2-migration.md</code> 정해야 할 것 7번).</div>
+</section>
+
+<section id="rotation">
+<h2><span class="num">07</span>Refresh Token 회전과 재사용 탐지</h2>
+<p><strong>회전(rotation)</strong>은 갱신할 때마다 Refresh Token도 새로 발급하고 이전 것을 폐기하는 방식이에요. Refresh Token 하나는 한 번만 쓸 수 있어요.</p>
+<p><strong>재사용 탐지</strong>는 회전과 짝을 이뤄요. 이미 폐기된 Refresh Token이 다시 들어오면, 누군가 옛 토큰을 훔쳐 쓰고 있다는 신호로 보고 그 토큰 계열 전체를 폐기해요. 훔친 사람과 진짜 사용자 중 누가 먼저 썼든, 두 번째 사용에서 걸려요.</p>
+<p>회전을 쓰면 클라이언트 쪽 부담이 커져요.</p>
+<ul>
+  <li>갱신 응답으로 받은 <strong>새 Refresh Token을 반드시 저장</strong>해야 해요. 저장에 실패하면 손에 남은 것은 폐기된 토큰뿐이에요.</li>
+  <li>동시에 두 번 갱신하면 두 번째 요청이 폐기된 토큰을 보내게 돼요. 재사용 탐지가 있으면 세션 전체가 끊길 수 있어요.</li>
+</ul>
+<div class="note"><span class="tag why">PopPang</span><code>AccessTokenRefresher</code>에는 "서버는 이미 이전 Refresh Token을 폐기했으므로"라는 주석이 있어요. 앱은 갱신이 Refresh Token을 바꾼다고 전제하고 작성됐어요(<a href="#races">17절</a>). 서버가 재사용 탐지까지 하는지는 <strong>확인 필요</strong>예요.</div>
+</section>
+
+<section id="purpose-token">
+<h2><span class="num">08</span>용도별 토큰</h2>
+<p>모든 권한을 가진 토큰 하나로 모든 일을 하면, 그 토큰이 새는 순간 피해가 커져요. 그래서 특정 단계에서만 쓰는 좁은 권한의 토큰을 따로 둬요. 대표적인 예가 <strong>가입 전용 토큰</strong>이에요.</p>
+<ol>
+  <li>소셜 로그인은 성공했지만 아직 가입하지 않은 사용자가 있어요.</li>
+  <li>서버는 정식 Access Token 대신 "가입 API만 부를 수 있는" 토큰을 줘요.</li>
+  <li>가입을 마치면 정식 토큰 쌍을 주고, 가입 토큰은 버려요.</li>
+</ol>
+<p>PopPang V2에도 이런 토큰이 있어요. 문서상 로그인 응답이 가입을 마친 사용자(COMPLETED)에게는 토큰 쌍을, 가입이 필요한 사용자(PENDING)에게는 Signup Token만 줘요. 앱 코드에서는 <code>APIAuthorization.signup</code>과 <code>AuthTokenStorage</code>의 <code>signupToken</code> 키가 이 토큰을 다뤄요.</p>
+</section>
+
+<section id="storage">
+<h2><span class="num">09</span>토큰을 둘 곳</h2>
+<h3>iOS Keychain</h3>
+<p>Keychain은 시스템이 암호화해서 보관하는 저장소예요. 앱마다 접근이 나뉘고, 언제 읽을 수 있는지를 항목마다 정할 수 있어요.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th><code>kSecAttrAccessible</code> 값</th><th>읽을 수 있는 때</th><th>백업으로 다른 기기 이동</th></tr></thead>
+  <tbody>
+    <tr><td><code>WhenUnlocked</code></td><td>기기가 잠금 해제된 동안</td><td>돼요</td></tr>
+    <tr><td><code>AfterFirstUnlock</code></td><td>재부팅 뒤 처음 잠금 해제한 다음부터</td><td>돼요</td></tr>
+    <tr><td><code>…ThisDeviceOnly</code></td><td>위와 같음</td><td>안 돼요</td></tr>
+  </tbody>
+</table></div>
+<p>토큰에는 보통 <code>kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly</code>를 골라요. 백그라운드 요청에서도 토큰을 읽고, 백업으로 다른 기기에 옮겨지지 않게 하려는 선택이에요. PopPang 저장소에 남아 있는 <code>KeychainStore</code>도 이 값을 써요. 다만 지금 토큰 저장에는 쓰지 않아요(<a href="#layers">20절</a>).</p>
+<h3>UserDefaults의 위험</h3>
+<p>일반적으로는 토큰을 UserDefaults에 두지 말라고 권해요.</p>
+<ul>
+  <li>앱 컨테이너 안의 plist 파일로 저장돼요. 기기 백업이나 탈옥 기기에서 그대로 읽힐 수 있어요.</li>
+  <li>설정값용 저장소라 읽기 권한을 항목마다 나눌 수 없어요.</li>
+  <li>디버깅하면서 전체 내용을 출력하는 일이 흔해서 로그에 토큰이 섞이기 쉬워요.</li>
+</ul>
+<h3>알아 둘 Keychain 특성</h3>
+<ul>
+  <li><strong>앱을 지워도 남아요.</strong> 다시 설치하면 이전 계정 토큰이 살아 있을 수 있어요. UserDefaults는 같이 지워지므로, 두 저장소의 상태가 어긋나요.</li>
+  <li><strong>읽기가 실패할 수 있어요.</strong> 재부팅 뒤 첫 잠금 해제 전에 백그라운드로 실행되면 <code>AfterFirstUnlock</code> 항목도 읽지 못해요. "값이 없음"과 "읽지 못함"은 다른 상황이에요.</li>
+</ul>
+<div class="note">
+<p><span class="tag why">PopPang은 이렇게 정했어요</span>팀 결정으로 V2 토큰(Access·Refresh·Signup)은 <strong>UserDefaults</strong>에 저장해요. <code>AuthTokenStorage</code>가 기본값으로 <code>UserDefaultsStore()</code>를 받고, 키는 <code>auth.accessToken</code>, <code>auth.refreshToken</code>, <code>auth.signupToken</code>이에요.</p>
+<ul>
+  <li><strong>얻는 것:</strong> 앱을 지우면 토큰도 함께 지워져요. 세션 정보와 같은 저장소에 있어서, 재설치한 뒤 이전 계정 토큰만 살아남는 문제가 생기지 않아요. UserDefaults는 읽기·삭제가 실패하지 않아서 "읽지 못함"을 따로 다룰 일도 없어요.</li>
+  <li><strong>잃는 것:</strong> 서버 명세는 Keychain 저장을 요구해요. 이 결정은 <strong>명세와 달라요</strong>. UserDefaults는 암호화하지 않은 plist라서 기기 백업이나 탈옥 기기에서 토큰이 그대로 노출될 수 있어요.</li>
+</ul>
+<p>위 일반론이 틀린 것은 아니에요. PopPang은 위험을 알고 재설치 문제를 먼저 피하기로 했어요. 그래서 토큰을 로그와 분석 이벤트에 남기지 않는 규칙이 더 중요해요.</p></div>
+</section>
+
+<section id="mistakes">
+<h2><span class="num">10</span>흔한 실수</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th>실수</th><th>결과</th><th>PopPang에서 막는 곳</th></tr></thead>
+  <tbody>
+    <tr><td>모든 401에 갱신</td><td>갱신해도 안 되는 401을 반복해요</td><td><code>isExpiredToken</code>은 401과 코드 5002를 함께 봐요</td></tr>
+    <tr><td>갱신 뒤 재요청을 반복</td><td>무한 루프</td><td>재요청은 한 번이고, 다시 5002면 오류를 던져요</td></tr>
+    <tr><td>동시 만료마다 갱신</td><td>회전 환경에서 세션이 끊길 수 있어요</td><td><code>AccessTokenRefresher</code>의 in-flight Task</td></tr>
+    <tr><td>늦게 온 갱신 응답을 그대로 저장</td><td>로그아웃한 세션이 되살아나요</td><td><code>replaceTokens(_:ifRefreshTokenIs:)</code></td></tr>
+    <tr><td>Keychain 읽기 실패를 "토큰 없음"으로 처리</td><td>멀쩡한 사용자를 로그아웃시켜요</td><td>지금은 UserDefaults라 읽기 실패가 없어요. Keychain을 쓰게 되면 <code>KeychainStoring</code>이 실패를 오류로 던져요(<a href="#keychain-fail">18절</a>)</td></tr>
+    <tr><td>로그·분석 이벤트에 토큰 남김</td><td>유출</td><td><code>AuthTokenStorage</code> 주석이 금지해요</td></tr>
+    <tr><td>암호화하지 않은 저장소에 토큰 저장</td><td>백업·탈옥 기기에서 노출될 수 있어요</td><td>막지 않아요. 팀 결정으로 UserDefaults에 저장해요. 서버 명세(Keychain)와 다른 결정이에요(<a href="#storage">9절</a>)</td></tr>
+    <tr><td>토큰이 필요 없는 요청에도 헤더 첨부</td><td>토큰이 불필요하게 노출돼요</td><td>V1과 공개 API는 <code>.none</code></td></tr>
+    <tr><td>payload에 민감 정보</td><td>누구나 디코딩해서 읽어요</td><td>서버 쪽 일이에요. 앱은 디코딩하지 않아요</td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<!-- ================= 2부 ================= -->
+<div class="part-title">2부 · PopPang 적용</div>
+
+<section id="overview">
+<h2><span class="num">11</span>전체 그림</h2>
+<p>PopPang은 서버 API를 V1에서 V2로 옮기는 중이에요. V2부터 토큰 인증이 들어와요. 1단계(#116)는 모든 V2 API가 함께 쓸 네트워크 기반을 <code>Core</code>에 만드는 단계예요. 이 단계에서는 어떤 API도 V2로 바꾸지 않아서 앱 동작은 그대로예요.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>구성 요소</th><th>위치 (<code>Core/Sources/</code>)</th><th>하는 일</th></tr></thead>
+  <tbody>
+    <tr><td><code>APIVersion</code>, <code>APIAuthorization</code></td><td><code>Network/BaseAPI.swift</code></td><td>target마다 버전과 인증 종류</td></tr>
+    <tr><td><code>NetworkConfig</code></td><td><code>Network/NetworkConfig.swift</code></td><td>버전별 기본 URL</td></tr>
+    <tr><td><code>APIResponse</code>, <code>ErrorResponse</code></td><td><code>Network/APIResponse.swift</code></td><td>V2 성공 래퍼, 공통 실패 형식</td></tr>
+    <tr><td><code>NetworkError</code></td><td><code>Network/NetworkError.swift</code></td><td>상태 코드와 서버 에러 코드</td></tr>
+    <tr><td><code>asyncRequest</code></td><td><code>Network/MoyaProvider+Async.swift</code></td><td>요청, 만료 감지, 갱신 뒤 재요청</td></tr>
+    <tr><td><code>AuthenticationPlugin</code></td><td><code>Network/Auth/</code></td><td>Bearer 헤더 첨부</td></tr>
+    <tr><td><code>AccessTokenRefresher</code></td><td><code>Network/Auth/</code></td><td>갱신을 하나로 합치고 결과 저장</td></tr>
+    <tr><td><code>AuthTokenStorage</code></td><td><code>LocalStorage/Storage/AuthToken/</code></td><td>토큰 저장·비교·삭제를 lock으로 묶음</td></tr>
+    <tr><td><code>Storing</code>, <code>UserDefaultsStore</code></td><td><code>LocalStorage/Store/</code></td><td>토큰을 실제로 담는 UserDefaults 읽기·쓰기·삭제</td></tr>
+    <tr><td><code>KeychainStoring</code>, <code>KeychainStore</code></td><td><code>LocalStorage/Store/Keychain/</code></td><td>Keychain 구현. 지금은 토큰 저장에 쓰지 않아요</td></tr>
+  </tbody>
+</table></div>
+<p>책임은 이렇게 나뉘어요. plugin은 <strong>헤더만</strong> 붙이고, 재요청 판단은 <code>asyncRequest</code>가, 갱신은 refresher가, 토큰의 원자적 변경은 storage가 해요.</p>
+</section>
+
+<section id="version-auth">
+<h2><span class="num">12</span>API 버전과 인증 종류</h2>
+<p>API target은 <code>BaseAPI</code>를 채택하고 버전과 인증 종류를 정해요. 기본값은 <code>.v1</code>, <code>.none</code>이에요. 그래서 기존 target은 아무것도 바꾸지 않아도 예전과 똑같이 동작해요.</p>
+<span class="src">Projects/Shared/Core/Sources/Network/BaseAPI.swift</span>
+<pre><code><span class="kw">public enum</span> APIAuthorization: Sendable {
+    <span class="cm">/// 헤더를 보내지 않는다. V1 API와 V2 공개 API(소셜 로그인, 토큰 갱신)가 해당한다.</span>
+    <span class="kw">case</span> none
+    <span class="cm">/// `Bearer {accessToken}`을 보낸다.</span>
+    <span class="kw">case</span> access
+    <span class="cm">/// `Bearer {signupToken}`을 보낸다. V2 회원가입 API에만 쓴다.</span>
+    <span class="kw">case</span> signup
+}
+
+<span class="cm">/// 실제로 적용할 인증 종류. V1 요청에는 서버 계약상 `Authorization` 헤더를 보내지 않는다.</span>
+<span class="kw">var</span> resolvedAuthorization: APIAuthorization {
+    apiVersion == .v1 ? .none : authorization
+}</code></pre>
+<h3>V1 요청에 헤더를 붙이지 않는 이유</h3>
+<ul>
+  <li><strong>서버 계약이에요.</strong> 코드 주석과 마이그레이션 문서 모두 "V1 요청에는 <code>Authorization</code> 헤더를 보내지 않는다"고 정해요. V1은 토큰 인증을 쓰지 않아서 헤더가 필요 없어요.</li>
+  <li><strong>실수를 구조로 막아요.</strong> V1 target에 실수로 <code>.access</code>를 적어도 <code>resolvedAuthorization</code>이 <code>.none</code>으로 바꿔요. 토큰이 필요 없는 곳에 토큰을 보내지 않고, V1의 401이 갱신 흐름에 들어가지도 않아요.</li>
+  <li><strong>전환 중 공존이 안전해요.</strong> V1과 V2 호출이 한 앱에 같이 있는 동안, 버전 하나만 보고 인증 경로가 갈려요.</li>
+</ul>
+<p>갱신 API와 소셜 로그인처럼 V2지만 토큰 없이 부르는 공개 API도 <code>.none</code>이에요. 갱신 API에 만료된 Access Token을 붙여 보낼 이유가 없어요.</p>
+<h3>버전별 기본 URL</h3>
+<span class="src">Projects/Shared/Core/Sources/Network/NetworkConfig.swift</span>
+<pre><code><span class="kw">public static func</span> apiURLString(for version: APIVersion) -&gt; String {
+    "\(serverURLString)/api/\(version.rawValue)"   <span class="cm">// https://poppang.co.kr/api/v1, /api/v2</span>
+}</code></pre>
+<p>V2 경로는 V1 경로의 숫자만 바꾼 것이 아니에요. 사용자 종속 API는 경로의 <code>{userUuid}</code>가 빠져요. 사용자를 토큰으로 식별하기 때문이에요(<code>api-v2-migration.md</code> 기본 원칙).</p>
+</section>
+
+<section id="response-error">
+<h2><span class="num">13</span>응답과 오류 코드</h2>
+<p>V2 성공 응답 가운데 일부는 <code>APIResponse</code>로 감싸져 와요. 감싸는지는 API마다 달라서 모든 응답에 일괄 적용하지 않아요. 실패 응답 형식은 V1과 V2가 같아요.</p>
+<span class="src">Projects/Shared/Core/Sources/Network/APIResponse.swift</span>
+<pre><code><span class="kw">public struct</span> APIResponse&lt;T: Decodable&gt;: Decodable {
+    <span class="kw">let</span> success: Bool; <span class="kw">let</span> code: Int; <span class="kw">let</span> message: String; <span class="kw">let</span> data: T
+}
+<span class="kw">public struct</span> ErrorResponse: Decodable { <span class="kw">let</span> success: Bool; <span class="kw">let</span> code: Int; <span class="kw">let</span> message: String }</code></pre>
+<p>HTTP 401만으로는 만료인지 알 수 없어요. 그래서 실패 본문의 서버 에러 코드를 읽어요.</p>
+<span class="src">Projects/Shared/Core/Sources/Network/NetworkError.swift</span>
+<pre><code><span class="cm">/// 본문에 정수 `code`가 없으면(5xx 기본 오류 본문 등) `nil`이다.</span>
+<span class="kw">public var</span> serverErrorCode: Int? {
+    <span class="kw">case let</span> .invalidStatusCode(_, message):
+        <span class="kw">return try?</span> JSONDecoder().decode(ServerErrorCodeBody.self, from: Data(message.utf8)).code
+}
+
+<span class="kw">var</span> isExpiredToken: Bool {
+    statusCode == 401 &amp;&amp; serverErrorCode == ServerErrorCode.expiredToken   <span class="cm">// 5002</span>
+}</code></pre>
+<ul>
+  <li><strong><code>code</code>만 디코딩해요.</strong> <code>ErrorResponse</code> 전체를 디코딩하면 <code>message</code> 같은 다른 필드가 빠졌을 때 코드까지 잃어요. 갱신 여부를 가르는 값은 코드 하나라서 그것만 읽어요.</li>
+  <li><strong>본문 형식이 다르면 <code>nil</code>이에요.</strong> 게이트웨이가 만든 5xx 기본 오류처럼 JSON이 아니면 서버 코드 없이 HTTP 상태로만 처리해요.</li>
+  <li><strong>401과 5002를 함께 봐요.</strong> 앱이 따로 처리하는 서버 코드는 지금 <code>expiredToken = 5002</code> 하나예요. 다른 401 코드의 뜻은 이 저장소에 적혀 있지 않아요(테스트는 5001, 5003 등을 "5002가 아닌 401"의 예로만 써요).</li>
+</ul>
+</section>
+
+<section id="plugin">
+<h2><span class="num">14</span>헤더를 붙이는 plugin</h2>
+<p><code>AuthenticationPlugin</code>은 Moya의 <code>PluginType</code>이에요. 요청이 나가기 직전 <code>prepare</code>에서 인증 종류에 맞는 토큰을 <code>AuthTokenStorage</code>(UserDefaults)에서 읽어 헤더를 붙여요.</p>
+<span class="src">Projects/Shared/Core/Sources/Network/Auth/AuthenticationPlugin.swift</span>
+<pre><code><span class="cm">/// 요청에 담을 토큰. 인증이 필요 없는 요청이거나 토큰이 없으면 `nil`이다.</span>
+<span class="kw">func</span> token(for target: TargetType) -&gt; String? {
+    <span class="kw">switch</span> Self.authorization(of: target) {
+    <span class="kw">case</span> .none:   <span class="kw">return nil</span>
+    <span class="kw">case</span> .access: <span class="kw">return</span> storage.loadTokens()?.accessToken
+    <span class="kw">case</span> .signup: <span class="kw">return</span> storage.loadSignupToken()
+    }
+}
+
+<span class="kw">static func</span> authorization(of target: TargetType) -&gt; APIAuthorization {
+    <span class="kw">let</span> target = (target <span class="kw">as?</span> MultiTarget)?.target ?? target
+    <span class="kw">return</span> (target <span class="kw">as?</span> BaseAPI)?.resolvedAuthorization ?? .none
+}</code></pre>
+<ul>
+  <li><strong>매 요청마다 저장소를 읽어요.</strong> 갱신 직후의 요청은 자연스럽게 새 토큰을 담아요. 따로 메모리 캐시를 두지 않아요. UserDefaults는 프로세스 안에서 값을 캐시해서, Keychain을 매번 읽을 때보다 부담이 작아요.</li>
+  <li><strong>읽기는 실패하지 않아요.</strong> UserDefaults에서 토큰을 읽는 함수는 <code>throws</code>가 아니에요. 토큰이 없을 때만 헤더 없이 보내요.</li>
+  <li><strong><code>MultiTarget</code>을 벗겨요.</strong> <code>MoyaProvider&lt;MultiTarget&gt;</code>으로 감싼 target이 들어와도 안쪽 target을 꺼내 인증 종류를 봐요. 테스트도 두 경우를 함께 확인해요.</li>
+  <li><strong>plugin은 재요청하지 않아요.</strong> Moya plugin에는 응답을 보고 요청을 다시 보내는 기능이 없어요. 재요청은 <code>asyncRequest</code>가 plugin을 찾아서 해요.</li>
+  <li>plugin은 <code>NetworkProvider(authentication:)</code>로 넣어요. <code>nil</code>이면 어떤 요청에도 헤더를 붙이지 않아요. 지금 <code>NetworkProvider.shared</code>에는 넣지 않았어요(<a href="#next">22절</a>).</li>
+</ul>
+</section>
+
+<section id="request-flow">
+<h2><span class="num">15</span>요청 흐름과 한 번만 재요청</h2>
+<p><code>MoyaProvider.asyncRequest(_:)</code>가 갱신과 재요청을 맡아요. 아래 그림은 요청 하나가 거치는 길이에요.</p>
+<figure>
+<div class="diagram">
+<svg viewBox="0 0 820 690" role="img" aria-labelledby="flow-title">
+  <title id="flow-title">asyncRequest 요청 흐름: 인증 종류 확인, 응답 분기, 401 5002일 때 갱신 후 한 번 재요청</title>
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+
+  <rect class="box-main" x="280" y="16" width="260" height="40" rx="8"/>
+  <text class="t mono" x="410" y="41" text-anchor="middle">asyncRequest(target)</text>
+
+  <line class="edge" x1="410" y1="56" x2="410" y2="86" marker-end="url(#arr)"/>
+
+  <rect class="box-dec" x="250" y="88" width="320" height="52" rx="8"/>
+  <text class="t" x="410" y="110" text-anchor="middle">Access Token이 필요한 요청인가요?</text>
+  <text class="sub mono" x="410" y="128" text-anchor="middle">plugin 있음 + resolvedAuthorization == .access</text>
+
+  <line class="edge" x1="570" y1="114" x2="618" y2="114" marker-end="url(#arr)"/>
+  <text class="lbl" x="594" y="106" text-anchor="middle">아니요</text>
+  <rect class="box" x="620" y="88" width="188" height="52" rx="8"/>
+  <text class="t mono" x="714" y="110" text-anchor="middle">sendRequest</text>
+  <text class="sub" x="714" y="128" text-anchor="middle">갱신 없이 보내고 결과 반환</text>
+
+  <line class="edge" x1="410" y1="140" x2="410" y2="170" marker-end="url(#arr)"/>
+  <text class="lbl" x="420" y="160">예</text>
+
+  <rect class="box" x="250" y="172" width="320" height="52" rx="8"/>
+  <text class="t mono" x="410" y="194" text-anchor="middle">sendAccessRequest</text>
+  <text class="sub" x="410" y="212" text-anchor="middle">plugin이 Bearer {accessToken}을 붙여 보내요</text>
+
+  <line class="edge" x1="410" y1="224" x2="410" y2="254" marker-end="url(#arr)"/>
+
+  <rect class="box-dec" x="290" y="256" width="240" height="40" rx="8"/>
+  <text class="t" x="410" y="281" text-anchor="middle">응답 상태는?</text>
+
+  <!-- 분기 버스 -->
+  <line class="edge" x1="410" y1="296" x2="410" y2="318"/>
+  <line class="edge" x1="106" y1="318" x2="722" y2="318"/>
+  <line class="edge" x1="106" y1="318" x2="106" y2="338" marker-end="url(#arr)"/>
+  <line class="edge" x1="311" y1="318" x2="311" y2="338" marker-end="url(#arr)"/>
+  <line class="edge" x1="521" y1="318" x2="521" y2="338" marker-end="url(#arr)"/>
+  <line class="edge" x1="722" y1="318" x2="722" y2="338" marker-end="url(#arr)"/>
+
+  <rect class="box-ok" x="16" y="340" width="180" height="52" rx="8"/>
+  <text class="t" x="106" y="362" text-anchor="middle">2xx</text>
+  <text class="sub" x="106" y="380" text-anchor="middle">응답을 돌려줘요</text>
+
+  <rect class="box-warn" x="216" y="340" width="190" height="52" rx="8"/>
+  <text class="t" x="311" y="362" text-anchor="middle">401 + 5002</text>
+  <text class="sub" x="311" y="380" text-anchor="middle">만료. 보낸 토큰을 기억해요</text>
+
+  <rect class="box-bad" x="426" y="340" width="190" height="52" rx="8"/>
+  <text class="t" x="521" y="362" text-anchor="middle">5002가 아닌 401</text>
+  <text class="sub" x="521" y="380" text-anchor="middle">같은 토큰으론 안 돼요</text>
+
+  <rect class="box" x="636" y="340" width="172" height="52" rx="8"/>
+  <text class="t" x="722" y="362" text-anchor="middle">그 밖 (403, 5xx…)</text>
+  <text class="sub" x="722" y="380" text-anchor="middle">갱신 없이 오류 그대로</text>
+
+  <!-- 만료 경로 -->
+  <line class="edge" x1="311" y1="392" x2="311" y2="418" marker-end="url(#arr)"/>
+  <rect class="box-main" x="216" y="420" width="190" height="62" rx="8"/>
+  <text class="t mono" x="311" y="442" text-anchor="middle">refresher</text>
+  <text class="sub mono" x="311" y="458" text-anchor="middle">.refreshAccessToken(</text>
+  <text class="sub mono" x="311" y="472" text-anchor="middle">expired: 보낸 토큰)</text>
+
+  <line class="edge" x1="216" y1="451" x2="198" y2="451" marker-end="url(#arr)"/>
+  <rect class="box-bad" x="16" y="420" width="180" height="62" rx="8"/>
+  <text class="t" x="106" y="440" text-anchor="middle">갱신 실패</text>
+  <text class="sub mono" x="106" y="457" text-anchor="middle">AuthSessionError → 그대로</text>
+  <text class="sub" x="106" y="473" text-anchor="middle">그 밖 → 원래 5002 오류</text>
+
+  <line class="edge" x1="311" y1="482" x2="311" y2="512" marker-end="url(#arr)"/>
+  <text class="lbl" x="320" y="502">갱신 성공</text>
+  <rect class="box" x="216" y="514" width="190" height="44" rx="8"/>
+  <text class="t" x="311" y="534" text-anchor="middle">같은 요청을 한 번 더</text>
+  <text class="sub" x="311" y="550" text-anchor="middle">새 토큰이 헤더에 담겨요</text>
+
+  <line class="edge" x1="311" y1="558" x2="311" y2="588" marker-end="url(#arr)"/>
+  <rect class="box-dec" x="196" y="590" width="230" height="84" rx="8"/>
+  <text class="sub" x="311" y="612" text-anchor="middle">2xx → 응답을 돌려줘요</text>
+  <text class="sub" x="311" y="630" text-anchor="middle">또 5002 → 오류를 던지고 끝</text>
+  <text class="sub" x="311" y="648" text-anchor="middle">(다시 갱신하지 않아요)</text>
+  <text class="sub" x="311" y="666" text-anchor="middle">다른 401·그 밖 → 옆 규칙과 같아요</text>
+
+  <!-- 다른 401 경로 -->
+  <line class="edge" x1="521" y1="392" x2="521" y2="418" marker-end="url(#arr)"/>
+  <rect class="box" x="436" y="420" width="170" height="62" rx="8"/>
+  <text class="sub mono" x="521" y="442" text-anchor="middle">removeTokens(</text>
+  <text class="sub mono" x="521" y="458" text-anchor="middle">ifAccessTokenIs:</text>
+  <text class="sub mono" x="521" y="474" text-anchor="middle">보낸 토큰)</text>
+  <line class="edge" x1="521" y1="482" x2="521" y2="512" marker-end="url(#arr)"/>
+  <rect class="box" x="446" y="514" width="150" height="62" rx="8"/>
+  <text class="sub" x="521" y="536" text-anchor="middle">true → 지우고</text>
+  <text class="sub mono" x="521" y="552" text-anchor="middle">loginRequired</text>
+  <text class="sub" x="521" y="568" text-anchor="middle">false → 새 토큰으로 1회 재요청</text>
+</svg>
+</div>
+<figcaption>그림 1. <code>asyncRequest(_:)</code>의 분기. 점선 상자는 판단, 파란 상자는 갱신 관련 동작이에요.</figcaption>
+</figure>
+<span class="src">Projects/Shared/Core/Sources/Network/MoyaProvider+Async.swift</span>
+<pre><code><span class="kw">switch try await</span> sendAccessRequest(target, authentication: authentication) {
+<span class="kw">case let</span> .success(response):
+    <span class="kw">return</span> response
+<span class="kw">case let</span> .rejectedWithStaleToken(_, error):
+    <span class="cm">// 보낸 뒤에 갱신·로그인으로 다른 토큰이 저장됐어요. 새 토큰으로 한 번 다시 보내요</span>
+    <span class="kw">return try await</span> retryAccessRequest(target, authentication: authentication, originalError: error)
+<span class="kw">case let</span> .expired(sentAccessToken, expiredError):
+    <span class="kw">do</span> {
+        _ = <span class="kw">try await</span> authentication.refresher.refreshAccessToken(expired: sentAccessToken)
+    } <span class="kw">catch let</span> error <span class="kw">as</span> AuthSessionError {
+        <span class="kw">throw</span> error              <span class="cm">// 다시 로그인해야 해요</span>
+    } <span class="kw">catch</span> {
+        <span class="kw">throw</span> expiredError       <span class="cm">// 원래 요청의 401 5002</span>
+    }
+    <span class="kw">return try await</span> retryAccessRequest(target, authentication: authentication, originalError: expiredError)
+}
+
+<span class="cm">// 다시 보낸 요청이 또 실패하면 갱신하지 않고 그 오류를 던져요</span>
+<span class="kw">func</span> retryAccessRequest(_ target: Target, authentication: AuthenticationPlugin, originalError: NetworkError) <span class="kw">async throws</span> -&gt; Response {
+    <span class="kw">switch try await</span> sendAccessRequest(target, authentication: authentication) {
+    <span class="kw">case let</span> .success(response):
+        <span class="kw">return</span> response
+    <span class="kw">case let</span> .expired(_, error), <span class="kw">let</span> .rejectedWithStaleToken(_, error):
+        <span class="kw">throw</span> error
+    }
+}</code></pre>
+<h3>왜 이렇게 했나요</h3>
+<ul>
+  <li><strong>5002일 때만 갱신해요.</strong> 갱신은 만료라는 한 가지 원인만 고쳐요. 다른 401에 갱신하면 성공할 수 없는 요청을 반복하고, 갱신 API 호출만 늘어요.</li>
+  <li><strong>재요청은 구조상 한 번이에요.</strong> <code>retryAccessRequest</code> 안의 두 번째 <code>sendAccessRequest</code>가 <code>.expired</code>나 <code>.rejectedWithStaleToken</code>을 돌려주면 갱신하지 않고 던져요. 반복문이 없어서 무한 재시도가 생길 수 없어요. 이때 토큰은 지우지 않아요. 명세가 이 경우를 정하지 않았기 때문이에요.</li>
+  <li><strong>보낸 토큰을 응답에서 꺼내요.</strong> <code>response.request?.bearerToken</code>으로 실제로 실었던 토큰을 읽어요. 지금 저장된 값이 아니라 "이 요청이 썼던 값"이 있어야 다른 요청이 이미 갱신했는지 판단할 수 있어요(<a href="#single-flight">16절</a>).</li>
+  <li><strong>갱신 실패의 오류를 구분해요.</strong> 로그인이 필요하면 <code>AuthSessionError.loginRequired</code>를, 일시적인 실패(400, 403, 429, 5xx, 네트워크)면 원래 요청의 5002 오류를 던져요. 일시 실패에는 토큰을 지우지 않아서 다음 요청이 다시 갱신을 시도해요. 이 정책은 아직 확정이 아니에요(정해야 할 것 3번).</li>
+  <li><strong>403에는 갱신하지 않아요.</strong> 403은 "누구인지는 알지만 권한이 없다"는 뜻이라 토큰을 바꿔도 결과가 같아요.</li>
+  <li><strong><code>signup</code> API의 5002도 갱신하지 않아요.</strong> 첫 <code>guard</code>가 <code>.access</code>만 갱신 흐름에 들여보내요. Signup Token이 만료되면 소셜 로그인부터 다시 해요.</li>
+</ul>
+<div class="warn"><span class="tag caution">주의</span>갱신과 재요청은 <code>asyncRequest</code> 계열 함수 안에서만 일어나요. Repository가 <code>provider.request</code>의 callback을 직접 부르면 갱신되지 않아요. Alamofire <code>AuthenticationInterceptor</code>를 쓰면 모든 경로에 적용되지만, 401 본문의 서버 코드로 갱신 여부를 나눠야 해서 직접 구현했어요(<code>api-v2-migration.md</code>).</div>
+</section>
+
+<section id="single-flight">
+<h2><span class="num">16</span>동시 만료를 갱신 하나로</h2>
+<p>화면이 여러 API를 동시에 부르면 요청 여러 개가 거의 같은 순간에 5002를 받아요. <code>AccessTokenRefresher</code>는 <strong>actor</strong>와 <strong>진행 중인 Task 하나</strong>로 이 갱신을 합쳐요.</p>
+<figure>
+<div class="diagram">
+<svg viewBox="0 0 820 560" role="img" aria-labelledby="sf-title">
+  <title id="sf-title">요청 A, B, C가 동시에 만료되어도 AccessTokenRefresher가 갱신 API를 한 번만 부르고 모두 새 토큰을 받는 순서</title>
+  <defs>
+    <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker>
+    <marker id="arr2ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="ah-ok" d="M0,0 L10,5 L0,10 z"/></marker>
+  </defs>
+
+  <!-- 레인 머리 -->
+  <rect class="box" x="30" y="14" width="80" height="34" rx="6"/><text class="t" x="70" y="36" text-anchor="middle">요청 A</text>
+  <rect class="box" x="140" y="14" width="80" height="34" rx="6"/><text class="t" x="180" y="36" text-anchor="middle">요청 B</text>
+  <rect class="box" x="250" y="14" width="80" height="34" rx="6"/><text class="t" x="290" y="36" text-anchor="middle">요청 C</text>
+  <rect class="box-main" x="380" y="14" width="160" height="34" rx="6"/><text class="t mono" x="460" y="36" text-anchor="middle">Refresher (actor)</text>
+  <rect class="box" x="580" y="14" width="110" height="34" rx="6"/><text class="t mono" x="635" y="36" text-anchor="middle">Storage</text>
+  <rect class="box" x="710" y="14" width="96" height="34" rx="6"/><text class="t" x="758" y="36" text-anchor="middle">갱신 API</text>
+
+  <line class="life" x1="70" y1="48" x2="70" y2="545"/>
+  <line class="life" x1="180" y1="48" x2="180" y2="545"/>
+  <line class="life" x1="290" y1="48" x2="290" y2="545"/>
+  <line class="life" x1="460" y1="48" x2="460" y2="545"/>
+  <line class="life" x1="635" y1="48" x2="635" y2="545"/>
+  <line class="life" x1="758" y1="48" x2="758" y2="545"/>
+
+  <!-- A 진입 -->
+  <line class="edge" x1="70" y1="80" x2="456" y2="80" marker-end="url(#arr2)"/>
+  <text class="lbl mono" x="80" y="73">refreshAccessToken(expired: old-access)</text>
+  <rect class="box-dec" x="400" y="92" width="170" height="42" rx="6"/>
+  <text class="sub" x="485" y="109" text-anchor="middle">저장값 == old-access</text>
+  <text class="sub" x="485" y="125" text-anchor="middle">진행 중 Task 없음 → 새 Task</text>
+
+  <line class="edge" x1="460" y1="152" x2="631" y2="152" marker-end="url(#arr2)"/>
+  <text class="lbl mono" x="470" y="146">loadTokens()</text>
+  <line class="edge-ret" x1="635" y1="172" x2="464" y2="172" marker-end="url(#arr2ok)"/>
+  <text class="lbl mono" x="545" y="186" text-anchor="middle">old-refresh</text>
+
+  <line class="edge" x1="460" y1="206" x2="754" y2="206" marker-end="url(#arr2)"/>
+  <text class="lbl mono" x="470" y="200">refresh(old-refresh)</text>
+
+  <!-- B, C 진입 -->
+  <line class="edge" x1="180" y1="240" x2="456" y2="240" marker-end="url(#arr2)"/>
+  <text class="lbl mono" x="190" y="233">refresh…(expired: old-access)</text>
+  <line class="edge" x1="290" y1="276" x2="456" y2="276" marker-end="url(#arr2)"/>
+  <text class="lbl mono" x="298" y="269">refresh…(old-access)</text>
+  <rect class="box-dec" x="300" y="286" width="150" height="42" rx="6"/>
+  <text class="sub" x="375" y="303" text-anchor="middle">진행 중 Task 있음</text>
+  <text class="sub" x="375" y="319" text-anchor="middle">→ 같은 Task를 기다려요</text>
+
+  <!-- 응답 -->
+  <line class="edge-ret" x1="758" y1="350" x2="464" y2="350" marker-end="url(#arr2ok)"/>
+  <text class="lbl mono" x="610" y="343" text-anchor="middle">new-access + new-refresh</text>
+
+  <line class="edge" x1="460" y1="384" x2="631" y2="384" marker-end="url(#arr2)"/>
+  <text class="lbl mono" x="470" y="378">replaceTokens(new, ifRefreshTokenIs: old-refresh)</text>
+  <rect class="box-dec" x="580" y="392" width="200" height="26" rx="6"/>
+  <text class="sub" x="680" y="409" text-anchor="middle">lock 안에서 비교한 뒤 저장</text>
+  <line class="edge-ret" x1="635" y1="432" x2="464" y2="432" marker-end="url(#arr2ok)"/>
+  <text class="lbl mono" x="545" y="446" text-anchor="middle">true</text>
+
+  <!-- 모두에게 결과 -->
+  <line class="edge-ret" x1="460" y1="468" x2="294" y2="468" marker-end="url(#arr2ok)"/>
+  <line class="edge-ret" x1="460" y1="486" x2="184" y2="486" marker-end="url(#arr2ok)"/>
+  <line class="edge-ret" x1="460" y1="504" x2="74" y2="504" marker-end="url(#arr2ok)"/>
+  <text class="lbl" x="470" y="490">모두 new-access를 받고 재요청해요</text>
+
+  <rect class="box-dec" x="400" y="516" width="200" height="26" rx="6"/>
+  <text class="sub mono" x="500" y="533" text-anchor="middle">defer: inFlightRefresh = nil</text>
+</svg>
+</div>
+<figcaption>그림 2. 세 요청이 함께 만료돼도 갱신 API는 한 번만 불려요. 초록 점선은 돌려받는 값이에요.</figcaption>
+</figure>
+<span class="src">Projects/Shared/Core/Sources/Network/Auth/AccessTokenRefresher.swift</span>
+<pre><code><span class="kw">public func</span> refreshAccessToken(expired expiredAccessToken: String?) <span class="kw">async throws</span> -&gt; String {
+    <span class="cm">// ① 다른 요청이 이미 갱신했으면 저장된 새 토큰을 써요</span>
+    <span class="kw">if let</span> expiredAccessToken,
+       <span class="kw">let</span> currentAccessToken = storage.loadTokens()?.accessToken,
+       currentAccessToken != expiredAccessToken {
+        <span class="kw">return</span> currentAccessToken
+    }
+    <span class="cm">// ② 갱신이 진행 중이면 그 결과를 기다려요</span>
+    <span class="kw">if let</span> inFlightRefresh {
+        <span class="kw">return try await</span> inFlightRefresh.value
+    }
+    <span class="cm">// ③ 처음 온 요청만 갱신 Task를 만들어요</span>
+    <span class="kw">let</span> task = Task { [storage, refresh] <span class="kw">in</span>
+        <span class="kw">try await</span> Self.performRefresh(storage: storage, refresh: refresh)
+    }
+    inFlightRefresh = task
+    <span class="kw">defer</span> { inFlightRefresh = <span class="kw">nil</span> }
+    <span class="kw">return try await</span> task.value
+}</code></pre>
+<h3>왜 이렇게 했나요</h3>
+<ul>
+  <li><strong>actor가 상태를 지켜요.</strong> <code>inFlightRefresh</code>를 읽고 쓰는 코드는 actor 안에서 한 번에 하나씩만 실행돼요. "Task가 없으면 만든다"를 두 요청이 동시에 통과하는 일이 없어요.</li>
+  <li><strong>actor는 <code>await</code>에서 다른 호출을 받아요(재진입).</strong> A가 <code>task.value</code>를 기다리는 동안 B와 C가 들어와 ②에서 같은 Task를 기다려요. 이 재진입 덕분에 갱신이 하나로 합쳐져요.</li>
+  <li><strong>①이 늦게 온 요청을 처리해요.</strong> 갱신이 끝나고 <code>inFlightRefresh</code>가 비워진 뒤에 옛 토큰의 5002가 도착할 수 있어요. 저장된 토큰이 보낸 토큰과 다르면 이미 갱신된 것이라 다시 갱신하지 않아요. 회전 환경에서 폐기된 Refresh Token을 보내는 일을 막아요.</li>
+  <li><strong>보낸 토큰을 모르면(<code>nil</code>) 갱신해요.</strong> 비교할 근거가 없는데 "누가 갱신했겠지"라고 넘기면, 실제로는 아무도 갱신하지 않았을 때 요청이 실패만 하고 끝나요.</li>
+  <li><strong>Task가 실패하면 기다리던 요청도 같은 오류를 받아요.</strong> <code>defer</code>로 Task를 비워서 다음 만료 때는 새로 시도해요.</li>
+</ul>
+</section>
+
+<section id="races">
+<h2><span class="num">17</span>늦은 응답·로그아웃·재로그인</h2>
+<p>갱신 요청이 서버에 가 있는 동안 사용자가 로그아웃하거나 다른 계정으로 다시 로그인할 수 있어요. 그다음에 옛 갱신 응답이 도착하면 어떻게 할까요? 그대로 저장하면 지운 세션이 되살아나거나 새 로그인 토큰이 덮여요.</p>
+<p>그래서 <code>AuthTokenStorage</code>는 <strong>"저장된 값이 내가 아는 값일 때만 바꾸거나 지우는"</strong> 함수를 lock 하나로 묶어 제공해요. 비교와 변경 사이에 다른 스레드가 끼어들 수 없어요.</p>
+<span class="src">Projects/Shared/Core/Sources/LocalStorage/Storage/AuthToken/AuthTokenStorage.swift</span>
+<pre><code><span class="cm">/// 같은 저장 수단을 쓰는 모든 인스턴스가 함께 쓰는 lock</span>
+<span class="kw">private static let</span> lock = NSRecursiveLock()
+
+<span class="kw">public func</span> replaceTokens(_ tokens: AuthTokens, ifRefreshTokenIs expectedRefreshToken: String) <span class="kw">throws</span> -&gt; Bool {
+    <span class="kw">try</span> withLock {
+        <span class="kw">guard</span> loadTokens()?.refreshToken == expectedRefreshToken <span class="kw">else</span> { <span class="kw">return false</span> }
+        <span class="kw">try</span> saveTokens(tokens)
+        <span class="kw">return true</span>
+    }
+}</code></pre>
+<ul>
+  <li><strong>lock이 <code>static</code>이에요.</strong> <code>AuthTokenStorage</code>는 struct라 여러 인스턴스가 생길 수 있어요. 실제 저장소(UserDefaults의 같은 키)는 하나라서 lock도 하나를 같이 써요. 저장 수단이 바뀌어도 이 이유는 그대로예요.</li>
+  <li><strong>UserDefaults만으로는 부족해요.</strong> UserDefaults의 읽기·쓰기 하나하나는 스레드에 안전하지만, "비교한 뒤 바꾸기"를 한 덩어리로 해 주지는 않아요. 그래서 저장 수단이 바뀌어도 lock과 조건부 함수는 남겼어요.</li>
+  <li><strong><code>NSRecursiveLock</code>이에요.</strong> <code>replaceTokens</code> 안에서 다시 lock을 잡는 <code>loadTokens</code>와 <code>saveTokens</code>를 불러요. 같은 스레드가 lock을 다시 잡아도 멈추지 않아야 해요.</li>
+</ul>
+<h3>상황별 처리</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th>상황</th><th>쓰는 함수</th><th>결과</th></tr></thead>
+  <tbody>
+    <tr><td>갱신 성공, 그사이 변화 없음</td><td><code>replaceTokens(_:ifRefreshTokenIs:)</code> → <code>true</code></td><td>새 토큰을 저장하고 새 Access Token을 돌려줘요</td></tr>
+    <tr><td>갱신 중 로그아웃</td><td>같은 함수 → <code>false</code></td><td>저장하지 않아요. 저장된 토큰이 없으니 <code>loginRequired</code></td></tr>
+    <tr><td>갱신 중 재로그인</td><td>같은 함수 → <code>false</code></td><td>덮어쓰지 않고 재로그인한 Access Token을 써요</td></tr>
+    <tr><td>갱신 API가 401, 그사이 재로그인</td><td><code>removeTokens(ifRefreshTokenIs:)</code> → <code>false</code></td><td>새 로그인 토큰을 지우지 않고 그 Access Token을 써요</td></tr>
+    <tr><td>갱신 API가 401, 변화 없음</td><td>같은 함수 → <code>true</code></td><td>지우고 <code>loginRequired</code></td></tr>
+    <tr><td>옛 토큰으로 보낸 요청이 다른 401</td><td><code>removeTokens(ifAccessTokenIs:)</code> → <code>false</code></td><td>그사이 갱신된 새 토큰을 지우지 않고, 새 토큰으로 원래 요청을 한 번만 다시 보내요(<code>rejectedWithStaleToken</code>)</td></tr>
+    <tr><td>갱신은 됐는데 저장 실패</td><td><code>replaceTokens</code>가 throw</td><td>남은 옛 토큰을 지우고 <code>loginRequired</code></td></tr>
+  </tbody>
+</table></div>
+<p>마지막 줄이 회전과 관련 있어요. 서버는 갱신하면서 이전 Refresh Token을 이미 폐기했어요. 새 토큰을 저장하지 못했다면 앱에 남은 것은 쓸 수 없는 토큰이에요. 남겨 두면 다음 요청마다 갱신이 실패하니 지우고 로그인을 요구해요.</p>
+<p>UserDefaults는 문자열 저장이 사실상 실패하지 않아서 이 줄은 거의 일어나지 않아요. 그래도 <code>catch</code>의 <code>storage.removeTokens()</code> 정리 코드는 그대로 두기로 했어요. 저장 함수(<code>saveTokens</code>, <code>replaceTokens</code>)는 <code>throws</code>라서, 실패했을 때 폐기된 토큰을 남기지 않는 쪽이 안전해요.</p>
+<span class="src">AccessTokenRefresher.swift · performRefresh</span>
+<pre><code><span class="kw">catch let</span> error <span class="kw">as</span> NetworkError <span class="kw">where</span> error.statusCode == 401 {
+    <span class="cm">// 갱신하는 동안 재로그인으로 토큰이 바뀌었으면 새 토큰을 지우지 않는다.</span>
+    <span class="kw">if</span> storage.removeTokens(ifRefreshTokenIs: refreshToken) {
+        <span class="kw">throw</span> AuthSessionError.loginRequired
+    }
+    <span class="kw">return try</span> replacedAccessToken(in: storage)   <span class="cm">// 재로그인한 토큰을 따라요</span>
+}</code></pre>
+<p>저장된 Refresh Token이 서버가 거절한 그 토큰이면 지우고(<code>true</code>) <code>loginRequired</code>를 던져요. 그사이 재로그인으로 다른 토큰이 저장돼 있으면(<code>false</code>) 지우지 않고 그 새 토큰을 따라가요. Access Token 없이 Refresh Token만 남아 있어도 같은 방식으로 비교해요.</p>
+<p>토큰 쌍이 다 갖춰지지 않은 상태(예: Refresh Token만 남음)는 <strong>로그아웃 상태</strong>로 봐요. 이 상태를 만나면 <code>removeIncompleteTokens()</code>가 lock 안에서 "쌍이 정말 없는지" 확인하고 남은 토큰을 지워요. 그사이 로그인으로 쌍이 생겼으면 지우지 않고(<code>false</code>) 그 새 토큰을 써요. 확인과 삭제를 따로 하면 그 사이에 로그인한 토큰을 지울 수 있어서, 한 번에 처리해요.</p>
+</section>
+
+<section id="keychain-fail">
+<h2><span class="num">18</span>Keychain을 쓰면: 실패는 토큰 없음이 아니에요</h2>
+<p>지금 토큰 저장소는 UserDefaults라서 읽기와 삭제가 실패하지 않아요. 그래서 <code>AuthTokenStorage</code>에서 <code>throws</code>는 저장 함수에만 남기고, 읽기·삭제 실패 처리는 지웠어요. 이 절은 <strong>Keychain을 다시 쓰게 될 때</strong> 그 처리가 왜 필요한지 정리해요.</p>
+<p>저장소에 남아 있는 <code>KeychainStore</code>는 "값이 없음"과 "읽지 못함"을 다르게 돌려줘요.</p>
+<span class="src">Projects/Shared/Core/Sources/LocalStorage/Store/Keychain/KeychainStore.swift</span>
+<pre><code><span class="kw">switch</span> status {
+<span class="kw">case</span> errSecSuccess:
+    <span class="kw">guard let</span> data = item <span class="kw">as?</span> Data <span class="kw">else</span> { <span class="kw">return nil</span> }
+    <span class="kw">return</span> String(data: data, encoding: .utf8)
+<span class="kw">case</span> errSecItemNotFound:
+    <span class="kw">return nil</span>                                       <span class="cm">// 없음</span>
+<span class="kw">default</span>:
+    <span class="kw">throw</span> KeychainStoreError.unhandledStatus(status)  <span class="cm">// 읽지 못함</span>
+}</code></pre>
+<p>이 구분이 필요한 이유는 iOS의 실행 조건 때문이에요. 기기를 재부팅하고 아직 잠금 해제하지 않았는데 푸시 같은 이유로 앱이 백그라운드에서 깨어나면, Keychain을 읽지 못할 수 있어요. 이것을 "토큰 없음"으로 처리하면 멀쩡한 사용자를 로그아웃시켜요.</p>
+<p>Keychain으로 되돌린다면 아래 지점에서 읽기 오류를 따로 처리해야 해요. 지금 코드에는 이 처리가 없어요. UserDefaults는 읽기·삭제가 실패하지 않아서, <code>AuthTokenStorage</code>의 읽기·삭제 함수에서 <code>throws</code>를 지웠기 때문이에요.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>지점</th><th>Keychain을 쓸 때 해야 할 처리</th></tr></thead>
+  <tbody>
+    <tr><td><code>AuthenticationPlugin.token(for:)</code></td><td>읽지 못하면 헤더 없이 보내고, 401을 받아도 토큰이 없다고 단정하지 않아요</td></tr>
+    <tr><td>토큰 없이 보낸 요청의 401</td><td>남은 토큰이 있는지 확인하지 못하면 지우지 않고 받은 오류를 던져요</td></tr>
+    <tr><td><code>sendAccessRequest</code>의 다른 401</td><td>비교·삭제에 실패하면 토큰을 지우지 않고 받은 오류를 던져요</td></tr>
+    <tr><td><code>refreshAccessToken</code>의 비교</td><td>읽지 못하면 오류를 그대로 던지고 토큰은 그대로 둬요</td></tr>
+  </tbody>
+</table></div>
+<div class="note"><span class="tag why">지금은</span>위 처리를 만들던 코드와 테스트(Keychain 읽기·삭제 실패)는 지웠어요. Keychain으로 되돌리면 <code>AuthTokenStorage</code> 함수에 <code>throws</code>를 다시 붙이고, 이 처리와 테스트를 다시 만들어야 해요(<a href="#layers">20절</a>).</div>
+</section>
+
+<section id="save-order">
+<h2><span class="num">19</span>Refresh Token을 먼저 저장하는 이유</h2>
+<p>UserDefaults도 Keychain도 두 키를 한 번에 쓰는 트랜잭션이 없어요. 토큰 쌍을 저장하다 중간에 실패할 수 있어요. 그래서 <code>saveTokens</code>는 하나라도 실패하면 둘 다 지워요. 그런데 지우는 것까지 실패하면 한쪽만 새 값으로 남아요. 어느 쪽이 남는 게 나을까요?</p>
+<span class="src">AuthTokenStorage.swift · saveTokens</span>
+<pre><code><span class="cm">/// 새 토큰 쌍을 함께 저장한다. 하나라도 저장하지 못하면 둘 다 지운다.
+///
+/// Refresh Token을 먼저 쓴다. 지우는 것까지 실패해 한쪽만 남더라도 새 Refresh Token과 옛 Access Token이 남아,
+/// 옛 Access Token이 만료되면 새 Refresh Token으로 다시 갱신할 수 있다.</span>
+<span class="kw">public func</span> saveTokens(_ tokens: AuthTokens) <span class="kw">throws</span> {
+    <span class="kw">try</span> withLock {
+        <span class="kw">do</span> {
+            <span class="kw">try</span> store.set(tokens.refreshToken, forKey: Key.refreshToken)   <span class="cm">// 먼저</span>
+            <span class="kw">try</span> store.set(tokens.accessToken, forKey: Key.accessToken)
+        } <span class="kw">catch</span> {
+            removeTokens()
+            <span class="kw">throw</span> error
+        }
+    }
+}</code></pre>
+<div class="table-wrap"><table>
+  <thead><tr><th>저장 순서</th><th>두 번째 쓰기와 되돌리기가 모두 실패하면 남는 값</th><th>그다음</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Refresh 먼저 (지금)</strong></td><td>새 Refresh + 옛 Access</td><td>옛 Access가 만료되면 새 Refresh로 갱신해요. <strong>세션이 이어져요</strong></td></tr>
+    <tr><td>Access 먼저</td><td>새 Access + 옛 Refresh</td><td>회전으로 옛 Refresh는 이미 폐기됐어요. Access가 만료되면 갱신이 실패해서 다시 로그인해야 해요</td></tr>
+  </tbody>
+</table></div>
+<p>UserDefaults로 바꾼 뒤에는 <code>removeTokens()</code>가 실패하지 않아서, "되돌리기까지 실패"하는 상황은 일어나지 않아요. 문자열 저장도 사실상 실패하지 않아요. 그래서 이 상황을 만들던 테스트(<code>keepsNewRefreshTokenWhenRollbackFails</code>)는 지웠어요. 저장 순서와 주석은 코드에 그대로 있어요. Keychain처럼 삭제가 실패할 수 있는 저장 수단으로 바꾸면 이 순서가 다시 의미를 가져요.</p>
+</section>
+
+<section id="layers">
+<h2><span class="num">20</span>Store와 Storage 두 층</h2>
+<p><code>LocalStorage</code>는 두 층으로 나뉘어요.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>층</th><th>위치</th><th>아는 것</th><th>타입</th></tr></thead>
+  <tbody>
+    <tr><td>저장 수단 Store</td><td><code>LocalStorage/Store/</code></td><td>어디에 어떻게 저장할지</td><td><code>Storing</code>·<code>UserDefaultsStore</code>, <code>KeychainStoring</code>·<code>KeychainStore</code>(지금은 쓰지 않음)</td></tr>
+    <tr><td>용도별 저장소 Storage</td><td><code>LocalStorage/Storage/&lt;용도&gt;/</code></td><td>무엇을 어떤 키와 타입으로 저장할지</td><td><code>AuthTokenStorage</code>, <code>LocalSessionStorage</code>, <code>PushTokenStorage</code>, <code>RecentSearchStorage</code>, <code>DeepLinkStorage</code></td></tr>
+  </tbody>
+</table></div>
+<p>Storage는 Store를 생성자로 받아 쓰고, Store의 protocol을 채택하지 않아요. 앱 코드는 Storage 층만 써요. reducer는 UserDefaults나 Keychain에 직접 접근하지 않아요(<code>dependency-injection.md</code>).</p>
+<span class="src">Storage/AuthToken/AuthTokenStorage.swift</span>
+<pre><code><span class="kw">enum</span> Key {
+    <span class="kw">static let</span> accessToken = <span class="kw">"auth.accessToken"</span>
+    <span class="kw">static let</span> refreshToken = <span class="kw">"auth.refreshToken"</span>
+    <span class="kw">static let</span> signupToken = <span class="kw">"auth.signupToken"</span>
+}
+
+<span class="kw">private let</span> store: Storing
+
+<span class="kw">public init</span>(store: Storing = UserDefaultsStore()) {
+    <span class="kw">self</span>.store = store
+}</code></pre>
+<span class="src">Store/Storing.swift · Store/Keychain/KeychainStoring.swift</span>
+<pre><code><span class="kw">public protocol</span> Storing: Sendable {
+    <span class="kw">func</span> value&lt;T&gt;(forKey key: String) -&gt; T?
+    <span class="kw">func</span> set&lt;T&gt;(_ value: T, forKey key: String) <span class="kw">throws</span>
+    <span class="kw">func</span> removeValue(forKey key: String)
+}
+
+<span class="kw">public protocol</span> KeychainStoring: Sendable {
+    <span class="kw">func</span> value(forKey key: String) <span class="kw">throws</span> -&gt; String?
+    <span class="kw">func</span> set(_ value: String, forKey key: String) <span class="kw">throws</span>
+    <span class="kw">func</span> removeValue(forKey key: String) <span class="kw">throws</span>
+}</code></pre>
+<h3>왜 protocol이 둘인가요</h3>
+<ul>
+  <li><strong>실패 모양이 달라요.</strong> Keychain은 읽기와 삭제가 실패할 수 있어서 <code>throws</code>가 필요해요. UserDefaults는 저장만 실패할 수 있어요(property list 타입이 아닐 때).</li>
+  <li><strong>다루는 타입이 달라요.</strong> <code>KeychainStore</code>는 문자열만 저장해요. <code>UserDefaultsStore</code>는 property list 타입을 저장하고, 아닌 타입은 <code>unsupportedType</code> 오류를 던져요. 토큰은 문자열이라 이 오류가 나지 않아요.</li>
+  <li><strong>지금 <code>AuthTokenStorage</code>는 <code>Storing</code>을 받아요.</strong> 그래서 <code>KeychainStore</code>를 그대로 넣을 수는 없어요. Keychain으로 되돌리려면 <code>store</code>의 타입을 <code>KeychainStoring</code>으로 바꾸고, <code>try</code>가 빠진 읽기·삭제 호출을 다시 고쳐야 해요.</li>
+  <li><strong>테스트가 쉬워요.</strong> 테스트는 <code>Storing</code>을 채택한 메모리 저장소(<code>Tests/Support/InMemoryStore.swift</code>)를 써요. <code>failingKeys</code>에 넣은 키에 저장하면 <code>SaveError</code>를 던져서 저장 실패만 만들 수 있어요. 읽기·삭제는 UserDefaults처럼 실패하지 않아요.</li>
+</ul>
+<h3>UserDefaultsStore의 선택</h3>
+<ul>
+  <li>기본값은 <code>UserDefaults.standard</code>예요. 토큰 키는 다른 설정과 섞이지 않게 <code>auth.</code>로 시작해요.</li>
+  <li><code>set</code>에 <code>nil</code>을 넘기면 키를 지워요. property list 타입이 아니면 저장하지 않고 오류를 던져요.</li>
+</ul>
+<h3>남아 있는 KeychainStore</h3>
+<ul>
+  <li>generic password 항목으로 저장하고, service 기본값은 <code>com.poppang.auth</code>예요. <code>set</code>은 먼저 <code>SecItemUpdate</code>를 시도하고, 항목이 없으면 <code>SecItemAdd</code>로 만들어요. 접근성 <code>AfterFirstUnlockThisDeviceOnly</code>는 새로 만들 때 지정해요.</li>
+  <li>앱 코드는 이 타입을 쓰지 않아요. 직접 부르는 곳은 <code>AuthTokenStorageTests</code>의 실제 Keychain 테스트 하나뿐이에요.</li>
+</ul>
+</section>
+
+<section id="tests">
+<h2><span class="num">21</span>테스트로 확인하기</h2>
+<p>규칙마다 테스트가 하나씩 있어요. 테스트 이름이 곧 규칙이라, 동작이 헷갈리면 테스트부터 읽는 것이 빨라요.</p>
+<h3><code>Tests/Network/AuthenticationTests.swift</code></h3>
+<div class="table-wrap"><table>
+  <thead><tr><th>묶음</th><th>확인하는 규칙</th></tr></thead>
+  <tbody>
+    <tr><td>헤더</td><td>인증 종류에 맞는 Bearer 헤더, V1·공개 API는 헤더 없음, 토큰이 없으면 헤더 없음</td></tr>
+    <tr><td>Refresher</td><td>동시 만료 다섯 개에 갱신 한 번, 이미 갱신됐으면 생략, 401이면 삭제와 로그인 요구, 다른 실패(400·403·429·503·500 등)는 토큰 유지, 갱신 중 로그아웃·재로그인, 갱신한 토큰의 저장 실패, 보낸 토큰을 모를 때, Refresh Token 없음</td></tr>
+    <tr><td>재요청</td><td>만료 뒤 새 토큰으로 한 번 재요청, 두 번째 만료는 재갱신 없음, 5002가 아닌 401은 삭제, 옛 토큰의 401은 새 토큰을 지우지 않고 새 토큰으로 한 번 재요청(두 번째는 없음), 토큰 없이 보낸 요청의 401은 쌍이 없으면 남은 토큰을 지우고 <code>loginRequired</code>, 그사이 로그인했으면 새 토큰으로 한 번 재요청, 갱신 일시 실패는 원래 오류, 403과 비 access target은 갱신 없음</td></tr>
+  </tbody>
+</table></div>
+<p>저장소는 <code>InMemoryStore</code>를 써요. 저장 실패는 <code>store.failingKeys = [AuthTokenStorage.Key.refreshToken]</code>처럼 키를 지정해 만들어요. 읽기·삭제 실패는 만들 수 없어서, Keychain 읽기 실패 중 갱신·요청, 갱신 거절 뒤 삭제 실패 같은 테스트는 지웠어요(<a href="#keychain-fail">18절</a>).</p>
+<p>경쟁 상황은 테스트 도구로 만들어요. 응답을 순서대로 정해 두는 provider가 <code>onFirstSend</code>로 "첫 요청을 보낸 직후, 응답 전"에 토큰을 바꿔서 다른 요청이 끼어든 상황을 재현해요.</p>
+<h3><code>Tests/LocalStorage/AuthTokenStorageTests.swift</code></h3>
+<ul>
+  <li>토큰 쌍과 Signup Token 저장·삭제</li>
+  <li>하나라도 저장 실패하면 둘 다 지움</li>
+  <li>기대한 값일 때만 바꾸거나 지움</li>
+  <li>Refresh Token만 남아 있어도 그 값으로 비교해 지움 (<code>removesLoneRefreshTokenWhenItMatches</code>)</li>
+  <li>토큰 쌍이 없으면 남은 토큰을 지우고, 쌍이 있으면 그대로 둠 (<code>removesOnlyIncompleteTokens</code>)</li>
+  <li>Refresh Token만 남아 있으면 갱신 결과로 바꾸지 않음 (<code>doesNotReplaceIncompleteTokens</code>)</li>
+  <li>실제 Keychain 저장·덮어쓰기·삭제(<code>KeychainStore</code>를 직접 확인). CoreTests는 앱 없이 실행돼 Keychain entitlement가 없어서(-34018) 이 테스트는 건너뛰어요. 토큰 저장과는 관계없는 테스트예요.</li>
+</ul>
+</section>
+
+<section id="next">
+<h2><span class="num">22</span>2단계에서 할 일</h2>
+<p>1단계는 기반만 만들었어요. 아래는 <code>api-v2-migration.md</code>가 2단계로 넘긴 일이에요.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th>할 일</th><th>지금 상태와 이유</th></tr></thead>
+  <tbody>
+    <tr><td><code>NetworkProvider.shared</code>에 <code>AuthenticationPlugin</code> 연결</td><td>갱신 API target(<code>POST /api/v2/auth/refresh</code>)이 <code>Data</code>에 생겨야 refresher의 갱신 함수를 만들 수 있어요. <code>AppBootstrap</code>이 조립해요.</td></tr>
+    <tr><td><code>AuthSessionError.loginRequired</code>를 받으면 로그인 화면으로</td><td>지금은 오류를 던지기만 해요. 앱 루트 전환은 <code>AppFeature</code>가 소유해요.</td></tr>
+    <tr><td><s>재설치 시 Keychain 정리</s></td><td>할 필요가 없어졌어요. 토큰을 UserDefaults로 옮겨서 앱을 지우면 세션과 토큰이 함께 지워져요(<a href="#storage">9절</a>).</td></tr>
+  </tbody>
+</table></div>
+<p>2단계의 로그인·가입 흐름도 이 토큰 저장소를 써요. PENDING이면 Signup Token을 저장하고, 가입에 성공하면 토큰 쌍을 저장하고 Signup Token을 지워요. 앱 시작은 <code>autoLogin</code> 대신 저장된 토큰으로 내 정보 조회를 불러요.</p>
+</section>
+
+<!-- ================= 3부 ================= -->
+<div class="part-title">3부 · 정리</div>
+
+<section id="quiz">
+<h2><span class="num">23</span>복습 질문</h2>
+<p>답을 먼저 떠올린 뒤 펼쳐 보세요.</p>
+<div class="quiz">
+  <details><summary>1. JWT payload에 사용자 이메일을 넣어도 안전할까요?</summary>
+    <p>아니요. Base64URL은 인코딩이라 누구나 디코딩해서 읽어요. 서명은 위조를 막을 뿐 내용을 숨기지 않아요.</p></details>
+  <details><summary>2. Access Token만 길게 쓰면 안 되는 이유는 뭔가요?</summary>
+    <p>요청마다 네트워크를 타서 새기 쉽고, 서명만으로 검증하면 중간에 무르기 어려워요. 짧게 살리고, 서버가 통제하는 Refresh Token으로 갱신해요.</p></details>
+  <details><summary>3. PopPang이 401을 받았는데 코드가 5001이면 어떻게 되나요?</summary>
+    <p>갱신하지 않아요. 보낸 토큰이 아직 저장된 토큰이면 지우고 <code>loginRequired</code>를 던져요. 그사이 다른 요청이 갱신했으면 지우지 않고 새 토큰으로 한 번만 다시 보내요. 토큰 없이 보낸 요청이면 토큰 쌍이 없을 때 남은 토큰을 지우고 <code>loginRequired</code>를 던져요. 그사이 로그인으로 쌍이 생겼으면 새 토큰으로 한 번만 다시 보내요.</p></details>
+  <details><summary>4. 갱신 뒤 다시 보낸 요청이 또 5002를 받으면요?</summary>
+    <p>다시 갱신하지 않고 그 오류를 던져요. 토큰은 지우지 않아요. 재요청은 구조상 한 번이에요.</p></details>
+  <details><summary>5. 다섯 요청이 동시에 만료되면 갱신 API는 몇 번 불리나요? 무엇이 그렇게 만드나요?</summary>
+    <p>한 번이에요. actor 안의 <code>inFlightRefresh</code> Task 하나를 나머지 요청이 기다려요. 갱신이 끝난 뒤 도착한 요청은 저장된 토큰이 보낸 토큰과 다르다는 것을 보고 갱신을 건너뛰어요.</p></details>
+  <details><summary>6. 갱신하는 동안 로그아웃했어요. 늦게 온 성공 응답은 어떻게 되나요?</summary>
+    <p><code>replaceTokens(_:ifRefreshTokenIs:)</code>가 저장된 Refresh Token이 없어서 <code>false</code>를 돌려줘요. 저장하지 않고 <code>loginRequired</code>를 던져요.</p></details>
+  <details><summary>7. 토큰 저장소를 Keychain으로 되돌린다면, 읽기 실패를 <code>nil</code>로 바꿔 돌려주면 무슨 문제가 생기나요?</summary>
+    <p>잠금 해제 전 백그라운드 실행 같은 일시적인 상황에서 토큰이 없다고 판단해 사용자를 로그아웃시킬 수 있어요. 그래서 <code>KeychainStoring</code>은 읽기 실패를 오류로 던져요.</p></details>
+  <details><summary>8. <code>saveTokens</code>가 Refresh Token을 먼저 쓰는 이유는요?</summary>
+    <p>되돌리기까지 실패해 한쪽만 남을 때 새 Refresh Token이 남아야 다음 만료 때 갱신할 수 있어요. 반대 순서면 폐기된 옛 Refresh Token이 남아요. UserDefaults에서는 삭제가 실패하지 않아 이 상황이 생기지 않지만, 저장 수단이 바뀌어도 안전하도록 순서를 지켜요.</p></details>
+  <details><summary>9. V1 target에 <code>authorization = .access</code>를 적으면요?</summary>
+    <p><code>resolvedAuthorization</code>이 <code>.none</code>을 돌려줘서 헤더도 붙지 않고 갱신 흐름에도 들어가지 않아요.</p></details>
+  <details><summary>10. <code>AuthTokenStorage</code>의 lock이 <code>static</code>이고 recursive인 이유는요?</summary>
+    <p>struct 인스턴스가 여러 개여도 실제 저장소(UserDefaults의 같은 키)는 하나라서 lock도 하나를 같이 써요. <code>replaceTokens</code>처럼 lock 안에서 다시 lock을 잡는 함수를 부르기 때문에 recursive여야 해요.</p></details>
+  <details><summary>11. PopPang이 서버 명세의 Keychain 대신 UserDefaults에 토큰을 두는 이유와 대가는요?</summary>
+    <p>앱을 지우면 토큰도 함께 지워져서, 재설치한 뒤 이전 계정 토큰이 남는 문제가 없어요. 대가로 암호화하지 않은 plist에 토큰이 남아 백업이나 탈옥 기기에서 노출될 수 있어요. 서버 명세와 다른 팀 결정이에요.</p></details>
+</div>
+</section>
+
+<section id="unknowns">
+<h2><span class="num">24</span>확인 필요 목록</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th>항목</th><th>확인할 곳</th></tr></thead>
+  <tbody>
+    <tr><td>PopPang V2 토큰이 JWT 형식인지, 서명 알고리즘과 claim 구성</td><td>서버 팀 V2 명세(저장소 밖 내부 문서)</td></tr>
+    <tr><td>토큰 유효기간과 요청 제한 횟수의 운영 값</td><td>서버 운영 설정 (<code>api-v2-migration.md</code> 정해야 할 것 7번)</td></tr>
+    <tr><td>서버가 Refresh Token 재사용 탐지를 하는지</td><td>서버 팀 명세. 앱 코드는 갱신 때 이전 Refresh Token이 폐기된다고만 전제해요</td></tr>
+    <tr><td>5002 외 401 코드의 의미</td><td>서버 팀 명세. 저장소에는 5002(만료)만 정의돼 있어요</td></tr>
+    <tr><td>갱신이 401이 아닌 이유로 실패할 때의 최종 정책</td><td><code>api-v2-migration.md</code> 정해야 할 것 3번</td></tr>
+    <tr><td>토큰을 UserDefaults에 두는 결정(서버 명세는 Keychain)을 서버 팀과 맞췄는지</td><td>서버 팀 V2 명세와 팀 논의 기록(저장소 밖)</td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<section id="files">
+<h2><span class="num">25</span>관련 파일</h2>
+<ul class="files">
+  <li><span class="d">네트워크</span></li>
+  <li>Projects/Shared/Core/Sources/Network/BaseAPI.swift</li>
+  <li>Projects/Shared/Core/Sources/Network/NetworkConfig.swift</li>
+  <li>Projects/Shared/Core/Sources/Network/NetworkProvider.swift</li>
+  <li>Projects/Shared/Core/Sources/Network/APIResponse.swift</li>
+  <li>Projects/Shared/Core/Sources/Network/NetworkError.swift</li>
+  <li>Projects/Shared/Core/Sources/Network/MoyaProvider+Async.swift</li>
+  <li>Projects/Shared/Core/Sources/Network/Auth/AuthenticationPlugin.swift</li>
+  <li>Projects/Shared/Core/Sources/Network/Auth/AccessTokenRefresher.swift</li>
+  <li><span class="d">로컬 저장소</span></li>
+  <li>Projects/Shared/Core/Sources/LocalStorage/Store/Storing.swift</li>
+  <li>Projects/Shared/Core/Sources/LocalStorage/Store/UserDefaults/UserDefaultsStore.swift</li>
+  <li>Projects/Shared/Core/Sources/LocalStorage/Store/Keychain/KeychainStoring.swift <span class="d">(지금은 쓰지 않음)</span></li>
+  <li>Projects/Shared/Core/Sources/LocalStorage/Store/Keychain/KeychainStore.swift <span class="d">(지금은 쓰지 않음)</span></li>
+  <li>Projects/Shared/Core/Sources/LocalStorage/Storage/AuthToken/AuthTokens.swift</li>
+  <li>Projects/Shared/Core/Sources/LocalStorage/Storage/AuthToken/AuthTokenStorage.swift</li>
+  <li><span class="d">테스트</span></li>
+  <li>Projects/Shared/Core/Tests/Network/AuthenticationTests.swift</li>
+  <li>Projects/Shared/Core/Tests/LocalStorage/AuthTokenStorageTests.swift</li>
+  <li>Projects/Shared/Core/Tests/Support/InMemoryStore.swift</li>
+  <li><span class="d">문서</span></li>
+  <li>Docs/architecture/api-v2-migration.md</li>
+  <li>Docs/architecture/dependency-injection.md</li>
+</ul>
+</section>
+
+<footer>
+  PopPang iOS 학습 가이드 00 · 기준: refactor/#116 브랜치의 Projects/ 코드와 Docs/ 문서. 코드가 바뀌면 이 문서도 함께 확인해 주세요.
+</footer>
+</main>
+</div>
+</body>
+</html>
