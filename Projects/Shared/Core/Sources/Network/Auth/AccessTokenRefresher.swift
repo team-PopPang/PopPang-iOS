@@ -56,7 +56,7 @@ private extension AccessTokenRefresher {
         refresh: Refresh
     ) async throws -> String {
         guard let refreshToken = try storage.loadTokens()?.refreshToken else {
-            storage.removeTokens()
+            try? storage.removeTokens()
             throw AuthSessionError.loginRequired
         }
 
@@ -77,6 +77,8 @@ private extension AccessTokenRefresher {
             isReplaced = try storage.replaceTokens(tokens, ifRefreshTokenIs: refreshToken)
         } catch {
             // 서버는 이미 이전 Refresh Token을 폐기했으므로 저장하지 못한 토큰으로는 세션을 이어 갈 수 없다.
+            // 폐기된 토큰이 남아 다음 요청마다 실패하지 않도록 지운다.
+            try? storage.removeTokens()
             throw AuthSessionError.loginRequired
         }
 

@@ -5,11 +5,13 @@ import Foundation
 final class InMemoryKeychainStore: KeychainStoring, @unchecked Sendable {
     struct SaveError: Error {}
     struct ReadError: Error {}
+    struct DeleteError: Error {}
 
     private let lock = NSLock()
     private var values: [String: String] = [:]
     private var _failingKeys: Set<String> = []
     private var _unreadableKeys: Set<String> = []
+    private var _undeletableKeys: Set<String> = []
 
     /// 이 키에 저장하면 `SaveError`를 던진다.
     var failingKeys: Set<String> {
@@ -37,7 +39,16 @@ final class InMemoryKeychainStore: KeychainStoring, @unchecked Sendable {
         }
     }
 
-    func removeValue(forKey key: String) {
-        lock.withLock { _ = values.removeValue(forKey: key) }
+    /// 이 키를 지우면 `DeleteError`를 던진다.
+    var undeletableKeys: Set<String> {
+        get { lock.withLock { _undeletableKeys } }
+        set { lock.withLock { _undeletableKeys = newValue } }
+    }
+
+    func removeValue(forKey key: String) throws {
+        try lock.withLock {
+            guard _undeletableKeys.contains(key) == false else { throw DeleteError() }
+            _ = values.removeValue(forKey: key)
+        }
     }
 }

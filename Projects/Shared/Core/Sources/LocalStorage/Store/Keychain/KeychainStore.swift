@@ -62,8 +62,12 @@ public struct KeychainStore: KeychainStoring {
         }
     }
 
-    public func removeValue(forKey key: String) {
-        SecItemDelete(baseQuery(forKey: key) as CFDictionary)
+    /// 값이 원래 없으면 성공으로 본다. 잠금 상태 등으로 지우지 못하면 오류를 던진다.
+    public func removeValue(forKey key: String) throws {
+        let status = SecItemDelete(baseQuery(forKey: key) as CFDictionary)
+        guard status == errSecSuccess || status == errSecItemNotFound else {
+            throw KeychainStoreError.unhandledStatus(status)
+        }
     }
 }
 

@@ -39,7 +39,7 @@ public struct AuthTokenStorage: Sendable {
                 try store.set(tokens.accessToken, forKey: Key.accessToken)
                 try store.set(tokens.refreshToken, forKey: Key.refreshToken)
             } catch {
-                removeTokens()
+                try? removeTokens()
                 throw error
             }
         }
@@ -62,7 +62,7 @@ public struct AuthTokenStorage: Sendable {
     public func removeTokens(ifAccessTokenIs accessToken: String?) throws -> Bool {
         try withLock {
             guard try loadTokens()?.accessToken == accessToken else { return false }
-            removeTokens()
+            try removeTokens()
             return true
         }
     }
@@ -73,7 +73,7 @@ public struct AuthTokenStorage: Sendable {
     public func removeTokens(ifRefreshTokenIs refreshToken: String) throws -> Bool {
         try withLock {
             guard try loadTokens()?.refreshToken == refreshToken else { return false }
-            removeTokens()
+            try removeTokens()
             return true
         }
     }
@@ -86,28 +86,36 @@ public struct AuthTokenStorage: Sendable {
         try withLock { try store.set(token, forKey: Key.signupToken) }
     }
 
-    public func removeSignupToken() {
-        withLock { store.removeValue(forKey: Key.signupToken) }
+    public func removeSignupToken() throws {
+        try withLock { try store.removeValue(forKey: Key.signupToken) }
     }
 
-    /// Access·Refresh Token을 지운다.
-    public func removeTokens() {
-        withLock {
-            store.removeValue(forKey: Key.accessToken)
-            store.removeValue(forKey: Key.refreshToken)
-        }
+    /// Access·Refresh Token을 지운다. 하나를 지우지 못해도 나머지는 지우고, 처음 실패한 오류를 던진다.
+    public func removeTokens() throws {
+        try withLock { try removeValues(forKeys: [Key.accessToken, Key.refreshToken]) }
     }
 
-    /// Signup Token까지 모든 인증 토큰을 지운다.
-    public func clear() {
-        withLock {
-            removeTokens()
-            removeSignupToken()
-        }
+    /// Signup Token까지 모든 인증 토큰을 지운다. 하나를 지우지 못해도 나머지는 지우고, 처음 실패한 오류를 던진다.
+    public func clear() throws {
+        try withLock { try removeValues(forKeys: [Key.accessToken, Key.refreshToken, Key.signupToken]) }
     }
 }
 
 private extension AuthTokenStorage {
+    func removeValues(forKeys keys: [String]) throws {
+        var firstError: Error?
+        for key in keys {
+            do {
+                try store.removeValue(forKey: key)
+            } catch {
+                firstError = firstError ?? error
+            }
+        }
+        if let firstError {
+            throw firstError
+        }
+    }
+
     func withLock<T>(_ body: () throws -> T) rethrows -> T {
         Self.lock.lock()
         defer { Self.lock.unlock() }

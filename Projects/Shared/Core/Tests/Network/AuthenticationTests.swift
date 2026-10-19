@@ -96,7 +96,7 @@ struct AuthenticationTests {
     func discardsRefreshResultAfterTokensAreCleared() async throws {
         let storage = try makeStorage()
         let refresher = AccessTokenRefresher(storage: storage) { _ in
-            storage.clear()
+            try storage.clear()
             return .newTokens
         }
 
@@ -178,6 +178,24 @@ struct AuthenticationTests {
         store.unreadableKeys = []
         #expect(try storage.loadTokens() == .oldTokens)
         #expect(await counter.count == 0)
+    }
+
+    @Test("갱신 뒤 Keychain을 읽지 못해 저장하지 못하면 폐기된 토큰을 지우고 다시 로그인해야 한다고 알린다")
+    func removesRevokedTokensWhenReplaceFails() async throws {
+        let store = InMemoryKeychainStore()
+        let storage = AuthTokenStorage(store: store)
+        try storage.saveTokens(.oldTokens)
+        let refresher = AccessTokenRefresher(storage: storage) { _ in
+            store.unreadableKeys = [AuthTokenStorage.Key.refreshToken]
+            return .newTokens
+        }
+
+        await #expect(throws: AuthSessionError.loginRequired) {
+            _ = try await refresher.refreshAccessToken(expired: "old-access")
+        }
+
+        store.unreadableKeys = []
+        #expect(try storage.loadTokens() == nil)
     }
 
     @Test("Refresh Token이 없으면 다시 로그인해야 한다고 알린다")
