@@ -693,7 +693,7 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
   <rect class="box" x="446" y="514" width="150" height="62" rx="8"/>
   <text class="sub" x="521" y="536" text-anchor="middle">true → 지우고</text>
   <text class="sub mono" x="521" y="552" text-anchor="middle">loginRequired</text>
-  <text class="sub" x="521" y="568" text-anchor="middle">false·실패 → 받은 오류</text>
+  <text class="sub" x="521" y="568" text-anchor="middle">false → 새 토큰으로 1회 재요청</text>
 </svg>
 </div>
 <figcaption>그림 1. <code>asyncRequest(_:)</code>의 분기. 점선 상자는 판단, 파란 상자는 갱신 관련 동작이에요.</figcaption>
@@ -702,6 +702,9 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
 <pre><code><span class="kw">switch try await</span> sendAccessRequest(target, authentication: authentication) {
 <span class="kw">case let</span> .success(response):
     <span class="kw">return</span> response
+<span class="kw">case let</span> .rejectedWithStaleToken(_, error):
+    <span class="cm">// 보낸 뒤에 갱신·로그인으로 다른 토큰이 저장됐어요. 새 토큰으로 한 번 다시 보내요</span>
+    <span class="kw">return try await</span> retryAccessRequest(target, authentication: authentication, originalError: error)
 <span class="kw">case let</span> .expired(sentAccessToken, expiredError):
     <span class="kw">do</span> {
         _ = <span class="kw">try await</span> authentication.refresher.refreshAccessToken(expired: sentAccessToken)
@@ -710,15 +713,22 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
     } <span class="kw">catch</span> {
         <span class="kw">throw</span> expiredError       <span class="cm">// 원래 요청의 401 5002</span>
     }
+    <span class="kw">return try await</span> retryAccessRequest(target, authentication: authentication, originalError: expiredError)
+}
+
+<span class="cm">// 다시 보낸 요청이 또 실패하면 갱신하지 않고 그 오류를 던져요</span>
+<span class="kw">func</span> retryAccessRequest(_ target: Target, authentication: AuthenticationPlugin, originalError: NetworkError) <span class="kw">async throws</span> -&gt; Response {
     <span class="kw">switch try await</span> sendAccessRequest(target, authentication: authentication) {
-    <span class="kw">case let</span> .success(response): <span class="kw">return</span> response
-    <span class="kw">case let</span> .expired(_, error):   <span class="kw">throw</span> error   <span class="cm">// 두 번째 만료에는 갱신하지 않아요</span>
+    <span class="kw">case let</span> .success(response):
+        <span class="kw">return</span> response
+    <span class="kw">case let</span> .expired(_, error), <span class="kw">let</span> .rejectedWithStaleToken(_, error):
+        <span class="kw">throw</span> error
     }
 }</code></pre>
 <h3>왜 이렇게 했나요</h3>
 <ul>
   <li><strong>5002일 때만 갱신해요.</strong> 갱신은 만료라는 한 가지 원인만 고쳐요. 다른 401에 갱신하면 성공할 수 없는 요청을 반복하고, 갱신 API 호출만 늘어요.</li>
-  <li><strong>재요청은 구조상 한 번이에요.</strong> 두 번째 <code>sendAccessRequest</code>의 <code>.expired</code>는 갱신하지 않고 던져요. 반복문이 없어서 무한 재시도가 생길 수 없어요. 이때 토큰은 지우지 않아요. 명세가 이 경우를 정하지 않았기 때문이에요.</li>
+  <li><strong>재요청은 구조상 한 번이에요.</strong> <code>retryAccessRequest</code> 안의 두 번째 <code>sendAccessRequest</code>가 <code>.expired</code>나 <code>.rejectedWithStaleToken</code>을 돌려주면 갱신하지 않고 던져요. 반복문이 없어서 무한 재시도가 생길 수 없어요. 이때 토큰은 지우지 않아요. 명세가 이 경우를 정하지 않았기 때문이에요.</li>
   <li><strong>보낸 토큰을 응답에서 꺼내요.</strong> <code>response.request?.bearerToken</code>으로 실제로 실었던 토큰을 읽어요. 지금 저장된 값이 아니라 "이 요청이 썼던 값"이 있어야 다른 요청이 이미 갱신했는지 판단할 수 있어요(<a href="#single-flight">16절</a>).</li>
   <li><strong>갱신 실패의 오류를 구분해요.</strong> 로그인이 필요하면 <code>AuthSessionError.loginRequired</code>를, 일시적인 실패(400, 403, 429, 5xx, 네트워크)면 원래 요청의 5002 오류를 던져요. 일시 실패에는 토큰을 지우지 않아서 다음 요청이 다시 갱신을 시도해요. 이 정책은 아직 확정이 아니에요(정해야 할 것 3번).</li>
   <li><strong>403에는 갱신하지 않아요.</strong> 403은 "누구인지는 알지만 권한이 없다"는 뜻이라 토큰을 바꿔도 결과가 같아요.</li>
