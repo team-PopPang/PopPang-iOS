@@ -23,8 +23,8 @@ public struct AuthTokenStorage: Sendable {
     }
 
     /// Access·Refresh Token이 모두 있을 때만 토큰 쌍을 돌려준다.
-    public func loadTokens() throws -> AuthTokens? {
-        try withLock {
+    public func loadTokens() -> AuthTokens? {
+        withLock {
             guard let accessToken: String = store.value(forKey: Key.accessToken),
                   let refreshToken: String = store.value(forKey: Key.refreshToken)
             else {
@@ -44,7 +44,7 @@ public struct AuthTokenStorage: Sendable {
                 try store.set(tokens.refreshToken, forKey: Key.refreshToken)
                 try store.set(tokens.accessToken, forKey: Key.accessToken)
             } catch {
-                try? removeTokens()
+                removeTokens()
                 throw error
             }
         }
@@ -55,7 +55,7 @@ public struct AuthTokenStorage: Sendable {
     /// - Returns: 바꿨으면 `true`. 그사이 로그아웃·재로그인으로 토큰이 바뀌었으면 저장하지 않고 `false`
     public func replaceTokens(_ tokens: AuthTokens, ifRefreshTokenIs expectedRefreshToken: String) throws -> Bool {
         try withLock {
-            guard try loadTokens()?.refreshToken == expectedRefreshToken else { return false }
+            guard loadTokens()?.refreshToken == expectedRefreshToken else { return false }
             try saveTokens(tokens)
             return true
         }
@@ -64,10 +64,10 @@ public struct AuthTokenStorage: Sendable {
     /// 저장된 Access Token이 `accessToken`일 때만 토큰 쌍을 지운다.
     ///
     /// - Returns: 지웠으면 `true`. 그사이 토큰이 바뀌었으면 지우지 않고 `false`
-    public func removeTokens(ifAccessTokenIs accessToken: String) throws -> Bool {
-        try withLock {
+    public func removeTokens(ifAccessTokenIs accessToken: String) -> Bool {
+        withLock {
             guard (store.value(forKey: Key.accessToken) as String?) == accessToken else { return false }
-            try removeTokens()
+            removeTokens()
             return true
         }
     }
@@ -75,23 +75,23 @@ public struct AuthTokenStorage: Sendable {
     /// 저장된 Refresh Token이 `refreshToken`일 때만 토큰 쌍을 지운다.
     ///
     /// - Returns: 지웠으면 `true`. 그사이 토큰이 바뀌었으면 지우지 않고 `false`
-    public func removeTokens(ifRefreshTokenIs refreshToken: String) throws -> Bool {
-        try withLock {
-            guard try loadTokens()?.refreshToken == refreshToken else { return false }
-            try removeTokens()
+    public func removeTokens(ifRefreshTokenIs refreshToken: String) -> Bool {
+        withLock {
+            guard (store.value(forKey: Key.refreshToken) as String?) == refreshToken else { return false }
+            removeTokens()
             return true
         }
     }
 
     /// Access·Refresh Token 가운데 하나라도 있으면 `true`. 쌍이 다 갖춰지지 않아도 남은 토큰이 있는지 본다.
-    public func hasAnyToken() throws -> Bool {
-        try withLock {
+    public func hasAnyToken() -> Bool {
+        withLock {
             (store.value(forKey: Key.accessToken) as String?) != nil
                 || (store.value(forKey: Key.refreshToken) as String?) != nil
         }
     }
 
-    public func loadSignupToken() throws -> String? {
+    public func loadSignupToken() -> String? {
         withLock { store.value(forKey: Key.signupToken) }
     }
 
@@ -99,12 +99,12 @@ public struct AuthTokenStorage: Sendable {
         try withLock { try store.set(token, forKey: Key.signupToken) }
     }
 
-    public func removeSignupToken() throws {
+    public func removeSignupToken() {
         withLock { store.removeValue(forKey: Key.signupToken) }
     }
 
     /// Access·Refresh Token을 지운다.
-    public func removeTokens() throws {
+    public func removeTokens() {
         withLock {
             store.removeValue(forKey: Key.accessToken)
             store.removeValue(forKey: Key.refreshToken)
@@ -112,7 +112,7 @@ public struct AuthTokenStorage: Sendable {
     }
 
     /// Signup Token까지 모든 인증 토큰을 지운다.
-    public func clear() throws {
+    public func clear() {
         withLock {
             store.removeValue(forKey: Key.accessToken)
             store.removeValue(forKey: Key.refreshToken)

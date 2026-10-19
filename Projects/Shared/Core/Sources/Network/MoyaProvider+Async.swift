@@ -102,24 +102,17 @@ private extension MoyaProvider {
 
         let storage = authentication.storage
         guard let sentAccessToken else {
-            // 토큰 없이 보냈다. 저장된 토큰이 하나도 없으면 로그인이 필요하고,
-            // 남은 토큰이 있거나 저장소를 읽지 못했으면 그 토큰을 지우지 않는다.
-            guard (try? storage.hasAnyToken()) == false else { throw error }
+            // 토큰 없이 보냈다. 저장된 토큰이 하나도 없으면 로그인이 필요하고, 남은 토큰이 있으면 지우지 않는다.
+            guard storage.hasAnyToken() == false else { throw error }
             throw AuthSessionError.loginRequired
         }
 
-        switch try? storage.removeTokens(ifAccessTokenIs: sentAccessToken) {
-        case true?:
+        if storage.removeTokens(ifAccessTokenIs: sentAccessToken) {
             throw AuthSessionError.loginRequired
-        case nil:
-            // 저장소를 읽거나 지우지 못했다. 이 실패로 세션을 끊지 않는다.
-            throw error
-        case false?:
-            break
         }
 
         // 보낸 뒤에 다른 요청이 토큰을 갱신했다. 새 토큰이 있으면 그 토큰으로 다시 보낸다.
-        guard (try? storage.loadTokens()) != nil else { throw error }
+        guard storage.loadTokens() != nil else { throw error }
         return .rejectedWithStaleToken(sentAccessToken: sentAccessToken, error: error)
     }
 

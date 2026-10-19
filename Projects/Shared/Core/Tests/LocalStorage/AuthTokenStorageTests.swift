@@ -11,19 +11,19 @@ struct AuthTokenStorageTests {
         try storage.saveTokens(tokens)
         try storage.saveSignupToken("signup")
 
-        #expect(try storage.loadTokens() == tokens)
-        #expect(try storage.loadSignupToken() == "signup")
+        #expect(storage.loadTokens() == tokens)
+        #expect(storage.loadSignupToken() == "signup")
 
-        try storage.removeTokens()
+        storage.removeTokens()
 
-        #expect(try storage.loadTokens() == nil)
-        #expect(try storage.loadSignupToken() == "signup")
+        #expect(storage.loadTokens() == nil)
+        #expect(storage.loadSignupToken() == "signup")
 
         try storage.saveTokens(tokens)
-        try storage.clear()
+        storage.clear()
 
-        #expect(try storage.loadTokens() == nil)
-        #expect(try storage.loadSignupToken() == nil)
+        #expect(storage.loadTokens() == nil)
+        #expect(storage.loadSignupToken() == nil)
     }
 
     @Test("토큰 쌍 가운데 하나라도 저장하지 못하면 둘 다 지운다")
@@ -36,7 +36,7 @@ struct AuthTokenStorageTests {
         #expect(throws: InMemoryStore.SaveError.self) {
             try storage.saveTokens(AuthTokens(accessToken: "new-access", refreshToken: "new-refresh"))
         }
-        #expect(try storage.loadTokens() == nil)
+        #expect(storage.loadTokens() == nil)
     }
 
     @Test("저장된 토큰이 기대한 값일 때만 바꾸거나 지운다")
@@ -47,15 +47,15 @@ struct AuthTokenStorageTests {
         try storage.saveTokens(oldTokens)
 
         #expect(try storage.replaceTokens(newTokens, ifRefreshTokenIs: "other-refresh") == false)
-        #expect(try storage.loadTokens() == oldTokens)
+        #expect(storage.loadTokens() == oldTokens)
         #expect(try storage.replaceTokens(newTokens, ifRefreshTokenIs: "old-refresh"))
-        #expect(try storage.loadTokens() == newTokens)
+        #expect(storage.loadTokens() == newTokens)
 
-        #expect(try storage.removeTokens(ifAccessTokenIs: "old-access") == false)
-        #expect(try storage.removeTokens(ifRefreshTokenIs: "old-refresh") == false)
-        #expect(try storage.loadTokens() == newTokens)
-        #expect(try storage.removeTokens(ifAccessTokenIs: "new-access"))
-        #expect(try storage.loadTokens() == nil)
+        #expect(storage.removeTokens(ifAccessTokenIs: "old-access") == false)
+        #expect(storage.removeTokens(ifRefreshTokenIs: "old-refresh") == false)
+        #expect(storage.loadTokens() == newTokens)
+        #expect(storage.removeTokens(ifAccessTokenIs: "new-access"))
+        #expect(storage.loadTokens() == nil)
     }
 
     @Test("Refresh Token만 남아 있어도 남은 토큰이 있다고 알려 준다")
@@ -64,11 +64,11 @@ struct AuthTokenStorageTests {
         let storage = AuthTokenStorage(store: store)
         try store.set("refresh", forKey: AuthTokenStorage.Key.refreshToken)
 
-        #expect(try storage.loadTokens() == nil)
-        #expect(try storage.hasAnyToken())
+        #expect(storage.loadTokens() == nil)
+        #expect(storage.hasAnyToken())
 
         store.removeValue(forKey: AuthTokenStorage.Key.refreshToken)
-        #expect(try storage.hasAnyToken() == false)
+        #expect(storage.hasAnyToken() == false)
     }
 
     /// 앱 없이 실행하는 CoreTests에는 Keychain entitlement가 없어(-34018) 이 테스트를 건너뛴다.
