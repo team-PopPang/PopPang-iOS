@@ -22,7 +22,7 @@
 
 | 모듈 | 타깃 | 파일 수 | `@Test` 수 | 내용 |
 | --- | --- | --- | --- | --- |
-| Core | `CoreTests` | 9 | 39 | 네트워크(Moya stub), V2 인증 헤더·토큰 갱신·재요청, 로컬 저장소. Keychain 테스트 1개는 entitlement가 없는 테스트 환경이라 건너뛴다. |
+| Core | `CoreTests` | 9 | 46 | 네트워크(Moya stub), V2 인증 헤더·토큰 갱신·재요청, 로컬 저장소. Keychain 테스트 1개는 entitlement가 없는 테스트 환경이라 건너뛴다. |
 | SheetKit | `SheetKitTests` | 4 | 24 | 하단 시트 높이 계산, 손을 뗀 높이와 속도로 고르는 멈출 높이, 손잡이 탭·VoiceOver 조절, 겹친 시트 가운데 더 높이 올라온 시트의 높이 고르기, 겹친 시트가 끄는 거리의 합, 끌기를 받을 곳 판단 |
 | Data | `DataTests` | 2 | 23 | DTO 변환, 계약, 서버 헬스 체크 판정(`URLProtocol` stub) |
 | HomeFeatureV2 | `HomeFeatureV2Tests` (`Tests/HomeFeatureTests.swift`) | 1 | 8 | TCA `TestStore`, 광고 배치 정책 |
