@@ -573,7 +573,7 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
 <h2><span class="num">14</span>헤더를 붙이는 plugin</h2>
 <p><code>AuthenticationPlugin</code>은 Moya의 <code>PluginType</code>이에요. 요청이 나가기 직전 <code>prepare</code>에서 인증 종류에 맞는 토큰을 <code>AuthTokenStorage</code>(UserDefaults)에서 읽어 헤더를 붙여요.</p>
 <span class="src">Projects/Shared/Core/Sources/Network/Auth/AuthenticationPlugin.swift</span>
-<pre><code><span class="cm">/// 요청에 담을 토큰. 인증이 필요 없는 요청이거나 토큰이 없거나 저장소를 읽지 못하면 `nil`이다.</span>
+<pre><code><span class="cm">/// 요청에 담을 토큰. 인증이 필요 없는 요청이거나 토큰이 없으면 `nil`이다.</span>
 <span class="kw">func</span> token(for target: TargetType) -&gt; String? {
     <span class="kw">switch</span> Self.authorization(of: target) {
     <span class="kw">case</span> .none:   <span class="kw">return nil</span>
@@ -588,7 +588,7 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
 }</code></pre>
 <ul>
   <li><strong>매 요청마다 저장소를 읽어요.</strong> 갱신 직후의 요청은 자연스럽게 새 토큰을 담아요. 따로 메모리 캐시를 두지 않아요. UserDefaults는 프로세스 안에서 값을 캐시해서, Keychain을 매번 읽을 때보다 부담이 작아요.</li>
-  <li><strong><code>try?</code>로 읽어요.</strong> 함수는 <code>throws</code>로 선언돼 있어서 실패하면 헤더 없이 보내요. UserDefaults에서는 읽기가 실패하지 않으니 실제로는 "토큰 없음"일 때만 헤더가 빠져요.</li>
+  <li><strong>읽기는 실패하지 않아요.</strong> UserDefaults에서 토큰을 읽는 함수는 <code>throws</code>가 아니에요. 토큰이 없을 때만 헤더 없이 보내요.</li>
   <li><strong><code>MultiTarget</code>을 벗겨요.</strong> <code>MoyaProvider&lt;MultiTarget&gt;</code>으로 감싼 target이 들어와도 안쪽 target을 꺼내 인증 종류를 봐요. 테스트도 두 경우를 함께 확인해요.</li>
   <li><strong>plugin은 재요청하지 않아요.</strong> Moya plugin에는 응답을 보고 요청을 다시 보내는 기능이 없어요. 재요청은 <code>asyncRequest</code>가 plugin을 찾아서 해요.</li>
   <li>plugin은 <code>NetworkProvider(authentication:)</code>로 넣어요. <code>nil</code>이면 어떤 요청에도 헤더를 붙이지 않아요. 지금 <code>NetworkProvider.shared</code>에는 넣지 않았어요(<a href="#next">22절</a>).</li>
@@ -865,21 +865,21 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
   </tbody>
 </table></div>
 <p>마지막 줄이 회전과 관련 있어요. 서버는 갱신하면서 이전 Refresh Token을 이미 폐기했어요. 새 토큰을 저장하지 못했다면 앱에 남은 것은 쓸 수 없는 토큰이에요. 남겨 두면 다음 요청마다 갱신이 실패하니 지우고 로그인을 요구해요.</p>
-<p>UserDefaults는 문자열 저장이 사실상 실패하지 않아서 이 줄은 거의 일어나지 않아요. 그래도 <code>catch</code>의 <code>try? storage.removeTokens()</code> 정리 코드는 그대로 두기로 했어요. 저장 함수가 <code>throws</code>인 한, 실패했을 때 폐기된 토큰을 남기지 않는 쪽이 안전해요.</p>
+<p>UserDefaults는 문자열 저장이 사실상 실패하지 않아서 이 줄은 거의 일어나지 않아요. 그래도 <code>catch</code>의 <code>storage.removeTokens()</code> 정리 코드는 그대로 두기로 했어요. 저장 함수(<code>saveTokens</code>, <code>replaceTokens</code>)는 <code>throws</code>라서, 실패했을 때 폐기된 토큰을 남기지 않는 쪽이 안전해요.</p>
 <span class="src">AccessTokenRefresher.swift · performRefresh</span>
 <pre><code><span class="kw">catch let</span> error <span class="kw">as</span> NetworkError <span class="kw">where</span> error.statusCode == 401 {
     <span class="cm">// 비교·삭제에 실패해도 이 Refresh Token은 더 쓸 수 없으므로 로그인을 요구한다.</span>
-    <span class="kw">guard</span> (<span class="kw">try?</span> storage.removeTokens(ifRefreshTokenIs: refreshToken)) == <span class="kw">false else</span> {
+    <span class="kw">guard</span> storage.removeTokens(ifRefreshTokenIs: refreshToken) == <span class="kw">false else</span> {
         <span class="kw">throw</span> AuthSessionError.loginRequired
     }
     <span class="kw">return try</span> replacedAccessToken(in: storage)   <span class="cm">// 재로그인한 토큰을 따라요</span>
 }</code></pre>
-<p><code>== false</code>를 보세요. 결과가 <code>true</code>(지움)이거나 <code>nil</code>(저장소 오류. UserDefaults에서는 생기지 않아요)이면 모두 <code>loginRequired</code>예요. 서버가 거절한 Refresh Token은 어떤 경우든 다시 쓸 수 없어서예요. 확실히 "바뀌었다"(<code>false</code>)고 확인된 경우만 새 토큰을 따라가요.</p>
+<p><code>== false</code>를 보세요. 결과가 <code>true</code>(지움)이면 <code>loginRequired</code>예요. 서버가 거절한 Refresh Token은 어떤 경우든 다시 쓸 수 없어서예요. 확실히 "바뀌었다"(<code>false</code>)고 확인된 경우만 새 토큰을 따라가요.</p>
 </section>
 
 <section id="keychain-fail">
 <h2><span class="num">18</span>Keychain을 쓰면: 실패는 토큰 없음이 아니에요</h2>
-<p>지금 토큰 저장소는 UserDefaults라서 읽기와 삭제가 실패하지 않아요. 그래도 <code>AuthTokenStorage</code>의 함수는 여전히 <code>throws</code>로 선언돼 있고, 호출하는 쪽도 실패를 따로 다뤄요. 이 절은 <strong>Keychain을 다시 쓰게 될 때</strong> 그 처리가 왜 필요한지 정리해요.</p>
+<p>지금 토큰 저장소는 UserDefaults라서 읽기와 삭제가 실패하지 않아요. 그래서 <code>AuthTokenStorage</code>에서 <code>throws</code>는 저장 함수에만 남기고, 읽기·삭제 실패 처리는 지웠어요. 이 절은 <strong>Keychain을 다시 쓰게 될 때</strong> 그 처리가 왜 필요한지 정리해요.</p>
 <p>저장소에 남아 있는 <code>KeychainStore</code>는 "값이 없음"과 "읽지 못함"을 다르게 돌려줘요.</p>
 <span class="src">Projects/Shared/Core/Sources/LocalStorage/Store/Keychain/KeychainStore.swift</span>
 <pre><code><span class="kw">switch</span> status {
