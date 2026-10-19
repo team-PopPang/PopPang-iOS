@@ -19,7 +19,7 @@ struct AuthenticationTests {
 
     @Test("저장된 토큰이 없으면 헤더를 붙이지 않는다")
     func skipsHeaderWithoutToken() {
-        let storage = AuthTokenStorage(store: InMemoryKeychainStore())
+        let storage = AuthTokenStorage(store: InMemoryStore())
         let plugin = AuthenticationPlugin(storage: storage, refresher: makeRefresher(storage: storage))
         let request = URLRequest(url: NetworkConfig.apiBaseURL(for: .v2))
 
@@ -136,7 +136,7 @@ struct AuthenticationTests {
 
     @Test("갱신한 토큰을 저장하지 못하면 다시 로그인해야 한다고 알린다")
     func requiresLoginWhenSavingRefreshedTokensFails() async throws {
-        let store = InMemoryKeychainStore()
+        let store = InMemoryStore()
         let storage = AuthTokenStorage(store: store)
         try storage.saveTokens(.oldTokens)
         let refresher = AccessTokenRefresher(storage: storage) { _ in
@@ -162,60 +162,9 @@ struct AuthenticationTests {
         #expect(await counter.count == 1)
     }
 
-    @Test("Keychain을 읽지 못하면 토큰을 지우지 않고 오류를 던진다")
-    func keepsTokensWhenKeychainIsUnreadableDuringRefresh() async throws {
-        let store = InMemoryKeychainStore()
-        let storage = AuthTokenStorage(store: store)
-        try storage.saveTokens(.oldTokens)
-        store.unreadableKeys = [AuthTokenStorage.Key.refreshToken]
-        let counter = CallCounter()
-        let refresher = makeRefresher(storage: storage, counter: counter)
-
-        await #expect(throws: InMemoryKeychainStore.ReadError.self) {
-            _ = try await refresher.refreshAccessToken(expired: nil)
-        }
-
-        store.unreadableKeys = []
-        #expect(try storage.loadTokens() == .oldTokens)
-        #expect(await counter.count == 0)
-    }
-
-    @Test("갱신 뒤 Keychain을 읽지 못해 저장하지 못하면 폐기된 토큰을 지우고 다시 로그인해야 한다고 알린다")
-    func removesRevokedTokensWhenReplaceFails() async throws {
-        let store = InMemoryKeychainStore()
-        let storage = AuthTokenStorage(store: store)
-        try storage.saveTokens(.oldTokens)
-        let refresher = AccessTokenRefresher(storage: storage) { _ in
-            store.unreadableKeys = [AuthTokenStorage.Key.refreshToken]
-            return .newTokens
-        }
-
-        await #expect(throws: AuthSessionError.loginRequired) {
-            _ = try await refresher.refreshAccessToken(expired: "old-access")
-        }
-
-        store.unreadableKeys = []
-        #expect(try storage.loadTokens() == nil)
-    }
-
-    @Test("갱신 API가 401을 준 뒤 토큰을 지우지 못해도 다시 로그인해야 한다고 알린다")
-    func requiresLoginWhenRemovingRejectedTokensFails() async throws {
-        let store = InMemoryKeychainStore()
-        let storage = AuthTokenStorage(store: store)
-        try storage.saveTokens(.oldTokens)
-        store.undeletableKeys = [AuthTokenStorage.Key.accessToken]
-        let refresher = AccessTokenRefresher(storage: storage) { _ in
-            throw NetworkError.invalidStatusCode(401, message: errorBody(code: 5007))
-        }
-
-        await #expect(throws: AuthSessionError.loginRequired) {
-            _ = try await refresher.refreshAccessToken(expired: "old-access")
-        }
-    }
-
     @Test("Refresh Token이 없으면 다시 로그인해야 한다고 알린다")
     func requiresLoginWithoutRefreshToken() async {
-        let storage = AuthTokenStorage(store: InMemoryKeychainStore())
+        let storage = AuthTokenStorage(store: InMemoryStore())
         let counter = CallCounter()
         let refresher = makeRefresher(storage: storage, counter: counter)
 
@@ -305,15 +254,15 @@ struct AuthenticationTests {
 
     @Test("Refresh Token만 남은 상태에서 토큰 없이 보낸 요청이 401을 받아도 남은 토큰을 지우지 않는다")
     func keepsLoneRefreshTokenWhenRequestWithoutTokenFails() async throws {
-        let store = InMemoryKeychainStore()
+        let store = InMemoryStore()
         let context = try RequestContext(store: store, responses: [(401, errorBody(code: 5006))])
-        try store.removeValue(forKey: AuthTokenStorage.Key.accessToken)
+        store.removeValue(forKey: AuthTokenStorage.Key.accessToken)
 
         await #expect(throws: NetworkError.invalidStatusCode(401, message: errorBody(code: 5006))) {
             _ = try await context.provider.asyncRequest(.access)
         }
         #expect(context.responses.authorizationHeaders == [nil])
-        #expect(try store.value(forKey: AuthTokenStorage.Key.refreshToken) == "old-refresh")
+        #expect((store.value(forKey: AuthTokenStorage.Key.refreshToken) as String?) == "old-refresh")
     }
 
     @Test("저장된 토큰이 하나도 없는데 401을 받으면 다시 로그인해야 한다고 알린다")
@@ -324,21 +273,6 @@ struct AuthenticationTests {
         await #expect(throws: AuthSessionError.loginRequired) {
             _ = try await context.provider.asyncRequest(.access)
         }
-    }
-
-    @Test("Keychain을 읽지 못해 헤더 없이 보낸 요청이 401을 받아도 토큰을 지우지 않는다")
-    func keepsTokensWhenKeychainIsUnreadableDuringRequest() async throws {
-        let store = InMemoryKeychainStore()
-        let context = try RequestContext(store: store, responses: [(401, errorBody(code: 5006))])
-        store.unreadableKeys = [AuthTokenStorage.Key.accessToken]
-
-        await #expect(throws: NetworkError.invalidStatusCode(401, message: errorBody(code: 5006))) {
-            _ = try await context.provider.asyncRequest(.access)
-        }
-
-        store.unreadableKeys = []
-        #expect(context.responses.authorizationHeaders == [nil])
-        #expect(try context.storage.loadTokens() == .oldTokens)
     }
 
     @Test("갱신이 401이 아닌 이유로 실패하면 원래 요청의 만료 오류를 던진다")
@@ -387,7 +321,7 @@ private func errorBody(code: Int) -> String {
 }
 
 private func makeStorage(
-    store: InMemoryKeychainStore = InMemoryKeychainStore(),
+    store: InMemoryStore = InMemoryStore(),
     signupToken: String? = nil
 ) throws -> AuthTokenStorage {
     let storage = AuthTokenStorage(store: store)
@@ -474,7 +408,7 @@ private struct RequestContext {
 
     /// - Parameter refresh: 갱신 API 대신 실행한다. `nil`이면 새 토큰 쌍을 돌려준다.
     init(
-        store: InMemoryKeychainStore = InMemoryKeychainStore(),
+        store: InMemoryStore = InMemoryStore(),
         responses: [(Int, String)],
         refresh: AccessTokenRefresher.Refresh? = nil,
         onFirstSend: (@Sendable (AuthTokenStorage) -> Void)? = nil

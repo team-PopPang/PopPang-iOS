@@ -29,7 +29,7 @@ public actor AccessTokenRefresher {
     /// - Parameter expiredAccessToken: 401 5002를 받은 요청에 담았던 토큰.
     ///   저장된 토큰이 이 값과 다르면 다른 요청이 이미 갱신한 것이므로 다시 갱신하지 않는다. 알 수 없으면(`nil`) 갱신한다.
     /// - Throws: 갱신 API가 401을 주거나 Refresh Token이 없으면 토큰을 지우고 `AuthSessionError.loginRequired`를 던진다.
-    ///   그 밖의 실패(400, 403, 429, 503, 500, 네트워크 오류)와 Keychain을 읽지 못한 경우는 토큰을 그대로 두고 받은 오류를 던진다.
+    ///   그 밖의 실패(400, 403, 429, 503, 500, 네트워크 오류)와 저장소를 읽지 못한 경우는 토큰을 그대로 두고 받은 오류를 던진다.
     public func refreshAccessToken(expired expiredAccessToken: String?) async throws -> String {
         if let expiredAccessToken,
            let currentAccessToken = try storage.loadTokens()?.accessToken,

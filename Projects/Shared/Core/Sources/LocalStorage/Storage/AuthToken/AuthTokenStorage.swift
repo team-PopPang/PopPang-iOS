@@ -1,30 +1,32 @@
 import Foundation
 
-/// V2 인증 토큰을 Keychain에 저장한다.
+/// V2 인증 토큰을 저장한다.
 ///
-/// 토큰은 UserDefaults, 로그, 분석 이벤트에 남기지 않는다.
+/// 기본 저장 수단은 UserDefaults(`UserDefaultsStore`)다. 서버 명세는 Keychain 저장을 요구하지만,
+/// 앱을 지우면 토큰도 함께 지워지도록 UserDefaults를 쓰기로 정했다([V2 API 마이그레이션] 문서의 결정 사항).
+/// 토큰은 로그와 분석 이벤트에 남기지 않는다.
 /// 토큰 갱신·로그아웃이 여러 스레드에서 겹쳐도 확인과 저장·삭제가 섞이지 않도록 모든 동작을 한 lock으로 묶는다.
 public struct AuthTokenStorage: Sendable {
     enum Key {
-        static let accessToken = "accessToken"
-        static let refreshToken = "refreshToken"
-        static let signupToken = "signupToken"
+        static let accessToken = "auth.accessToken"
+        static let refreshToken = "auth.refreshToken"
+        static let signupToken = "auth.signupToken"
     }
 
-    /// 같은 Keychain을 쓰는 모든 인스턴스가 함께 쓰는 lock
+    /// 같은 저장 수단을 쓰는 모든 인스턴스가 함께 쓰는 lock
     private static let lock = NSRecursiveLock()
 
-    private let store: KeychainStoring
+    private let store: Storing
 
-    public init(store: KeychainStoring = KeychainStore()) {
+    public init(store: Storing = UserDefaultsStore()) {
         self.store = store
     }
 
-    /// Access·Refresh Token이 모두 있을 때만 토큰 쌍을 돌려준다. Keychain을 읽지 못하면 오류를 던진다.
+    /// Access·Refresh Token이 모두 있을 때만 토큰 쌍을 돌려준다.
     public func loadTokens() throws -> AuthTokens? {
         try withLock {
-            guard let accessToken = try store.value(forKey: Key.accessToken),
-                  let refreshToken = try store.value(forKey: Key.refreshToken)
+            guard let accessToken: String = store.value(forKey: Key.accessToken),
+                  let refreshToken: String = store.value(forKey: Key.refreshToken)
             else {
                 return nil
             }
@@ -64,7 +66,7 @@ public struct AuthTokenStorage: Sendable {
     /// - Returns: 지웠으면 `true`. 그사이 토큰이 바뀌었으면 지우지 않고 `false`
     public func removeTokens(ifAccessTokenIs accessToken: String) throws -> Bool {
         try withLock {
-            guard try store.value(forKey: Key.accessToken) == accessToken else { return false }
+            guard (store.value(forKey: Key.accessToken) as String?) == accessToken else { return false }
             try removeTokens()
             return true
         }
@@ -84,13 +86,13 @@ public struct AuthTokenStorage: Sendable {
     /// Access·Refresh Token 가운데 하나라도 있으면 `true`. 쌍이 다 갖춰지지 않아도 남은 토큰이 있는지 본다.
     public func hasAnyToken() throws -> Bool {
         try withLock {
-            try store.value(forKey: Key.accessToken) != nil
-                || store.value(forKey: Key.refreshToken) != nil
+            (store.value(forKey: Key.accessToken) as String?) != nil
+                || (store.value(forKey: Key.refreshToken) as String?) != nil
         }
     }
 
     public func loadSignupToken() throws -> String? {
-        try withLock { try store.value(forKey: Key.signupToken) }
+        withLock { store.value(forKey: Key.signupToken) }
     }
 
     public func saveSignupToken(_ token: String) throws {
@@ -98,35 +100,28 @@ public struct AuthTokenStorage: Sendable {
     }
 
     public func removeSignupToken() throws {
-        try withLock { try store.removeValue(forKey: Key.signupToken) }
+        withLock { store.removeValue(forKey: Key.signupToken) }
     }
 
-    /// Access·Refresh Token을 지운다. 하나를 지우지 못해도 나머지는 지우고, 처음 실패한 오류를 던진다.
+    /// Access·Refresh Token을 지운다.
     public func removeTokens() throws {
-        try withLock { try removeValues(forKeys: [Key.accessToken, Key.refreshToken]) }
+        withLock {
+            store.removeValue(forKey: Key.accessToken)
+            store.removeValue(forKey: Key.refreshToken)
+        }
     }
 
-    /// Signup Token까지 모든 인증 토큰을 지운다. 하나를 지우지 못해도 나머지는 지우고, 처음 실패한 오류를 던진다.
+    /// Signup Token까지 모든 인증 토큰을 지운다.
     public func clear() throws {
-        try withLock { try removeValues(forKeys: [Key.accessToken, Key.refreshToken, Key.signupToken]) }
+        withLock {
+            store.removeValue(forKey: Key.accessToken)
+            store.removeValue(forKey: Key.refreshToken)
+            store.removeValue(forKey: Key.signupToken)
+        }
     }
 }
 
 private extension AuthTokenStorage {
-    func removeValues(forKeys keys: [String]) throws {
-        var firstError: Error?
-        for key in keys {
-            do {
-                try store.removeValue(forKey: key)
-            } catch {
-                firstError = firstError ?? error
-            }
-        }
-        if let firstError {
-            throw firstError
-        }
-    }
-
     func withLock<T>(_ body: () throws -> T) rethrows -> T {
         Self.lock.lock()
         defer { Self.lock.unlock() }

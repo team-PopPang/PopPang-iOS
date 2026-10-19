@@ -24,7 +24,7 @@ public struct AuthenticationPlugin: PluginType {
         return request
     }
 
-    /// 요청에 담을 토큰. 인증이 필요 없는 요청이거나 토큰이 없거나 Keychain을 읽지 못하면 `nil`이다.
+    /// 요청에 담을 토큰. 인증이 필요 없는 요청이거나 토큰이 없거나 저장소를 읽지 못하면 `nil`이다.
     func token(for target: TargetType) -> String? {
         switch Self.authorization(of: target) {
         case .none:
