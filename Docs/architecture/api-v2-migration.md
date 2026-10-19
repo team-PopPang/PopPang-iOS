@@ -52,7 +52,7 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 | `APIResponse<T>`, `ErrorResponse` | `Core/Sources/Network/APIResponse.swift` | V2 성공 응답 래퍼와 V1·V2 공통 실패 응답 형식 |
 | `asyncRequest(_:decodeDataTo:)` | `Core/Sources/Network/MoyaProvider+Async.swift` | `APIResponse`로 감싼 API만 이 함수로 요청하고 `data`를 돌려받아요. |
 | `NetworkError.statusCode`, `serverErrorCode`, `isExpiredToken` | `Core/Sources/Network/NetworkError.swift` | 실패 본문에서 서버 에러 코드를 읽어요. 5xx 기본 오류 본문처럼 형식이 다르면 `serverErrorCode`는 `nil`이고, HTTP 상태로 처리해요. |
-| `AuthTokenStorage`, `KeychainStore` | `Core/Sources/LocalStorage/AuthToken/`, `Core/Sources/LocalStorage/Support/` | Access·Refresh·Signup Token을 Keychain에 저장해요. 이 기기에서만 쓰고, 처음 잠금 해제한 뒤부터 읽을 수 있어요. |
+| `AuthTokenStorage`, `KeychainStoring`·`KeychainStore` | `Core/Sources/LocalStorage/Storage/AuthToken/`, `Core/Sources/LocalStorage/Store/Keychain/` | Access·Refresh·Signup Token을 Keychain에 저장해요. 이 기기에서만 쓰고, 처음 잠금 해제한 뒤부터 읽을 수 있어요. |
 | `AccessTokenRefresher` | `Core/Sources/Network/Auth/AccessTokenRefresher.swift` | 만료된 Access Token을 갱신해요. 동시에 여러 요청이 만료돼도 갱신 요청은 하나만 보내요. |
 | `AuthenticationPlugin` | `Core/Sources/Network/Auth/AuthenticationPlugin.swift` | V2 요청에 `Authorization` 헤더를 붙이는 Moya plugin이에요. `NetworkProvider(authentication:)`로 넣어요. |
 
@@ -62,12 +62,14 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 
 | 상황 | 동작 |
 | --- | --- |
-| `access` API가 401 5002(만료)를 받아요. | 토큰을 한 번 갱신하고, 새 토큰으로 원래 요청을 한 번만 다시 보내요. 다시 보낸 요청도 실패하면 그대로 실패해요. |
+| `access` API가 401 5002(만료)를 받아요. | 그 요청에 실제로 담았던 토큰을 기준으로 한 번 갱신하고, 새 토큰으로 원래 요청을 한 번만 다시 보내요. 다시 보낸 요청도 실패하면(다시 5002여도) 받은 오류를 그대로 던져요. 명세가 이 경우를 정하지 않아서 토큰은 지우지 않아요. |
 | 여러 요청이 동시에 만료돼요. | 갱신 요청은 하나만 보내요. 나머지 요청은 그 결과를 기다렸다가 새 토큰으로 다시 보내요. |
-| `access` API가 5002가 아닌 401을 받아요. | 같은 토큰으로는 다시 성공할 수 없어서 Access·Refresh Token을 지우고 `AuthSessionError.loginRequired`를 던져요. |
+| `access` API가 5002가 아닌 401을 받아요. | 같은 토큰으로는 다시 성공할 수 없어서 Access·Refresh Token을 지우고 `AuthSessionError.loginRequired`를 던져요. 다만 요청을 보낸 뒤 다른 요청이 토큰을 갱신했으면 새 토큰은 지우지 않고 받은 오류만 던져요. |
 | 갱신 API가 401을 주거나 Refresh Token이 없어요. | 토큰을 지우고 `AuthSessionError.loginRequired`를 던져요. |
 | 갱신이 401이 아닌 이유로 실패해요 (400, 403, 429, 500, 503, 네트워크 오류). | 토큰을 그대로 두고 받은 오류를 던져요. 다음 요청이 만료되면 다시 갱신해요. 이 정책은 [정해야 할 것](#정해야-할-것) 3번이 정해지면 다시 봐요. |
-| 갱신하는 동안 로그아웃 등으로 토큰이 지워져요. | 늦게 온 새 토큰을 저장하지 않고 `AuthSessionError.loginRequired`를 던져요. |
+| 갱신하는 동안 로그아웃으로 토큰이 지워져요. | 늦게 온 응답을 저장하지 않고 `AuthSessionError.loginRequired`를 던져요. |
+| 갱신하는 동안 다시 로그인해서 새 토큰이 저장돼요. | 늦게 온 응답(성공이든 401이든)으로 새 로그인 토큰을 덮어쓰거나 지우지 않고, 새 로그인의 Access Token을 써요. |
+| 갱신한 토큰을 Keychain에 저장하지 못해요. | 서버는 이미 이전 Refresh Token을 폐기했으므로 `AuthSessionError.loginRequired`를 던져요. |
 | 403을 받아요. | 갱신하지 않아요. |
 | `signup` API가 401 5002를 받아요. | 갱신하지 않아요. Signup Token이 만료된 것이라 소셜 로그인부터 다시 해요(2단계에서 처리). |
 | V1 API | 헤더를 붙이지 않고, 401을 받아도 갱신하지 않아요. |
@@ -94,6 +96,7 @@ case마다 인증 종류가 다르면 `switch`로 나눠요. 응답이 `APIRespo
 
 - `NetworkProvider.shared`에 `AuthenticationPlugin`을 넣는 일. 갱신 API target(`POST /api/v2/auth/refresh`)이 `Data`에 생겨야 `AccessTokenRefresher`의 갱신 함수를 만들 수 있어서, 2단계에서 `AppBootstrap`이 조립해요.
 - `AuthSessionError.loginRequired`를 받았을 때 로그인 화면으로 보내는 일
+- 앱을 지웠다 다시 설치한 경우. Keychain 항목은 앱을 지워도 남지만 UserDefaults 세션은 지워져요. 설치 뒤 처음 실행할 때 UserDefaults 표시로 판단해 `AuthTokenStorage.clear()`를 불러야 이전 계정 토큰으로 시작하지 않아요.
 - Keychain 실제 저장 확인. CoreTests는 앱 없이 실행되는 테스트 번들이라 Keychain entitlement가 없어(-34018) Keychain 테스트를 건너뛰어요. 2단계에서 앱으로 저장·삭제를 확인해요.
 
 ## 2단계: 로그인 모듈과 유저 엔티티
