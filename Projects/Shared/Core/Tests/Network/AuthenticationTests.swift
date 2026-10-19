@@ -252,17 +252,36 @@ struct AuthenticationTests {
         #expect(await context.counter.count == 0)
     }
 
-    @Test("Refresh Token만 남은 상태에서 토큰 없이 보낸 요청이 401을 받아도 남은 토큰을 지우지 않는다")
-    func keepsLoneRefreshTokenWhenRequestWithoutTokenFails() async throws {
+    @Test("Refresh Token만 남은 상태에서 토큰 없이 보낸 요청이 401을 받으면 남은 토큰을 지우고 다시 로그인해야 한다고 알린다")
+    func clearsLoneRefreshTokenWhenRequestWithoutTokenFails() async throws {
         let store = InMemoryStore()
         let context = try RequestContext(store: store, responses: [(401, errorBody(code: 5006))])
         store.removeValue(forKey: AuthTokenStorage.Key.accessToken)
 
-        await #expect(throws: NetworkError.invalidStatusCode(401, message: errorBody(code: 5006))) {
+        await #expect(throws: AuthSessionError.loginRequired) {
             _ = try await context.provider.asyncRequest(.access)
         }
         #expect(context.responses.authorizationHeaders == [nil])
-        #expect((store.value(forKey: AuthTokenStorage.Key.refreshToken) as String?) == "old-refresh")
+        #expect((store.value(forKey: AuthTokenStorage.Key.refreshToken) as String?) == nil)
+    }
+
+    @Test("토큰 없이 보낸 뒤 로그인으로 토큰이 생겼으면 새 토큰으로 한 번 다시 보낸다")
+    func retriesWithLoginTokensWhenRequestWithoutTokenFails() async throws {
+        let context = try RequestContext(responses: [
+            (401, errorBody(code: 5006)),
+            (200, #"{"message":"ok"}"#),
+        ])
+        context.storage.removeTokens()
+
+        let provider = context.provider
+        let storage = context.storage
+        let responses = context.responses
+        responses.setOnFirstSend { try? storage.saveTokens(.newTokens) }
+
+        let response = try await provider.asyncRequest(.access, decodeTo: AuthTestResponse.self)
+
+        #expect(response.message == "ok")
+        #expect(responses.authorizationHeaders == [nil, "Bearer new-access"])
     }
 
     @Test("저장된 토큰이 하나도 없는데 401을 받으면 다시 로그인해야 한다고 알린다")
@@ -388,6 +407,10 @@ private final class StubResponses: PluginType, @unchecked Sendable {
             let (statusCode, body) = responses.isEmpty ? (500, "") : responses.removeFirst()
             return .networkResponse(statusCode, Data(body.utf8))
         }
+    }
+
+    func setOnFirstSend(_ hook: @escaping @Sendable () -> Void) {
+        lock.withLock { onFirstSend = hook }
     }
 
     func willSend(_ request: RequestType, target: TargetType) {

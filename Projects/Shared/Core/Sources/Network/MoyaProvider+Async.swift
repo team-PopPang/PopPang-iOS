@@ -65,7 +65,7 @@ private enum AccessRequestResult {
     case success(Response)
     /// 401 5002를 받았다. `sentAccessToken`은 그 요청에 실제로 담았던 토큰이다.
     case expired(sentAccessToken: String?, error: NetworkError)
-    /// 5002가 아닌 401을 받았는데, 보낸 뒤에 다른 요청이 토큰을 갱신해 지금은 다른 토큰이 저장돼 있다.
+    /// 5002가 아닌 401을 받았는데, 보낸 뒤에 갱신이나 로그인으로 지금은 다른 토큰이 저장돼 있다.
     case rejectedWithStaleToken(sentAccessToken: String?, error: NetworkError)
 }
 
@@ -102,9 +102,12 @@ private extension MoyaProvider {
 
         let storage = authentication.storage
         guard let sentAccessToken else {
-            // 토큰 없이 보냈다. 저장된 토큰이 하나도 없으면 로그인이 필요하고, 남은 토큰이 있으면 지우지 않는다.
-            if storage.hasAnyToken() { throw error }
-            throw AuthSessionError.loginRequired
+            // 토큰 없이 보냈다. 토큰 쌍이 없으면 로그아웃 상태이고,
+            // 보낸 뒤에 로그인으로 쌍이 생겼으면 새 토큰으로 다시 보낸다.
+            if storage.removeIncompleteTokens() {
+                throw AuthSessionError.loginRequired
+            }
+            return .rejectedWithStaleToken(sentAccessToken: nil, error: error)
         }
 
         if storage.removeTokens(ifAccessTokenIs: sentAccessToken) {

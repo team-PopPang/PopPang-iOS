@@ -55,7 +55,7 @@ public struct AuthTokenStorage: Sendable {
     /// - Returns: 바꿨으면 `true`. 그사이 로그아웃·재로그인으로 토큰이 바뀌었으면 저장하지 않고 `false`
     public func replaceTokens(_ tokens: AuthTokens, ifRefreshTokenIs expectedRefreshToken: String) throws -> Bool {
         try withLock {
-            guard (store.value(forKey: Key.refreshToken) as String?) == expectedRefreshToken else { return false }
+            guard loadTokens()?.refreshToken == expectedRefreshToken else { return false }
             try saveTokens(tokens)
             return true
         }
@@ -85,11 +85,14 @@ public struct AuthTokenStorage: Sendable {
         }
     }
 
-    /// Access·Refresh Token 가운데 하나라도 있으면 `true`. 쌍이 다 갖춰지지 않아도 남은 토큰이 있는지 본다.
-    public func hasAnyToken() -> Bool {
+    /// 토큰 쌍이 다 갖춰지지 않았으면 남은 토큰을 지운다. 쌍이 다 갖춰지지 않은 상태는 로그아웃으로 본다.
+    ///
+    /// - Returns: 쌍이 없어서 로그아웃 상태면 `true`. 그사이 로그인으로 쌍이 생겼으면 지우지 않고 `false`
+    public func removeIncompleteTokens() -> Bool {
         withLock {
-            (store.value(forKey: Key.accessToken) as String?) != nil
-                || (store.value(forKey: Key.refreshToken) as String?) != nil
+            guard loadTokens() == nil else { return false }
+            removeTokens()
+            return true
         }
     }
 

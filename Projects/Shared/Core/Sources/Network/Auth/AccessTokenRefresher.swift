@@ -56,8 +56,11 @@ private extension AccessTokenRefresher {
         refresh: Refresh
     ) async throws -> String {
         guard let refreshToken = storage.loadTokens()?.refreshToken else {
-            storage.removeTokens()
-            throw AuthSessionError.loginRequired
+            // 토큰 쌍이 없으면 로그아웃 상태다. 그사이 로그인으로 쌍이 생겼으면 그 토큰을 쓴다.
+            if storage.removeIncompleteTokens() {
+                throw AuthSessionError.loginRequired
+            }
+            return try replacedAccessToken(in: storage)
         }
 
         let tokens: AuthTokens

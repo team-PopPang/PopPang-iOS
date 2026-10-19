@@ -65,22 +65,34 @@ struct AuthTokenStorageTests {
         try store.set("refresh", forKey: AuthTokenStorage.Key.refreshToken)
 
         #expect(storage.removeTokens(ifRefreshTokenIs: "other") == false)
-        #expect(storage.hasAnyToken())
+        #expect((store.value(forKey: AuthTokenStorage.Key.refreshToken) as String?) == "refresh")
         #expect(storage.removeTokens(ifRefreshTokenIs: "refresh"))
-        #expect(storage.hasAnyToken() == false)
+        #expect((store.value(forKey: AuthTokenStorage.Key.refreshToken) as String?) == nil)
     }
 
-    @Test("Refresh Token만 남아 있어도 남은 토큰이 있다고 알려 준다")
-    func reportsLoneRefreshToken() throws {
+    @Test("토큰 쌍이 다 갖춰지지 않았으면 남은 토큰을 지우고, 쌍이 있으면 그대로 둔다")
+    func removesOnlyIncompleteTokens() throws {
         let store = InMemoryStore()
         let storage = AuthTokenStorage(store: store)
         try store.set("refresh", forKey: AuthTokenStorage.Key.refreshToken)
 
-        #expect(storage.loadTokens() == nil)
-        #expect(storage.hasAnyToken())
+        #expect(storage.removeIncompleteTokens())
+        #expect((store.value(forKey: AuthTokenStorage.Key.refreshToken) as String?) == nil)
 
-        store.removeValue(forKey: AuthTokenStorage.Key.refreshToken)
-        #expect(storage.hasAnyToken() == false)
+        let tokens = AuthTokens(accessToken: "access", refreshToken: "refresh")
+        try storage.saveTokens(tokens)
+        #expect(storage.removeIncompleteTokens() == false)
+        #expect(storage.loadTokens() == tokens)
+    }
+
+    @Test("Refresh Token만 남아 있으면 바꾸지 않는다")
+    func doesNotReplaceIncompleteTokens() throws {
+        let store = InMemoryStore()
+        let storage = AuthTokenStorage(store: store)
+        try store.set("refresh", forKey: AuthTokenStorage.Key.refreshToken)
+
+        #expect(try storage.replaceTokens(AuthTokens(accessToken: "new", refreshToken: "new-refresh"), ifRefreshTokenIs: "refresh") == false)
+        #expect(storage.loadTokens() == nil)
     }
 
     /// 앱 없이 실행하는 CoreTests에는 Keychain entitlement가 없어(-34018) 이 테스트를 건너뛴다.
