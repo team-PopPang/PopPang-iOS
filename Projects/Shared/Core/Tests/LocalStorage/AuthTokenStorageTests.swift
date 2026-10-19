@@ -11,19 +11,19 @@ struct AuthTokenStorageTests {
         try storage.saveTokens(tokens)
         try storage.saveSignupToken("signup")
 
-        #expect(storage.loadTokens() == tokens)
-        #expect(storage.loadSignupToken() == "signup")
+        #expect(try storage.loadTokens() == tokens)
+        #expect(try storage.loadSignupToken() == "signup")
 
         storage.removeTokens()
 
-        #expect(storage.loadTokens() == nil)
-        #expect(storage.loadSignupToken() == "signup")
+        #expect(try storage.loadTokens() == nil)
+        #expect(try storage.loadSignupToken() == "signup")
 
         try storage.saveTokens(tokens)
         storage.clear()
 
-        #expect(storage.loadTokens() == nil)
-        #expect(storage.loadSignupToken() == nil)
+        #expect(try storage.loadTokens() == nil)
+        #expect(try storage.loadSignupToken() == nil)
     }
 
     @Test("토큰 쌍 가운데 하나라도 저장하지 못하면 둘 다 지운다")
@@ -36,7 +36,44 @@ struct AuthTokenStorageTests {
         #expect(throws: InMemoryKeychainStore.SaveError.self) {
             try storage.saveTokens(AuthTokens(accessToken: "new-access", refreshToken: "new-refresh"))
         }
-        #expect(storage.loadTokens() == nil)
+        #expect(try storage.loadTokens() == nil)
+    }
+
+    @Test("저장된 토큰이 기대한 값일 때만 바꾸거나 지운다")
+    func replacesAndRemovesOnlyWhenTokensMatch() throws {
+        let storage = AuthTokenStorage(store: InMemoryKeychainStore())
+        let oldTokens = AuthTokens(accessToken: "old-access", refreshToken: "old-refresh")
+        let newTokens = AuthTokens(accessToken: "new-access", refreshToken: "new-refresh")
+        try storage.saveTokens(oldTokens)
+
+        #expect(try storage.replaceTokens(newTokens, ifRefreshTokenIs: "other-refresh") == false)
+        #expect(try storage.loadTokens() == oldTokens)
+        #expect(try storage.replaceTokens(newTokens, ifRefreshTokenIs: "old-refresh"))
+        #expect(try storage.loadTokens() == newTokens)
+
+        #expect(try storage.removeTokens(ifAccessTokenIs: "old-access") == false)
+        #expect(try storage.removeTokens(ifRefreshTokenIs: "old-refresh") == false)
+        #expect(try storage.loadTokens() == newTokens)
+        #expect(try storage.removeTokens(ifAccessTokenIs: "new-access"))
+        #expect(try storage.loadTokens() == nil)
+    }
+
+    @Test("Keychain을 읽지 못하면 토큰이 없다고 하지 않고 오류를 던진다")
+    func throwsWhenKeychainIsUnreadable() throws {
+        let store = InMemoryKeychainStore()
+        let storage = AuthTokenStorage(store: store)
+        try storage.saveTokens(AuthTokens(accessToken: "access", refreshToken: "refresh"))
+        store.unreadableKeys = [AuthTokenStorage.Key.accessToken]
+
+        #expect(throws: InMemoryKeychainStore.ReadError.self) {
+            _ = try storage.loadTokens()
+        }
+        #expect(throws: InMemoryKeychainStore.ReadError.self) {
+            _ = try storage.removeTokens(ifAccessTokenIs: nil)
+        }
+
+        store.unreadableKeys = []
+        #expect(try storage.loadTokens() != nil)
     }
 
     /// 앱 없이 실행하는 CoreTests에는 Keychain entitlement가 없어(-34018) 이 테스트를 건너뛴다.
@@ -50,13 +87,13 @@ struct AuthTokenStorageTests {
         defer { store.removeValue(forKey: key) }
 
         try store.set("first", forKey: key)
-        #expect(store.value(forKey: key) == "first")
+        #expect(try store.value(forKey: key) == "first")
 
         try store.set("second", forKey: key)
-        #expect(store.value(forKey: key) == "second")
+        #expect(try store.value(forKey: key) == "second")
 
         store.removeValue(forKey: key)
-        #expect(store.value(forKey: key) == nil)
+        #expect(try store.value(forKey: key) == nil)
     }
 }
 

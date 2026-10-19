@@ -24,6 +24,7 @@ public extension MoyaProvider {
     ///
     /// Access Token이 필요한 요청이 401 5002(만료)를 받으면 토큰을 한 번 갱신하고 원래 요청을 한 번만 다시 보낸다.
     /// 다시 보낸 요청도 실패하면 받은 오류를 그대로 던진다.
+    /// 갱신이 401이 아닌 이유로 실패하면 원래 요청의 만료 오류를 던진다.
     /// 5002가 아닌 401은 같은 토큰으로 다시 성공할 수 없으므로 토큰을 지우고 `AuthSessionError.loginRequired`를 던진다.
     /// 403에는 갱신하지 않는다.
     func asyncRequest(_ target: Target) async throws -> Response {
@@ -37,8 +38,14 @@ public extension MoyaProvider {
         case let .success(response):
             return response
 
-        case let .expired(sentAccessToken, _):
-            _ = try await authentication.refresher.refreshAccessToken(expired: sentAccessToken)
+        case let .expired(sentAccessToken, expiredError):
+            do {
+                _ = try await authentication.refresher.refreshAccessToken(expired: sentAccessToken)
+            } catch let error as AuthSessionError {
+                throw error
+            } catch {
+                throw expiredError
+            }
             switch try await sendAccessRequest(target, authentication: authentication) {
             case let .success(response):
                 return response
@@ -76,12 +83,10 @@ private extension MoyaProvider {
 
         guard error.statusCode == 401 else { throw error }
 
-        // 보낸 뒤에 다른 요청이 토큰을 갱신했다면, 옛 토큰의 실패로 새 토큰을 지우지 않는다.
-        guard authentication.storage.loadTokens()?.accessToken == sentAccessToken else {
+        // 보낸 뒤에 다른 요청이 토큰을 갱신했거나 Keychain을 읽지 못하면, 이 실패로 토큰을 지우지 않는다.
+        guard (try? authentication.storage.removeTokens(ifAccessTokenIs: sentAccessToken)) == true else {
             throw error
         }
-
-        authentication.storage.removeTokens()
         throw AuthSessionError.loginRequired
     }
 

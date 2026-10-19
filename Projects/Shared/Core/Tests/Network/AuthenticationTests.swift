@@ -48,7 +48,7 @@ struct AuthenticationTests {
 
         #expect(accessTokens == Array(repeating: "new-access", count: 5))
         #expect(await counter.refreshTokens == ["old-refresh"])
-        #expect(storage.loadTokens() == .newTokens)
+        #expect(try storage.loadTokens() == .newTokens)
     }
 
     @Test("다른 요청이 이미 갱신했으면 다시 갱신하지 않는다")
@@ -74,7 +74,7 @@ struct AuthenticationTests {
         await #expect(throws: AuthSessionError.loginRequired) {
             _ = try await refresher.refreshAccessToken(expired: "old-access")
         }
-        #expect(storage.loadTokens() == nil)
+        #expect(try storage.loadTokens() == nil)
     }
 
     @Test(
@@ -89,7 +89,7 @@ struct AuthenticationTests {
         await #expect(throws: error) {
             _ = try await refresher.refreshAccessToken(expired: "old-access")
         }
-        #expect(storage.loadTokens() == .oldTokens)
+        #expect(try storage.loadTokens() == .oldTokens)
     }
 
     @Test("갱신하는 동안 토큰이 지워지면 늦게 온 새 토큰을 저장하지 않는다")
@@ -103,7 +103,7 @@ struct AuthenticationTests {
         await #expect(throws: AuthSessionError.loginRequired) {
             _ = try await refresher.refreshAccessToken(expired: "old-access")
         }
-        #expect(storage.loadTokens() == nil)
+        #expect(try storage.loadTokens() == nil)
     }
 
     @Test("갱신하는 동안 다시 로그인했으면 늦게 온 응답 대신 새 로그인 토큰을 쓴다")
@@ -117,7 +117,7 @@ struct AuthenticationTests {
         let accessToken = try await refresher.refreshAccessToken(expired: "old-access")
 
         #expect(accessToken == "relogin-access")
-        #expect(storage.loadTokens() == .reloginTokens)
+        #expect(try storage.loadTokens() == .reloginTokens)
     }
 
     @Test("갱신하는 동안 다시 로그인했으면 늦게 온 401이 새 로그인 토큰을 지우지 않는다")
@@ -131,7 +131,7 @@ struct AuthenticationTests {
         let accessToken = try await refresher.refreshAccessToken(expired: "old-access")
 
         #expect(accessToken == "relogin-access")
-        #expect(storage.loadTokens() == .reloginTokens)
+        #expect(try storage.loadTokens() == .reloginTokens)
     }
 
     @Test("갱신한 토큰을 저장하지 못하면 다시 로그인해야 한다고 알린다")
@@ -147,7 +147,37 @@ struct AuthenticationTests {
         await #expect(throws: AuthSessionError.loginRequired) {
             _ = try await refresher.refreshAccessToken(expired: "old-access")
         }
-        #expect(storage.loadTokens() == nil)
+        #expect(try storage.loadTokens() == nil)
+    }
+
+    @Test("만료된 토큰을 알 수 없으면 저장된 토큰이 있어도 갱신한다")
+    func refreshesWhenExpiredTokenIsUnknown() async throws {
+        let storage = try makeStorage()
+        let counter = CallCounter()
+        let refresher = makeRefresher(storage: storage, counter: counter)
+
+        let accessToken = try await refresher.refreshAccessToken(expired: nil)
+
+        #expect(accessToken == "new-access")
+        #expect(await counter.count == 1)
+    }
+
+    @Test("Keychain을 읽지 못하면 토큰을 지우지 않고 오류를 던진다")
+    func keepsTokensWhenKeychainIsUnreadableDuringRefresh() async throws {
+        let store = InMemoryKeychainStore()
+        let storage = AuthTokenStorage(store: store)
+        try storage.saveTokens(.oldTokens)
+        store.unreadableKeys = [AuthTokenStorage.Key.refreshToken]
+        let counter = CallCounter()
+        let refresher = makeRefresher(storage: storage, counter: counter)
+
+        await #expect(throws: InMemoryKeychainStore.ReadError.self) {
+            _ = try await refresher.refreshAccessToken(expired: nil)
+        }
+
+        store.unreadableKeys = []
+        #expect(try storage.loadTokens() == .oldTokens)
+        #expect(await counter.count == 0)
     }
 
     @Test("Refresh Token이 없으면 다시 로그인해야 한다고 알린다")
@@ -176,7 +206,7 @@ struct AuthenticationTests {
         #expect(response.message == "ok")
         #expect(context.responses.authorizationHeaders == ["Bearer old-access", "Bearer new-access"])
         #expect(await context.counter.count == 1)
-        #expect(context.storage.loadTokens() == .newTokens)
+        #expect(try context.storage.loadTokens() == .newTokens)
     }
 
     @Test("다시 보낸 요청도 만료 응답을 받으면 더 갱신하지 않는다")
@@ -204,7 +234,7 @@ struct AuthenticationTests {
             _ = try await context.provider.asyncRequest(.access)
         }
         #expect(await context.counter.count == 0)
-        #expect(context.storage.loadTokens() == nil)
+        #expect(try context.storage.loadTokens() == nil)
     }
 
     @Test("보낸 뒤에 다른 요청이 토큰을 갱신했으면 옛 토큰의 401이 새 토큰을 지우지 않는다")
@@ -217,7 +247,35 @@ struct AuthenticationTests {
             _ = try await context.provider.asyncRequest(.access)
         }
         #expect(context.responses.authorizationHeaders == ["Bearer old-access"])
-        #expect(context.storage.loadTokens() == .newTokens)
+        #expect(try context.storage.loadTokens() == .newTokens)
+    }
+
+    @Test("Keychain을 읽지 못해 헤더 없이 보낸 요청이 401을 받아도 토큰을 지우지 않는다")
+    func keepsTokensWhenKeychainIsUnreadableDuringRequest() async throws {
+        let store = InMemoryKeychainStore()
+        let context = try RequestContext(store: store, responses: [(401, errorBody(code: 5006))])
+        store.unreadableKeys = [AuthTokenStorage.Key.accessToken]
+
+        await #expect(throws: NetworkError.invalidStatusCode(401, message: errorBody(code: 5006))) {
+            _ = try await context.provider.asyncRequest(.access)
+        }
+
+        store.unreadableKeys = []
+        #expect(context.responses.authorizationHeaders == [nil])
+        #expect(try context.storage.loadTokens() == .oldTokens)
+    }
+
+    @Test("갱신이 401이 아닌 이유로 실패하면 원래 요청의 만료 오류를 던진다")
+    func throwsOriginalErrorWhenRefreshFailsOtherwise() async throws {
+        let context = try RequestContext(
+            responses: [(401, errorBody(code: 5002))],
+            refresh: { _ in throw NetworkError.invalidStatusCode(503, message: errorBody(code: 5013)) }
+        )
+
+        await #expect(throws: NetworkError.invalidStatusCode(401, message: errorBody(code: 5002))) {
+            _ = try await context.provider.asyncRequest(.access)
+        }
+        #expect(try context.storage.loadTokens() == .oldTokens)
     }
 
     @Test("403에는 갱신하지 않고 토큰을 그대로 둔다")
@@ -228,7 +286,7 @@ struct AuthenticationTests {
             _ = try await context.provider.asyncRequest(.access)
         }
         #expect(await context.counter.count == 0)
-        #expect(context.storage.loadTokens() == .oldTokens)
+        #expect(try context.storage.loadTokens() == .oldTokens)
     }
 
     @Test(
@@ -242,7 +300,7 @@ struct AuthenticationTests {
             _ = try await context.provider.asyncRequest(target)
         }
         #expect(await context.counter.count == 0)
-        #expect(context.storage.loadTokens() == .oldTokens)
+        #expect(try context.storage.loadTokens() == .oldTokens)
     }
 }
 
@@ -252,8 +310,11 @@ private func errorBody(code: Int) -> String {
     #"{"success":false,"code":\#(code),"message":"error","data":null}"#
 }
 
-private func makeStorage(signupToken: String? = nil) throws -> AuthTokenStorage {
-    let storage = AuthTokenStorage(store: InMemoryKeychainStore())
+private func makeStorage(
+    store: InMemoryKeychainStore = InMemoryKeychainStore(),
+    signupToken: String? = nil
+) throws -> AuthTokenStorage {
+    let storage = AuthTokenStorage(store: store)
     try storage.saveTokens(.oldTokens)
     if let signupToken {
         try storage.saveSignupToken(signupToken)
@@ -335,17 +396,19 @@ private struct RequestContext {
     let responses: StubResponses
     let provider: MoyaProvider<AuthTestAPI>
 
+    /// - Parameter refresh: 갱신 API 대신 실행한다. `nil`이면 새 토큰 쌍을 돌려준다.
     init(
+        store: InMemoryKeychainStore = InMemoryKeychainStore(),
         responses: [(Int, String)],
+        refresh: AccessTokenRefresher.Refresh? = nil,
         onFirstSend: (@Sendable (AuthTokenStorage) -> Void)? = nil
     ) throws {
-        let storage = try makeStorage(signupToken: "signup")
+        let storage = try makeStorage(store: store, signupToken: "signup")
         let stubResponses = StubResponses(responses, onFirstSend: onFirstSend.map { hook in { hook(storage) } })
         let counter = CallCounter()
-        let authentication = AuthenticationPlugin(
-            storage: storage,
-            refresher: makeRefresher(storage: storage, counter: counter)
-        )
+        let refresher = refresh.map { AccessTokenRefresher(storage: storage, refresh: $0) }
+            ?? makeRefresher(storage: storage, counter: counter)
+        let authentication = AuthenticationPlugin(storage: storage, refresher: refresher)
 
         self.storage = storage
         self.counter = counter

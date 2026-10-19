@@ -16,18 +16,25 @@ public struct KeychainStore: KeychainStoring {
         self.service = service
     }
 
-    public func value(forKey key: String) -> String? {
+    /// 저장된 값이 없으면 `nil`이다. 잠금 상태 등으로 읽지 못하면 오류를 던진다.
+    public func value(forKey key: String) throws -> String? {
         var query = baseQuery(forKey: key)
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
 
         var item: CFTypeRef?
-        guard SecItemCopyMatching(query as CFDictionary, &item) == errSecSuccess,
-              let data = item as? Data
-        else {
+        let status = SecItemCopyMatching(query as CFDictionary, &item)
+        switch status {
+        case errSecSuccess:
+            guard let data = item as? Data else { return nil }
+            return String(data: data, encoding: .utf8)
+
+        case errSecItemNotFound:
             return nil
+
+        default:
+            throw KeychainStoreError.unhandledStatus(status)
         }
-        return String(data: data, encoding: .utf8)
     }
 
     public func set(_ value: String, forKey key: String) throws {
