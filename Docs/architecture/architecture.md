@@ -133,7 +133,7 @@ Projects
   - 예외: `ServerHealthRepositoryImpl`(앱 시작 헬스 체크)은 `URLSession`으로 직접 요청한다. 오프라인 여부를 `URLError` 코드로 구분하고 요청 전체를 5초로 제한하기 위해서다. 요청 주소와 헤더는 `ServerHealthAPI`(`BaseAPI`)로 만든다.
 - `Sources/DTO`: 서버 응답·요청 형식
 - `Sources/Mapping/<Entity>+DataMapping.swift`: DTO↔Entity 변환. 일부 DTO는 DTO 파일 안의 `toEntity()` extension으로 변환한다.
-- 카카오·구글·애플 로그인 SDK 연동 구현
+- `Sources/SocialLogin/`: 카카오·구글·애플 SDK 로그인 전략(`SocialLoginStrategy`). 서버 로그인·가입·토큰 저장은 `AuthRepositoryImpl`이 모든 제공자에 같은 방식으로 한다. ([V2 API 마이그레이션](api-v2-migration.md#2단계-로그인-모듈과-유저-엔티티))
 
 넣지 않을 것: DTO를 Domain이나 Feature로 노출하는 코드, 화면 상태.
 

@@ -27,8 +27,8 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 
 | 단계 | 내용 | 명세 묶음 | 화면 동작 변경 | 상태 |
 | --- | --- | --- | --- | --- |
-| 1 | 공통 네트워크 기반 | COMMON | 없음 | 진행 중 (#116) |
-| 2 | 로그인 모듈과 유저 엔티티 | A1, A2, USER-01 | 있음 (기존 사용자 재로그인) | 예정 |
+| 1 | 공통 네트워크 기반 | COMMON | 없음 | 완료 (#117) |
+| 2 | 로그인 모듈과 유저 엔티티 | A1, A2, USER-01 | 있음 (기존 사용자 재로그인) | 진행 중 (#118) |
 | 3 | 내 정보 | U | 일부 | 예정 |
 | 4 | 팝업 목록·상세 | P1, P2 | 거의 없음 | 예정 |
 | 5 | 찜·추천 카테고리·팝업 제보 | F | 거의 없음 | 예정 |
@@ -74,7 +74,7 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 | 갱신한 토큰을 저장하지 못해요. | 서버는 이미 이전 Refresh Token을 폐기했으므로, 남은 옛 토큰을 지우고 `AuthSessionError.loginRequired`를 던져요. |
 | 만료 응답을 받은 요청에 어떤 토큰을 담았는지 알 수 없어요. | 다른 요청이 갱신했다고 보지 않고 갱신해요. |
 | 403을 받아요. | 갱신하지 않아요. |
-| `signup` API가 401 5002를 받아요. | 갱신하지 않아요. Signup Token이 만료된 것이라 소셜 로그인부터 다시 해요(2단계에서 처리). |
+| `signup` API가 401 5002를 받아요. | 갱신하지 않아요. Signup Token이 만료된 것이라 소셜 로그인부터 다시 해요. |
 | V1 API | 헤더를 붙이지 않고, 401을 받아도 갱신하지 않아요. |
 
 ### 동시에 일어나는 토큰 변경
@@ -101,53 +101,59 @@ extension UserAPI: BaseAPI {
 
 case마다 인증 종류가 다르면 `switch`로 나눠요. 응답이 `APIResponse`로 감싸진 API는 `asyncRequest(_:decodeDataTo:)`로, 감싸지 않은 API는 지금처럼 `asyncRequest(_:decodeTo:)`로 요청해요. 성공 본문이 없거나 `data`가 늘 null인 API(`ApiResponse[null]`)는 `asyncRequestVoid(_:)`로 요청해요.
 
-### 2단계로 넘기는 일
+### 2단계에서 연결한 것
 
-- `NetworkProvider.shared`에 `AuthenticationPlugin`을 넣는 일. 갱신 API target(`POST /api/v2/auth/refresh`)이 `Data`에 생겨야 `AccessTokenRefresher`의 갱신 함수를 만들 수 있어서, 2단계에서 `AppBootstrap`이 조립해요.
-- `AuthSessionError.loginRequired`를 받았을 때 로그인 화면으로 보내는 일
-- 앱에서 토큰 저장·삭제를 실제로 확인하는 일
+- `NetworkProvider.shared`에 `AuthenticationPlugin`을 넣는 일과 갱신 API target은 2단계에서 했어요. [2단계](#2단계-로그인-모듈과-유저-엔티티)를 봐요.
 
 ## 2단계: 로그인 모듈과 유저 엔티티
 
-### 지금 구조
+로그인·가입·앱 시작 세션 복구·로그아웃을 V2로 옮기고, 카카오·애플·구글 로그인을 전략 패턴으로 묶었어요. PR 하나로 해요(#118).
 
-- `User`·`UserDTO`를 로그인 응답과 가입 요청에 같이 써요. `uid`, `fcmToken`, `alertKeywordList`, `recommendList`가 들어 있어요.
-- 가입 화면은 로그인 응답의 `User`를 받아 시작하고(`AppFeature`의 `.register`), 그 `User`에 입력값을 채워 가입 요청을 보내요(`RegisterFlowFeature`).
-- 앱을 시작하면 UserDefaults의 `uuid`로 `POST /api/v1/auth/autoLogin`을 불러 세션을 되살려요(`LocalSessionClient`).
-- 로그아웃은 서버를 부르지 않고 로컬 세션만 지워요.
-- 애플 로그인 요청에 nonce를 넣지 않아요(`AuthFeatureView`의 `SignInWithAppleButton`).
+### 구조
 
-### V2에서 달라지는 것
+소셜 로그인은 "SDK로 증명 값을 받는 단계"만 제공자마다 다르고, "그 값을 서버에 보내는 단계"는 같아요. 다른 부분은 전략으로, 같은 부분은 Repository 하나로 나눴어요.
 
-- 로그인 응답이 가입 상태에 따라 둘로 나뉘어요. 가입을 마친 사용자(COMPLETED)는 사용자 정보와 토큰 쌍을 받고, 가입이 필요한 사용자(PENDING)는 Signup Token만 받아요. PENDING에는 사용자 정보가 없어요.
-- V2 사용자 정보에는 `uid`와 `fcmToken`이 없어요.
-- 가입 요청은 `uid`·`provider`·`email`·`role` 없이 Signup Token으로 대상을 정해요.
-- 토큰 갱신 응답에는 사용자 정보가 없어요. 앱을 시작할 때 프로필은 내 정보 조회(USER-01)로 받아요.
-- 애플 로그인은 요청마다 새 nonce를 만들어 Apple 요청에 SHA-256 값을 넣고, 서버에는 원문을 `raw_nonce`로 보내요.
+| 구성 요소 | 위치 | 역할 |
+| --- | --- | --- |
+| `SocialLoginStrategy` | `Data/Sources/SocialLogin/` | `login() -> SocialCredential`. 제공자마다 SDK로 로그인하고 서버에 보낼 증명 값을 돌려줘요. 사용자가 창을 닫으면 `AuthError.cancelled`를 던져요. |
+| `KakaoLoginStrategy` | 같음 | 카카오톡 앱이 있으면 앱으로, 없으면 카카오 계정 웹으로 로그인해 `access_token`을 받아요. |
+| `GoogleLoginStrategy` | 같음 | `GIDSignIn`으로 `id_token`을 받아요. |
+| `AppleLoginStrategy` | 같음 | `ASAuthorizationController`를 Data 안에서 직접 띄워요. 요청마다 nonce 원문을 만들고, Apple 요청에는 그 SHA-256 값(소문자 16진수)을 넣어요. 서버에는 `auth_code`와 원문(`raw_nonce`)을 보내요. |
+| `AuthRepositoryImpl` | `Data/Sources/RepositoryImpl/` | 모든 제공자에 같은 서버 단계예요. V2 로그인·가입·내 정보 조회·로그아웃을 부르고 토큰을 `AuthTokenStorage`에 저장해요. 토큰은 feature에 넘기지 않아요. 서버 오류 코드는 `AuthError`로 바꿔요. |
+| `AuthAPI`, `AuthTokenRefreshAPI` | `Data/Sources/Remote/Auth/` | V2 인증 API target. 갱신 API는 인증 plugin이 없는 provider로 불러서 갱신 요청에 다시 갱신이 걸리지 않아요. |
+| `Provider`, `Role`, `LoginResult`, `SignupRequest`, `AuthError`, `AuthRepositoryProtocol`, `AuthUsecase` | `Domain` | `LoginResult`는 `.completed(User)` 또는 `.pending(Provider)`예요. |
+| `User` | `Domain/Sources/Entities/User.swift` | V2 사용자 정보 모양이에요. `uid`·`fcmToken`·`alertKeywordList`·`recommendList`를 뺐고, `provider`·`role`은 enum이에요. 관리자 판단은 `isAdmin`으로 해요. |
 
-### 바꿀 모델
-
-| 모델 | 바뀌는 점 |
-| --- | --- |
-| `User` | V2 사용자 정보 모양으로 바꿔요. `uid`·`fcmToken`을 빼고 `provider`·`role`은 값이 없을 수 있는 enum으로 바꿔요. |
-| `LoginResult` (새 entity) | `.completed(User)` 또는 `.pending(provider)`. 토큰은 Data가 `AuthTokenStorage`에 저장하고 feature에는 넘기지 않아요. |
-| `SignupRequest` (새 entity) | 가입 입력값을 `User`와 분리해요. nickname, isAlerted, fcmToken, alertKeywordList, recommendList |
+새 제공자를 추가하려면 `SocialLoginStrategy`를 채택한 전략 하나를 만들고 `AuthRepositoryImpl` 기본 목록에 넣어요.
 
 ### 흐름
 
-1. 로그인: PENDING이면 Signup Token을 저장하고 가입 화면으로 가요. COMPLETED이면 토큰 쌍을 저장하고 메인으로 가요.
-2. 가입: Signup Token으로 요청하고, 성공하면 토큰 쌍을 저장하고 Signup Token을 지워요. 같은 provider의 로그인과 가입은 함께 옮겨요.
-3. 앱 시작: `autoLogin`을 없애고, 저장된 토큰으로 내 정보 조회를 불러 세션을 되살려요. 토큰이 없으면 로그인 화면으로 가요.
-4. 로그아웃: 서버 로그아웃(`POST /api/v2/auth/logout`)을 부른 뒤 토큰과 로컬 세션을 지워요.
-5. 아직 V1인 API에는 COMPLETED 응답에서 저장한 `userUuid`를 그대로 넘겨요.
+1. 로그인 버튼 3개가 같은 action(`loginTapped(Provider)`)을 보내요.
+2. COMPLETED이면 토큰 쌍을 저장하고 메인으로, PENDING이면 가입 전용 토큰을 저장하고 가입 화면으로 가요.
+3. 가입은 가입 전용 토큰으로 요청하고, 성공하면 토큰 쌍을 저장하고 가입 전용 토큰을 지워요. 가입 단계가 만료되면(401 5002·5014 등) 만료 안내와 함께 로그인 화면으로 돌아가요. 닉네임이 중복이면(409 4202) 닉네임 단계로 돌아가요.
+4. 앱 시작은 `autoLogin` 대신 저장된 토큰으로 내 정보 조회(`GET /api/v2/user`)를 불러 세션을 되살려요. 아직 V1인 API를 위해 받은 `userUuid`를 저장해요.
+5. 로그아웃은 서버 로그아웃(`POST /api/v2/auth/logout`)을 부른 뒤 기기의 토큰과 세션을 지워요.
+6. 앱을 쓰는 중에 `AuthSessionError.loginRequired`가 나면 `AuthenticationPlugin`이 알리고, `AppFeature`가 메인 화면에서만 로그아웃 전환을 해요.
 
-### PR 나누기
+`AppBootstrap`이 토큰 저장소, refresher, 인증 plugin을 만들어 `NetworkProvider.shared.configureAuthentication(_:)`으로 요청 전에 연결해요.
 
-| PR | 내용 |
+### 2단계에서 정한 것
+
+| 상황 | 결정 |
 | --- | --- |
-| 2-1 | 유저 entity, DTO, Repository·Usecase protocol 변경과 테스트 |
-| 2-2 | `NetworkProvider.shared` 인증 연결, 카카오·애플·구글 로그인과 가입, 가입 화면 변경 |
-| 2-3 | 앱 시작, 로그인 화면으로 보내는 처리, 로그아웃 |
+| 가입 화면의 추천 목록·닉네임 중복 확인 | V1 유지 ([정해야 할 것](#정해야-할-것) 1번) |
+| 기존 사용자 | 업데이트 뒤 한 번 다시 로그인해요. |
+| 서버 로그아웃 실패 | 기기의 토큰과 세션은 지우고 로그아웃해요. 서버 세션은 남을 수 있어요. |
+| 앱 시작 때 내 정보 조회가 서버 오류·네트워크로 실패 | 토큰은 지우지 않고 로그인 화면을 보여 줘요. 다음 실행 때 다시 확인해요. |
+| 가입 도중 앱을 다시 켬 | 가입 전용 토큰을 지우고 로그인부터 다시 해요. |
+| 로그인 실패 안내 | 탈퇴 계정(5010), 다른 방식으로 가입된 계정(5016), 그 밖의 실패 세 가지로 안내해요(ko·en·ja). 사용자가 창을 닫으면 안내하지 않아요. |
+| 애플 로그인 요청 범위 | 이전처럼 이름·이메일 범위(scope)를 요청하지 않아요. |
+
+### 직접 확인할 것
+
+- 제공자마다 신규 가입(PENDING)과 기존 로그인(COMPLETED)
+- 앱을 다시 켰을 때 로그인 유지, 로그아웃
+- 애플 로그인은 실제 기기에서 확인해요. nonce 형식이 틀리면 401 5015로 실패해요.
 
 ## 3~7단계
 
@@ -165,10 +171,10 @@ case마다 인증 종류가 다르면 `switch`로 나눠요. 응답이 `APIRespo
 
 | 번호 | 내용 | 관련 단계 | 상태 |
 | --- | --- | --- | --- |
-| 1 | 가입 화면이 추천 카테고리 목록과 닉네임 중복 확인을 인증 없이 불러요. V2에서는 Signup Token으로 두 API를 부를 수 없어요. 당분간 V1로 둘지, 서버 계약을 정할지 | 2, 3, 5 | 미정 |
-| 2 | 업데이트하면 기존 사용자는 V2 토큰이 없어서 한 번 다시 로그인해야 해요. 그대로 받아들일지 | 2 | 미정 |
+| 1 | 가입 화면이 추천 카테고리 목록과 닉네임 중복 확인을 인증 없이 불러요. V2에서는 Signup Token으로 두 API를 부를 수 없어요. 당분간 V1로 둘지, 서버 계약을 정할지 | 2, 3, 5 | V1 유지로 결정함. V1이 없어지기 전에 서버 팀과 계약을 정해야 해요 (확인 필요) |
+| 2 | 업데이트하면 기존 사용자는 V2 토큰이 없어서 한 번 다시 로그인해야 해요. 그대로 받아들일지 | 2 | 받아들이기로 결정함 |
 | 3 | 토큰 갱신이 401이 아닌 이유로 실패할 때 토큰을 지울지, 언제 다시 시도할지. 1단계는 토큰을 그대로 둬요. | 1, 2 | 미정 |
-| 4 | 서버 로그아웃이 실패할 때 로컬 로그인 정보를 지울지 | 2 | 미정 |
+| 4 | 서버 로그아웃이 실패할 때 로컬 로그인 정보를 지울지 | 2 | 지우기로 결정함 |
 | 5 | 지금 앱은 가입 요청에 `signupOs`를 보내지 않고, V2도 가입 OS를 저장하지 않아요. 가입 OS 통계가 필요한지 | 2 | 미정 |
 | 6 | 로그인 전 화면이 부르는 V1 조회 API가 있는지 | 4 | 확인 필요: `OnboardingFeature`, `AuthFeature`의 client 호출 |
 | 7 | 토큰 유효기간과 요청 제한 횟수의 운영 값. 앱에 하드코딩하지 않아요. | 2 | 확인 필요: 서버 운영 설정 |
