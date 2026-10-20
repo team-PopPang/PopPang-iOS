@@ -10,6 +10,7 @@ import Moya
 public final class AuthRepositoryImpl: AuthRepositoryProtocol {
     private let strategies: [Provider: SocialLoginStrategy]
     private let tokenStorage: AuthTokenStorage
+    private let refreshTokens: AccessTokenRefresher.Refresh
     private let makeProvider: () -> MoyaProvider<AuthAPI>
 
     public init(
@@ -19,10 +20,12 @@ public final class AuthRepositoryImpl: AuthRepositoryProtocol {
             GoogleLoginStrategy(),
         ],
         tokenStorage: AuthTokenStorage,
+        refreshTokens: @escaping AccessTokenRefresher.Refresh = AuthTokenRefresh.live(),
         makeProvider: @escaping () -> MoyaProvider<AuthAPI> = { NetworkProvider.shared.makeProvider() }
     ) {
         self.strategies = Dictionary(strategies.map { ($0.provider, $0) }) { first, _ in first }
         self.tokenStorage = tokenStorage
+        self.refreshTokens = refreshTokens
         self.makeProvider = makeProvider
     }
 
@@ -102,6 +105,15 @@ public final class AuthRepositoryImpl: AuthRepositoryProtocol {
         guard let tokens else { return }
         do {
             try await makeProvider().asyncRequestVoid(.logout(accessToken: tokens.accessToken))
+        } catch let error as NetworkError where error.isExpiredToken {
+            // Access Token은 짧게 만료되므로 로그아웃할 때 이미 만료된 경우가 많다.
+            // 서버의 Refresh 세션을 지우려고 꺼내 둔 Refresh Token으로 한 번 갱신해 다시 보낸다. 새 토큰은 저장하지 않는다.
+            do {
+                let refreshed = try await refreshTokens(tokens.refreshToken)
+                try await makeProvider().asyncRequestVoid(.logout(accessToken: refreshed.accessToken))
+            } catch {
+                Logger.w("서버 로그아웃 실패: \(error.localizedDescription)")
+            }
         } catch {
             // 서버 세션 삭제가 확인되지 않아도 사용자가 원한 로그아웃이므로 기기의 토큰은 이미 지웠다.
             Logger.w("서버 로그아웃 실패: \(error.localizedDescription)")

@@ -229,14 +229,15 @@ struct AuthRepositoryTests {
         #expect(context.storage.loadTokens() == AuthTokens(accessToken: "new-access", refreshToken: "new-refresh"))
     }
 
-    @Test("Access Token이 만료된 상태로 로그아웃해도 갱신하지 않고 기기의 토큰을 지운다")
-    func logoutWithExpiredTokenDoesNotRefresh() async throws {
-        let context = Context(responses: [(401, Fixture.error(5002))])
+    @Test("Access Token이 만료된 상태로 로그아웃하면 한 번 갱신한 토큰으로 다시 보내고, 새 토큰은 저장하지 않는다")
+    func logoutWithExpiredTokenRetriesWithRefreshedToken() async throws {
+        let context = Context(responses: [(401, Fixture.error(5002)), (200, "")])
         try context.storage.saveTokens(AuthTokens(accessToken: "access", refreshToken: "refresh"))
 
         await context.repository.logout()
 
-        #expect(context.stub.requestCount == 1)
+        #expect(context.stub.authorizationHeaders == ["Bearer access", "Bearer new-access"])
+        #expect(context.refreshedTokens.value == ["refresh"])
         #expect(context.storage.loadTokens() == nil)
     }
 
@@ -367,9 +368,28 @@ private final class StubResponses: PluginType, @unchecked Sendable {
     }
 }
 
+/// 여러 스레드에서 값을 고칠 수 있는 테스트용 상자
+private final class LockedValue<Value>: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _value: Value
+
+    init(_ value: Value) {
+        _value = value
+    }
+
+    var value: Value {
+        lock.withLock { _value }
+    }
+
+    func update(_ body: (inout Value) -> Void) {
+        lock.withLock { body(&_value) }
+    }
+}
+
 private struct Context {
     let storage: AuthTokenStorage
     let stub: StubResponses
+    let refreshedTokens: LockedValue<[String]>
     let repository: AuthRepositoryImpl
 
     init(
@@ -390,11 +410,17 @@ private struct Context {
             authentication: authentication
         )
 
+        let refreshedTokens = LockedValue<[String]>([])
         self.storage = storage
         self.stub = stub
+        self.refreshedTokens = refreshedTokens
         self.repository = AuthRepositoryImpl(
             strategies: Provider.allCases.map { FakeLoginStrategy(provider: $0, error: strategyError) },
             tokenStorage: storage,
+            refreshTokens: { refreshToken in
+                refreshedTokens.update { $0.append(refreshToken) }
+                return AuthTokens(accessToken: "new-access", refreshToken: "new-refresh")
+            },
             makeProvider: {
                 networkProvider.makeProvider(
                     endpointClosure: { target in

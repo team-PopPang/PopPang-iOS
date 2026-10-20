@@ -1035,7 +1035,7 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
     <tr><td><code>AuthSessionError.loginRequired</code>를 받으면 로그인 화면으로</td><td>plugin이 <code>AuthSessionEvents</code>로 알리고(구독할 때마다 새 stream을 줘요), <code>AppFeature</code>가 메인 화면에서만 로그아웃 전환을 해요. 로그인 화면이나 로그아웃 중에 온 알림은 무시해요.</td></tr>
     <tr><td>로그인·가입 토큰 저장</td><td><code>AuthRepositoryImpl</code>이 COMPLETED면 토큰 쌍을, PENDING이면 Signup Token을 저장해요. 가입에 성공하면 토큰 쌍을 저장하고 Signup Token을 지워요. 토큰은 feature에 넘기지 않아요.</td></tr>
     <tr><td>앱 시작 세션 복구</td><td><code>autoLogin</code> 대신 저장된 토큰으로 내 정보 조회(<code>GET /api/v2/user</code>)를 불러요. 만료됐으면 이 문서의 갱신 흐름이 그대로 동작해요.</td></tr>
-    <tr><td>로그아웃</td><td>기기의 토큰을 먼저 지우고, 미리 꺼내 둔 Access Token을 헤더에 직접 담아 서버 로그아웃(<code>POST /api/v2/auth/logout</code>)을 보내요. 그래서 로그아웃 요청에는 갱신이 걸리지 않고, 기다리는 동안 다시 로그인해도 새 토큰이 지워지지 않아요. 토큰이 없으면 서버에 묻지 않아요.</td></tr>
+    <tr><td>로그아웃</td><td>기기의 토큰을 먼저 지우고, 미리 꺼내 둔 Access Token을 헤더에 직접 담아 서버 로그아웃(<code>POST /api/v2/auth/logout</code>)을 보내요. 그래서 기다리는 동안 다시 로그인해도 새 토큰이 지워지지 않아요. Access Token은 15분(설계값)이면 만료돼서 로그아웃할 때 이미 만료된 경우가 많아요. 그래서 401 5002를 받으면 꺼내 둔 Refresh Token으로 한 번 갱신해 다시 보내요. 서버의 Refresh 세션을 지우기 위해서이고, 갱신한 토큰은 저장하지 않아요. 토큰이 없으면 서버에 묻지 않아요.</td></tr>
     <tr><td><s>재설치 시 Keychain 정리</s></td><td>할 필요가 없어졌어요. 토큰을 UserDefaults로 옮겨서 앱을 지우면 세션과 토큰이 함께 지워져요(<a href="#storage">9절</a>).</td></tr>
   </tbody>
 </table></div>
