@@ -13,10 +13,10 @@ public struct V2AuthUserDTO: Decodable, Equatable, Sendable {
     func toEntity() -> User {
         User(
             userUuid: userUuid,
-            provider: provider.flatMap(Provider.init(rawValue:)),
+            provider: provider.flatMap { Provider(rawValue: $0.uppercased()) },
             email: email,
             nickname: nickname,
-            role: role.flatMap(Role.init(rawValue:)),
+            role: role.flatMap { Role(rawValue: $0.uppercased()) },
             isAlerted: isAlerted
         )
     }

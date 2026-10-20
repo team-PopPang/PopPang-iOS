@@ -7,7 +7,8 @@ import Moya
 public enum AuthAPI {
     case login(SocialCredential)
     case signup(provider: Provider, request: V2SignupRequestDTO)
-    case logout
+    /// 로그아웃. 기기의 토큰을 먼저 지운 뒤 보내므로 저장소 대신 꺼내 둔 Access Token을 직접 담는다.
+    case logout(accessToken: String)
     case me
 }
 
@@ -18,11 +19,11 @@ extension AuthAPI: BaseAPI {
 
     public var authorization: APIAuthorization {
         switch self {
-        case .login:
+        case .login, .logout:
             return .none
         case .signup:
             return .signup
-        case .logout, .me:
+        case .me:
             return .access
         }
     }
@@ -47,6 +48,17 @@ extension AuthAPI: BaseAPI {
         case .login, .signup, .logout:
             return .post
         }
+    }
+
+    public var headers: [String: String]? {
+        var headers = [
+            "Content-Type": "application/json",
+            "accept": "application/json",
+        ]
+        if case let .logout(accessToken) = self {
+            headers["Authorization"] = "Bearer \(accessToken)"
+        }
+        return headers
     }
 
     public var task: Task {

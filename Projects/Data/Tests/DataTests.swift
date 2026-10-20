@@ -149,7 +149,7 @@ struct DataTests {
             provider: "KAKAO",
             email: "index@example.com",
             nickname: "팝팡",
-            role: "ADMIN",
+            role: "admin",
             isAlerted: true
         ).toEntity()
 

@@ -94,22 +94,18 @@ public final class AuthRepositoryImpl: AuthRepositoryProtocol {
     }
 
     public func logout() async {
-        tokenStorage.removeSignupToken()
+        // 기기의 토큰을 먼저 지운다. 서버를 기다리는 동안 다시 로그인해도 새 토큰을 지우지 않고,
+        // 만료된 Access Token 때문에 갱신이 일어나 새 토큰이 남는 일도 없다.
+        let tokens = tokenStorage.loadTokens()
+        tokenStorage.clear()
 
-        // 토큰이 없으면 서버에 알릴 세션도 없다.
-        guard let tokens = tokenStorage.loadTokens() else {
-            _ = tokenStorage.removeIncompleteTokens()
-            return
-        }
-
+        guard let tokens else { return }
         do {
-            try await makeProvider().asyncRequestVoid(.logout)
+            try await makeProvider().asyncRequestVoid(.logout(accessToken: tokens.accessToken))
         } catch {
-            // 서버 세션 삭제가 확인되지 않아도 사용자가 원한 로그아웃이므로 기기의 토큰은 지운다.
+            // 서버 세션 삭제가 확인되지 않아도 사용자가 원한 로그아웃이므로 기기의 토큰은 이미 지웠다.
             Logger.w("서버 로그아웃 실패: \(error.localizedDescription)")
         }
-        // 서버를 기다리는 동안 다시 로그인했다면 새 토큰은 지우지 않는다.
-        _ = tokenStorage.removeTokens(ifRefreshTokenIs: tokens.refreshToken)
     }
 }
 

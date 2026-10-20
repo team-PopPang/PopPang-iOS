@@ -132,9 +132,9 @@ case마다 인증 종류가 다르면 `switch`로 나눠요. 응답이 `APIRespo
 2. COMPLETED이면 토큰 쌍을 저장하고 메인으로, PENDING이면 가입 전용 토큰을 저장하고 가입 화면으로 가요.
 3. 가입은 가입 전용 토큰으로 요청하고, 성공하면 토큰 쌍을 저장하고 가입 전용 토큰을 지워요. 가입 단계가 만료됐거나(401 5002·5014 등) 탈퇴한 계정(401 5010)이면 안내와 함께 로그인 화면으로 돌아가요. 닉네임이 중복이면(409 4202) 닉네임 단계로 돌아가요.
 4. 앱 시작은 `autoLogin` 대신 저장된 토큰으로 내 정보 조회(`GET /api/v2/user`)를 불러 세션을 되살려요. 아직 V1인 API를 위해 받은 `userUuid`를 저장해요.
-5. 로그아웃은 서버 로그아웃(`POST /api/v2/auth/logout`)을 부른 뒤 기기의 토큰과 세션을 지워요.
+5. 로그아웃은 기기의 토큰과 세션을 지우고 서버 로그아웃(`POST /api/v2/auth/logout`)을 알려요.
 6. 앱을 쓰는 중에 `AuthSessionError.loginRequired`가 나면 `AuthenticationPlugin`이 `AuthSessionEvents`로 알리고, `AppFeature`가 메인 화면에서만 로그아웃 전환을 해요. 화면 전환용 closure 대신 구독할 때마다 새 stream을 주는 알림 객체를 써요.
-7. 로그아웃은 로컬 세션을 먼저 지우고 서버 로그아웃을 기다려요. 기다리는 동안 다시 로그인했다면 새 토큰은 지우지 않아요.
+7. 로그아웃은 로컬 세션과 기기 토큰을 먼저 지우고, 미리 꺼내 둔 Access Token을 헤더에 직접 담아 서버 로그아웃을 보내요. 그래서 기다리는 동안 다시 로그인해도 새 토큰이 지워지지 않고, Access Token이 만료됐어도 갱신이 일어나 토큰이 남는 일이 없어요.
 
 `AppBootstrap`이 토큰 저장소, refresher, 인증 plugin을 만들어 `NetworkProvider.shared.configureAuthentication(_:)`으로 요청 전에 연결해요.
 

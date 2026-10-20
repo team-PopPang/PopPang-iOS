@@ -46,8 +46,10 @@ struct AuthRepositoryTests {
         #expect(try urlRequest(for: .me).httpMethod == "GET")
         #expect(AuthAPI.me.resolvedAuthorization == .access)
 
-        #expect(try urlRequest(for: .logout).url?.path == "/api/v2/auth/logout")
-        #expect(AuthAPI.logout.resolvedAuthorization == .access)
+        let logout = try urlRequest(for: .logout(accessToken: "access"))
+        #expect(logout.url?.path == "/api/v2/auth/logout")
+        #expect(logout.value(forHTTPHeaderField: "Authorization") == "Bearer access")
+        #expect(AuthAPI.logout(accessToken: "access").resolvedAuthorization == .none)
 
         let refresh = try MoyaProvider<AuthTokenRefreshAPI>
             .defaultEndpointMapping(for: .refresh(refreshToken: "refresh"))
@@ -225,6 +227,17 @@ struct AuthRepositoryTests {
         await context.repository.logout()
 
         #expect(context.storage.loadTokens() == AuthTokens(accessToken: "new-access", refreshToken: "new-refresh"))
+    }
+
+    @Test("Access Token이 만료된 상태로 로그아웃해도 갱신하지 않고 기기의 토큰을 지운다")
+    func logoutWithExpiredTokenDoesNotRefresh() async throws {
+        let context = Context(responses: [(401, Fixture.error(5002))])
+        try context.storage.saveTokens(AuthTokens(accessToken: "access", refreshToken: "refresh"))
+
+        await context.repository.logout()
+
+        #expect(context.stub.requestCount == 1)
+        #expect(context.storage.loadTokens() == nil)
     }
 
     @Test("서버 로그아웃이 실패해도 기기의 토큰은 지운다")
