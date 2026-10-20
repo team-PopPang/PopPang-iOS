@@ -23,14 +23,12 @@ struct AppBootstrap {
         
         // V2 인증 토큰 저장소와 갱신을 조립해, 모든 요청이 쓰는 NetworkProvider에 요청 전에 연결
         let tokenStorage = AuthTokenStorage(store: store)
-        let (loginRequiredEvents, loginRequiredContinuation) = AsyncStream<Void>.makeStream(
-            bufferingPolicy: .bufferingNewest(1)
-        )
+        let sessionEvents = AuthSessionEvents()
         NetworkProvider.shared.configureAuthentication(
             AuthenticationPlugin(
                 storage: tokenStorage,
                 refresher: AccessTokenRefresher(storage: tokenStorage, refresh: AuthTokenRefresh.live()),
-                onLoginRequired: { loginRequiredContinuation.yield() }
+                sessionEvents: sessionEvents
             )
         )
 
@@ -41,7 +39,7 @@ struct AppBootstrap {
         let localSessionClient = LocalSessionClient.live(
             sessionStorage: sessionStorage,
             authUsecase: dependencies.usecases.authUsecase,
-            loginRequiredEvents: loginRequiredEvents
+            sessionEvents: sessionEvents
         )
         
         // MainTab과 하위 Feature들이 사용할 실제 의존성들을 구성

@@ -7,17 +7,17 @@ import Moya
 public struct AuthenticationPlugin: PluginType {
     public let storage: AuthTokenStorage
     public let refresher: AccessTokenRefresher
-    /// Access Token이 필요한 요청이 `AuthSessionError.loginRequired`로 끝났을 때 부른다. 앱이 로그인 화면으로 보내는 데 쓴다.
-    let onLoginRequired: @Sendable () -> Void
+    /// Access Token이 필요한 요청이 `AuthSessionError.loginRequired`로 끝났음을 알릴 곳
+    let sessionEvents: AuthSessionEvents?
 
     public init(
         storage: AuthTokenStorage,
         refresher: AccessTokenRefresher,
-        onLoginRequired: @escaping @Sendable () -> Void = {}
+        sessionEvents: AuthSessionEvents? = nil
     ) {
         self.storage = storage
         self.refresher = refresher
-        self.onLoginRequired = onLoginRequired
+        self.sessionEvents = sessionEvents
     }
 
     public func prepare(_ request: URLRequest, target: TargetType) -> URLRequest {

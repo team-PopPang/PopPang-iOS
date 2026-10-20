@@ -1032,7 +1032,7 @@ Authorization: Bearer eyJhbGciOi...(예시)</code></pre>
   <thead><tr><th>연결한 것</th><th>어떻게 했나요</th></tr></thead>
   <tbody>
     <tr><td><code>NetworkProvider.shared</code>에 <code>AuthenticationPlugin</code> 연결</td><td>갱신 API target(<code>AuthTokenRefreshAPI</code>)을 <code>Data</code>에 만들고, <code>AppBootstrap</code>이 토큰 저장소·refresher·plugin을 만들어 <code>configureAuthentication(_:)</code>으로 요청 전에 넣어요. 갱신 API는 plugin이 없는 provider로 불러서 갱신 요청에 다시 갱신이 걸리지 않아요.</td></tr>
-    <tr><td><code>AuthSessionError.loginRequired</code>를 받으면 로그인 화면으로</td><td>plugin의 <code>onLoginRequired</code>가 알리고, <code>AppFeature</code>가 메인 화면에서만 로그아웃 전환을 해요. 로그인 화면이나 로그아웃 중에 온 알림은 무시해요.</td></tr>
+    <tr><td><code>AuthSessionError.loginRequired</code>를 받으면 로그인 화면으로</td><td>plugin이 <code>AuthSessionEvents</code>로 알리고(구독할 때마다 새 stream을 줘요), <code>AppFeature</code>가 메인 화면에서만 로그아웃 전환을 해요. 로그인 화면이나 로그아웃 중에 온 알림은 무시해요.</td></tr>
     <tr><td>로그인·가입 토큰 저장</td><td><code>AuthRepositoryImpl</code>이 COMPLETED면 토큰 쌍을, PENDING이면 Signup Token을 저장해요. 가입에 성공하면 토큰 쌍을 저장하고 Signup Token을 지워요. 토큰은 feature에 넘기지 않아요.</td></tr>
     <tr><td>앱 시작 세션 복구</td><td><code>autoLogin</code> 대신 저장된 토큰으로 내 정보 조회(<code>GET /api/v2/user</code>)를 불러요. 만료됐으면 이 문서의 갱신 흐름이 그대로 동작해요.</td></tr>
     <tr><td>로그아웃</td><td>서버 로그아웃(<code>POST /api/v2/auth/logout</code>)을 부른 뒤, 실패해도 기기의 토큰을 지워요. 토큰이 없으면 서버에 묻지 않아요.</td></tr>

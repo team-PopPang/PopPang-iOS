@@ -96,8 +96,8 @@ struct AppFeature {
         /// 소셜 로그인 결과 가입이 필요할 때 전달
         case signupRequired(Provider)
 
-        /// 가입 단계가 만료돼 로그인부터 다시 해야 할 때 전달
-        case signupSessionExpired
+        /// 가입을 끝낼 수 없어 안내와 함께 로그인부터 다시 해야 할 때 전달
+        case signupAborted(errorMessage: String)
 
         /// 앱을 쓰는 중에 인증 토큰을 쓸 수 없게 돼 다시 로그인해야 할 때 전달
         case sessionExpired
@@ -116,6 +116,10 @@ struct AppFeature {
         
         /// 메인 탭 Feature의 액션
         case mainTab(MainTabFeature.Action)
+    }
+
+    private enum CancelID {
+        case loginRequiredObservation
     }
 
     /// 온보딩 화면에서 이동할 수 있는 경로
@@ -228,17 +232,17 @@ struct AppFeature {
                 // 추가 회원정보 등록 완료 결과를 공통 액션으로 전달
                 return .send(.registerCompleted(user))
 
-            case .registerFlow(.delegate(.signupSessionExpired)):
-                return .send(.signupSessionExpired)
+            case let .registerFlow(.delegate(.loginRequired(errorMessage))):
+                return .send(.signupAborted(errorMessage: errorMessage))
 
             case .signupRequired(let provider):
                 applySignupRequired(provider, state: &state)
                 return .none
 
-            case .signupSessionExpired:
-                // 가입 화면을 닫고, 만료 안내와 함께 로그인 화면을 다시 보여 준다
+            case .signupAborted(let errorMessage):
+                // 가입 화면을 닫고, 안내와 함께 로그인 화면을 다시 보여 준다
                 state.registerFlow = nil
-                state.auth = .signupSessionExpired
+                state.auth = .init(errorMessage: errorMessage)
                 state.destination = .auth
                 return .none
 
@@ -450,6 +454,7 @@ private extension AppFeature {
                 await send(.sessionExpired)
             }
         }
+        .cancellable(id: CancelID.loginRequiredObservation, cancelInFlight: true)
     }
 
     /// 인증 완료 후 필요한 앱 외부 상태를 설정

@@ -14,7 +14,7 @@ extension LocalSessionClient {
     static func live(
         sessionStorage: LocalSessionStorage,
         authUsecase: AuthUsecaseProtocol,
-        loginRequiredEvents: AsyncStream<Void>
+        sessionEvents: AuthSessionEvents
     ) -> Self {
         let authUsecaseBox = AuthUsecaseBox(authUsecase)
 
@@ -38,11 +38,12 @@ extension LocalSessionClient {
                 sessionStorage.saveUserID(user?.userUuid)
             },
             clear: {
-                await authUsecaseBox.usecase.logout()
+                // 서버 로그아웃을 기다리는 동안 다시 로그인할 수 있으므로 로컬 세션을 먼저 지운다.
                 sessionStorage.clearSession()
+                await authUsecaseBox.usecase.logout()
             },
             loginRequiredEvents: {
-                loginRequiredEvents
+                sessionEvents.loginRequired()
             }
         )
     }

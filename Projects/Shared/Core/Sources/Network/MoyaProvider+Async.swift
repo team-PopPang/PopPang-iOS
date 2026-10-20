@@ -40,7 +40,7 @@ public extension MoyaProvider {
         do {
             return try await sendAuthenticatedRequest(target, authentication: authentication)
         } catch AuthSessionError.loginRequired {
-            authentication.onLoginRequired()
+            authentication.sessionEvents?.notifyLoginRequired()
             throw AuthSessionError.loginRequired
         }
     }

@@ -307,6 +307,23 @@ struct AuthenticationTests {
         #expect(context.storage.loadTokens() == .oldTokens)
     }
 
+    @Test("다시 로그인해야 하면 구독한 곳 모두에 알린다")
+    func notifiesAllSubscribersWhenLoginIsRequired() async throws {
+        let events = AuthSessionEvents()
+        let first = events.loginRequired()
+        let second = events.loginRequired()
+        let context = try RequestContext(responses: [(401, errorBody(code: 5001))], sessionEvents: events)
+
+        await #expect(throws: AuthSessionError.loginRequired) {
+            _ = try await context.provider.asyncRequest(.access)
+        }
+
+        var firstIterator = first.makeAsyncIterator()
+        var secondIterator = second.makeAsyncIterator()
+        #expect(await firstIterator.next() != nil)
+        #expect(await secondIterator.next() != nil)
+    }
+
     @Test("403에는 갱신하지 않고 토큰을 그대로 둔다")
     func doesNotRefreshForForbidden() async throws {
         let context = try RequestContext(responses: [(403, errorBody(code: 5008))])
@@ -434,14 +451,15 @@ private struct RequestContext {
         store: InMemoryStore = InMemoryStore(),
         responses: [(Int, String)],
         onFirstSend: (@Sendable (AuthTokenStorage) -> Void)? = nil,
-        refresh: AccessTokenRefresher.Refresh? = nil
+        refresh: AccessTokenRefresher.Refresh? = nil,
+        sessionEvents: AuthSessionEvents? = nil
     ) throws {
         let storage = try makeStorage(store: store, signupToken: "signup")
         let stubResponses = StubResponses(responses, onFirstSend: onFirstSend.map { hook in { @Sendable in hook(storage) } })
         let counter = CallCounter()
         let refresher = refresh.map { AccessTokenRefresher(storage: storage, refresh: $0) }
             ?? makeRefresher(storage: storage, counter: counter)
-        let authentication = AuthenticationPlugin(storage: storage, refresher: refresher)
+        let authentication = AuthenticationPlugin(storage: storage, refresher: refresher, sessionEvents: sessionEvents)
 
         self.storage = storage
         self.counter = counter

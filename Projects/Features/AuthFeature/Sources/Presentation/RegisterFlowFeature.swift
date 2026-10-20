@@ -45,8 +45,8 @@ public struct RegisterFlowFeature {
 
         public enum Delegate: Equatable {
             case completed(User)
-            /// 가입 단계가 만료됐다. 소셜 로그인부터 다시 해야 한다.
-            case signupSessionExpired
+            /// 가입을 끝낼 수 없다(가입 단계 만료, 탈퇴 계정). 안내와 함께 소셜 로그인부터 다시 해야 한다.
+            case loginRequired(errorMessage: String)
         }
     }
 
@@ -209,7 +209,9 @@ public struct RegisterFlowFeature {
                 state.isSubmitting = false
                 switch error as? AuthError {
                 case .signupSessionExpired:
-                    return .send(.delegate(.signupSessionExpired))
+                    return .send(.delegate(.loginRequired(errorMessage: AuthErrorMessage.signupSessionExpired)))
+                case .inactiveAccount:
+                    return .send(.delegate(.loginRequired(errorMessage: AuthErrorMessage.signup(for: AuthError.inactiveAccount))))
                 case .duplicateNickname:
                     // 닉네임 화면으로 돌아가 다른 닉네임을 입력하게 한다.
                     state.currentStep = .nickname

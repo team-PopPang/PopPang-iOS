@@ -66,7 +66,9 @@ public final class AuthRepositoryImpl: AuthRepositoryProtocol {
         }
 
         guard case let .completed(user) = try save(data, provider: provider) else {
-            throw AuthError.failed
+            // 가입 응답은 항상 COMPLETED여야 한다. 가입이 끝나지 않았으면 소셜 로그인부터 다시 해서 상태를 확인한다.
+            tokenStorage.removeSignupToken()
+            throw AuthError.signupSessionExpired
         }
         return user
     }
@@ -92,9 +94,11 @@ public final class AuthRepositoryImpl: AuthRepositoryProtocol {
     }
 
     public func logout() async {
+        tokenStorage.removeSignupToken()
+
         // 토큰이 없으면 서버에 알릴 세션도 없다.
-        guard tokenStorage.loadTokens() != nil else {
-            tokenStorage.clear()
+        guard let tokens = tokenStorage.loadTokens() else {
+            _ = tokenStorage.removeIncompleteTokens()
             return
         }
 
@@ -104,7 +108,8 @@ public final class AuthRepositoryImpl: AuthRepositoryProtocol {
             // 서버 세션 삭제가 확인되지 않아도 사용자가 원한 로그아웃이므로 기기의 토큰은 지운다.
             Logger.w("서버 로그아웃 실패: \(error.localizedDescription)")
         }
-        tokenStorage.clear()
+        // 서버를 기다리는 동안 다시 로그인했다면 새 토큰은 지우지 않는다.
+        _ = tokenStorage.removeTokens(ifRefreshTokenIs: tokens.refreshToken)
     }
 }
 

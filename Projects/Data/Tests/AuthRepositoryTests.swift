@@ -204,6 +204,29 @@ struct AuthRepositoryTests {
         #expect(context.storage.loadTokens() == tokens)
     }
 
+    @Test("가입 응답이 COMPLETED가 아니면 가입 전용 토큰을 지우고 로그인부터 다시 하게 한다")
+    func pendingSignupResponseRequiresLogin() async throws {
+        let context = Context(responses: [(200, Fixture.pending)])
+        try context.storage.saveSignupToken("old-signup")
+
+        await #expect(throws: AuthError.signupSessionExpired) {
+            _ = try await context.repository.signup(with: .kakao, request: .sample)
+        }
+        #expect(context.storage.loadSignupToken() == nil)
+    }
+
+    @Test("서버 로그아웃을 기다리는 동안 다시 로그인했으면 새 토큰은 지우지 않는다")
+    func logoutKeepsTokensSavedDuringRequest() async throws {
+        let context = Context(responses: [(200, "")]) { storage in
+            try? storage.saveTokens(AuthTokens(accessToken: "new-access", refreshToken: "new-refresh"))
+        }
+        try context.storage.saveTokens(AuthTokens(accessToken: "access", refreshToken: "refresh"))
+
+        await context.repository.logout()
+
+        #expect(context.storage.loadTokens() == AuthTokens(accessToken: "new-access", refreshToken: "new-refresh"))
+    }
+
     @Test("서버 로그아웃이 실패해도 기기의 토큰은 지운다")
     func logoutClearsTokensEvenIfServerFails() async throws {
         let context = Context(responses: [(503, Fixture.error(5013))])
@@ -298,9 +321,12 @@ private final class StubResponses: PluginType, @unchecked Sendable {
     private let lock = NSLock()
     private var responses: [(Int, String)]
     private var headers: [String?] = []
+    private var onFirstSend: (@Sendable () -> Void)?
 
-    init(_ responses: [(Int, String)]) {
+    /// - Parameter onFirstSend: 첫 요청을 보낸 직후, 응답을 받기 전에 실행한다. 다른 동작이 끼어든 상황을 만든다.
+    init(_ responses: [(Int, String)], onFirstSend: (@Sendable () -> Void)? = nil) {
         self.responses = responses
+        self.onFirstSend = onFirstSend
     }
 
     var requestCount: Int {
@@ -319,7 +345,12 @@ private final class StubResponses: PluginType, @unchecked Sendable {
     }
 
     func willSend(_ request: RequestType, target: TargetType) {
-        lock.withLock { headers.append(request.request?.value(forHTTPHeaderField: "Authorization")) }
+        let onFirstSend = lock.withLock {
+            headers.append(request.request?.value(forHTTPHeaderField: "Authorization"))
+            defer { self.onFirstSend = nil }
+            return self.onFirstSend
+        }
+        onFirstSend?()
     }
 }
 
@@ -328,9 +359,13 @@ private struct Context {
     let stub: StubResponses
     let repository: AuthRepositoryImpl
 
-    init(responses: [(Int, String)], strategyError: AuthError? = nil) {
+    init(
+        responses: [(Int, String)],
+        strategyError: AuthError? = nil,
+        onFirstSend: (@Sendable (AuthTokenStorage) -> Void)? = nil
+    ) {
         let storage = AuthTokenStorage(store: InMemoryStore())
-        let stub = StubResponses(responses)
+        let stub = StubResponses(responses, onFirstSend: onFirstSend.map { hook in { @Sendable in hook(storage) } })
         let authentication = AuthenticationPlugin(
             storage: storage,
             refresher: AccessTokenRefresher(storage: storage) { _ in

@@ -66,10 +66,3 @@ public struct AuthFeature {
         }
     }
 }
-
-public extension AuthFeature.State {
-    /// 가입 단계가 만료돼 로그인 화면으로 돌아왔을 때의 상태
-    static var signupSessionExpired: Self {
-        Self(errorMessage: AuthErrorMessage.signupSessionExpired)
-    }
-}

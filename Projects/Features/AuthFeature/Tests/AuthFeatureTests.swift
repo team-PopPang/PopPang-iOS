@@ -114,13 +114,19 @@ struct RegisterFlowFeatureTests {
         ))
     }
 
-    @Test("가입 단계가 만료되면 로그인부터 다시 하게 알린다")
-    func expiredSignupSendsSessionExpired() async {
+    @Test(
+        "가입 단계가 만료됐거나 탈퇴한 계정이면 안내와 함께 로그인부터 다시 하게 알린다",
+        arguments: [AuthError.signupSessionExpired, .inactiveAccount]
+    )
+    func unrecoverableSignupReturnsToLogin(error: AuthError) async {
         let store = TestStore(initialState: makeState()) {
             RegisterFlowFeature()
         } withDependencies: {
-            $0.authFeatureClient = .mock(signup: { _, _ in throw AuthError.signupSessionExpired })
+            $0.authFeatureClient = .mock(signup: { _, _ in throw error })
         }
+        let message = error == .signupSessionExpired
+            ? AuthErrorMessage.signupSessionExpired
+            : AuthErrorMessage.signup(for: error)
 
         await store.send(.completeRegistrationTapped) {
             $0.isSubmitting = true
@@ -128,7 +134,7 @@ struct RegisterFlowFeatureTests {
         await store.receive(\.completeRegistrationResponse.failure) {
             $0.isSubmitting = false
         }
-        await store.receive(\.delegate, .signupSessionExpired)
+        await store.receive(\.delegate, .loginRequired(errorMessage: message))
     }
 
     @Test("닉네임이 중복이면 닉네임 단계로 돌아가 안내한다")

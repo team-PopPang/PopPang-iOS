@@ -55,8 +55,15 @@ private extension KakaoLoginStrategy {
         }
     }
 
+    /// 로그인 창을 닫거나(ClientFailed.Cancelled) 카카오톡 동의 화면에서 취소했는지(AuthFailed.AccessDenied) 확인한다.
     static func isCancelled(_ error: Error) -> Bool {
-        guard case let .ClientFailed(reason, _) = error as? SdkError else { return false }
-        return reason == .Cancelled
+        switch error as? SdkError {
+        case let .ClientFailed(reason, _):
+            return reason == .Cancelled
+        case let .AuthFailed(reason, _):
+            return reason == .AccessDenied
+        default:
+            return false
+        }
     }
 }
