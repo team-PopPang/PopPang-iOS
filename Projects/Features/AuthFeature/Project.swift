@@ -20,6 +20,20 @@ let project = Project(
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]
         ),
+        .target(
+            name: "AuthFeatureTests",
+            destinations: [.iPhone],
+            product: .unitTests,
+            bundleId: "com.poppang.features.auth.tests",
+            deploymentTargets: .iOS("17.0"),
+            infoPlist: .default,
+            sources: ["Tests/**"],
+            dependencies: [
+                .target(name: "AuthFeature"),
+                .project(target: "Domain", path: "../../Domain"),
+                .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
+            ]
+        ),
         // .target(
         //     name: "AuthFeatureDemo",
         //     destinations: [.iPhone],
