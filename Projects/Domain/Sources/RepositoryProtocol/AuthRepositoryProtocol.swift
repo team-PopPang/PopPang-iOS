@@ -7,9 +7,6 @@ public protocol AuthRepositoryProtocol {
     /// - Throws: `AuthError`
     func signup(with provider: Provider, request: SignupRequest) async throws -> User
 
-    /// 진행 중인 가입을 취소한다.
-    func cancelSignup()
-
     /// 저장된 토큰으로 로그인 상태를 되살린다.
     /// - Returns: 로그인 상태가 아니면 `nil`
     /// - Throws: 서버 오류나 네트워크 문제로 확인하지 못했을 때. 이때 저장된 토큰은 지우지 않는다.

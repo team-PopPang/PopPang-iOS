@@ -71,6 +71,29 @@
         }
       }
     },
+    "가입 시간이 지났어요. 다시 로그인해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Sign-up timed out. Please sign in again."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "登録の有効期限が切れました。もう一度ログインしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "가입 시간이 지났어요. 다시 로그인해 주세요."
+          }
+        }
+      }
+    },
     "가입 중..." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -90,6 +113,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "가입 중..."
+          }
+        }
+      }
+    },
+    "가입하지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't complete sign-up. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "登録できませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "가입하지 못했어요. 잠시 후 다시 시도해 주세요."
           }
         }
       }
@@ -325,6 +371,52 @@
         }
       }
     },
+    "로그인하지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't sign in. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ログインできませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "로그인하지 못했어요. 잠시 후 다시 시도해 주세요."
+          }
+        }
+      }
+    },
+    "로그인할 수 없어요" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Unable to sign in"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ログインできません"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "로그인할 수 없어요"
+          }
+        }
+      }
+    },
     "사용 가능한 닉네임입니다." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -418,6 +510,52 @@
         }
       }
     },
+    "이미 다른 방법으로 가입된 계정이에요. 처음 가입한 방법으로 로그인해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This account is already registered with a different sign-in method. Please sign in the way you first signed up."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "このアカウントは別の方法で登録されています。最初に登録した方法でログインしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미 다른 방법으로 가입된 계정이에요. 처음 가입한 방법으로 로그인해 주세요."
+          }
+        }
+      }
+    },
+    "이미 사용 중인 닉네임이에요. 다른 닉네임을 입력해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This nickname is already taken. Please enter another one."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "このニックネームはすでに使われています。別のニックネームを入力してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "이미 사용 중인 닉네임이에요. 다른 닉네임을 입력해 주세요."
+          }
+        }
+      }
+    },
     "이미 사용 중인 닉네임입니다." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -437,6 +575,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이미 사용 중인 닉네임입니다."
+          }
+        }
+      }
+    },
+    "입력한 정보를 다시 확인해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Please check the information you entered."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "入力内容をもう一度確認してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "입력한 정보를 다시 확인해 주세요."
           }
         }
       }
@@ -553,6 +714,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "키워드를\n입력해주세요."
+          }
+        }
+      }
+    },
+    "탈퇴한 계정이에요. 다른 계정으로 로그인해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This account has been deleted. Please sign in with another account."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "退会済みのアカウントです。別のアカウントでログインしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "탈퇴한 계정이에요. 다른 계정으로 로그인해 주세요."
           }
         }
       }

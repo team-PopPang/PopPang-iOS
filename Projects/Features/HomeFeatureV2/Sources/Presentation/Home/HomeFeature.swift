@@ -28,7 +28,7 @@ public struct HomeFeature {
         ) {
             self.userUuid = user.userUuid
             self.nickname = user.nickname ?? String(localized: "닉네임", bundle: .module)
-            self.isAdmin = user.role.uppercased() == "ADMIN"
+            self.isAdmin = user.isAdmin
         }
     }
 

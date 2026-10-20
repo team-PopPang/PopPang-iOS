@@ -342,15 +342,11 @@ private enum TestError: LocalizedError {
 private func makeUser() -> User {
     User(
         userUuid: "user-1",
-        uid: "test-uid",
-        provider: "test",
+        provider: nil,
         email: nil,
         nickname: "팝팡",
-        role: "USER",
-        isAlerted: false,
-        fcmToken: nil,
-        alertKeywordList: nil,
-        recommendList: nil
+        role: .member,
+        isAlerted: false
     )
 }
 

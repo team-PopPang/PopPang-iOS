@@ -17,10 +17,11 @@ public struct RegisterFlowFeature {
         public var keywordInput = ""
         public var isSubmitting = false
         public var errorMessage: String?
-        var initialUser: User?
+        /// 가입할 소셜 로그인 제공자. 로그인 결과가 가입 필요(PENDING)일 때 받는다.
+        public let provider: Provider
 
-        public init(user: User?) {
-            self.initialUser = user
+        public init(provider: Provider) {
+            self.provider = provider
         }
     }
 
@@ -44,6 +45,8 @@ public struct RegisterFlowFeature {
 
         public enum Delegate: Equatable {
             case completed(User)
+            /// 가입 단계가 만료됐다. 소셜 로그인부터 다시 해야 한다.
+            case signupSessionExpired
         }
     }
 
@@ -183,39 +186,19 @@ public struct RegisterFlowFeature {
                 state.isSubmitting = true
                 state.errorMessage = nil
 
-                var user = state.initialUser ?? User(
-                    userUuid: UUID().uuidString,
-                    uid: UUID().uuidString,
-                    provider: "KAKAO",
-                    email: nil,
-                    nickname: nil,
-                    role: "USER",
-                    isAlerted: false,
+                let provider = state.provider
+                let request = SignupRequest(
+                    nickname: state.nickname,
+                    isAlerted: !state.keywords.isEmpty,
                     fcmToken: nil,
-                    alertKeywordList: nil,
-                    recommendList: nil
+                    alertKeywordList: state.keywords,
+                    recommendList: state.selectedCategories
                 )
-                user.nickname = state.nickname
-                user.recommendList = state.selectedCategories
-                user.alertKeywordList = state.keywords
-                user.isAlerted = !state.keywords.isEmpty
-                let registrationUser = user
 
-                return .run { [authFeatureClient, registrationUser] send in
-                    do {
-                        let registeredUser: User
-                        switch registrationUser.provider.uppercased() {
-                        case "APPLE":
-                            registeredUser = try await authFeatureClient.appleRegister(registrationUser)
-                        case "GOOGLE":
-                            registeredUser = try await authFeatureClient.googleRegister(registrationUser)
-                        default:
-                            registeredUser = try await authFeatureClient.kakaoRegister(registrationUser)
-                        }
-                        await send(.completeRegistrationResponse(.success(registeredUser)))
-                    } catch {
-                        await send(.completeRegistrationResponse(.failure(error)))
-                    }
+                return .run { [authFeatureClient] send in
+                    await send(.completeRegistrationResponse(Result {
+                        try await authFeatureClient.signup(provider, request)
+                    }))
                 }
 
             case .completeRegistrationResponse(.success(let user)):
@@ -224,7 +207,18 @@ public struct RegisterFlowFeature {
 
             case .completeRegistrationResponse(.failure(let error)):
                 state.isSubmitting = false
-                state.errorMessage = error.localizedDescription
+                switch error as? AuthError {
+                case .signupSessionExpired:
+                    return .send(.delegate(.signupSessionExpired))
+                case .duplicateNickname:
+                    // 닉네임 화면으로 돌아가 다른 닉네임을 입력하게 한다.
+                    state.currentStep = .nickname
+                    state.isForward = false
+                    state.validationState = .duplicate
+                default:
+                    break
+                }
+                state.errorMessage = AuthErrorMessage.signup(for: error)
                 return .none
 
             case .delegate:

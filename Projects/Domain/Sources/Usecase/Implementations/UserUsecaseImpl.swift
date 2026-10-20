@@ -9,10 +9,6 @@ public final class UserUsecaseImpl: UserUsecaseProtocol {
         try await userRepository.checkNickname(nickname: nickname)
     }
 
-    public func autoLogin(userUuid: String) async throws -> User {
-        try await userRepository.autoLogin(userUuid: userUuid)
-    }
-
     public func getRecommandList() async throws -> [Recommend] {
         try await userRepository.getRecommandList()
     }

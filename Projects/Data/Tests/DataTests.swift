@@ -1,3 +1,4 @@
+import Core
 import Foundation
 import Domain
 import Moya
@@ -11,27 +12,21 @@ struct DataTests {
         let popupSubmissionRepository: PopupSubmissionRepositoryProtocol = PopupSubmissionRepositoryImpl()
         let userRepository: UserRepositoryProtocol = UserRepositoryImpl()
         let adminRepository: AdminRepositoryProtocol = AdminRepositoryImpl()
-        let appleRepository: AppleAuthRepositoryProtocol = AppleAuthRepositoryImpl()
-        let googleRepository: GoogleAuthRepositoryProtocol = GoogleAuthRepositoryImpl()
-        let kakaoRepository: KakaoAuthRepositoryProtocol = KakaoAuthRepositoryImpl()
+        let authRepository: AuthRepositoryProtocol = AuthRepositoryImpl(tokenStorage: AuthTokenStorage())
         let serverHealthRepository: ServerHealthRepositoryProtocol = ServerHealthRepositoryImpl()
 
         let popupUsecase: PopupUsecaseProtocol = PopupUsecaseImpl(popupRepository: popupRepository)
         let popupSubmissionUsecase: PopupSubmissionUsecaseProtocol = PopupSubmissionUsecaseImpl(repository: popupSubmissionRepository)
         let userUsecase: UserUsecaseProtocol = UserUsecaseImpl(userRepository: userRepository)
         let adminUsecase: AdminUsecaseProtocol = AdminUsecaseImpl(adminRepository: adminRepository)
-        let appleUsecase: AppleAuthUsecaseProtocol = AppleAuthUsecaseImpl(appleAuthRepository: appleRepository)
-        let googleUsecase: GoogleAuthUsecaseProtocol = GoogleAuthUsecaseImpl(googleAuthRepository: googleRepository)
-        let kakaoUsecase: KakaoAuthUsecaseProtocol = KakaoAuthUsecaseImpl(kakaoAuthRepository: kakaoRepository)
+        let authUsecase: AuthUsecaseProtocol = AuthUsecaseImpl(authRepository: authRepository)
         let serverHealthUsecase: ServerHealthUsecaseProtocol = ServerHealthUsecaseImpl(serverHealthRepository: serverHealthRepository)
 
         #expect(contractTypeName(of: popupUsecase) == "PopupUsecaseImpl")
         #expect(contractTypeName(of: popupSubmissionUsecase) == "PopupSubmissionUsecaseImpl")
         #expect(contractTypeName(of: userUsecase) == "UserUsecaseImpl")
         #expect(contractTypeName(of: adminUsecase) == "AdminUsecaseImpl")
-        #expect(contractTypeName(of: appleUsecase) == "AppleAuthUsecaseImpl")
-        #expect(contractTypeName(of: googleUsecase) == "GoogleAuthUsecaseImpl")
-        #expect(contractTypeName(of: kakaoUsecase) == "KakaoAuthUsecaseImpl")
+        #expect(contractTypeName(of: authUsecase) == "AuthUsecaseImpl")
         #expect(contractTypeName(of: serverHealthUsecase) == "ServerHealthUsecaseImpl")
     }
 
@@ -149,18 +144,14 @@ struct DataTests {
         let keyword = KeywordDTO(keyword: "팝업스토어").toModel()
         let recommend = RecommendListDTO(id: 7, recommendName: "캐릭터").toModel()
         let region = RegionListDTO(region: "서울", districtList: ["성동구", "마포구"]).toEntity()
-        let user = UserDTO(
+        let user = V2AuthUserDTO(
             userUuid: "user-1",
-            uid: "oauth-1",
             provider: "KAKAO",
             email: "index@example.com",
             nickname: "팝팡",
-            role: "USER",
-            isAlerted: true,
-            fcmToken: "fcm-token",
-            alertKeywordList: ["성수"],
-            recommendList: [7]
-        ).toModel()
+            role: "ADMIN",
+            isAlerted: true
+        ).toEntity()
 
         #expect(keyword.keyword == "팝업스토어")
         #expect(recommend.id == 7)
@@ -168,14 +159,11 @@ struct DataTests {
         #expect(region.region == "서울")
         #expect(region.districtList == ["성동구", "마포구"])
         #expect(user.userUuid == "user-1")
-        #expect(user.uid == "oauth-1")
-        #expect(user.provider == "KAKAO")
+        #expect(user.provider == .kakao)
         #expect(user.email == "index@example.com")
         #expect(user.nickname == "팝팡")
+        #expect(user.isAdmin)
         #expect(user.isAlerted)
-        #expect(user.fcmToken == "fcm-token")
-        #expect(user.alertKeywordList == ["성수"])
-        #expect(user.recommendList == [7])
     }
 
     @Test("팝업 제보 요청 엔티티가 서버 DTO 날짜 형식으로 변환된다")
@@ -405,12 +393,6 @@ struct DataTests {
             requestDTO: .adminFixture
         ).path == "/admin/popup-submissions/7")
 
-        #expect(AppleAuthAPI.login(authCode: "auth").path == "/auth/apple/mobile/login")
-        #expect(AppleAuthAPI.signup(userDto: UserDTO.adminUser).path == "/auth/apple/signup")
-        #expect(GoogleAuthAPI.login(idToken: "id-token").path == "/auth/google/mobile/login")
-        #expect(GoogleAuthAPI.signup(userDTO: UserDTO.adminUser).path == "/auth/google/signup")
-        #expect(KakaoAuthAPI.login(accessToken: "token").path == "/auth/kakao/mobile/login")
-        #expect(KakaoAuthAPI.signup(userDTO: UserDTO.adminUser).path == "/auth/kakao/signup")
 
         #expect(PopupAPI.getPopupList.path == "/popup")
         #expect(PopupAPI.getUpcomingPopupList.path == "/popup/upcoming")
@@ -437,7 +419,6 @@ struct DataTests {
 
         #expect(UserAPI.checkNickname(nickname: "팝팡").path == "/user/nickname/duplicated")
         #expect(UserAPI.updateNickname(userUuid: "user-1", newNickname: "새팝팡").path == "/user/user-1")
-        #expect(UserAPI.autoLogin(userUuid: "user-1").path == "/auth/autoLogin")
         #expect(UserAPI.getRecommendList.path == "/recommend")
         #expect(UserAPI.hardDeleteUser(userUuid: "user-1").path == "/user/user-1/hard-delete")
         #expect(UserAPI.getAlertKeywordList(userUuid: "user-1").path == "/alert-keyword")
@@ -467,13 +448,6 @@ struct DataTests {
             requestDTO: .adminFixture
         ).method == .put)
 
-        #expect(AppleAuthAPI.login(authCode: "auth").method == .post)
-        #expect(AppleAuthAPI.loginWithEmail(authCode: "auth", email: "index@example.com").method == .post)
-        #expect(AppleAuthAPI.signup(userDto: UserDTO.adminUser).method == .post)
-        #expect(GoogleAuthAPI.login(idToken: "id-token").method == .post)
-        #expect(GoogleAuthAPI.signup(userDTO: UserDTO.adminUser).method == .post)
-        #expect(KakaoAuthAPI.login(accessToken: "token").method == .post)
-        #expect(KakaoAuthAPI.signup(userDTO: UserDTO.adminUser).method == .post)
 
         #expect(PopupAPI.getPopupList.method == .get)
         #expect(PopupAPI.getUpcomingPopupList.method == .get)
@@ -500,7 +474,6 @@ struct DataTests {
 
         #expect(UserAPI.checkNickname(nickname: "팝팡").method == .get)
         #expect(UserAPI.updateNickname(userUuid: "user-1", newNickname: "새팝팡").method == .patch)
-        #expect(UserAPI.autoLogin(userUuid: "user-1").method == .post)
         #expect(UserAPI.getRecommendList.method == .get)
         #expect(UserAPI.hardDeleteUser(userUuid: "user-1").method == .delete)
         #expect(UserAPI.getAlertKeywordList(userUuid: "user-1").method == .get)

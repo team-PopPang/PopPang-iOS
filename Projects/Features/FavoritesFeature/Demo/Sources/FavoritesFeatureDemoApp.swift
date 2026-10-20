@@ -31,15 +31,11 @@ struct FavoritesFeatureDemoApp: App {
 private extension User {
     static let demo = User(
         userUuid: "demo-user",
-        uid: "demo-user",
-        provider: "KAKAO",
+        provider: .kakao,
         email: nil,
         nickname: "홍길동",
-        role: "USER",
-        isAlerted: false,
-        fcmToken: nil,
-        alertKeywordList: nil,
-        recommendList: nil
+        role: .member,
+        isAlerted: false
     )
 }
 

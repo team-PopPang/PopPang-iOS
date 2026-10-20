@@ -2,6 +2,7 @@ import ComposableArchitecture
 import Core
 import Foundation
 import AuthFeature
+import Data
 import MainTabFeature
 
 struct AppBootstrap {
@@ -20,13 +21,27 @@ struct AppBootstrap {
         // 로컬 세션 저장소
         let sessionStorage = LocalSessionStorage(store: store)
         
+        // V2 인증 토큰 저장소와 갱신을 조립해, 모든 요청이 쓰는 NetworkProvider에 요청 전에 연결
+        let tokenStorage = AuthTokenStorage(store: store)
+        let (loginRequiredEvents, loginRequiredContinuation) = AsyncStream<Void>.makeStream(
+            bufferingPolicy: .bufferingNewest(1)
+        )
+        NetworkProvider.shared.configureAuthentication(
+            AuthenticationPlugin(
+                storage: tokenStorage,
+                refresher: AccessTokenRefresher(storage: tokenStorage, refresh: AuthTokenRefresh.live()),
+                onLoginRequired: { loginRequiredContinuation.yield() }
+            )
+        )
+
         // Repository와 UseCase를 포함한 앱의 실제 의존성 그래프
-        let dependencies = AppDependencyRegistry.live()
+        let dependencies = AppDependencyRegistry.live(tokenStorage: tokenStorage)
         
         /// TCA Feature용 LocalSessionClient를 생성
         let localSessionClient = LocalSessionClient.live(
             sessionStorage: sessionStorage,
-            userUsecase: dependencies.usecases.userUsecase
+            authUsecase: dependencies.usecases.authUsecase,
+            loginRequiredEvents: loginRequiredEvents
         )
         
         // MainTab과 하위 Feature들이 사용할 실제 의존성들을 구성
@@ -73,9 +88,7 @@ struct AppBootstrap {
             )
             mainTabFeatureDependencies.configure(&$0)
             $0.authFeatureClient = .live(
-                kakaoAuthUsecase: dependencies.usecases.kakaoAuthUsecase,
-                googleAuthUsecase: dependencies.usecases.googleAuthUsecase,
-                appleAuthUsecase: dependencies.usecases.appleAuthUsecase,
+                authUsecase: dependencies.usecases.authUsecase,
                 userUsecase: dependencies.usecases.userUsecase
             )
         }

@@ -13,10 +13,6 @@ public final class AuthUsecaseImpl: AuthUsecaseProtocol {
         try await authRepository.signup(with: provider, request: request)
     }
 
-    public func cancelSignup() {
-        authRepository.cancelSignup()
-    }
-
     public func restoreSession() async throws -> User? {
         try await authRepository.restoreSession()
     }

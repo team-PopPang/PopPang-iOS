@@ -37,6 +37,24 @@ public extension MoyaProvider {
             return try await sendRequest(target)
         }
 
+        do {
+            return try await sendAuthenticatedRequest(target, authentication: authentication)
+        } catch AuthSessionError.loginRequired {
+            authentication.onLoginRequired()
+            throw AuthSessionError.loginRequired
+        }
+    }
+
+    func asyncRequestVoid(_ target: Target) async throws {
+        _ = try await asyncRequest(target)
+    }
+}
+
+private extension MoyaProvider {
+    func sendAuthenticatedRequest(
+        _ target: Target,
+        authentication: AuthenticationPlugin
+    ) async throws -> Response {
         switch try await sendAccessRequest(target, authentication: authentication) {
         case let .success(response):
             return response
@@ -54,10 +72,6 @@ public extension MoyaProvider {
             }
             return try await retryAccessRequest(target, authentication: authentication, originalError: expiredError)
         }
-    }
-
-    func asyncRequestVoid(_ target: Target) async throws {
-        _ = try await asyncRequest(target)
     }
 }
 

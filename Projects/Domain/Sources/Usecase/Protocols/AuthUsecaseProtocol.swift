@@ -7,9 +7,6 @@ public protocol AuthUsecaseProtocol {
     /// - Throws: `AuthError`
     func signup(with provider: Provider, request: SignupRequest) async throws -> User
 
-    /// 진행 중인 가입을 취소한다.
-    func cancelSignup()
-
     /// 저장된 토큰으로 로그인 상태를 되살린다.
     /// - Returns: 로그인 상태가 아니면 `nil`
     func restoreSession() async throws -> User?

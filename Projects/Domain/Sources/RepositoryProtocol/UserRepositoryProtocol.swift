@@ -22,11 +22,6 @@ public protocol UserRepositoryProtocol {
     /// - Returns: 중복유무 Bool 타입
     func checkNickname(nickname: String) async throws -> Bool
 
-    /// 자동 로그인
-    /// - Parameter userUuid: 로컬에 저장된 UUID
-    /// - Returns: User
-    func autoLogin(userUuid: String) async throws -> User
-
     /// 추천 카테고리 리스트 가져오기
     /// - Returns: [Recommend]
     func getRecommandList() async throws -> [Recommend]

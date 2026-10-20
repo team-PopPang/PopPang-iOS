@@ -330,15 +330,11 @@ private extension HomeFeatureView {
             initialState: HomeFeature.State(
                 user: User(
                     userUuid: "preview-user",
-                    uid: "preview-uid",
-                    provider: "preview",
+                    provider: nil,
                     email: nil,
                     nickname: "홍길동",
-                    role: "ADMIN",
-                    isAlerted: false,
-                    fcmToken: nil,
-                    alertKeywordList: nil,
-                    recommendList: nil
+                    role: .admin,
+                    isAlerted: false
                 )
             )
         ) {

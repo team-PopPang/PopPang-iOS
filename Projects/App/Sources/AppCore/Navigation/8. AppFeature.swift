@@ -24,8 +24,6 @@ enum AppLaunchResolution {
     /// 인증과 회원가입이 모두 완료된 사용자
     case authenticated(User)
     
-    /// 인증은 완료됐지만 추가 회원정보 입력이 필요한 사용자
-    case registrationRequired(User)
 }
 
 extension AppFeature.OnboardingPath.State: Equatable {}
@@ -94,6 +92,15 @@ struct AppFeature {
         
         /// 추가 회원정보 등록이 완료됐을 때 사용자 정보를 전달
         case registerCompleted(User)
+
+        /// 소셜 로그인 결과 가입이 필요할 때 전달
+        case signupRequired(Provider)
+
+        /// 가입 단계가 만료돼 로그인부터 다시 해야 할 때 전달
+        case signupSessionExpired
+
+        /// 앱을 쓰는 중에 인증 토큰을 쓸 수 없게 돼 다시 로그인해야 할 때 전달
+        case sessionExpired
 
         /// 메인 탭 루트 view가 화면에서 사라졌음을 전달
         case mainTabViewDidDisappear
@@ -165,7 +172,10 @@ struct AppFeature {
             case .launchTask:
                 // 초기 화면 확인이 중복 실행되지 않도록 launch 상태에서만 처리
                 guard state.destination == .launch else { return .none }
-                return resolveLaunch()
+                return .merge(
+                    resolveLaunch(),
+                    observeLoginRequired()
+                )
 
             case .maintenanceRetryTapped:
                 // 다시 확인하는 중에 누른 버튼은 무시
@@ -209,9 +219,36 @@ struct AppFeature {
                 // 루트 로그인과 온보딩 내부 로그인의 성공 결과를 하나의 공통 액션으로 통합
                 return .send(.authCompleted(user))
 
+            case let .auth(.delegate(.signupRequired(provider))),
+                 let .onboardingPath(.element(_, .auth(.delegate(.signupRequired(provider))))):
+                // 루트 로그인과 온보딩 내부 로그인의 가입 필요 결과를 하나의 공통 액션으로 통합
+                return .send(.signupRequired(provider))
+
             case let .registerFlow(.delegate(.completed(user))):
                 // 추가 회원정보 등록 완료 결과를 공통 액션으로 전달
                 return .send(.registerCompleted(user))
+
+            case .registerFlow(.delegate(.signupSessionExpired)):
+                return .send(.signupSessionExpired)
+
+            case .signupRequired(let provider):
+                applySignupRequired(provider, state: &state)
+                return .none
+
+            case .signupSessionExpired:
+                // 가입 화면을 닫고, 만료 안내와 함께 로그인 화면을 다시 보여 준다
+                state.registerFlow = nil
+                state.auth = .signupSessionExpired
+                state.destination = .auth
+                return .none
+
+            case .sessionExpired:
+                // 메인 화면을 쓰는 중일 때만 로그아웃 전환을 시작한다. 로그인 화면에서 온 알림은 무시한다
+                guard state.destination == .main, !state.isLoggingOut else { return .none }
+                beginLoggedOutTransition(state: &state)
+                return .run { [localSessionClient] _ in
+                    await localSessionClient.clear()
+                }
 
             case .authCompleted(let user),
                     .registerCompleted(let user):
@@ -356,10 +393,6 @@ private extension AppFeature {
         if destination == .main, session.user != nil {
             // 인증과 회원정보 등록이 완료됐다면 메인 탭 상태를 생성
             state.mainTab = state.mainTab ?? .init(session: state.$session)
-        } else if destination == .register, let user = session.user {
-            // 인증은 완료됐지만 닉네임 등 추가 정보가 필요하면 회원정보 입력 흐름을 생성
-            state.registerFlow = .init(user: user)
-            state.mainTab = nil
         } else {
             // 그 외 화면에서는 메인 탭 상태를 유지하지 않는다
             state.mainTab = nil
@@ -386,16 +419,36 @@ private extension AppFeature {
             state.onboardingPath = StackState()
         }
 
-        if user.nickname == nil {
-            // 닉네임이 없으면 추가 회원정보 입력 화면으로 이동
-            state.mainTab = nil
-            state.registerFlow = .init(user: user)
-            state.destination = .register
-        } else {
-            // 필요한 회원정보가 모두 있으면 메인 화면으로 이동
-            state.registerFlow = nil
-            state.mainTab = state.mainTab ?? .init(session: state.$session)
-            state.destination = .main
+        // V2 로그인·가입 결과의 사용자는 가입을 마친 사용자이므로 메인 화면으로 이동
+        state.registerFlow = nil
+        state.mainTab = state.mainTab ?? .init(session: state.$session)
+        state.destination = .main
+    }
+
+    /// 소셜 로그인 결과 가입이 필요하면 회원정보 입력 화면으로 이동
+    func applySignupRequired(_ provider: Provider, state: inout State) {
+        state.isLoggingOut = false
+        state.mainTab = nil
+        let shouldDeferOnboardingTeardown = state.destination == .onboarding
+
+        // 가입하는 사용자도 온보딩을 마친 것으로 저장
+        sessionStorage.setOnboardingCompleted(true)
+
+        state.auth = .init()
+        if !shouldDeferOnboardingTeardown {
+            state.onboarding = .init()
+            state.onboardingPath = StackState()
+        }
+        state.registerFlow = .init(provider: provider)
+        state.destination = .register
+    }
+
+    /// 앱을 쓰는 동안 "다시 로그인 필요" 알림을 받아 로그아웃 전환으로 보낸다
+    func observeLoginRequired() -> Effect<Action> {
+        .run { [localSessionClient] send in
+            for await _ in localSessionClient.loginRequiredEvents() {
+                await send(.sessionExpired)
+            }
         }
     }
 
