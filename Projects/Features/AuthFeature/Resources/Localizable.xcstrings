@@ -186,6 +186,29 @@
         }
       }
     },
+    "관심 카테고리를 불러오지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't load the categories. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "カテゴリーを読み込めませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "관심 카테고리를 불러오지 못했어요. 잠시 후 다시 시도해 주세요."
+          }
+        }
+      }
+    },
     "닉네임은 나중에 변경할 수 있습니다." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -274,6 +297,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "닉네임을 확인 중입니다."
+          }
+        }
+      }
+    },
+    "닉네임을 확인하지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't check the nickname. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ニックネームを確認できませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "닉네임을 확인하지 못했어요. 잠시 후 다시 시도해 주세요."
           }
         }
       }

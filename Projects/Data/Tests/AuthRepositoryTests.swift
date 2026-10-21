@@ -40,6 +40,20 @@ struct AuthRepositoryTests {
         #expect(body["recommendList"] as? [Int] == [1, 2])
     }
 
+    @Test("가입 화면의 닉네임 중복 확인과 관심 카테고리 목록은 V2 경로에 가입 전용 토큰을 쓴다")
+    func signupScreenRequestsUseSignupToken() throws {
+        let nickname = try urlRequest(for: .signupNicknameDuplicated(nickname: "팝팡"))
+        #expect(nickname.url?.path == "/api/v2/user/nickname/duplicated")
+        #expect(URLComponents(url: try #require(nickname.url), resolvingAgainstBaseURL: false)?.queryItems == [URLQueryItem(name: "nickname", value: "팝팡")])
+        #expect(nickname.httpMethod == "GET")
+        #expect(AuthAPI.signupNicknameDuplicated(nickname: "팝팡").resolvedAuthorization == .signup)
+
+        let recommend = try urlRequest(for: .signupRecommendList)
+        #expect(recommend.url?.path == "/api/v2/recommend")
+        #expect(recommend.httpMethod == "GET")
+        #expect(AuthAPI.signupRecommendList.resolvedAuthorization == .signup)
+    }
+
     @Test("내 정보 조회·로그아웃·토큰 갱신의 경로와 인증 종류가 맞다")
     func otherRequestsMatchV2Contract() throws {
         #expect(try urlRequest(for: .me).url?.path == "/api/v2/user")
@@ -169,6 +183,61 @@ struct AuthRepositoryTests {
         }
         let isSignupTokenKept = context.storage.loadSignupToken() != nil
         #expect(isSignupTokenKept == (expected != .signupSessionExpired))
+    }
+
+    @Test("가입 화면의 닉네임 중복 확인은 감싼 응답에서 결과를 읽고 가입 전용 토큰을 보낸다")
+    func checkSignupNicknameReadsWrappedResponse() async throws {
+        let context = Context(responses: [(200, #"{"success":true,"code":0,"message":"요청 성공!","data":{"isDuplicated":true}}"#)])
+        try context.storage.saveSignupToken("signup")
+
+        #expect(try await context.repository.checkSignupNickname("팝팡"))
+        #expect(context.stub.authorizationHeaders == ["Bearer signup"])
+    }
+
+    @Test("가입 화면의 관심 카테고리 목록은 감싸지 않은 배열 응답을 읽는다")
+    func fetchSignupRecommendListReadsArray() async throws {
+        let context = Context(responses: [(200, #"[{"id":1,"recommendName":"패션"},{"id":2,"recommendName":"뷰티"}]"#)])
+        try context.storage.saveSignupToken("signup")
+
+        let list = try await context.repository.fetchSignupRecommendList()
+
+        #expect(list.map(\.id) == [1, 2])
+        #expect(list.map(\.recommendName) == ["패션", "뷰티"])
+    }
+
+    @Test(
+        "가입 화면 요청이 가입 단계 만료를 받으면 가입 전용 토큰을 지우고 로그인부터 다시 하게 한다",
+        arguments: [5002, 5014, 5006]
+    )
+    func signupScreenRequestMapsExpiry(code: Int) async throws {
+        let context = Context(responses: [(401, Fixture.error(code))])
+        try context.storage.saveSignupToken("signup")
+
+        await #expect(throws: AuthError.signupSessionExpired) {
+            _ = try await context.repository.fetchSignupRecommendList()
+        }
+        #expect(context.storage.loadSignupToken() == nil)
+    }
+
+    @Test("가입 화면 요청이 다른 이유로 실패하면 가입 전용 토큰을 두고 일반 실패로 알린다")
+    func signupScreenRequestKeepsTokenOnOtherFailure() async throws {
+        let context = Context(responses: [(403, Fixture.error(5008))])
+        try context.storage.saveSignupToken("signup")
+
+        await #expect(throws: AuthError.failed) {
+            _ = try await context.repository.checkSignupNickname("팝팡")
+        }
+        #expect(context.storage.loadSignupToken() == "signup")
+    }
+
+    @Test("가입 전용 토큰이 없으면 가입 화면 요청을 보내지 않는다")
+    func signupScreenRequestWithoutSignupToken() async {
+        let context = Context(responses: [])
+
+        await #expect(throws: AuthError.signupSessionExpired) {
+            _ = try await context.repository.checkSignupNickname("팝팡")
+        }
+        #expect(context.stub.requestCount == 0)
     }
 
     // MARK: - 세션 복구와 로그아웃

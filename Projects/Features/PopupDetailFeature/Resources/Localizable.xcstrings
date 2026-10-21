@@ -1,6 +1,25 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
+    "-" : {
+
+    },
+    "%@" : {
+
+    },
+    "%@ - %@" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ - %2$@"
+          }
+        }
+      }
+    },
+    "%@명이 봤어요" : {
+
+    },
     "%lld명이 봤어요" : {
       "comment" : "View count of the popup",
       "extractionState" : "manual",
@@ -37,6 +56,12 @@
         }
       }
     },
+    "|" : {
+
+    },
+    "2026.01.03" : {
+
+    },
     "SNS / 홈페이지" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -59,6 +84,9 @@
           }
         }
       }
+    },
+    "리뷰 %@개" : {
+
     },
     "리뷰 %lld개" : {
       "extractionState" : "manual",

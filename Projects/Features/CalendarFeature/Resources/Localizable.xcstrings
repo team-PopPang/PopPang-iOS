@@ -1,6 +1,19 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
+    "%@" : {
+
+    },
+    "%@ - %@" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ - %2$@"
+          }
+        }
+      }
+    },
     "선택한 날짜에 팝업이 없습니다" : {
       "extractionState" : "manual",
       "localizations" : {

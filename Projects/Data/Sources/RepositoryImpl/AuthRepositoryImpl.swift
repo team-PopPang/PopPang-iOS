@@ -76,6 +76,22 @@ public final class AuthRepositoryImpl: AuthRepositoryProtocol {
         return user
     }
 
+    public func checkSignupNickname(_ nickname: String) async throws -> Bool {
+        try await signupRequest {
+            try await makeProvider().asyncRequest(
+                .signupNicknameDuplicated(nickname: nickname),
+                decodeDataTo: CheckNicknameDTO.self
+            ).isDuplicated
+        }
+    }
+
+    public func fetchSignupRecommendList() async throws -> [Recommend] {
+        try await signupRequest {
+            try await makeProvider().asyncRequest(.signupRecommendList, decodeTo: [RecommendListDTO].self)
+                .map { $0.toModel() }
+        }
+    }
+
     public func restoreSession() async throws -> User? {
         // 가입 도중 앱을 다시 켰다면 가입 전용 토큰은 이미 만료됐을 수 있어 소셜 로그인부터 다시 한다.
         tokenStorage.removeSignupToken()
@@ -122,6 +138,25 @@ public final class AuthRepositoryImpl: AuthRepositoryProtocol {
 }
 
 private extension AuthRepositoryImpl {
+    /// 가입 화면에서 가입 전용 토큰으로 부르는 요청. 가입 단계가 끝났으면 가입 전용 토큰을 지우고 로그인부터 다시 하게 한다.
+    func signupRequest<T>(_ request: () async throws -> T) async throws -> T {
+        guard tokenStorage.loadSignupToken() != nil else { throw AuthError.signupSessionExpired }
+
+        do {
+            return try await request()
+        } catch let error as NetworkError where Self.isSignupSessionEnded(error) {
+            tokenStorage.removeSignupToken()
+            throw AuthError.signupSessionExpired
+        } catch {
+            throw AuthError.failed
+        }
+    }
+
+    /// 가입 전용 토큰이 만료됐거나(5002) 최신 토큰이 아니거나(5014) 없다(5006).
+    static func isSignupSessionEnded(_ error: NetworkError) -> Bool {
+        error.statusCode == 401 && [5002, 5014, 5006].contains(error.serverErrorCode)
+    }
+
     /// 로그인·가입 응답의 토큰을 저장하고 결과를 돌려준다.
     func save(_ data: V2LoginDataDTO, provider: Provider) throws -> LoginResult {
         do {

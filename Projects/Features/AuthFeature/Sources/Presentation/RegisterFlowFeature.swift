@@ -74,7 +74,10 @@ public struct RegisterFlowFeature {
                 return .none
 
             case .recommendListResponse(.failure(let error)):
-                state.errorMessage = error.localizedDescription
+                if (error as? AuthError) == .signupSessionExpired {
+                    return .send(.delegate(.loginRequired(errorMessage: AuthErrorMessage.signupSessionExpired)))
+                }
+                state.errorMessage = AuthErrorMessage.recommendListLoadFailed
                 return .none
 
             case .backTapped:
@@ -140,7 +143,10 @@ public struct RegisterFlowFeature {
             case .validateNicknameResponse(.failure(let error)):
                 state.isSubmitting = false
                 state.validationState = .none
-                state.errorMessage = error.localizedDescription
+                if (error as? AuthError) == .signupSessionExpired {
+                    return .send(.delegate(.loginRequired(errorMessage: AuthErrorMessage.signupSessionExpired)))
+                }
+                state.errorMessage = AuthErrorMessage.nicknameCheckFailed
                 return .none
 
             case .nextFromNicknameTapped:

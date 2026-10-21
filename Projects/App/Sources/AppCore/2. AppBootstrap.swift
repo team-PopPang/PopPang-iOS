@@ -85,10 +85,7 @@ struct AppBootstrap {
                 serverHealthUsecase: dependencies.usecases.serverHealthUsecase
             )
             mainTabFeatureDependencies.configure(&$0)
-            $0.authFeatureClient = .live(
-                authUsecase: dependencies.usecases.authUsecase,
-                userUsecase: dependencies.usecases.userUsecase
-            )
+            $0.authFeatureClient = .live(authUsecase: dependencies.usecases.authUsecase)
         }
     }
 }

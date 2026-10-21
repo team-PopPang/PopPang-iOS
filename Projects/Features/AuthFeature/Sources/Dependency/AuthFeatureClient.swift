@@ -19,12 +19,8 @@ public struct AuthFeatureClient: Sendable {
         self.getRecommendList = getRecommendList
     }
 
-    public static func live(
-        authUsecase: AuthUsecaseProtocol,
-        userUsecase: UserUsecaseProtocol
-    ) -> Self {
+    public static func live(authUsecase: AuthUsecaseProtocol) -> Self {
         let authUsecaseBox = AuthUsecaseBox(authUsecase)
-        let userUsecaseBox = UserUsecaseBox(userUsecase)
 
         return AuthFeatureClient(
             login: { provider in
@@ -34,10 +30,10 @@ public struct AuthFeatureClient: Sendable {
                 try await authUsecaseBox.usecase.signup(with: provider, request: request)
             },
             checkNickname: { nickname in
-                try await userUsecaseBox.usecase.checkNickname(nickname: nickname)
+                try await authUsecaseBox.usecase.checkSignupNickname(nickname)
             },
             getRecommendList: {
-                try await userUsecaseBox.usecase.getRecommandList()
+                try await authUsecaseBox.usecase.fetchSignupRecommendList()
             }
         )
     }
@@ -58,14 +54,6 @@ private final class AuthUsecaseBox: @unchecked Sendable {
     let usecase: AuthUsecaseProtocol
 
     init(_ usecase: AuthUsecaseProtocol) {
-        self.usecase = usecase
-    }
-}
-
-private final class UserUsecaseBox: @unchecked Sendable {
-    let usecase: UserUsecaseProtocol
-
-    init(_ usecase: UserUsecaseProtocol) {
         self.usecase = usecase
     }
 }

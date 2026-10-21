@@ -1,6 +1,22 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
+    "-" : {
+
+    },
+    "%@" : {
+
+    },
+    "%@ - %@" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ - %2$@"
+          }
+        }
+      }
+    },
     "가까운순" : {
       "comment" : "Sort option",
       "extractionState" : "manual",

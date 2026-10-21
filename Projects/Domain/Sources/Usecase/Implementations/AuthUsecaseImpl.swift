@@ -13,6 +13,14 @@ public final class AuthUsecaseImpl: AuthUsecaseProtocol {
         try await authRepository.signup(with: provider, request: request)
     }
 
+    public func checkSignupNickname(_ nickname: String) async throws -> Bool {
+        try await authRepository.checkSignupNickname(nickname)
+    }
+
+    public func fetchSignupRecommendList() async throws -> [Recommend] {
+        try await authRepository.fetchSignupRecommendList()
+    }
+
     public func restoreSession() async throws -> User? {
         try await authRepository.restoreSession()
     }

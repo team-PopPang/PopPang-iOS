@@ -137,6 +137,41 @@ struct RegisterFlowFeatureTests {
         await store.receive(\.delegate, .loginRequired(errorMessage: message))
     }
 
+    @Test("가입 화면의 닉네임 확인이 가입 단계 만료를 받으면 로그인부터 다시 하게 알린다")
+    func nicknameCheckExpiryReturnsToLogin() async {
+        var state = makeState()
+        state.nickname = "팝팡이"
+        let store = TestStore(initialState: state) {
+            RegisterFlowFeature()
+        } withDependencies: {
+            $0.authFeatureClient = .mock(checkNickname: { _ in throw AuthError.signupSessionExpired })
+        }
+
+        await store.send(.validateNicknameTapped) {
+            $0.isSubmitting = true
+            $0.validationState = .checking
+        }
+        await store.receive(\.validateNicknameResponse.failure) {
+            $0.isSubmitting = false
+            $0.validationState = .none
+        }
+        await store.receive(\.delegate, .loginRequired(errorMessage: AuthErrorMessage.signupSessionExpired))
+    }
+
+    @Test("관심 카테고리를 불러오지 못하면 안내한다")
+    func recommendListFailureShowsMessage() async {
+        let store = TestStore(initialState: makeState()) {
+            RegisterFlowFeature()
+        } withDependencies: {
+            $0.authFeatureClient = .mock(getRecommendList: { throw AuthError.failed })
+        }
+
+        await store.send(.onAppear)
+        await store.receive(\.recommendListResponse.failure) {
+            $0.errorMessage = AuthErrorMessage.recommendListLoadFailed
+        }
+    }
+
     @Test("닉네임이 중복이면 닉네임 단계로 돌아가 안내한다")
     func duplicateNicknameReturnsToNicknameStep() async {
         var state = makeState()
@@ -182,13 +217,15 @@ private extension User {
 private extension AuthFeatureClient {
     static func mock(
         login: @escaping @Sendable (Provider) async throws -> LoginResult = { _ in throw AuthError.failed },
-        signup: @escaping @Sendable (Provider, SignupRequest) async throws -> User = { _, _ in throw AuthError.failed }
+        signup: @escaping @Sendable (Provider, SignupRequest) async throws -> User = { _, _ in throw AuthError.failed },
+        checkNickname: @escaping @Sendable (String) async throws -> Bool = { _ in false },
+        getRecommendList: @escaping @Sendable () async throws -> [Recommend] = { [] }
     ) -> Self {
         AuthFeatureClient(
             login: login,
             signup: signup,
-            checkNickname: { _ in false },
-            getRecommendList: { [] }
+            checkNickname: checkNickname,
+            getRecommendList: getRecommendList
         )
     }
 }

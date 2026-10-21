@@ -7,6 +7,10 @@ import Moya
 public enum AuthAPI {
     case login(SocialCredential)
     case signup(provider: Provider, request: V2SignupRequestDTO)
+    /// 가입 화면의 닉네임 중복 확인
+    case signupNicknameDuplicated(nickname: String)
+    /// 가입 화면의 관심 카테고리 목록
+    case signupRecommendList
     /// 로그아웃. 기기의 토큰을 먼저 지운 뒤 보내므로 저장소 대신 꺼내 둔 Access Token을 직접 담는다.
     case logout(accessToken: String)
     case me
@@ -21,7 +25,7 @@ extension AuthAPI: BaseAPI {
         switch self {
         case .login, .logout:
             return .none
-        case .signup:
+        case .signup, .signupNicknameDuplicated, .signupRecommendList:
             return .signup
         case .me:
             return .access
@@ -34,6 +38,10 @@ extension AuthAPI: BaseAPI {
             return "/auth/\(credential.provider.pathComponent)/mobile/login"
         case .signup(let provider, _):
             return "/auth/\(provider.pathComponent)/signup"
+        case .signupNicknameDuplicated:
+            return "/user/nickname/duplicated"
+        case .signupRecommendList:
+            return "/recommend"
         case .logout:
             return "/auth/logout"
         case .me:
@@ -43,7 +51,7 @@ extension AuthAPI: BaseAPI {
 
     public var method: Moya.Method {
         switch self {
-        case .me:
+        case .me, .signupNicknameDuplicated, .signupRecommendList:
             return .get
         case .login, .signup, .logout:
             return .post
@@ -74,7 +82,9 @@ extension AuthAPI: BaseAPI {
             ])
         case .signup(_, let request):
             return .requestJSONEncodable(request)
-        case .logout, .me:
+        case .signupNicknameDuplicated(let nickname):
+            return .requestParameters(parameters: ["nickname": nickname], encoding: URLEncoding.queryString)
+        case .logout, .me, .signupRecommendList:
             return .requestPlain
         }
     }
