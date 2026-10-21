@@ -27,7 +27,7 @@ struct AuthRepositoryTests {
         #expect(AuthAPI.login(credential).resolvedAuthorization == .none)
     }
 
-    @Test("가입 요청은 가입 전용 토큰을 쓰고, 사용자 식별값 없이 다섯 키만 보낸다")
+    @Test("가입 요청은 가입 전용 토큰을 쓰고, 사용자 식별값 없이 가입 입력값과 가입 OS만 보낸다")
     func signupRequestMatchesV2Contract() throws {
         let signup = AuthAPI.signup(provider: .apple, request: V2SignupRequestDTO(.sample))
         let request = try urlRequest(for: signup)
@@ -35,7 +35,8 @@ struct AuthRepositoryTests {
 
         #expect(request.url?.path == "/api/v2/auth/apple/signup")
         #expect(signup.resolvedAuthorization == .signup)
-        #expect(Set(body.keys) == ["nickname", "isAlerted", "fcmToken", "alertKeywordList", "recommendList"])
+        #expect(Set(body.keys) == ["nickname", "isAlerted", "fcmToken", "alertKeywordList", "recommendList", "signupOs"])
+        #expect(body["signupOs"] as? String == "IOS")
         #expect(body["nickname"] as? String == "팝팡")
         #expect(body["recommendList"] as? [Int] == [1, 2])
     }

@@ -8,6 +8,8 @@ public struct V2SignupRequestDTO: Encodable, Equatable, Sendable {
     public let fcmToken: String?
     public let alertKeywordList: [String]
     public let recommendList: [Int]
+    /// 가입한 OS. 서버가 가입 정보와 가입 알림 메일에 표시한다(2026-10-21 서버 계약 추가). iOS 앱은 항상 `IOS`다.
+    public let signupOs = "IOS"
 
     init(_ request: SignupRequest) {
         nickname = request.nickname
