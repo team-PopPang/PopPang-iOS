@@ -86,6 +86,7 @@ public final class AuthRepositoryImpl: AuthRepositoryProtocol {
     }
 
     public func fetchSignupRecommendList() async throws -> [Recommend] {
+        // 명세 RECO-01: V2 성공 응답도 `APIResponse`로 감싸지 않은 배열이다.
         try await signupRequest {
             try await makeProvider().asyncRequest(.signupRecommendList, decodeTo: [RecommendListDTO].self)
                 .map { $0.toModel() }

@@ -7,9 +7,15 @@ import Moya
 public enum AuthAPI {
     case login(SocialCredential)
     case signup(provider: Provider, request: V2SignupRequestDTO)
-    /// 가입 화면의 닉네임 중복 확인
+    /// 가입 화면의 닉네임 중복 확인 (`GET /api/v2/user/nickname/duplicated`, 명세 USER-04)
+    ///
+    /// 명세는 Access Token 전용이지만, 서버가 Signup Token으로도 부를 수 있게 권한을 바꿔 운영에 배포했다(2026-10-21).
+    /// 성공 응답은 `APIResponse`로 감싼 `{ isDuplicated }`다.
     case signupNicknameDuplicated(nickname: String)
-    /// 가입 화면의 관심 카테고리 목록
+    /// 가입 화면의 관심 카테고리 목록 (`GET /api/v2/recommend`, 명세 RECO-01)
+    ///
+    /// 권한은 위와 같이 Signup Token을 허용한다. 성공 응답은 명세상 V1과 같은 감싸지 않은 배열(`wrapper NONE → NONE`)이라
+    /// `asyncRequest(_:decodeTo:)`로 읽는다.
     case signupRecommendList
     /// 로그아웃. 기기의 토큰을 먼저 지운 뒤 보내므로 저장소 대신 꺼내 둔 Access Token을 직접 담는다.
     case logout(accessToken: String)
