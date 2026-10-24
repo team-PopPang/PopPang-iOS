@@ -3,14 +3,10 @@ import Foundation
 import Moya
 
 public enum UserAPI {
-    case checkNickname(nickname: String)
-    case updateNickname(userUuid: String, newNickname: String)
     case getRecommendList
-    case hardDeleteUser(userUuid: String)
     case getAlertKeywordList(userUuid: String)
     case addAlertKeyword(userUuid: String, newAlertKeyword: String)
     case removeAlertKeyword(userUuid: String, deleteAlertKeyword: String)
-    case alertStatus(userUuid: String, isAlerted: Bool)
     case checkFcmToken(userUuid: String, fcmToken: String)
     case updateFcmToken(userUuid: String, newFcmToken: String)
 }
@@ -18,18 +14,10 @@ public enum UserAPI {
 extension UserAPI: BaseAPI {
     public var path: String {
         switch self {
-        case .checkNickname:
-            return "/user/nickname/duplicated"
-        case .updateNickname(let userUuid, _):
-            return "/user/\(userUuid)"
         case .getRecommendList:
             return "/recommend"
-        case .hardDeleteUser(let userUuid):
-            return "/user/\(userUuid)/hard-delete"
         case .getAlertKeywordList, .addAlertKeyword, .removeAlertKeyword:
             return "/alert-keyword"
-        case .alertStatus(let userUuid, _):
-            return "/user/\(userUuid)/alert-status"
         case .checkFcmToken(let userUuid, _):
             return "/user/\(userUuid)/fcm-token/duplicate-check"
         case .updateFcmToken(let userUuid, _):
@@ -39,26 +27,20 @@ extension UserAPI: BaseAPI {
 
     public var method: Moya.Method {
         switch self {
-        case .checkNickname, .getRecommendList, .getAlertKeywordList, .checkFcmToken:
+        case .getRecommendList, .getAlertKeywordList, .checkFcmToken:
             return .get
         case .addAlertKeyword:
             return .post
-        case .updateNickname, .alertStatus:
-            return .patch
         case .updateFcmToken:
             return .put
-        case .hardDeleteUser, .removeAlertKeyword:
+        case .removeAlertKeyword:
             return .delete
         }
     }
 
     public var task: Task {
         switch self {
-        case .checkNickname(let nickname):
-            return .requestParameters(parameters: ["nickname": nickname], encoding: URLEncoding.queryString)
-        case .updateNickname(_, let newNickname):
-            return .requestParameters(parameters: ["nickname": newNickname], encoding: JSONEncoding.default)
-        case .getRecommendList, .hardDeleteUser:
+        case .getRecommendList:
             return .requestPlain
         case .getAlertKeywordList(let userUuid):
             return .requestParameters(parameters: ["userUuid": userUuid], encoding: URLEncoding.queryString)
@@ -78,8 +60,6 @@ extension UserAPI: BaseAPI {
                 ],
                 encoding: JSONEncoding.default
             )
-        case .alertStatus(_, let isAlerted):
-            return .requestParameters(parameters: ["isAlerted": isAlerted], encoding: JSONEncoding.default)
         case .checkFcmToken(_, let fcmToken):
             return .requestParameters(parameters: ["fcmToken": fcmToken], encoding: URLEncoding.queryString)
         case .updateFcmToken(_, let newFcmToken):

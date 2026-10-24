@@ -153,7 +153,7 @@ public struct ProfileFeatureView: View {
 
 public struct ProfileSettingFeatureView: View {
     let store: StoreOf<ProfileSettingFeature>
-    @State private var showHardDeleteAlert = false
+    @State private var showWithdrawAlert = false
     @State private var draftNickname = ""
     @FocusState private var isFocused: Bool
     // @Environment(\.dismiss) private var dismiss
@@ -205,7 +205,7 @@ public struct ProfileSettingFeatureView: View {
             .padding(.top, 20)
 
             Button {
-                showHardDeleteAlert = true
+                showWithdrawAlert = true
             } label: {
                 Text("회원탈퇴", bundle: .module)
                     .frame(height: 22)
@@ -238,9 +238,9 @@ public struct ProfileSettingFeatureView: View {
         .onChange(of: draftNickname) { _, newValue in
             store.send(.nicknameChanged(newValue))
         }
-        .alert(Text("회원 탈퇴", bundle: .module), isPresented: $showHardDeleteAlert) {
+        .alert(Text("회원 탈퇴", bundle: .module), isPresented: $showWithdrawAlert) {
             Button(String(localized: "탈퇴하기", bundle: .module), role: .destructive) {
-                store.send(.hardDeleteTapped)
+                store.send(.withdrawTapped)
             }
             Button(String(localized: "취소", bundle: .module), role: .cancel) {}
         } message: {

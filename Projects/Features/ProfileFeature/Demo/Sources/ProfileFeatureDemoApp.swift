@@ -19,9 +19,9 @@ struct ProfileFeatureDemoApp: App {
                         checkNickname: { nickname in
                             nickname == "중복닉네임"
                         },
-                        updateNickname: { _, _ in },
-                        hardDeleteUser: { _ in },
-                        alertStatus: { _, _ in }
+                        updateNickname: { _ in },
+                        withdraw: {},
+                        alertStatus: { $0 }
                     )
                 }
             )

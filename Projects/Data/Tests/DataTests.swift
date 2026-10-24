@@ -10,7 +10,7 @@ struct DataTests {
     func repositoryImplementationsSatisfyDomainContracts() {
         let popupRepository: PopupRepositoryProtocol = PopupRepositoryImpl()
         let popupSubmissionRepository: PopupSubmissionRepositoryProtocol = PopupSubmissionRepositoryImpl()
-        let userRepository: UserRepositoryProtocol = UserRepositoryImpl()
+        let userRepository: UserRepositoryProtocol = UserRepositoryImpl(tokenStorage: AuthTokenStorage())
         let adminRepository: AdminRepositoryProtocol = AdminRepositoryImpl()
         let authRepository: AuthRepositoryProtocol = AuthRepositoryImpl(tokenStorage: AuthTokenStorage())
         let serverHealthRepository: ServerHealthRepositoryProtocol = ServerHealthRepositoryImpl()
@@ -417,14 +417,10 @@ struct DataTests {
         #expect(PopupAPI.getPopularRecommendList.path == "recommend/featured")
         #expect(PopupAPI.getPopularRecommendPopupList(userUuid: "user-1", recommendId: 7).path == "/users/user-1/popups/recommendations/7")
 
-        #expect(UserAPI.checkNickname(nickname: "팝팡").path == "/user/nickname/duplicated")
-        #expect(UserAPI.updateNickname(userUuid: "user-1", newNickname: "새팝팡").path == "/user/user-1")
         #expect(UserAPI.getRecommendList.path == "/recommend")
-        #expect(UserAPI.hardDeleteUser(userUuid: "user-1").path == "/user/user-1/hard-delete")
         #expect(UserAPI.getAlertKeywordList(userUuid: "user-1").path == "/alert-keyword")
         #expect(UserAPI.addAlertKeyword(userUuid: "user-1", newAlertKeyword: "성수").path == "/alert-keyword")
         #expect(UserAPI.removeAlertKeyword(userUuid: "user-1", deleteAlertKeyword: "성수").path == "/alert-keyword")
-        #expect(UserAPI.alertStatus(userUuid: "user-1", isAlerted: true).path == "/user/user-1/alert-status")
         #expect(UserAPI.checkFcmToken(userUuid: "user-1", fcmToken: "fcm").path == "/user/user-1/fcm-token/duplicate-check")
         #expect(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").path == "/user/user-1/fcm-token/update")
     }
@@ -472,14 +468,10 @@ struct DataTests {
         #expect(PopupAPI.getPopularRecommendList.method == .get)
         #expect(PopupAPI.getPopularRecommendPopupList(userUuid: "user-1", recommendId: 7).method == .get)
 
-        #expect(UserAPI.checkNickname(nickname: "팝팡").method == .get)
-        #expect(UserAPI.updateNickname(userUuid: "user-1", newNickname: "새팝팡").method == .patch)
         #expect(UserAPI.getRecommendList.method == .get)
-        #expect(UserAPI.hardDeleteUser(userUuid: "user-1").method == .delete)
         #expect(UserAPI.getAlertKeywordList(userUuid: "user-1").method == .get)
         #expect(UserAPI.addAlertKeyword(userUuid: "user-1", newAlertKeyword: "성수").method == .post)
         #expect(UserAPI.removeAlertKeyword(userUuid: "user-1", deleteAlertKeyword: "성수").method == .delete)
-        #expect(UserAPI.alertStatus(userUuid: "user-1", isAlerted: true).method == .patch)
         #expect(UserAPI.checkFcmToken(userUuid: "user-1", fcmToken: "fcm").method == .get)
         #expect(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").method == .put)
     }
@@ -514,12 +506,9 @@ struct DataTests {
         #expect(stringParameter(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").task, key: "userUuid") == "user-1")
         #expect(stringParameter(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").task, key: "popupUuid") == "popup-1")
 
-        #expect(stringParameter(UserAPI.checkNickname(nickname: "팝팡").task, key: "nickname") == "팝팡")
-        #expect(stringParameter(UserAPI.updateNickname(userUuid: "user-1", newNickname: "새팝팡").task, key: "nickname") == "새팝팡")
         #expect(stringParameter(UserAPI.getAlertKeywordList(userUuid: "user-1").task, key: "userUuid") == "user-1")
         #expect(stringParameter(UserAPI.addAlertKeyword(userUuid: "user-1", newAlertKeyword: "성수").task, key: "newAlertKeyword") == "성수")
         #expect(stringParameter(UserAPI.removeAlertKeyword(userUuid: "user-1", deleteAlertKeyword: "성수").task, key: "deleteAlertKeyword") == "성수")
-        #expect(boolParameter(UserAPI.alertStatus(userUuid: "user-1", isAlerted: true).task, key: "isAlerted") == true)
         #expect(stringParameter(UserAPI.checkFcmToken(userUuid: "user-1", fcmToken: "fcm").task, key: "fcmToken") == "fcm")
         #expect(stringParameter(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").task, key: "fcmToken") == "fcm")
     }
