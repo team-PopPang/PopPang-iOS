@@ -122,9 +122,11 @@ public struct ProfileSettingFeature {
     public enum Action {
         case nicknameChanged(String)
         case validateNicknameTapped
-        case validateNicknameResponse(Result<Bool, Error>)
+        /// `nickname`은 확인을 보낸 닉네임이다. 그사이 입력이 바뀌었으면 결과를 쓰지 않는다.
+        case validateNicknameResponse(nickname: String, Result<Bool, Error>)
         case updateNicknameTapped
-        case updateNicknameResponse(Result<Void, Error>)
+        /// `nickname`은 서버에 보낸 닉네임이다. 성공하면 입력란이 아니라 이 값을 알린다.
+        case updateNicknameResponse(nickname: String, Result<Void, Error>)
         case logoutTapped
         case withdrawTapped
         case withdrawResponse(Result<Void, Error>)
@@ -171,18 +173,22 @@ public struct ProfileSettingFeature {
                 return .run { [profileFeatureClient] send in
                     do {
                         let isDuplicated = try await profileFeatureClient.checkNickname(nickname)
-                        await send(.validateNicknameResponse(.success(isDuplicated)))
+                        await send(.validateNicknameResponse(nickname: nickname, .success(isDuplicated)))
                     } catch {
-                        await send(.validateNicknameResponse(.failure(error)))
+                        await send(.validateNicknameResponse(nickname: nickname, .failure(error)))
                     }
                 }
 
-            case .validateNicknameResponse(.success(let isDuplicated)):
+            case .validateNicknameResponse(let nickname, _) where nickname != state.newNickname:
+                state.isLoading = false
+                return .none
+
+            case .validateNicknameResponse(_, .success(let isDuplicated)):
                 state.isLoading = false
                 state.validationState = isDuplicated ? .duplicate : .success
                 return .none
 
-            case .validateNicknameResponse(.failure(let error)):
+            case .validateNicknameResponse(_, .failure(let error)):
                 state.isLoading = false
                 state.validationState = .none
                 state.errorMessage = ProfileErrorMessage.nicknameCheck(for: error)
@@ -197,21 +203,21 @@ public struct ProfileSettingFeature {
                 return .run { [profileFeatureClient] send in
                     do {
                         try await profileFeatureClient.updateNickname(nickname)
-                        await send(.updateNicknameResponse(.success(())))
+                        await send(.updateNicknameResponse(nickname: nickname, .success(())))
                     } catch {
-                        await send(.updateNicknameResponse(.failure(error)))
+                        await send(.updateNicknameResponse(nickname: nickname, .failure(error)))
                     }
                 }
 
-            case .updateNicknameResponse(.success):
+            case .updateNicknameResponse(let nickname, .success):
                 state.isLoading = false
                 state.errorMessage = nil
-                let nickname = state.newNickname
                 return .send(.delegate(.nicknameUpdated(nickname)))
 
-            case .updateNicknameResponse(.failure(let error)):
+            case .updateNicknameResponse(let nickname, .failure(let error)):
                 state.isLoading = false
-                switch error as? UserError {
+                // 그사이 입력이 바뀌었으면 새 입력의 확인 상태는 건드리지 않는다.
+                switch nickname == state.newNickname ? error as? UserError : nil {
                 case .duplicateNickname:
                     // 중복 확인 뒤에 다른 사용자가 같은 닉네임을 먼저 쓴 경우다. 입력란 아래 중복 안내를 보여 주고 다시 확인하게 한다.
                     state.validationState = .duplicate
@@ -228,6 +234,7 @@ public struct ProfileSettingFeature {
                 return .send(.delegate(.logoutRequested))
 
             case .withdrawTapped:
+                guard !state.isLoading else { return .none }
                 state.isLoading = true
                 state.errorMessage = nil
 
