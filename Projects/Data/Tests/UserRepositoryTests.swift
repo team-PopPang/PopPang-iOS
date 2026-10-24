@@ -57,23 +57,38 @@ struct UserRepositoryTests {
         try await context.repository.updateNickname(newNickname: "새팝팡")
     }
 
-    @Test("탈퇴에 성공하면 기기의 토큰을 지운다")
-    func withdrawClearsTokens() async throws {
+    @Test("탈퇴는 빈 본문을 성공으로 처리하고, 기기의 토큰은 로그아웃 전환이 지우도록 남겨 둔다")
+    func withdrawKeepsTokensForLogout() async throws {
         let context = Context(response: (200, ""))
 
         try await context.repository.withdraw()
 
-        #expect(context.storage.loadTokens() == nil)
+        #expect(context.storage.loadTokens() == Context.tokens)
     }
 
-    @Test("탈퇴에 실패하면 토큰을 그대로 둔다")
-    func failedWithdrawKeepsTokens() async throws {
+    @Test("탈퇴를 다시 보내 사용자가 없다는 응답(404 4201)을 받으면 이미 탈퇴한 것으로 본다")
+    func withdrawTreatsMissingUserAsWithdrawn() async throws {
+        let context = Context(response: (404, error(4201)))
+
+        try await context.repository.withdraw()
+    }
+
+    @Test("탈퇴가 서버 오류로 실패하면 화면이 안내할 실패를 던진다")
+    func failedWithdrawThrowsUserError() async throws {
         let context = Context(response: (500, error(6000)))
 
         await #expect(throws: UserError.failed) {
             try await context.repository.withdraw()
         }
-        #expect(context.storage.loadTokens() == Context.tokens)
+    }
+
+    @Test("다시 로그인해야 하는 실패는 UserError로 바꾸지 않고 그대로 던진다")
+    func loginRequiredIsRethrown() async throws {
+        let context = Context(response: (401, error(5006)))
+
+        await #expect(throws: AuthSessionError.loginRequired) {
+            _ = try await context.repository.alertStatus(isAlerted: true)
+        }
     }
 
     @Test(
@@ -105,7 +120,7 @@ private func error(_ code: Int) -> String {
     #"{"success":false,"code":\#(code),"message":"error","data":null}"#
 }
 
-/// 로그인한 상태의 토큰 저장소와, 정해 둔 응답 하나를 돌려주는 Repository
+/// 로그인한 상태의 토큰 저장소와 인증 plugin, 정해 둔 응답 하나를 돌려주는 Repository
 private struct Context {
     static let tokens = AuthTokens(accessToken: "access", refreshToken: "refresh")
 
@@ -115,11 +130,19 @@ private struct Context {
     init(response: (Int, String)) {
         let storage = AuthTokenStorage(store: InMemoryStore())
         try? storage.saveTokens(Self.tokens)
-        let networkProvider = NetworkProvider(stubClosure: MoyaProvider.immediatelyStub)
+        let authentication = AuthenticationPlugin(
+            storage: storage,
+            refresher: AccessTokenRefresher(storage: storage) { _ in
+                throw NetworkError.invalidStatusCode(401, message: error(5007))
+            }
+        )
+        let networkProvider = NetworkProvider(
+            stubClosure: MoyaProvider.immediatelyStub,
+            authentication: authentication
+        )
 
         self.storage = storage
         self.repository = UserRepositoryImpl(
-            tokenStorage: storage,
             makeV2Provider: {
                 networkProvider.makeProvider(
                     endpointClosure: { target in

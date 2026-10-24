@@ -10,7 +10,7 @@ struct DataTests {
     func repositoryImplementationsSatisfyDomainContracts() {
         let popupRepository: PopupRepositoryProtocol = PopupRepositoryImpl()
         let popupSubmissionRepository: PopupSubmissionRepositoryProtocol = PopupSubmissionRepositoryImpl()
-        let userRepository: UserRepositoryProtocol = UserRepositoryImpl(tokenStorage: AuthTokenStorage())
+        let userRepository: UserRepositoryProtocol = UserRepositoryImpl()
         let adminRepository: AdminRepositoryProtocol = AdminRepositoryImpl()
         let authRepository: AuthRepositoryProtocol = AuthRepositoryImpl(tokenStorage: AuthTokenStorage())
         let serverHealthRepository: ServerHealthRepositoryProtocol = ServerHealthRepositoryImpl()

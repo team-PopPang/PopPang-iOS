@@ -465,29 +465,6 @@
         }
       }
     },
-    "이미 사용 중인 닉네임이에요. 다른 닉네임을 입력해 주세요." : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This nickname is already in use. Please enter a different one."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "このニックネームはすでに使われています。別のニックネームを入力してください。"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이미 사용 중인 닉네임이에요. 다른 닉네임을 입력해 주세요."
-          }
-        }
-      }
-    },
     "이미 사용 중인 닉네임입니다." : {
       "extractionState" : "manual",
       "localizations" : {

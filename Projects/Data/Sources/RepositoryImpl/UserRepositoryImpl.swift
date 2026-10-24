@@ -4,14 +4,11 @@ import Foundation
 import Moya
 
 public final class UserRepositoryImpl: UserRepositoryProtocol {
-    private let tokenStorage: AuthTokenStorage
     private let makeV2Provider: () -> MoyaProvider<V2UserAPI>
 
     public init(
-        tokenStorage: AuthTokenStorage,
         makeV2Provider: @escaping () -> MoyaProvider<V2UserAPI> = { NetworkProvider.shared.makeProvider() }
     ) {
-        self.tokenStorage = tokenStorage
         self.makeV2Provider = makeV2Provider
     }
 
@@ -29,11 +26,15 @@ public final class UserRepositoryImpl: UserRepositoryProtocol {
     }
 
     public func withdraw() async throws {
+        // 기기의 토큰은 뒤이은 로그아웃 전환이 지운다. 여기서 먼저 지우면 아직 화면에서 진행 중인 요청이
+        // 토큰 없이 실패해 세션 만료 알림이 로그아웃 전환과 겹친다.
         try await userRequest {
-            try await makeV2Provider().asyncRequestVoid(.withdraw)
+            do {
+                try await makeV2Provider().asyncRequestVoid(.withdraw)
+            } catch let error as NetworkError where error.statusCode == 404 && error.serverErrorCode == 4201 {
+                // 앞선 탈퇴 요청의 응답을 받지 못한 채 다시 보냈다. 사용자가 이미 없으므로 탈퇴한 것으로 본다.
+            }
         }
-        // 탈퇴하면 서버가 이 사용자의 토큰을 받지 않는다. 뒤이은 로그아웃이 서버를 부르지 않도록 기기의 토큰을 먼저 지운다.
-        tokenStorage.clear()
     }
 
     public func getAlertKeywordList(userUuid: String) async throws -> [Keyword] {
@@ -90,11 +91,17 @@ public final class UserRepositoryImpl: UserRepositoryProtocol {
 
 private extension UserRepositoryImpl {
     /// V2 내 정보 요청의 실패를 화면이 안내할 오류로 바꾼다.
+    ///
+    /// 다시 로그인해야 하거나(`AuthSessionError`) 작업이 취소된 경우는 그대로 던진다. 화면이 실패로 안내하지 않게 하기 위해서다.
     func userRequest<T>(_ request: () async throws -> T) async throws -> T {
         do {
             return try await request()
         } catch let error as NetworkError {
             throw Self.userError(from: error)
+        } catch let error as AuthSessionError {
+            throw error
+        } catch is CancellationError {
+            throw CancellationError()
         } catch {
             throw UserError.failed
         }

@@ -11,7 +11,7 @@ public protocol UserRepositoryProtocol {
     /// - Returns: [Recommend]
     func getRecommandList() async throws -> [Recommend]
 
-    /// 회원 탈퇴. 성공하면 기기의 인증 토큰을 지운다.
+    /// 회원 탈퇴. 기기의 인증 토큰은 뒤이은 로그아웃이 지운다.
     /// - Throws: `UserError`
     func withdraw() async throws
 

@@ -31,7 +31,8 @@ public struct ProfileFeature {
         case notificationsTapped
         case serviceTermsTapped
         case alertStatusChanged(Bool)
-        case alertStatusResponse(Result<Void, Error>, Bool)
+        /// 실패하면 `previousValue`로 되돌린다.
+        case alertStatusResponse(Result<Bool, Error>, previousValue: Bool)
         case delegate(Delegate)
 
         public enum Delegate: Equatable {
@@ -70,22 +71,22 @@ public struct ProfileFeature {
                 return .run { [profileFeatureClient] send in
                     do {
                         let savedValue = try await profileFeatureClient.alertStatus(isAlerted)
-                        await send(.alertStatusResponse(.success(()), savedValue))
+                        await send(.alertStatusResponse(.success(savedValue), previousValue: previousValue))
                     } catch {
-                        await send(.alertStatusResponse(.failure(error), previousValue))
+                        await send(.alertStatusResponse(.failure(error), previousValue: previousValue))
                     }
                 }
 
-            case .alertStatusResponse(.success, let resolvedValue):
+            case .alertStatusResponse(.success(let savedValue), _):
                 state.isLoading = false
-                state.localIsAlerted = resolvedValue
+                state.localIsAlerted = savedValue
                 state.errorMessage = nil
-                return .send(.delegate(.alertStatusUpdated(resolvedValue)))
+                return .send(.delegate(.alertStatusUpdated(savedValue)))
 
-            case .alertStatusResponse(.failure, let resolvedValue):
+            case .alertStatusResponse(.failure(let error), let previousValue):
                 state.isLoading = false
-                state.localIsAlerted = resolvedValue
-                state.errorMessage = ProfileErrorMessage.alertStatusFailed
+                state.localIsAlerted = previousValue
+                state.errorMessage = ProfileErrorMessage.alertStatus(for: error)
                 return .none
 
             case .delegate:
@@ -210,9 +211,15 @@ public struct ProfileSettingFeature {
 
             case .updateNicknameResponse(.failure(let error)):
                 state.isLoading = false
-                if error as? UserError == .duplicateNickname {
-                    // 중복 확인 뒤에 다른 사용자가 같은 닉네임을 먼저 쓴 경우다. 다시 확인해야 바꿀 수 있게 한다.
+                switch error as? UserError {
+                case .duplicateNickname:
+                    // 중복 확인 뒤에 다른 사용자가 같은 닉네임을 먼저 쓴 경우다. 입력란 아래 중복 안내를 보여 주고 다시 확인하게 한다.
                     state.validationState = .duplicate
+                case .invalidNickname:
+                    // 서버가 받지 않는 닉네임이라 "사용 가능" 표시를 지우고 다시 확인하게 한다.
+                    state.validationState = .none
+                default:
+                    break
                 }
                 state.errorMessage = ProfileErrorMessage.nicknameUpdate(for: error)
                 return .none
@@ -237,9 +244,9 @@ public struct ProfileSettingFeature {
                 state.isLoading = false
                 return .send(.delegate(.logoutRequested))
 
-            case .withdrawResponse(.failure):
+            case .withdrawResponse(.failure(let error)):
                 state.isLoading = false
-                state.errorMessage = ProfileErrorMessage.withdrawFailed
+                state.errorMessage = ProfileErrorMessage.withdraw(for: error)
                 return .none
 
             case .delegate:
