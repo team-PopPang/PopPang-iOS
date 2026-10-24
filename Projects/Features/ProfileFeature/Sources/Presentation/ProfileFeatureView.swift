@@ -202,6 +202,7 @@ public struct ProfileSettingFeatureView: View {
                     .ppStyleFont(.scdream(.regular, size: 12))
                     .foregroundStyle(Color.subBlack)
             }
+            .disabled(store.isWithdrawing)
             .padding(.top, 20)
 
             Button {
@@ -212,6 +213,7 @@ public struct ProfileSettingFeatureView: View {
                     .ppStyleFont(.scdream(.regular, size: 10))
                     .foregroundStyle(Color.mainGray2)
             }
+            .disabled(store.isWithdrawing)
             .padding(.top, 4)
 
             Spacer()

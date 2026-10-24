@@ -104,6 +104,8 @@ public struct ProfileSettingFeature {
         public var newNickname = ""
         public var validationState: NicknameValidationState = .none
         public var isLoading = false
+        /// 탈퇴 요청을 기다리는 중이다. 이때는 탈퇴·로그아웃을 다시 보내지 않는다.
+        public var isWithdrawing = false
         public var errorMessage: String?
 
         public init(user: User) {
@@ -115,6 +117,7 @@ public struct ProfileSettingFeature {
                 && lhs.newNickname == rhs.newNickname
                 && lhs.validationState == rhs.validationState
                 && lhs.isLoading == rhs.isLoading
+                && lhs.isWithdrawing == rhs.isWithdrawing
                 && lhs.errorMessage == rhs.errorMessage
         }
     }
@@ -216,8 +219,12 @@ public struct ProfileSettingFeature {
 
             case .updateNicknameResponse(let nickname, .failure(let error)):
                 state.isLoading = false
-                // 그사이 입력이 바뀌었으면 새 입력의 확인 상태는 건드리지 않는다.
-                switch nickname == state.newNickname ? error as? UserError : nil {
+                guard nickname == state.newNickname else {
+                    // 그사이 입력이 바뀌었으면 새 입력의 확인 상태는 건드리지 않고, 보낸 닉네임으로 바꾸지 못했다는 것만 알린다.
+                    state.errorMessage = ProfileErrorMessage.nicknameUpdate(for: error is UserError ? UserError.failed : error)
+                    return .none
+                }
+                switch error as? UserError {
                 case .duplicateNickname:
                     // 중복 확인 뒤에 다른 사용자가 같은 닉네임을 먼저 쓴 경우다. 입력란 아래 중복 안내를 보여 주고 다시 확인하게 한다.
                     state.validationState = .duplicate
@@ -231,10 +238,12 @@ public struct ProfileSettingFeature {
                 return .none
 
             case .logoutTapped:
+                guard !state.isWithdrawing else { return .none }
                 return .send(.delegate(.logoutRequested))
 
             case .withdrawTapped:
-                guard !state.isLoading else { return .none }
+                guard !state.isWithdrawing else { return .none }
+                state.isWithdrawing = true
                 state.isLoading = true
                 state.errorMessage = nil
 
@@ -248,10 +257,12 @@ public struct ProfileSettingFeature {
                 }
 
             case .withdrawResponse(.success):
+                state.isWithdrawing = false
                 state.isLoading = false
                 return .send(.delegate(.logoutRequested))
 
             case .withdrawResponse(.failure(let error)):
+                state.isWithdrawing = false
                 state.isLoading = false
                 state.errorMessage = ProfileErrorMessage.withdraw(for: error)
                 return .none

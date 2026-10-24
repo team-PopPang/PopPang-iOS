@@ -92,7 +92,7 @@ public final class UserRepositoryImpl: UserRepositoryProtocol {
 private extension UserRepositoryImpl {
     /// V2 내 정보 요청의 실패를 화면이 안내할 오류로 바꾼다.
     ///
-    /// 다시 로그인해야 하거나(`AuthSessionError`) 작업이 취소된 경우는 그대로 던진다. 화면이 실패로 안내하지 않게 하기 위해서다.
+    /// 다시 로그인해야 하는 경우(`AuthSessionError`)는 그대로 던진다. 앱이 로그인 화면으로 보내므로 화면이 실패로 안내하지 않게 하기 위해서다.
     func userRequest<T>(_ request: () async throws -> T) async throws -> T {
         do {
             return try await request()
@@ -100,8 +100,6 @@ private extension UserRepositoryImpl {
             throw Self.userError(from: error)
         } catch let error as AuthSessionError {
             throw error
-        } catch is CancellationError {
-            throw CancellationError()
         } catch {
             throw UserError.failed
         }

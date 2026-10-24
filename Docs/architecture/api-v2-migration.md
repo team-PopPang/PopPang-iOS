@@ -171,9 +171,10 @@ case마다 인증 종류가 다르면 `switch`로 나눠요. 응답이 `APIRespo
 
 - 모두 Access Token으로 부르고 경로에 `userUuid`를 넣지 않아요. 요청은 `Data/Sources/Remote/V2UserAPI.swift`에 있고, `UserRepositoryImpl`이 불러요.
 - `UserRepositoryProtocol`·`UserUsecase`·`ProfileFeatureClient`의 해당 함수에서 `userUuid` 인자를 뺐어요. 탈퇴 함수 이름은 `hardDeleteUser`에서 `withdraw`로 바꿨어요. 프로필 화면 state도 `userUuid`를 들고 있지 않아요.
-- 실패는 `UserError`로 바꿔요. 닉네임 중복(409 4202)은 `.duplicateNickname`, 빈 값이나 공백만 있는 닉네임(400 4205)은 `.invalidNickname`, 나머지는 `.failed`예요. 다시 로그인해야 하는 실패(`AuthSessionError`)와 작업 취소는 바꾸지 않고 그대로 던져서, 프로필 화면이 실패 안내를 띄우지 않아요. 프로필 화면은 `ProfileErrorMessage`로 안내 문구를 골라요(ko·en·ja).
+- 실패는 `UserError`로 바꿔요. 닉네임 중복(409 4202)은 `.duplicateNickname`, 빈 값이나 공백만 있는 닉네임(400 4205)은 `.invalidNickname`, 나머지는 `.failed`예요. 다시 로그인해야 하는 실패(`AuthSessionError`)는 바꾸지 않고 그대로 던져서, 프로필 화면이 실패 안내를 띄우지 않아요. 프로필 화면은 `ProfileErrorMessage`로 안내 문구를 골라요(ko·en·ja).
 - 닉네임 변경이 중복으로 실패하면 입력란 아래 중복 안내를, 잘못된 값으로 실패하면 "사용 가능" 표시를 지우고 안내해요. 둘 다 다시 중복 확인을 해야 바꿀 수 있어요.
-- 닉네임 확인·변경 응답에는 보낸 닉네임을 함께 실어요. 응답을 기다리는 동안 입력이 바뀌면 확인 결과를 새 입력에 붙이지 않고, 변경에 성공하면 실제로 보낸 닉네임을 홈 화면에 알려요.
+- 닉네임 확인·변경 응답에는 보낸 닉네임을 함께 실어요. 응답을 기다리는 동안 입력이 바뀌면 확인 결과를 새 입력에 붙이지 않고, 변경에 성공하면 실제로 보낸 닉네임을 홈 화면에 알려요. 입력이 바뀐 뒤 실패가 오면 확인 상태는 두고 바꾸지 못했다는 안내만 해요.
+- 탈퇴 요청을 기다리는 동안(`isWithdrawing`)에는 탈퇴·로그아웃 버튼을 막아요.
 - 알림 켜기·끄기는 응답의 `isAlerted`를 화면 상태에 반영해요.
 - 탈퇴에 성공하면 기존 로그아웃 전환(`logoutRequested`)으로 보내고, 기기의 토큰은 그 전환이 지워요. Repository에서 먼저 지우면 아직 진행 중인 다른 요청이 토큰 없이 실패해 세션 만료 알림이 로그아웃 전환과 겹치기 때문이에요. 뒤이은 서버 로그아웃은 사용자가 없어 실패하지만, 로그아웃은 서버 응답과 관계없이 끝나요.
 - 탈퇴 응답을 받지 못해 다시 보냈는데 사용자가 없다는 응답(404 4201)이 오면 이미 탈퇴한 것으로 봐요.

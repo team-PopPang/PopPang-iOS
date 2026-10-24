@@ -3,7 +3,7 @@ import Foundation
 
 /// 내 정보 변경 실패를 화면에 보여 줄 문구로 바꾼다.
 ///
-/// `UserError`가 아닌 실패는 다시 로그인해야 하거나 작업이 취소된 경우라 `nil`을 돌려준다.
+/// `UserError`가 아닌 실패는 다시 로그인해야 하는 경우라 `nil`을 돌려준다.
 /// 다시 로그인해야 하면 앱이 로그인 화면으로 보내므로 따로 안내하지 않는다.
 enum ProfileErrorMessage {
     static func nicknameCheck(for error: Error) -> String? {
