@@ -28,8 +28,8 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 | 단계 | 내용 | 명세 묶음 | 화면 동작 변경 | 상태 |
 | --- | --- | --- | --- | --- |
 | 1 | 공통 네트워크 기반 | COMMON | 없음 | 완료 (#117) |
-| 2 | 로그인 모듈과 유저 엔티티 | A1, A2, USER-01 | 있음 (기존 사용자 재로그인) | 진행 중 (#118) |
-| 3 | 내 정보 | U | 일부 | 예정 |
+| 2 | 로그인 모듈과 유저 엔티티 | A1, A2, USER-01 | 있음 (기존 사용자 재로그인) | 완료 (#119) |
+| 3 | 내 정보 | U | 없음 | 진행 중 (프로필 화면 #120) |
 | 4 | 팝업 목록·상세 | P1, P2 | 거의 없음 | 예정 |
 | 5 | 찜·추천 카테고리·팝업 제보 | F | 거의 없음 | 예정 |
 | 6 | 알림 키워드·알림함 | K | 거의 없음 | 예정 |
@@ -156,11 +156,42 @@ case마다 인증 종류가 다르면 `switch`로 나눠요. 응답이 `APIRespo
 - 앱을 다시 켰을 때 로그인 유지, 로그아웃
 - 애플 로그인은 실제 기기에서 확인해요. nonce 형식이 틀리면 401 5015로 실패해요.
 
-## 3~7단계
+## 3단계: 내 정보
+
+프로필 화면이 부르는 사용자 API 4개를 먼저 옮겼어요(#120). FCM 토큰 등록(USER-06)은 다음 PR에서 옮겨요.
+
+### 프로필 화면
+
+| 기능 | V1 | V2 | 성공 응답 |
+| --- | --- | --- | --- |
+| 닉네임 중복 확인 (USER-04) | `GET /api/v1/user/nickname/duplicated` | `GET /api/v2/user/nickname/duplicated` | `APIResponse`로 감싼 `{ isDuplicated }` |
+| 닉네임 변경 (USER-02) | `PATCH /api/v1/user/{userUuid}` | `PATCH /api/v2/user` | 빈 본문 |
+| 알림 켜기·끄기 (USER-05) | `PATCH /api/v1/user/{userUuid}/alert-status` | `PATCH /api/v2/user/alert-status` | `APIResponse`로 감싼 `{ userUuid, isAlerted }` |
+| 회원 탈퇴 (USER-03) | `DELETE /api/v1/user/{userUuid}/hard-delete` | `DELETE /api/v2/user` | 빈 본문 |
+
+- 모두 Access Token으로 부르고 경로에 `userUuid`를 넣지 않아요. 요청은 `Data/Sources/Remote/V2UserAPI.swift`에 있고, `UserRepositoryImpl`이 불러요.
+- `UserRepositoryProtocol`·`UserUsecase`·`ProfileFeatureClient`의 해당 함수에서 `userUuid` 인자를 뺐어요. 탈퇴 함수 이름은 `hardDeleteUser`에서 `withdraw`로 바꿨어요. 프로필 화면 state도 `userUuid`를 들고 있지 않아요.
+- 실패는 `UserError`로 바꿔요. 닉네임 중복(409 4202)은 `.duplicateNickname`, 빈 값이나 공백만 있는 닉네임(400 4205)은 `.invalidNickname`, 나머지는 `.failed`예요. 프로필 화면은 `ProfileErrorMessage`로 안내 문구를 골라요(ko·en·ja).
+- 알림 켜기·끄기는 응답의 `isAlerted`를 화면 상태에 반영해요.
+- 탈퇴에 성공하면 `UserRepositoryImpl`이 기기의 토큰을 지워요. 그 뒤 로그아웃 전환이 서버 로그아웃을 부를 토큰이 없어서, 탈퇴한 사용자의 토큰으로 서버를 다시 부르지 않아요.
+
+### 3단계에서 정한 것
+
+| 상황 | 결정 |
+| --- | --- |
+| 회원 탈퇴 | 명세(`cc55e51`)의 V2 탈퇴는 탈퇴 표시만 해서(soft delete) 같은 소셜 계정으로 다시 가입할 수 없었어요. 서버가 V2 탈퇴를 영구 삭제로 바꿔 배포해서(2026-10-25), V1 영구 삭제처럼 탈퇴한 뒤 다시 가입할 수 있어요. 탈퇴 안내 문구("모든 데이터가 삭제되며 복구할 수 없습니다")는 그대로 둬요. 확인 필요: 바뀐 서버 명세나 서버 PR |
+| 회원 복구 | V2에 없어요. 앱은 V1 복구(`resotre`)를 부르지 않아요. |
+
+### 직접 확인할 것
+
+- 프로필 화면에서 닉네임 중복 확인과 변경, 알림 켜기·끄기
+- 테스트 계정으로 탈퇴한 뒤 같은 소셜 계정으로 다시 가입되는지
+
+## 4~7단계
 
 | 단계 | 할 일 | 먼저 확인할 것 |
 | --- | --- | --- |
-| 3 (U) | 닉네임 변경, 탈퇴, 닉네임 중복 확인, 알림 설정, FCM 토큰 등록에서 `userUuid` 경로를 빼요. | 회원 영구 삭제와 회원 복구는 V2 대응 API가 없어요. 프로필 화면이 영구 삭제를 불러요(`ProfileFeatureClient`). |
+| 3 (U) 남은 것 | FCM 토큰 등록에서 V1 중복 확인·갱신 두 요청을 `PUT /api/v2/user/fcm-token` 하나로 바꿔요. | `AppNotificationManager`가 로그인 직후와 토큰이 바뀔 때 부르는 순서 |
 | 4 (P1, P2) | 대부분 버전과 인증 종류만 바꿔요. 개인화 추천은 경로의 `userUuid`가 빠져요. | 로그인 전에 팝업 API를 부르는 화면이 있는지 |
 | 5 (F) | 찜, 추천 카테고리, 팝업 제보 | 팝업 제보를 React Native 화면에서 보내는지 |
 | 6 (K) | 알림 키워드, 알림함 | |
