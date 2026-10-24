@@ -7,13 +7,17 @@ import Moya
 public struct AuthenticationPlugin: PluginType {
     public let storage: AuthTokenStorage
     public let refresher: AccessTokenRefresher
+    /// Access Token이 필요한 요청이 `AuthSessionError.loginRequired`로 끝났음을 알릴 곳
+    let sessionEvents: AuthSessionEvents?
 
     public init(
         storage: AuthTokenStorage,
-        refresher: AccessTokenRefresher
+        refresher: AccessTokenRefresher,
+        sessionEvents: AuthSessionEvents? = nil
     ) {
         self.storage = storage
         self.refresher = refresher
+        self.sessionEvents = sessionEvents
     }
 
     public func prepare(_ request: URLRequest, target: TargetType) -> URLRequest {

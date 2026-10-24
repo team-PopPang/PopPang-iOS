@@ -388,7 +388,7 @@ private extension MainTabFeature {
                 .init(
                     userUuid: state.core.user.userUuid,
                     popup: popup,
-                    isAdmin: state.core.user.role.uppercased() == "ADMIN"
+                    isAdmin: state.core.user.isAdmin
                 )
             )
         )

@@ -23,10 +23,6 @@ public final class UserRepositoryImpl: UserRepositoryProtocol {
         }
     }
 
-    public func autoLogin(userUuid: String) async throws -> Domain.User {
-        try await userProvider.asyncRequest(.autoLogin(userUuid: userUuid), decodeTo: UserDTO.self).toModel()
-    }
-
     public func getRecommandList() async throws -> [Recommend] {
         try await userProvider.asyncRequest(.getRecommendList, decodeTo: [RecommendListDTO].self).map { $0.toModel() }
     }

@@ -5,7 +5,6 @@ import Moya
 public enum UserAPI {
     case checkNickname(nickname: String)
     case updateNickname(userUuid: String, newNickname: String)
-    case autoLogin(userUuid: String)
     case getRecommendList
     case hardDeleteUser(userUuid: String)
     case getAlertKeywordList(userUuid: String)
@@ -23,8 +22,6 @@ extension UserAPI: BaseAPI {
             return "/user/nickname/duplicated"
         case .updateNickname(let userUuid, _):
             return "/user/\(userUuid)"
-        case .autoLogin:
-            return "/auth/autoLogin"
         case .getRecommendList:
             return "/recommend"
         case .hardDeleteUser(let userUuid):
@@ -44,7 +41,7 @@ extension UserAPI: BaseAPI {
         switch self {
         case .checkNickname, .getRecommendList, .getAlertKeywordList, .checkFcmToken:
             return .get
-        case .autoLogin, .addAlertKeyword:
+        case .addAlertKeyword:
             return .post
         case .updateNickname, .alertStatus:
             return .patch
@@ -61,8 +58,6 @@ extension UserAPI: BaseAPI {
             return .requestParameters(parameters: ["nickname": nickname], encoding: URLEncoding.queryString)
         case .updateNickname(_, let newNickname):
             return .requestParameters(parameters: ["nickname": newNickname], encoding: JSONEncoding.default)
-        case .autoLogin(let userUuid):
-            return .requestJSONEncodable(["userUuid": userUuid])
         case .getRecommendList, .hardDeleteUser:
             return .requestPlain
         case .getAlertKeywordList(let userUuid):

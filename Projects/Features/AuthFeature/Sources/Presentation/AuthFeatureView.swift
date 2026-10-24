@@ -1,9 +1,7 @@
-import AuthenticationServices
 import ComposableArchitecture
 import Domain
 import DSKit
 import SwiftUI
-import UIKit
 
 public struct AuthFeatureView: View {
     let store: StoreOf<AuthFeature>
@@ -21,64 +19,35 @@ public struct AuthFeatureView: View {
 
             VStack {
                 SocialLoginButton(type: .kakao) {
-                    store.send(.kakaoLoginTapped)
+                    store.send(.loginTapped(.kakao))
                 }
                 .disabled(store.isSubmitting)
 
-                ZStack {
-                    SignInWithAppleButton { _ in
-                    } onCompletion: { result in
-                        switch result {
-                        case .success(let authorization):
-                            store.send(.appleLoginTapped(.init(authorization)))
-                        case .failure(let error):
-                            print("[LoginView] 애플 로그인 에러: \(error.localizedDescription)")
-                        }
-                    }
-                    .frame(maxWidth: 375, maxHeight: 52)
-                    .disabled(store.isSubmitting)
-
-                    SocialLoginButton(type: .apple) {
-                        triggerAppleLoginBtnTap()
-                    }
-                    .disabled(store.isSubmitting)
+                SocialLoginButton(type: .apple) {
+                    store.send(.loginTapped(.apple))
                 }
+                .disabled(store.isSubmitting)
 
                 SocialLoginButton(type: .google) {
-                    store.send(.googleLoginTapped)
+                    store.send(.loginTapped(.google))
                 }
                 .disabled(store.isSubmitting)
             }
             .padding(.top, 120)
         }
         .padding(.horizontal, 24)
-    }
-}
-
-private extension AuthFeatureView {
-    func triggerAppleLoginBtnTap() {
-        guard let keyWindow = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .flatMap({ $0.windows })
-            .first(where: { $0.isKeyWindow }),
-            let appleButton = findAppleSignInButton(in: keyWindow)
-        else {
-            print("Apple 로그인 버튼을 찾을 수 없습니다.")
-            return
+        .alert(
+            Text("로그인할 수 없어요", bundle: .module),
+            isPresented: Binding(
+                get: { store.errorMessage != nil },
+                set: { isPresented in
+                    if !isPresented { store.send(.errorDismissed) }
+                }
+            )
+        ) {
+            Button(String(localized: "확인", bundle: .module), role: .cancel) {}
+        } message: {
+            Text(store.errorMessage ?? "")
         }
-
-        appleButton.sendActions(for: .touchUpInside)
-    }
-
-    func findAppleSignInButton(in view: UIView) -> ASAuthorizationAppleIDButton? {
-        for subview in view.subviews {
-            if let appleButton = subview as? ASAuthorizationAppleIDButton {
-                return appleButton
-            }
-            if let found = findAppleSignInButton(in: subview) {
-                return found
-            }
-        }
-        return nil
     }
 }

@@ -1,34 +1,30 @@
-import AuthenticationServices
 import ComposableArchitecture
 import Domain
 import Foundation
 
 @Reducer
 public struct AuthFeature {
-    public struct AppleAuthorization: @unchecked Sendable {
-        let value: ASAuthorization
-
-        public init(_ value: ASAuthorization) {
-            self.value = value
-        }
-    }
-
     @ObservableState
     public struct State: Equatable {
         public var isSubmitting = false
+        public var errorMessage: String?
 
-        public init() {}
+        public init(errorMessage: String? = nil) {
+            self.errorMessage = errorMessage
+        }
     }
 
     public enum Action {
-        case kakaoLoginTapped
-        case googleLoginTapped
-        case appleLoginTapped(AppleAuthorization)
-        case loginResponse(Result<User, Error>)
+        case loginTapped(Provider)
+        case loginResponse(Result<LoginResult, Error>)
+        case errorDismissed
         case delegate(Delegate)
 
         public enum Delegate: Equatable {
+            /// 가입을 마친 사용자가 로그인했다.
             case authenticated(User)
+            /// 가입이 필요하다.
+            case signupRequired(Provider)
         }
     }
 
@@ -39,45 +35,29 @@ public struct AuthFeature {
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case .kakaoLoginTapped:
+            case .loginTapped(let provider):
+                guard !state.isSubmitting else { return .none }
                 state.isSubmitting = true
+                state.errorMessage = nil
                 return .run { [authFeatureClient] send in
-                    do {
-                        let user = try await authFeatureClient.kakaoLogin()
-                        await send(.loginResponse(.success(user)))
-                    } catch {
-                        await send(.loginResponse(.failure(error)))
-                    }
+                    await send(.loginResponse(Result { try await authFeatureClient.login(provider) }))
                 }
 
-            case .googleLoginTapped:
-                state.isSubmitting = true
-                return .run { [authFeatureClient] send in
-                    do {
-                        let user = try await authFeatureClient.googleLogin()
-                        await send(.loginResponse(.success(user)))
-                    } catch {
-                        await send(.loginResponse(.failure(error)))
-                    }
-                }
-
-            case .appleLoginTapped(let authorization):
-                state.isSubmitting = true
-                return .run { [authFeatureClient] send in
-                    do {
-                        let user = try await authFeatureClient.appleLogin(authorization.value)
-                        await send(.loginResponse(.success(user)))
-                    } catch {
-                        await send(.loginResponse(.failure(error)))
-                    }
-                }
-
-            case .loginResponse(.success(let user)):
+            case .loginResponse(.success(.completed(let user))):
                 state.isSubmitting = false
                 return .send(.delegate(.authenticated(user)))
 
-            case .loginResponse(.failure):
+            case .loginResponse(.success(.pending(let provider))):
                 state.isSubmitting = false
+                return .send(.delegate(.signupRequired(provider)))
+
+            case .loginResponse(.failure(let error)):
+                state.isSubmitting = false
+                state.errorMessage = AuthErrorMessage.login(for: error)
+                return .none
+
+            case .errorDismissed:
+                state.errorMessage = nil
                 return .none
 
             case .delegate:

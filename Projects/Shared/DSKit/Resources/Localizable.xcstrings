@@ -1,6 +1,12 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
+    "%@" : {
+
+    },
+    "+%@건" : {
+
+    },
     "+%lld건" : {
       "comment" : "Number of popups on a calendar day",
       "extractionState" : "manual",

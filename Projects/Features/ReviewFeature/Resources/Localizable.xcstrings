@@ -1,6 +1,12 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
+    "|" : {
+
+    },
+    "2026.01.03" : {
+
+    },
     "나" : {
       "comment" : "Author name shown on the review the user just wrote",
       "extractionState" : "manual",
@@ -24,6 +30,9 @@
           }
         }
       }
+    },
+    "리뷰 %@개" : {
+
     },
     "리뷰 %lld개" : {
       "extractionState" : "manual",

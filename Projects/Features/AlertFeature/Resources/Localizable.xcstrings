@@ -1,6 +1,19 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
+    "%@" : {
+
+    },
+    "%@ - %@" : {
+      "localizations" : {
+        "ko" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ - %2$@"
+          }
+        }
+      }
+    },
     "닉네임" : {
       "comment" : "Shown in place of the user's name when no nickname is set",
       "extractionState" : "manual",

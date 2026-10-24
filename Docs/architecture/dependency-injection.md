@@ -17,7 +17,9 @@
 ```text
 PopPangApp.init
 → AppBootstrap.live()
-   ├─ AppDependencyRegistry.live()
+   ├─ AuthTokenStorage, AccessTokenRefresher, AuthenticationPlugin 생성
+   │   └─ NetworkProvider.shared.configureAuthentication(...)   V2 인증 연결 (요청 전에 한 번)
+   ├─ AppDependencyRegistry.live(tokenStorage:)
    │   ├─ AppRepositoryRegistry.live()   RepositoryImpl 생성 (Data)
    │   └─ AppUsecaseRegistry             UsecaseImpl 생성 (Domain)
    ├─ LocalSessionClient.live(...)
@@ -26,7 +28,7 @@ PopPangApp.init
 → AppBootstrap.makeAppStore()
    └─ Store(initialState:) { AppFeature(...) } withDependencies: { ... }
       ├─ ServerHealthClient.live(...)    앱 시작 헬스 체크
-      └─ AuthFeatureClient.live(...)     로그인
+      └─ AuthFeatureClient.live(...)     로그인·가입 (AuthUsecase)
 → 모든 하위 reducer가 @Dependency로 client를 읽음
 ```
 
@@ -177,11 +179,11 @@ private final class PopupUsecaseBox: @unchecked Sendable {
 | 타입 | 위치 | 역할 |
 | --- | --- | --- |
 | `UserSession` | `Core/Sources/Support/UserSession.swift` | 앱이 지금 쓰는 세션. source of truth는 `AppFeature.State.session`(`@Shared`)이다. |
-| `LocalSessionClient` | `App/Sources/AppCore/LocalSessionClient.swift` | 세션 load·save·clear. `LocalSessionStorage`와 `UserUsecaseProtocol`을 조합한다. |
+| `LocalSessionClient` | `App/Sources/AppCore/LocalSessionClient.swift` | 세션 load·save·clear와 "다시 로그인 필요" 알림. `LocalSessionStorage`와 `AuthUsecaseProtocol`을 조합한다. load는 저장된 토큰으로 내 정보를 조회하고, clear는 서버 로그아웃 후 토큰을 지운다. |
 | `LocalSessionStorage` | `Core/Sources/LocalStorage/Storage/Session/` | `userID`, 온보딩 완료 여부 같은 로컬 값 읽기·쓰기 |
 | `Storing` / `UserDefaultsStore` | `Core/Sources/LocalStorage/Store/` | 키로 값을 저장·조회·삭제하는 공통 저장소 protocol과 UserDefaults 구현. `AppBootstrap.live(store:)`가 하나를 만들어 여러 저장소에 나눠 준다. 저장소마다 더 필요한 기능은 그 저장소 타입의 `public extension`으로 추가한다. |
 | `RecentSearchStorage`, `PushTokenStorage`, `DeepLinkStorage` | `Core/Sources/LocalStorage/Storage/` | 최근 검색어, 푸시 토큰, 딥링크 팝업 ID |
-| `AuthTokenStorage` | `Core/Sources/LocalStorage/Storage/AuthToken/` | V2 Access·Refresh·Signup Token. `Storing`(기본 `UserDefaultsStore`)에 저장한다. 명세와 다른 결정이며 이유는 [V2 API 마이그레이션](api-v2-migration.md#정해야-할-것) 8번에 있다. 아직 앱에서 조립하지 않는다([V2 API 마이그레이션](api-v2-migration.md) 2단계). |
+| `AuthTokenStorage` | `Core/Sources/LocalStorage/Storage/AuthToken/` | V2 Access·Refresh·Signup Token. `Storing`(기본 `UserDefaultsStore`)에 저장한다. 명세와 다른 결정이며 이유는 [V2 API 마이그레이션](api-v2-migration.md#정해야-할-것) 8번에 있다. `AppBootstrap`이 만들어 인증 plugin과 `AuthRepositoryImpl`에 같은 인스턴스를 나눠 준다. |
 | `KeychainStoring` / `KeychainStore` | `Core/Sources/LocalStorage/Store/Keychain/` | Keychain 저장 구현. 지금은 쓰는 곳이 없다. |
 
 로컬 저장소는 두 층으로 나눈다.
