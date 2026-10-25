@@ -8,13 +8,16 @@ import Moya
 /// 기록은 앱을 지우면 함께 지워진다. 다시 설치해 한 번 더 보내도 서버가 이미 있는 값을 유지하므로 괜찮다.
 public final class MigrationRepositoryImpl: MigrationRepositoryProtocol {
     private let store: Storing
+    private let tokenStorage: AuthTokenStorage
     private let makeProvider: () -> MoyaProvider<MigrationAPI>
 
     public init(
         store: Storing,
+        tokenStorage: AuthTokenStorage,
         makeProvider: @escaping () -> MoyaProvider<MigrationAPI> = { NetworkProvider.shared.makeProvider() }
     ) {
         self.store = store
+        self.tokenStorage = tokenStorage
         self.makeProvider = makeProvider
     }
 
@@ -23,7 +26,8 @@ public final class MigrationRepositoryImpl: MigrationRepositoryProtocol {
     }
 
     public func fillSignupOs() async throws {
-        try await makeProvider().asyncRequestVoid(.fillSignupOs)
+        guard let tokens = tokenStorage.loadTokens() else { throw AuthSessionError.loginRequired }
+        try await makeProvider().asyncRequestVoid(.fillSignupOs(accessToken: tokens.accessToken))
     }
 
     public func markSignupOsFilled(userUuid: String) {

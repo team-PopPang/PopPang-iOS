@@ -6,14 +6,27 @@ import Testing
 @testable import Data
 
 struct MigrationTests {
-    @Test("가입 OS 채우기는 V2 경로에 Access Token으로 IOS를 보낸다")
+    @Test("가입 OS 채우기는 V2 경로에 꺼내 둔 Access Token을 직접 담아 IOS를 보내고, 인증 plugin을 거치지 않는다")
     func fillSignupOsRequestMatchesContract() throws {
-        let request = try MoyaProvider<MigrationAPI>.defaultEndpointMapping(for: .fillSignupOs).urlRequest()
+        let target = MigrationAPI.fillSignupOs(accessToken: "access")
+        let request = try MoyaProvider<MigrationAPI>.defaultEndpointMapping(for: target).urlRequest()
 
         #expect(request.url?.path == "/api/v2/user/signup-os")
         #expect(request.httpMethod == "PATCH")
+        #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer access")
         #expect(try JSONSerialization.jsonObject(with: try #require(request.httpBody)) as? [String: String] == ["signupOs": "IOS"])
-        #expect(MigrationAPI.fillSignupOs.resolvedAuthorization == .access)
+        #expect(target.resolvedAuthorization == .none)
+    }
+
+    @Test("저장된 토큰이 없으면 요청을 보내지 않는다")
+    func missingTokensSkipRequest() async throws {
+        let context = Context(statusCode: 200, isLoggedIn: false)
+
+        await #expect(throws: AuthSessionError.loginRequired) {
+            try await context.usecase.runPendingMigrations(userUuid: "user-1")
+        }
+        #expect(context.requestCount.value == 0)
+        #expect(!context.repository.isSignupOsFilled(userUuid: "user-1"))
     }
 
     @Test("아직 하지 않은 사용자는 요청을 보내고, 성공하면 마쳤다고 기록한다")
@@ -82,12 +95,18 @@ private struct Context {
     let repository: MigrationRepositoryImpl
     let usecase: MigrationUsecaseImpl
 
-    init(statusCode: Int) {
+    init(statusCode: Int, isLoggedIn: Bool = true) {
         let networkProvider = NetworkProvider(stubClosure: MoyaProvider.immediatelyStub)
         let requestCount = requestCount
+        let store = InMemoryStore()
+        let tokenStorage = AuthTokenStorage(store: store)
+        if isLoggedIn {
+            try? tokenStorage.saveTokens(AuthTokens(accessToken: "access", refreshToken: "refresh"))
+        }
 
         let repository = MigrationRepositoryImpl(
-            store: InMemoryStore(),
+            store: store,
+            tokenStorage: tokenStorage,
             makeProvider: {
                 networkProvider.makeProvider(
                     endpointClosure: { target in

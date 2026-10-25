@@ -16,7 +16,7 @@ struct AppRepositoryRegistry {
         AppRepositoryRegistry(
             adminRepository: AdminRepositoryImpl(),
             authRepository: AuthRepositoryImpl(tokenStorage: tokenStorage),
-            migrationRepository: MigrationRepositoryImpl(store: store),
+            migrationRepository: MigrationRepositoryImpl(store: store, tokenStorage: tokenStorage),
             popupRepository: PopupRepositoryImpl(),
             serverHealthRepository: ServerHealthRepositoryImpl(),
             userRepository: UserRepositoryImpl()
