@@ -216,6 +216,7 @@ HomeFeatureView (HomeFeatureV2)
    - 정상: `LocalSessionStorage.loadSnapshot()`과 세션으로 `AppLaunchStateResolver`가 시작 화면을 정하고, `launchResolved`에서 `session`과 `destination`을 반영한다. main이면 `MainTabFeature.State`를 만든다.
    - 서버 이상·오프라인: `serverHealthCheckFailed`로 `.maintenance` 화면(`MaintenanceFeatureView`)을 띄운다. 저장된 로그인 정보는 지우지 않는다.
 7. 점검 화면의 다시 시도(`maintenanceRetryTapped`)는 5번부터 다시 실행한다. 확인 중에 누른 버튼은 무시한다.
+8. 자동 로그인(`launchResolved`)이나 로그인·가입 완료로 메인 화면에 들어가면 `AppMigrationClient.run(userUuid)`로 남은 마이그레이션을 실행한다. 화면 전환은 기다리지 않고, 실패하면 로그만 남긴 뒤 다음 실행 때 다시 한다. 자세한 내용은 [V2 API 마이그레이션](api-v2-migration.md#기존-사용자-데이터-보정)을 본다.
 
 ## 주요 기술
 

@@ -191,6 +191,29 @@ case마다 인증 종류가 다르면 `switch`로 나눠요. 응답이 `APIRespo
 - 프로필 화면에서 닉네임 중복 확인과 변경, 알림 켜기·끄기
 - 테스트 계정으로 탈퇴한 뒤 같은 소셜 계정으로 다시 가입되는지
 
+## 기존 사용자 데이터 보정
+
+V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용자는 서버에 가입 OS가 비어 있어요. 서버가 이 값을 채우는 API를 마이그레이션 명세(`cc55e51`) 뒤에 추가했어요(2026-10-25).
+
+| 항목 | 값 |
+| --- | --- |
+| API | `PATCH /api/v2/user/signup-os`, Access Token, 본문 `{"signupOs":"IOS"}`, 성공 응답은 빈 본문 |
+| 서버 동작 | 가입 OS가 비어 있으면 저장하고, 이미 값이 있으면 유지해요. |
+| 부르는 때 | 자동 로그인이나 로그인·가입 완료로 메인 화면에 들어갈 때(`AppFeature`) |
+
+| 구성 요소 | 위치 | 역할 |
+| --- | --- | --- |
+| `MigrationUsecase` | `Domain` | 이 사용자에게 아직 하지 않은 마이그레이션을 실행하고, 성공한 것만 기록해요. |
+| `MigrationRepositoryProtocol` | `Domain` | 서버 요청과 기기의 완료 기록을 맡아요. |
+| `MigrationAPI`, `MigrationRepositoryImpl` | `Data` | 요청을 보내고, 마친 사용자 UUID를 UserDefaults(`migration.signupOsFilledUsers`)에 기록해요. |
+| `AppMigrationClient` | `App` | `AppFeature`가 부르는 TCA 의존성이에요. 실패하면 로그만 남겨요. |
+
+- 기록은 사용자별이라, 한 기기에서 다른 계정으로 로그인하면 그 계정에서 한 번 더 보내요.
+- 실패하면 기록하지 않아서 다음 실행 때 다시 보내요. 화면에는 알리지 않고 메인 화면은 그대로 들어가요.
+- 기록은 앱을 지우면 함께 지워져요. 다시 설치해 한 번 더 보내도 서버가 이미 있는 값을 유지해요.
+- 사용자 엔티티(`User`)에는 가입 OS를 넣지 않았어요. V2 내 정보 응답에 없고, 채울지는 서버가 판단해요.
+- 새 마이그레이션이 생기면 `MigrationRepositoryProtocol`에 요청과 기록 함수를, `MigrationUsecaseImpl.runPendingMigrations`에 실행 단계를 더해요.
+
 ## 4~7단계
 
 | 단계 | 할 일 | 먼저 확인할 것 |

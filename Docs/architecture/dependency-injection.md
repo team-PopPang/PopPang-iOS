@@ -19,8 +19,8 @@ PopPangApp.init
 → AppBootstrap.live()
    ├─ AuthTokenStorage, AccessTokenRefresher, AuthenticationPlugin 생성
    │   └─ NetworkProvider.shared.configureAuthentication(...)   V2 인증 연결 (요청 전에 한 번)
-   ├─ AppDependencyRegistry.live(tokenStorage:)
-   │   ├─ AppRepositoryRegistry.live()   RepositoryImpl 생성 (Data)
+   ├─ AppDependencyRegistry.live(tokenStorage:store:)
+   │   ├─ AppRepositoryRegistry.live(tokenStorage:store:)   RepositoryImpl 생성 (Data)
    │   └─ AppUsecaseRegistry             UsecaseImpl 생성 (Domain)
    ├─ LocalSessionClient.live(...)
    ├─ MainTabFeatureDependencies(...)    탭·상세 feature client의 .live(...) 조립
@@ -28,6 +28,7 @@ PopPangApp.init
 → AppBootstrap.makeAppStore()
    └─ Store(initialState:) { AppFeature(...) } withDependencies: { ... }
       ├─ ServerHealthClient.live(...)    앱 시작 헬스 체크
+      ├─ AppMigrationClient.live(...)    메인 진입 때 기존 사용자 데이터 보정 (MigrationUsecase)
       └─ AuthFeatureClient.live(...)     로그인·가입 (AuthUsecase)
 → 모든 하위 reducer가 @Dependency로 client를 읽음
 ```
@@ -55,13 +56,11 @@ Store(initialState: AppFeature.State()) {
     $0.serverHealthClient = .live(
         serverHealthUsecase: dependencies.usecases.serverHealthUsecase
     )
-    mainTabFeatureDependencies.configure(&$0)
-    $0.authFeatureClient = .live(
-        kakaoAuthUsecase: dependencies.usecases.kakaoAuthUsecase,
-        googleAuthUsecase: dependencies.usecases.googleAuthUsecase,
-        appleAuthUsecase: dependencies.usecases.appleAuthUsecase,
-        userUsecase: dependencies.usecases.userUsecase
+    $0.appMigrationClient = .live(
+        migrationUsecase: dependencies.usecases.migrationUsecase
     )
+    mainTabFeatureDependencies.configure(&$0)
+    $0.authFeatureClient = .live(authUsecase: dependencies.usecases.authUsecase)
 }
 ```
 
