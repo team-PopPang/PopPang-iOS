@@ -262,4 +262,16 @@ public extension View {
             toolbar(content: content)
         }
     }
+
+    /// iOS 26부터 내비게이션 바 아래로 지나가는 스크롤 내용에 붙는 흐린 가장자리 효과를 끈다.
+    /// 사진을 화면 맨 위까지 까는 화면에서는 이 효과가 사진 위에 흐린 띠로 보인다.
+    /// iOS 26 미만에는 이 효과가 없어서 그대로 둔다.
+    @ViewBuilder
+    func ppScrollEdgeEffectHidden(for edges: Edge.Set = .top) -> some View {
+        if #available(iOS 26.0, *) {
+            scrollEdgeEffectHidden(true, for: edges)
+        } else {
+            self
+        }
+    }
 }

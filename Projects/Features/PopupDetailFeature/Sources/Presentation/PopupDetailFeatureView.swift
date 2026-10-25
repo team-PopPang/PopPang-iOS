@@ -98,6 +98,8 @@ public struct PopupDetailFeatureView: View {
                         .frame(height: 130)
                 }
             }
+            // 사진을 상단 바 아래까지 깔기 때문에, 상단 바 아래 흐린 가장자리 효과가 사진을 흐린 띠로 덮지 않게 끈다.
+            .ppScrollEdgeEffectHidden(for: .top)
             .ignoresSafeArea()
 
             BottomTabBarView(
