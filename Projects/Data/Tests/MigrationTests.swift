@@ -46,6 +46,23 @@ struct MigrationTests {
         #expect(!context.repository.isSignupOsFilled(userUuid: "user-1"))
     }
 
+    @Test("요청을 기다리는 동안 취소되면 기록하지 않는다")
+    func cancelledMigrationIsNotRecorded() async throws {
+        let context = Context(statusCode: 200)
+
+        // Moya도 `Task`를 내보내서 Swift Concurrency의 `Task`를 직접 가리킨다.
+        let task = _Concurrency.Task {
+            withUnsafeCurrentTask { $0?.cancel() }
+            try await context.usecase.runPendingMigrations(userUuid: "user-1")
+        }
+
+        await #expect(throws: CancellationError.self) {
+            try await task.value
+        }
+        #expect(context.requestCount.value == 0)
+        #expect(!context.repository.isSignupOsFilled(userUuid: "user-1"))
+    }
+
     @Test("기록은 사용자별이라 다른 계정은 한 번 더 보낸다")
     func recordsArePerUser() async throws {
         let context = Context(statusCode: 200)

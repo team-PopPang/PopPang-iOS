@@ -18,6 +18,10 @@ extension AppMigrationClient {
             run: { userUuid in
                 do {
                     try await migrationUsecaseBox.usecase.runPendingMigrations(userUuid: userUuid)
+                } catch is CancellationError {
+                    // 로그아웃해 취소했다. 다음 로그인 때 다시 한다.
+                } catch AuthSessionError.loginRequired {
+                    // 다시 로그인해야 한다. 앱이 로그인 화면으로 보내고, 다음 로그인 때 다시 한다.
                 } catch {
                     Logger.w("마이그레이션 실패, 다음 실행 때 다시 시도: \(error.localizedDescription)")
                 }
