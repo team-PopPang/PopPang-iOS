@@ -13,8 +13,8 @@ public final class UserUsecaseImpl: UserUsecaseProtocol {
         try await userRepository.getRecommandList()
     }
 
-    public func hardDeleteUser(userUuid: String) async throws {
-        try await userRepository.hardDeleteUser(userUuid: userUuid)
+    public func withdraw() async throws {
+        try await userRepository.withdraw()
     }
 
     public func getAlertKeywordList(userUuid: String) async throws -> [Keyword] {
@@ -29,12 +29,12 @@ public final class UserUsecaseImpl: UserUsecaseProtocol {
         try await userRepository.removeAlertKeyword(userUuid: userUuid, alertKeyword: alertKeyword)
     }
 
-    public func alertStatus(userUuid: String, isAlerted: Bool) async throws {
-        try await userRepository.alertStatus(userUuid: userUuid, isAlerted: isAlerted)
+    public func alertStatus(isAlerted: Bool) async throws -> Bool {
+        try await userRepository.alertStatus(isAlerted: isAlerted)
     }
 
-    public func updateNickname(userUuid: String, newNickname: String) async throws {
-        try await userRepository.updateNickname(userUuid: userUuid, newNickname: newNickname)
+    public func updateNickname(newNickname: String) async throws {
+        try await userRepository.updateNickname(newNickname: newNickname)
     }
 
     public func checkFcmToken(userUuid: String, fcmToken: String) async throws -> Bool {

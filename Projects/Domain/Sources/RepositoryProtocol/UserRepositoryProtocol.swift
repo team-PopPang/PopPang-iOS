@@ -1,34 +1,19 @@
 import Foundation
 
-public enum UserRepositoryError: Error {
-    case decodingError
-    case unknown(Error)
-}
-
-extension UserRepositoryError: LocalizedError {
-    public var errorDescription: String? {
-        switch self {
-        case .decodingError:
-            return "데이터를 불러올 수 없습니다"
-        case .unknown(let error):
-            return "알 수 없는 오류: \(error.localizedDescription)"
-        }
-    }
-}
-
 public protocol UserRepositoryProtocol {
-    /// 닉네임 중복 여부 확인
+    /// 닉네임 중복 여부 확인. 로그인한 사용자가 부른다.
     /// - Parameter nickname: 닉네임
     /// - Returns: 중복유무 Bool 타입
+    /// - Throws: `UserError`
     func checkNickname(nickname: String) async throws -> Bool
 
     /// 추천 카테고리 리스트 가져오기
     /// - Returns: [Recommend]
     func getRecommandList() async throws -> [Recommend]
 
-    /// 유저 삭제
-    /// - Parameter userUuid: userUuid
-    func hardDeleteUser(userUuid: String) async throws
+    /// 회원 탈퇴. 기기의 인증 토큰은 뒤이은 로그아웃이 지운다.
+    /// - Throws: `UserError`
+    func withdraw() async throws
 
     /// 키워드 리스트 가져오기
     /// - Returns: [Keyword]
@@ -47,16 +32,15 @@ public protocol UserRepositoryProtocol {
     func removeAlertKeyword(userUuid: String, alertKeyword: String) async throws
 
     /// 알림 토글
-    /// - Parameters:
-    ///   - userUuid: 유저 고유값
-    ///   - isAlerted: 알림 상태 변경 Bool
-    func alertStatus(userUuid: String, isAlerted: Bool) async throws
+    /// - Parameter isAlerted: 알림 상태 변경 Bool
+    /// - Returns: 서버에 저장된 알림 상태
+    /// - Throws: `UserError`
+    func alertStatus(isAlerted: Bool) async throws -> Bool
 
     /// 닉네임 수정
-    /// - Parameters:
-    ///   - userUuid: 유저 고유값
-    ///   - newNickname: 변경할 닉네임
-    func updateNickname(userUuid: String, newNickname: String) async throws
+    /// - Parameter newNickname: 변경할 닉네임
+    /// - Throws: `UserError`
+    func updateNickname(newNickname: String) async throws
 
     /// FCM토큰 일치 확인
     /// - Parameters:

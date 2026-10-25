@@ -117,6 +117,29 @@
         }
       }
     },
+    "닉네임을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't change the nickname. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ニックネームを変更できませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "닉네임을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요."
+          }
+        }
+      }
+    },
     "닉네임을 입력해 주세요" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -136,6 +159,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "닉네임을 입력해 주세요"
+          }
+        }
+      }
+    },
+    "닉네임을 확인하지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't check the nickname. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ニックネームを確認できませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "닉네임을 확인하지 못했어요. 잠시 후 다시 시도해 주세요."
           }
         }
       }
@@ -303,6 +349,29 @@
         }
       }
     },
+    "사용할 수 없는 닉네임이에요. 다른 닉네임을 입력해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "This nickname can't be used. Please enter a different one."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "このニックネームは使用できません。別のニックネームを入力してください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "사용할 수 없는 닉네임이에요. 다른 닉네임을 입력해 주세요."
+          }
+        }
+      }
+    },
     "서비스 이용약관" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -345,6 +414,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "설정으로 이동"
+          }
+        }
+      }
+    },
+    "알림 설정을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't change notification settings. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "通知設定を変更できませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알림 설정을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요."
           }
         }
       }
@@ -532,6 +624,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "탈퇴하기"
+          }
+        }
+      }
+    },
+    "탈퇴하지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't delete your account. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "退会できませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "탈퇴하지 못했어요. 잠시 후 다시 시도해 주세요."
           }
         }
       }

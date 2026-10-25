@@ -7,21 +7,18 @@ import Foundation
 public struct ProfileFeature {
     @ObservableState
     public struct State: Equatable {
-        public var userUuid: String
         public var nickname: String
         public var isLoading = false
         public var errorMessage: String?
         public var localIsAlerted: Bool
 
         public init(user: User) {
-            self.userUuid = user.userUuid
             self.nickname = user.nickname ?? String(localized: "닉네임", bundle: .module)
             self.localIsAlerted = user.isAlerted
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.userUuid == rhs.userUuid
-                && lhs.nickname == rhs.nickname
+            lhs.nickname == rhs.nickname
                 && lhs.localIsAlerted == rhs.localIsAlerted
                 && lhs.isLoading == rhs.isLoading
                 && lhs.errorMessage == rhs.errorMessage
@@ -34,7 +31,8 @@ public struct ProfileFeature {
         case notificationsTapped
         case serviceTermsTapped
         case alertStatusChanged(Bool)
-        case alertStatusResponse(Result<Void, Error>, Bool)
+        /// 실패하면 `previousValue`로 되돌린다.
+        case alertStatusResponse(Result<Bool, Error>, previousValue: Bool)
         case delegate(Delegate)
 
         public enum Delegate: Equatable {
@@ -70,27 +68,25 @@ public struct ProfileFeature {
                 state.localIsAlerted = isAlerted
                 state.isLoading = true
                 state.errorMessage = nil
-                let userUuid = state.userUuid
-
                 return .run { [profileFeatureClient] send in
                     do {
-                        try await profileFeatureClient.alertStatus(userUuid, isAlerted)
-                        await send(.alertStatusResponse(.success(()), isAlerted))
+                        let savedValue = try await profileFeatureClient.alertStatus(isAlerted)
+                        await send(.alertStatusResponse(.success(savedValue), previousValue: previousValue))
                     } catch {
-                        await send(.alertStatusResponse(.failure(error), previousValue))
+                        await send(.alertStatusResponse(.failure(error), previousValue: previousValue))
                     }
                 }
 
-            case .alertStatusResponse(.success, let resolvedValue):
+            case .alertStatusResponse(.success(let savedValue), _):
                 state.isLoading = false
-                state.localIsAlerted = resolvedValue
+                state.localIsAlerted = savedValue
                 state.errorMessage = nil
-                return .send(.delegate(.alertStatusUpdated(resolvedValue)))
+                return .send(.delegate(.alertStatusUpdated(savedValue)))
 
-            case .alertStatusResponse(.failure(let error), let resolvedValue):
+            case .alertStatusResponse(.failure(let error), let previousValue):
                 state.isLoading = false
-                state.localIsAlerted = resolvedValue
-                state.errorMessage = error.localizedDescription
+                state.localIsAlerted = previousValue
+                state.errorMessage = ProfileErrorMessage.alertStatus(for: error)
                 return .none
 
             case .delegate:
@@ -104,24 +100,24 @@ public struct ProfileFeature {
 public struct ProfileSettingFeature {
     @ObservableState
     public struct State: Equatable {
-        public var userUuid: String
         public var nickname: String
         public var newNickname = ""
         public var validationState: NicknameValidationState = .none
         public var isLoading = false
+        /// 탈퇴 요청을 기다리는 중이다. 이때는 탈퇴·로그아웃을 다시 보내지 않는다.
+        public var isWithdrawing = false
         public var errorMessage: String?
 
         public init(user: User) {
-            self.userUuid = user.userUuid
             self.nickname = user.nickname ?? String(localized: "닉네임", bundle: .module)
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.userUuid == rhs.userUuid
-                && lhs.nickname == rhs.nickname
+            lhs.nickname == rhs.nickname
                 && lhs.newNickname == rhs.newNickname
                 && lhs.validationState == rhs.validationState
                 && lhs.isLoading == rhs.isLoading
+                && lhs.isWithdrawing == rhs.isWithdrawing
                 && lhs.errorMessage == rhs.errorMessage
         }
     }
@@ -129,12 +125,15 @@ public struct ProfileSettingFeature {
     public enum Action {
         case nicknameChanged(String)
         case validateNicknameTapped
-        case validateNicknameResponse(Result<Bool, Error>)
+        /// `nickname`은 확인을 보낸 닉네임이다. 그사이 입력이 바뀌었으면 결과를 쓰지 않는다.
+        case validateNicknameResponse(nickname: String, Result<Bool, Error>)
         case updateNicknameTapped
-        case updateNicknameResponse(Result<Void, Error>)
+        /// `nickname`은 서버에 보낸 닉네임이다. 성공하면 입력란이 아니라 이 값을 알린다.
+        case updateNicknameResponse(nickname: String, Result<Void, Error>)
+        case backTapped
         case logoutTapped
-        case hardDeleteTapped
-        case hardDeleteResponse(Result<Void, Error>)
+        case withdrawTapped
+        case withdrawResponse(Result<Void, Error>)
         case delegate(Delegate)
 
         public enum Delegate: Equatable {
@@ -178,74 +177,100 @@ public struct ProfileSettingFeature {
                 return .run { [profileFeatureClient] send in
                     do {
                         let isDuplicated = try await profileFeatureClient.checkNickname(nickname)
-                        await send(.validateNicknameResponse(.success(isDuplicated)))
+                        await send(.validateNicknameResponse(nickname: nickname, .success(isDuplicated)))
                     } catch {
-                        await send(.validateNicknameResponse(.failure(error)))
+                        await send(.validateNicknameResponse(nickname: nickname, .failure(error)))
                     }
                 }
 
-            case .validateNicknameResponse(.success(let isDuplicated)):
+            case .validateNicknameResponse(let nickname, _) where nickname != state.newNickname:
+                state.isLoading = false
+                return .none
+
+            case .validateNicknameResponse(_, .success(let isDuplicated)):
                 state.isLoading = false
                 state.validationState = isDuplicated ? .duplicate : .success
                 return .none
 
-            case .validateNicknameResponse(.failure(let error)):
+            case .validateNicknameResponse(_, .failure(let error)):
                 state.isLoading = false
                 state.validationState = .none
-                state.errorMessage = error.localizedDescription
+                state.errorMessage = ProfileErrorMessage.nicknameCheck(for: error)
                 return .none
 
             case .updateNicknameTapped:
                 guard state.validationState == .success else { return .none }
                 state.isLoading = true
                 state.errorMessage = nil
-                let userUuid = state.userUuid
                 let nickname = state.newNickname
 
                 return .run { [profileFeatureClient] send in
                     do {
-                        try await profileFeatureClient.updateNickname(userUuid, nickname)
-                        await send(.updateNicknameResponse(.success(())))
+                        try await profileFeatureClient.updateNickname(nickname)
+                        await send(.updateNicknameResponse(nickname: nickname, .success(())))
                     } catch {
-                        await send(.updateNicknameResponse(.failure(error)))
+                        await send(.updateNicknameResponse(nickname: nickname, .failure(error)))
                     }
                 }
 
-            case .updateNicknameResponse(.success):
+            case .updateNicknameResponse(let nickname, .success):
                 state.isLoading = false
                 state.errorMessage = nil
-                let nickname = state.newNickname
                 return .send(.delegate(.nicknameUpdated(nickname)))
 
-            case .updateNicknameResponse(.failure(let error)):
+            case .updateNicknameResponse(let nickname, .failure(let error)):
                 state.isLoading = false
-                state.errorMessage = error.localizedDescription
+                guard nickname == state.newNickname else {
+                    // 그사이 입력이 바뀌었으면 새 입력의 확인 상태는 건드리지 않고, 보낸 닉네임으로 바꾸지 못했다는 것만 알린다.
+                    state.errorMessage = ProfileErrorMessage.nicknameUpdate(for: error is UserError ? UserError.failed : error)
+                    return .none
+                }
+                switch error as? UserError {
+                case .duplicateNickname:
+                    // 중복 확인 뒤에 다른 사용자가 같은 닉네임을 먼저 쓴 경우다. 입력란 아래 중복 안내를 보여 주고 다시 확인하게 한다.
+                    state.validationState = .duplicate
+                case .invalidNickname:
+                    // 서버가 받지 않는 닉네임이라 "사용 가능" 표시를 지우고 다시 확인하게 한다.
+                    state.validationState = .none
+                default:
+                    break
+                }
+                state.errorMessage = ProfileErrorMessage.nicknameUpdate(for: error)
                 return .none
 
+            case .backTapped:
+                // 탈퇴 중에 화면이 닫히면 탈퇴 effect가 취소돼 서버에서 지워진 계정으로 로그아웃 전환이 일어나지 않는다.
+                guard !state.isWithdrawing else { return .none }
+                return .send(.delegate(.dismiss))
+
             case .logoutTapped:
+                guard !state.isWithdrawing else { return .none }
                 return .send(.delegate(.logoutRequested))
 
-            case .hardDeleteTapped:
+            case .withdrawTapped:
+                guard !state.isWithdrawing else { return .none }
+                state.isWithdrawing = true
                 state.isLoading = true
                 state.errorMessage = nil
-                let userUuid = state.userUuid
 
                 return .run { [profileFeatureClient] send in
                     do {
-                        try await profileFeatureClient.hardDeleteUser(userUuid)
-                        await send(.hardDeleteResponse(.success(())))
+                        try await profileFeatureClient.withdraw()
+                        await send(.withdrawResponse(.success(())))
                     } catch {
-                        await send(.hardDeleteResponse(.failure(error)))
+                        await send(.withdrawResponse(.failure(error)))
                     }
                 }
 
-            case .hardDeleteResponse(.success):
+            case .withdrawResponse(.success):
+                state.isWithdrawing = false
                 state.isLoading = false
                 return .send(.delegate(.logoutRequested))
 
-            case .hardDeleteResponse(.failure(let error)):
+            case .withdrawResponse(.failure(let error)):
+                state.isWithdrawing = false
                 state.isLoading = false
-                state.errorMessage = error.localizedDescription
+                state.errorMessage = ProfileErrorMessage.withdraw(for: error)
                 return .none
 
             case .delegate:

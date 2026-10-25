@@ -8,9 +8,8 @@ public protocol UserUsecaseProtocol {
     /// - Returns: [Recommend]
     func getRecommandList() async throws -> [Recommend]
 
-    /// 유저 삭제
-    /// - Parameter userUuid: userUuid
-    func hardDeleteUser(userUuid: String) async throws
+    /// 회원 탈퇴. 기기의 인증 토큰은 뒤이은 로그아웃이 지운다.
+    func withdraw() async throws
 
     /// 키워드 리스트 가져오기
     /// - Returns: [Keyword]
@@ -29,16 +28,13 @@ public protocol UserUsecaseProtocol {
     func removeAlertKeyword(userUuid: String, alertKeyword: String) async throws
 
     /// 알림 토글
-    /// - Parameters:
-    ///   - userUuid: 유저 고유값
-    ///   - isAlerted: 알림 상태 변경 Bool
-    func alertStatus(userUuid: String, isAlerted: Bool) async throws
+    /// - Parameter isAlerted: 알림 상태 변경 Bool
+    /// - Returns: 서버에 저장된 알림 상태
+    func alertStatus(isAlerted: Bool) async throws -> Bool
 
     /// 닉네임 수정
-    /// - Parameters:
-    ///   - userUuid: 유저 고유값
-    ///   - newNickname: 변경할 닉네임
-    func updateNickname(userUuid: String, newNickname: String) async throws
+    /// - Parameter newNickname: 변경할 닉네임
+    func updateNickname(newNickname: String) async throws
 
     /// FCM토큰 일치 확인
     /// - Parameters:

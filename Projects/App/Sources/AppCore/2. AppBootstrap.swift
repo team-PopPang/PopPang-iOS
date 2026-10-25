@@ -33,7 +33,7 @@ struct AppBootstrap {
         )
 
         // Repository와 UseCase를 포함한 앱의 실제 의존성 그래프
-        let dependencies = AppDependencyRegistry.live(tokenStorage: tokenStorage)
+        let dependencies = AppDependencyRegistry.live(tokenStorage: tokenStorage, store: store)
         
         /// TCA Feature용 LocalSessionClient를 생성
         let localSessionClient = LocalSessionClient.live(
@@ -83,6 +83,9 @@ struct AppBootstrap {
             $0.localSessionClient = localSessionClient
             $0.serverHealthClient = .live(
                 serverHealthUsecase: dependencies.usecases.serverHealthUsecase
+            )
+            $0.appMigrationClient = .live(
+                migrationUsecase: dependencies.usecases.migrationUsecase
             )
             mainTabFeatureDependencies.configure(&$0)
             $0.authFeatureClient = .live(authUsecase: dependencies.usecases.authUsecase)
