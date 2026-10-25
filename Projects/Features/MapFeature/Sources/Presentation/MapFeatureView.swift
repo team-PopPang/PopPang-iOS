@@ -69,8 +69,12 @@ public struct MapFeatureView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                         .padding(.bottom, 20 + bottomBarHeight)
                 }
-
-                // 내 위치 버튼은 하나만 둔다. 시트 위를 따라 움직이고, 시트를 숨기면 목록 보기 버튼 오른쪽에 멈춘다.
+            }
+            // 내 위치 버튼은 하나만 둔다. 시트 위를 따라 움직이고, 시트를 숨기면 목록 보기 버튼 오른쪽에 멈춘다.
+            // ZStack 안에 두면 시트 높이로 정한 버튼 위치가 화면 크기 계산에 끼어든다. 그러면 소수점 끝자리 차이로
+            // 화면 높이가 바뀌고, 시트 높이와 버튼 위치가 다시 바뀌는 고리가 끝없이 돌아 앱이 멈췄다.
+            // overlay는 화면 크기를 바꾸지 않으므로 여기에 둔다. 시트는 뒤에 붙이므로 버튼보다 위에 그려진다.
+            .overlay(alignment: .bottomTrailing) {
                 MapLocationButtonLayer(
                     position: sheetPosition,
                     restingBottomPadding: 20 + bottomBarHeight,
@@ -313,11 +317,14 @@ private extension MapFeatureView {
 /// 내 위치 버튼. 시트 위쪽 끝을 따라 움직이고, 시트를 숨기면 목록 보기 버튼 오른쪽에 멈춘다.
 /// 시트를 끝까지 올리면 흐려지며 숨는다.
 /// 시트 높이는 끄는 동안 프레임마다 바뀌므로, 화면 body가 아니라 이 뷰에서 읽어 이 뷰만 다시 그려지게 한다.
+/// 위치는 `offset`으로 옮긴다. 레이아웃 크기를 바꾸지 않아서 시트 높이가 화면 크기 계산으로 되돌아가지 않는다.
 private struct MapLocationButtonLayer: View {
     /// 시트 위쪽 끝과 버튼 사이 간격.
     private static let spacing: CGFloat = 12
     /// 시트를 끝까지 올리기 전 이만큼 남았을 때부터 버튼이 흐려진다.
     private static let fadeDistance: CGFloat = 150
+    /// 이 불투명도 이하면 숨은 것으로 보고 터치를 받지 않는다.
+    private static let hiddenOpacity: CGFloat = 0.05
 
     let position: MapSheetPosition
     /// 시트를 숨겼을 때 버튼이 멈출 바닥 여백. 목록 보기 버튼과 같은 높이다.
@@ -339,11 +346,11 @@ private struct MapLocationButtonLayer: View {
         }
         .buttonStyle(.plain)
         .opacity(opacity)
-        .allowsHitTesting(opacity > 0)
-        .accessibilityHidden(opacity == 0)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        // 거의 투명한 버튼이 탭과 VoiceOver를 받아 검색창 탭을 가로채지 않게 한다.
+        .allowsHitTesting(opacity > Self.hiddenOpacity)
+        .accessibilityHidden(opacity <= Self.hiddenOpacity)
         .padding(.trailing, 20)
-        .padding(.bottom, max((geometry?.height ?? 0) + Self.spacing, restingBottomPadding))
+        .offset(y: -max((geometry?.height ?? 0) + Self.spacing, restingBottomPadding))
     }
 
     /// 시트 높이를 받기 전에는 숨기고, 끝까지 올라가기 직전부터 흐려진다.
