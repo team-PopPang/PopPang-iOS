@@ -53,7 +53,7 @@ struct BottomSheetContainer<Content: View>: View {
                             containerHeight = proxy.size.height
                         }
                         .onChange(of: proxy.size.height) { _, height in
-                            // 소수점 끝자리만 다른 높이는 받지 않는다. 받으면 시트 높이가 바뀌고, 그 높이로 위치를 정한
+                            // 부동소수점 오차만큼만 다른 높이는 받지 않는다. 받으면 시트 높이가 바뀌고, 그 높이로 위치를 정한
                             // 바깥 뷰가 다시 이 높이를 끝자리만큼 바꾸는 고리가 생겨 레이아웃이 끝없이 반복될 수 있다.
                             guard BottomSheetMetrics.isMeaningfulChange(from: containerHeight, to: height) else { return }
                             containerHeight = height
@@ -291,10 +291,11 @@ enum BottomSheetMetrics {
     /// 손잡이 줄의 높이. 시트를 끝까지 끌어 내려도 이 높이는 남는다.
     static let grabberAreaHeight: CGFloat = 20
     static let animation = Animation.spring(response: 0.4, dampingFraction: 0.85)
-    /// 이보다 작게 바뀐 높이는 같은 높이로 본다. 화면 한 점보다 작아 눈에 보이지 않는다.
-    static let heightChangeThreshold: CGFloat = 0.5
+    /// 이보다 작게 바뀐 높이는 같은 높이로 본다.
+    /// 부동소수점 계산 오차(끝자리 차이)만 거르는 값이다. 실제로 끌거나 멈춘 높이는 이보다 크게 바뀌므로 그대로 전달된다.
+    static let heightChangeThreshold: CGFloat = 0.01
 
-    /// 높이가 눈에 보일 만큼 바뀌었는지.
+    /// 높이가 계산 오차보다 크게 바뀌었는지.
     static func isMeaningfulChange(from old: CGFloat, to new: CGFloat) -> Bool {
         abs(new - old) > heightChangeThreshold
     }

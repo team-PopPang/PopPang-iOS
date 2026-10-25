@@ -323,6 +323,8 @@ private struct MapLocationButtonLayer: View {
     private static let spacing: CGFloat = 12
     /// 시트를 끝까지 올리기 전 이만큼 남았을 때부터 버튼이 흐려진다.
     private static let fadeDistance: CGFloat = 150
+    /// 이 불투명도 이하면 숨은 것으로 보고 터치를 받지 않는다.
+    private static let hiddenOpacity: CGFloat = 0.05
 
     let position: MapSheetPosition
     /// 시트를 숨겼을 때 버튼이 멈출 바닥 여백. 목록 보기 버튼과 같은 높이다.
@@ -344,8 +346,9 @@ private struct MapLocationButtonLayer: View {
         }
         .buttonStyle(.plain)
         .opacity(opacity)
-        .allowsHitTesting(opacity > 0)
-        .accessibilityHidden(opacity == 0)
+        // 거의 투명한 버튼이 탭과 VoiceOver를 받아 검색창 탭을 가로채지 않게 한다.
+        .allowsHitTesting(opacity > Self.hiddenOpacity)
+        .accessibilityHidden(opacity <= Self.hiddenOpacity)
         .padding(.trailing, 20)
         .offset(y: -max((geometry?.height ?? 0) + Self.spacing, restingBottomPadding))
     }

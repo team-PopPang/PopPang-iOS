@@ -80,7 +80,7 @@ struct MapSheetDemoView: View {
             }
         }
         .coordinateSpace(name: Self.coordinateSpace)
-        .overlay {
+        .overlay(alignment: .bottomTrailing) {
             LocateButtonLayer(position: sheetPosition, restingBottomPadding: 20) {
                 locateTapCount += 1
             }
@@ -281,11 +281,11 @@ private struct LocateButtonLayer: View {
         }
         .accessibilityLabel("내 위치")
         .opacity(opacity)
-        .allowsHitTesting(opacity > 0)
-        .accessibilityHidden(opacity == 0)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        .allowsHitTesting(opacity > 0.05)
+        .accessibilityHidden(opacity <= 0.05)
         .padding(.trailing, 16)
-        .padding(.bottom, max((geometry?.height ?? 0) + Self.spacing, restingBottomPadding))
+        // 크기를 바꾸지 않는 offset으로 올린다. 받은 높이가 레이아웃으로 되돌아가지 않게 한다.
+        .offset(y: -max((geometry?.height ?? 0) + Self.spacing, restingBottomPadding))
     }
 
     /// 시트 높이를 받기 전에는 숨기고, 끝까지 올라가기 직전부터 흐려진다.
