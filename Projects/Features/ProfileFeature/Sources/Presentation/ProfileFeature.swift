@@ -130,6 +130,7 @@ public struct ProfileSettingFeature {
         case updateNicknameTapped
         /// `nickname`은 서버에 보낸 닉네임이다. 성공하면 입력란이 아니라 이 값을 알린다.
         case updateNicknameResponse(nickname: String, Result<Void, Error>)
+        case backTapped
         case logoutTapped
         case withdrawTapped
         case withdrawResponse(Result<Void, Error>)
@@ -236,6 +237,11 @@ public struct ProfileSettingFeature {
                 }
                 state.errorMessage = ProfileErrorMessage.nicknameUpdate(for: error)
                 return .none
+
+            case .backTapped:
+                // 탈퇴 중에 화면이 닫히면 탈퇴 effect가 취소돼 서버에서 지워진 계정으로 로그아웃 전환이 일어나지 않는다.
+                guard !state.isWithdrawing else { return .none }
+                return .send(.delegate(.dismiss))
 
             case .logoutTapped:
                 guard !state.isWithdrawing else { return .none }

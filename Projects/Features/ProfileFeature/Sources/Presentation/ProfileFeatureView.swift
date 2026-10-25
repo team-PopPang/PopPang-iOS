@@ -232,7 +232,7 @@ public struct ProfileSettingFeatureView: View {
         .padding(.top, 24)
         .padding(.horizontal, 24)
         .ppBackNavigationBar(title: String(localized: "프로필 설정", bundle: .module)) {
-            store.send(.delegate(.dismiss))
+            store.send(.backTapped)
         }
         .onAppear {
             draftNickname = store.newNickname
