@@ -134,6 +134,9 @@ struct AppFeature {
     /// 앱 시작 시 서버 헬스 체크를 요청하는 TCA 의존성
     @Dependency(\.serverHealthClient) private var serverHealthClient: ServerHealthClient
 
+    /// 메인 화면에 들어갈 때 이미 가입한 사용자의 서버 데이터를 보정하는 TCA 의존성
+    @Dependency(\.appMigrationClient) private var appMigrationClient: AppMigrationClient
+
     /// 온보딩 완료 여부 등의 로컬 값을 동기적으로 관리
     private let sessionStorage: LocalSessionStorage
     
@@ -199,7 +202,9 @@ struct AppFeature {
                     destination: destination,
                     state: &state
                 )
-                return .none
+                // 자동 로그인으로 메인 화면에 들어가면 남은 마이그레이션을 실행
+                guard state.destination == .main, let user = session.user else { return .none }
+                return runPendingMigrations(userUuid: user.userUuid)
 
             case .serverHealthCheckFailed(let reason):
                 // 로그인 흐름으로 가지 않고 점검 화면을 표시
@@ -259,10 +264,13 @@ struct AppFeature {
                 // 인증 또는 회원가입 완료 사용자 정보를 앱 상태에 반영
                 applyAuthenticatedUser(user, state: &state)
                 
-                // 최신 사용자 세션을 로컬에 저장
-                return .run { _ in
-                    await localSessionClient.saveUser(user)
-                }
+                // 최신 사용자 세션을 로컬에 저장하고, 메인 화면에 들어가며 남은 마이그레이션을 실행
+                return .merge(
+                    .run { _ in
+                        await localSessionClient.saveUser(user)
+                    },
+                    runPendingMigrations(userUuid: user.userUuid)
+                )
 
             case .mainTab(.delegate(.logout)):
                 // Keep mainTab alive until SwiftUI completes its pending lifecycle callbacks.
@@ -376,6 +384,13 @@ private extension AppFeature {
         }
     }
     
+    /// 메인 화면에 들어갈 때 이 사용자에게 남은 마이그레이션을 실행한다. 화면 전환은 기다리지 않는다.
+    func runPendingMigrations(userUuid: String) -> Effect<Action> {
+        .run { [appMigrationClient] _ in
+            await appMigrationClient.run(userUuid)
+        }
+    }
+
     /// 앱 실행 시 불러온 세션과 목적지를 최상위 상태에 반영
     func applyLaunchState(
         session: UserSession,
