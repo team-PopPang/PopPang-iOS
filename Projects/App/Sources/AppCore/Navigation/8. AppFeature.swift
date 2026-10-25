@@ -120,6 +120,8 @@ struct AppFeature {
 
     private enum CancelID {
         case loginRequiredObservation
+        /// 로그인한 사용자의 마이그레이션. 로그아웃하면 취소해 다음 계정의 토큰으로 요청이 나가지 않게 한다.
+        case migration
     }
 
     /// 온보딩 화면에서 이동할 수 있는 경로
@@ -255,15 +257,17 @@ struct AppFeature {
                 // 메인 화면을 쓰는 중일 때만 로그아웃 전환을 시작한다. 로그인 화면에서 온 알림은 무시한다
                 guard state.destination == .main, !state.isLoggingOut else { return .none }
                 beginLoggedOutTransition(state: &state)
-                return .run { [localSessionClient] _ in
-                    await localSessionClient.clear()
-                }
+                return .merge(
+                    .cancel(id: CancelID.migration),
+                    .run { [localSessionClient] _ in
+                        await localSessionClient.clear()
+                    }
+                )
 
-            case .authCompleted(let user),
-                    .registerCompleted(let user):
-                // 인증 또는 회원가입 완료 사용자 정보를 앱 상태에 반영
+            case .authCompleted(let user):
+                // 인증 완료 사용자 정보를 앱 상태에 반영
                 applyAuthenticatedUser(user, state: &state)
-                
+
                 // 최신 사용자 세션을 로컬에 저장하고, 메인 화면에 들어가며 남은 마이그레이션을 실행
                 return .merge(
                     .run { _ in
@@ -272,13 +276,25 @@ struct AppFeature {
                     runPendingMigrations(userUuid: user.userUuid)
                 )
 
+            case .registerCompleted(let user):
+                // 회원가입 완료 사용자 정보를 앱 상태에 반영. 가입 요청이 가입 OS를 보내므로 마이그레이션은 하지 않는다
+                applyAuthenticatedUser(user, state: &state)
+
+                // 최신 사용자 세션을 로컬에 저장
+                return .run { _ in
+                    await localSessionClient.saveUser(user)
+                }
+
             case .mainTab(.delegate(.logout)):
                 // Keep mainTab alive until SwiftUI completes its pending lifecycle callbacks.
                 guard !state.isLoggingOut else { return .none }
                 beginLoggedOutTransition(state: &state)
-                return .run { [localSessionClient] _ in
-                    await localSessionClient.clear()
-                }
+                return .merge(
+                    .cancel(id: CancelID.migration),
+                    .run { [localSessionClient] _ in
+                        await localSessionClient.clear()
+                    }
+                )
 
             case .mainTabViewDidDisappear:
                 // Child views can finish their lifecycle callbacks before optional state is removed.
@@ -385,10 +401,13 @@ private extension AppFeature {
     }
     
     /// 메인 화면에 들어갈 때 이 사용자에게 남은 마이그레이션을 실행한다. 화면 전환은 기다리지 않는다.
+    ///
+    /// 로그아웃하면 취소한다. 요청은 그때의 Access Token으로 나가므로, 다음 계정의 토큰으로 이전 사용자의 마이그레이션을 하지 않게 한다.
     func runPendingMigrations(userUuid: String) -> Effect<Action> {
         .run { [appMigrationClient] _ in
             await appMigrationClient.run(userUuid)
         }
+        .cancellable(id: CancelID.migration, cancelInFlight: true)
     }
 
     /// 앱 실행 시 불러온 세션과 목적지를 최상위 상태에 반영

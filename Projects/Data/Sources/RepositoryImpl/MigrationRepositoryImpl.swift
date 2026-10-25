@@ -27,7 +27,14 @@ public final class MigrationRepositoryImpl: MigrationRepositoryProtocol {
     }
 
     public func markSignupOsFilled(userUuid: String) {
-        try? store.set(signupOsFilledUsers + [userUuid], forKey: Key.signupOsFilledUsers)
+        let users = signupOsFilledUsers
+        guard !users.contains(userUuid) else { return }
+        do {
+            try store.set(users + [userUuid], forKey: Key.signupOsFilledUsers)
+        } catch {
+            // 기록하지 못하면 다음 실행 때 한 번 더 보낸다. 서버가 이미 있는 값을 유지하므로 결과는 같다.
+            Logger.w("가입 OS 채우기 기록 실패: \(error.localizedDescription)")
+        }
     }
 }
 
