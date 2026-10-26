@@ -59,10 +59,16 @@ struct BottomSheetLayout {
         velocity / 1000 * decelerationRate / (1 - decelerationRate)
     }
 
+    /// 이보다 빠르게 놓으면 튕긴 것으로 보고, 튕긴 방향으로 적어도 한 단계 간다. 단위는 초당 pt다.
+    ///
+    /// 예상 높이만 보면, 끝까지 올린 시트를 짧고 빠르게 튕겨 내렸을 때 두 단계의 가운데를 넘지 못해 다시 위로 돌아갔다.
+    static let flickVelocity: CGFloat = 300
+
     /// 손을 뗐을 때 멈출 단계. 숨겨야 하면 `nil`이다.
     ///
     /// 손을 뗀 높이에서 속도로 더 움직일 거리만큼 옮긴 예상 높이를 구하고, 그 높이에서 가장 가까운 단계를 고른다.
     /// 숨길 수 있으면 높이 0을 숨김 단계로 보고, 가장 낮은 단계의 절반보다 아래면 숨긴다.
+    /// `flickVelocity`보다 빠르게 놓았는데 고른 단계가 튕긴 방향의 반대쪽이면, 튕긴 방향으로 바로 다음 단계를 고른다.
     ///
     /// - Parameters:
     ///   - releasedHeight: 손을 뗀 순간의 시트 높이.
@@ -78,9 +84,19 @@ struct BottomSheetLayout {
         if canHide, projectedHeight < height(for: lowest) / 2 {
             return nil
         }
-        return sortedDetents.min {
+        let nearest = sortedDetents.min {
             abs(height(for: $0) - projectedHeight) < abs(height(for: $1) - projectedHeight)
         }
+        guard abs(velocity) >= Self.flickVelocity, let nearest else { return nearest }
+
+        // 튕긴 방향으로 손을 뗀 높이보다 앞에 있는 단계들. 아래로 튕기면 더 낮은 단계, 위로 튕기면 더 높은 단계다.
+        let isDownward = velocity > 0
+        let ahead = sortedDetents.filter {
+            isDownward ? height(for: $0) < releasedHeight : height(for: $0) > releasedHeight
+        }
+        guard !ahead.contains(nearest) else { return nearest }
+        // 앞에 단계가 없으면(맨 끝에서 더 튕기면) 가장 가까운 단계에 멈춘다.
+        return (isDownward ? ahead.last : ahead.first) ?? nearest
     }
 
     /// 손잡이를 눌렀을 때 갈 단계. 위로 한 단계 가고, 맨 위에서는 아래로 한 단계 간다.
