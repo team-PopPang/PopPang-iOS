@@ -21,6 +21,14 @@ struct BottomSheetLayout {
         max(maxHeight - visibleHeight, 0)
     }
 
+    /// 시트가 나타나고 숨을 때 움직일 거리. 보이는 높이에 배경을 깐 아래 safe area를 더한 만큼이다.
+    ///
+    /// 시트 프레임 높이(가장 큰 높이)만큼 움직이면, 가운데에서 숨길 때 보이는 높이보다 훨씬 긴 거리를 같은 시간에 지나
+    /// 빠르게 훽 사라지고, 나타날 때는 처음 잠깐 화면 밖에서 움직여 늦게 올라온다.
+    static func transitionDistance(visibleHeight: CGFloat, bottomSafeArea: CGFloat) -> CGFloat {
+        max(visibleHeight, 0) + max(bottomSafeArea, 0)
+    }
+
     /// 높이 단계에 멈췄을 때 화면 밖으로 나가 가려지는 시트 아래쪽 높이.
     /// 시트 안 내용의 아래 safe area로 넘겨서, 스크롤 끝이 보이는 영역 안에 오게 한다.
     func hiddenHeight(for detent: BottomSheetDetent) -> CGFloat {
