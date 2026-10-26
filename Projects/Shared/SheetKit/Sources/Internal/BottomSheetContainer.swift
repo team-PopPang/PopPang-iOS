@@ -287,9 +287,9 @@ enum BottomSheetMetrics {
     /// 손잡이 줄의 높이. 시트를 끝까지 끌어 내려도 이 높이는 남는다.
     static let grabberAreaHeight: CGFloat = 20
     /// 높이 단계를 옮기는 애니메이션. 스프링이라 끄는 동안의 속도를 이어받아 출발한다.
-    /// 예전 라이브러리(BottomSheet)와 같은 값이라 조금 튕기며 멈춘다. 0.4, 0.85로 두었을 때는 멈추는 모습이 딱딱했다.
+    /// 살짝만 튕기며 멈춘다. 예전 라이브러리(BottomSheet) 값(0.5, 0.75)은 손을 뗀 속도를 이어받으면 너무 많이 출렁였다.
     /// 라이브러리의 `blendDuration: 1`은 넣지 않는다. 넣었더니 손을 떼는 순간 시트가 위로 튀었다가 몇 프레임 만에 건너뛰었다.
-    static let animation = Animation.spring(response: 0.5, dampingFraction: 0.75)
+    static let animation = Animation.spring(response: 0.45, dampingFraction: 0.88)
     /// 시트 안 내용의 아래 여백을 줄이는 애니메이션. 여백이 튕기면 내용이 위아래로 흔들리므로 튕기지 않게 둔다.
     static let insetAnimation = Animation.spring(response: 0.4, dampingFraction: 1)
     /// 끄는 동안 손가락을 따라가는 애니메이션. 거의 바로 따라가도록 짧게 둔다.
