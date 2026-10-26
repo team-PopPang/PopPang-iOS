@@ -55,7 +55,12 @@ final class BottomSheetDragController {
     func ended(_ value: DragGesture.Value, source: BottomSheetDragSource) {
         guard let current = drag, current.source == source else { return }
         drag = nil
-        guard !current.isHorizontal, let configuration else { return }
+        guard !current.isHorizontal else { return }
+        guard let configuration else {
+            // 시트를 아직 그리지 않아 멈출 단계를 모르면 끈 거리만 되돌린다.
+            translation = 0
+            return
+        }
 
         // `predictedEndTranslation`은 너무 멀리 예측하므로 속도는 `BottomSheetLayout`이 짧게 반영한다.
         let target = configuration.layout.targetDetent(

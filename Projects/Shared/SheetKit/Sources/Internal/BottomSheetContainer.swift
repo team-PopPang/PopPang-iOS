@@ -169,8 +169,7 @@ struct BottomSheetContainer<Content: View>: View {
         // 높이는 늘 가장 큰 높이다. 끄는 동안 바뀌지 않아서 내용, 모서리 자르기, 배경을 다시 계산하지 않는다.
         .frame(maxWidth: .infinity)
         .frame(height: layout.maxHeight, alignment: .top)
-        .clipShape(shape)
-        // 내용은 지금 화면에 올라와 보이는 높이까지만 그리고 터치도 그 안에서만 받는다.
+        // 위쪽 둥근 모서리와 함께, 내용은 지금 화면에 올라와 보이는 높이까지만 그리고 터치도 그 안에서만 받는다.
         // 아래로 내린 부분을 자르지 않으면, 시트를 붙인 뷰가 아래 safe area를 지킬 때 그 아래(홈 인디케이터, 탭바 자리)에
         // 내용이 그려지고 탭도 받는다. 모양이 `Animatable`이라 높이 단계를 옮길 때 시트와 같은 애니메이션으로 움직인다.
         .clipShape(BottomSheetVisibleShape(height: visibleHeight, cornerRadius: cornerRadius))
