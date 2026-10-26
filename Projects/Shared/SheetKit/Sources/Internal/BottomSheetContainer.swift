@@ -99,7 +99,8 @@ struct BottomSheetContainer<Content: View>: View {
             .task(id: targetBottomInset) {
                 try? await Task.sleep(for: BottomSheetMetrics.settleDuration)
                 // 그사이 다시 끌기 시작했으면 손을 뗄 때까지 기다린다. 끄는 도중에 바꾸면 내용이 튄다.
-                while drag != nil, !Task.isCancelled {
+                // 위에 겹친 시트를 끄는 동안에도 이 시트가 같이 움직이므로 함께 기다린다.
+                while drag != nil || linksAbove.totalTranslation != 0, !Task.isCancelled {
                     try? await Task.sleep(for: .milliseconds(50))
                 }
                 guard !Task.isCancelled else { return }
@@ -172,13 +173,18 @@ struct BottomSheetContainer<Content: View>: View {
         .frame(maxWidth: .infinity)
         .frame(height: layout.maxHeight, alignment: .top)
         .clipShape(shape)
+        // 내용은 지금 화면에 올라와 보이는 높이까지만 그리고 터치도 그 안에서만 받는다.
+        // 아래로 내린 부분을 자르지 않으면, 시트를 붙인 뷰가 아래 safe area를 지킬 때 그 아래(홈 인디케이터, 탭바 자리)에
+        // 내용이 그려지고 탭도 받는다. 모양이 `Animatable`이라 높이 단계를 옮길 때 시트와 같은 애니메이션으로 움직인다.
+        .clipShape(BottomSheetVisibleShape(height: visibleHeight))
         .background {
             // 내용은 safe area 안에 두고, 배경만 탭바와 홈 인디케이터 아래 화면 끝까지 깐다.
             // 내용이 터치를 받지 않는 빈 곳(여백, Spacer)을 끌어도 시트가 움직이도록 배경에 끌기를 붙인다.
             // 배경 색이 투명해도 잡히도록 모양으로 판정한다.
             shape
                 .fill(background)
-                .contentShape(shape)
+                // 배경도 보이는 높이 안에서만 끌기를 받는다. 화면 밖으로 내린 부분이 아래 화면의 터치를 가로채지 않게 한다.
+                .contentShape(BottomSheetVisibleShape(height: visibleHeight))
                 .gesture(dragGesture(source: .background, isActive: $isBackgroundDragging, sink: sink))
                 .ignoresSafeArea(.container, edges: .bottom)
         }
@@ -340,7 +346,7 @@ enum BottomSheetMetrics {
     static let grabberAreaHeight: CGFloat = 20
     static let animation = Animation.spring(response: 0.4, dampingFraction: 0.85)
     /// 높이 단계를 옮기는 애니메이션이 눈에 띄게 끝나는 시간. 시트 안 내용의 아래 여백을 이 뒤에 늘린다.
-    static let settleDuration: Duration = .milliseconds(450)
+    static let settleDuration: Duration = .milliseconds(600)
     /// 이보다 작게 바뀐 높이는 같은 높이로 본다.
     /// 부동소수점 계산 오차(끝자리 차이)만 거르는 값이다. 실제로 끌거나 멈춘 높이는 이보다 크게 바뀌므로 그대로 전달된다.
     static let heightChangeThreshold: CGFloat = 0.01
@@ -348,5 +354,22 @@ enum BottomSheetMetrics {
     /// 높이가 계산 오차보다 크게 바뀌었는지.
     static func isMeaningfulChange(from old: CGFloat, to new: CGFloat) -> Bool {
         abs(new - old) > heightChangeThreshold
+    }
+}
+
+/// 시트에서 지금 화면에 올라와 보이는 위쪽 부분.
+///
+/// 시트는 가장 큰 높이로 그리고 아래로 내려 보일 높이만 올라오게 하므로, 이 모양으로 잘라 화면 밖으로 내린 부분은
+/// 그리지도 터치를 받지도 않게 한다.
+struct BottomSheetVisibleShape: Shape {
+    var height: CGFloat
+
+    var animatableData: CGFloat {
+        get { height }
+        set { height = newValue }
+    }
+
+    func path(in rect: CGRect) -> Path {
+        Path(CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: min(max(height, 0), rect.height)))
     }
 }
