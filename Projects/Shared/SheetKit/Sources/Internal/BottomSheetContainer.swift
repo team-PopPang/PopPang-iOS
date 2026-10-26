@@ -56,7 +56,10 @@ struct BottomSheetContainer<Content: View>: View {
             .overlay(alignment: .bottom) {
                 if let detent, containerHeight > 0 {
                     sheet(detent: detent, layout: layout)
-                        .transition(.move(edge: .bottom))
+                        // 나타나고 숨을 때는 보이는 높이(아래 safe area 포함)만큼만 움직인다. `.move(edge:)`는 시트 프레임
+                        // 높이(가장 큰 높이)만큼 움직여서, 가운데에서 숨기면 보이는 높이보다 훨씬 긴 거리를 같은 시간에 지나
+                        // 빠르게 훽 사라졌고, 나타날 때는 처음 잠깐 화면 밖에서 움직여 늦게 올라왔다.
+                        .transition(.offset(y: sheetHeight(detent: detent, layout: layout) + containerBottomSafeArea))
                         // 시트가 나타날 때는 아직 움직이는 중이 아니므로, 기다리지 않고 처음부터 가려진 높이를 넘긴다.
                         // 기다리면 그동안 내용 아래쪽이 화면 밖에 있어 목록 끝까지 스크롤할 수 없다.
                         .onAppear {
