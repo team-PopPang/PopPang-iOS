@@ -40,7 +40,8 @@ struct BottomSheetContainer<Content: View>: View {
     /// 손잡이 줄, 배경, 지정한 뷰의 끌기를 받는 통로. 같은 객체를 계속 써서 내용이 매 프레임 다시 갱신되지 않게 한다.
     @State private var sink = BottomSheetDragSink()
     /// 시트 안 내용에 넘기는 아래 safe area. 화면 밖으로 나가 가려진 시트 아래쪽 높이다.
-    /// 높이 단계가 바뀌어도 시트가 움직이는 동안에는 바꾸지 않고, 움직임이 끝난 뒤 애니메이션 없이 한 번만 바꾼다.
+    /// 높이 단계가 바뀌어도 시트가 움직이는 동안에는 바꾸지 않고, 움직임이 끝난 뒤 한 번만 바꾼다.
+    /// 늘릴 때(시트가 작아질 때)는 애니메이션 없이, 줄일 때(시트가 커질 때)는 애니메이션으로 바꾼다.
     /// 움직이는 도중에 바꾸면 내용이 시트와 따로 움직였다(내려놓을 때는 아래로, 올려놓을 때는 위로 튀었다가 따라왔다).
     @State private var contentBottomInset: CGFloat = 0
 
@@ -112,17 +113,13 @@ struct BottomSheetContainer<Content: View>: View {
                 // 애니메이션 없이 바꾸면 그만큼 한 번에 튄다. 시트는 이미 멈춘 뒤라 내용이 시트와 따로 움직이지 않는다.
                 setContentBottomInset(targetBottomInset, animated: targetBottomInset < contentBottomInset)
             }
-            // 끌기 통로의 처리 클로저가 이 뷰를 붙잡고, 이 뷰가 `@State`로 통로를 붙잡는 순환을 사라질 때 끊는다.
-            .onDisappear {
-                sink.reset()
-            }
             // 키보드가 올라와도 시트를 밀어 올리지 않는다.
             .ignoresSafeArea(.keyboard)
             // 높이 단계가 바뀔 때만 애니메이션을 건다. 화면이 다시 그려진다고 시트 전체에 애니메이션을 걸지 않는다.
             .animation(BottomSheetMetrics.animation, value: detent)
     }
 
-    /// 시트 안 내용의 아래 safe area를 애니메이션 없이 바꾼다.
+    /// 시트 안 내용의 아래 safe area를 바꾼다. `animated`가 아니면 애니메이션 없이 바꾼다.
     private func setContentBottomInset(_ inset: CGFloat, animated: Bool = false) {
         guard !animated else {
             withAnimation(BottomSheetMetrics.animation) {

@@ -63,13 +63,6 @@ final class BottomSheetDragSink {
         self.ended = ended
         self.abandoned = abandoned
     }
-
-    /// 처리 클로저를 비운다. 클로저가 시트 뷰를 붙잡아 생기는 순환 참조를 시트가 사라질 때 끊는다.
-    func reset() {
-        changed = { _, _ in }
-        ended = { _, _ in }
-        abandoned = { _ in }
-    }
 }
 
 private struct BottomSheetDragSinkKey: EnvironmentKey {
