@@ -47,9 +47,14 @@ final class BottomSheetDragController {
         }
         guard !current.isHorizontal else { return }
 
-        translation = value.translation.height
-        // 아래 시트가 같은 프레임에 같이 움직이도록 끄는 거리를 바로 알린다.
-        configuration?.link.translation = value.translation.height
+        // 짧은 스프링으로 손가락을 따라가게 해서 시트가 늘 속도를 가진 채 움직이게 한다. 손을 떼면 높이 단계를 옮기는
+        // 스프링이 이 속도를 이어받는다. 애니메이션 없이 따라가면 손을 떼는 순간 속도 0에서 다시 출발해서, 시트가 거의
+        // 멈췄다가 다시 빨라져 딱딱하게 느껴졌다.
+        withAnimation(BottomSheetMetrics.dragAnimation) {
+            translation = value.translation.height
+            // 아래 시트가 같은 프레임에 같이 움직이도록 끄는 거리를 바로 알린다.
+            configuration?.link.translation = value.translation.height
+        }
     }
 
     func ended(_ value: DragGesture.Value, source: BottomSheetDragSource) {

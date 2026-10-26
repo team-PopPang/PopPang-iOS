@@ -286,7 +286,10 @@ enum BottomSheetMetrics {
     static let grabberSize = CGSize(width: 36, height: 5)
     /// 손잡이 줄의 높이. 시트를 끝까지 끌어 내려도 이 높이는 남는다.
     static let grabberAreaHeight: CGFloat = 20
+    /// 높이 단계를 옮기는 애니메이션. 스프링이라 끄는 동안의 속도를 이어받아 출발한다.
     static let animation = Animation.spring(response: 0.4, dampingFraction: 0.85)
+    /// 끄는 동안 손가락을 따라가는 애니메이션. 거의 바로 따라가도록 짧게 둔다.
+    static let dragAnimation = Animation.interactiveSpring(response: 0.15, dampingFraction: 0.86, blendDuration: 0.25)
     /// 높이 단계를 옮기는 애니메이션이 눈에 띄게 끝나는 시간. 시트 안 내용의 아래 여백을 이 뒤에 늘린다.
     static let settleDuration: Duration = .milliseconds(600)
     /// 이보다 작게 바뀐 높이는 같은 높이로 본다.
