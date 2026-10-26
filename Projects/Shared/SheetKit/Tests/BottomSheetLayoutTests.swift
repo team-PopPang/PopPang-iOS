@@ -104,12 +104,22 @@ struct BottomSheetLayoutTests {
         #expect(layout.targetDetent(releasedHeight: 700, startHeight: 700, velocity: -800, in: detents, canHide: true) == .large)
     }
 
-    @Test("가장 낮은 단계에서 아래로 튕기면 숨길 수 있을 때만 숨긴다")
-    func flickDownFromLowestHidesOnlyWhenAllowed() {
+    @Test("가장 낮은 단계에서 세게 아래로 튕기면 숨길 수 있을 때만 숨기고, 살짝 밀면 숨기지 않는다")
+    func flickDownFromLowestHidesOnlyWhenStrongAndAllowed() {
         let detents = layout.sortedDetents([.medium, .large])
 
         #expect(layout.targetDetent(releasedHeight: 380, startHeight: 400, velocity: 800, in: detents, canHide: true) == nil)
         #expect(layout.targetDetent(releasedHeight: 380, startHeight: 400, velocity: 800, in: detents, canHide: false) == .medium)
+        // 12pt만 밀고 초속 250pt로 놓으면 숨기지 않는다.
+        #expect(layout.targetDetent(releasedHeight: 388, startHeight: 400, velocity: 250, in: detents, canHide: true) == .medium)
+    }
+
+    @Test("끈 방향과 반대로 튕기면 한 단계 가지 않고 가장 가까운 단계에 멈춘다")
+    func flickAgainstDragDirectionStaysNearest() {
+        let detents = layout.sortedDetents([.fraction(0.3), .medium, .large])
+
+        // 400에서 위로 540까지 끌었다가 놓기 직전 초속 250pt로 내려오면, 예상 높이(약 515)에서 가까운 가운데에 멈춘다.
+        #expect(layout.targetDetent(releasedHeight: 540, startHeight: 400, velocity: 250, in: detents, canHide: true) == .medium)
     }
 
     @Test("다른 단계를 막 지나쳐 튕겨도 그 단계를 건너뛰지 않는다")
