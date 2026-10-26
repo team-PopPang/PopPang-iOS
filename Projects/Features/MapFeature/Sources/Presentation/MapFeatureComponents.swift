@@ -287,7 +287,8 @@ struct MapListPopupCell: View {
                             .fill(Color.mainGray3)
                             .frame(width: 106, height: 133)
                     }
-                    .resizable()
+                    // 다른 화면 셀처럼 셀 크기로 줄여 쓴다. 원본을 그대로 쓰면 시트를 올려 새 셀이 나타날 때마다 큰 이미지를 풀어야 한다.
+                    .downSampled(.small)
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 106, height: 133, alignment: .center)
                     .clipped()
@@ -431,6 +432,10 @@ struct DetailSheetView: View {
                     .padding(.top, 10)
 
                     KFImage(URL(string: popup.imageUrlList.first ?? ""))
+                        // 그리는 크기로 줄여 쓴다. 원본을 그대로 풀면 미리보기 시트를 열 때 무겁다.
+                        .setProcessor(DownsamplingImageProcessor(size: CGSize(width: imageWidth, height: 182)))
+                        .scaleFactor(UIScreen.main.scale)
+                        .cacheOriginalImage()
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: imageWidth, height: 182)
