@@ -34,6 +34,8 @@ struct BottomSheetContainer<Content: View>: View {
     @GestureState private var isBackgroundDragging = false
     /// 시트를 붙인 뷰의 높이.
     @State private var containerHeight: CGFloat = 0
+    /// 시트를 붙인 뷰의 아래 safe area. 배경을 이만큼 더 아래(탭바, 홈 인디케이터 자리)까지 깐다.
+    @State private var containerBottomSafeArea: CGFloat = 0
     /// 시트 안 내용에 넘기는 아래 safe area. 화면 밖으로 나가 가려진 시트 아래쪽 높이다.
     /// 높이 단계가 바뀌어도 시트가 움직이는 동안에는 바꾸지 않고, 움직임이 끝난 뒤 한 번만 바꾼다.
     /// 늘릴 때(시트가 작아질 때)는 애니메이션 없이, 줄일 때(시트가 커질 때)는 애니메이션으로 바꾼다.
@@ -67,6 +69,11 @@ struct BottomSheetContainer<Content: View>: View {
                     Color.clear
                         .onAppear {
                             containerHeight = proxy.size.height
+                            containerBottomSafeArea = proxy.safeAreaInsets.bottom
+                        }
+                        .onChange(of: proxy.safeAreaInsets.bottom) { _, inset in
+                            guard BottomSheetMetrics.isMeaningfulChange(from: containerBottomSafeArea, to: inset) else { return }
+                            containerBottomSafeArea = inset
                         }
                         .onChange(of: proxy.size.height) { _, height in
                             // 부동소수점 오차만큼만 다른 높이는 받지 않는다. 받으면 시트 높이가 바뀌고, 그 높이로 위치를 정한
@@ -141,11 +148,8 @@ struct BottomSheetContainer<Content: View>: View {
         let sortedDetents = layout.sortedDetents(detents)
         let baseHeight = layout.height(for: detent)
         let visibleHeight = sheetHeight(detent: detent, layout: layout)
-        let shape = UnevenRoundedRectangle(
-            topLeadingRadius: cornerRadius,
-            topTrailingRadius: cornerRadius,
-            style: .continuous
-        )
+        // 지금 화면에 올라와 보이는 부분. 그리기와 터치를 모두 이 모양으로 자른다.
+        let visibleShape = BottomSheetVisibleShape(height: visibleHeight, cornerRadius: cornerRadius)
         // 손잡이 줄, 배경, 지정한 뷰의 끌기를 모두 같은 처리로 보낸다.
         // 끌기를 끝낼 때 쓸 값은 지금 상태로 넘긴다. 값만 넘겨서 처리 객체가 이 뷰를 붙잡지 않는다.
         let dragController = dragController
@@ -172,17 +176,19 @@ struct BottomSheetContainer<Content: View>: View {
         // 위쪽 둥근 모서리와 함께, 내용은 지금 화면에 올라와 보이는 높이까지만 그리고 터치도 그 안에서만 받는다.
         // 아래로 내린 부분을 자르지 않으면, 시트를 붙인 뷰가 아래 safe area를 지킬 때 그 아래(홈 인디케이터, 탭바 자리)에
         // 내용이 그려지고 탭도 받는다. 모양이 `Animatable`이라 높이 단계를 옮길 때 시트와 같은 애니메이션으로 움직인다.
-        .clipShape(BottomSheetVisibleShape(height: visibleHeight, cornerRadius: cornerRadius))
+        .clipShape(visibleShape)
         // clipShape는 그리기만 자르고 터치 판정은 자르지 않으므로, 터치 영역도 같은 모양으로 제한한다.
-        .contentShape(BottomSheetVisibleShape(height: visibleHeight, cornerRadius: cornerRadius))
+        .contentShape(visibleShape)
         .background {
             // 내용은 safe area 안에 두고, 배경만 탭바와 홈 인디케이터 아래 화면 끝까지 깐다.
+            // 배경도 보이는 높이에 아래 safe area만큼만 더해 그린다. 가장 큰 높이로 그리면 아래로 내린 만큼
+            // 시트를 붙인 뷰 밖으로 삐져나가, 그 아래에 있는 다른 뷰를 덮는다.
             // 내용이 터치를 받지 않는 빈 곳(여백, Spacer)을 끌어도 시트가 움직이도록 배경에 끌기를 붙인다.
             // 배경 색이 투명해도 잡히도록 모양으로 판정한다.
-            shape
+            BottomSheetVisibleShape(height: visibleHeight + containerBottomSafeArea, cornerRadius: cornerRadius)
                 .fill(background)
                 // 배경도 보이는 높이 안에서만 끌기를 받는다. 화면 밖으로 내린 부분이 아래 화면의 터치를 가로채지 않게 한다.
-                .contentShape(BottomSheetVisibleShape(height: visibleHeight, cornerRadius: cornerRadius))
+                .contentShape(visibleShape)
                 .gesture(dragGesture(source: .background, isActive: $isBackgroundDragging, dragController: dragController))
                 .ignoresSafeArea(.container, edges: .bottom)
         }

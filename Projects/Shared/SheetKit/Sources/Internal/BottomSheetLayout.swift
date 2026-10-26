@@ -62,19 +62,26 @@ struct BottomSheetLayout {
     /// 이보다 빠르게 놓으면 튕긴 것으로 보고, 튕긴 방향으로 적어도 한 단계 간다. 단위는 초당 pt다.
     ///
     /// 예상 높이만 보면, 끝까지 올린 시트를 짧고 빠르게 튕겨 내렸을 때 두 단계의 가운데를 넘지 못해 다시 위로 돌아갔다.
-    static let flickVelocity: CGFloat = 300
+    /// 손가락은 떼기 직전에 느려져서, 300으로 두었을 때는 80pt를 0.12초에 튕겨도 초속 288pt로 잡혀 다시 올라갔다.
+    static let flickVelocity: CGFloat = 200
 
     /// 손을 뗐을 때 멈출 단계. 숨겨야 하면 `nil`이다.
     ///
     /// 손을 뗀 높이에서 속도로 더 움직일 거리만큼 옮긴 예상 높이를 구하고, 그 높이에서 가장 가까운 단계를 고른다.
     /// 숨길 수 있으면 높이 0을 숨김 단계로 보고, 가장 낮은 단계의 절반보다 아래면 숨긴다.
-    /// `flickVelocity`보다 빠르게 놓았는데 고른 단계가 튕긴 방향의 반대쪽이면, 튕긴 방향으로 바로 다음 단계를 고른다.
+    /// `flickVelocity`보다 빠르게 놓았는데 고른 단계가 끌기 전 단계면, 끌기 전 단계에서 튕긴 방향으로 한 단계 간다.
+    /// 가장 낮은 단계에서 아래로 튕기면 숨길 수 있을 때 숨긴다.
+    ///
+    /// 한 단계는 손을 뗀 높이가 아니라 끌기 전 단계에서 센다. 손을 뗀 높이에서 세면, 다른 단계를 막 지나쳐 놓았을 때
+    /// 그 단계를 건너뛰고 하나 더 갔다.
     ///
     /// - Parameters:
     ///   - releasedHeight: 손을 뗀 순간의 시트 높이.
+    ///   - startHeight: 끌기 전에 멈춰 있던 높이.
     ///   - velocity: 손을 뗀 순간의 초당 이동 거리. 아래로 끌면 양수다.
     func targetDetent(
         releasedHeight: CGFloat,
+        startHeight: CGFloat,
         velocity: CGFloat,
         in sortedDetents: [BottomSheetDetent],
         canHide: Bool
@@ -87,16 +94,19 @@ struct BottomSheetLayout {
         let nearest = sortedDetents.min {
             abs(height(for: $0) - projectedHeight) < abs(height(for: $1) - projectedHeight)
         }
-        guard abs(velocity) >= Self.flickVelocity, let nearest else { return nearest }
+        guard abs(velocity) >= Self.flickVelocity,
+              let nearest,
+              !BottomSheetMetrics.isMeaningfulChange(from: height(for: nearest), to: startHeight)
+        else { return nearest }
 
-        // 튕긴 방향으로 손을 뗀 높이보다 앞에 있는 단계들. 아래로 튕기면 더 낮은 단계, 위로 튕기면 더 높은 단계다.
-        let isDownward = velocity > 0
-        let ahead = sortedDetents.filter {
-            isDownward ? height(for: $0) < releasedHeight : height(for: $0) > releasedHeight
+        // 끌기 전 단계로 돌아가려 하면, 튕긴 방향으로 끌기 전 단계 바로 다음 단계로 간다.
+        if velocity > 0 {
+            let lower = sortedDetents.last { height(for: $0) < startHeight }
+            if let lower { return lower }
+            // 가장 낮은 단계에서 아래로 튕겼다.
+            return canHide ? nil : nearest
         }
-        guard !ahead.contains(nearest) else { return nearest }
-        // 앞에 단계가 없으면(맨 끝에서 더 튕기면) 가장 가까운 단계에 멈춘다.
-        return (isDownward ? ahead.last : ahead.first) ?? nearest
+        return sortedDetents.first { height(for: $0) > startHeight } ?? nearest
     }
 
     /// 손잡이를 눌렀을 때 갈 단계. 위로 한 단계 가고, 맨 위에서는 아래로 한 단계 간다.

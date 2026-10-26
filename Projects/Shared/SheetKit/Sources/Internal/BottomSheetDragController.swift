@@ -70,6 +70,7 @@ final class BottomSheetDragController {
         // `predictedEndTranslation`은 너무 멀리 예측하므로 속도는 `BottomSheetLayout`이 짧게 반영한다.
         let target = configuration.layout.targetDetent(
             releasedHeight: configuration.baseHeight - value.translation.height,
+            startHeight: configuration.baseHeight,
             velocity: value.velocity.height,
             in: configuration.sortedDetents,
             canHide: configuration.canHide
