@@ -24,6 +24,22 @@ struct BottomSheetLayoutTests {
         #expect(layout.height(for: .height(-10)) == 0)
     }
 
+    @Test("최대 높이로 그린 시트는 보일 높이만큼만 올라오도록 나머지를 아래로 내린다")
+    func offsetLeavesVisibleHeight() {
+        #expect(layout.offset(forVisibleHeight: 700) == 0)
+        #expect(layout.offset(forVisibleHeight: 400) == 300)
+        #expect(layout.offset(forVisibleHeight: 20) == 680)
+        // 끝까지 올린 높이보다 크게 끌어도 위로는 올라가지 않는다.
+        #expect(layout.offset(forVisibleHeight: 750) == 0)
+    }
+
+    @Test("멈춘 높이 단계에서 가려지는 아래쪽 높이는 최대 높이에서 그 단계 높이를 뺀 값이다")
+    func hiddenHeightForDetent() {
+        #expect(layout.hiddenHeight(for: .large) == 0)
+        #expect(layout.hiddenHeight(for: .medium) == 300)
+        #expect(layout.hiddenHeight(for: .fraction(0.25)) == 500)
+    }
+
     @Test("위쪽 여백이 뷰보다 크면 모든 높이가 0이다")
     func topInsetLargerThanContainer() {
         let layout = BottomSheetLayout(containerHeight: 300, topInset: 400)

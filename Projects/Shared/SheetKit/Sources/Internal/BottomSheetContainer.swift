@@ -4,6 +4,10 @@ import SwiftUI
 ///
 /// 손잡이 줄, 내용이 터치를 받지 않는 빈 곳, `bottomSheetDragHandle(_:)`로 지정한 뷰를 끌면 시트가 움직인다.
 /// 목록(스크롤뷰, `List`)에는 시트 제스처를 붙이지 않으므로, 목록 위에서 시작한 끌기는 목록만 스크롤한다.
+///
+/// 시트는 늘 가장 큰 높이(`.large`)로 배치하고, 보일 높이만큼만 화면에 올라오도록 아래로 내려(`offset`) 그린다.
+/// 끄는 동안과 높이 단계를 옮기는 애니메이션 동안에는 내리는 거리만 바뀌므로, 시트 안 목록을 다시 배치하지 않는다.
+/// 화면 밖으로 나간 아래쪽 높이는 멈춘 뒤에 한 번만 내용의 아래 safe area로 넘긴다.
 struct BottomSheetContainer<Content: View>: View {
     /// 지금 높이 단계. `nil`이면 시트를 숨긴다.
     let detent: BottomSheetDetent?
@@ -33,9 +37,16 @@ struct BottomSheetContainer<Content: View>: View {
     @GestureState private var isBackgroundDragging = false
     /// 시트를 붙인 뷰의 높이.
     @State private var containerHeight: CGFloat = 0
+    /// 손잡이 줄, 배경, 지정한 뷰의 끌기를 받는 통로. 같은 객체를 계속 써서 내용이 매 프레임 다시 갱신되지 않게 한다.
+    @State private var sink = BottomSheetDragSink()
+    /// 시트 안 내용에 넘기는 아래 safe area. 화면 밖으로 나가 가려진 시트 아래쪽 높이다.
+    /// 높이 단계가 바뀌어도 시트가 움직이는 동안에는 바꾸지 않고, 움직임이 끝난 뒤 애니메이션 없이 한 번만 바꾼다.
+    /// 움직이는 도중에 바꾸면 내용이 시트와 따로 움직였다(내려놓을 때는 아래로, 올려놓을 때는 위로 튀었다가 따라왔다).
+    @State private var contentBottomInset: CGFloat = 0
 
     var body: some View {
         let layout = BottomSheetLayout(containerHeight: containerHeight, topInset: topInset)
+        let targetBottomInset = detent.map { layout.hiddenHeight(for: $0) } ?? 0
 
         // 시트는 GeometryReader 클로저 밖에서 그린다.
         // 클로저 안에서 그리면, 상위 뷰 구조에 따라 바인딩이 바뀌어도 클로저가 다시 실행되지 않아 시트가 나타나지 않는다.
@@ -77,6 +88,18 @@ struct BottomSheetContainer<Content: View>: View {
                 guard !isDragging else { return }
                 dragAbandoned(source: .background)
             }
+            // 시트가 커지든 작아지든 움직임이 끝난 뒤에 애니메이션 없이 바꾼다.
+            // 움직이는 도중에 바꾸면 커질 때는 내용이 위로, 작아질 때는 아래로 튀었다.
+            // 기다리는 동안 여백이 커도 셀은 시트 아래쪽까지 그려져서 빈 곳은 보이지 않는다.
+            .task(id: targetBottomInset) {
+                try? await Task.sleep(for: BottomSheetMetrics.settleDuration)
+                guard !Task.isCancelled else { return }
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) {
+                    contentBottomInset = targetBottomInset
+                }
+            }
             // 키보드가 올라와도 시트를 밀어 올리지 않는다.
             .ignoresSafeArea(.keyboard)
             // 높이 단계가 바뀔 때만 애니메이션을 건다. 화면이 다시 그려진다고 시트 전체에 애니메이션을 걸지 않는다.
@@ -96,14 +119,16 @@ struct BottomSheetContainer<Content: View>: View {
     private func sheet(detent: BottomSheetDetent, layout: BottomSheetLayout) -> some View {
         let sortedDetents = layout.sortedDetents(detents)
         let baseHeight = layout.height(for: detent)
-        let height = sheetHeight(detent: detent, layout: layout)
+        let visibleHeight = sheetHeight(detent: detent, layout: layout)
         let shape = UnevenRoundedRectangle(
             topLeadingRadius: cornerRadius,
             topTrailingRadius: cornerRadius,
             style: .continuous
         )
         // 손잡이 줄, 배경, 지정한 뷰의 끌기를 모두 같은 처리로 보낸다.
-        let sink = BottomSheetDragSink(
+        // 통로 객체는 그대로 두고 처리만 지금 상태로 바꾼다.
+        let sink = sink
+        sink.update(
             changed: { value, source in
                 dragChanged(value, source: source)
             },
@@ -125,11 +150,13 @@ struct BottomSheetContainer<Content: View>: View {
             detent: detent,
             layout: layout,
             sortedDetents: sortedDetents,
+            bottomInset: contentBottomInset,
             sink: sink
         )
         // 가로 길이는 따로 계산하지 않고 시트를 붙인 뷰의 너비를 그대로 쓴다.
+        // 높이는 늘 가장 큰 높이다. 끄는 동안 바뀌지 않아서 내용, 모서리 자르기, 배경을 다시 계산하지 않는다.
         .frame(maxWidth: .infinity)
-        .frame(height: height, alignment: .top)
+        .frame(height: layout.maxHeight, alignment: .top)
         .clipShape(shape)
         .background {
             // 내용은 safe area 안에 두고, 배경만 탭바와 홈 인디케이터 아래 화면 끝까지 깐다.
@@ -141,6 +168,9 @@ struct BottomSheetContainer<Content: View>: View {
                 .gesture(dragGesture(source: .background, isActive: $isBackgroundDragging, sink: sink))
                 .ignoresSafeArea(.container, edges: .bottom)
         }
+        // 보일 높이만큼만 화면에 올라오도록 아래로 내린다. 끄는 동안에는 이 거리만 바뀐다.
+        // offset은 화면을 그리는 위치와 터치 위치만 옮기고 배치는 바꾸지 않는다.
+        .offset(y: layout.offset(forVisibleHeight: visibleHeight))
     }
 
     /// 손잡이 줄과 내용.
@@ -148,6 +178,7 @@ struct BottomSheetContainer<Content: View>: View {
         detent: BottomSheetDetent,
         layout: BottomSheetLayout,
         sortedDetents: [BottomSheetDetent],
+        bottomInset: CGFloat,
         sink: BottomSheetDragSink
     ) -> some View {
         VStack(spacing: 0) {
@@ -173,6 +204,9 @@ struct BottomSheetContainer<Content: View>: View {
             content
                 // 내용 안의 `bottomSheetDragHandle(_:)`이 끌기를 넘길 통로.
                 .environment(\.bottomSheetDragSink, sink)
+                // 화면 밖으로 나간 아래쪽을 safe area로 넘겨, 스크롤 끝이 보이는 영역 안에 오게 한다.
+                // 시트가 멈춘 뒤에만 바뀌므로 끄는 동안과 움직이는 동안에는 내용을 다시 배치하지 않는다.
+                .safeAreaPadding(.bottom, bottomInset)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
     }
@@ -291,6 +325,8 @@ enum BottomSheetMetrics {
     /// 손잡이 줄의 높이. 시트를 끝까지 끌어 내려도 이 높이는 남는다.
     static let grabberAreaHeight: CGFloat = 20
     static let animation = Animation.spring(response: 0.4, dampingFraction: 0.85)
+    /// 높이 단계를 옮기는 애니메이션이 눈에 띄게 끝나는 시간. 시트 안 내용의 아래 여백을 이 뒤에 늘린다.
+    static let settleDuration: Duration = .milliseconds(450)
     /// 이보다 작게 바뀐 높이는 같은 높이로 본다.
     /// 부동소수점 계산 오차(끝자리 차이)만 거르는 값이다. 실제로 끌거나 멈춘 높이는 이보다 크게 바뀌므로 그대로 전달된다.
     static let heightChangeThreshold: CGFloat = 0.01

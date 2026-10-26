@@ -14,6 +14,19 @@ struct BottomSheetLayout {
         max(containerHeight - topInset, 0)
     }
 
+    /// 최대 높이로 그린 시트를 아래로 내릴 거리. 시트는 이만큼 화면 밖으로 나가고 `visibleHeight`만큼 보인다.
+    ///
+    /// 끄는 동안에는 시트 크기를 바꾸지 않고 이 거리만 바꾼다. 크기를 바꾸면 시트 안 목록이 매 프레임 다시 배치된다.
+    func offset(forVisibleHeight visibleHeight: CGFloat) -> CGFloat {
+        max(maxHeight - visibleHeight, 0)
+    }
+
+    /// 높이 단계에 멈췄을 때 화면 밖으로 나가 가려지는 시트 아래쪽 높이.
+    /// 시트 안 내용의 아래 safe area로 넘겨서, 스크롤 끝이 보이는 영역 안에 오게 한다.
+    func hiddenHeight(for detent: BottomSheetDetent) -> CGFloat {
+        offset(forVisibleHeight: height(for: detent))
+    }
+
     func height(for detent: BottomSheetDetent) -> CGFloat {
         let height: CGFloat = switch detent.kind {
         case .fraction(let value):
