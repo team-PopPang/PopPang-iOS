@@ -108,7 +108,13 @@ struct BottomSheetContainer<Content: View>: View {
                     try? await Task.sleep(for: .milliseconds(50))
                 }
                 guard !Task.isCancelled else { return }
-                setContentBottomInset(targetBottomInset)
+                // 커질 때(여백이 줄 때)는 애니메이션으로 바꾼다. 목록을 끝까지 내린 상태면 스크롤 위치가 맞춰지는데,
+                // 애니메이션 없이 바꾸면 그만큼 한 번에 튄다. 시트는 이미 멈춘 뒤라 내용이 시트와 따로 움직이지 않는다.
+                setContentBottomInset(targetBottomInset, animated: targetBottomInset < contentBottomInset)
+            }
+            // 끌기 통로의 처리 클로저가 이 뷰를 붙잡고, 이 뷰가 `@State`로 통로를 붙잡는 순환을 사라질 때 끊는다.
+            .onDisappear {
+                sink.reset()
             }
             // 키보드가 올라와도 시트를 밀어 올리지 않는다.
             .ignoresSafeArea(.keyboard)
@@ -117,7 +123,13 @@ struct BottomSheetContainer<Content: View>: View {
     }
 
     /// 시트 안 내용의 아래 safe area를 애니메이션 없이 바꾼다.
-    private func setContentBottomInset(_ inset: CGFloat) {
+    private func setContentBottomInset(_ inset: CGFloat, animated: Bool = false) {
+        guard !animated else {
+            withAnimation(BottomSheetMetrics.animation) {
+                contentBottomInset = inset
+            }
+            return
+        }
         var transaction = Transaction()
         transaction.disablesAnimations = true
         withTransaction(transaction) {
@@ -180,9 +192,9 @@ struct BottomSheetContainer<Content: View>: View {
         // 내용은 지금 화면에 올라와 보이는 높이까지만 그리고 터치도 그 안에서만 받는다.
         // 아래로 내린 부분을 자르지 않으면, 시트를 붙인 뷰가 아래 safe area를 지킬 때 그 아래(홈 인디케이터, 탭바 자리)에
         // 내용이 그려지고 탭도 받는다. 모양이 `Animatable`이라 높이 단계를 옮길 때 시트와 같은 애니메이션으로 움직인다.
-        .clipShape(BottomSheetVisibleShape(height: visibleHeight))
+        .clipShape(BottomSheetVisibleShape(height: visibleHeight, cornerRadius: cornerRadius))
         // clipShape는 그리기만 자르고 터치 판정은 자르지 않으므로, 터치 영역도 같은 모양으로 제한한다.
-        .contentShape(BottomSheetVisibleShape(height: visibleHeight))
+        .contentShape(BottomSheetVisibleShape(height: visibleHeight, cornerRadius: cornerRadius))
         .background {
             // 내용은 safe area 안에 두고, 배경만 탭바와 홈 인디케이터 아래 화면 끝까지 깐다.
             // 내용이 터치를 받지 않는 빈 곳(여백, Spacer)을 끌어도 시트가 움직이도록 배경에 끌기를 붙인다.
@@ -190,7 +202,7 @@ struct BottomSheetContainer<Content: View>: View {
             shape
                 .fill(background)
                 // 배경도 보이는 높이 안에서만 끌기를 받는다. 화면 밖으로 내린 부분이 아래 화면의 터치를 가로채지 않게 한다.
-                .contentShape(BottomSheetVisibleShape(height: visibleHeight))
+                .contentShape(BottomSheetVisibleShape(height: visibleHeight, cornerRadius: cornerRadius))
                 .gesture(dragGesture(source: .background, isActive: $isBackgroundDragging, sink: sink))
                 .ignoresSafeArea(.container, edges: .bottom)
         }
@@ -371,6 +383,8 @@ enum BottomSheetMetrics {
 /// 그리지도 터치를 받지도 않게 한다. 그리기는 `clipShape`, 터치는 `contentShape`로 자른다.
 struct BottomSheetVisibleShape: Shape {
     var height: CGFloat
+    /// 시트 위쪽 모서리 반지름. 모서리 바깥의 투명한 곳이 아래 화면의 터치를 가로채지 않게 같은 모양으로 둥글린다.
+    var cornerRadius: CGFloat
 
     var animatableData: CGFloat {
         get { height }
@@ -378,6 +392,12 @@ struct BottomSheetVisibleShape: Shape {
     }
 
     func path(in rect: CGRect) -> Path {
-        Path(CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: min(max(height, 0), rect.height)))
+        let visible = CGRect(x: rect.minX, y: rect.minY, width: rect.width, height: min(max(height, 0), rect.height))
+        return UnevenRoundedRectangle(
+            topLeadingRadius: cornerRadius,
+            topTrailingRadius: cornerRadius,
+            style: .continuous
+        )
+        .path(in: visible)
     }
 }
