@@ -177,8 +177,6 @@ struct BottomSheetContainer<Content: View>: View {
         // 아래로 내린 부분을 자르지 않으면, 시트를 붙인 뷰가 아래 safe area를 지킬 때 그 아래(홈 인디케이터, 탭바 자리)에
         // 내용이 그려지고 탭도 받는다. 모양이 `Animatable`이라 높이 단계를 옮길 때 시트와 같은 애니메이션으로 움직인다.
         .clipShape(visibleShape)
-        // clipShape는 그리기만 자르고 터치 판정은 자르지 않으므로, 터치 영역도 같은 모양으로 제한한다.
-        .contentShape(visibleShape)
         .background {
             // 내용은 safe area 안에 두고, 배경만 탭바와 홈 인디케이터 아래 화면 끝까지 깐다.
             // 배경도 보이는 높이에 아래 safe area만큼만 더해 그린다. 가장 큰 높이로 그리면 아래로 내린 만큼
@@ -192,6 +190,9 @@ struct BottomSheetContainer<Content: View>: View {
                 .gesture(dragGesture(source: .background, isActive: $isBackgroundDragging, dragController: dragController))
                 .ignoresSafeArea(.container, edges: .bottom)
         }
+        // clipShape는 그리기만 자르고 터치 판정은 자르지 않으므로, 내용과 배경을 합친 시트 전체의 터치 영역을 같은 모양으로
+        // 제한한다. 내용에만 걸면 내용의 빈 곳(여백, Spacer)이 터치를 받아 뒤의 배경 끌기로 가지 않았다.
+        .contentShape(visibleShape)
         // 보일 높이만큼만 화면에 올라오도록 아래로 내린다. 끄는 동안에는 이 거리만 바뀐다.
         // offset은 화면을 그리는 위치와 터치 위치만 옮기고 배치는 바꾸지 않는다.
         .offset(y: layout.offset(forVisibleHeight: visibleHeight))
