@@ -55,6 +55,11 @@ struct BottomSheetContainer<Content: View>: View {
                 if let detent, containerHeight > 0 {
                     sheet(detent: detent, layout: layout)
                         .transition(.move(edge: .bottom))
+                        // 시트가 나타날 때는 아직 움직이는 중이 아니므로, 기다리지 않고 처음부터 가려진 높이를 넘긴다.
+                        // 기다리면 그동안 내용 아래쪽이 화면 밖에 있어 목록 끝까지 스크롤할 수 없다.
+                        .onAppear {
+                            setContentBottomInset(layout.hiddenHeight(for: detent))
+                        }
                 }
             }
             .background {
@@ -93,17 +98,26 @@ struct BottomSheetContainer<Content: View>: View {
             // 기다리는 동안 여백이 커도 셀은 시트 아래쪽까지 그려져서 빈 곳은 보이지 않는다.
             .task(id: targetBottomInset) {
                 try? await Task.sleep(for: BottomSheetMetrics.settleDuration)
-                guard !Task.isCancelled else { return }
-                var transaction = Transaction()
-                transaction.disablesAnimations = true
-                withTransaction(transaction) {
-                    contentBottomInset = targetBottomInset
+                // 그사이 다시 끌기 시작했으면 손을 뗄 때까지 기다린다. 끄는 도중에 바꾸면 내용이 튄다.
+                while drag != nil, !Task.isCancelled {
+                    try? await Task.sleep(for: .milliseconds(50))
                 }
+                guard !Task.isCancelled else { return }
+                setContentBottomInset(targetBottomInset)
             }
             // 키보드가 올라와도 시트를 밀어 올리지 않는다.
             .ignoresSafeArea(.keyboard)
             // 높이 단계가 바뀔 때만 애니메이션을 건다. 화면이 다시 그려진다고 시트 전체에 애니메이션을 걸지 않는다.
             .animation(BottomSheetMetrics.animation, value: detent)
+    }
+
+    /// 시트 안 내용의 아래 safe area를 애니메이션 없이 바꾼다.
+    private func setContentBottomInset(_ inset: CGFloat) {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            contentBottomInset = inset
+        }
     }
 
     /// 지금 그릴 시트 높이.

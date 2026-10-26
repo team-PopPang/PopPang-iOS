@@ -432,10 +432,6 @@ struct DetailSheetView: View {
                     .padding(.top, 10)
 
                     KFImage(URL(string: popup.imageUrlList.first ?? ""))
-                        // 그리는 크기로 줄여 쓴다. 원본을 그대로 풀면 미리보기 시트를 열 때 무겁다.
-                        .setProcessor(DownsamplingImageProcessor(size: CGSize(width: imageWidth, height: 182)))
-                        .scaleFactor(UIScreen.main.scale)
-                        .cacheOriginalImage()
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                         .frame(width: imageWidth, height: 182)
