@@ -14,6 +14,19 @@ struct BottomSheetLayout {
         max(containerHeight - topInset, 0)
     }
 
+    /// 최대 높이로 그린 시트를 아래로 내릴 거리. 시트는 이만큼 화면 밖으로 나가고 `visibleHeight`만큼 보인다.
+    ///
+    /// 끄는 동안에는 시트 크기를 바꾸지 않고 이 거리만 바꾼다. 크기를 바꾸면 시트 안 목록이 매 프레임 다시 배치된다.
+    func offset(forVisibleHeight visibleHeight: CGFloat) -> CGFloat {
+        max(maxHeight - visibleHeight, 0)
+    }
+
+    /// 높이 단계에 멈췄을 때 화면 밖으로 나가 가려지는 시트 아래쪽 높이.
+    /// 시트 안 내용의 아래 safe area로 넘겨서, 스크롤 끝이 보이는 영역 안에 오게 한다.
+    func hiddenHeight(for detent: BottomSheetDetent) -> CGFloat {
+        offset(forVisibleHeight: height(for: detent))
+    }
+
     func height(for detent: BottomSheetDetent) -> CGFloat {
         let height: CGFloat = switch detent.kind {
         case .fraction(let value):
@@ -46,16 +59,35 @@ struct BottomSheetLayout {
         velocity / 1000 * decelerationRate / (1 - decelerationRate)
     }
 
+    /// 이보다 빠르게 놓으면 튕긴 것으로 보고, 튕긴 방향으로 적어도 한 단계 간다. 단위는 초당 pt다.
+    ///
+    /// 예상 높이만 보면, 끝까지 올린 시트를 짧고 빠르게 튕겨 내렸을 때 두 단계의 가운데를 넘지 못해 다시 위로 돌아갔다.
+    /// 손가락은 떼기 직전에 느려져서, 300으로 두었을 때는 80pt를 0.12초에 튕겨도 초속 288pt로 잡혀 다시 올라갔다.
+    static let flickVelocity: CGFloat = 200
+
+    /// 가장 낮은 단계에서 이보다 빠르게 아래로 튕기면 숨긴다. 단위는 초당 pt다.
+    ///
+    /// 한 단계 가는 기준(`flickVelocity`)과 같게 두면, 살짝 밀기만 해도 시트가 사라졌다.
+    static let hideFlickVelocity: CGFloat = 800
+
     /// 손을 뗐을 때 멈출 단계. 숨겨야 하면 `nil`이다.
     ///
     /// 손을 뗀 높이에서 속도로 더 움직일 거리만큼 옮긴 예상 높이를 구하고, 그 높이에서 가장 가까운 단계를 고른다.
     /// 숨길 수 있으면 높이 0을 숨김 단계로 보고, 가장 낮은 단계의 절반보다 아래면 숨긴다.
+    /// `flickVelocity`보다 빠르게 놓았는데 고른 단계가 끌기 전 단계면, 끌기 전 단계에서 튕긴 방향으로 한 단계 간다.
+    /// 튕긴 방향이 끈 방향과 같을 때만 그렇다. 위로 끌었다가 놓기 직전에 아래로 돌아오면 아래로 가지 않는다.
+    /// 가장 낮은 단계에서 `hideFlickVelocity`보다 빠르게 아래로 튕기면 숨길 수 있을 때 숨긴다.
+    ///
+    /// 한 단계는 손을 뗀 높이가 아니라 끌기 전 단계에서 센다. 손을 뗀 높이에서 세면, 다른 단계를 막 지나쳐 놓았을 때
+    /// 그 단계를 건너뛰고 하나 더 갔다.
     ///
     /// - Parameters:
     ///   - releasedHeight: 손을 뗀 순간의 시트 높이.
+    ///   - startHeight: 끌기 전에 멈춰 있던 높이.
     ///   - velocity: 손을 뗀 순간의 초당 이동 거리. 아래로 끌면 양수다.
     func targetDetent(
         releasedHeight: CGFloat,
+        startHeight: CGFloat,
         velocity: CGFloat,
         in sortedDetents: [BottomSheetDetent],
         canHide: Bool
@@ -65,9 +97,26 @@ struct BottomSheetLayout {
         if canHide, projectedHeight < height(for: lowest) / 2 {
             return nil
         }
-        return sortedDetents.min {
+        let nearest = sortedDetents.min {
             abs(height(for: $0) - projectedHeight) < abs(height(for: $1) - projectedHeight)
         }
+        let isDownward = velocity > 0
+        // 튕긴 방향과 끈 방향이 같은지. 아래로 끌면 손을 뗀 높이가 끌기 전보다 낮다.
+        let isDraggedSameWay = isDownward ? releasedHeight < startHeight : releasedHeight > startHeight
+        guard abs(velocity) >= Self.flickVelocity,
+              isDraggedSameWay,
+              let nearest,
+              !BottomSheetMetrics.isMeaningfulChange(from: height(for: nearest), to: startHeight)
+        else { return nearest }
+
+        // 끌기 전 단계로 돌아가려 하면, 튕긴 방향으로 끌기 전 단계 바로 다음 단계로 간다.
+        if isDownward {
+            let lower = sortedDetents.last { height(for: $0) < startHeight }
+            if let lower { return lower }
+            // 가장 낮은 단계에서 아래로 튕겼다. 세게 튕겼을 때만 숨긴다.
+            return canHide && velocity >= Self.hideFlickVelocity ? nil : nearest
+        }
+        return sortedDetents.first { height(for: $0) > startHeight } ?? nearest
     }
 
     /// 손잡이를 눌렀을 때 갈 단계. 위로 한 단계 가고, 맨 위에서는 아래로 한 단계 간다.
