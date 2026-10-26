@@ -100,7 +100,11 @@ struct BottomSheetContainer<Content: View>: View {
                 try? await Task.sleep(for: BottomSheetMetrics.settleDuration)
                 // 그사이 다시 끌기 시작했으면 손을 뗄 때까지 기다린다. 끄는 도중에 바꾸면 내용이 튄다.
                 // 위에 겹친 시트를 끄는 동안에도 이 시트가 같이 움직이므로 함께 기다린다.
-                while drag != nil || linksAbove.totalTranslation != 0, !Task.isCancelled {
+                // 끌기 상태가 비정상적으로 남아도 여백이 영영 바뀌지 않는 일이 없도록 최대 대기 시간을 둔다.
+                let deadline = ContinuousClock.now + BottomSheetMetrics.maxDragWait
+                while drag != nil || linksAbove.totalTranslation != 0,
+                      ContinuousClock.now < deadline,
+                      !Task.isCancelled {
                     try? await Task.sleep(for: .milliseconds(50))
                 }
                 guard !Task.isCancelled else { return }
@@ -177,6 +181,8 @@ struct BottomSheetContainer<Content: View>: View {
         // 아래로 내린 부분을 자르지 않으면, 시트를 붙인 뷰가 아래 safe area를 지킬 때 그 아래(홈 인디케이터, 탭바 자리)에
         // 내용이 그려지고 탭도 받는다. 모양이 `Animatable`이라 높이 단계를 옮길 때 시트와 같은 애니메이션으로 움직인다.
         .clipShape(BottomSheetVisibleShape(height: visibleHeight))
+        // clipShape는 그리기만 자르고 터치 판정은 자르지 않으므로, 터치 영역도 같은 모양으로 제한한다.
+        .contentShape(BottomSheetVisibleShape(height: visibleHeight))
         .background {
             // 내용은 safe area 안에 두고, 배경만 탭바와 홈 인디케이터 아래 화면 끝까지 깐다.
             // 내용이 터치를 받지 않는 빈 곳(여백, Spacer)을 끌어도 시트가 움직이도록 배경에 끌기를 붙인다.
@@ -347,6 +353,8 @@ enum BottomSheetMetrics {
     static let animation = Animation.spring(response: 0.4, dampingFraction: 0.85)
     /// 높이 단계를 옮기는 애니메이션이 눈에 띄게 끝나는 시간. 시트 안 내용의 아래 여백을 이 뒤에 늘린다.
     static let settleDuration: Duration = .milliseconds(600)
+    /// 끄는 중이라 여백 변경을 미룰 때 기다리는 최대 시간.
+    static let maxDragWait: Duration = .seconds(10)
     /// 이보다 작게 바뀐 높이는 같은 높이로 본다.
     /// 부동소수점 계산 오차(끝자리 차이)만 거르는 값이다. 실제로 끌거나 멈춘 높이는 이보다 크게 바뀌므로 그대로 전달된다.
     static let heightChangeThreshold: CGFloat = 0.01
@@ -360,7 +368,7 @@ enum BottomSheetMetrics {
 /// 시트에서 지금 화면에 올라와 보이는 위쪽 부분.
 ///
 /// 시트는 가장 큰 높이로 그리고 아래로 내려 보일 높이만 올라오게 하므로, 이 모양으로 잘라 화면 밖으로 내린 부분은
-/// 그리지도 터치를 받지도 않게 한다.
+/// 그리지도 터치를 받지도 않게 한다. 그리기는 `clipShape`, 터치는 `contentShape`로 자른다.
 struct BottomSheetVisibleShape: Shape {
     var height: CGFloat
 
