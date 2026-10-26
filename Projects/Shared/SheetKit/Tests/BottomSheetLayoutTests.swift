@@ -33,6 +33,14 @@ struct BottomSheetLayoutTests {
         #expect(layout.offset(forVisibleHeight: 750) == 0)
     }
 
+    @Test("나타나고 숨을 때는 시트 전체 높이가 아니라 보이는 높이와 아래 safe area만큼만 움직인다")
+    func transitionMovesVisibleHeightAndSafeArea() {
+        // 가운데(400)에 있는 시트를 숨길 때, 가장 큰 높이(700)가 아니라 400에 safe area 34를 더한 만큼 움직인다.
+        #expect(BottomSheetLayout.transitionDistance(visibleHeight: 400, bottomSafeArea: 34) == 434)
+        // 시트를 붙인 뷰가 safe area를 무시하면(지도 화면) 보이는 높이만큼만 움직인다.
+        #expect(BottomSheetLayout.transitionDistance(visibleHeight: 400, bottomSafeArea: 0) == 400)
+    }
+
     @Test("멈춘 높이 단계에서 가려지는 아래쪽 높이는 최대 높이에서 그 단계 높이를 뺀 값이다")
     func hiddenHeightForDetent() {
         #expect(layout.hiddenHeight(for: .large) == 0)

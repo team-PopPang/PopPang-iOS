@@ -44,6 +44,8 @@ struct BottomSheetContainer<Content: View>: View {
 
     var body: some View {
         let layout = BottomSheetLayout(containerHeight: containerHeight, topInset: topInset)
+        // 지금 화면에 올라와 보이는 높이. 숨으면 0이다. 시트, 나타나고 숨는 거리, 바깥에 알리는 높이가 모두 이 값을 쓴다.
+        let visibleHeight = detent.map { sheetHeight(detent: $0, layout: layout) } ?? 0
         let insetRequest = BottomSheetInsetRequest(
             target: detent.map { layout.hiddenHeight(for: $0) } ?? 0,
             // 이 시트나 위에 겹친 시트를 끄는 중이면 이 시트가 움직이는 중이다.
@@ -55,8 +57,18 @@ struct BottomSheetContainer<Content: View>: View {
         return Color.clear
             .overlay(alignment: .bottom) {
                 if let detent, containerHeight > 0 {
-                    sheet(detent: detent, layout: layout)
-                        .transition(.move(edge: .bottom))
+                    sheet(detent: detent, layout: layout, visibleHeight: visibleHeight)
+                        // 나타나고 숨을 때는 보이는 높이(아래 safe area 포함)만큼만 움직인다. `.move(edge:)`는 시트 프레임
+                        // 높이(가장 큰 높이)만큼 움직여서, 가운데에서 숨기면 보이는 높이보다 훨씬 긴 거리를 같은 시간에 지나
+                        // 빠르게 훽 사라졌고, 나타날 때는 처음 잠깐 화면 밖에서 움직여 늦게 올라왔다.
+                        .transition(
+                            .offset(
+                                y: BottomSheetLayout.transitionDistance(
+                                    visibleHeight: visibleHeight,
+                                    bottomSafeArea: containerBottomSafeArea
+                                )
+                            )
+                        )
                         // 시트가 나타날 때는 아직 움직이는 중이 아니므로, 기다리지 않고 처음부터 가려진 높이를 넘긴다.
                         // 기다리면 그동안 내용 아래쪽이 화면 밖에 있어 목록 끝까지 스크롤할 수 없다.
                         .onAppear {
@@ -87,7 +99,7 @@ struct BottomSheetContainer<Content: View>: View {
             // 아래 `.animation`보다 안쪽에 둬야 높이 단계가 바뀔 때 중간 높이까지 알린다.
             .modifier(
                 BottomSheetGeometryReporter(
-                    height: detent.map { sheetHeight(detent: $0, layout: layout) } ?? 0,
+                    height: visibleHeight,
                     maxHeight: layout.maxHeight,
                     isActive: containerHeight > 0
                 )
@@ -144,10 +156,9 @@ struct BottomSheetContainer<Content: View>: View {
         )
     }
 
-    private func sheet(detent: BottomSheetDetent, layout: BottomSheetLayout) -> some View {
+    private func sheet(detent: BottomSheetDetent, layout: BottomSheetLayout, visibleHeight: CGFloat) -> some View {
         let sortedDetents = layout.sortedDetents(detents)
         let baseHeight = layout.height(for: detent)
-        let visibleHeight = sheetHeight(detent: detent, layout: layout)
         // 지금 화면에 올라와 보이는 부분. 그리기와 터치를 모두 이 모양으로 자른다.
         let visibleShape = BottomSheetVisibleShape(height: visibleHeight, cornerRadius: cornerRadius)
         // 손잡이 줄, 배경, 지정한 뷰의 끌기를 모두 같은 처리로 보낸다.
