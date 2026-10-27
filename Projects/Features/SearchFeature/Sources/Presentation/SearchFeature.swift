@@ -6,9 +6,7 @@ import Foundation
 public struct SearchFeature {
     @ObservableState
     public struct State: Equatable, Identifiable {
-        // public var id: String { "search-\(userUuid)" }
         public let id = UUID()
-        public let userUuid: String
         public let nickname: String
         public var searchText = ""
         public var recentKeywords: [String] = []
@@ -16,17 +14,12 @@ public struct SearchFeature {
         public var isLoading = false
         public var errorMessage: String?
 
-        public init(
-            userUuid: String = "demo-user",
-            nickname: String = "홍길동"
-        ) {
-            self.userUuid = userUuid
+        public init(nickname: String = "홍길동") {
             self.nickname = nickname
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.userUuid == rhs.userUuid
-                && lhs.nickname == rhs.nickname
+            lhs.nickname == rhs.nickname
                 && lhs.searchText == rhs.searchText
                 && lhs.recentKeywords == rhs.recentKeywords
                 && lhs.searchPopupList == rhs.searchPopupList
@@ -103,7 +96,6 @@ public struct SearchFeature {
                 state.isLoading = false
                 state.errorMessage = nil
                 return search(
-                    userUuid: state.userUuid,
                     searchText: searchText,
                     shouldPersistKeyword: true,
                     startsLoadingAfterDebounce: true
@@ -115,7 +107,6 @@ public struct SearchFeature {
                 state.isLoading = true
                 state.errorMessage = nil
                 return search(
-                    userUuid: state.userUuid,
                     searchText: keyword,
                     shouldPersistKeyword: false,
                     startsLoadingAfterDebounce: false
@@ -158,7 +149,6 @@ public struct SearchFeature {
 
 private extension SearchFeature {
     func search(
-        userUuid: String,
         searchText: String,
         shouldPersistKeyword: Bool,
         startsLoadingAfterDebounce: Bool
@@ -176,10 +166,7 @@ private extension SearchFeature {
                     await send(.loadingChanged(true))
                 }
 
-                let popups = try await searchFeatureClient.searchPopups(
-                    userUuid,
-                    searchText
-                )
+                let popups = try await searchFeatureClient.searchPopups(searchText)
                 try Task.checkCancellation()
 
                 var recentKeywords: [String]?

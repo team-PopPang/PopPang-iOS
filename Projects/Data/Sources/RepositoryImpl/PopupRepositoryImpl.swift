@@ -4,7 +4,13 @@ import Foundation
 import Moya
 
 public final class PopupRepositoryImpl: PopupRepositoryProtocol {
-    public init() {}
+    private let makeV2Provider: () -> MoyaProvider<V2PopupAPI>
+
+    public init(
+        makeV2Provider: @escaping () -> MoyaProvider<V2PopupAPI> = { NetworkProvider.shared.makeProvider() }
+    ) {
+        self.makeV2Provider = makeV2Provider
+    }
 
     public func getPopupList() async throws -> [Popup] {
         try await popupProvider.asyncRequest(.getPopupList, decodeTo: [PopupDTO].self).map { $0.toEntity() }
@@ -65,11 +71,9 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
         ).map { $0.toEntity() }
     }
 
-    public func getPersonalSearchPopupList(userUuid: String, searchText: String) async throws -> [Popup] {
-        try await popupProvider.asyncRequest(
-            .getPersonalSearchPopupList(userUuid: userUuid, searchText: searchText),
-            decodeTo: [PopupDTO].self
-        ).map { $0.toEntity() }
+    public func getPersonalSearchPopupList(searchText: String) async throws -> [Popup] {
+        try await makeV2Provider().asyncRequest(.search(q: searchText), decodeTo: [PopupDTO].self)
+            .map { $0.toEntity() }
     }
 
     public func getPersonalMapFilteredPopupList(

@@ -9,10 +9,7 @@ struct SearchFeatureDemoApp: App {
         WindowGroup {
             SearchFeatureView(
                 store: Store(
-                    initialState: SearchFeature.State(
-                        userUuid: "demo-user",
-                        nickname: "홍길동"
-                    )
+                    initialState: SearchFeature.State(nickname: "홍길동")
                 ) {
                     SearchFeature()
                 } withDependencies: {
@@ -22,7 +19,7 @@ struct SearchFeatureDemoApp: App {
                         },
                         addRecentKeyword: { _ in },
                         removeRecentKeyword: { _ in },
-                        searchPopups: { _, searchText in
+                        searchPopups: { searchText in
                             searchText.isEmpty ? [] : [.demo]
                         }
                     )

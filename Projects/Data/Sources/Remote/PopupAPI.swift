@@ -14,7 +14,6 @@ public enum PopupAPI {
     case getPersonalUseerRecommendPopupList(userUuid: String)
     case getPersonalUpcomingPopupList(userUuid: String)
     case getPersonalFilteredPopupList(userUuid: String, region: String, district: String, homeSortStandard: String)
-    case getPersonalSearchPopupList(userUuid: String, searchText: String)
     case getPersonalMapFilteredPopupList(
         userUuid: String,
         region: String,
@@ -61,8 +60,6 @@ extension PopupAPI: BaseAPI {
             return "/users/\(userUuid)/popups/upcoming"
         case .getPersonalFilteredPopupList(let userUuid, _, _, _):
             return "/users/\(userUuid)/popups/filtered/home"
-        case .getPersonalSearchPopupList(let userUuid, _):
-            return "/users/\(userUuid)/popups/search"
         case .getPersonalMapFilteredPopupList(let userUuid, _, _, _, _, _):
             return "/users/\(userUuid)/popups/filtered/map"
         case .getPersonalRelatedPopupList(let userUuid, let popupUuid):
@@ -97,7 +94,6 @@ extension PopupAPI: BaseAPI {
              .getPersonalUseerRecommendPopupList,
              .getPersonalUpcomingPopupList,
              .getPersonalFilteredPopupList,
-             .getPersonalSearchPopupList,
              .getPersonalMapFilteredPopupList,
              .getPersonalRelatedPopupList,
              .getPersonalRandomPopupList,
@@ -143,8 +139,6 @@ extension PopupAPI: BaseAPI {
                 ],
                 encoding: URLEncoding.queryString
             )
-        case .getPersonalSearchPopupList(_, let searchText):
-            return .requestParameters(parameters: ["q": searchText], encoding: URLEncoding.queryString)
         case .getPersonalMapFilteredPopupList(_, let region, let district, let latitude, let longitude, let mapSortStandard):
             var params: [String: Any] = [
                 "region": region,

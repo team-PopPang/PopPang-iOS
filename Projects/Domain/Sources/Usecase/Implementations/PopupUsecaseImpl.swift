@@ -55,11 +55,8 @@ public final class PopupUsecaseImpl: PopupUsecaseProtocol {
         )
     }
 
-    public func getPersonalSearchPopupList(userUuid: String, searchText: String) async throws -> [Popup] {
-        try await popupRepository.getPersonalSearchPopupList(
-            userUuid: userUuid,
-            searchText: searchText
-        )
+    public func getPersonalSearchPopupList(searchText: String) async throws -> [Popup] {
+        try await popupRepository.getPersonalSearchPopupList(searchText: searchText)
     }
 
     public func getPersonalMapFilteredPopupList(
