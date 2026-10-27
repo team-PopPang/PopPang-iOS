@@ -34,6 +34,29 @@
         }
       }
     },
+    "검색하지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't search. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "検索できませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색하지 못했어요. 잠시 후 다시 시도해 주세요."
+          }
+        }
+      }
+    },
     "궁금한 장소를 검색해보세요" : {
       "extractionState" : "manual",
       "localizations" : {

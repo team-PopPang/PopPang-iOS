@@ -20,7 +20,7 @@ struct MainTabFeatureTests {
             return
         }
 
-        #expect(searchState.search.userUuid == "user-1")
+        #expect(searchState.userUuid == "user-1")
         #expect(searchState.search.nickname == "팝팡")
     }
 

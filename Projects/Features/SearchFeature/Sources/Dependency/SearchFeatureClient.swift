@@ -6,13 +6,13 @@ public struct SearchFeatureClient: Sendable {
     public var loadRecentKeywords: @Sendable () -> [String]
     public var addRecentKeyword: @Sendable (String) -> Void
     public var removeRecentKeyword: @Sendable (String) -> Void
-    public var searchPopups: @Sendable (_ userUuid: String, _ searchText: String) async throws -> [Popup]
+    public var searchPopups: @Sendable (_ searchText: String) async throws -> [Popup]
 
     public init(
         loadRecentKeywords: @escaping @Sendable () -> [String],
         addRecentKeyword: @escaping @Sendable (String) -> Void,
         removeRecentKeyword: @escaping @Sendable (String) -> Void,
-        searchPopups: @escaping @Sendable (_ userUuid: String, _ searchText: String) async throws -> [Popup]
+        searchPopups: @escaping @Sendable (_ searchText: String) async throws -> [Popup]
     ) {
         self.loadRecentKeywords = loadRecentKeywords
         self.addRecentKeyword = addRecentKeyword
@@ -36,11 +36,8 @@ public struct SearchFeatureClient: Sendable {
             removeRecentKeyword: { keyword in
                 recentSearchStorage.remove(keyword)
             },
-            searchPopups: { userUuid, searchText in
-                try await popupUsecaseBox.usecase.getPersonalSearchPopupList(
-                    userUuid: userUuid,
-                    searchText: searchText
-                )
+            searchPopups: { searchText in
+                try await popupUsecaseBox.usecase.getPersonalSearchPopupList(searchText: searchText)
             }
         )
     }
@@ -51,7 +48,7 @@ extension SearchFeatureClient: DependencyKey {
         loadRecentKeywords: { [] },
         addRecentKeyword: { _ in },
         removeRecentKeyword: { _ in },
-        searchPopups: { _, _ in [] }
+        searchPopups: { _ in [] }
     )
 }
 
@@ -60,7 +57,7 @@ extension SearchFeatureClient: TestDependencyKey {
         loadRecentKeywords: { [] },
         addRecentKeyword: { _ in },
         removeRecentKeyword: { _ in },
-        searchPopups: { _, _ in [] }
+        searchPopups: { _ in [] }
     )
 }
 

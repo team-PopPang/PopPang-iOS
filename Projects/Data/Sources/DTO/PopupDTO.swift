@@ -10,7 +10,8 @@ public struct PopupDTO: Decodable, Sendable {
     public let openTime: String?
     public let closeTime: String?
     public let address: String
-    public let roadAddress: String
+    /// 명세상 null일 수 있다. 없거나 비어 있으면 일반 주소(`address`)를 대신 쓴다.
+    public let roadAddress: String?
     public let region: String
     public let latitude: Double?
     public let longitude: Double?
@@ -18,11 +19,13 @@ public struct PopupDTO: Decodable, Sendable {
     public let instaPostUrl: String?
     public let captionSummary: String
     public let imageUrlList: [String]
-    public let mediaType: String
+    /// 명세상 null일 수 있다. 없으면 이미지로 본다.
+    public let mediaType: String?
     public let favoriteCount: Int
     public let viewCount: Int
     public let isFavorited: Bool
-    public let recommendList: [String]
+    /// 명세상 목록 API는 추천이 없으면 null을 준다. 없으면 빈 배열로 바꾼다.
+    public let recommendList: [String]?
 }
 
 public extension PopupDTO {
@@ -43,7 +46,7 @@ public extension PopupDTO {
             openTime: openTime,
             closeTime: closeTime,
             address: address,
-            roadAddress: roadAddress,
+            roadAddress: roadAddress.flatMap { $0.isEmpty ? nil : $0 } ?? address,
             region: region,
             latitude: latitude,
             longitude: longitude,
@@ -51,11 +54,11 @@ public extension PopupDTO {
             instaPostUrl: instaPostUrl,
             captionSummary: captionSummary,
             imageUrlList: fullImageUrlList,
-            mediaType: Popup.MediaType(rawValue: mediaType.uppercased()) ?? .image,
+            mediaType: mediaType.flatMap { Popup.MediaType(rawValue: $0.uppercased()) } ?? .image,
             favoriteCount: favoriteCount,
             viewCount: viewCount,
             isFavorited: isFavorited,
-            recommendList: recommendList
+            recommendList: recommendList ?? []
         )
     }
 }

@@ -54,12 +54,8 @@ public protocol PopupRepositoryProtocol {
         homeSortStandard: String
     ) async throws -> [Popup]
 
-    /// 팝업 검색 결과를 반환합니다
-    /// - Parameters:
-    ///   - userUuid: userUuid
-    ///   - searchText: searchText
-    /// - Returns: [Popup]
-    func getPersonalSearchPopupList(userUuid: String, searchText: String) async throws -> [Popup]
+    /// 회원 팝업 검색 결과를 반환합니다. 찜 여부는 로그인한 사용자 기준입니다.
+    func getPersonalSearchPopupList(searchText: String) async throws -> [Popup]
 
     /// 맵 팝업 필터 조회
     /// - Parameters:

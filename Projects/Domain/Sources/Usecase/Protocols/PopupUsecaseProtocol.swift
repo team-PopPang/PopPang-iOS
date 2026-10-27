@@ -35,7 +35,7 @@ public protocol PopupUsecaseProtocol {
     ) async throws -> [Popup]
 
     /// 팝업 검색 결과를 반환합니다
-    func getPersonalSearchPopupList(userUuid: String, searchText: String) async throws -> [Popup]
+    func getPersonalSearchPopupList(searchText: String) async throws -> [Popup]
 
     /// 맵 팝업 필터 조회
     func getPersonalMapFilteredPopupList(

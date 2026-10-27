@@ -530,19 +530,20 @@ public struct SearchDestinationFeature {
         public var id: UUID { search.id }
         var search: SearchFeature.State
         var path = StackState<Path.State>()
+        /// 검색 결과에서 여는 팝업 상세가 아직 V1 API에 넘길 사용자 UUID
+        let userUuid: String
 
         public init(
             userUuid: String,
             nickname: String
         ) {
-            self.search = .init(
-                userUuid: userUuid,
-                nickname: nickname
-            )
+            self.search = .init(nickname: nickname)
+            self.userUuid = userUuid
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
             lhs.search == rhs.search
+            && lhs.userUuid == rhs.userUuid
             && pathsEqual(lhs.path, rhs.path)
         }
 
@@ -613,7 +614,7 @@ private extension SearchDestinationFeature {
         state.path.append(
             .popupDetail(
                 .init(
-                    userUuid: state.search.userUuid,
+                    userUuid: state.userUuid,
                     popup: popup,
                     isAdmin: false,
                     hidesSystemTabBar: true

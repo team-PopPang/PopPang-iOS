@@ -6,9 +6,7 @@ import Foundation
 public struct SearchFeature {
     @ObservableState
     public struct State: Equatable, Identifiable {
-        // public var id: String { "search-\(userUuid)" }
         public let id = UUID()
-        public let userUuid: String
         public let nickname: String
         public var searchText = ""
         public var recentKeywords: [String] = []
@@ -16,17 +14,12 @@ public struct SearchFeature {
         public var isLoading = false
         public var errorMessage: String?
 
-        public init(
-            userUuid: String = "demo-user",
-            nickname: String = "홍길동"
-        ) {
-            self.userUuid = userUuid
+        public init(nickname: String = "홍길동") {
             self.nickname = nickname
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.userUuid == rhs.userUuid
-                && lhs.nickname == rhs.nickname
+            lhs.nickname == rhs.nickname
                 && lhs.searchText == rhs.searchText
                 && lhs.recentKeywords == rhs.recentKeywords
                 && lhs.searchPopupList == rhs.searchPopupList
@@ -103,7 +96,6 @@ public struct SearchFeature {
                 state.isLoading = false
                 state.errorMessage = nil
                 return search(
-                    userUuid: state.userUuid,
                     searchText: searchText,
                     shouldPersistKeyword: true,
                     startsLoadingAfterDebounce: true
@@ -115,7 +107,6 @@ public struct SearchFeature {
                 state.isLoading = true
                 state.errorMessage = nil
                 return search(
-                    userUuid: state.userUuid,
                     searchText: keyword,
                     shouldPersistKeyword: false,
                     startsLoadingAfterDebounce: false
@@ -143,9 +134,11 @@ public struct SearchFeature {
                 }
                 return .none
 
-            case .searchResponse(.failure(let error)):
+            case .searchResponse(.failure):
                 state.searchPopupList = []
-                state.errorMessage = error.localizedDescription
+                // 다시 로그인해야 하는 실패도 결과가 없는 것처럼 보이지 않게 같은 안내를 보여 준다.
+                // 그때는 곧이어 앱이 로그인 화면으로 보낸다.
+                state.errorMessage = String(localized: "검색하지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
                 state.isLoading = false
                 return .none
 
@@ -158,7 +151,6 @@ public struct SearchFeature {
 
 private extension SearchFeature {
     func search(
-        userUuid: String,
         searchText: String,
         shouldPersistKeyword: Bool,
         startsLoadingAfterDebounce: Bool
@@ -176,10 +168,7 @@ private extension SearchFeature {
                     await send(.loadingChanged(true))
                 }
 
-                let popups = try await searchFeatureClient.searchPopups(
-                    userUuid,
-                    searchText
-                )
+                let popups = try await searchFeatureClient.searchPopups(searchText)
                 try Task.checkCancellation()
 
                 var recentKeywords: [String]?

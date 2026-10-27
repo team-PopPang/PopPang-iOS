@@ -4,7 +4,13 @@ import Foundation
 import Moya
 
 public final class PopupRepositoryImpl: PopupRepositoryProtocol {
-    public init() {}
+    private let makeV2Provider: () -> MoyaProvider<V2PopupAPI>
+
+    public init(
+        makeV2Provider: @escaping () -> MoyaProvider<V2PopupAPI> = { NetworkProvider.shared.makeProvider() }
+    ) {
+        self.makeV2Provider = makeV2Provider
+    }
 
     public func getPopupList() async throws -> [Popup] {
         try await popupProvider.asyncRequest(.getPopupList, decodeTo: [PopupDTO].self).map { $0.toEntity() }
@@ -65,11 +71,12 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
         ).map { $0.toEntity() }
     }
 
-    public func getPersonalSearchPopupList(userUuid: String, searchText: String) async throws -> [Popup] {
-        try await popupProvider.asyncRequest(
-            .getPersonalSearchPopupList(userUuid: userUuid, searchText: searchText),
-            decodeTo: [PopupDTO].self
-        ).map { $0.toEntity() }
+    public func getPersonalSearchPopupList(searchText: String) async throws -> [Popup] {
+        // 명세 UPOP-11: 성공 응답은 `APIResponse`로 감싸지 않은 팝업 배열이다(`wrapper NONE → NONE`).
+        try await popupRequest {
+            try await makeV2Provider().asyncRequest(.search(q: searchText), decodeTo: [PopupDTO].self)
+                .map { $0.toEntity() }
+        }
     }
 
     public func getPersonalMapFilteredPopupList(
@@ -144,5 +151,30 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
 
     private var popupProvider: MoyaProvider<PopupAPI> {
         NetworkProvider.shared.makeProvider()
+    }
+}
+
+private extension PopupRepositoryImpl {
+    /// V2 팝업 조회의 실패를 화면이 안내할 `PopupError`로 바꾼다. 다시 로그인해야 하는 실패는 그대로 던진다.
+    func popupRequest<T>(_ request: () async throws -> T) async throws -> T {
+        do {
+            return try await request()
+        } catch let error as AuthSessionError {
+            throw error
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            // 화면에는 PopupError로 안내하지만 원인을 찾을 수 있게 남긴다.
+            // 출시 빌드에도 찍히므로 서버 응답 본문이나 검색어가 담긴 URL은 남기지 않고 코드와 오류 종류만 남긴다.
+            Logger.e("팝업 조회 실패: \(Self.logDescription(of: error))")
+            throw PopupError.failed
+        }
+    }
+
+    static func logDescription(of error: Error) -> String {
+        guard let error = error as? NetworkError else {
+            return String(describing: type(of: error))
+        }
+        return "HTTP \(error.statusCode), code \(error.serverErrorCode.map(String.init) ?? "없음")"
     }
 }
