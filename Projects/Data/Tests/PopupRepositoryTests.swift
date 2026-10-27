@@ -33,7 +33,7 @@ struct PopupRepositoryTests {
 
         let popup = try #require(try await context.repository.getPersonalSearchPopupList(searchText: "성수").first)
 
-        #expect(popup.roadAddress == "")
+        #expect(popup.roadAddress == "서울 성동구")
         #expect(popup.mediaType == .image)
         #expect(popup.recommendList.isEmpty)
     }

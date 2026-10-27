@@ -234,7 +234,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 
 - 여러 feature가 같이 쓰는 API(찜 등록·해제, 지역 목록, 필터 팝업)는 **처음 쓰는 feature에서 V2로 만들고**, 뒤의 feature는 가져다 써요. 옮기는 동안 화면마다 V1·V2가 섞여도 서버 데이터가 같아서 괜찮아요(명세 C-9).
 - 회원 팝업 V2 API는 `Data/Sources/Remote/V2PopupAPI.swift`에 모아요. 응답은 V1과 같은 감싸지 않은 팝업 배열이라 `PopupDTO`를 그대로 써요.
-- `PopupDTO`는 명세상 null일 수 있는 `roadAddress`·`mediaType`·`recommendList`를 null로 받아요. null이면 빈 문자열·이미지·빈 배열로 바꿔요. 전에는 null을 받으면 목록 전체를 읽지 못했어요(V1부터 있던 문제, #130에서 수정).
+- `PopupDTO`는 명세상 null일 수 있는 `roadAddress`·`mediaType`·`recommendList`를 null로 받아요. null이면 각각 일반 주소(`address`)·이미지·빈 배열로 바꿔요. 전에는 null을 받으면 목록 전체를 읽지 못했어요(V1부터 있던 문제, #130에서 수정).
 - `userUuid`는 아직 V1인 화면이 쓰므로 마지막 정리 단계에서 지워요. 예를 들어 검색 결과에서 여는 팝업 상세는 V1이라, `SearchDestination`이 `userUuid`를 들고 있다가 상세에 넘겨요.
 
 **확인 필요 (백엔드)**

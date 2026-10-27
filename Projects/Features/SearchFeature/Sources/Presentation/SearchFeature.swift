@@ -134,12 +134,11 @@ public struct SearchFeature {
                 }
                 return .none
 
-            case .searchResponse(.failure(let error)):
+            case .searchResponse(.failure):
                 state.searchPopupList = []
-                // 다시 로그인해야 하는 실패는 앱이 로그인 화면으로 보내므로 따로 안내하지 않는다.
-                state.errorMessage = error is PopupError
-                    ? String(localized: "검색하지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
-                    : nil
+                // 다시 로그인해야 하는 실패도 결과가 없는 것처럼 보이지 않게 같은 안내를 보여 준다.
+                // 그때는 곧이어 앱이 로그인 화면으로 보낸다.
+                state.errorMessage = String(localized: "검색하지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
                 state.isLoading = false
                 return .none
 
