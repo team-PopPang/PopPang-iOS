@@ -38,6 +38,24 @@ struct PopupRepositoryTests {
         #expect(popup.recommendList.isEmpty)
     }
 
+    @Test("검색이 서버 오류로 실패하면 화면이 안내할 PopupError로 바꾼다")
+    func searchMapsServerErrorToPopupError() async {
+        let context = Context(response: (500, #"{"success":false,"code":6000,"message":"서버 에러","data":null}"#))
+
+        await #expect(throws: PopupError.failed) {
+            _ = try await context.repository.getPersonalSearchPopupList(searchText: "성수")
+        }
+    }
+
+    @Test("다시 로그인해야 하는 실패는 바꾸지 않고 그대로 던진다")
+    func searchPassesLoginRequiredThrough() async {
+        let context = Context(response: (401, #"{"success":false,"code":5001,"message":"error","data":null}"#))
+
+        await #expect(throws: AuthSessionError.loginRequired) {
+            _ = try await context.repository.getPersonalSearchPopupList(searchText: "성수")
+        }
+    }
+
     @Test("검색 결과가 없으면 빈 배열을 돌려준다")
     func searchReturnsEmptyArray() async throws {
         let context = Context(response: (200, "[]"))

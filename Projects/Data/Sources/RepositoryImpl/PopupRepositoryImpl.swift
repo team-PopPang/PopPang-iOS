@@ -72,8 +72,11 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
     }
 
     public func getPersonalSearchPopupList(searchText: String) async throws -> [Popup] {
-        try await makeV2Provider().asyncRequest(.search(q: searchText), decodeTo: [PopupDTO].self)
-            .map { $0.toEntity() }
+        // 명세 UPOP-11: 성공 응답은 `APIResponse`로 감싸지 않은 팝업 배열이다(`wrapper NONE → NONE`).
+        try await popupRequest {
+            try await makeV2Provider().asyncRequest(.search(q: searchText), decodeTo: [PopupDTO].self)
+                .map { $0.toEntity() }
+        }
     }
 
     public func getPersonalMapFilteredPopupList(
@@ -148,5 +151,20 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
 
     private var popupProvider: MoyaProvider<PopupAPI> {
         NetworkProvider.shared.makeProvider()
+    }
+}
+
+private extension PopupRepositoryImpl {
+    /// V2 팝업 조회의 실패를 화면이 안내할 `PopupError`로 바꾼다. 다시 로그인해야 하는 실패는 그대로 던진다.
+    func popupRequest<T>(_ request: () async throws -> T) async throws -> T {
+        do {
+            return try await request()
+        } catch let error as AuthSessionError {
+            throw error
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            throw PopupError.failed
+        }
     }
 }
