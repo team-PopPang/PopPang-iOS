@@ -164,6 +164,8 @@ private extension PopupRepositoryImpl {
         } catch is CancellationError {
             throw CancellationError()
         } catch {
+            // 화면에는 PopupError로 안내하지만 원인을 찾을 수 있게 원래 오류를 남긴다. 오류에는 토큰이 들어 있지 않다.
+            Logger.e("팝업 조회 실패: \(error)")
             throw PopupError.failed
         }
     }
