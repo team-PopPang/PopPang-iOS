@@ -10,7 +10,7 @@ public struct PopupDTO: Decodable, Sendable {
     public let openTime: String?
     public let closeTime: String?
     public let address: String
-    /// 명세상 null일 수 있다. 없으면 일반 주소(`address`)를 대신 쓴다.
+    /// 명세상 null일 수 있다. 없거나 비어 있으면 일반 주소(`address`)를 대신 쓴다.
     public let roadAddress: String?
     public let region: String
     public let latitude: Double?
@@ -46,7 +46,7 @@ public extension PopupDTO {
             openTime: openTime,
             closeTime: closeTime,
             address: address,
-            roadAddress: roadAddress ?? address,
+            roadAddress: roadAddress.flatMap { $0.isEmpty ? nil : $0 } ?? address,
             region: region,
             latitude: latitude,
             longitude: longitude,

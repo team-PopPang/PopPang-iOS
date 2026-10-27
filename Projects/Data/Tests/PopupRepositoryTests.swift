@@ -56,6 +56,16 @@ struct PopupRepositoryTests {
         }
     }
 
+    @Test("도로명 주소가 빈 문자열이어도 일반 주소를 쓴다")
+    func searchUsesAddressWhenRoadAddressIsEmpty() async throws {
+        let popupJSON = Fixture.popup.replacingOccurrences(of: "\"roadAddress\":null", with: "\"roadAddress\":\"\"")
+        let context = Context(response: (200, "[\(popupJSON)]"))
+
+        let popup = try #require(try await context.repository.getPersonalSearchPopupList(searchText: "성수").first)
+
+        #expect(popup.roadAddress == "서울 성동구")
+    }
+
     @Test("검색 결과가 없으면 빈 배열을 돌려준다")
     func searchReturnsEmptyArray() async throws {
         let context = Context(response: (200, "[]"))
