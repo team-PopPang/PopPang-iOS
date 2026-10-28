@@ -41,3 +41,27 @@
 - 판단: `popupRequest {}` 로그 문구를 "팝업 조회 실패"에서 "팝업 요청 실패"로 바꿨다 — 찜 등록·해제에도 쓰여서 — 로그 문구뿐임
 - 판단: 하트 실패 때 목록을 먼저 다시 받고 그다음 안내 문구를 넣는다 — `favoritePopupsLoaded`가 `errorMessage`를 지우므로 순서를 바꾸면 문구가 사라진다 — 순서만 바꾸면 됨
 - 결과: 미완료 ([ ]). 시뮬레이터 동작 확인만 남음
+
+## 2026-10-28 S01 시뮬레이터 확인
+
+- 확인할 동작: 시뮬레이터 찜 탭 목록과 하트 해제 → 사용자 확인함 ("시뮬레이터 확인했어")
+- 결과: 완료 ([x])
+
+## 2026-10-28 S03 전환 문서 갱신과 전체 검증
+
+- 시작: 473113e. 관련 없는 변경: `.obsidian/` (건드리지 않음). 스펙 폴더의 S01 완료 표시는 커밋 전
+- 바꾼 파일: `Docs/architecture/api-v2-migration.md`, `Docs/development/testing.md`
+- 완료 조건:
+  - `rg -n "FavoritesFeature" Docs/architecture/api-v2-migration.md` → 2번 행 "진행 중 (#132)"
+  - `mise exec -- tuist test Core` → 통과 (51 tests: 50 passed, 1 skipped. 건너뜀은 기존 Keychain 테스트)
+  - `mise exec -- tuist test Data` → "no tests to run, finishing early"로 0개 실행. 통과로 보지 않았다. Data 코드가 S01 뒤로 바뀌지 않아 Tuist가 건너뛴 것으로 보인다
+  - 대신 `xcodebuild test -workspace PopPang.xcworkspace -scheme Data -destination <sim>` → 통과 (77 tests in 7 suites). `testing.md`의 7개 파일·77개와 같다
+  - 확인할 동작: 실제 계정으로 빈 목록, 다른 기기에서 해제한 팝업의 하트 → 사용자 확인 필요. 목록과 하트 해제는 S01에서 사용자가 확인함
+- 판단: 전환 문서 1번 행(SearchFeature)도 "진행 중 (#130)"에서 "완료 (#131)"로 고쳤다 — #131이 병합돼 문서가 실제와 달랐다 — 문서 한 줄뿐임
+- 판단: 전환 문서에 찜 V2 API 위치, 뒤 화면이 쓸 함수 이름, 실패 처리 원칙을 적었다 — 할 일의 "뒤의 feature가 가져다 쓴다"를 구체적으로 — 문서뿐임
+- 결과: 미완료 ([ ]). 직접 확인할 동작만 남음
+
+## 2026-10-28 S03 직접 확인
+
+- 확인할 동작: 빈 목록, 다른 기기에서 해제한 팝업의 하트 → 사용자 확인함 ("확인했어")
+- 결과: 완료 ([x]). 모든 단계가 끝나 스펙 상태를 완료로 바꿨다

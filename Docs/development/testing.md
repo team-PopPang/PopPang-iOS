@@ -24,7 +24,7 @@
 | --- | --- | --- | --- | --- |
 | Core | `CoreTests` | 9 | 51 | 네트워크(Moya stub), V2 인증 헤더·토큰 갱신·재요청, 로컬 저장소. `KeychainStore` 테스트 1개는 entitlement가 없는 테스트 환경이라 건너뛴다. |
 | SheetKit | `SheetKitTests` | 4 | 33 | 하단 시트 높이 계산, 최대 높이로 그린 시트를 내리는 거리와 가려지는 아래쪽 높이, 부동소수점 오차만큼의 높이 변화 무시, 손을 뗀 높이와 속도로 고르는 멈출 높이, 짧게 튕겨도 한 단계 가기, 나타나고 숨을 때 움직일 거리, 손잡이 탭·VoiceOver 조절, 겹친 시트 가운데 더 높이 올라온 시트의 높이 고르기, 겹친 시트가 끄는 거리의 합, 끌기를 받을 곳 판단 |
-| Data | `DataTests` | 6 | 70 | DTO 변환, 계약, 서버 헬스 체크 판정(`URLProtocol` stub), V2 인증 요청 형식·로그인·가입·세션 복구(가짜 소셜 로그인 전략과 Moya stub), V2 내 정보 요청 형식·응답·실패 코드·탈퇴 재요청, 가입 OS 채우기 마이그레이션 실행·기록, 회원 팝업 V2 검색과 팝업 응답의 null 필드 |
+| Data | `DataTests` | 7 | 77 | DTO 변환, 계약, 서버 헬스 체크 판정(`URLProtocol` stub), V2 인증 요청 형식·로그인·가입·세션 복구(가짜 소셜 로그인 전략과 Moya stub), V2 내 정보 요청 형식·응답·실패 코드·탈퇴 재요청, 가입 OS 채우기 마이그레이션 실행·기록, 회원 팝업 V2 검색과 팝업 응답의 null 필드, V2 찜 목록·등록·해제 요청 형식과 실패 변환 |
 | HomeFeatureV2 | `HomeFeatureV2Tests` (`Tests/HomeFeatureTests.swift`) | 1 | 8 | TCA `TestStore`, 광고 배치 정책 |
 | MainTabFeature | `MainTabFeatureTests` | 1 | 6 | delegate → path·destination 전환, 해제 순서 |
 | AuthFeature | `AuthFeatureTests` | 1 | 9 | TCA `TestStore`, 로그인 결과(COMPLETED/PENDING) 분기, 실패 안내, 가입 완료·만료·닉네임 중복, 가입 화면 닉네임 확인·카테고리 목록 실패 |
