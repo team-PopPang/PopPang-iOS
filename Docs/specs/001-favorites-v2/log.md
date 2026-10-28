@@ -117,3 +117,10 @@
   - 숨김 처리(`applyVisiblePopups`의 Set 필터)를 일부러 뺀 코드로 같은 명령 → 7개 중 4개 실패. 테스트가 이 버그를 잡는다. 확인 뒤 원래 코드로 되돌렸다(실패한 테스트가 끝나지 않는 요청을 남겨 xcodebuild가 10분 넘게 멈춰 강제로 끝냈다)
   - `xcodebuild build ... -scheme PopPangApp` → BUILD SUCCEEDED
 - 판단: 화면용 파생 값(날짜별 개수 등)은 확인하지 않도록 `TestStore`를 non-exhaustive로 썼다 — 해제·숨김 상태만 확인하려고 — 틀리면 exhaustivity만 켜면 됨
+
+## 2026-10-28 여섯 번째 리뷰 FAIL 대응
+
+- 리뷰 판정: FAIL. 근거는 (1) 목록을 다시 받는 데 성공해도 이전 문구가 남음 (2) `isFavorited`가 false인 팝업의 하트를 눌러도 해제 요청이 감
+- 고친 것: (1) 목록을 받으면 목록 실패 문구만 지운다. 해제 실패 문구는 1차 답 A대로 남긴다 (2) `isFavorited`가 false면 하트를 무시한다. 테스트 2개 추가
+- 판단: (1)을 목록 실패 문구로만 좁혔다 — 1차 답 A("안내 문구를 보여 주고 목록을 다시 받는다")를 지키려고 — 틀리면 조건만 지우면 됨
+- 확인: `FavoritesFeatureTests` 9개 통과, PopPangApp 빌드 성공

@@ -168,6 +168,50 @@ struct FavoritesFeatureTests {
         #expect(await removals.callCount == 1)
     }
 
+    @Test("목록을 다시 받으면 목록 실패 문구는 지우고 해제 실패 문구는 남긴다")
+    func successfulLoadClearsOnlyLoadFailure() async {
+        let lists = Responses<[Popup]>()
+        let removals = RemovalResponses()
+        let store = makeStore(lists: lists, removals: removals)
+
+        await store.send(.onAppear)
+        await lists.respond(.failure(PopupError.failed))
+        await store.receive(\.errorMessageChanged)
+        await store.receive(\.loadingChanged)
+        #expect(store.state.errorMessage != nil)
+
+        await store.send(.onAppear)
+        await lists.respond(.success([.a]))
+        await store.receive(\.favoritePopupsLoaded)
+        await store.receive(\.loadingChanged)
+
+        await store.send(.toggleLike(.a))
+        await removals.respond("a", .failure(PopupError.failed))
+        await store.receive(\.removeFavoriteFinished)
+        let removeFailure = store.state.errorMessage
+        #expect(removeFailure != nil)
+
+        await lists.respond(.success([.a]))
+        await store.receive(\.favoritePopupsLoaded)
+        await store.receive(\.loadingChanged)
+        #expect(store.state.errorMessage == removeFailure)
+    }
+
+    @Test("찜하지 않은 팝업의 하트를 눌러도 해제 요청을 보내지 않는다")
+    func notFavoritedPopupIsNotRemoved() async {
+        let lists = Responses<[Popup]>()
+        let removals = RemovalResponses()
+        let store = makeStore(lists: lists, removals: removals)
+        var popup = Popup.a
+        popup.isFavorited = false
+
+        await store.send(.favoritePopupsLoaded([popup]))
+        await store.send(.toggleLike(popup))
+
+        #expect(store.state.favoritePopups == [popup])
+        #expect(await removals.callCount == 0)
+    }
+
     @Test("목록을 받지 못하면 목록 실패 문구를 보여 준다")
     func failedLoadShowsMessage() async {
         let lists = Responses<[Popup]>()

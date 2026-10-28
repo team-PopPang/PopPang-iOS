@@ -128,6 +128,8 @@ MainTabFeature: favorites = .init()  (상세로 넘길 userUuid는 MainTab의 us
 | 로그인 끊김(`AuthSessionError.loginRequired`) | 숨긴 팝업을 다시 보여 주고 같은 안내 문구. 목록은 다시 받지 않는다. 로그인 화면 전환은 AppFeature가 한다 (D-7) |
 | 해제 중에 온 목록 응답 | 해제 중인 팝업은 빼고 보여 준다. 해제가 끝나면 그 전의 목록 요청을 취소하고 새로 받는다 (D-7) |
 | 빈 목록 `data: []` | 정상. 기존 빈 화면 |
+| 목록 실패 뒤 다시 받기 성공 | 목록 실패 문구를 지운다. 해제 실패 문구는 남긴다 |
+| `isFavorited`가 false인 팝업의 하트 | 아무것도 하지 않는다 (찜 탭은 해제 전용, D-6) |
 | 다시 받은 목록도 실패 | 안내 문구만 남기고 이전 목록 유지 |
 
 문구는 FavoritesFeature의 `Localizable.xcstrings`에 ko·en·ja로 넣는다.

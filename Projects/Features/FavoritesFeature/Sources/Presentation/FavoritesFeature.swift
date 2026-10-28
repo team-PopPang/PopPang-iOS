@@ -81,8 +81,8 @@ public struct FavoritesFeature {
                 return .none
 
             case .toggleLike(let popup):
-                // 찜 탭의 팝업은 모두 찜한 팝업이라 하트는 항상 해제다.
-                guard !state.removingPopupUuids.contains(popup.popupUuid) else { return .none }
+                // 찜 탭의 팝업은 모두 찜한 팝업이라 하트는 해제만 한다. 찜하지 않은 팝업이 오면 누르지 않은 것으로 본다.
+                guard popup.isFavorited, !state.removingPopupUuids.contains(popup.popupUuid) else { return .none }
                 state.errorMessage = nil
                 // 응답을 기다리지 않고 먼저 숨긴다.
                 state.removingPopupUuids.insert(popup.popupUuid)
@@ -123,6 +123,10 @@ public struct FavoritesFeature {
             case .favoritePopupsLoaded(let popups):
                 state.loadedPopups = popups
                 applyVisiblePopups(state: &state)
+                // 목록을 받았으니 목록 실패 문구는 지운다. 해제 실패 문구는 다시 받은 뒤에도 남긴다.
+                if state.errorMessage == Self.loadFailedMessage {
+                    state.errorMessage = nil
+                }
                 return .none
 
             case .loadingChanged(let isLoading):
