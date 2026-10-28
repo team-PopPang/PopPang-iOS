@@ -86,3 +86,11 @@
 - 그대로 둔 지적: 404 4102에도 안내 문구(1차 답 A), 찜 탭 테스트 타깃 없음(A-2)
 - 확인: `xcodebuild build ... -scheme PopPangApp` → BUILD SUCCEEDED, `-scheme FavoritesFeature` 빌드 성공, Data 77개·MainTab 6개·HomeFeatureV2 8개 통과
 - 확인 못 함: FavoritesFeatureDemo는 워크스페이스에 스킴이 없어 빌드하지 않았다(Demo는 `addFavorite: { _ in },` 한 줄만 지움). 바뀐 하트 동작의 화면 확인은 사용자 확인 필요
+
+## 2026-10-28 세 번째 리뷰 FAIL 대응
+
+- 리뷰 판정: FAIL. 근거는 `onAppear`에서 해제 완료 Set을 비운 뒤 목록 요청이 실패하면 해제한 팝업이 다시 보임, 해제 실패 뒤 다시 받기가 첫 목록 요청을 취소하고 실패를 알리지 않음
+- 바뀐 결정: D-7 추가, D-6은 일부 대체됨. 사용자 "A로, addFavorite는 남김" (2026-10-28)
+- 고친 것: `FavoritesFeature.swift`(해제 완료 Set 삭제, 성공하면 `loadedPopups`에서도 빼고 목록을 새로 받음, 목록 실패 문구를 항상 보여 줌, 해제 요청 취소는 무시), `Docs/architecture/api-v2-migration.md` 한 줄
+- 그대로 둔 지적: 404 4102에도 안내 문구, 다시 받은 뒤에도 문구 유지(1차 답 A), 로그인 끊김에도 목록 실패 문구(D-1), 쓰는 곳 없는 V2 `addFavorite(popupUuid:)`(D-4, 사용자 남김), 찜 탭 테스트 타깃 없음(A-2)
+- 확인: PopPangApp BUILD SUCCEEDED, Data 77개·MainTab 6개·HomeFeatureV2 8개 통과. 바뀐 하트 동작의 화면 확인은 사용자 확인 필요

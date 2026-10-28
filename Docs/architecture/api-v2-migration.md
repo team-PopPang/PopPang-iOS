@@ -236,7 +236,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 - 회원 팝업 V2 API는 `Data/Sources/Remote/V2PopupAPI.swift`에 모아요. 응답은 V1과 같은 감싸지 않은 팝업 배열이라 `PopupDTO`를 그대로 써요.
 - 찜 V2 API는 경로(`/favorite`)가 달라 `Data/Sources/Remote/V2FavoriteAPI.swift`에 따로 둬요. 찜 목록은 검색과 달리 `APIResponse`로 감싼 팝업 배열이에요. 등록·해제는 본문에 `popupUuid`만 담고, DELETE도 JSON 본문을 보내요.
 - 찜 등록·해제 V2는 `PopupUsecaseProtocol`의 `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)`예요(#132). 3번부터의 화면은 기존 `addFavorite(userUuid:popupUuid:)` 대신 이 함수를 가져다 써요. 기존 함수는 모든 화면이 옮긴 뒤 9번 정리 단계에서 지워요.
-- V2 팝업·찜 요청이 실패하면 Repository가 `PopupError.failed`로 바꾸고, 화면은 원본 오류 대신 안내 문구를 보여 줘요. 이미 찜함(409 4101)·찜 없음(404 4102)도 성공으로 보지 않아요. 찜 탭의 하트는 해제만 해요. 누르면 응답을 기다리지 않고 `popupUuid`를 Set에 넣어 숨기고, 늦게 온 목록 응답에도 Set에 있는 팝업은 빼고 보여 줘요. 실패하면 Set에서 빼서 다시 보여 주고 목록을 다시 받아요(로그인 끊김은 다시 받지 않아요).
+- V2 팝업·찜 요청이 실패하면 Repository가 `PopupError.failed`로 바꾸고, 화면은 원본 오류 대신 안내 문구를 보여 줘요. 이미 찜함(409 4101)·찜 없음(404 4102)도 성공으로 보지 않아요. 찜 탭의 하트는 해제만 해요. 누르면 응답을 기다리지 않고 `popupUuid`를 해제 중 Set에 넣어 숨기고, 그동안 온 목록 응답에서도 빼고 보여 줘요. 해제가 끝나면 그 전의 목록 요청을 취소하고 목록을 새로 받아요. 실패하면 Set에서 빼서 다시 보여 줘요(로그인 끊김은 다시 받지 않아요).
 - `PopupDTO`는 명세상 null일 수 있는 `roadAddress`·`mediaType`·`recommendList`를 null로 받아요. null이면 각각 일반 주소(`address`)·이미지·빈 배열로 바꿔요. 도로명 주소가 빈 문자열이어도 일반 주소를 써요. 전에는 null을 받으면 목록 전체를 읽지 못했어요(V1부터 있던 문제, #130에서 수정).
 - `userUuid`는 아직 V1인 화면이 쓰므로 마지막 정리 단계에서 지워요. 예를 들어 검색 결과에서 여는 팝업 상세는 V1이라, `SearchDestination`이 `userUuid`를 들고 있다가 상세에 넘겨요.
 
