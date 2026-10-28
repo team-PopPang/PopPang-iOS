@@ -77,3 +77,12 @@
   - `xcodebuild build ... -scheme PopPangApp` → BUILD SUCCEEDED
   - `MainTabFeatureTests` 6개, `HomeFeatureV2Tests` 8개 통과
   - 낙관적 해제의 화면 동작 → 사용자 확인 필요 (S01·S03 확인은 이 수정 전에 했다)
+
+## 2026-10-28 두 번째 리뷰 FAIL 대응
+
+- 리뷰 판정: FAIL. 근거는 진행 중인 목록 응답이나 실패 뒤 다시 받은 목록이 먼저 뺀 팝업을 되살림
+- 바뀐 결정: D-6 추가, D-5는 대체됨. R2를 찜 탭 해제 전용으로 좁힘. 사용자 "Set으로, A로 진행" (2026-10-28)
+- 고친 것: `FavoritesFeature.swift`(서버 목록 `loadedPopups`, 해제 중·해제 완료 Set, `removeFavoriteFinished` action, 목록 요청 `cancelInFlight`, 목록 응답이 문구를 지우지 않음, 실행되지 않던 취소 분기와 등록 분기 삭제), `FavoritesFeatureClient.swift`·Demo(`addFavorite` 삭제), `Docs/architecture/api-v2-migration.md` 한 줄
+- 그대로 둔 지적: 404 4102에도 안내 문구(1차 답 A), 찜 탭 테스트 타깃 없음(A-2)
+- 확인: `xcodebuild build ... -scheme PopPangApp` → BUILD SUCCEEDED, `-scheme FavoritesFeature` 빌드 성공, Data 77개·MainTab 6개·HomeFeatureV2 8개 통과
+- 확인 못 함: FavoritesFeatureDemo는 워크스페이스에 스킴이 없어 빌드하지 않았다(Demo는 `addFavorite: { _ in },` 한 줄만 지움). 바뀐 하트 동작의 화면 확인은 사용자 확인 필요
