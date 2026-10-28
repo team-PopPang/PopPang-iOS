@@ -101,27 +101,26 @@ final class PopupTestStore: Storing, @unchecked Sendable {
     }
 }
 
-/// 보낸 요청을 기록한다.
-final class HeaderRecorder: PluginType, @unchecked Sendable {
+/// 보낸 요청을 기록한다. `URLRequest`가 없는 요청도 `nil`로 남겨 보낸 횟수를 그대로 센다.
+final class RequestRecorder: PluginType, @unchecked Sendable {
     private let lock = NSLock()
-    private var requests: [URLRequest] = []
+    private var requests: [URLRequest?] = []
 
     var authorizationHeaders: [String?] {
-        lock.withLock { requests.map { $0.value(forHTTPHeaderField: "Authorization") } }
+        lock.withLock { requests.map { $0?.value(forHTTPHeaderField: "Authorization") } }
     }
 
-    var sentRequests: [URLRequest] {
-        lock.withLock { requests }
+    var httpMethods: [String?] {
+        lock.withLock { requests.map { $0?.httpMethod } }
     }
 
     func willSend(_ request: RequestType, target: TargetType) {
-        guard let urlRequest = request.request else { return }
-        lock.withLock { requests.append(urlRequest) }
+        lock.withLock { requests.append(request.request) }
     }
 }
 
 struct PopupRepositoryContext {
-    let recorder: HeaderRecorder
+    let recorder: RequestRecorder
     let repository: PopupRepositoryImpl
 
     init(response: (Int, String)) {
@@ -134,7 +133,7 @@ struct PopupRepositoryContext {
             }
         )
         let networkProvider = NetworkProvider(stubClosure: MoyaProvider.immediatelyStub, authentication: authentication)
-        let recorder = HeaderRecorder()
+        let recorder = RequestRecorder()
 
         func makeProvider<T: TargetType>() -> MoyaProvider<T> {
             networkProvider.makeProvider(

@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Core
 import Domain
 import Foundation
 
@@ -62,7 +63,11 @@ public struct FavoritesFeature {
                 return .none
 
             case .toggleLike(let popup):
-                state.isLoading = true
+                state.errorMessage = nil
+                if popup.isFavorited {
+                    // 응답을 기다리지 않고 먼저 뺀다. 같은 하트를 다시 눌러 해제 요청이 두 번 가지 않는다.
+                    applyPopups(state.favoritePopups.filter { $0.popupUuid != popup.popupUuid }, state: &state)
+                }
                 return toggleLike(popup: popup)
 
             case .popupSelected(let popup):
@@ -102,6 +107,8 @@ private extension FavoritesFeature {
             do {
                 let popups = try await favoritesFeatureClient.getFavoriteList()
                 await send(.favoritePopupsLoaded(popups))
+            } catch is CancellationError {
+                // 화면이 사라져 취소됐다. 안내하지 않는다.
             } catch {
                 await send(.errorMessageChanged(Self.loadFailedMessage))
             }
@@ -116,24 +123,26 @@ private extension FavoritesFeature {
         return .run { [popup, favoritesFeatureClient] send in
             do {
                 if popup.isFavorited {
+                    // 목록에서는 이미 뺐으므로 성공하면 더 할 일이 없다.
                     try await favoritesFeatureClient.removeFavorite(popup.popupUuid)
                 } else {
                     try await favoritesFeatureClient.addFavorite(popup.popupUuid)
+                    let popups = try await favoritesFeatureClient.getFavoriteList()
+                    await send(.favoritePopupsLoaded(popups))
                 }
-
-                let popups = try await favoritesFeatureClient.getFavoriteList()
-                await send(.favoritePopupsLoaded(popups))
-                await send(.errorMessageChanged(nil))
+            } catch is CancellationError {
+                // 화면이 사라져 취소됐다. 안내하지 않는다.
+            } catch is AuthSessionError {
+                // 토큰이 지워져 목록을 다시 받아도 실패한다. 로그인 화면 전환은 AppFeature가 한다.
+                await send(.errorMessageChanged(Self.toggleFailedMessage))
             } catch {
-                // 이미 찜했거나(409 4101) 이미 해제된(404 4102) 경우처럼 화면과 서버가 어긋났을 수 있어 목록을 다시 받는다.
+                // 먼저 뺀 팝업을 서버 상태로 되돌린다. 이미 해제된 찜(404 4102)이면 다시 받은 목록에도 없다.
                 // 다시 받기도 실패하면 안내만 남기고 지금 목록을 둔다.
                 if let popups = try? await favoritesFeatureClient.getFavoriteList() {
                     await send(.favoritePopupsLoaded(popups))
                 }
                 await send(.errorMessageChanged(Self.toggleFailedMessage))
             }
-
-            await send(.loadingChanged(false))
         }
     }
 

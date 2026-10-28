@@ -60,7 +60,7 @@ struct FavoriteRepositoryTests {
         try await context.repository.addFavorite(popupUuid: "popup-1")
         try await context.repository.removeFavorite(popupUuid: "popup-1")
 
-        #expect(context.recorder.sentRequests.map(\.httpMethod) == ["POST", "DELETE"])
+        #expect(context.recorder.httpMethods == ["POST", "DELETE"])
         #expect(context.recorder.authorizationHeaders == ["Bearer access", "Bearer access"])
     }
 
