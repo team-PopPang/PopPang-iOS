@@ -17,8 +17,8 @@ public final class PopupUsecaseImpl: PopupUsecaseProtocol {
         try await popupRepository.getInProgressPopupList()
     }
 
-    public func getFavoriteList(userUuid: String) async throws -> [Popup] {
-        try await popupRepository.getFavoriteList(userUuid: userUuid)
+    public func getFavoriteList() async throws -> [Popup] {
+        try await popupRepository.getFavoriteList()
     }
 
     public func searchPopupList(searchText: String) async throws -> [Popup] {
@@ -106,6 +106,14 @@ public final class PopupUsecaseImpl: PopupUsecaseProtocol {
 
     public func removeFavorite(userUuid: String, popupUuid: String) async throws {
         try await popupRepository.removeFavorite(userUuid: userUuid, popupUuid: popupUuid)
+    }
+
+    public func addFavorite(popupUuid: String) async throws {
+        try await popupRepository.addFavorite(popupUuid: popupUuid)
+    }
+
+    public func removeFavorite(popupUuid: String) async throws {
+        try await popupRepository.removeFavorite(popupUuid: popupUuid)
     }
 
     public func getRegionList() async throws -> [RegionList] {

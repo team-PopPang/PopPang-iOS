@@ -6,7 +6,6 @@ import Foundation
 public struct FavoritesFeature {
     @ObservableState
     public struct State: Equatable {
-        public var userUuid: String
         public var favoritePopups: [Popup] = []
         public var selectedPopups: [Popup] = []
         public var selectedDate: Date = Date()
@@ -14,13 +13,10 @@ public struct FavoritesFeature {
         public var isLoading = false
         public var errorMessage: String?
 
-        public init(userUuid: String) {
-            self.userUuid = userUuid
-        }
+        public init() {}
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.userUuid == rhs.userUuid
-                && lhs.favoritePopups == rhs.favoritePopups
+            lhs.favoritePopups == rhs.favoritePopups
                 && lhs.selectedPopups == rhs.selectedPopups
                 && lhs.selectedDate == rhs.selectedDate
                 && lhs.popupEventCounts == rhs.popupEventCounts
@@ -58,7 +54,7 @@ public struct FavoritesFeature {
             case .onAppear:
                 state.isLoading = true
                 state.errorMessage = nil
-                return getFavoritePopups(state: state)
+                return getFavoritePopups()
 
             case .dateSelected(let date):
                 state.selectedDate = date
@@ -67,7 +63,7 @@ public struct FavoritesFeature {
 
             case .toggleLike(let popup):
                 state.isLoading = true
-                return toggleLike(state: state, popup: popup)
+                return toggleLike(popup: popup)
 
             case .popupSelected(let popup):
                 return .send(.delegate(.popupSelected(popup)))
@@ -99,41 +95,54 @@ public struct FavoritesFeature {
 }
 
 private extension FavoritesFeature {
-    func getFavoritePopups(state: State) -> Effect<Action> {
+    func getFavoritePopups() -> Effect<Action> {
         let favoritesFeatureClient = favoritesFeatureClient
 
-        return .run { [state, favoritesFeatureClient] send in
+        return .run { [favoritesFeatureClient] send in
             do {
-                let popups = try await favoritesFeatureClient.getFavoriteList(state.userUuid)
+                let popups = try await favoritesFeatureClient.getFavoriteList()
                 await send(.favoritePopupsLoaded(popups))
             } catch {
-                await send(.errorMessageChanged(error.localizedDescription))
+                await send(.errorMessageChanged(Self.loadFailedMessage))
             }
 
             await send(.loadingChanged(false))
         }
     }
 
-    func toggleLike(state: State, popup: Popup) -> Effect<Action> {
+    func toggleLike(popup: Popup) -> Effect<Action> {
         let favoritesFeatureClient = favoritesFeatureClient
 
-        return .run { [state, popup, favoritesFeatureClient] send in
+        return .run { [popup, favoritesFeatureClient] send in
             do {
                 if popup.isFavorited {
-                    try await favoritesFeatureClient.removeFavorite(state.userUuid, popup.popupUuid)
+                    try await favoritesFeatureClient.removeFavorite(popup.popupUuid)
                 } else {
-                    try await favoritesFeatureClient.addFavorite(state.userUuid, popup.popupUuid)
+                    try await favoritesFeatureClient.addFavorite(popup.popupUuid)
                 }
 
-                let popups = try await favoritesFeatureClient.getFavoriteList(state.userUuid)
+                let popups = try await favoritesFeatureClient.getFavoriteList()
                 await send(.favoritePopupsLoaded(popups))
                 await send(.errorMessageChanged(nil))
             } catch {
-                await send(.errorMessageChanged(error.localizedDescription))
+                // 이미 찜했거나(409 4101) 이미 해제된(404 4102) 경우처럼 화면과 서버가 어긋났을 수 있어 목록을 다시 받는다.
+                // 다시 받기도 실패하면 안내만 남기고 지금 목록을 둔다.
+                if let popups = try? await favoritesFeatureClient.getFavoriteList() {
+                    await send(.favoritePopupsLoaded(popups))
+                }
+                await send(.errorMessageChanged(Self.toggleFailedMessage))
             }
 
             await send(.loadingChanged(false))
         }
+    }
+
+    static var loadFailedMessage: String {
+        String(localized: "찜한 팝업을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
+    }
+
+    static var toggleFailedMessage: String {
+        String(localized: "찜을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
     }
 
     func applyPopups(_ popups: [Popup], state: inout State) {

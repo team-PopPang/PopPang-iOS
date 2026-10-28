@@ -85,6 +85,29 @@
         }
       }
     },
+    "찜을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't update your saved pop-ups. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "お気に入りを変更できませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "찜을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요."
+          }
+        }
+      }
+    },
     "찜캘린더" : {
       "comment" : "Segment that shows saved popups on a calendar",
       "extractionState" : "manual",
@@ -128,6 +151,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "찜한 팝업스토어가 없어요"
+          }
+        }
+      }
+    },
+    "찜한 팝업을 불러오지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't load your saved pop-ups. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "お気に入りのポップアップを読み込めませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "찜한 팝업을 불러오지 못했어요. 잠시 후 다시 시도해 주세요."
           }
         }
       }

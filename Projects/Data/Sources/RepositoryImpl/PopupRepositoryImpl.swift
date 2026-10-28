@@ -5,11 +5,14 @@ import Moya
 
 public final class PopupRepositoryImpl: PopupRepositoryProtocol {
     private let makeV2Provider: () -> MoyaProvider<V2PopupAPI>
+    private let makeV2FavoriteProvider: () -> MoyaProvider<V2FavoriteAPI>
 
     public init(
-        makeV2Provider: @escaping () -> MoyaProvider<V2PopupAPI> = { NetworkProvider.shared.makeProvider() }
+        makeV2Provider: @escaping () -> MoyaProvider<V2PopupAPI> = { NetworkProvider.shared.makeProvider() },
+        makeV2FavoriteProvider: @escaping () -> MoyaProvider<V2FavoriteAPI> = { NetworkProvider.shared.makeProvider() }
     ) {
         self.makeV2Provider = makeV2Provider
+        self.makeV2FavoriteProvider = makeV2FavoriteProvider
     }
 
     public func getPopupList() async throws -> [Popup] {
@@ -24,8 +27,12 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
         try await popupProvider.asyncRequest(.getInProgressPopupList, decodeTo: [PopupDTO].self).map { $0.toEntity() }
     }
 
-    public func getFavoriteList(userUuid: String) async throws -> [Popup] {
-        try await popupProvider.asyncRequest(.getFavoriteList(userUuid: userUuid), decodeTo: [PopupDTO].self).map { $0.toEntity() }
+    public func getFavoriteList() async throws -> [Popup] {
+        // 명세 FAV-04: 검색과 달리 성공 응답이 `APIResponse`로 감싸져 있다.
+        try await popupRequest {
+            try await makeV2FavoriteProvider().asyncRequest(.list, decodeDataTo: [PopupDTO].self)
+                .map { $0.toEntity() }
+        }
     }
 
     public func searchPopupList(searchText: String) async throws -> [Popup] {
@@ -134,6 +141,20 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
         try await popupProvider.asyncRequestVoid(.removeFavorite(userUuid: userUuid, popupUuid: popupUuid))
     }
 
+    public func addFavorite(popupUuid: String) async throws {
+        // 명세 FAV-01: 이미 찜한 팝업은 409 4101이다. 성공으로 보지 않고 다른 실패와 같이 PopupError로 바꾼다.
+        try await popupRequest {
+            try await makeV2FavoriteProvider().asyncRequestVoid(.add(popupUuid: popupUuid))
+        }
+    }
+
+    public func removeFavorite(popupUuid: String) async throws {
+        // 명세 FAV-02: 찜하지 않은 팝업은 404 4102다. 성공으로 보지 않고 다른 실패와 같이 PopupError로 바꾼다.
+        try await popupRequest {
+            try await makeV2FavoriteProvider().asyncRequestVoid(.remove(popupUuid: popupUuid))
+        }
+    }
+
     public func getRegionList() async throws -> [RegionList] {
         try await popupProvider.asyncRequest(.getRegionList, decodeTo: [RegionListDTO].self).map { $0.toEntity() }
     }
@@ -155,7 +176,7 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
 }
 
 private extension PopupRepositoryImpl {
-    /// V2 팝업 조회의 실패를 화면이 안내할 `PopupError`로 바꾼다. 다시 로그인해야 하는 실패는 그대로 던진다.
+    /// V2 팝업·찜 요청의 실패를 화면이 안내할 `PopupError`로 바꾼다. 다시 로그인해야 하는 실패는 그대로 던진다.
     func popupRequest<T>(_ request: () async throws -> T) async throws -> T {
         do {
             return try await request()
@@ -166,7 +187,7 @@ private extension PopupRepositoryImpl {
         } catch {
             // 화면에는 PopupError로 안내하지만 원인을 찾을 수 있게 남긴다.
             // 출시 빌드에도 찍히므로 서버 응답 본문이나 검색어가 담긴 URL은 남기지 않고 코드와 오류 종류만 남긴다.
-            Logger.e("팝업 조회 실패: \(Self.logDescription(of: error))")
+            Logger.e("팝업 요청 실패: \(Self.logDescription(of: error))")
             throw PopupError.failed
         }
     }
