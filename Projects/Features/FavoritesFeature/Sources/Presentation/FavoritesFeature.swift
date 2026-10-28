@@ -57,8 +57,6 @@ public struct FavoritesFeature {
         /// 다시 로그인해야 한다. 토큰이 지워져 목록을 다시 받아도 실패한다.
         case loginRequired
         case failed
-        /// 요청이 취소됐다. 해제 여부를 알 수 없어 숨긴 팝업만 다시 보여 준다.
-        case cancelled
     }
 
     private enum CancelID {
@@ -99,10 +97,6 @@ public struct FavoritesFeature {
                     applyVisiblePopups(state: &state)
                     // 해제 도중에 보낸 목록 요청은 해제 전 상태라 이 팝업이 들어 있을 수 있다. 취소하고 새로 받는다.
                     return loadFavoritePopups()
-
-                case .cancelled:
-                    applyVisiblePopups(state: &state)
-                    return .none
 
                 case .loginRequired:
                     // 숨긴 팝업을 다시 보여 준다. 로그인 화면 전환은 AppFeature가 한다.
@@ -164,6 +158,7 @@ private extension FavoritesFeature {
         .cancellable(id: CancelID.load, cancelInFlight: true)
     }
 
+    /// 해제 요청은 취소 ID가 없어 store가 사라질 때만 취소된다. 그때는 상태도 함께 사라지므로 취소를 따로 처리하지 않는다.
     func removeFavorite(popupUuid: String) -> Effect<Action> {
         let favoritesFeatureClient = favoritesFeatureClient
 
@@ -171,9 +166,6 @@ private extension FavoritesFeature {
             do {
                 try await favoritesFeatureClient.removeFavorite(popupUuid)
                 await send(.removeFavoriteFinished(popupUuid: popupUuid, .succeeded))
-            } catch is CancellationError {
-                // 숨긴 팝업이 Set에 남아 계속 가려지지 않도록 끝났음을 알린다.
-                await send(.removeFavoriteFinished(popupUuid: popupUuid, .cancelled))
             } catch is AuthSessionError {
                 await send(.removeFavoriteFinished(popupUuid: popupUuid, .loginRequired))
             } catch {
