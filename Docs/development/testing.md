@@ -13,7 +13,7 @@
 | CI 실행(Core, Data) | `xcodebuild test -workspace PopPang.xcworkspace -scheme Core`(또는 `Data`) `-destination 'platform=iOS Simulator,id=<첫 번째 iPhone 시뮬레이터>'` | `.github/workflows/2. poppang-test.yml`, `3. poppang-build-and-test.yml` |
 | fastlane | `bundle exec fastlane test` (Core → Data, iPhone 16, 코드 커버리지) | `fastlane/Fastfile` |
 | SheetKit 테스트 | `xcodebuild test -workspace PopPang.xcworkspace -scheme SheetKit -destination 'id=<시뮬레이터 UDID>'` | 2026-10-14 로컬에서 실행해 24개 통과. CI는 `3. poppang-build-and-test.yml`의 `sheetkit-test` job |
-| feature 테스트 실행 | `xcodebuild test -workspace PopPang.xcworkspace -scheme HomeFeatureV2 -destination 'id=<시뮬레이터 UDID>' -only-testing:HomeFeatureV2Tests` (MainTab은 `-scheme MainTabFeature -only-testing:MainTabFeatureTests`, AuthFeature는 `-scheme AuthFeature -only-testing:AuthFeatureTests`) | PR #92 검증 명령. scheme은 Tuist가 모듈 이름으로 자동 생성한다. |
+| feature 테스트 실행 | `xcodebuild test -workspace PopPang.xcworkspace -scheme HomeFeatureV2 -destination 'id=<시뮬레이터 UDID>' -only-testing:HomeFeatureV2Tests` (MainTab은 `-scheme MainTabFeature -only-testing:MainTabFeatureTests`, 찜은 `-scheme FavoritesFeature -only-testing:FavoritesFeatureTests`, AuthFeature는 `-scheme AuthFeature -only-testing:AuthFeatureTests`) | PR #92 검증 명령. scheme은 Tuist가 모듈 이름으로 자동 생성한다. |
 | 시뮬레이터·환경 | CI는 macOS 15 + Xcode 26.2에서 사용 가능한 첫 번째 iPhone 시뮬레이터를 쓴다. | CI workflow |
 
 테스트를 실행하려면 workspace가 있어야 한다. 처음이라면 [Tuist 설치와 실행](tuist.md)의 순서를 먼저 따른다. `tuist test`는 workspace를 다시 만들 수 있으므로 에이전트는 승인을 받고 실행한다.
@@ -27,6 +27,7 @@
 | Data | `DataTests` | 7 | 77 | DTO 변환, 계약, 서버 헬스 체크 판정(`URLProtocol` stub), V2 인증 요청 형식·로그인·가입·세션 복구(가짜 소셜 로그인 전략과 Moya stub), V2 내 정보 요청 형식·응답·실패 코드·탈퇴 재요청, 가입 OS 채우기 마이그레이션 실행·기록, 회원 팝업 V2 검색과 팝업 응답의 null 필드, V2 찜 목록·등록·해제 요청 형식과 실패 변환 |
 | HomeFeatureV2 | `HomeFeatureV2Tests` (`Tests/HomeFeatureTests.swift`) | 1 | 8 | TCA `TestStore`, 광고 배치 정책 |
 | MainTabFeature | `MainTabFeatureTests` | 1 | 6 | delegate → path·destination 전환, 해제 순서 |
+| FavoritesFeature | `FavoritesFeatureTests` | 1 | 7 | TCA `TestStore`, 찜 해제를 먼저 숨기기, 해제 중에 온 목록 응답, 연달아 해제 중 실패, 실패·로그인 끊김 때 되돌리기, 같은 하트 반복 탭, 목록 실패 문구 |
 | AuthFeature | `AuthFeatureTests` | 1 | 9 | TCA `TestStore`, 로그인 결과(COMPLETED/PENDING) 분기, 실패 안내, 가입 완료·만료·닉네임 중복, 가입 화면 닉네임 확인·카테고리 목록 실패 |
 
 App, Domain, DSKit, 다른 feature에는 테스트 타깃이 없다.

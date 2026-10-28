@@ -101,3 +101,19 @@
 - 고친 것: (1) `RemoveResult.cancelled`를 더해 취소돼도 Set에서 빼고 다시 보여 준다. D-7 문장을 이에 맞게 고쳤다
 - 그대로 둔 것: (2)·(3)은 1차 답 A("안내 문구를 보여 주고 목록을 다시 받는다")대로다
 - 확인: PopPangApp BUILD SUCCEEDED, MainTab 6개·HomeFeatureV2 8개 통과 (Data는 바뀌지 않음)
+
+## 2026-10-28 다섯 번째 리뷰 FAIL
+
+- 리뷰 판정: FAIL. 근거는 (1) 앞 단계에서 더한 취소 분기가 실행될 수 없음. Moya 요청은 `CancellationError`를 던지지 않고, 취소된 effect의 `send`는 TCA가 버린다 (2) 목록을 다시 받아도 문구가 남음
+- 고친 것: (1) `RemoveResult.cancelled`와 취소 분기를 되돌렸다. 해제 effect는 취소 ID가 없어 store가 사라질 때만 취소되고, 그때는 상태도 사라져 Set에 남는 일이 보이지 않는다. D-7의 취소 문장도 지웠다
+- 판단: 네 번째 대응에서 취소 분기를 더한 것은 잘못이었다 — 리뷰 지적을 확인하지 않고 따랐다
+
+## 2026-10-28 찜 Reducer 테스트 추가
+
+- 바뀐 가정: A-2. 사용자 "A로 진행", "승인" (2026-10-28). Tuist에 `FavoritesFeatureTests` 타깃을 추가했다
+- 바꾼 파일: `Projects/Features/FavoritesFeature/Project.swift`, `Projects/Features/FavoritesFeature/Tests/FavoritesFeatureTests.swift`(새 파일), `Docs/development/testing.md`
+- 확인:
+  - `xcodebuild test ... -scheme FavoritesFeature -only-testing:FavoritesFeatureTests` → 통과 (7 tests)
+  - 숨김 처리(`applyVisiblePopups`의 Set 필터)를 일부러 뺀 코드로 같은 명령 → 7개 중 4개 실패. 테스트가 이 버그를 잡는다. 확인 뒤 원래 코드로 되돌렸다(실패한 테스트가 끝나지 않는 요청을 남겨 xcodebuild가 10분 넘게 멈춰 강제로 끝냈다)
+  - `xcodebuild build ... -scheme PopPangApp` → BUILD SUCCEEDED
+- 판단: 화면용 파생 값(날짜별 개수 등)은 확인하지 않도록 `TestStore`를 non-exhaustive로 썼다 — 해제·숨김 상태만 확인하려고 — 틀리면 exhaustivity만 켜면 됨
