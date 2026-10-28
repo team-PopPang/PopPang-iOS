@@ -94,3 +94,10 @@
 - 고친 것: `FavoritesFeature.swift`(해제 완료 Set 삭제, 성공하면 `loadedPopups`에서도 빼고 목록을 새로 받음, 목록 실패 문구를 항상 보여 줌, 해제 요청 취소는 무시), `Docs/architecture/api-v2-migration.md` 한 줄
 - 그대로 둔 지적: 404 4102에도 안내 문구, 다시 받은 뒤에도 문구 유지(1차 답 A), 로그인 끊김에도 목록 실패 문구(D-1), 쓰는 곳 없는 V2 `addFavorite(popupUuid:)`(D-4, 사용자 남김), 찜 탭 테스트 타깃 없음(A-2)
 - 확인: PopPangApp BUILD SUCCEEDED, Data 77개·MainTab 6개·HomeFeatureV2 8개 통과. 바뀐 하트 동작의 화면 확인은 사용자 확인 필요
+
+## 2026-10-28 네 번째 리뷰 FAIL 대응
+
+- 리뷰 판정: FAIL. 근거는 (1) 해제 요청이 취소되면 `popupUuid`가 Set에 남아 팝업이 계속 숨겨짐 (2) 다시 받은 뒤에도 문구가 남음 (3) 404 4102를 실패로 처리
+- 고친 것: (1) `RemoveResult.cancelled`를 더해 취소돼도 Set에서 빼고 다시 보여 준다. D-7 문장을 이에 맞게 고쳤다
+- 그대로 둔 것: (2)·(3)은 1차 답 A("안내 문구를 보여 주고 목록을 다시 받는다")대로다
+- 확인: PopPangApp BUILD SUCCEEDED, MainTab 6개·HomeFeatureV2 8개 통과 (Data는 바뀌지 않음)
