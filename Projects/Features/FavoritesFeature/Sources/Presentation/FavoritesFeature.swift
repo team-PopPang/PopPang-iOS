@@ -15,10 +15,8 @@ public struct FavoritesFeature {
         public var errorMessage: String?
         /// 서버에서 마지막으로 받은 찜 목록. 화면에는 숨길 팝업을 뺀 `favoritePopups`를 보여 준다.
         var loadedPopups: [Popup] = []
-        /// 해제 요청을 보내고 응답을 기다리는 팝업
+        /// 해제 요청을 보내고 응답을 기다리는 팝업. 어떤 목록 응답이 와도 화면에서 뺀다.
         var removingPopupUuids: Set<String> = []
-        /// 이번에 화면을 연 뒤 해제가 끝난 팝업. 해제 전에 보낸 목록 요청의 응답이 늦게 와도 다시 보이지 않게 한다.
-        var removedPopupUuids: Set<String> = []
 
         public init() {}
 
@@ -31,7 +29,6 @@ public struct FavoritesFeature {
                 && lhs.errorMessage == rhs.errorMessage
                 && lhs.loadedPopups == rhs.loadedPopups
                 && lhs.removingPopupUuids == rhs.removingPopupUuids
-                && lhs.removedPopupUuids == rhs.removedPopupUuids
         }
     }
 
@@ -76,8 +73,6 @@ public struct FavoritesFeature {
             case .onAppear:
                 state.isLoading = true
                 state.errorMessage = nil
-                // 해제가 끝난 팝업은 서버 목록에도 없으므로 새로 받는 목록부터는 숨기지 않아도 된다.
-                state.removedPopupUuids = []
                 return loadFavoritePopups()
 
             case .dateSelected(let date):
@@ -87,11 +82,7 @@ public struct FavoritesFeature {
 
             case .toggleLike(let popup):
                 // 찜 탭의 팝업은 모두 찜한 팝업이라 하트는 항상 해제다.
-                guard !state.removingPopupUuids.contains(popup.popupUuid),
-                      !state.removedPopupUuids.contains(popup.popupUuid)
-                else {
-                    return .none
-                }
+                guard !state.removingPopupUuids.contains(popup.popupUuid) else { return .none }
                 state.errorMessage = nil
                 // 응답을 기다리지 않고 먼저 숨긴다.
                 state.removingPopupUuids.insert(popup.popupUuid)
@@ -102,9 +93,10 @@ public struct FavoritesFeature {
                 state.removingPopupUuids.remove(popupUuid)
                 switch result {
                 case .succeeded:
-                    state.removedPopupUuids.insert(popupUuid)
+                    state.loadedPopups.removeAll { $0.popupUuid == popupUuid }
                     applyVisiblePopups(state: &state)
-                    return .none
+                    // 해제 도중에 보낸 목록 요청은 해제 전 상태라 이 팝업이 들어 있을 수 있다. 취소하고 새로 받는다.
+                    return loadFavoritePopups()
 
                 case .loginRequired:
                     // 숨긴 팝업을 다시 보여 준다. 로그인 화면 전환은 AppFeature가 한다.
@@ -116,7 +108,7 @@ public struct FavoritesFeature {
                     // 숨긴 팝업을 다시 보여 주고, 이미 해제된 찜(404 4102)처럼 서버와 어긋났을 수 있어 목록을 다시 받는다.
                     applyVisiblePopups(state: &state)
                     state.errorMessage = Self.removeFailedMessage
-                    return loadFavoritePopups(showsFailure: false)
+                    return loadFavoritePopups()
                 }
 
             case .popupSelected(let popup):
@@ -150,8 +142,7 @@ public struct FavoritesFeature {
 
 private extension FavoritesFeature {
     /// 찜 목록을 받는다. 앞서 보낸 목록 요청은 취소해 가장 최근 요청의 응답만 반영한다.
-    /// - Parameter showsFailure: 실패하면 목록 실패 문구를 보여 줄지. 해제 실패 뒤 다시 받을 때는 해제 실패 문구를 그대로 둔다.
-    func loadFavoritePopups(showsFailure: Bool = true) -> Effect<Action> {
+    func loadFavoritePopups() -> Effect<Action> {
         let favoritesFeatureClient = favoritesFeatureClient
 
         return .run { [favoritesFeatureClient] send in
@@ -159,9 +150,7 @@ private extension FavoritesFeature {
                 let popups = try await favoritesFeatureClient.getFavoriteList()
                 await send(.favoritePopupsLoaded(popups))
             } catch {
-                if showsFailure {
-                    await send(.errorMessageChanged(Self.loadFailedMessage))
-                }
+                await send(.errorMessageChanged(Self.loadFailedMessage))
             }
 
             await send(.loadingChanged(false))
@@ -176,6 +165,8 @@ private extension FavoritesFeature {
             do {
                 try await favoritesFeatureClient.removeFavorite(popupUuid)
                 await send(.removeFavoriteFinished(popupUuid: popupUuid, .succeeded))
+            } catch is CancellationError {
+                // 화면이 사라져 요청이 취소됐다. 해제 여부를 알 수 없으므로 아무것도 바꾸지 않는다.
             } catch is AuthSessionError {
                 await send(.removeFavoriteFinished(popupUuid: popupUuid, .loginRequired))
             } catch {
@@ -192,10 +183,9 @@ private extension FavoritesFeature {
         String(localized: "찜을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
     }
 
-    /// 서버 목록에서 해제 중이거나 해제된 팝업을 빼고 화면 상태를 다시 만든다.
+    /// 서버 목록에서 해제 중인 팝업을 빼고 화면 상태를 다시 만든다.
     func applyVisiblePopups(state: inout State) {
-        let hidden = state.removingPopupUuids.union(state.removedPopupUuids)
-        let popups = state.loadedPopups.filter { !hidden.contains($0.popupUuid) }
+        let popups = state.loadedPopups.filter { !state.removingPopupUuids.contains($0.popupUuid) }
         state.favoritePopups = popups
         state.popupEventCounts = Self.eventCounts(from: popups)
         state.selectedPopups = Self.popups(from: popups, on: state.selectedDate)
