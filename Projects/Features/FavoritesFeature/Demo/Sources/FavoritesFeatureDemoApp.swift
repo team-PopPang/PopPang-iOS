@@ -17,7 +17,6 @@ struct FavoritesFeatureDemoApp: App {
                         getFavoriteList: {
                             [.demo]
                         },
-                        addFavorite: { _ in },
                         removeFavorite: { _ in }
                     )
                 }

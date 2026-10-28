@@ -3,16 +3,14 @@ import Domain
 
 public struct FavoritesFeatureClient: Sendable {
     public var getFavoriteList: @Sendable () async throws -> [Popup]
-    public var addFavorite: @Sendable (_ popupUuid: String) async throws -> Void
+    /// 찜 탭의 팝업은 모두 찜한 팝업이라 하트는 해제만 한다.
     public var removeFavorite: @Sendable (_ popupUuid: String) async throws -> Void
 
     public init(
         getFavoriteList: @escaping @Sendable () async throws -> [Popup],
-        addFavorite: @escaping @Sendable (_ popupUuid: String) async throws -> Void,
         removeFavorite: @escaping @Sendable (_ popupUuid: String) async throws -> Void
     ) {
         self.getFavoriteList = getFavoriteList
-        self.addFavorite = addFavorite
         self.removeFavorite = removeFavorite
     }
 
@@ -25,9 +23,6 @@ public struct FavoritesFeatureClient: Sendable {
             getFavoriteList: {
                 try await popupUsecaseBox.usecase.getFavoriteList()
             },
-            addFavorite: { popupUuid in
-                try await popupUsecaseBox.usecase.addFavorite(popupUuid: popupUuid)
-            },
             removeFavorite: { popupUuid in
                 try await popupUsecaseBox.usecase.removeFavorite(popupUuid: popupUuid)
             }
@@ -38,7 +33,6 @@ public struct FavoritesFeatureClient: Sendable {
 extension FavoritesFeatureClient: DependencyKey {
     public static let liveValue = Self(
         getFavoriteList: { [] },
-        addFavorite: { _ in },
         removeFavorite: { _ in }
     )
 }
@@ -46,7 +40,6 @@ extension FavoritesFeatureClient: DependencyKey {
 extension FavoritesFeatureClient: TestDependencyKey {
     public static let testValue = Self(
         getFavoriteList: { [] },
-        addFavorite: { _ in },
         removeFavorite: { _ in }
     )
 }
