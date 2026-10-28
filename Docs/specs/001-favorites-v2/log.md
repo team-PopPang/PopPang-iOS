@@ -65,3 +65,15 @@
 
 - 확인할 동작: 빈 목록, 다른 기기에서 해제한 팝업의 하트 → 사용자 확인함 ("확인했어")
 - 결과: 완료 ([x]). 모든 단계가 끝나 스펙 상태를 완료로 바꿨다
+
+## 2026-10-28 push 전 리뷰 FAIL 대응
+
+- 리뷰 판정: FAIL. 근거는 (1) 하트가 로그인 끊김·취소로 실패해도 목록을 다시 받아 "다시 로그인 필요" 알림이 두 번 감 (2) 하트를 빠르게 두 번 누르면 두 번째 DELETE가 404 4102를 받아 해제가 됐는데도 실패 문구가 뜸
+- 바뀐 결정: D-5 추가 (찜 해제를 낙관적으로 반영). 사용자 "낙관적으로 진행" (2026-10-28)
+- 고친 것: `FavoritesFeature.swift`(먼저 빼기, 성공 뒤 다시 받기 없음, `AuthSessionError`는 문구만, 취소는 무시, 목록 조회 취소도 문구 없음), `PopupRepositoryTests.swift`·`FavoriteRepositoryTests.swift`(`HeaderRecorder` → `RequestRecorder`, `URLRequest`가 없는 요청도 `nil`로 기록), `Docs/architecture/api-v2-migration.md` 한 줄
+- 그대로 둔 지적: 목록을 다시 받은 뒤에도 문구를 남김(1차 답 A), 찜 탭 테스트 타깃 없음(A-2), 같은 이름의 V2 함수와 `PopupRepository` 안 배치(D-4), `isFavorited`로 등록·해제 고르기(기존 동작)
+- 확인:
+  - `xcodebuild test ... -scheme Data` → 통과 (77 tests in 7 suites)
+  - `xcodebuild build ... -scheme PopPangApp` → BUILD SUCCEEDED
+  - `MainTabFeatureTests` 6개, `HomeFeatureV2Tests` 8개 통과
+  - 낙관적 해제의 화면 동작 → 사용자 확인 필요 (S01·S03 확인은 이 수정 전에 했다)
