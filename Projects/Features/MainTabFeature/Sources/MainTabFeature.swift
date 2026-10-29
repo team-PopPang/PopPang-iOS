@@ -78,7 +78,7 @@ public struct MainTabFeature {
         public init(user: User) {
             self.user = user
             self.calendar = .init(userUuid: user.userUuid)
-            self.favorites = .init(userUuid: user.userUuid)
+            self.favorites = .init()
             self.home = .init(user: user)
             self.map = .init(userUuid: user.userUuid)
             self.profile = .init(user: user)

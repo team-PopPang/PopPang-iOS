@@ -9,34 +9,20 @@ struct FavoritesFeatureDemoApp: App {
         WindowGroup {
             FavoritesFeatureView(
                 store: Store(
-                    initialState: FavoritesFeature.State(
-                        userUuid: User.demo.userUuid
-                    )
+                    initialState: FavoritesFeature.State()
                 ) {
                     FavoritesFeature()
                 } withDependencies: {
                     $0.favoritesFeatureClient = FavoritesFeatureClient(
-                        getFavoriteList: { _ in
+                        getFavoriteList: {
                             [.demo]
                         },
-                        addFavorite: { _, _ in },
-                        removeFavorite: { _, _ in }
+                        removeFavorite: { _ in }
                     )
                 }
             )
         }
     }
-}
-
-private extension User {
-    static let demo = User(
-        userUuid: "demo-user",
-        provider: .kakao,
-        email: nil,
-        nickname: "홍길동",
-        role: .member,
-        isAlerted: false
-    )
 }
 
 private extension Popup {

@@ -8,8 +8,8 @@ public protocol PopupUsecaseProtocol {
     /// 진행 중인 팝업 리스트를 가져옵니다
     func getInProgressPopupList() async throws -> [Popup]
 
-    /// 찜 리스트를 가져옵니다
-    func getFavoriteList(userUuid: String) async throws -> [Popup]
+    /// 로그인한 사용자의 찜 리스트를 가져옵니다
+    func getFavoriteList() async throws -> [Popup]
 
     /// 팝업 검색 결과를 반환합니다
     func searchPopupList(searchText: String) async throws -> [Popup]
@@ -67,6 +67,12 @@ public protocol PopupUsecaseProtocol {
 
     /// 찜 리스트에서 팝업을 삭제합니다
     func removeFavorite(userUuid: String, popupUuid: String) async throws
+
+    /// 로그인한 사용자의 찜 리스트에 팝업을 추가합니다
+    func addFavorite(popupUuid: String) async throws
+
+    /// 로그인한 사용자의 찜 리스트에서 팝업을 삭제합니다
+    func removeFavorite(popupUuid: String) async throws
 
     /// 지역/구 목록을 가져옵니다
     func getRegionList() async throws -> [RegionList]

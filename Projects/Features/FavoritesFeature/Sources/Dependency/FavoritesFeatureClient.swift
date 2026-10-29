@@ -2,17 +2,15 @@ import ComposableArchitecture
 import Domain
 
 public struct FavoritesFeatureClient: Sendable {
-    public var getFavoriteList: @Sendable (_ userUuid: String) async throws -> [Popup]
-    public var addFavorite: @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void
-    public var removeFavorite: @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void
+    public var getFavoriteList: @Sendable () async throws -> [Popup]
+    /// 찜 탭의 팝업은 모두 찜한 팝업이라 하트는 해제만 한다.
+    public var removeFavorite: @Sendable (_ popupUuid: String) async throws -> Void
 
     public init(
-        getFavoriteList: @escaping @Sendable (_ userUuid: String) async throws -> [Popup],
-        addFavorite: @escaping @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void,
-        removeFavorite: @escaping @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void
+        getFavoriteList: @escaping @Sendable () async throws -> [Popup],
+        removeFavorite: @escaping @Sendable (_ popupUuid: String) async throws -> Void
     ) {
         self.getFavoriteList = getFavoriteList
-        self.addFavorite = addFavorite
         self.removeFavorite = removeFavorite
     }
 
@@ -22,14 +20,11 @@ public struct FavoritesFeatureClient: Sendable {
         let popupUsecaseBox = PopupUsecaseBox(popupUsecase)
 
         return Self(
-            getFavoriteList: { userUuid in
-                try await popupUsecaseBox.usecase.getFavoriteList(userUuid: userUuid)
+            getFavoriteList: {
+                try await popupUsecaseBox.usecase.getFavoriteList()
             },
-            addFavorite: { userUuid, popupUuid in
-                try await popupUsecaseBox.usecase.addFavorite(userUuid: userUuid, popupUuid: popupUuid)
-            },
-            removeFavorite: { userUuid, popupUuid in
-                try await popupUsecaseBox.usecase.removeFavorite(userUuid: userUuid, popupUuid: popupUuid)
+            removeFavorite: { popupUuid in
+                try await popupUsecaseBox.usecase.removeFavorite(popupUuid: popupUuid)
             }
         )
     }
@@ -37,17 +32,15 @@ public struct FavoritesFeatureClient: Sendable {
 
 extension FavoritesFeatureClient: DependencyKey {
     public static let liveValue = Self(
-        getFavoriteList: { _ in [] },
-        addFavorite: { _, _ in },
-        removeFavorite: { _, _ in }
+        getFavoriteList: { [] },
+        removeFavorite: { _ in }
     )
 }
 
 extension FavoritesFeatureClient: TestDependencyKey {
     public static let testValue = Self(
-        getFavoriteList: { _ in [] },
-        addFavorite: { _, _ in },
-        removeFavorite: { _, _ in }
+        getFavoriteList: { [] },
+        removeFavorite: { _ in }
     )
 }
 

@@ -18,7 +18,7 @@ struct PopupRepositoryTests {
 
     @Test("회원 팝업 검색은 감싸지 않은 팝업 배열을 읽고 Access Token을 보낸다")
     func searchReadsPopupArray() async throws {
-        let context = Context(response: (200, "[\(Fixture.popup)]"))
+        let context = PopupRepositoryContext(response: (200, "[\(PopupFixture.popup)]"))
 
         let popups = try await context.repository.getPersonalSearchPopupList(searchText: "성수")
 
@@ -29,7 +29,7 @@ struct PopupRepositoryTests {
 
     @Test("명세상 null일 수 있는 도로명 주소·미디어 종류·추천 카테고리가 null이어도 목록을 읽는다")
     func searchReadsNullableFields() async throws {
-        let context = Context(response: (200, "[\(Fixture.popup)]"))
+        let context = PopupRepositoryContext(response: (200, "[\(PopupFixture.popup)]"))
 
         let popup = try #require(try await context.repository.getPersonalSearchPopupList(searchText: "성수").first)
 
@@ -40,7 +40,7 @@ struct PopupRepositoryTests {
 
     @Test("검색이 서버 오류로 실패하면 화면이 안내할 PopupError로 바꾼다")
     func searchMapsServerErrorToPopupError() async {
-        let context = Context(response: (500, #"{"success":false,"code":6000,"message":"서버 에러","data":null}"#))
+        let context = PopupRepositoryContext(response: (500, #"{"success":false,"code":6000,"message":"서버 에러","data":null}"#))
 
         await #expect(throws: PopupError.failed) {
             _ = try await context.repository.getPersonalSearchPopupList(searchText: "성수")
@@ -49,7 +49,7 @@ struct PopupRepositoryTests {
 
     @Test("다시 로그인해야 하는 실패는 바꾸지 않고 그대로 던진다")
     func searchPassesLoginRequiredThrough() async {
-        let context = Context(response: (401, #"{"success":false,"code":5001,"message":"error","data":null}"#))
+        let context = PopupRepositoryContext(response: (401, #"{"success":false,"code":5001,"message":"error","data":null}"#))
 
         await #expect(throws: AuthSessionError.loginRequired) {
             _ = try await context.repository.getPersonalSearchPopupList(searchText: "성수")
@@ -58,8 +58,8 @@ struct PopupRepositoryTests {
 
     @Test("도로명 주소가 빈 문자열이어도 일반 주소를 쓴다")
     func searchUsesAddressWhenRoadAddressIsEmpty() async throws {
-        let popupJSON = Fixture.popup.replacingOccurrences(of: "\"roadAddress\":null", with: "\"roadAddress\":\"\"")
-        let context = Context(response: (200, "[\(popupJSON)]"))
+        let popupJSON = PopupFixture.popup.replacingOccurrences(of: "\"roadAddress\":null", with: "\"roadAddress\":\"\"")
+        let context = PopupRepositoryContext(response: (200, "[\(popupJSON)]"))
 
         let popup = try #require(try await context.repository.getPersonalSearchPopupList(searchText: "성수").first)
 
@@ -68,7 +68,7 @@ struct PopupRepositoryTests {
 
     @Test("검색 결과가 없으면 빈 배열을 돌려준다")
     func searchReturnsEmptyArray() async throws {
-        let context = Context(response: (200, "[]"))
+        let context = PopupRepositoryContext(response: (200, "[]"))
 
         #expect(try await context.repository.getPersonalSearchPopupList(searchText: "없는팝업").isEmpty)
     }
@@ -76,14 +76,15 @@ struct PopupRepositoryTests {
 
 // MARK: - 테스트 도구
 
-private enum Fixture {
+/// 팝업·찜 Repository 테스트가 함께 쓰는 도구
+enum PopupFixture {
     static let popup = """
     {"popupUuid":"popup-1","name":"성수 팝업","startDate":"26.05.01","endDate":"26.05.31","openTime":"10:00","closeTime":"20:00","address":"서울 성동구","roadAddress":null,"region":"서울","latitude":37.544,"longitude":127.055,"instaPostId":null,"instaPostUrl":null,"captionSummary":"요약","imageUrlList":[],"mediaType":null,"favoriteCount":12,"viewCount":34,"isFavorited":true,"recommendList":null}
     """
 }
 
 /// 메모리에 값을 두는 저장 수단
-private final class InMemoryStore: Storing, @unchecked Sendable {
+final class PopupTestStore: Storing, @unchecked Sendable {
     private let lock = NSLock()
     private var values: [String: Any] = [:]
 
@@ -100,26 +101,30 @@ private final class InMemoryStore: Storing, @unchecked Sendable {
     }
 }
 
-/// 보낸 요청의 `Authorization` 헤더를 기록한다.
-private final class HeaderRecorder: PluginType, @unchecked Sendable {
+/// 보낸 요청을 기록한다. `URLRequest`가 없는 요청도 `nil`로 남겨 보낸 횟수를 그대로 센다.
+final class RequestRecorder: PluginType, @unchecked Sendable {
     private let lock = NSLock()
-    private var headers: [String?] = []
+    private var requests: [URLRequest?] = []
 
     var authorizationHeaders: [String?] {
-        lock.withLock { headers }
+        lock.withLock { requests.map { $0?.value(forHTTPHeaderField: "Authorization") } }
+    }
+
+    var httpMethods: [String?] {
+        lock.withLock { requests.map { $0?.httpMethod } }
     }
 
     func willSend(_ request: RequestType, target: TargetType) {
-        lock.withLock { headers.append(request.request?.value(forHTTPHeaderField: "Authorization")) }
+        lock.withLock { requests.append(request.request) }
     }
 }
 
-private struct Context {
-    let recorder: HeaderRecorder
+struct PopupRepositoryContext {
+    let recorder: RequestRecorder
     let repository: PopupRepositoryImpl
 
     init(response: (Int, String)) {
-        let storage = AuthTokenStorage(store: InMemoryStore())
+        let storage = AuthTokenStorage(store: PopupTestStore())
         try? storage.saveTokens(AuthTokens(accessToken: "access", refreshToken: "refresh"))
         let authentication = AuthenticationPlugin(
             storage: storage,
@@ -128,24 +133,27 @@ private struct Context {
             }
         )
         let networkProvider = NetworkProvider(stubClosure: MoyaProvider.immediatelyStub, authentication: authentication)
-        let recorder = HeaderRecorder()
+        let recorder = RequestRecorder()
+
+        func makeProvider<T: TargetType>() -> MoyaProvider<T> {
+            networkProvider.makeProvider(
+                endpointClosure: { target in
+                    Endpoint(
+                        url: target.baseURL.appendingPathComponent(target.path).absoluteString,
+                        sampleResponseClosure: { .networkResponse(response.0, Data(response.1.utf8)) },
+                        method: target.method,
+                        task: target.task,
+                        httpHeaderFields: target.headers
+                    )
+                },
+                plugins: [recorder]
+            )
+        }
 
         self.recorder = recorder
         self.repository = PopupRepositoryImpl(
-            makeV2Provider: {
-                networkProvider.makeProvider(
-                    endpointClosure: { target in
-                        Endpoint(
-                            url: target.baseURL.appendingPathComponent(target.path).absoluteString,
-                            sampleResponseClosure: { .networkResponse(response.0, Data(response.1.utf8)) },
-                            method: target.method,
-                            task: target.task,
-                            httpHeaderFields: target.headers
-                        )
-                    },
-                    plugins: [recorder]
-                )
-            }
+            makeV2Provider: { makeProvider() },
+            makeV2FavoriteProvider: { makeProvider() }
         )
     }
 }

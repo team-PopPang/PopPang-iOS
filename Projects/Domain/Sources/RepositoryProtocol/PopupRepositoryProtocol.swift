@@ -11,10 +11,9 @@ public protocol PopupRepositoryProtocol {
     /// - Returns: [Popup]
     func getInProgressPopupList() async throws -> [Popup]
 
-    /// 찜 리스트를 가져옵니다
-    /// - Parameter userUuid: userUuid
+    /// 로그인한 사용자의 찜 리스트를 가져옵니다
     /// - Returns: [Popup]
-    func getFavoriteList(userUuid: String) async throws -> [Popup]
+    func getFavoriteList() async throws -> [Popup]
 
     /// 팝업 검색 결과를 반환합니다
     /// - Parameter searchText: searchText
@@ -111,6 +110,14 @@ public protocol PopupRepositoryProtocol {
     ///   - userUuid: userUuid
     ///   - popupUuid: popupUuid
     func removeFavorite(userUuid: String, popupUuid: String) async throws
+
+    /// 로그인한 사용자의 찜 리스트에 팝업을 추가합니다
+    /// - Parameter popupUuid: popupUuid
+    func addFavorite(popupUuid: String) async throws
+
+    /// 로그인한 사용자의 찜 리스트에서 팝업을 삭제합니다
+    /// - Parameter popupUuid: popupUuid
+    func removeFavorite(popupUuid: String) async throws
 
     /// 지역/구 목록을 가져옵니다
     /// - Returns: [RegionList]
