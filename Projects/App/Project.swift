@@ -135,7 +135,7 @@ let project = Project(
             dependencies: [
                 .project(target: "ADKit", path: "../Shared/ADKit"),
                 .project(target: "AuthFeature", path: "../Features/AuthFeature"),
-                .project(target: "OnboardingFeature", path: "../Features/OnboardingFeature"),
+                .project(target: "OnboardingFeatureV2", path: "../Features/OnboardingFeatureV2"),
                 .project(target: "MainTabFeature", path: "../Features/MainTabFeature"),
                 .project(target: "MaintenanceFeature", path: "../Features/MaintenanceFeature"),
                 .project(target: "Domain", path: "../Domain"),

@@ -2,7 +2,7 @@ import AuthFeature
 import ComposableArchitecture
 import DSKit
 import MaintenanceFeature
-import OnboardingFeature
+import OnboardingFeatureV2
 import MainTabFeature
 import SwiftUI
 

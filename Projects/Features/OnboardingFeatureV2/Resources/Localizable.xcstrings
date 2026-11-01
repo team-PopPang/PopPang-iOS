@@ -1,0 +1,222 @@
+{
+  "sourceLanguage" : "ko",
+  "strings" : {
+    "가고 싶은 팝업은\n캘린더에 찜해두세요" : {
+      "comment" : "Onboarding title for favorites calendar",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save the popups you want to visit\nto your calendar"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "行きたいポップアップは\nカレンダーに保存しましょう"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "가고 싶은 팝업은\n캘린더에 찜해두세요"
+          }
+        }
+      }
+    },
+    "건너뛰기" : {
+      "comment" : "Action to skip onboarding",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "スキップ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "건너뛰기"
+          }
+        }
+      }
+    },
+    "놓치기 싫은 팝업,\n키워드만 등록하세요" : {
+      "comment" : "Onboarding title for keyword notifications",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Never miss a popup.\nJust add your keywords"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "見逃したくないポップアップは、\nキーワードを登録するだけ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "놓치기 싫은 팝업,\n키워드만 등록하세요"
+          }
+        }
+      }
+    },
+    "다음" : {
+      "comment" : "Primary CTA to continue to the next step",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "次へ"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다음"
+          }
+        }
+      }
+    },
+    "브랜드, 캐릭터, 지역 키워드를 등록하면\n관련 팝업이 열리는 순간 알려드려요." : {
+      "comment" : "Onboarding body for keyword notifications",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Add brand, character, or area keywords\nand we'll alert you the moment a related popup opens."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ブランド・キャラクター・地域のキーワードを登録すると、\n関連ポップアップのオープンをすぐにお知らせします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "브랜드, 캐릭터, 지역 키워드를 등록하면\n관련 팝업이 열리는 순간 알려드려요."
+          }
+        }
+      }
+    },
+    "시작하기" : {
+      "comment" : "Primary CTA to start the app",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Get Started"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "始める"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시작하기"
+          }
+        }
+      }
+    },
+    "지금 근처에서 열린 팝업,\n지도로 한눈에" : {
+      "comment" : "Onboarding title for nearby popup map",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Popups open near you,\nall on one map"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "近くで開催中のポップアップを、\n地図でひと目で"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지금 근처에서 열린 팝업,\n지도로 한눈에"
+          }
+        }
+      }
+    },
+    "지도 앱엔 안 나오는 팝업까지,\n거리와 마감 시간을 함께 보여드려요." : {
+      "comment" : "Onboarding body for nearby popup map",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Even popups other map apps miss,\nwith distance and closing time."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "地図アプリにないポップアップまで、\n距離と終了時間と一緒にお見せします。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "지도 앱엔 안 나오는 팝업까지,\n거리와 마감 시간을 함께 보여드려요."
+          }
+        }
+      }
+    },
+    "캘린더에 한눈에 정리되고,\n날짜별로 바로 확인할 수 있어요" : {
+      "comment" : "Onboarding body for favorites calendar",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See them all on your calendar,\nand check them by date"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "カレンダーにひと目で整理され、\n日付ごとにすぐ確認できます"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "캘린더에 한눈에 정리되고,\n날짜별로 바로 확인할 수 있어요"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}
