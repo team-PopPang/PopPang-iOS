@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>회원가입 화면 V2 디자인 테크 스펙</title>
+<style>
+:root { color-scheme: light dark; --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d1d9e0; --code: #f6f8fa; --accent: #0969da; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #3d444d; --code: #151b23; --accent: #4493f8; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif; }
+main { max-width: 920px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 1.8em; border-bottom: 1px solid var(--line); padding-bottom: .3em; }
+h2 { font-size: 1.35em; border-bottom: 1px solid var(--line); padding-bottom: .25em; margin-top: 2em; }
+a { color: var(--accent); }
+code { background: var(--code); padding: .15em .35em; border-radius: 4px; font-size: .9em; }
+pre { background: var(--code); padding: 12px 14px; border-radius: 6px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; display: block; overflow-x: auto; margin: 12px 0; }
+th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+blockquote { margin: 0; padding: 0 1em; color: var(--muted); border-left: 4px solid var(--line); }
+li.task { list-style: none; margin-left: -1.3em; }
+.generated { color: var(--muted); font-size: .85em; }
+</style>
+</head>
+<body>
+<main>
+<p class="generated">spec_tool.py가 spec.md로 만든 파일이에요. 직접 고치지 말고 Markdown을 고친 뒤 다시 만들어 주세요.</p>
+<h1 id="회원가입-화면-v2-디자인-테크-스펙">회원가입 화면 V2 디자인 테크 스펙</h1>
+<ul><li>상태: 완료</li><li>만든 날: 2026-11-02</li><li>체크리스트: <a href="tasks.html">tasks.md</a> · 진행 기록: <a href="log.html">log.md</a></li></ul>
+<h2 id="기획-원문">기획 원문</h2>
+<ul><li>"이제 authfeaturev2만들거야 https://www.figma.com/design/asdKpjfFHPVtvKvDT3mMLs/...?node-id=2432-9525 부터 회원가입 화면 디자인 분석해줄래 4장" (2026-11-02)</li><li>피그마 "팝업스토어" 파일의 회원가입 4장: 2467-10836(닉네임), 2467-10856(카테고리), 2467-10890(키워드), 2467-10931(완료)</li><li>"이해안가 피그마대로하면되는데 필요한 선택만다 시정리" (2026-11-02)</li><li>"1. 그냥 아예 없앨거야 2. 5개로 할게 3. 이건 인기 키워드 api가 만들어졌어 … 4. 가입하고 완료 화면" (2026-11-02)</li><li>백엔드 공지 (2026-11-02, 붙여넣은 원문):</li></ul>
+<pre><code class="language-text">  신규 API 2개 운영 배포 완료했습니다.
+
+  공통
+  - Base URL: https://api.poppang.co.kr
+  - Header: Authorization: Bearer {token}
+  - Access Token 또는 최신 Signup Token 사용
+  - Query / Body 없음
+
+  1. 랜덤 닉네임 추천
+  GET /api/v2/user/nickname/recommendation
+
+  응답 예시:
+  {&quot;success&quot;:true,&quot;code&quot;:0,&quot;message&quot;:&quot;요청 성공!&quot;,&quot;data&quot;:{&quot;nickname&quot;:&quot;설레는수달&quot;}}
+
+  - 수식어+동물 조합, DB 중복 확인 후 반환
+  - 추천은 예약이 아니므로 가입 시 중복 재확인
+  - 추천 실패: HTTP 503 / code 4208
+
+  2. 인기 알림 키워드
+  GET /api/v2/alert-keyword/popular
+
+  응답 예시:
+  {&quot;success&quot;:true,&quot;code&quot;:0,&quot;message&quot;:&quot;요청 성공!&quot;,&quot;data&quot;:[{&quot;alertKeyword&quot;:&quot;소금빵&quot;},{&quot;alertKeyword&quot;:&quot;산리오&quot;}]}
+
+  - 전체 사용자 등록 인원순으로 최대 6개 반환
+  - 공백 제거·영문 소문자 통일, 동일 사용자 중복 제외
+  - 동률이면 키워드 오름차순, 결과 없으면 data: []</code></pre>
+<ul><li>"5 추천대로. 6. 추천디자인은 이거참고 …node-id=2432-9525" (2026-11-02)</li><li>"A 1번, B 추천대로, C 지금 규칙 유지" (2026-11-02)</li></ul>
+<h2 id="1-목표와-범위">1. 목표와 범위</h2>
+<h3 id="왜-하는지">왜 하는지</h3>
+<p>회원가입 화면을 피그마 새 디자인으로 바꾸고, 새로 나온 닉네임 추천·인기 키워드 API를 붙인다.</p>
+<h3 id="하는-것">하는 것</h3>
+<ul><li>새 모듈 <code>AuthFeatureV2</code>를 만들고 앱이 V2를 쓰게 바꾼다.</li><li>가입 3단계(닉네임, 카테고리, 키워드)를 새 디자인으로 바꾸고, 가입 완료 화면을 새로 만든다.</li><li>닉네임 추천 API와 인기 키워드 API를 Data·Domain에 추가하고 가입 화면에서 쓴다.</li></ul>
+<h3 id="하지-않는-것">하지 않는 것</h3>
+<ul><li>로그인 화면 디자인은 바꾸지 않는다 (모서리 15는 #137에서 이미 반영).</li><li>지역 선택은 만들지 않는다. 디자인의 "지역" 문구도 쓰지 않는다.</li><li>닉네임 규칙(공백 금지, 3자 이상)은 바꾸지 않는다. "2~10자 · 한글, 영문, 숫자" 안내 문구도 넣지 않는다.</li><li>키워드 최대 개수는 5개 그대로다.</li><li>가입 요청(<code>SignupRequest</code>) 형식과 가입 이후 흐름(메인 화면 이동, 푸시 토큰 동기화)은 바꾸지 않는다.</li></ul>
+<h3 id="성공-기준">성공 기준</h3>
+<ul><li>시뮬레이터에서 가입 4장이 피그마 화면과 같아 보인다.</li><li>닉네임 화면에 들어오면 추천 닉네임이 채워져 있고, "다른 닉네임 추천받기"로 바꿀 수 있다.</li><li>키워드 화면에 인기 키워드가 보이고, 누르면 내 키워드에 추가된다.</li><li>3단계 "다음"에서 가입이 끝나고 완료 화면이 나온다. "알림 켜고 시작하기"를 누르면 알림 권한을 묻고 메인 화면으로 간다.</li></ul>
+<h3 id="제약">제약</h3>
+<ul><li>서버 API는 공지된 두 개 외에 새로 요구하지 않는다.</li></ul>
+<h2 id="2-요구사항">2. 요구사항</h2>
+<ul><li><strong>R1</strong> 가입은 닉네임(1/3) → 카테고리(2/3) → 키워드(3/3) → 완료 순서다. 1~3단계 위에는 뒤로 <code>‹</code>, 진행 막대, <code>n/3</code>가 있다.</li><li><strong>R2</strong> 닉네임 화면은 <code>2467-10836</code> 디자인(입력칸 + 확인 버튼 + 확인 결과 문구)에 <code>2432-9525</code>의 "다른 닉네임 추천받기" 버튼만 더한다. (4차 답 A)</li><li><strong>R3</strong> 닉네임 화면에 들어오면 추천 닉네임을 입력칸에 채우고 "사용할 수 있는 닉네임이에요"로 표시한다. "다른 닉네임 추천받기"를 누르면 새 추천으로 바꾼다. (4차 답 B)</li><li><strong>R4</strong> 닉네임 규칙은 지금 그대로다: 공백 금지, 3자 이상, 확인 버튼으로 중복 확인. (4차 답 C)</li><li><strong>R5</strong> 카테고리 화면은 서버 카테고리 목록을 칩으로 보여 주고, 여러 개 고를 수 있다. 버튼 위 요약은 "관심사 N개 선택됨"이다 (지역 없음, 2차 답 1).</li><li><strong>R6</strong> 키워드 화면에서 키워드를 직접 추가·삭제한다. 최대 5개이고 개수를 <code>N / 5</code>로 보여 준다. (2차 답 2)</li><li><strong>R7</strong> 키워드 화면에 인기 키워드(<code>GET /api/v2/alert-keyword/popular</code>, 최대 6개)를 "많이 등록한 키워드" 제목과 칩으로 보여 주고, 누르면 내 키워드에 추가한다. (2차 답 3, 3차 답 5)</li><li><strong>R8</strong> 키워드 화면 "다음"을 누르면 가입 요청을 보내고, 성공하면 완료 화면을 보여 준다. 건너뛰기도 같다. (2차 답 4)</li><li><strong>R9</strong> 완료 화면은 체크 아이콘, "준비 끝!\n{닉네임}님, 환영해요"(닉네임만 주황), 안내 카드 3항목, "알림 켜고 시작하기" 버튼이다. 카드 1번 설명은 고른 카테고리와 키워드를 " · "로 잇는다.</li><li><strong>R10</strong> "알림 켜고 시작하기"를 누르면 알림 권한을 요청하고, 결과와 관계없이 메인 화면으로 간다. 키워드를 추가할 때는 더 이상 알림 권한을 묻지 않는다. (2차 답 4)</li></ul>
+<h2 id="3-현재-코드">3. 현재 코드</h2>
+<ul><li>가입 흐름은 <code>AuthFeature</code> 모듈의 <code>RegisterFlowFeature</code>(259줄)·<code>RegisterFlowFeatureView</code>(461줄)다. 로그인 화면은 같은 모듈의 <code>AuthFeature</code>·<code>AuthFeatureView</code>다.</li><li><code>AppFeature</code>가 <code>registerFlow: RegisterFlowFeature.State?</code>를 <code>ifLet</code>으로 붙인다. <code>.delegate(.completed(user))</code> → <code>registerCompleted</code>(메인 이동, 푸시 토큰 동기화), <code>.delegate(.loginRequired)</code> → 로그인 화면으로 돌아감 (<code>8. AppFeature.swift:164</code>, <code>:238</code>, <code>:494</code>).</li><li>앱 의존: <code>2. AppBootstrap.swift</code>와 <code>7. AppRootFlowView.swift</code>가 <code>import AuthFeature</code>. <code>AuthFeatureClient.live(authUsecase:)</code>를 AppBootstrap에서 주입한다.</li><li><code>AuthFeatureClient</code>: <code>login</code>, <code>signup</code>, <code>checkNickname</code>, <code>getRecommendList</code> (<code>AuthFeatureClient.swift</code>).</li><li>가입 API는 모두 V2이고 가입 토큰(<code>.signup</code> 권한)으로 부른다: <code>POST /auth/{provider}/signup</code>, <code>GET /user/nickname/duplicated</code>, <code>GET /recommend</code> (<code>AuthAPI.swift</code>).</li><li>가입 토큰 만료(401/5002·5014·5006)는 <code>AuthError.signupSessionExpired</code>로 바뀌고, 화면은 <code>loginRequired</code>로 로그인부터 다시 하게 한다 (<code>AuthRepositoryImpl.swift:156</code>).</li><li>지금 동작:<ul><li>닉네임 단계에는 뒤로가기·건너뛰기가 없다. 카테고리·키워드 단계에는 둘 다 있다.</li><li>카테고리는 1개 이상 골라야 다음으로 간다. 건너뛰기로 넘길 수 있다.</li><li>키워드는 최대 5개. 키워드를 추가할 때 알림 권한을 묻고, 거부했으면 설정 이동 알림을 띄운다 (<code>RegisterFlowFeatureView.swift:427</code>).</li><li>키워드 "다음"·건너뛰기에서 가입하고 바로 <code>completed</code>로 메인에 간다. <code>isAlerted</code>는 키워드가 있으면 <code>true</code>.</li></ul></li><li><code>AuthFeatureDemo</code> 타깃은 주석 처리돼 있다 (<code>AuthFeature/Project.swift:37</code>).</li><li>선례: <code>OnboardingFeatureV2</code>, <code>HomeFeatureV2</code>는 새 모듈을 만들고 같은 타입 이름을 쓰며, 기존 모듈은 남겨 두었다.</li><li>DSKit 색: <code>mainOrange #FF7A00</code>, <code>mainBlack #333333</code>, <code>subWhite3 #F2F2F2</code>, <code>mainGray6 #999999</code>, <code>onboardingGray #8B8B8B</code>, <code>onboardingBody #555555</code>가 있다 (<code>UIConstants.swift</code>). 글꼴은 <code>.scdream(.light/.regular/.medium/.extraBold)</code>.</li></ul>
+<p>피그마 값 (Talk to Figma <code>get_nodes_info</code>, 2026-11-02):</p>
+<table><thead><tr><th>요소</th><th>값</th></tr></thead><tbody><tr><td>화면</td><td>393×852, 흰 배경, 좌우 여백 20</td></tr><tr><td>뒤로</td><td><code>‹</code> Light 30 <code>#1A1A1A</code> (구현은 SF Symbol <code>chevron.left</code>)</td></tr><tr><td>진행 막대</td><td>270×4, 모서리 2, 바탕 <code>#EDEDED</code>, 채움 <code>#FF7A00</code></td></tr><tr><td>단계 표시</td><td><code>1/3</code> Medium 14 <code>#8B8B8B</code>, 오른쪽</td></tr><tr><td>제목</td><td>ExtraBold 24, 줄 높이 35.28, <code>#000000</code></td></tr><tr><td>아래 버튼</td><td>347×52, 모서리 10, <code>#FF7A00</code>, Medium 15 흰색</td></tr><tr><td>닉네임 입력칸</td><td>273×48, 모서리 12, 테두리 <code>#FF7A00</code>, Medium 17 <code>#1A1A1A</code>, 안쪽 여백 16</td></tr><tr><td>확인 버튼</td><td>62×45, 모서리 5, <code>#FF7A00</code>, Medium 12 흰색, 간격 10</td></tr><tr><td>확인 결과</td><td>ExtraBold 13 <code>#1A8C3D</code>, "✓  사용할 수 있는 닉네임이에요", 입력칸 아래 13</td></tr><tr><td>추천받기 버튼 (2432-9525, 그림이라 눈대중)</td><td>회색 캡슐, <code>arrow.clockwise</code> + "다른 닉네임 추천받기"</td></tr><tr><td>섹션 라벨</td><td>ExtraBold 14 <code>#333333</code></td></tr><tr><td>칩</td><td>높이 39, 모서리 19, 좌우 15, 간격 8 / 기본: 흰 바탕, 테두리 <code>#E0E0E0</code>, Light 14 <code>#333333</code> / 선택: <code>#FFF3E8</code>, 테두리 <code>#FF7A00</code>, ExtraBold 14 <code>#FF7A00</code>, "✓ "</td></tr><tr><td>선택 요약</td><td>Light 13 <code>#8C8C8C</code>, 가운데, 버튼 위 20</td></tr><tr><td>키워드 부제목</td><td>Regular 14 <code>#555555</code></td></tr><tr><td>건너뛰기</td><td>Medium 14 <code>#8C8C8C</code>, 키워드 제목 줄 오른쪽</td></tr><tr><td>키워드 입력칸</td><td>281×50, 모서리 12, <code>#F2F2F2</code>, 안내 Light 15 <code>#999999</code> "예: 두쫀쿠, 짱구, 레고" + 돋보기</td></tr><tr><td>추가 버튼</td><td>64×50, 모서리 12, <code>#1A1A1A</code>, ExtraBold 15 흰색, 간격 8</td></tr><tr><td>내 키워드 칩</td><td><code>#FFF3E8</code>, 테두리 없음, ExtraBold 14 <code>#FF7A00</code>, "키워드  ×"</td></tr><tr><td>인기 키워드 칩</td><td>기본 칩, "+ 키워드"</td></tr><tr><td>완료 아이콘</td><td>84 원 <code>#FFF3E8</code> 안에 58 원 <code>#FF7A00</code>, 흰 체크</td></tr><tr><td>완료 제목</td><td>ExtraBold 26 <code>#121212</code>, 가운데, 닉네임만 <code>#FF7A00</code></td></tr><tr><td>안내 카드</td><td>338×225, 모서리 15, 흰 바탕, 그림자, 안쪽 여백 26, 항목 간격 22</td></tr><tr><td>카드 항목</td><td>체크 원 26 <code>#FFF3E8</code> + 주황 체크 14 / 제목 Medium 16 <code>#121212</code> / 설명 Light 13 <code>#8C8C8C</code></td></tr></tbody></table>
+<h2 id="4-설계">4. 설계</h2>
+<h3 id="기술-스택">기술 스택</h3>
+<table><thead><tr><th>이름</th><th>버전</th><th>새로 들이는지</th><th>결정</th></tr></thead><tbody><tr><td>TCA, SwiftUI, Tuist, Moya</td><td>레포 기준</td><td>아니요</td><td>—</td></tr></tbody></table>
+<h3 id="구조">구조</h3>
+<pre><code class="language-text">App ──▶ AuthFeatureV2 (새 모듈, D-1)
+          ├─ AuthFeature / AuthFeatureView        (로그인, 기존 코드 그대로 옮김)
+          ├─ RegisterFlowFeature                  (단계 .nickname/.category/.keyword/.complete)
+          ├─ RegisterFlowFeatureView + 단계별 View (새 디자인)
+          ├─ AuthFeatureClient                    (+ recommendNickname, getPopularKeywords)
+          └─ Resources/Localizable.xcstrings      (새 문구 ko·en·ja)
+        ──▶ Domain: AuthRepositoryProtocol·AuthUsecase에 메서드 2개 추가 (D-3)
+        ──▶ Data:   AuthAPI에 case 2개 추가, AuthRepositoryImpl 구현, 응답 DTO 2개
+        ──▶ DSKit:  새 색 추가 (D-4)
+AuthFeature (기존 모듈) — 그대로 남김 (D-2)</code></pre>
+<ul><li>타입 이름은 그대로 쓰고 앱은 <code>import AuthFeatureV2</code>만 바꾼다 (<code>OnboardingFeatureV2</code>와 같은 방식). <code>AppFeature</code>의 연결 코드는 바꾸지 않는다.</li><li>완료 화면은 가입 흐름 안의 마지막 단계로 둔다. 가입 성공 시 <code>User</code>를 state에 들고 있다가 "알림 켜고 시작하기"에서 <code>.delegate(.completed(user))</code>를 보낸다 (D-5).</li></ul>
+<h3 id="데이터-모델">데이터 모델</h3>
+<ul><li><code>RegisterRoute</code>: <code>.nickname</code>, <code>.category</code>, <code>.keyword</code>, <code>.complete</code>. 진행 막대·<code>n/3</code>은 앞의 3개만 센다.</li><li><code>RegisterFlowFeature.State</code>에 추가: <code>popularKeywords: [String]</code>, <code>signedUpUser: User?</code>.</li><li>Domain: 인기 키워드는 <code>[String]</code>, 추천 닉네임은 <code>String</code>으로 돌려준다. 새 엔티티는 만들지 않는다.</li></ul>
+<h3 id="api">API</h3>
+<table><thead><tr><th>메서드</th><th>경로</th><th>권한</th><th>응답</th><th>실패</th></tr></thead><tbody><tr><td><code>recommendSignupNickname()</code></td><td><code>GET /api/v2/user/nickname/recommendation</code></td><td>가입 토큰</td><td><code>APIResponse&lt;{ nickname }&gt;</code></td><td>503/4208 → <code>AuthError.failed</code></td></tr><tr><td><code>fetchPopularKeywords()</code></td><td><code>GET /api/v2/alert-keyword/popular</code></td><td>가입 토큰</td><td><code>APIResponse&lt;[{ alertKeyword }]&gt;</code></td><td>빈 배열 가능</td></tr></tbody></table>
+<ul><li>가입 토큰 만료는 기존 가입 API와 같이 <code>signupSessionExpired</code>로 바꾼다.</li></ul>
+<h3 id="에러예외-처리">에러·예외 처리</h3>
+<ul><li>닉네임 추천 실패: 입력칸을 비워 두고 아무것도 띄우지 않는다. 사용자가 직접 입력한다.</li><li>인기 키워드 실패·빈 배열: 인기 키워드 영역을 숨긴다.</li><li>가입 토큰 만료: 지금처럼 <code>loginRequired</code>로 로그인 화면에 돌아간다.</li><li>인기 키워드 칩을 눌렀는데 이미 5개이거나 같은 키워드가 있으면 지금 직접 추가할 때와 같이 처리한다.</li><li>가입 요청 중에는 "다음"·건너뛰기를 막는다 (지금과 같음).</li></ul>
+<h3 id="테스트-방법">테스트 방법</h3>
+<ul><li><code>AuthFeatureV2Tests</code> (TestStore):<ul><li>진입 시 추천 닉네임이 채워지고 <code>validationState == .success</code>, 추천받기로 바뀜, 추천 실패 시 빈 칸</li><li>인기 키워드 로드, 칩 탭 → 키워드 추가, 5개 제한</li><li>키워드 "다음" → 가입 성공 → <code>.complete</code> 단계, 아직 <code>completed</code>를 보내지 않음</li><li>완료 버튼 → <code>.delegate(.completed(user))</code></li><li>가입 토큰 만료 → <code>loginRequired</code></li><li>기존 <code>AuthFeatureTests</code>의 로그인·가입 테스트를 옮겨 그대로 통과</li></ul></li><li>Data: <code>AuthRepositoryTests</code>에 두 API의 경로·권한·디코딩 테스트</li><li>Demo 타깃 <code>AuthFeatureV2Demo</code>: 가짜 client로 가입 흐름만 띄워 피그마와 비교</li><li>시뮬레이터: 실제 가입으로 4장 흐름, 알림 권한 팝업, 메인 이동 확인. iPhone SE에서 잘리지 않는지 확인</li></ul>
+<h2 id="5-결정-기록">5. 결정 기록</h2>
+<h3 id="d-1-새-모듈로-만들기">D-1 새 모듈로 만들기</h3>
+<ul><li>결정: <code>AuthFeatureV2</code> 모듈을 새로 만들고 앱이 V2에 의존한다. 로그인 화면도 같이 옮긴다</li><li>이유: 사용자 요청("authfeaturev2 만들거야"). <code>OnboardingFeatureV2</code>와 같은 방식. 로그인과 가입이 한 모듈에 있어서 같이 옮겨야 앱이 한 모듈만 쓴다</li><li>검토한 대안: 기존 <code>AuthFeature</code> 안에서 가입 화면만 바꾸기 (변경이 적지만 요청과 다름)</li><li>영향: R1~R10</li><li>정한 사람: 모듈 생성은 사용자 (2026-11-02), 로그인 함께 옮기기는 AI 제안·사용자 확인 (2026-11-02 설계 승인)</li></ul>
+<h3 id="d-2-기존-authfeature-모듈">D-2 기존 <code>AuthFeature</code> 모듈</h3>
+<ul><li>결정: 지우지 않고 남긴다. 앱 의존성에서만 뺀다</li><li>이유: <code>OnboardingFeature</code>, <code>HomeFeature</code>를 남긴 선례. 되돌리기 쉽다</li><li>검토한 대안: 이번에 지운다</li><li>영향: R1</li><li>정한 사람: AI 제안, 사용자 확인 (2026-11-02 설계 승인)</li></ul>
+<h3 id="d-3-새-api를-넣을-자리">D-3 새 API를 넣을 자리</h3>
+<ul><li>결정: 기존 <code>AuthAPI</code>·<code>AuthRepositoryProtocol</code>·<code>AuthUsecase</code>에 메서드를 추가한다 (<code>recommendSignupNickname</code>, <code>fetchPopularKeywords</code>)</li><li>이유: 둘 다 가입 화면에서 가입 토큰으로 부르는 API라 기존 가입 API(<code>checkSignupNickname</code>, <code>fetchSignupRecommendList</code>)와 같은 자리다</li><li>검토한 대안: 인기 키워드를 키워드(Alert) 쪽 저장소에 두기 (다른 화면에서도 쓸 때 맞지만, 지금 그 저장소는 Access Token 전용)</li><li>영향: R3, R7</li><li>정한 사람: AI 제안, 사용자 확인 (2026-11-02 설계 승인)</li></ul>
+<h3 id="d-4-새-색">D-4 새 색</h3>
+<ul><li>결정: 피그마 값 그대로 DSKit <code>UIConstants.swift</code>에 추가한다. <code>#8C8C8C</code>는 <code>onboardingGray</code>(#8B8B8B), <code>#555555</code>는 <code>onboardingBody</code>를 쓴다. 새로 넣는 색: <code>registerText #1A1A1A</code>, <code>registerTitle #121212</code>, <code>registerTrack #EDEDED</code>, <code>registerChipBorder #E0E0E0</code>, <code>registerChipSelected #FFF3E8</code>, <code>registerValid #1A8C3D</code></li><li>이유: 온보딩 V2와 같은 방식(D-5). 거의 같은 회색은 합친다</li><li>검토한 대안: 기존 토큰 중 비슷한 색으로 맞추기 (<code>mainGreen #006813</code>, <code>mainGray5 #EEEEEE</code> 등, 색이 눈에 띄게 다름)</li><li>영향: R1~R9</li><li>정한 사람: AI 제안, 사용자 확인 (2026-11-02 설계 승인)</li></ul>
+<h3 id="d-5-완료-화면-위치">D-5 완료 화면 위치</h3>
+<ul><li>결정: 가입 흐름(<code>RegisterFlowFeature</code>)의 마지막 단계로 둔다. 가입 성공 후 완료 버튼을 누를 때 <code>completed</code>를 보낸다</li><li>이유: <code>AppFeature</code>를 바꾸지 않아도 된다. 닉네임·카테고리·키워드를 이미 state에 들고 있다</li><li>검토한 대안: <code>AppFeature</code>가 완료 화면을 따로 띄우기 (앱 루트 흐름 변경이 커짐)</li><li>영향: R8, R9, R10</li><li>정한 사람: AI 제안, 사용자 확인 (2026-11-02 설계 승인)</li></ul>
+<h2 id="6-가정과-보류">6. 가정과 보류</h2>
+<h3 id="가정">가정</h3>
+<ul><li><strong>A-1</strong> 닉네임 단계의 뒤로 <code>‹</code>는 디자인에 있지만 지금처럼 숨긴다 (돌아갈 화면이 없음). AI 제안</li><li><strong>A-2</strong> 카테고리 단계에는 건너뛰기를 두지 않는다 (디자인에 없음). 1개 이상 골라야 다음으로 간다. AI 제안</li><li><strong>A-3</strong> 오류 문구(중복, 공백, 너무 짧음, 확인 실패)는 지금 문구를 쓰고, 모양은 확인 결과와 같은 ExtraBold 13, 색은 <code>mainRed</code>. AI 제안</li><li><strong>A-4</strong> 아래 버튼이 비활성일 때는 지금처럼 <code>mainGray2</code> 바탕. AI 제안</li><li><strong>A-5</strong> 알림 권한을 이미 거부한 사용자는 완료 버튼을 누르면 설정 이동 알림 없이 바로 메인으로 간다. AI 제안</li><li><strong>A-6</strong> 키워드 5개 초과 알림은 지금 알림을 그대로 쓴다. AI 제안</li><li><strong>A-7</strong> 안내 카드 그림자는 값을 읽지 못해서 이미지와 비슷하게 맞춘다 (<code>black 8%, 반경 16, y 4</code> 정도). AI 제안</li><li><strong>A-8</strong> 추천받기 버튼 크기·색은 그림(2432-9525) 눈대중이다: 높이 36, <code>#F2F2F2</code> 캡슐, SemiBold 13 <code>#333333</code>. AI 제안</li><li><strong>A-9</strong> 화면 전환은 지금처럼 옆으로 미는 애니메이션이다.</li><li><strong>A-10</strong> 배포는 PR 하나로 main에 병합한다. 마감은 없다.</li></ul>
+<h3 id="보류">보류</h3>
+<ul><li>없음</li></ul>
+<h2 id="7-위험">7. 위험</h2>
+<ul><li>닉네임 추천 값이 가입 사이에 다른 사람에게 쓰일 수 있다 → 가입 요청의 중복 닉네임(409/4204) 처리가 이미 있어 닉네임 단계로 돌아간다.</li><li>로그인 코드를 새 모듈로 복사하면 두 모듈에 같은 코드가 생긴다 → 앱은 V2만 쓰고, 기존 모듈은 나중에 지운다.</li><li><code>AuthRepositoryProtocol</code>(public protocol)에 메서드를 추가한다 → 이 프로토콜을 따르는 테스트용 가짜 객체도 함께 고친다.</li></ul>
+<h2 id="8-질문과-답">8. 질문과 답</h2>
+<h3 id="분야별-상태">분야별 상태</h3>
+<table><thead><tr><th>분야</th><th>상태</th></tr></thead><tbody><tr><td>목적·범위</td><td>명확</td></tr><tr><td>사용자 흐름</td><td>가정</td></tr><tr><td>데이터</td><td>명확</td></tr><tr><td>외부 연동·API</td><td>명확</td></tr><tr><td>기술 스택</td><td>명확</td></tr><tr><td>구조</td><td>가정</td></tr><tr><td>상태 관리</td><td>명확</td></tr><tr><td>에러·예외</td><td>가정</td></tr><tr><td>성능·보안</td><td>명확</td></tr><tr><td>테스트</td><td>명확</td></tr><tr><td>배포·일정</td><td>가정</td></tr></tbody></table>
+<h3 id="기록">기록</h3>
+<h4 id="1차-2026-11-02">1차 (2026-11-02)</h4>
+<ul><li>Q: 피그마대로 하면 되고, 정해야 할 선택만 다시 정리 → A: 지역·키워드 개수·추천 키워드·가입 시점 4개로 정리</li></ul>
+<h4 id="2차-2026-11-02">2차 (2026-11-02)</h4>
+<ul><li>Q: 1. 지역 처리 2. 키워드 최대 개수 3. 추천 키워드 데이터 4. 가입 시점 → A: 1. 지역은 아예 없앤다 2. 5개 3. 인기 키워드 API가 생겼다(공지 원문은 기획 원문에) 4. 3단계에서 가입하고 완료 화면</li></ul>
+<h4 id="3차-2026-11-02">3차 (2026-11-02)</h4>
+<ul><li>Q: 5. 인기 키워드 제목 (전체 기준이라 "디저트 · 캐릭터를 고른 분들이…"가 맞지 않음) 6. 닉네임 추천 API 사용 방법 → A: 5. 추천대로 "많이 등록한 키워드" 6. 추천 디자인은 2432-9525 참고</li></ul>
+<h4 id="4차-2026-11-02">4차 (2026-11-02)</h4>
+<ul><li>Q: A. 닉네임 화면 모양 B. 추천 닉네임 동작 C. 닉네임 규칙 → A: A 1번(10836에 추천받기 버튼만 추가), B 추천대로(진입 시 채우고 바로 사용 가능 표시), C 지금 규칙 유지</li></ul>
+</main>
+</body>
+</html>
