@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>온보딩 화면 V2 디자인 테크 스펙</title>
+<style>
+:root { color-scheme: light dark; --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d1d9e0; --code: #f6f8fa; --accent: #0969da; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #3d444d; --code: #151b23; --accent: #4493f8; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif; }
+main { max-width: 920px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 1.8em; border-bottom: 1px solid var(--line); padding-bottom: .3em; }
+h2 { font-size: 1.35em; border-bottom: 1px solid var(--line); padding-bottom: .25em; margin-top: 2em; }
+a { color: var(--accent); }
+code { background: var(--code); padding: .15em .35em; border-radius: 4px; font-size: .9em; }
+pre { background: var(--code); padding: 12px 14px; border-radius: 6px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; display: block; overflow-x: auto; margin: 12px 0; }
+th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+blockquote { margin: 0; padding: 0 1em; color: var(--muted); border-left: 4px solid var(--line); }
+li.task { list-style: none; margin-left: -1.3em; }
+.generated { color: var(--muted); font-size: .85em; }
+</style>
+</head>
+<body>
+<main>
+<p class="generated">spec_tool.py가 spec.md로 만든 파일이에요. 직접 고치지 말고 Markdown을 고친 뒤 다시 만들어 주세요.</p>
+<h1 id="온보딩-화면-v2-디자인-테크-스펙">온보딩 화면 V2 디자인 테크 스펙</h1>
+<ul><li>상태: 완료</li><li>만든 날: 2026-11-01</li><li>체크리스트: <a href="tasks.html">tasks.md</a> · 진행 기록: <a href="log.html">log.md</a></li></ul>
+<h2 id="기획-원문">기획 원문</h2>
+<ul><li>"onboardingfeaturev2만들건데 figma에 온보딩 새로운버전UI만들었어" (2026-11-01)</li><li>"팝팡 온보딩 디자인 개선부분만 분석해봐" — 피그마 "팝업스토어" 파일, 섹션 "팝팡 리뉴얼 최종"(2467-10300)의 "팝팡 온보딩 탭 디자인 개선" 3장 (2467-10688, 2467-10769, 2467-10794)</li><li>"온보딩 UI만 바뀐 작업이잖아. … 사진같은건 피그마꺼다운받고 버튼이나 글자는 직접 swiftui로하는게 좋을거같아, 그리고 마지막 화면 다음은 일단 현재 로그인 화면디자인 그대로." (2026-11-01)</li><li>"1 시작하기 2 네 3 네 4 v2로 만들어" (2026-11-01)</li></ul>
+<h2 id="1-목표와-범위">1. 목표와 범위</h2>
+<h3 id="왜-하는지">왜 하는지</h3>
+<p>온보딩 3장을 피그마 새 디자인으로 바꾼다.</p>
+<h3 id="하는-것">하는 것</h3>
+<ul><li>새 모듈 <code>OnboardingFeatureV2</code>를 만들고 앱이 V2를 쓰게 바꾼다.</li><li>화면 배치, 문구, 그림, 아이콘, 점, 버튼을 새 디자인대로 만든다.</li></ul>
+<h3 id="하지-않는-것">하지 않는 것</h3>
+<ul><li>온보딩 흐름(화면 3장, 다음, 건너뛰기, 끝나면 로그인 화면)은 바꾸지 않는다.</li><li>로그인 화면과 피그마의 "로그인 탭 디자인 개선"(닉네임·카테고리·키워드·완료)은 하지 않는다.</li><li>서버·알림 기능은 건드리지 않는다.</li><li><code>MainOrangeButton</code>은 바꾸지 않는다.</li></ul>
+<h3 id="성공-기준">성공 기준</h3>
+<ul><li>시뮬레이터에서 온보딩 3장이 피그마 화면과 같아 보인다.</li><li>다음·건너뛰기·옆으로 넘기기·마지막 "시작하기"가 지금처럼 동작하고, 끝나면 지금 로그인 화면이 나온다.</li></ul>
+<h3 id="제약">제약</h3>
+<ul><li>그림 이미지 안의 글자는 번역되지 않는다 (한국어 그대로).</li></ul>
+<h2 id="2-요구사항">2. 요구사항</h2>
+<ul><li><strong>R1</strong> 화면 3장(키워드 알림, 지도, 캘린더 찜)을 새 배치로 보여 준다: 위에 그림 카드, 아래에 아이콘·제목·설명(왼쪽 정렬), 점, 버튼.</li><li><strong>R2</strong> 위쪽 그림 카드는 피그마에서 받은 PNG로 보여 준다.</li><li><strong>R3</strong> 아이콘(종, 지도 핀, 달력)과 버튼 화살표는 피그마에서 받은 SVG로 보여 준다.</li><li><strong>R4</strong> 제목·설명·건너뛰기·점·버튼은 SwiftUI로 그린다. 문구는 새 디자인 문구이고 ko·en·ja를 넣는다. 단, 3번 화면 설명은 지금 없는 종료 알림 대신 "캘린더에 한눈에 정리되고, 날짜별로 바로 확인할 수 있어요"로 쓴다. (2차 답)</li><li><strong>R5</strong> 버튼은 "다음 →"이고, 마지막 화면만 "시작하기"다. (사용자 답 1)</li><li><strong>R6</strong> 마지막 화면 버튼과 건너뛰기를 누르면 지금처럼 로그인 화면으로 간다.</li><li><strong>R7</strong> 앱에 없는 색 <code>#8B8B8B</code>, <code>#FEF2E7</code>, <code>#555555</code>, <code>#D9D9D9</code>를 DSKit에 추가한다. (사용자 답 2)</li></ul>
+<h2 id="3-현재-코드">3. 현재 코드</h2>
+<ul><li>앱은 로그인한 사용자가 없으면 온보딩을 띄운다 (<code>AppLaunchStateResolver.swift:10</code>).</li><li><code>AppFeature</code>가 <code>OnboardingFeature</code>를 Scope로 붙이고, <code>.delegate(.authRequested)</code>를 받으면 온보딩 완료를 저장하고 로그인 화면을 push한다 (<code>8. AppFeature.swift:169</code>, <code>:218</code>).</li><li><code>OnboardingFeature</code>(48줄): <code>currentStep</code>(<code>.keyword</code>, <code>.map</code>, <code>.favorite</code>), <code>nextTapped</code>(마지막이면 <code>authRequested</code>), <code>skipTapped</code>, <code>stepChanged</code> (<code>OnboardingFeature.swift</code>).</li><li><code>OnboardingFeatureView</code>: 페이지형 <code>TabView</code>, 로고 <code>Logo1~3</code>, 제목 18 ExtraBold 가운데, 설명 15, 그림 <code>Onboarding1~3</code>(화면 높이 45%), 점(검정 12×6 / 회색 6×6), <code>MainOrangeButton</code>, 건너뛰기 12pt 검정, 배경 <code>subWhite3</code> (<code>OnboardingFeatureView.swift</code>).</li><li>이미지는 DSKit <code>Assets.xcassets/Onboarding</code>, 문구는 <code>OnboardingFeature/Resources/Localizable.xcstrings</code>.</li><li>앱 타깃만 <code>OnboardingFeature</code>에 의존한다 (<code>Projects/App/Project.swift:138</code>).</li><li>같은 V2 방식의 선례: <code>HomeFeatureV2</code>는 새 모듈로 만들고 <code>MainTabFeature</code>가 V2에 의존한다. 기존 <code>HomeFeature</code>는 남아 있다.</li><li><code>MainOrangeButton</code>: 모서리 5, 높이 56, Bold 14, 화살표 없음 (<code>MainOrangeButton.swift</code>).</li><li>글꼴은 S-Core Dream 1~9가 DSKit에 있다. Noto Sans KR은 없다.</li></ul>
+<p>피그마 값 (get_design_context, 2026-11-01):</p>
+<table><thead><tr><th>요소</th><th>값</th></tr></thead><tbody><tr><td>화면</td><td>393×852, 배경 <code>#FFFFFF</code></td></tr><tr><td>건너뛰기</td><td>S-Core Dream Medium 14, <code>#8B8B8B</code>, 오른쪽 여백 20, 높이 37 줄</td></tr><tr><td>그림 카드</td><td>353×379~383, 배경 <code>#FEF2E7</code>, 모서리 20, 화면 여백 20</td></tr><tr><td>아이콘</td><td>30×30</td></tr><tr><td>제목</td><td>S-Core Dream ExtraBold 24, 줄 간격 1.47, <code>#000000</code>, 2줄</td></tr><tr><td>설명</td><td>S-Core Dream Regular 14, 줄 간격 1.47, <code>#555555</code>, 2줄</td></tr><tr><td>아이콘·제목·설명 간격</td><td>9</td></tr><tr><td>점</td><td>현재 <code>#333333</code> 17×8, 나머지 <code>#D9D9D9</code> 8×8, 간격 10</td></tr><tr><td>버튼</td><td><code>#FF7A00</code>, 347×52(양옆 23), 모서리 10, Medium 15 흰색, 화살표 24, 간격 10</td></tr></tbody></table>
+<h2 id="4-설계">4. 설계</h2>
+<h3 id="기술-스택">기술 스택</h3>
+<table><thead><tr><th>이름</th><th>버전</th><th>새로 들이는지</th><th>결정</th></tr></thead><tbody><tr><td>TCA, SwiftUI, Tuist</td><td>레포 기준</td><td>아니요</td><td>—</td></tr></tbody></table>
+<h3 id="구조">구조</h3>
+<pre><code class="language-text">App ──▶ OnboardingFeatureV2 (새 모듈, D-1)
+          ├─ OnboardingFeature (Reducer, 기존 코드를 옮김)
+          ├─ OnboardingFeatureView (새 디자인)
+          ├─ OnboardingNextButton (화살표 버튼, 모듈 안 전용)
+          └─ Resources/Localizable.xcstrings (새 문구)
+        ──▶ DSKit (색 4개 추가, Assets.xcassets/OnboardingV2: 카드 PNG 3, 아이콘 SVG 4)
+OnboardingFeature (기존 모듈) — 그대로 남김 (D-2)</code></pre>
+<ul><li>타입 이름은 <code>OnboardingFeature</code>, <code>OnboardingFeatureView</code>, <code>OnboardingStep</code>을 그대로 쓴다. 앱은 <code>import OnboardingFeatureV2</code>만 바꾼다 (<code>HomeFeatureV2</code>와 같은 방식).</li></ul>
+<h3 id="데이터-모델">데이터 모델</h3>
+<p><code>OnboardingStep</code>(<code>.keyword</code>, <code>.map</code>, <code>.favorite</code>)에 새 문구·아이콘·카드 이미지 이름을 둔다.</p>
+<p>에셋 (DSKit <code>Assets.xcassets/OnboardingV2/</code>):</p>
+<table><thead><tr><th>이름</th><th>형식</th><th>피그마 노드</th></tr></thead><tbody><tr><td><code>OnboardingV2Card1~3</code></td><td>PNG @2x·@3x, 카드 전체(배경·모서리 포함)</td><td>2467-10693, 2467-10774, 2467-10799</td></tr><tr><td><code>OnboardingV2IconBell</code>, <code>OnboardingV2IconMapPin</code>, <code>OnboardingV2IconCalendar</code></td><td>SVG</td><td>2467-10754 및 2·3번 화면의 같은 자리</td></tr><tr><td><code>OnboardingV2Arrow</code></td><td>SVG</td><td>2467-10766</td></tr></tbody></table>
+<p>문구 (제목·설명은 두 줄, <code>\n</code>으로 줄을 나눈다. en·ja는 AI 번역, 기존 표기 <code>popup</code>·<code>ポップアップ</code>를 따른다):</p>
+<table><thead><tr><th>키 (ko)</th><th>en</th><th>ja</th></tr></thead><tbody><tr><td>놓치기 싫은 팝업,\n키워드만 등록하세요</td><td>Never miss a popup.\nJust add your keywords</td><td>見逃したくないポップアップは、\nキーワードを登録するだけ</td></tr><tr><td>브랜드, 캐릭터, 지역 키워드를 등록하면\n관련 팝업이 열리는 순간 알려드려요.</td><td>Add brand, character, or area keywords\nand we'll alert you the moment a related popup opens.</td><td>ブランド・キャラクター・地域のキーワードを登録すると、\n関連ポップアップのオープンをすぐにお知らせします。</td></tr><tr><td>지금 근처에서 열린 팝업,\n지도로 한눈에</td><td>Popups open near you,\nall on one map</td><td>近くで開催中のポップアップを、\n地図でひと目で</td></tr><tr><td>지도 앱엔 안 나오는 팝업까지,\n거리와 마감 시간을 함께 보여드려요.</td><td>Even popups other map apps miss,\nwith distance and closing time.</td><td>地図アプリにないポップアップまで、\n距離と終了時間と一緒にお見せします。</td></tr><tr><td>가고 싶은 팝업은\n캘린더에 찜해두세요</td><td>Save the popups you want to visit\nto your calendar</td><td>行きたいポップアップは\nカレンダーに保存しましょう</td></tr><tr><td>캘린더에 한눈에 정리되고,\n날짜별로 바로 확인할 수 있어요</td><td>See them all on your calendar,\nand check them by date</td><td>カレンダーにひと目で整理され、\n日付ごとにすぐ確認できます</td></tr><tr><td>다음 / 시작하기 / 건너뛰기</td><td>기존 번역 그대로 (Next / Get Started / Skip)</td><td>기존 번역 그대로 (次へ / 始める / スキップ)</td></tr></tbody></table>
+<h3 id="api">API</h3>
+<p>없음.</p>
+<h3 id="에러예외-처리">에러·예외 처리</h3>
+<p>없음. 이미지를 못 찾으면 빈 카드가 보인다 (빌드 시 에셋 이름 확인).</p>
+<h3 id="테스트-방법">테스트 방법</h3>
+<ul><li>새 타깃 <code>OnboardingFeatureV2Tests</code>: TestStore로 다음 → 다음 단계, 마지막 다음 → <code>authRequested</code>, 건너뛰기 → <code>authRequested</code>, 넘기기 → <code>stepChanged</code>.</li><li>Demo 타깃 <code>OnboardingFeatureV2Demo</code>: 로그인 없이 온보딩만 띄워 피그마 화면과 비교한다.</li><li>시뮬레이터에서 새로 설치한 앱(온보딩 보이는 상태)으로 흐름과 로그인 화면 이동을 확인한다. 화면 크기가 다른 기기(iPhone SE, Pro Max)에서도 잘리지 않는지 본다.</li></ul>
+<h2 id="5-결정-기록">5. 결정 기록</h2>
+<h3 id="d-1-새-모듈로-만들기">D-1 새 모듈로 만들기</h3>
+<ul><li>결정: <code>OnboardingFeatureV2</code> 모듈을 새로 만들고 앱이 V2에 의존한다</li><li>이유: 사용자 요청. <code>HomeFeatureV2</code>와 같은 방식</li><li>검토한 대안: 기존 <code>OnboardingFeature</code> 화면만 바꾸기 (코드가 적어 더 간단)</li><li>영향: R1~R6</li><li>정한 사람: 사용자 (2026-11-01)</li></ul>
+<h3 id="d-2-기존-onboardingfeature-모듈">D-2 기존 <code>OnboardingFeature</code> 모듈</h3>
+<ul><li>결정: 이번에는 지우지 않고 남긴다. 앱 의존성에서만 뺀다</li><li>이유: <code>HomeFeature</code>도 남겨 둔 선례가 있고, 되돌리기 쉽다</li><li>검토한 대안: 이번에 지운다 (정리되지만 되돌릴 때 다시 만들어야 함)</li><li>영향: R6</li><li>정한 사람: AI 제안, 사용자 확인 (2026-11-01 설계 승인)</li></ul>
+<h3 id="d-3-그림아이콘-만드는-방법">D-3 그림·아이콘 만드는 방법</h3>
+<ul><li>결정: 그림 카드는 카드 전체를 PNG(@2x, @3x)로, 아이콘·화살표는 SVG로 받는다. 글자·버튼·점은 SwiftUI</li><li>이유: 장식 그림이라 이미지가 가장 단순하다. 2·3번은 피그마에서도 사진이다</li><li>검토한 대안: 1번 카드(칩·알림 카드)를 SwiftUI로 조립 (번역 가능하지만 일이 많다)</li><li>영향: R2, R3, R4</li><li>정한 사람: 사용자 (2026-11-01, "사진같은건 피그마꺼다운받고 버튼이나 글자는 직접 swiftui")</li></ul>
+<h3 id="d-4-버튼">D-4 버튼</h3>
+<ul><li>결정: <code>MainOrangeButton</code>을 바꾸지 않고 V2 모듈 안에 화살표 버튼을 만든다</li><li>이유: 다른 화면이 <code>MainOrangeButton</code>을 쓴다</li><li>검토한 대안: <code>MainOrangeButton</code>에 화살표·모서리 옵션 추가</li><li>영향: R5</li><li>정한 사람: 사용자 (2026-11-01, 답 3)</li></ul>
+<h3 id="d-5-새-색-이름">D-5 새 색 이름</h3>
+<ul><li>결정: DSKit <code>UIConstants.swift</code>에 피그마 값 그대로 추가한다. 이름은 <code>onboardingGray</code>(#8B8B8B), <code>onboardingCard</code>(#FEF2E7), <code>onboardingBody</code>(#555555), <code>onboardingDot</code>(#D9D9D9)</li><li>이유: 값은 사용자 답 2. 지금은 온보딩에서만 쓴다</li><li>검토한 대안: <code>mainGray10</code>처럼 기존 번호 규칙 이름 (다른 화면에서도 쓸 때 맞음)</li><li>영향: R7</li><li>정한 사람: 값은 사용자 (2026-11-01), 이름은 AI 제안·사용자 확인 (2026-11-01 설계 승인)</li></ul>
+<h2 id="6-가정과-보류">6. 가정과 보류</h2>
+<h3 id="가정">가정</h3>
+<ul><li><strong>A-1</strong> 화면 높이가 852보다 작은 기기에서는 그림 카드 높이를 줄여 버튼이 잘리지 않게 한다 (AI 제안).</li><li><strong>A-2</strong> 피그마 시안의 점은 3장 모두 첫 번째가 켜져 있지만, 앱에서는 현재 화면 점을 켠다.</li><li><strong>A-3</strong> 화면 전환 애니메이션은 지금처럼 옆으로 넘기기와 점 애니메이션을 쓴다.</li><li><strong>A-4</strong> 마지막 화면 "시작하기" 버튼에는 화살표를 붙이지 않는다 (AI 제안, 설계 승인 때 보여 줌).</li><li><strong>A-5</strong> 배포는 PR 하나로 main에 병합한다. 마감은 없다.</li></ul>
+<h3 id="보류">보류</h3>
+<ul><li>없음</li></ul>
+<h2 id="7-위험">7. 위험</h2>
+<ul><li>피그마 임시 이미지 주소는 7일 뒤 만료된다 → 받은 즉시 에셋으로 넣는다.</li><li>작은 화면에서 글자가 잘릴 수 있다 → SE 시뮬레이터로 확인한다.</li></ul>
+<h2 id="8-질문과-답">8. 질문과 답</h2>
+<h3 id="분야별-상태">분야별 상태</h3>
+<table><thead><tr><th>분야</th><th>상태</th></tr></thead><tbody><tr><td>목적·범위</td><td>명확</td></tr><tr><td>사용자 흐름</td><td>명확</td></tr><tr><td>데이터</td><td>명확</td></tr><tr><td>외부 연동·API</td><td>명확</td></tr><tr><td>기술 스택</td><td>명확</td></tr><tr><td>구조</td><td>명확</td></tr><tr><td>상태 관리</td><td>명확</td></tr><tr><td>에러·예외</td><td>명확</td></tr><tr><td>성능·보안</td><td>명확</td></tr><tr><td>테스트</td><td>명확</td></tr><tr><td>배포·일정</td><td>명확</td></tr></tbody></table>
+<h3 id="기록">기록</h3>
+<h4 id="1차-2026-11-01">1차 (2026-11-01)</h4>
+<ul><li>Q: 마지막 화면 버튼 글자 → A: 시작하기</li><li>Q: 앱에 없는 색 4개를 DSKit에 추가? → A: 네</li><li>Q: <code>MainOrangeButton</code>은 두고 온보딩 전용 버튼? → A: 네</li><li>Q: 새 모듈 V2 vs 기존 화면만 변경 → A: V2로 만든다</li></ul>
+<h4 id="2차-2026-11-01">2차 (2026-11-01)</h4>
+<ul><li>Q: 3번 설명의 "종료 직전에 다시 알려드려요"는 지금 없는 기능이라 다른 문구? → A: "캘린더에 한눈에 정리되고, 날짜별로 바로 확인할 수 있어요" (1번안)</li></ul>
+</main>
+</body>
+</html>

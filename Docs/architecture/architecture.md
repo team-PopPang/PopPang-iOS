@@ -38,7 +38,8 @@ Projects
 │   ├── MainTabFeature        로그인 이후 탭과 탭 공통 push·fullScreen 소유
 │   ├── HomeFeatureV2         홈 탭 (MainTabFeature가 사용하는 홈)
 │   ├── CalendarFeature, MapFeature, FavoritesFeature, ProfileFeature
-│   ├── AuthFeature, OnboardingFeature
+│   ├── AuthFeature
+│   ├── OnboardingFeatureV2   온보딩 화면 (App이 사용하는 온보딩, 기존 OnboardingFeature는 남겨 둠)
 │   ├── PopupDetailFeature, ReviewFeature, SearchFeature, AlertFeature
 │   ├── MaintenanceFeature    앱 시작 헬스 체크 실패 시 점검·오프라인 안내 화면
 │   └── PopPangRNFeature      React Native 화면 호스트 (팝업 제보·관리)
@@ -56,7 +57,7 @@ Projects
 
 | 모듈 | product | 프로젝트 의존성 | 추가 타깃 |
 | --- | --- | --- | --- |
-| App (`PopPangApp`) | app | ADKit, AuthFeature, OnboardingFeature, MainTabFeature, MaintenanceFeature, Domain, Data, ThirdParty, Core, DSKit, React Native local package | 없음 |
+| App (`PopPangApp`) | app | ADKit, AuthFeature, OnboardingFeatureV2, MainTabFeature, MaintenanceFeature, Domain, Data, ThirdParty, Core, DSKit, React Native local package | 없음 |
 | Domain | framework | 없음 | 없음 |
 | Data | framework | Domain, Core, ThirdParty | `DataTests` |
 | Shared/Core | framework | Domain, ThirdParty | `CoreTests` |
@@ -70,6 +71,7 @@ Projects
 | MapFeature | staticFramework | Domain, DSKit, Core, SheetKit, ThirdParty | Demo |
 | SearchFeature | staticFramework | Domain, DSKit, Core, ThirdParty | 없음 |
 | Auth, Onboarding, Review Feature | staticFramework | Domain, DSKit, ThirdParty | 없음 (Demo 주석 처리) |
+| OnboardingFeatureV2 | staticFramework | Domain, DSKit, ThirdParty | Demo, `OnboardingFeatureV2Tests` |
 | MaintenanceFeature | staticFramework | DSKit | Demo |
 | PopPangRNFeature | framework | ThirdParty, React Native local package | 없음 |
 
@@ -155,7 +157,7 @@ Projects
 flowchart TD
     App --> MainTabFeature
     App --> AuthFeature
-    App --> OnboardingFeature
+    App --> OnboardingFeatureV2
     App --> Data
     MainTabFeature --> TabFeatures["Tab·상세 Features"]
     TabFeatures --> Domain

@@ -70,7 +70,7 @@ public struct SocialLoginButton: View {
     public init(
         type: SocialType,
         size: CGFloat = 20,
-        cornerRadius: CGFloat = 5,
+        cornerRadius: CGFloat = 15,
         action: @escaping () -> Void
     ) {
         self.type = type

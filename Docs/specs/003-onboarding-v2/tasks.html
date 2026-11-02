@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>온보딩 화면 V2 디자인 개발 순서와 체크리스트</title>
+<style>
+:root { color-scheme: light dark; --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --line: #d1d9e0; --code: #f6f8fa; --accent: #0969da; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --line: #3d444d; --code: #151b23; --accent: #4493f8; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.65 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", sans-serif; }
+main { max-width: 920px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 1.8em; border-bottom: 1px solid var(--line); padding-bottom: .3em; }
+h2 { font-size: 1.35em; border-bottom: 1px solid var(--line); padding-bottom: .25em; margin-top: 2em; }
+a { color: var(--accent); }
+code { background: var(--code); padding: .15em .35em; border-radius: 4px; font-size: .9em; }
+pre { background: var(--code); padding: 12px 14px; border-radius: 6px; overflow-x: auto; }
+pre code { background: none; padding: 0; }
+table { border-collapse: collapse; display: block; overflow-x: auto; margin: 12px 0; }
+th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; vertical-align: top; }
+blockquote { margin: 0; padding: 0 1em; color: var(--muted); border-left: 4px solid var(--line); }
+li.task { list-style: none; margin-left: -1.3em; }
+.generated { color: var(--muted); font-size: .85em; }
+</style>
+</head>
+<body>
+<main>
+<p class="generated">spec_tool.py가 tasks.md로 만든 파일이에요. 직접 고치지 말고 Markdown을 고친 뒤 다시 만들어 주세요.</p>
+<h1 id="온보딩-화면-v2-디자인-개발-순서와-체크리스트">온보딩 화면 V2 디자인 개발 순서와 체크리스트</h1>
+<ul><li>스펙: <a href="spec.html">spec.md</a> · 진행 기록: <a href="log.html">log.md</a></li></ul>
+<h2 id="단계-목록">단계 목록</h2>
+<ul><li class="task"><input type="checkbox" disabled checked> S01 OnboardingFeatureV2 모듈을 만들고 앱을 V2로 바꾸기 (화면은 기존과 같음)</li><li class="task"><input type="checkbox" disabled checked> S02 새 디자인 화면 3장 (에셋, 색, 문구, 화살표 버튼)</li><li class="task"><input type="checkbox" disabled checked> S03 작은 화면 대응, 문서 갱신, 전체 검증</li></ul>
+<p>공통 명령의 <code>&lt;sim&gt;</code>은 <code>id=7AD2920B-36F6-4B7A-B3B9-14DEE96A5F74</code>다. <code>xcodebuild</code> 전에는 <code>mise exec -- tuist generate --no-open</code>을 먼저 실행한다.</p>
+<h2 id="s01-onboardingfeaturev2-모듈을-만들고-앱을-v2로-바꾸기-화면은-기존과-같음">S01 OnboardingFeatureV2 모듈을 만들고 앱을 V2로 바꾸기 (화면은 기존과 같음)</h2>
+<ul><li>요구사항: R6</li><li>결정: D-1, D-2</li><li>할 일:<ul><li>main에서 이슈를 만들고 자동으로 생긴 이슈 브랜치로 옮긴다.</li><li><code>Projects/Features/OnboardingFeatureV2</code>를 만든다. 타깃: <code>OnboardingFeatureV2</code>(staticFramework), <code>OnboardingFeatureV2Demo</code>, <code>OnboardingFeatureV2Tests</code>. 의존성은 기존 모듈과 같다(Domain, DSKit, ThirdParty).</li><li>기존 <code>OnboardingFeature.swift</code>, <code>OnboardingFeatureView.swift</code>, <code>Localizable.xcstrings</code>를 그대로 복사한다. 타입 이름은 바꾸지 않는다.</li><li><code>Projects/App/Project.swift</code>와 <code>8. AppFeature.swift</code>(및 온보딩을 import하는 앱 파일)를 <code>OnboardingFeatureV2</code>로 바꾼다. 기존 모듈은 지우지 않는다.</li><li><code>OnboardingFeatureV2Tests</code>: 다음 → 다음 단계, 마지막 다음 → <code>authRequested</code>, 건너뛰기 → <code>authRequested</code>, <code>stepChanged</code>.</li></ul></li><li>바꿀 파일:<ul><li><code>Projects/Features/OnboardingFeatureV2/Project.swift</code> (새 파일)</li><li><code>Projects/Features/OnboardingFeatureV2/Sources/Presentation/OnboardingFeature.swift</code> (새 파일)</li><li><code>Projects/Features/OnboardingFeatureV2/Sources/Presentation/OnboardingFeatureView.swift</code> (새 파일)</li><li><code>Projects/Features/OnboardingFeatureV2/Resources/Localizable.xcstrings</code> (새 파일)</li><li><code>Projects/Features/OnboardingFeatureV2/Demo/Sources/OnboardingFeatureV2DemoApp.swift</code> (새 파일)</li><li><code>Projects/Features/OnboardingFeatureV2/Tests/OnboardingFeatureV2Tests.swift</code> (새 파일)</li><li><code>Projects/App/Project.swift</code>, <code>Projects/App/Sources/AppCore/Navigation/8. AppFeature.swift</code></li><li><code>Workspace.swift</code> (모듈 목록이 있으면)</li></ul></li><li>완료 조건:<ul><li><code>xcodebuild test -workspace PopPang.xcworkspace -scheme OnboardingFeatureV2 -destination &lt;sim&gt; -only-testing:OnboardingFeatureV2Tests</code> → 기대: 4개 통과 (이 단계 전에는 scheme이 없어 실패)</li><li><code>rg -n &quot;import OnboardingFeature$&quot; Projects/App</code> → 기대: 결과 없음</li><li><code>xcodebuild build -workspace PopPang.xcworkspace -scheme PopPangApp -destination &lt;sim&gt;</code> → 기대: BUILD SUCCEEDED</li><li>확인할 동작: 시뮬레이터에서 앱을 지우고 새로 설치하면 기존과 같은 온보딩이 나오고, 시작하기를 누르면 로그인 화면이 나온다</li></ul></li></ul>
+<h2 id="s02-새-디자인-화면-3장-에셋-색-문구-화살표-버튼">S02 새 디자인 화면 3장 (에셋, 색, 문구, 화살표 버튼)</h2>
+<ul><li>요구사항: R1, R2, R3, R4, R5, R7</li><li>결정: D-3, D-4, D-5</li><li>할 일:<ul><li>피그마에서 카드 PNG 3장(@2x, @3x)과 아이콘·화살표 SVG 4개를 받아 DSKit <code>Assets.xcassets/OnboardingV2/</code>에 넣는다. 이름은 spec.md 데이터 모델 표를 따른다.</li><li>DSKit <code>UIConstants.swift</code>에 <code>onboardingGray</code>, <code>onboardingCard</code>, <code>onboardingBody</code>, <code>onboardingDot</code>을 추가한다.</li><li><code>OnboardingFeatureView</code>를 새 배치로 바꾼다: 건너뛰기 줄 → 그림 카드 → 아이콘·제목·설명(왼쪽 정렬) → 점 → 버튼. 값은 spec.md 피그마 값 표를 따른다.</li><li>V2 모듈 안에 <code>OnboardingNextButton</code>을 만든다: 모서리 10, 높이 52, Medium 15, 화살표 24. 마지막 화면은 "시작하기"이고 화살표가 없다.</li><li><code>OnboardingStep</code>의 아이콘·카드·문구를 새 것으로 바꾸고, 새 문구 ko·en·ja를 <code>Localizable.xcstrings</code>에 넣는다. 쓰지 않는 옛 문구는 V2 카탈로그에서 지운다.</li><li>테스트: <code>OnboardingStep</code>의 카드·아이콘 이름이 DSKit 에셋에 있는지 확인하는 테스트를 더한다.</li></ul></li><li>바꿀 파일:<ul><li><code>Projects/Shared/DSKit/Resources/Assets.xcassets/OnboardingV2/</code> (새 폴더)</li><li><code>Projects/Shared/DSKit/Sources/Support/UIConstants.swift</code></li><li><code>Projects/Features/OnboardingFeatureV2/Sources/Presentation/OnboardingFeatureView.swift</code></li><li><code>Projects/Features/OnboardingFeatureV2/Sources/Presentation/OnboardingNextButton.swift</code> (새 파일)</li><li><code>Projects/Features/OnboardingFeatureV2/Resources/Localizable.xcstrings</code></li><li><code>Projects/Features/OnboardingFeatureV2/Tests/OnboardingFeatureV2Tests.swift</code></li></ul></li><li>완료 조건:<ul><li><code>xcodebuild test -workspace PopPang.xcworkspace -scheme OnboardingFeatureV2 -destination &lt;sim&gt; -only-testing:OnboardingFeatureV2Tests</code> → 기대: 에셋 확인 테스트를 포함해 통과 (이 단계 전에는 에셋이 없어 실패)</li><li><code>rg -n &quot;figma.com/api/mcp/asset&quot; Projects</code> → 기대: 결과 없음 (임시 주소를 코드에 남기지 않음)</li><li><code>xcodebuild build -workspace PopPang.xcworkspace -scheme PopPangApp -destination &lt;sim&gt;</code> → 기대: BUILD SUCCEEDED</li><li>확인할 동작: iPhone 17 시뮬레이터에서 3장이 피그마 화면과 같아 보이고, 영어·일본어(<code>-AppleLanguages</code>)에서 새 번역이 나온다</li></ul></li></ul>
+<h2 id="s03-작은-화면-대응-문서-갱신-전체-검증">S03 작은 화면 대응, 문서 갱신, 전체 검증</h2>
+<ul><li>요구사항: R1, R6</li><li>할 일:<ul><li>화면 높이가 작으면 그림 카드 높이를 줄여 버튼이 잘리지 않게 한다 (A-1).</li><li><code>Docs/architecture</code>의 모듈 목록·의존성 표에 <code>OnboardingFeatureV2</code>를 더하고, 앱이 V2를 쓴다고 적는다.</li><li><code>Docs/development/testing.md</code>에 <code>OnboardingFeatureV2Tests</code> 줄을 더한다.</li><li>전체 테스트와 빌드를 다시 돌리고, 직접 확인할 동작을 사용자에게 요청한다.</li></ul></li><li>바꿀 파일:<ul><li><code>Projects/Features/OnboardingFeatureV2/Sources/Presentation/OnboardingFeatureView.swift</code></li><li><code>Docs/architecture/</code> 의 모듈 문서</li><li><code>Docs/development/testing.md</code></li></ul></li><li>완료 조건:<ul><li><code>rg -n &quot;OnboardingFeatureV2&quot; Docs/architecture Docs/development/testing.md</code> → 기대: 결과 있음 (이 단계 전에는 없음)</li><li><code>xcodebuild test -workspace PopPang.xcworkspace -scheme OnboardingFeatureV2 -destination &lt;sim&gt; -only-testing:OnboardingFeatureV2Tests</code> → 기대: 통과</li><li><code>mise exec -- tuist test Data</code> (또는 건너뛰면 <code>xcodebuild test -scheme Data</code>) → 기대: 통과</li><li><code>xcodebuild build -workspace PopPang.xcworkspace -scheme PopPangApp -destination &lt;sim&gt;</code> → 기대: BUILD SUCCEEDED</li><li>확인할 동작: iPhone SE(3세대) 시뮬레이터에서 3장 모두 버튼과 글자가 잘리지 않는다</li></ul></li></ul>
+</main>
+</body>
+</html>

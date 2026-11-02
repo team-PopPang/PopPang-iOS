@@ -37,4 +37,12 @@ public extension Color {
     static let mainGray7 = Color(hex: "#F3F4F6")
     static let mainGray8 = Color(hex: "#DDDDDD")
     static let mainGray9 = Color(hex: "#666666")
+    /// 온보딩 V2 건너뛰기 글자
+    static let onboardingGray = Color(hex: "#8B8B8B")
+    /// 온보딩 V2 그림 카드 배경
+    static let onboardingCard = Color(hex: "#FEF2E7")
+    /// 온보딩 V2 설명 글자
+    static let onboardingBody = Color(hex: "#555555")
+    /// 온보딩 V2 현재가 아닌 페이지 점
+    static let onboardingDot = Color(hex: "#D9D9D9")
 }

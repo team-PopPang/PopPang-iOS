@@ -3,7 +3,7 @@ import AuthFeature
 import Core
 import Domain
 import MaintenanceFeature
-import OnboardingFeature
+import OnboardingFeatureV2
 import MainTabFeature
 
 /// 앱 최상위에서 표시할 화면
