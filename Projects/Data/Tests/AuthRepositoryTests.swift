@@ -206,6 +206,63 @@ struct AuthRepositoryTests {
         #expect(list.map(\.recommendName) == ["패션", "뷰티"])
     }
 
+    @Test("S02 가입 화면의 닉네임 추천은 V2 경로에 가입 전용 토큰으로 GET 한다")
+    func s02NicknameRecommendationRequestUsesSignupToken() throws {
+        let request = try urlRequest(for: .signupNicknameRecommendation)
+
+        #expect(request.url?.path == "/api/v2/user/nickname/recommendation")
+        #expect(request.httpMethod == "GET")
+        #expect(request.httpBody == nil)
+        #expect(AuthAPI.signupNicknameRecommendation.resolvedAuthorization == .signup)
+    }
+
+    @Test("S02 가입 화면의 닉네임 추천은 감싼 응답에서 닉네임을 읽고 가입 전용 토큰을 보낸다")
+    func s02RecommendSignupNicknameReadsWrappedResponse() async throws {
+        let context = Context(responses: [(200, #"{"success":true,"code":0,"message":"요청 성공!","data":{"nickname":"설레는수달"}}"#)])
+        try context.storage.saveSignupToken("signup")
+
+        #expect(try await context.repository.recommendSignupNickname() == "설레는수달")
+        #expect(context.stub.authorizationHeaders == ["Bearer signup"])
+    }
+
+    @Test("S02 닉네임 추천에 실패하면(503/4208) 가입 전용 토큰을 두고 일반 실패로 알린다")
+    func s02RecommendSignupNicknameFailure() async throws {
+        let context = Context(responses: [(503, Fixture.error(4208))])
+        try context.storage.saveSignupToken("signup")
+
+        await #expect(throws: AuthError.failed) {
+            _ = try await context.repository.recommendSignupNickname()
+        }
+        #expect(context.storage.loadSignupToken() == "signup")
+    }
+
+    @Test("S04 가입 화면의 인기 키워드는 V2 경로에 가입 전용 토큰으로 GET 한다")
+    func s04PopularKeywordsRequestUsesSignupToken() throws {
+        let request = try urlRequest(for: .popularAlertKeywords)
+
+        #expect(request.url?.path == "/api/v2/alert-keyword/popular")
+        #expect(request.httpMethod == "GET")
+        #expect(request.httpBody == nil)
+        #expect(AuthAPI.popularAlertKeywords.resolvedAuthorization == .signup)
+    }
+
+    @Test("S04 인기 키워드는 감싼 응답의 배열에서 키워드만 순서대로 읽는다")
+    func s04FetchPopularKeywordsReadsWrappedArray() async throws {
+        let context = Context(responses: [(200, #"{"success":true,"code":0,"message":"요청 성공!","data":[{"alertKeyword":"두쫀쿠"},{"alertKeyword":"짱구"}]}"#)])
+        try context.storage.saveSignupToken("signup")
+
+        #expect(try await context.repository.fetchPopularKeywords() == ["두쫀쿠", "짱구"])
+        #expect(context.stub.authorizationHeaders == ["Bearer signup"])
+    }
+
+    @Test("S04 인기 키워드가 없으면 빈 배열을 돌려준다")
+    func s04FetchPopularKeywordsReadsEmptyArray() async throws {
+        let context = Context(responses: [(200, #"{"success":true,"code":0,"message":"요청 성공!","data":[]}"#)])
+        try context.storage.saveSignupToken("signup")
+
+        #expect(try await context.repository.fetchPopularKeywords() == [])
+    }
+
     @Test(
         "가입 화면 요청이 가입 단계 만료를 받으면 가입 전용 토큰을 지우고 로그인부터 다시 하게 한다",
         arguments: [5002, 5014, 5006]

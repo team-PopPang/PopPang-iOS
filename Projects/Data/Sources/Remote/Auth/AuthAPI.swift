@@ -17,6 +17,15 @@ public enum AuthAPI {
     /// 권한은 위와 같이 Signup Token을 허용한다. 성공 응답은 명세상 V1과 같은 감싸지 않은 배열(`wrapper NONE → NONE`)이라
     /// `asyncRequest(_:decodeTo:)`로 읽는다.
     case signupRecommendList
+    /// 가입 화면의 랜덤 닉네임 추천 (`GET /api/v2/user/nickname/recommendation`)
+    ///
+    /// Access Token이나 최신 Signup Token으로 부른다. 추천은 예약이 아니라서 가입할 때 서버가 중복을 다시 확인한다.
+    /// 추천에 실패하면 503/4208을 준다.
+    case signupNicknameRecommendation
+    /// 가입 화면 키워드 단계의 인기 키워드 (`GET /api/v2/alert-keyword/popular`)
+    ///
+    /// Access Token이나 최신 Signup Token으로 부른다. 최대 6개를 감싼 응답 `data: [{ alertKeyword }]`로 주고, 빈 배열일 수 있다.
+    case popularAlertKeywords
     /// 로그아웃. 기기의 토큰을 먼저 지운 뒤 보내므로 저장소 대신 꺼내 둔 Access Token을 직접 담는다.
     case logout(accessToken: String)
     case me
@@ -31,7 +40,7 @@ extension AuthAPI: BaseAPI {
         switch self {
         case .login, .logout:
             return .none
-        case .signup, .signupNicknameDuplicated, .signupRecommendList:
+        case .signup, .signupNicknameDuplicated, .signupRecommendList, .signupNicknameRecommendation, .popularAlertKeywords:
             return .signup
         case .me:
             return .access
@@ -48,6 +57,10 @@ extension AuthAPI: BaseAPI {
             return "/user/nickname/duplicated"
         case .signupRecommendList:
             return "/recommend"
+        case .signupNicknameRecommendation:
+            return "/user/nickname/recommendation"
+        case .popularAlertKeywords:
+            return "/alert-keyword/popular"
         case .logout:
             return "/auth/logout"
         case .me:
@@ -57,7 +70,7 @@ extension AuthAPI: BaseAPI {
 
     public var method: Moya.Method {
         switch self {
-        case .me, .signupNicknameDuplicated, .signupRecommendList:
+        case .me, .signupNicknameDuplicated, .signupRecommendList, .signupNicknameRecommendation, .popularAlertKeywords:
             return .get
         case .login, .signup, .logout:
             return .post
@@ -90,7 +103,7 @@ extension AuthAPI: BaseAPI {
             return .requestJSONEncodable(request)
         case .signupNicknameDuplicated(let nickname):
             return .requestParameters(parameters: ["nickname": nickname], encoding: URLEncoding.queryString)
-        case .logout, .me, .signupRecommendList:
+        case .logout, .me, .signupRecommendList, .signupNicknameRecommendation, .popularAlertKeywords:
             return .requestPlain
         }
     }

@@ -93,6 +93,24 @@ public final class AuthRepositoryImpl: AuthRepositoryProtocol {
         }
     }
 
+    public func recommendSignupNickname() async throws -> String {
+        try await signupRequest {
+            try await makeProvider().asyncRequest(
+                .signupNicknameRecommendation,
+                decodeDataTo: NicknameRecommendationDTO.self
+            ).nickname
+        }
+    }
+
+    public func fetchPopularKeywords() async throws -> [String] {
+        try await signupRequest {
+            try await makeProvider().asyncRequest(
+                .popularAlertKeywords,
+                decodeDataTo: [PopularAlertKeywordDTO].self
+            ).map(\.alertKeyword)
+        }
+    }
+
     public func restoreSession() async throws -> User? {
         // 가입 도중 앱을 다시 켰다면 가입 전용 토큰은 이미 만료됐을 수 있어 소셜 로그인부터 다시 한다.
         tokenStorage.removeSignupToken()
