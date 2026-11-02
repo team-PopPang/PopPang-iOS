@@ -1,7 +1,7 @@
 import ComposableArchitecture
 import Core
 import Foundation
-import AuthFeature
+import AuthFeatureV2
 import Data
 import MainTabFeature
 
@@ -89,6 +89,7 @@ struct AppBootstrap {
             )
             mainTabFeatureDependencies.configure(&$0)
             $0.authFeatureClient = .live(authUsecase: dependencies.usecases.authUsecase)
+            $0.notificationPermissionClient = .live
         }
     }
 }

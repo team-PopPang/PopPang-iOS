@@ -1,4 +1,4 @@
-import AuthFeature
+import AuthFeatureV2
 import ComposableArchitecture
 import DSKit
 import MaintenanceFeature
