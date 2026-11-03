@@ -28,6 +28,13 @@ let project = Project(
             deploymentTargets: .iOS("17.0"),
             infoPlist: .extendingDefault(
                 with: [
+                    // 본 앱과 같은 언어 목록. 없으면 iOS가 데모 앱을 영어 앱으로 보고 문구를 영어로 띄운다.
+                    "CFBundleAllowMixedLocalizations": true,
+                    "CFBundleLocalizations": [
+                        "ko",
+                        "en",
+                        "ja",
+                    ],
                     "UILaunchScreen": [
                         "UIColorName": "",
                         "UIImageName": "",

@@ -12,14 +12,18 @@ public struct RegisterFlowFeature {
         public var nickname = ""
         public var validationState: NicknameValidationState = .none
         public var recommendList: [Recommend] = []
+        /// 카테고리 목록을 받지 못했다. 카테고리 단계에 "다시 시도"를 보여 준다.
+        public var isRecommendListLoadFailed = false
         public var selectedCategories: [Int] = []
         public var keywords: [String] = []
         public var keywordInput = ""
+        /// 키워드를 5개 넘게 더하려고 할 때 띄우는 제한 알림
+        public var isKeywordLimitAlertPresented = false
         /// 키워드 단계의 "많이 등록한 키워드". 받지 못했거나 비어 있으면 화면에서 숨긴다.
         public var popularKeywords: [String] = []
         /// 인기 키워드는 가입 흐름에 들어올 때 한 번만 받는다. 빈 배열이어도 다시 받지 않는다.
         public var hasRequestedPopularKeywords = false
-        /// 가입에 성공한 사용자. 완료 화면의 버튼을 누를 때 `completed`로 넘긴다.
+        /// 가입에 성공한 사용자. 완료 화면의 "시작하기"를 누를 때 `completed`로 넘긴다.
         public var signedUpUser: User?
         public var isSubmitting = false
         public var errorMessage: String?
@@ -34,25 +38,27 @@ public struct RegisterFlowFeature {
     public enum Action {
         case onAppear
         case recommendListResponse(Result<[Recommend], Error>)
+        case retryRecommendListTapped
         case backTapped
         case skipTapped
         case nicknameChanged(String)
         case recommendNicknameTapped
         case nicknameRecommendationResponse(Result<String, Error>)
         case validateNicknameTapped
-        case validateNicknameResponse(Result<Bool, Error>)
+        /// `nickname`은 확인을 요청한 닉네임이다. 그 사이 입력이 바뀌었으면 결과를 버린다.
+        case validateNicknameResponse(nickname: String, Result<Bool, Error>)
         case nextFromNicknameTapped
         case categoryToggled(Int)
         case nextFromCategoryTapped
         case keywordInputChanged(String)
         case keywordAdded(String)
         case keywordRemoved(Int)
+        case keywordLimitAlertDismissed
         case popularKeywordsResponse(Result<[String], Error>)
         case popularKeywordTapped(String)
         case completeRegistrationTapped
         case completeRegistrationResponse(Result<User, Error>)
         case startTapped
-        case notificationPermissionResponse(Bool)
         case delegate(Delegate)
 
         public enum Delegate: Equatable {
@@ -63,7 +69,6 @@ public struct RegisterFlowFeature {
     }
 
     @Dependency(\.authFeatureClient) private var authFeatureClient: AuthFeatureClient
-    @Dependency(\.notificationPermissionClient) private var notificationPermissionClient
 
     private enum CancelID {
         case nicknameRecommendation
@@ -84,15 +89,8 @@ public struct RegisterFlowFeature {
                     effects.append(recommendNickname())
                 }
                 if state.recommendList.isEmpty {
-                    state.errorMessage = nil
-                    effects.append(.run { [authFeatureClient] send in
-                        do {
-                            let recommendList = try await authFeatureClient.getRecommendList()
-                            await send(.recommendListResponse(.success(recommendList)))
-                        } catch {
-                            await send(.recommendListResponse(.failure(error)))
-                        }
-                    })
+                    state.isRecommendListLoadFailed = false
+                    effects.append(fetchRecommendList())
                 }
                 if !state.hasRequestedPopularKeywords {
                     state.hasRequestedPopularKeywords = true
@@ -106,14 +104,20 @@ public struct RegisterFlowFeature {
 
             case .recommendListResponse(.success(let recommendList)):
                 state.recommendList = recommendList
+                state.isRecommendListLoadFailed = false
                 return .none
 
             case .recommendListResponse(.failure(let error)):
                 if (error as? AuthError) == .signupSessionExpired {
                     return .send(.delegate(.loginRequired(errorMessage: AuthErrorMessage.signupSessionExpired)))
                 }
-                state.errorMessage = AuthErrorMessage.recommendListLoadFailed
+                // 닉네임 화면이 아니라 목록이 필요한 카테고리 단계에서 안내하고 다시 받게 한다.
+                state.isRecommendListLoadFailed = true
                 return .none
+
+            case .retryRecommendListTapped:
+                state.isRecommendListLoadFailed = false
+                return fetchRecommendList()
 
             case .backTapped:
                 switch state.currentStep {
@@ -178,21 +182,27 @@ public struct RegisterFlowFeature {
                 state.validationState = .checking
                 state.errorMessage = nil
                 let nickname = state.nickname
-                return .run { [authFeatureClient] send in
-                    do {
-                        let isDuplicated = try await authFeatureClient.checkNickname(nickname)
-                        await send(.validateNicknameResponse(.success(isDuplicated)))
-                    } catch {
-                        await send(.validateNicknameResponse(.failure(error)))
+                return .merge(
+                    // 확인하는 동안 늦게 도착한 추천 닉네임이 입력칸을 덮어쓰지 않게 한다.
+                    .cancel(id: CancelID.nicknameRecommendation),
+                    .run { [authFeatureClient] send in
+                        await send(.validateNicknameResponse(nickname: nickname, Result {
+                            try await authFeatureClient.checkNickname(nickname)
+                        }))
                     }
-                }
+                )
 
-            case .validateNicknameResponse(.success(let isDuplicated)):
+            case .validateNicknameResponse(let nickname, _) where nickname != state.nickname:
+                // 확인을 누른 뒤 닉네임을 고쳤다. 고친 닉네임은 아직 확인하지 않은 상태로 둔다.
+                state.isSubmitting = false
+                return .none
+
+            case .validateNicknameResponse(_, .success(let isDuplicated)):
                 state.isSubmitting = false
                 state.validationState = isDuplicated ? .duplicate : .success
                 return .none
 
-            case .validateNicknameResponse(.failure(let error)):
+            case .validateNicknameResponse(_, .failure(let error)):
                 state.isSubmitting = false
                 state.validationState = .none
                 if (error as? AuthError) == .signupSessionExpired {
@@ -233,6 +243,10 @@ public struct RegisterFlowFeature {
             case .popularKeywordTapped(let keyword):
                 // 직접 추가와 같은 규칙(5개, 중복)을 따르고, 입력 중인 글자는 그대로 둔다.
                 _ = Self.appendKeyword(keyword, to: &state)
+                return .none
+
+            case .keywordLimitAlertDismissed:
+                state.isKeywordLimitAlertPresented = false
                 return .none
 
             case .popularKeywordsResponse(.success(let keywords)):
@@ -281,15 +295,7 @@ public struct RegisterFlowFeature {
                 return .none
 
             case .startTapped:
-                guard state.signedUpUser != nil, !state.isSubmitting else { return .none }
-                state.isSubmitting = true
-                return .run { [notificationPermissionClient] send in
-                    await send(.notificationPermissionResponse(notificationPermissionClient.request()))
-                }
-
-            case .notificationPermissionResponse:
-                // 허용·거부와 관계없이 메인으로 간다. 거부했어도 설정 이동을 안내하지 않는다 (A-5).
-                state.isSubmitting = false
+                // 알림 권한은 앱을 시작할 때 묻는다. 여기서는 따로 묻지 않고 바로 메인으로 간다 (D-6).
                 guard let user = state.signedUpUser else { return .none }
                 return .send(.delegate(.completed(user)))
 
@@ -302,9 +308,11 @@ public struct RegisterFlowFeature {
                     return .send(.delegate(.loginRequired(errorMessage: AuthErrorMessage.signup(for: AuthError.inactiveAccount))))
                 case .duplicateNickname:
                     // 닉네임 화면으로 돌아가 다른 닉네임을 입력하게 한다.
+                    // 중복 안내는 닉네임 확인 문구가 보여 주므로 같은 뜻의 빨간 문구를 더하지 않는다.
                     state.currentStep = .nickname
                     state.isForward = false
                     state.validationState = .duplicate
+                    return .none
                 default:
                     break
                 }
@@ -332,6 +340,14 @@ public enum RegisterRoute: Int, CaseIterable, Hashable, Sendable {
 }
 
 private extension RegisterFlowFeature {
+    func fetchRecommendList() -> Effect<Action> {
+        .run { [authFeatureClient] send in
+            await send(.recommendListResponse(Result {
+                try await authFeatureClient.getRecommendList()
+            }))
+        }
+    }
+
     func recommendNickname() -> Effect<Action> {
         .run { [authFeatureClient] send in
             await send(.nicknameRecommendationResponse(Result {
@@ -341,13 +357,16 @@ private extension RegisterFlowFeature {
         .cancellable(id: CancelID.nicknameRecommendation, cancelInFlight: true)
     }
 
-    /// 키워드를 내 키워드 끝에 더한다. 비었거나, 이미 5개이거나, 같은 키워드가 있으면 더하지 않는다.
+    /// 키워드를 내 키워드 끝에 더한다. 비었거나 같은 키워드가 있으면 더하지 않는다.
+    /// 이미 5개면 더하지 않고 제한 알림을 띄운다.
     static func appendKeyword(_ keyword: String, to state: inout State) -> Bool {
         let trimmed = keyword.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty,
-              state.keywords.count < maxKeywordCount,
-              !state.keywords.contains(trimmed)
-        else { return false }
+        guard !trimmed.isEmpty else { return false }
+        guard state.keywords.count < maxKeywordCount else {
+            state.isKeywordLimitAlertPresented = true
+            return false
+        }
+        guard !state.keywords.contains(trimmed) else { return false }
         state.keywords.append(trimmed)
         return true
     }

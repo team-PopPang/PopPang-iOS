@@ -89,7 +89,6 @@ struct AppBootstrap {
             )
             mainTabFeatureDependencies.configure(&$0)
             $0.authFeatureClient = .live(authUsecase: dependencies.usecases.authUsecase)
-            $0.notificationPermissionClient = .live
         }
     }
 }

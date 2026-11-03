@@ -67,7 +67,9 @@ public struct RegisterFlowFeatureView: View {
                 CategorySettingStepView(
                     recommendList: store.recommendList,
                     selectedCategories: store.selectedCategories,
+                    isLoadFailed: store.isRecommendListLoadFailed,
                     onToggle: { store.send(.categoryToggled($0)) },
+                    onRetry: { store.send(.retryRecommendListTapped) },
                     onNext: {
                         store.send(.nextFromCategoryTapped)
                     }
@@ -87,6 +89,10 @@ public struct RegisterFlowFeatureView: View {
                     onAddKeyword: { store.send(.keywordAdded($0)) },
                     onAddPopularKeyword: { store.send(.popularKeywordTapped($0)) },
                     onRemoveKeyword: { store.send(.keywordRemoved($0)) },
+                    isLimitAlertPresented: Binding(
+                        get: { store.isKeywordLimitAlertPresented },
+                        set: { if !$0 { store.send(.keywordLimitAlertDismissed) } }
+                    ),
                     onSkip: { store.send(.skipTapped) },
                     onNext: {
                         store.send(.completeRegistrationTapped)
@@ -98,7 +104,7 @@ public struct RegisterFlowFeatureView: View {
                 RegisterCompleteStepView(
                     nickname: store.signedUpUser?.nickname ?? store.nickname,
                     interestSummary: interestSummary,
-                    isSubmitting: store.isSubmitting,
+                    hasKeywords: !store.keywords.isEmpty,
                     onStart: { store.send(.startTapped) }
                 )
                 .frame(width: geo.size.width, height: geo.size.height)
@@ -272,7 +278,9 @@ private struct NicknameSettingStepView: View {
 private struct CategorySettingStepView: View {
     let recommendList: [Recommend]
     let selectedCategories: [Int]
+    let isLoadFailed: Bool
     let onToggle: (Int) -> Void
+    let onRetry: () -> Void
     let onNext: () -> Void
 
     private var isNextEnabled: Bool {
@@ -290,29 +298,28 @@ private struct CategorySettingStepView: View {
                     RegisterSectionLabel(text: "카테고리")
                         .padding(.top, RegisterLayout.sectionLabelTop)
 
-                    RegisterChipFlowLayout {
-                        ForEach(recommendList, id: \.id) { category in
-                            let isSelected = selectedCategories.contains(category.id)
-                            RegisterChip(
-                                text: isSelected ? "✓ \(category.recommendName)" : category.recommendName,
-                                style: isSelected ? .selected : .normal
-                            ) {
-                                onToggle(category.id)
+                    if recommendList.isEmpty, isLoadFailed {
+                        loadFailedView
+                            .padding(.top, RegisterLayout.chipsTop)
+                    } else {
+                        RegisterChipFlowLayout {
+                            ForEach(recommendList, id: \.id) { category in
+                                let isSelected = selectedCategories.contains(category.id)
+                                RegisterChip(
+                                    text: isSelected ? "✓ \(category.recommendName)" : category.recommendName,
+                                    style: isSelected ? .selected : .normal
+                                ) {
+                                    onToggle(category.id)
+                                }
                             }
                         }
+                        .padding(.top, RegisterLayout.chipsTop)
                     }
-                    .padding(.top, RegisterLayout.chipsTop)
                 }
                 .padding(.bottom, RegisterLayout.summaryBottom)
             }
             .scrollIndicators(.hidden)
             .scrollBounceBehavior(.basedOnSize)
-
-            Text("관심사 \(selectedCategories.count)개 선택됨", bundle: .module, comment: "Number of selected interest categories above the next button")
-                .ppStyleFont(.scdream(.light, size: 13), lineHeightPt: 16)
-                .foregroundStyle(Color.onboardingGray)
-                .frame(maxWidth: .infinity)
-                .padding(.bottom, RegisterLayout.summaryBottom)
 
             RegisterNextButton(
                 title: String(localized: "다음", bundle: .module),
@@ -326,6 +333,21 @@ private struct CategorySettingStepView: View {
         }
         .padding(.horizontal, RegisterLayout.screenHorizontal)
     }
+
+    /// 카테고리 목록을 받지 못하면 칩 자리에 안내와 "다시 시도"를 보여 준다. 카테고리를 골라야 다음으로 갈 수 있기 때문이다.
+    private var loadFailedView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(AuthErrorMessage.recommendListLoadFailed)
+                .ppStyleFont(.scdream(.extraBold, size: 13), lineHeightPt: 15.52)
+                .foregroundStyle(Color.mainRed)
+
+            RegisterChip(
+                text: String(localized: "다시 시도", bundle: .module, comment: "Button that loads the interest categories again after a failure"),
+                style: .normal,
+                action: onRetry
+            )
+        }
+    }
 }
 
 private struct KeywordSettingStepView: View {
@@ -338,10 +360,9 @@ private struct KeywordSettingStepView: View {
     let onAddKeyword: (String) -> Void
     let onAddPopularKeyword: (String) -> Void
     let onRemoveKeyword: (Int) -> Void
+    @Binding var isLimitAlertPresented: Bool
     let onSkip: () -> Void
     let onNext: () -> Void
-
-    @State private var showKeywordLimitAlert = false
 
     private var isNextEnabled: Bool { !keywords.isEmpty }
     private var maxCount: Int { RegisterFlowFeature.maxKeywordCount }
@@ -446,7 +467,7 @@ private struct KeywordSettingStepView: View {
             .padding(.horizontal, RegisterLayout.buttonHorizontal - RegisterLayout.screenHorizontal)
         }
         .padding(.horizontal, RegisterLayout.screenHorizontal)
-        .alert(Text("키워드 개수 제한", bundle: .module), isPresented: $showKeywordLimitAlert) {
+        .alert(Text("키워드 개수 제한", bundle: .module), isPresented: $isLimitAlertPresented) {
             Button(String(localized: "확인", bundle: .module), role: .cancel) {}
         } message: {
             Text("키워드는 최대 5개 까지만 등록 가능합니다.", bundle: .module)
@@ -480,13 +501,8 @@ private struct KeywordSettingStepView: View {
         .clipShape(RoundedRectangle(cornerRadius: RegisterLayout.fieldRadius))
     }
 
-    /// 5개를 넘으면 기존 제한 알림을 띄우고, 아니면 reducer에 맡긴다. 빈 칸·중복은 reducer가 무시한다.
+    /// 빈 칸·중복·5개 제한은 reducer가 판단한다. 5개를 넘으면 reducer가 제한 알림을 띄운다.
     private func add(_ keyword: String, clearsInput: Bool) {
-        guard !keyword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        guard keywords.count < maxCount else {
-            showKeywordLimitAlert = true
-            return
-        }
         if clearsInput {
             onAddKeyword(keyword)
         } else {

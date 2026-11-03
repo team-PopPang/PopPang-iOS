@@ -96,6 +96,30 @@
         }
       }
     },
+    "가고 싶은 팝업은 찜해 두세요" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Save popups you want to visit"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "行きたいポップアップは保存しておきましょう"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "가고 싶은 팝업은 찜해 두세요"
+          }
+        }
+      },
+      "comment" : "Sign-up complete card when the keyword step was skipped: save popups you want to visit"
+    },
     "가입 시간이 지났어요. 다시 로그인해 주세요." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -234,30 +258,6 @@
         }
       }
     },
-    "관심사 %lld개 선택됨" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "%lld interests selected"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "興味 %lld件 選択中"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "관심사 %lld개 선택됨"
-          }
-        }
-      },
-      "comment" : "Number of selected interest categories above the next button"
-    },
     "내 키워드" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -374,6 +374,30 @@
         }
       },
       "comment" : "Button that fills in another random nickname"
+    },
+    "다시 시도" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Try again"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "もう一度試す"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "다시 시도"
+          }
+        }
+      },
+      "comment" : "Button that loads the interest categories again after a failure"
     },
     "다음" : {
       "extractionState" : "manual",
@@ -492,29 +516,29 @@
       },
       "comment" : "Where to change alert settings later"
     },
-    "마지막 기회를 놓치지 않게" : {
+    "마이 > 키워드 알림에서 추가할 수 있어요" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "So you never miss the last chance"
+            "value" : "Add them in My > Keyword alerts"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "最後のチャンスを逃さないように"
+            "value" : "マイ > キーワード通知から追加できます"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "마지막 기회를 놓치지 않게"
+            "value" : "마이 > 키워드 알림에서 추가할 수 있어요"
           }
         }
       },
-      "comment" : "Description of the saved popup ending alert"
+      "comment" : "Where to add keywords later. 'My > Keyword alerts' is the profile menu name"
     },
     "많이 등록한 키워드" : {
       "extractionState" : "manual",
@@ -612,6 +636,30 @@
       },
       "comment" : "Shown when the nickname is not taken"
     },
+    "시작하기" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Get started"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "はじめる"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "시작하기"
+          }
+        }
+      },
+      "comment" : "Button on the sign-up complete screen that opens the main screen"
+    },
     "알림 받을 키워드를\n등록해주세요" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -635,30 +683,6 @@
         }
       },
       "comment" : "Title of the sign-up keyword step"
-    },
-    "알림 켜고 시작하기" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Turn on alerts and start"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "通知をオンにして始める"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "알림 켜고 시작하기"
-          }
-        }
-      },
-      "comment" : "Button on the sign-up complete screen that asks for notification permission and opens the main screen"
     },
     "어떤 팝업을\n좋아하세요?" : {
       "extractionState" : "manual",
@@ -824,30 +848,6 @@
       },
       "comment" : "First line of the sign-up complete title"
     },
-    "찜한 팝업 종료 하루 전 알림" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Alert one day before saved popups end"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "保存したポップアップ終了前日の通知"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "찜한 팝업 종료 하루 전 알림"
-          }
-        }
-      },
-      "comment" : "Benefit on the sign-up complete card: alert one day before a saved popup ends"
-    },
     "추가" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -896,6 +896,30 @@
       },
       "comment" : "Section label above the category chips"
     },
+    "캘린더에 한눈에 모아 드려요" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "See them all at a glance in the calendar"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "カレンダーにひと目でまとめます"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "캘린더에 한눈에 모아 드려요"
+          }
+        }
+      },
+      "comment" : "Saved popups are gathered in the calendar"
+    },
     "키워드 개수 제한" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -942,6 +966,30 @@
         }
       },
       "comment" : "Benefit on the sign-up complete card: alerts when a popup matching your keywords opens"
+    },
+    "키워드는 나중에 등록해도 돼요" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "You can add keywords later"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "キーワードは後で登録できます"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "키워드는 나중에 등록해도 돼요"
+          }
+        }
+      },
+      "comment" : "Sign-up complete card when the keyword step was skipped: keywords can be added later"
     },
     "키워드는 최대 5개 까지만 등록 가능합니다." : {
       "extractionState" : "manual",

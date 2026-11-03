@@ -153,24 +153,38 @@ struct RegisterFlowFeatureTests {
             $0.isSubmitting = true
             $0.validationState = .checking
         }
-        await store.receive(\.validateNicknameResponse.failure) {
+        await store.receive(\.validateNicknameResponse) {
             $0.isSubmitting = false
             $0.validationState = .none
         }
         await store.receive(\.delegate, .loginRequired(errorMessage: AuthErrorMessage.signupSessionExpired))
     }
 
-    @Test("관심 카테고리를 불러오지 못하면 안내한다")
-    func recommendListFailureShowsMessage() async {
+    @Test("관심 카테고리를 불러오지 못하면 카테고리 단계에 다시 시도를 보여 주고, 누르면 다시 받는다")
+    func recommendListFailureCanRetry() async {
+        let attempt = LockIsolated(0)
         let store = TestStore(initialState: makeState()) {
             RegisterFlowFeature()
         } withDependencies: {
-            $0.authFeatureClient = .mock(getRecommendList: { throw AuthError.failed })
+            $0.authFeatureClient = .mock(getRecommendList: {
+                let count = attempt.withValue { $0 += 1; return $0 }
+                if count == 1 { throw AuthError.failed }
+                return [Recommend(id: 1, recommendName: "디저트")]
+            })
         }
 
         await store.send(.onAppear)
         await store.receive(\.recommendListResponse.failure) {
-            $0.errorMessage = AuthErrorMessage.recommendListLoadFailed
+            $0.isRecommendListLoadFailed = true
+        }
+        // 닉네임 화면에는 안내하지 않는다.
+        #expect(store.state.errorMessage == nil)
+
+        await store.send(.retryRecommendListTapped) {
+            $0.isRecommendListLoadFailed = false
+        }
+        await store.receive(\.recommendListResponse.success) {
+            $0.recommendList = [Recommend(id: 1, recommendName: "디저트")]
         }
     }
 
@@ -191,9 +205,66 @@ struct RegisterFlowFeatureTests {
             $0.isSubmitting = false
             $0.currentStep = .nickname
             $0.isForward = false
+            // 중복 안내는 닉네임 확인 문구 하나만 보여 준다.
             $0.validationState = .duplicate
-            $0.errorMessage = AuthErrorMessage.signup(for: AuthError.duplicateNickname)
         }
+    }
+
+    @Test("닉네임 확인을 누른 뒤 닉네임을 고치면 늦게 온 확인 결과를 고친 닉네임에 붙이지 않는다")
+    func staleNicknameCheckIsIgnored() async {
+        let (gate, release) = AsyncStream.makeStream(of: Void.self)
+        var state = makeState()
+        state.nickname = "팝팡이"
+        let store = TestStore(initialState: state) {
+            RegisterFlowFeature()
+        } withDependencies: {
+            $0.authFeatureClient = .mock(checkNickname: { _ in
+                for await _ in gate { break }
+                return false
+            })
+        }
+
+        await store.send(.validateNicknameTapped) {
+            $0.isSubmitting = true
+            $0.validationState = .checking
+        }
+        await store.send(.nicknameChanged("팝팡이다")) {
+            $0.nickname = "팝팡이다"
+            $0.validationState = .none
+        }
+        release.yield()
+        await store.receive(\.validateNicknameResponse) {
+            $0.isSubmitting = false
+        }
+        #expect(store.state.validationState == .none)
+    }
+
+    @Test("닉네임 확인을 누르면 아직 오지 않은 추천 닉네임으로 입력칸을 덮어쓰지 않는다")
+    func validateCancelsPendingRecommendation() async {
+        var state = makeState()
+        state.nickname = "팝팡이"
+        let store = TestStore(initialState: state) {
+            RegisterFlowFeature()
+        } withDependencies: {
+            $0.authFeatureClient = .mock(
+                checkNickname: { _ in false },
+                recommendNickname: {
+                    try await Task.sleep(for: .seconds(60))
+                    return "설레는수달"
+                }
+            )
+        }
+
+        await store.send(.recommendNicknameTapped)
+        await store.send(.validateNicknameTapped) {
+            $0.isSubmitting = true
+            $0.validationState = .checking
+        }
+        await store.receive(\.validateNicknameResponse) {
+            $0.isSubmitting = false
+            $0.validationState = .success
+        }
+        #expect(store.state.nickname == "팝팡이")
     }
 
     @Test("S02 닉네임 화면에 들어오면 추천 닉네임을 채우고 바로 쓸 수 있다고 표시한다")
@@ -383,7 +454,7 @@ struct RegisterFlowFeatureTests {
         await store.send(.popularKeywordTapped("전시"))
     }
 
-    @Test("S04 내 키워드가 5개면 인기 키워드도 직접 입력도 더하지 않는다")
+    @Test("S04 내 키워드가 5개면 인기 키워드도 직접 입력도 더하지 않고 제한 알림을 띄운다")
     func s04KeywordLimitIsFive() async {
         var state = makeState()
         state.currentStep = .keyword
@@ -395,11 +466,18 @@ struct RegisterFlowFeatureTests {
         await store.send(.popularKeywordTapped("마")) {
             $0.keywords = ["가", "나", "다", "라", "마"]
         }
-        await store.send(.popularKeywordTapped("바"))
+        await store.send(.popularKeywordTapped("바")) {
+            $0.isKeywordLimitAlertPresented = true
+        }
+        await store.send(.keywordLimitAlertDismissed) {
+            $0.isKeywordLimitAlertPresented = false
+        }
         await store.send(.keywordInputChanged("사")) {
             $0.keywordInput = "사"
         }
-        await store.send(.keywordAdded("사"))
+        await store.send(.keywordAdded("사")) {
+            $0.isKeywordLimitAlertPresented = true
+        }
         #expect(store.state.keywords.count == RegisterFlowFeature.maxKeywordCount)
     }
 
@@ -444,30 +522,17 @@ struct RegisterFlowFeatureTests {
         await store.send(.backTapped)
     }
 
-    @Test("S05 알림 켜고 시작하기를 누르면 알림 권한을 물은 뒤 완료를 알린다", arguments: [true, false])
-    func s05StartRequestsPermissionThenCompletes(granted: Bool) async {
-        let requestCount = LockIsolated(0)
+    @Test("S05 시작하기를 누르면 알림 권한을 묻지 않고 바로 완료를 알린다")
+    func s05StartCompletesImmediately() async {
         var state = makeState()
         state.currentStep = .complete
         state.signedUpUser = .sample
         let store = TestStore(initialState: state) {
             RegisterFlowFeature()
-        } withDependencies: {
-            $0.notificationPermissionClient = NotificationPermissionClient(request: {
-                requestCount.withValue { $0 += 1 }
-                return granted
-            })
         }
 
-        await store.send(.startTapped) {
-            $0.isSubmitting = true
-        }
-        await store.receive(\.notificationPermissionResponse, granted) {
-            $0.isSubmitting = false
-        }
-        // 허용·거부와 관계없이 메인으로 간다.
+        await store.send(.startTapped)
         await store.receive(\.delegate, .completed(.sample))
-        #expect(requestCount.value == 1)
     }
 
     private func makeState() -> RegisterFlowFeature.State {

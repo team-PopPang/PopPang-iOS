@@ -6,7 +6,8 @@ struct RegisterCompleteStepView: View {
     let nickname: String
     /// 카드 1번 설명. 고른 카테고리와 키워드를 " · "로 이은 글이다.
     let interestSummary: String
-    let isSubmitting: Bool
+    /// 키워드를 하나 이상 등록했는지. 건너뛰었으면 알림이 꺼진 채 가입하므로 알림 대신 나중에 등록하는 방법과 찜을 안내한다.
+    let hasKeywords: Bool
     let onStart: () -> Void
 
     var body: some View {
@@ -30,8 +31,8 @@ struct RegisterCompleteStepView: View {
             Spacer(minLength: CompleteLayout.titleTop)
 
             RegisterNextButton(
-                title: String(localized: "알림 켜고 시작하기", bundle: .module, comment: "Button on the sign-up complete screen that asks for notification permission and opens the main screen"),
-                isEnabled: !isSubmitting,
+                title: String(localized: "시작하기", bundle: .module, comment: "Button on the sign-up complete screen that opens the main screen"),
+                isEnabled: true,
                 action: onStart
             )
             .padding(.horizontal, RegisterLayout.buttonHorizontal - RegisterLayout.screenHorizontal)
@@ -69,18 +70,28 @@ struct RegisterCompleteStepView: View {
 
     private var benefitCard: some View {
         VStack(alignment: .leading, spacing: CompleteLayout.itemSpacing) {
-            BenefitRow(
-                title: Text("키워드 팝업 오픈 알림", bundle: .module, comment: "Benefit on the sign-up complete card: alerts when a popup matching your keywords opens"),
-                description: Text(verbatim: interestSummary)
-            )
-            BenefitRow(
-                title: Text("찜한 팝업 종료 하루 전 알림", bundle: .module, comment: "Benefit on the sign-up complete card: alert one day before a saved popup ends"),
-                description: Text("마지막 기회를 놓치지 않게", bundle: .module, comment: "Description of the saved popup ending alert")
-            )
-            BenefitRow(
-                title: Text("받을 알림은 직접 고를 수 있어요", bundle: .module, comment: "Benefit on the sign-up complete card: you can choose which alerts to get"),
-                description: Text("마이 > 알림 설정에서 언제든 바꿀 수 있어요", bundle: .module, comment: "Where to change alert settings later")
-            )
+            if hasKeywords {
+                BenefitRow(
+                    title: Text("키워드 팝업 오픈 알림", bundle: .module, comment: "Benefit on the sign-up complete card: alerts when a popup matching your keywords opens"),
+                    description: Text(verbatim: interestSummary)
+                )
+                BenefitRow(
+                    title: Text("받을 알림은 직접 고를 수 있어요", bundle: .module, comment: "Benefit on the sign-up complete card: you can choose which alerts to get"),
+                    description: Text("마이 > 알림 설정에서 언제든 바꿀 수 있어요", bundle: .module, comment: "Where to change alert settings later"),
+                    prefersSingleLine: true
+                )
+            } else {
+                BenefitRow(
+                    title: Text("키워드는 나중에 등록해도 돼요", bundle: .module, comment: "Sign-up complete card when the keyword step was skipped: keywords can be added later"),
+                    description: Text("마이 > 키워드 알림에서 추가할 수 있어요", bundle: .module, comment: "Where to add keywords later. 'My > Keyword alerts' is the profile menu name"),
+                    prefersSingleLine: true
+                )
+                BenefitRow(
+                    title: Text("가고 싶은 팝업은 찜해 두세요", bundle: .module, comment: "Sign-up complete card when the keyword step was skipped: save popups you want to visit"),
+                    description: Text("캘린더에 한눈에 모아 드려요", bundle: .module, comment: "Saved popups are gathered in the calendar"),
+                    prefersSingleLine: true
+                )
+            }
         }
         .padding(CompleteLayout.cardPadding)
         .frame(maxWidth: CompleteLayout.cardMaxWidth, alignment: .leading)
@@ -96,6 +107,8 @@ struct RegisterCompleteStepView: View {
 private struct BenefitRow: View {
     let title: Text
     let description: Text
+    /// 피그마처럼 설명을 한 줄로 보여 준다. 폭이 모자란 화면(SE)에서는 12pt로 줄이고, 그래도 넘치면 두 줄로 둔다.
+    var prefersSingleLine = false
 
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
@@ -113,14 +126,26 @@ private struct BenefitRow: View {
                 title
                     .ppStyleFont(.scdream(.medium, size: 16), lineHeightPt: 19)
                     .foregroundStyle(Color.registerTitle)
-                description
-                    .ppStyleFont(.scdream(.light, size: 13), lineHeightPt: 15.5)
-                    .foregroundStyle(Color.onboardingGray)
+                if prefersSingleLine {
+                    ViewThatFits(in: .horizontal) {
+                        descriptionText(size: 13).lineLimit(1)
+                        descriptionText(size: 12).lineLimit(1)
+                        descriptionText(size: 13)
+                    }
+                } else {
+                    descriptionText(size: 13)
+                }
             }
             .padding(.top, 2)
             .fixedSize(horizontal: false, vertical: true)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    private func descriptionText(size: CGFloat) -> some View {
+        description
+            .ppStyleFont(.scdream(.light, size: size), lineHeightPt: 15.5)
+            .foregroundStyle(Color.onboardingGray)
     }
 }
 

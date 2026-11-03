@@ -41,7 +41,6 @@ struct AuthFeatureV2DemoApp: App {
                             ["소금빵", "베이글", "산리오", "포켓몬", "케이크", "레고"]
                         }
                     )
-                    $0.notificationPermissionClient = NotificationPermissionClient(request: { true })
                 }
             )
         }
@@ -50,24 +49,28 @@ struct AuthFeatureV2DemoApp: App {
 
 private extension AuthFeatureV2DemoApp {
     /// `-demoStep category`면 카테고리 단계(디저트 선택), `-demoStep keyword`면 키워드 단계(두쫀쿠·짱구),
-    /// `-demoStep complete`면 가입 완료 화면부터 띄운다.
+    /// `-demoStep complete`면 가입 완료 화면부터, `-demoStep completeSkipped`면 키워드를 건너뛴 완료 화면부터 띄운다.
     /// 화면 캡처 비교용이다.
     static func initialState() -> RegisterFlowFeature.State {
         var state = RegisterFlowFeature.State(provider: .kakao)
         let arguments = ProcessInfo.processInfo.arguments
         if let index = arguments.firstIndex(of: "-demoStep"),
            arguments.indices.contains(index + 1),
-           ["category", "keyword", "complete"].contains(arguments[index + 1]) {
+           ["category", "keyword", "complete", "completeSkipped"].contains(arguments[index + 1]) {
+            let step = arguments[index + 1]
             state.nickname = "성수팝업러"
             state.validationState = .success
             state.currentStep = .category
             state.selectedCategories = [1]
-            if arguments[index + 1] != "category" {
+            if step != "category" {
                 state.currentStep = .keyword
                 state.selectedCategories = [1, 2]
                 state.keywords = ["두쫀쿠", "짱구"]
             }
-            if arguments[index + 1] == "complete" {
+            if step == "complete" || step == "completeSkipped" {
+                if step == "completeSkipped" {
+                    state.keywords = []
+                }
                 state.recommendList = [
                     Recommend(id: 1, recommendName: "디저트"),
                     Recommend(id: 2, recommendName: "캐릭터"),
