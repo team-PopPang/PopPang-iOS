@@ -255,9 +255,12 @@ struct RegisterFlowFeatureTests {
             )
         }
 
-        await store.send(.recommendNicknameTapped)
+        await store.send(.recommendNicknameTapped) {
+            $0.isRecommendingNickname = true
+        }
         await store.send(.validateNicknameTapped) {
             $0.isSubmitting = true
+            $0.isRecommendingNickname = false
             $0.validationState = .checking
         }
         await store.receive(\.validateNicknameResponse) {
@@ -297,8 +300,11 @@ struct RegisterFlowFeatureTests {
             $0.authFeatureClient = .mock(recommendNickname: { "용감한판다" })
         }
 
-        await store.send(.recommendNicknameTapped)
+        await store.send(.recommendNicknameTapped) {
+            $0.isRecommendingNickname = true
+        }
         await store.receive(\.nicknameRecommendationResponse.success) {
+            $0.isRecommendingNickname = false
             $0.nickname = "용감한판다"
         }
     }
@@ -314,8 +320,12 @@ struct RegisterFlowFeatureTests {
             $0.authFeatureClient = .mock(recommendNickname: { throw AuthError.failed })
         }
 
-        await store.send(.onAppear)
-        await store.receive(\.nicknameRecommendationResponse.failure)
+        await store.send(.onAppear) {
+            $0.isRecommendingNickname = true
+        }
+        await store.receive(\.nicknameRecommendationResponse.failure) {
+            $0.isRecommendingNickname = false
+        }
     }
 
     @Test("S02 닉네임 추천이 가입 단계 만료를 받으면 로그인부터 다시 하게 알린다")
@@ -326,8 +336,12 @@ struct RegisterFlowFeatureTests {
             $0.authFeatureClient = .mock(recommendNickname: { throw AuthError.signupSessionExpired })
         }
 
-        await store.send(.recommendNicknameTapped)
-        await store.receive(\.nicknameRecommendationResponse.failure)
+        await store.send(.recommendNicknameTapped) {
+            $0.isRecommendingNickname = true
+        }
+        await store.receive(\.nicknameRecommendationResponse.failure) {
+            $0.isRecommendingNickname = false
+        }
         await store.receive(\.delegate, .loginRequired(errorMessage: AuthErrorMessage.signupSessionExpired))
     }
 
@@ -509,7 +523,10 @@ struct RegisterFlowFeatureTests {
             $0.authFeatureClient = .mock(signup: { _, _ in .sample })
         }
 
-        await store.send(.skipTapped)
+        await store.send(.skipTapped) {
+            // 건너뛰면 이미 넣은 키워드도 등록하지 않는다.
+            $0.keywords = []
+        }
         await store.receive(\.completeRegistrationTapped) {
             $0.isSubmitting = true
         }
@@ -520,6 +537,82 @@ struct RegisterFlowFeatureTests {
         }
         // 완료 화면에서는 뒤로 가지 않는다.
         await store.send(.backTapped)
+    }
+
+    @Test("키워드 단계에서 건너뛰기를 누르면 넣어 둔 키워드 없이 알림을 끈 채 가입한다")
+    func skipSignsUpWithoutKeywords() async {
+        let request = LockIsolated<SignupRequest?>(nil)
+        var state = makeState()
+        state.currentStep = .keyword
+        state.keywords = ["두쫀쿠"]
+        state.keywordInput = "짱"
+        let store = TestStore(initialState: state) {
+            RegisterFlowFeature()
+        } withDependencies: {
+            $0.authFeatureClient = .mock(signup: { _, sent in
+                request.setValue(sent)
+                return .sample
+            })
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.skipTapped) {
+            $0.keywords = []
+            $0.keywordInput = ""
+        }
+        await store.receive(\.completeRegistrationResponse.success)
+        #expect(request.value?.alertKeywordList == [])
+        #expect(request.value?.isAlerted == false)
+    }
+
+    @Test("추천 닉네임을 받는 동안에는 다음으로 가지 않는다")
+    func nextIsBlockedWhileRecommending() async {
+        let (gate, release) = AsyncStream.makeStream(of: Void.self)
+        var state = makeState()
+        state.nickname = "팝팡이"
+        state.validationState = .success
+        let store = TestStore(initialState: state) {
+            RegisterFlowFeature()
+        } withDependencies: {
+            $0.authFeatureClient = .mock(recommendNickname: {
+                for await _ in gate { break }
+                return "설레는수달"
+            })
+        }
+
+        await store.send(.recommendNicknameTapped) {
+            $0.isRecommendingNickname = true
+        }
+        // 응답 전에는 다음을 눌러도 닉네임 단계에 머문다.
+        await store.send(.nextFromNicknameTapped)
+        release.yield()
+        await store.receive(\.nicknameRecommendationResponse.success) {
+            $0.isRecommendingNickname = false
+            $0.nickname = "설레는수달"
+        }
+        await store.send(.nextFromNicknameTapped) {
+            $0.currentStep = .category
+        }
+    }
+
+    @Test("닉네임 확인은 입력할 때와 같은 규칙으로 먼저 거른다")
+    func validateUsesLocalRules() async {
+        let store = TestStore(initialState: makeState()) {
+            RegisterFlowFeature()
+        }
+
+        await store.send(.nicknameChanged("")) {
+            $0.nickname = ""
+        }
+        await store.send(.validateNicknameTapped) {
+            // 빈 칸은 너무 짧은 닉네임으로 본다.
+            $0.validationState = .tooShort
+        }
+        await store.send(.nicknameChanged("팝 팡이")) {
+            $0.nickname = "팝 팡이"
+            $0.validationState = .invalidSpace
+        }
+        await store.send(.validateNicknameTapped)
     }
 
     @Test("S05 시작하기를 누르면 알림 권한을 묻지 않고 바로 완료를 알린다")

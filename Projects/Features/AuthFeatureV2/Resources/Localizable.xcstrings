@@ -991,28 +991,29 @@
       },
       "comment" : "Sign-up complete card when the keyword step was skipped: keywords can be added later"
     },
-    "키워드는 최대 5개 까지만 등록 가능합니다." : {
+    "키워드는 최대 %lld개 까지만 등록 가능합니다." : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "You can add up to 5 keywords."
+            "value" : "You can add up to %lld keywords."
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "キーワードは最大5個まで登録できます。"
+            "value" : "キーワードは最大%lld個まで登録できます。"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "키워드는 최대 5개 까지만 등록 가능합니다."
+            "value" : "키워드는 최대 %lld개 까지만 등록 가능합니다."
           }
         }
-      }
+      },
+      "comment" : "Alert message when adding more keywords than the limit. The argument is the limit"
     },
     "탈퇴한 계정이에요. 다른 계정으로 로그인해 주세요." : {
       "extractionState" : "manual",

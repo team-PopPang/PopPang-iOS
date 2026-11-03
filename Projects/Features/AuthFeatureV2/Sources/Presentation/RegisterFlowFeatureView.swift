@@ -51,6 +51,7 @@ public struct RegisterFlowFeatureView: View {
                     validationState: store.validationState,
                     errorMessage: store.errorMessage,
                     isSubmitting: store.isSubmitting,
+                    isRecommending: store.isRecommendingNickname,
                     onValidate: {
                         store.send(.validateNicknameTapped)
                     },
@@ -110,6 +111,8 @@ public struct RegisterFlowFeatureView: View {
                 .frame(width: geo.size.width, height: geo.size.height)
                 .offset(x: offset(for: .complete, in: geo.size.width))
             }
+            // 뒤로 가기, 닉네임 중복으로 돌아가기, 가입 완료처럼 버튼 밖에서 단계가 바뀌어도 같은 속도로 밀린다.
+            .animation(.easeInOut(duration: 0.3), value: store.currentStep)
         }
         .clipped()
     }
@@ -134,6 +137,8 @@ private struct NicknameSettingStepView: View {
     let validationState: NicknameValidationState
     let errorMessage: String?
     let isSubmitting: Bool
+    /// 추천 닉네임을 받는 중이면 "다음"을 막는다. 응답이 오면 닉네임이 바뀌기 때문이다.
+    let isRecommending: Bool
     let onValidate: () -> Void
     let onRecommend: () -> Void
     let onNext: () -> Void
@@ -173,7 +178,7 @@ private struct NicknameSettingStepView: View {
 
             RegisterNextButton(
                 title: String(localized: "다음", bundle: .module),
-                isEnabled: validationState == .success
+                isEnabled: validationState == .success && !isRecommending
             ) {
                 isFocused = false
                 withAnimation(.easeInOut(duration: 0.3)) {
@@ -470,7 +475,7 @@ private struct KeywordSettingStepView: View {
         .alert(Text("키워드 개수 제한", bundle: .module), isPresented: $isLimitAlertPresented) {
             Button(String(localized: "확인", bundle: .module), role: .cancel) {}
         } message: {
-            Text("키워드는 최대 5개 까지만 등록 가능합니다.", bundle: .module)
+            Text("키워드는 최대 \(maxCount)개 까지만 등록 가능합니다.", bundle: .module, comment: "Alert message when adding more keywords than the limit. The argument is the limit")
         }
     }
 
