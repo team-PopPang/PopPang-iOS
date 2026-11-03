@@ -215,3 +215,19 @@
   - `xcodebuild build … -scheme PopPangApp` → BUILD SUCCEEDED
   - `xcodebuild build … -scheme AuthFeatureV2Demo` → BUILD SUCCEEDED
 - 확인 필요: 키보드 내림과 빈 칸 안내는 화면 동작이라 테스트로 확인하지 못함. Demo에서 직접 눌러 확인 필요
+
+## 2026-11-03 다섯 번째 push 전 리뷰 지적 반영과 리뷰 없이 push
+- 계기: push 전 리뷰 hook FAIL (cbcab62..99772aa). 리뷰가 매번 새 지적을 내고, 빈 카테고리 목록 처리는 이전 지적과 반대 방향으로 나옴
+- 사용자 결정 (2026-11-03): 1~4번을 고친 뒤 `git push --no-verify`로 push하고 PR을 만든다. 남은 지적은 PR 본문의 후속 작업에 적는다
+- 바꾼 내용:
+  - 가입 요청 중: 뒤로 가기 버튼을 숨기고 `backTapped`·`nextFromCategoryTapped`를 막음
+  - 확인 중 닉네임 수정: 확인 요청을 `CancelID.nicknameValidation`으로 취소하고 `isSubmitting`을 바로 풂
+  - 서버 추천 닉네임: `localValidationState(for:)`를 거쳐 규칙에 맞을 때만 `.success`
+  - 빈 카테고리 목록: `isRecommendListEmpty`. 회색 "아직 고를 수 있는 카테고리가 없어요" + 다시 시도. 받기 실패는 빨간 문구 그대로
+- 바꾼 테스트와 이유: `staleNicknameCheckIsIgnored`(이름은 그대로) — 확인 중 수정하면 요청을 취소하므로 응답을 받지 않고 `isSubmitting`이 바로 false. `emptyRecommendListShowsRetry` — 빈 목록을 실패와 구분
+- 새 테스트: `backIsBlockedWhileSubmitting`, `invalidRecommendationIsNotSuccess`
+- 확인:
+  - `xcodebuild test … -scheme AuthFeatureV2 -only-testing:AuthFeatureV2Tests` → 통과 (37 tests in 2 suites)
+  - `xcodebuild build … -scheme PopPangApp` → BUILD SUCCEEDED
+  - `xcodebuild build … -scheme AuthFeatureV2Demo` → BUILD SUCCEEDED
+- 후속으로 남긴 리뷰 지적: 칩 배치 코드 DSKit 중복과 측정 횟수, V1 `AuthFeature` 모듈 정리(D-1), 가입 화면 새 색 6개의 `PPColor` 토큰화, 가입 단계 만료 때 `loginRequired` 중복 전달, 쓰지 않는 `isForward`
