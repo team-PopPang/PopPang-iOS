@@ -660,6 +660,30 @@
       },
       "comment" : "Button on the sign-up complete screen that opens the main screen"
     },
+    "아직 고를 수 있는 카테고리가 없어요. 잠시 후 다시 시도해 주세요." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "There are no categories to choose yet. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "まだ選べるカテゴリーがありません。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "아직 고를 수 있는 카테고리가 없어요. 잠시 후 다시 시도해 주세요."
+          }
+        }
+      },
+      "comment" : "Shown on the sign-up category step when the server returns no categories"
+    },
     "알림 받을 키워드를\n등록해주세요" : {
       "extractionState" : "manual",
       "localizations" : {

@@ -34,6 +34,10 @@ enum AuthErrorMessage {
         String(localized: "관심 카테고리를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
     }
 
+    static var recommendListEmpty: String {
+        String(localized: "아직 고를 수 있는 카테고리가 없어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
+    }
+
     static var nicknameCheckFailed: String {
         String(localized: "닉네임을 확인하지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
     }

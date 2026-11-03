@@ -27,7 +27,7 @@ public struct RegisterFlowFeatureView: View {
                 step: min(store.currentStep.index + 1, RegisterRoute.inputSteps.count),
                 totalSteps: RegisterRoute.inputSteps.count,
                 // 닉네임 단계는 돌아갈 가입 단계가 없다.
-                showsBack: store.currentStep != .nickname
+                showsBack: store.currentStep != .nickname && !store.isSubmitting
             ) {
                 store.send(.backTapped)
             }
@@ -70,6 +70,7 @@ public struct RegisterFlowFeatureView: View {
                     recommendList: store.recommendList,
                     selectedCategories: store.selectedCategories,
                     isLoadFailed: store.isRecommendListLoadFailed,
+                    isEmpty: store.isRecommendListEmpty,
                     onToggle: { store.send(.categoryToggled($0)) },
                     onRetry: { store.send(.retryRecommendListTapped) },
                     onNext: {
@@ -289,6 +290,7 @@ private struct CategorySettingStepView: View {
     let recommendList: [Recommend]
     let selectedCategories: [Int]
     let isLoadFailed: Bool
+    let isEmpty: Bool
     let onToggle: (Int) -> Void
     let onRetry: () -> Void
     let onNext: () -> Void
@@ -308,7 +310,7 @@ private struct CategorySettingStepView: View {
                     RegisterSectionLabel(text: "카테고리")
                         .padding(.top, RegisterLayout.sectionLabelTop)
 
-                    if recommendList.isEmpty, isLoadFailed {
+                    if recommendList.isEmpty, isLoadFailed || isEmpty {
                         loadFailedView
                             .padding(.top, RegisterLayout.chipsTop)
                     } else {
@@ -347,9 +349,10 @@ private struct CategorySettingStepView: View {
     /// 카테고리 목록을 받지 못하면 칩 자리에 안내와 "다시 시도"를 보여 준다. 카테고리를 골라야 다음으로 갈 수 있기 때문이다.
     private var loadFailedView: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(AuthErrorMessage.recommendListLoadFailed)
+            // 받기 실패는 빨간 오류 문구, 빈 목록은 회색 안내 문구로 구분한다.
+            Text(isLoadFailed ? AuthErrorMessage.recommendListLoadFailed : AuthErrorMessage.recommendListEmpty)
                 .ppStyleFont(.scdream(.extraBold, size: 13), lineHeightPt: 15.52)
-                .foregroundStyle(Color.mainRed)
+                .foregroundStyle(isLoadFailed ? Color.mainRed : Color.onboardingGray)
 
             RegisterChip(
                 text: String(localized: "다시 시도", bundle: .module, comment: "Button that loads the interest categories again after a failure"),

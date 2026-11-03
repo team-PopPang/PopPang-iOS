@@ -16,6 +16,8 @@ public struct RegisterFlowFeature {
         public var recommendList: [Recommend] = []
         /// 카테고리 목록을 받지 못했다. 카테고리 단계에 "다시 시도"를 보여 준다.
         public var isRecommendListLoadFailed = false
+        /// 카테고리 목록을 받았지만 비어 있다. 실패 문구 대신 비어 있다고 안내하고 "다시 시도"를 보여 준다.
+        public var isRecommendListEmpty = false
         public var selectedCategories: [Int] = []
         public var keywords: [String] = []
         public var keywordInput = ""
@@ -76,6 +78,7 @@ public struct RegisterFlowFeature {
 
     private enum CancelID {
         case nicknameRecommendation
+        case nicknameValidation
     }
 
     /// 가입할 때 등록할 수 있는 키워드 최대 개수
@@ -109,8 +112,9 @@ public struct RegisterFlowFeature {
 
             case .recommendListResponse(.success(let recommendList)):
                 state.recommendList = recommendList
-                // 빈 목록이면 고를 칩이 없어 다음으로 갈 수 없다. 실패처럼 다시 시도를 보여 준다.
-                state.isRecommendListLoadFailed = recommendList.isEmpty
+                // 빈 목록이면 고를 칩이 없어 다음으로 갈 수 없다. 비어 있다고 안내하고 다시 시도를 보여 준다.
+                state.isRecommendListLoadFailed = false
+                state.isRecommendListEmpty = recommendList.isEmpty
                 return .none
 
             case .recommendListResponse(.failure(let error)):
@@ -123,9 +127,12 @@ public struct RegisterFlowFeature {
 
             case .retryRecommendListTapped:
                 state.isRecommendListLoadFailed = false
+                state.isRecommendListEmpty = false
                 return fetchRecommendList()
 
             case .backTapped:
+                // 가입 요청 중에 단계를 옮기면 응답이 엉뚱한 단계에 도착한다.
+                guard !state.isSubmitting else { return .none }
                 // 실패 문구는 닉네임·키워드 단계가 함께 쓰므로 단계를 옮기면 지운다.
                 if state.currentStep != .nickname, state.currentStep != .complete {
                     state.errorMessage = nil
@@ -164,7 +171,12 @@ public struct RegisterFlowFeature {
                 state.errorMessage = nil
                 // 직접 입력하면 늦게 도착한 추천 닉네임으로 덮어쓰지 않는다.
                 state.isRecommendingNickname = false
-                return .cancel(id: CancelID.nicknameRecommendation)
+                // 확인 중이던 닉네임은 바뀌었으므로 확인 요청도 취소하고 버튼을 푼다.
+                state.isSubmitting = false
+                return .merge(
+                    .cancel(id: CancelID.nicknameRecommendation),
+                    .cancel(id: CancelID.nicknameValidation)
+                )
 
             case .recommendNicknameTapped:
                 guard !state.isSubmitting else { return .none }
@@ -175,7 +187,9 @@ public struct RegisterFlowFeature {
                 // 서버가 중복을 확인한 닉네임이라 바로 쓸 수 있다고 보여 준다. 가입할 때 서버가 다시 확인한다.
                 state.isRecommendingNickname = false
                 state.nickname = nickname
-                state.validationState = .success
+                // 서버 추천도 입력과 같은 규칙으로 거른 뒤에만 쓸 수 있다고 보여 준다.
+                let localState = Self.localValidationState(for: nickname)
+                state.validationState = localState == .none && !nickname.isEmpty ? .success : localState
                 state.errorMessage = nil
                 return .none
 
@@ -209,6 +223,7 @@ public struct RegisterFlowFeature {
                             try await authFeatureClient.checkNickname(nickname)
                         }))
                     }
+                    .cancellable(id: CancelID.nicknameValidation, cancelInFlight: true)
                 )
 
             case .validateNicknameResponse(let nickname, _) where nickname != state.nickname:
@@ -246,7 +261,7 @@ public struct RegisterFlowFeature {
                 return .none
 
             case .nextFromCategoryTapped:
-                guard !state.selectedCategories.isEmpty else { return .none }
+                guard !state.selectedCategories.isEmpty, !state.isSubmitting else { return .none }
                 state.currentStep = .keyword
                 state.isForward = true
                 return .none

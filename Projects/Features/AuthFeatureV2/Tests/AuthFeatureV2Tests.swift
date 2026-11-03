@@ -210,7 +210,7 @@ struct RegisterFlowFeatureTests {
         }
     }
 
-    @Test("닉네임 확인을 누른 뒤 닉네임을 고치면 늦게 온 확인 결과를 고친 닉네임에 붙이지 않는다")
+    @Test("닉네임 확인 중에 닉네임을 고치면 확인 요청을 취소하고 버튼을 바로 푼다")
     func staleNicknameCheckIsIgnored() async {
         let (gate, release) = AsyncStream.makeStream(of: Void.self)
         var state = makeState()
@@ -231,11 +231,12 @@ struct RegisterFlowFeatureTests {
         await store.send(.nicknameChanged("팝팡이다")) {
             $0.nickname = "팝팡이다"
             $0.validationState = .none
-        }
-        release.yield()
-        await store.receive(\.validateNicknameResponse) {
+            // 늦은 응답을 기다리지 않고 확인·추천 버튼을 바로 푼다.
             $0.isSubmitting = false
         }
+        // 취소한 요청의 응답은 받지 않는다.
+        release.yield()
+        await store.finish()
         #expect(store.state.validationState == .none)
     }
 
@@ -588,7 +589,7 @@ struct RegisterFlowFeatureTests {
         #expect(store.state.keywords == ["두쫀쿠", "짱구"])
     }
 
-    @Test("카테고리 목록이 비어 오면 실패처럼 다시 시도를 보여 준다")
+    @Test("카테고리 목록이 비어 오면 실패와 구분해 안내하고 다시 시도를 보여 준다")
     func emptyRecommendListShowsRetry() async {
         let store = TestStore(initialState: makeState()) {
             RegisterFlowFeature()
@@ -598,7 +599,37 @@ struct RegisterFlowFeatureTests {
 
         await store.send(.onAppear)
         await store.receive(\.recommendListResponse.success) {
-            $0.isRecommendListLoadFailed = true
+            $0.isRecommendListEmpty = true
+        }
+    }
+
+    @Test("가입 요청 중에는 뒤로 가지 않는다")
+    func backIsBlockedWhileSubmitting() async {
+        var state = makeState()
+        state.currentStep = .keyword
+        state.isSubmitting = true
+        let store = TestStore(initialState: state) {
+            RegisterFlowFeature()
+        }
+
+        await store.send(.backTapped)
+    }
+
+    @Test("서버 추천 닉네임이 규칙에 어긋나면 쓸 수 있다고 보여 주지 않는다")
+    func invalidRecommendationIsNotSuccess() async {
+        let store = TestStore(initialState: makeState()) {
+            RegisterFlowFeature()
+        } withDependencies: {
+            $0.authFeatureClient = .mock(recommendNickname: { "팝 팡" })
+        }
+
+        await store.send(.recommendNicknameTapped) {
+            $0.isRecommendingNickname = true
+        }
+        await store.receive(\.nicknameRecommendationResponse.success) {
+            $0.isRecommendingNickname = false
+            $0.nickname = "팝 팡"
+            $0.validationState = .invalidSpace
         }
     }
 
