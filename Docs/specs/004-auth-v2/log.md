@@ -200,3 +200,18 @@
   - `xcodebuild test … -scheme AuthFeatureV2 -only-testing:AuthFeatureV2Tests` → 통과 (33 tests in 2 suites)
   - `xcodebuild build … -scheme PopPangApp` → BUILD SUCCEEDED
   - `xcodebuild build … -scheme AuthFeatureV2Demo` → BUILD SUCCEEDED
+
+## 2026-11-03 네 번째 push 전 리뷰 지적 반영
+- 계기: push 전 리뷰 hook FAIL (cbcab62..eb1e203). 사용자 결정 (2026-11-03): 막은 지적 1~3과 작은 지적 5·6을 고침. 만료 응답 중복 delegate(4), 칩 배치 측정 횟수(7), V1 모듈(8)은 후속
+- 바꾼 내용:
+  - 키보드: 키워드 단계 "다음"·"건너뛰기"에서 `@FocusState`로 키보드를 내림 (완료 화면의 "시작하기"를 가리지 않게)
+  - 빈 닉네임 확인: 빈 칸에서 "확인"을 누르면(`.tooShort`) 안내 문구를 보여 줌. 입력하다 빈 칸이 되면 그대로 숨김
+  - 확인 두 번 누름: `validateNicknameTapped`에 `guard !state.isSubmitting`
+  - 인기 키워드 중복: 받은 순서를 지키며 중복 제거
+  - `nicknameChanged`의 쓰이지 않던 `.checking` 조건 정리
+- 새 테스트: `validateIgnoresDoubleTap`, `popularKeywordsAreDeduplicated`
+- 확인:
+  - `xcodebuild test … -scheme AuthFeatureV2 -only-testing:AuthFeatureV2Tests` → 통과 (35 tests in 2 suites)
+  - `xcodebuild build … -scheme PopPangApp` → BUILD SUCCEEDED
+  - `xcodebuild build … -scheme AuthFeatureV2Demo` → BUILD SUCCEEDED
+- 확인 필요: 키보드 내림과 빈 칸 안내는 화면 동작이라 테스트로 확인하지 못함. Demo에서 직접 눌러 확인 필요
