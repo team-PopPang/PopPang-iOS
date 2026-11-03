@@ -524,14 +524,14 @@ struct RegisterFlowFeatureTests {
         }
 
         await store.send(.skipTapped) {
-            // 건너뛰면 이미 넣은 키워드도 등록하지 않는다.
-            $0.keywords = []
-        }
-        await store.receive(\.completeRegistrationTapped) {
+            $0.isSkippingKeywords = true
             $0.isSubmitting = true
         }
         await store.receive(\.completeRegistrationResponse.success) {
             $0.isSubmitting = false
+            // 건너뛰고 가입에 성공하면 넣어 둔 키워드도 비운다.
+            $0.keywords = []
+            $0.isSkippingKeywords = false
             $0.signedUpUser = .sample
             $0.currentStep = .complete
         }
@@ -556,13 +556,78 @@ struct RegisterFlowFeatureTests {
         }
         store.exhaustivity = .off(showSkippedAssertions: false)
 
-        await store.send(.skipTapped) {
+        await store.send(.skipTapped)
+        await store.receive(\.completeRegistrationResponse.success) {
             $0.keywords = []
             $0.keywordInput = ""
         }
-        await store.receive(\.completeRegistrationResponse.success)
         #expect(request.value?.alertKeywordList == [])
         #expect(request.value?.isAlerted == false)
+    }
+
+    @Test("건너뛰고 가입이 실패하면 넣어 둔 키워드를 그대로 둔다")
+    func skipFailureKeepsKeywords() async {
+        var state = makeState()
+        state.currentStep = .keyword
+        state.keywords = ["두쫀쿠", "짱구"]
+        let store = TestStore(initialState: state) {
+            RegisterFlowFeature()
+        } withDependencies: {
+            $0.authFeatureClient = .mock(signup: { _, _ in throw AuthError.failed })
+        }
+
+        await store.send(.skipTapped) {
+            $0.isSkippingKeywords = true
+            $0.isSubmitting = true
+        }
+        await store.receive(\.completeRegistrationResponse.failure) {
+            $0.isSubmitting = false
+            $0.isSkippingKeywords = false
+            $0.errorMessage = AuthErrorMessage.signup(for: AuthError.failed)
+        }
+        #expect(store.state.keywords == ["두쫀쿠", "짱구"])
+    }
+
+    @Test("카테고리 목록이 비어 오면 실패처럼 다시 시도를 보여 준다")
+    func emptyRecommendListShowsRetry() async {
+        let store = TestStore(initialState: makeState()) {
+            RegisterFlowFeature()
+        } withDependencies: {
+            $0.authFeatureClient = .mock(getRecommendList: { [] })
+        }
+
+        await store.send(.onAppear)
+        await store.receive(\.recommendListResponse.success) {
+            $0.isRecommendListLoadFailed = true
+        }
+    }
+
+    @Test("가입 실패 문구는 뒤로 가면 지운다")
+    func backClearsErrorMessage() async {
+        var state = makeState()
+        state.currentStep = .keyword
+        state.errorMessage = AuthErrorMessage.signup(for: AuthError.failed)
+        let store = TestStore(initialState: state) {
+            RegisterFlowFeature()
+        }
+
+        await store.send(.backTapped) {
+            $0.errorMessage = nil
+            $0.currentStep = .category
+            $0.isForward = false
+        }
+    }
+
+    @Test("입력칸이 같은 닉네임을 다시 보내도 확인한 상태를 지우지 않는다")
+    func sameNicknameKeepsValidation() async {
+        var state = makeState()
+        state.nickname = "설레는수달"
+        state.validationState = .success
+        let store = TestStore(initialState: state) {
+            RegisterFlowFeature()
+        }
+
+        await store.send(.nicknameChanged("설레는수달"))
     }
 
     @Test("추천 닉네임을 받는 동안에는 다음으로 가지 않는다")

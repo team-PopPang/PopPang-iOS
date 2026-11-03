@@ -28,6 +28,8 @@ public struct RegisterFlowFeature {
         /// 가입에 성공한 사용자. 완료 화면의 "시작하기"를 누를 때 `completed`로 넘긴다.
         public var signedUpUser: User?
         public var isSubmitting = false
+        /// 건너뛰기로 가입 중. 키워드 없이 요청하고, 성공하면 화면의 키워드도 비운다. 실패하면 키워드를 그대로 둔다.
+        public var isSkippingKeywords = false
         public var errorMessage: String?
         /// 가입할 소셜 로그인 제공자. 로그인 결과가 가입 필요(PENDING)일 때 받는다.
         public let provider: Provider
@@ -107,7 +109,8 @@ public struct RegisterFlowFeature {
 
             case .recommendListResponse(.success(let recommendList)):
                 state.recommendList = recommendList
-                state.isRecommendListLoadFailed = false
+                // 빈 목록이면 고를 칩이 없어 다음으로 갈 수 없다. 실패처럼 다시 시도를 보여 준다.
+                state.isRecommendListLoadFailed = recommendList.isEmpty
                 return .none
 
             case .recommendListResponse(.failure(let error)):
@@ -123,6 +126,10 @@ public struct RegisterFlowFeature {
                 return fetchRecommendList()
 
             case .backTapped:
+                // 실패 문구는 닉네임·키워드 단계가 함께 쓰므로 단계를 옮기면 지운다.
+                if state.currentStep != .nickname, state.currentStep != .complete {
+                    state.errorMessage = nil
+                }
                 switch state.currentStep {
                 case .keyword:
                     state.currentStep = .category
@@ -139,17 +146,19 @@ public struct RegisterFlowFeature {
             case .skipTapped:
                 switch state.currentStep {
                 case .keyword:
-                    // 건너뛰면 이미 넣은 키워드도 등록하지 않는다. 알림이 꺼진 채 가입한다.
+                    // 건너뛰면 넣어 둔 키워드도 등록하지 않는다. 알림이 꺼진 채 가입한다.
+                    // 화면의 키워드는 가입이 성공한 뒤에 비운다. 실패하면 다시 고를 수 있게 둔다.
                     guard !state.isSubmitting else { return .none }
-                    state.keywords = []
-                    state.keywordInput = ""
-                    return .send(.completeRegistrationTapped)
+                    state.isSkippingKeywords = true
+                    return signup(&state, keywords: [])
                 case .nickname, .category, .complete:
                     // 닉네임·카테고리 단계는 건너뛸 수 없다. 카테고리는 1개 이상 골라야 다음으로 간다.
                     return .none
                 }
 
             case .nicknameChanged(let nickname):
+                // 입력칸이 같은 값을 다시 보내도 확인한 상태를 지우지 않는다.
+                guard nickname != state.nickname else { return .none }
                 state.nickname = nickname
                 state.validationState = Self.localValidationState(for: nickname)
                 if state.validationState != .checking {
@@ -223,6 +232,7 @@ public struct RegisterFlowFeature {
 
             case .nextFromNicknameTapped:
                 guard state.validationState == .success, !state.isRecommendingNickname else { return .none }
+                state.errorMessage = nil
                 state.currentStep = .category
                 state.isForward = true
                 return .none
@@ -278,27 +288,17 @@ public struct RegisterFlowFeature {
 
             case .completeRegistrationTapped:
                 guard !state.isSubmitting else { return .none }
-                state.isSubmitting = true
-                state.errorMessage = nil
-
-                let provider = state.provider
-                let request = SignupRequest(
-                    nickname: state.nickname,
-                    isAlerted: !state.keywords.isEmpty,
-                    fcmToken: nil,
-                    alertKeywordList: state.keywords,
-                    recommendList: state.selectedCategories
-                )
-
-                return .run { [authFeatureClient] send in
-                    await send(.completeRegistrationResponse(Result {
-                        try await authFeatureClient.signup(provider, request)
-                    }))
-                }
+                state.isSkippingKeywords = false
+                return signup(&state, keywords: state.keywords)
 
             case .completeRegistrationResponse(.success(let user)):
                 // 바로 메인으로 가지 않고 완료 화면을 보여 준다. 메인 이동은 완료 화면 버튼에서 한다.
                 state.isSubmitting = false
+                if state.isSkippingKeywords {
+                    state.keywords = []
+                    state.keywordInput = ""
+                    state.isSkippingKeywords = false
+                }
                 state.signedUpUser = user
                 state.currentStep = .complete
                 state.isForward = true
@@ -311,6 +311,7 @@ public struct RegisterFlowFeature {
 
             case .completeRegistrationResponse(.failure(let error)):
                 state.isSubmitting = false
+                state.isSkippingKeywords = false
                 switch error as? AuthError {
                 case .signupSessionExpired:
                     return .send(.delegate(.loginRequired(errorMessage: AuthErrorMessage.signupSessionExpired)))
@@ -350,6 +351,27 @@ public enum RegisterRoute: Int, CaseIterable, Hashable, Sendable {
 }
 
 private extension RegisterFlowFeature {
+    /// 가입을 요청한다. 키워드가 없으면 알림을 끈 채 가입한다.
+    func signup(_ state: inout State, keywords: [String]) -> Effect<Action> {
+        state.isSubmitting = true
+        state.errorMessage = nil
+
+        let provider = state.provider
+        let request = SignupRequest(
+            nickname: state.nickname,
+            isAlerted: !keywords.isEmpty,
+            fcmToken: nil,
+            alertKeywordList: keywords,
+            recommendList: state.selectedCategories
+        )
+
+        return .run { [authFeatureClient] send in
+            await send(.completeRegistrationResponse(Result {
+                try await authFeatureClient.signup(provider, request)
+            }))
+        }
+    }
+
     func fetchRecommendList() -> Effect<Action> {
         .run { [authFeatureClient] send in
             await send(.recommendListResponse(Result {

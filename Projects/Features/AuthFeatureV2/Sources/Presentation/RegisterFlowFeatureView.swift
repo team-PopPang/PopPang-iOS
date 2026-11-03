@@ -64,6 +64,7 @@ public struct RegisterFlowFeatureView: View {
                 )
                 .frame(width: geo.size.width, height: geo.size.height)
                 .offset(x: offset(for: .nickname, in: geo.size.width))
+                .stepInteraction(isCurrent: store.currentStep == .nickname)
 
                 CategorySettingStepView(
                     recommendList: store.recommendList,
@@ -77,6 +78,7 @@ public struct RegisterFlowFeatureView: View {
                 )
                 .frame(width: geo.size.width, height: geo.size.height)
                 .offset(x: offset(for: .category, in: geo.size.width))
+                .stepInteraction(isCurrent: store.currentStep == .category)
 
                 KeywordSettingStepView(
                     text: Binding(
@@ -101,6 +103,7 @@ public struct RegisterFlowFeatureView: View {
                 )
                 .frame(width: geo.size.width, height: geo.size.height)
                 .offset(x: offset(for: .keyword, in: geo.size.width))
+                .stepInteraction(isCurrent: store.currentStep == .keyword)
 
                 RegisterCompleteStepView(
                     nickname: store.signedUpUser?.nickname ?? store.nickname,
@@ -110,6 +113,7 @@ public struct RegisterFlowFeatureView: View {
                 )
                 .frame(width: geo.size.width, height: geo.size.height)
                 .offset(x: offset(for: .complete, in: geo.size.width))
+                .stepInteraction(isCurrent: store.currentStep == .complete)
             }
             // 뒤로 가기, 닉네임 중복으로 돌아가기, 가입 완료처럼 버튼 밖에서 단계가 바뀌어도 같은 속도로 밀린다.
             .animation(.easeInOut(duration: 0.3), value: store.currentStep)
@@ -513,5 +517,13 @@ private struct KeywordSettingStepView: View {
         } else {
             onAddPopularKeyword(keyword)
         }
+    }
+}
+
+private extension View {
+    /// 옆으로 밀려 안 보이는 단계는 터치와 VoiceOver에서 뺀다. 숨은 단계의 버튼이 눌리지 않게 한다.
+    func stepInteraction(isCurrent: Bool) -> some View {
+        allowsHitTesting(isCurrent)
+            .accessibilityHidden(!isCurrent)
     }
 }
