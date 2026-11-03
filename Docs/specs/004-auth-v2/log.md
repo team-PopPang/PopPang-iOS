@@ -185,3 +185,18 @@
   - `xcodebuild test … -scheme AuthFeatureV2 -only-testing:AuthFeatureV2Tests` → 통과 (29 tests in 2 suites)
   - `xcodebuild build … -scheme PopPangApp` → BUILD SUCCEEDED
   - `xcodebuild build … -scheme AuthFeatureV2Demo` → BUILD SUCCEEDED
+
+## 2026-11-03 세 번째 push 전 리뷰 지적 반영
+- 계기: push 전 리뷰 hook FAIL (cbcab62..6fbfa9b). 사용자 결정 (2026-11-03): 1~5번 고침, 칩 배치 중복과 V1 모듈은 후속
+- 바꾼 내용:
+  - 실패 문구: 뒤로 가기와 닉네임 단계 "다음"에서 `errorMessage`를 지움 (닉네임·키워드 단계가 같은 칸을 씀)
+  - 건너뛰기: `isSkippingKeywords`. 요청에만 빈 키워드를 담고, 화면의 키워드는 가입 성공 뒤에 비움. 실패하면 그대로 둠. 가입 요청은 `signup(_:keywords:)`로 모음
+  - 빈 카테고리 목록: `.success([])`도 `isRecommendListLoadFailed = true`로 다시 시도를 보여 줌
+  - 숨은 단계: 지금 단계가 아닌 화면은 `allowsHitTesting(false)`, `accessibilityHidden(true)`
+  - 같은 닉네임: `nicknameChanged`에 지금 닉네임과 같은 값이 오면 무시
+- 바꾼 테스트와 이유: `s05SignupSuccessShowsCompleteStep`, `skipSignsUpWithoutKeywords` — 건너뛰기가 `completeRegistrationTapped`를 거치지 않고, 키워드를 성공 뒤에 비우도록 동작이 바뀜
+- 새 테스트: `skipFailureKeepsKeywords`, `emptyRecommendListShowsRetry`, `backClearsErrorMessage`, `sameNicknameKeepsValidation`
+- 확인:
+  - `xcodebuild test … -scheme AuthFeatureV2 -only-testing:AuthFeatureV2Tests` → 통과 (33 tests in 2 suites)
+  - `xcodebuild build … -scheme PopPangApp` → BUILD SUCCEEDED
+  - `xcodebuild build … -scheme AuthFeatureV2Demo` → BUILD SUCCEEDED
