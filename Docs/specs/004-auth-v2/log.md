@@ -121,3 +121,51 @@
   - `xcodebuild build … -scheme PopPangApp` → BUILD SUCCEEDED
   - `xcodebuild build … -scheme AuthFeatureV2Demo` → BUILD SUCCEEDED (Demo는 가짜 client를 그대로 주입)
 - 확인 필요: 실제 가입 완료 화면에서 알림 권한 팝업이 다시 뜨는지 앱에서 한 번 확인 (주입 경로만 바뀜)
+
+## 2026-11-03 push 전 리뷰 지적 반영
+- 계기: push 전 리뷰 hook이 FAIL. 사용자 결정 (2026-11-03): 1~6번 고침, 7번(`RegisterChipFlowLayout`과 DSKit `SearchFlowLayout` 중복)·8번(V1 `AuthFeature` 모듈 남김, D-1)은 후속, 완료 버튼은 "시작하기"
+- 바꾼 내용:
+  - 1번: 완료 화면의 알림 권한 요청을 뺌 (D-6). `NotificationPermissionClient.swift` 삭제, `AppBootstrap` 주입 삭제, 버튼 "시작하기"
+  - 2번: 카테고리 목록을 받지 못하면 닉네임 화면 대신 카테고리 단계 칩 자리에 안내와 "다시 시도"를 보여 줌 (`isRecommendListLoadFailed`, `retryRecommendListTapped`)
+  - 3번: `validateNicknameResponse`에 확인한 닉네임을 담고, 지금 닉네임과 다르면 결과를 버림 (ProfileFeature와 같은 방식)
+  - 4번: 닉네임 확인을 누르면 진행 중인 추천 요청을 취소함
+  - 5번: 가입 때 닉네임 중복이면 `errorMessage`를 비워 둠. 중복 안내는 닉네임 확인 문구 하나만 보임
+  - 6번: 키워드 5개 제한 알림을 reducer state(`isKeywordLimitAlertPresented`)로 옮김. 화면은 판단하지 않음
+  - Demo 앱 Info.plist에 `CFBundleLocalizations`(ko·en·ja) 추가 — S06의 "Demo 앱이 영어로 보임" 확인 필요 해결
+- 바꾼 테스트와 이유:
+  - `recommendListFailureShowsMessage` → `recommendListFailureCanRetry`: 실패 안내 위치가 `errorMessage`에서 카테고리 단계로 바뀜 (2번)
+  - `duplicateNicknameReturnsToNicknameStep`: `errorMessage` 기대를 지움 (5번)
+  - `s04KeywordLimitIsFive`: 제한 알림 state 기대를 더함 (6번)
+  - `s05StartRequestsPermissionThenCompletes` → `s05StartCompletesImmediately` (D-6)
+  - 새 테스트: `staleNicknameCheckIsIgnored` (3번), `validateCancelsPendingRecommendation` (4번)
+- 확인:
+  - `xcodebuild test … -scheme AuthFeatureV2 -only-testing:AuthFeatureV2Tests` → 통과 (26 tests in 2 suites)
+  - `xcodebuild build … -scheme PopPangApp` → BUILD SUCCEEDED
+  - `xcodebuild build … -scheme AuthFeatureV2Demo` → BUILD SUCCEEDED
+  - iPhone SE(3세대) Demo `-demoStep complete` → 한국어 문구, "시작하기" 버튼 확인
+
+## 2026-11-03 카테고리 단계 선택 개수 문구 숨김
+- 사용자 요청 (2026-11-03): "2페이지에서 관심사 선택됨 문장안보이게 수정"
+- 바꾼 파일: `RegisterFlowFeatureView.swift` (버튼 위 "관심사 N개 선택됨" 삭제), `Resources/Localizable.xcstrings` (키 삭제), `spec.md` R5
+- 확인: 아래 빌드와 Demo `-demoStep category` 캡처
+
+## 2026-11-03 완료 화면 안내 카드 2항목으로 줄임
+- 계기: 피그마 2467-10300(팝팡 리뉴얼 최종)의 완료 화면 카드가 2항목(높이 160). 빠진 항목은 이전에 읽은 2467:10950~10955 "찜한 팝업 종료 하루 전 알림 / 마지막 기회를 놓치지 않게"
+- 사용자 결정 (2026-11-03): 카드는 피그마처럼 2개, 키워드 단계 아래 칩은 인기 키워드 유지(피그마 메모 "카테고리 추천 키워드"는 따르지 않음), 완료 버튼은 "시작하기" 유지
+- 바꾼 파일: `RegisterCompleteStepView.swift` (가운데 항목 삭제), `Resources/Localizable.xcstrings` (키 2개 삭제), `spec.md` R9
+- 확인: 아래 빌드와 Demo `-demoStep complete` 캡처
+- 확인 필요: 온보딩 아이콘(SVG) 주황 `#EA6D00`과 버튼 `mainOrange` `#FF7A00`이 다름. 피그마 파일의 Color profile(sRGB·Display P3)은 Figma 호출 한도로 확인하지 못함
+
+## 2026-11-03 완료 카드 두 번째 설명 한 줄 맞춤
+- 사용자 요청 (2026-11-03): SE에서 "마이 > 알림 설정에서 언제든 바꿀 수 있어요"가 두 줄로 넘어감 → 한 줄로 (작은 화면에서만 줄임)
+- 원인: 카드 최대 폭 338, SE는 화면 375 - 양옆 40 = 335라 3pt 모자람
+- 바꾼 파일: `RegisterCompleteStepView.swift` — `BenefitRow(prefersSingleLine:)`, `ViewThatFits`로 13pt 한 줄 → 12pt 한 줄 → 13pt 여러 줄 순서. 첫 번째 설명(관심사 나열)은 그대로 여러 줄
+- 확인: `xcodebuild build … -scheme AuthFeatureV2Demo` → BUILD SUCCEEDED, iPhone SE(3세대)·iPhone 17 Demo `-demoStep complete` 캡처 → 두 기기 모두 한 줄
+
+## 2026-11-03 키워드를 건너뛴 완료 카드 문구
+- 계기: 키워드 단계를 건너뛰면 `isAlerted: false`로 가입하는데 카드가 "키워드 팝업 오픈 알림"을 보여 줌
+- 사용자 결정 (2026-11-03): 건너뛰면 1행 "키워드는 나중에 등록해도 돼요 / 마이 > 키워드 알림에서 언제든 추가할 수 있어요", 2행 A안 "가고 싶은 팝업은 찜해 두세요 / 캘린더에 한눈에 모아 드려요"
+- 바꾼 파일: `RegisterCompleteStepView.swift` (`hasKeywords`), `RegisterFlowFeatureView.swift`, `Resources/Localizable.xcstrings` (새 키 4개, en·ja needs_review), `spec.md` R9
+- 근거: "마이 > 키워드 알림"은 `ProfileFeatureView.swift:57`의 메뉴 이름
+- 확인 필요: 키워드를 등록했을 때 1행 설명에 카테고리 이름도 나오는데, 카테고리가 알림 기준인지는 서버 정책 확인 필요
+- 후속 (2026-11-03, 사용자 결정): 두 기기 모두 두 줄로 넘어가 "언제든"을 빼고 "마이 > 키워드 알림에서 추가할 수 있어요"로 줄임
