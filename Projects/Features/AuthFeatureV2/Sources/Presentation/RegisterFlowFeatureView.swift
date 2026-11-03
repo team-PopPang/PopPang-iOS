@@ -234,7 +234,8 @@ private struct NicknameSettingStepView: View {
 
     @ViewBuilder
     private var nicknameMessage: some View {
-        if !nickname.isEmpty, let message = validationMessage {
+        // 입력하다 빈 칸이 되면 안내하지 않는다. 빈 칸에서 "확인"을 누르면(.tooShort) 안내한다.
+        if !nickname.isEmpty || validationState == .tooShort, let message = validationMessage {
             HStack(spacing: 4) {
                 if validationState == .success {
                     Image(systemName: "checkmark")
@@ -373,6 +374,9 @@ private struct KeywordSettingStepView: View {
     let onSkip: () -> Void
     let onNext: () -> Void
 
+    /// 가입하러 넘어갈 때 키보드를 내린다. 남아 있으면 완료 화면의 "시작하기"를 가린다.
+    @FocusState private var isKeywordFocused: Bool
+
     private var isNextEnabled: Bool { !keywords.isEmpty }
     private var maxCount: Int { RegisterFlowFeature.maxKeywordCount }
 
@@ -384,7 +388,10 @@ private struct KeywordSettingStepView: View {
                     ZStack(alignment: .topTrailing) {
                         RegisterTitle(text: "알림 받을 키워드를\n등록해주세요")
 
-                        Button(action: onSkip) {
+                        Button {
+                            isKeywordFocused = false
+                            onSkip()
+                        } label: {
                             Text("건너뛰기", bundle: .module)
                                 .ppStyleFont(.scdream(.medium, size: 14), lineHeightPt: 17)
                                 .foregroundStyle(Color.onboardingGray)
@@ -471,6 +478,7 @@ private struct KeywordSettingStepView: View {
                     : String(localized: "다음", bundle: .module),
                 isEnabled: isNextEnabled && !isSubmitting
             ) {
+                isKeywordFocused = false
                 onNext()
             }
             .padding(.horizontal, RegisterLayout.buttonHorizontal - RegisterLayout.screenHorizontal)
@@ -500,6 +508,7 @@ private struct KeywordSettingStepView: View {
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .submitLabel(.done)
+            .focused($isKeywordFocused)
             .onSubmit {
                 add(text, clearsInput: true)
             }

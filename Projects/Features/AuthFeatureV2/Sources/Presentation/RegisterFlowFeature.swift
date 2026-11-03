@@ -161,9 +161,7 @@ public struct RegisterFlowFeature {
                 guard nickname != state.nickname else { return .none }
                 state.nickname = nickname
                 state.validationState = Self.localValidationState(for: nickname)
-                if state.validationState != .checking {
-                    state.errorMessage = nil
-                }
+                state.errorMessage = nil
                 // 직접 입력하면 늦게 도착한 추천 닉네임으로 덮어쓰지 않는다.
                 state.isRecommendingNickname = false
                 return .cancel(id: CancelID.nicknameRecommendation)
@@ -190,6 +188,8 @@ public struct RegisterFlowFeature {
                 return .none
 
             case .validateNicknameTapped:
+                // 확인 중에 다시 누르면 요청을 또 보내지 않는다.
+                guard !state.isSubmitting else { return .none }
                 // 입력할 때와 같은 규칙으로 먼저 거른다. 빈 칸은 너무 짧은 닉네임으로 본다.
                 let localState = Self.localValidationState(for: state.nickname)
                 guard localState == .none, !state.nickname.isEmpty else {
@@ -270,7 +270,9 @@ public struct RegisterFlowFeature {
                 return .none
 
             case .popularKeywordsResponse(.success(let keywords)):
-                state.popularKeywords = keywords
+                // 서버가 같은 키워드를 여러 번 주어도 칩은 한 번만 보여 준다 (칩 목록이 키워드를 id로 쓴다).
+                var seen = Set<String>()
+                state.popularKeywords = keywords.filter { seen.insert($0).inserted }
                 return .none
 
             case .popularKeywordsResponse(.failure(let error)):

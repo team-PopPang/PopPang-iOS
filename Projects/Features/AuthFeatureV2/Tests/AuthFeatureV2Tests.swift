@@ -630,6 +630,54 @@ struct RegisterFlowFeatureTests {
         await store.send(.nicknameChanged("설레는수달"))
     }
 
+    @Test("닉네임을 확인하는 동안 다시 눌러도 요청을 또 보내지 않는다")
+    func validateIgnoresDoubleTap() async {
+        let (gate, release) = AsyncStream.makeStream(of: Void.self)
+        let callCount = LockIsolated(0)
+        var state = makeState()
+        state.nickname = "팝팡이"
+        let store = TestStore(initialState: state) {
+            RegisterFlowFeature()
+        } withDependencies: {
+            $0.authFeatureClient = .mock(checkNickname: { _ in
+                callCount.withValue { $0 += 1 }
+                for await _ in gate { break }
+                return false
+            })
+        }
+
+        await store.send(.validateNicknameTapped) {
+            $0.isSubmitting = true
+            $0.validationState = .checking
+        }
+        await store.send(.validateNicknameTapped)
+        release.yield()
+        await store.receive(\.validateNicknameResponse) {
+            $0.isSubmitting = false
+            $0.validationState = .success
+        }
+        #expect(callCount.value == 1)
+    }
+
+    @Test("인기 키워드가 중복으로 와도 한 번만 보여 준다")
+    func popularKeywordsAreDeduplicated() async {
+        var state = makeState()
+        state.hasRequestedPopularKeywords = false
+        state.recommendList = [Recommend(id: 1, recommendName: "디저트")]
+        let store = TestStore(initialState: state) {
+            RegisterFlowFeature()
+        } withDependencies: {
+            $0.authFeatureClient = .mock(getPopularKeywords: { ["짱구", "레고", "짱구"] })
+        }
+
+        await store.send(.onAppear) {
+            $0.hasRequestedPopularKeywords = true
+        }
+        await store.receive(\.popularKeywordsResponse.success) {
+            $0.popularKeywords = ["짱구", "레고"]
+        }
+    }
+
     @Test("추천 닉네임을 받는 동안에는 다음으로 가지 않는다")
     func nextIsBlockedWhileRecommending() async {
         let (gate, release) = AsyncStream.makeStream(of: Void.self)
