@@ -1,7 +1,7 @@
 import ComposableArchitecture
 import Core
 import Foundation
-import AuthFeature
+import AuthFeatureV2
 import Data
 import MainTabFeature
 

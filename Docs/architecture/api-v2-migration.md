@@ -140,6 +140,7 @@ case마다 인증 종류가 다르면 `switch`로 나눠요. 응답이 `APIRespo
 | 상황 | 결정 |
 | --- | --- |
 | 가입 화면의 추천 목록·닉네임 중복 확인 | 서버가 두 V2 API를 Signup Token으로 부를 수 있게 권한을 바꿔서, 가입 화면은 `GET /api/v2/recommend`와 `GET /api/v2/user/nickname/duplicated`를 Signup Token으로 불러요(`AuthAPI.signupRecommendList`, `.signupNicknameDuplicated`). 가입 단계가 만료되면(401 5002·5014·5006) 로그인 화면으로 돌아가요. 프로필 화면의 닉네임 중복 확인은 Access Token으로 3단계에서 옮겨요. ([정해야 할 것](#정해야-할-것) 1번) |
+| 가입 화면의 닉네임 추천·인기 키워드 (#138) | 회원가입 V2 화면(`AuthFeatureV2`)이 두 V2 API를 Signup Token으로 불러요. `GET /api/v2/user/nickname/recommendation`(`AuthAPI.signupNicknameRecommendation`)은 감싼 응답 `data.nickname`을 닉네임 칸에 미리 채워요. 추천은 예약이 아니라 가입할 때 서버가 다시 중복을 확인하고, 실패(503 4208)하면 빈 칸으로 둬요. `GET /api/v2/alert-keyword/popular`(`AuthAPI.popularAlertKeywords`)는 `data: [{ alertKeyword }]`로 최대 6개를 주고, 실패하거나 빈 배열이면 "많이 등록한 키워드" 영역을 숨겨요. 둘 다 가입 단계가 만료되면 로그인 화면으로 돌아가요. |
 | 기존 사용자 | 업데이트 뒤 한 번 다시 로그인해요. |
 | 서버 로그아웃 실패 | 기기의 토큰과 세션은 지우고 로그아웃해요. 서버 세션은 남을 수 있어요. |
 | 앱 시작 때 내 정보 조회가 서버 오류·네트워크로 실패 | 토큰은 지우지 않고 로그인 화면을 보여 줘요. 다음 실행 때 다시 확인해요. |

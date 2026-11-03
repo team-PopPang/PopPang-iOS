@@ -1,5 +1,5 @@
 import ComposableArchitecture
-import AuthFeature
+import AuthFeatureV2
 import Core
 import Domain
 import MaintenanceFeature

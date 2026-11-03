@@ -15,6 +15,15 @@ public protocol AuthRepositoryProtocol {
     /// - Throws: `AuthError`
     func fetchSignupRecommendList() async throws -> [Recommend]
 
+    /// 가입 화면에 미리 채울 랜덤 닉네임. 가입 전용 토큰으로 부른다.
+    /// 추천은 예약이 아니라서 가입할 때 다시 중복을 확인한다.
+    /// - Throws: `AuthError`
+    func recommendSignupNickname() async throws -> String
+
+    /// 가입 화면 키워드 단계의 인기 키워드. 가입 전용 토큰으로 부른다. 최대 6개이고 없으면 빈 배열이다.
+    /// - Throws: `AuthError`
+    func fetchPopularKeywords() async throws -> [String]
+
     /// 저장된 토큰으로 로그인 상태를 되살린다.
     /// - Returns: 로그인 상태가 아니면 `nil`
     /// - Throws: 서버 오류나 네트워크 문제로 확인하지 못했을 때. 이때 저장된 토큰은 지우지 않는다.

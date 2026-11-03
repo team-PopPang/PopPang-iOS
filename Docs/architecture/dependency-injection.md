@@ -29,7 +29,7 @@ PopPangApp.init
    └─ Store(initialState:) { AppFeature(...) } withDependencies: { ... }
       ├─ ServerHealthClient.live(...)    앱 시작 헬스 체크
       ├─ AppMigrationClient.live(...)    메인 진입 때 기존 사용자 데이터 보정 (MigrationUsecase)
-      └─ AuthFeatureClient.live(...)     로그인·가입 (AuthUsecase)
+      └─ AuthFeatureClient.live(...)     로그인·가입 (AuthUsecase, AuthFeatureV2)
 → 모든 하위 reducer가 @Dependency로 client를 읽음
 ```
 

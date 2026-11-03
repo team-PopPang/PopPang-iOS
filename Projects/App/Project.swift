@@ -134,7 +134,7 @@ let project = Project(
             entitlements: "PopPangApp.entitlements",
             dependencies: [
                 .project(target: "ADKit", path: "../Shared/ADKit"),
-                .project(target: "AuthFeature", path: "../Features/AuthFeature"),
+                .project(target: "AuthFeatureV2", path: "../Features/AuthFeatureV2"),
                 .project(target: "OnboardingFeatureV2", path: "../Features/OnboardingFeatureV2"),
                 .project(target: "MainTabFeature", path: "../Features/MainTabFeature"),
                 .project(target: "MaintenanceFeature", path: "../Features/MaintenanceFeature"),

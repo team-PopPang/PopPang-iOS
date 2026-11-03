@@ -45,4 +45,16 @@ public extension Color {
     static let onboardingBody = Color(hex: "#555555")
     /// 온보딩 V2 현재가 아닌 페이지 점
     static let onboardingDot = Color(hex: "#D9D9D9")
+    /// 회원가입 V2 입력 글자, 검정 버튼
+    static let registerText = Color(hex: "#1A1A1A")
+    /// 회원가입 V2 완료 화면 제목·안내 글자
+    static let registerTitle = Color(hex: "#121212")
+    /// 회원가입 V2 진행 막대 바탕
+    static let registerTrack = Color(hex: "#EDEDED")
+    /// 회원가입 V2 기본 칩 테두리
+    static let registerChipBorder = Color(hex: "#E0E0E0")
+    /// 회원가입 V2 선택한 칩·체크 원 배경
+    static let registerChipSelected = Color(hex: "#FFF3E8")
+    /// 회원가입 V2 사용할 수 있는 닉네임 안내
+    static let registerValid = Color(hex: "#1A8C3D")
 }
