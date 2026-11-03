@@ -29,7 +29,7 @@
 | MainTabFeature | `MainTabFeatureTests` | 1 | 6 | delegate → path·destination 전환, 해제 순서 |
 | FavoritesFeature | `FavoritesFeatureTests` | 1 | 9 | TCA `TestStore`, 찜 해제를 먼저 숨기기, 해제 중에 온 목록 응답, 연달아 해제 중 실패, 실패·로그인 끊김 때 되돌리기, 같은 하트 반복 탭, 찜하지 않은 팝업 무시, 목록 실패 문구와 다시 받은 뒤 지우기 |
 | AuthFeature | `AuthFeatureTests` | 1 | 9 | 앱이 더 쓰지 않는 기존 모듈. 로그인 결과(COMPLETED/PENDING) 분기, 실패 안내, 가입 완료·만료·닉네임 중복, 가입 화면 닉네임 확인·카테고리 목록 실패 |
-| AuthFeatureV2 | `AuthFeatureV2Tests` | 1 | 26 | TCA `TestStore`, AuthFeature 테스트를 옮긴 것에 더해 추천 닉네임 채우기·다시 추천·실패, 카테고리 선택과 건너뛰기 막기, 인기 키워드 받기·탭 추가·5개 제한, 가입 성공 뒤 완료 화면과 시작하기, 카테고리 다시 받기, 늦게 온 닉네임 확인 결과 버리기, 확인 때 추천 취소 |
+| AuthFeatureV2 | `AuthFeatureV2Tests` | 1 | 29 | TCA `TestStore`, AuthFeature 테스트를 옮긴 것에 더해 추천 닉네임 채우기·다시 추천·실패, 카테고리 선택과 건너뛰기 막기, 인기 키워드 받기·탭 추가·5개 제한, 가입 성공 뒤 완료 화면과 시작하기, 카테고리 다시 받기, 늦게 온 닉네임 확인 결과 버리기, 확인 때 추천 취소, 추천 중 다음 막기, 건너뛰면 키워드 없이 가입 |
 | OnboardingFeatureV2 | `OnboardingFeatureV2Tests` | 1 | 6 | TCA `TestStore`, 다음·건너뛰기·넘기기로 화면 이동과 로그인 요청, 화면마다 쓰는 카드·아이콘·화살표가 DSKit 에셋에 있는지 |
 
 App, Domain, DSKit, 다른 feature에는 테스트 타깃이 없다.

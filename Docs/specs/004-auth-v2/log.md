@@ -169,3 +169,19 @@
 - 근거: "마이 > 키워드 알림"은 `ProfileFeatureView.swift:57`의 메뉴 이름
 - 확인 필요: 키워드를 등록했을 때 1행 설명에 카테고리 이름도 나오는데, 카테고리가 알림 기준인지는 서버 정책 확인 필요
 - 후속 (2026-11-03, 사용자 결정): 두 기기 모두 두 줄로 넘어가 "언제든"을 빼고 "마이 > 키워드 알림에서 추가할 수 있어요"로 줄임
+
+## 2026-11-03 두 번째 push 전 리뷰 지적 반영
+- 계기: push 전 리뷰 hook FAIL (cbcab62..c18a2ab). 막은 지적 2개와 작은 지적 3개를 고침. 나머지(`isForward` 정리, 칩 배치 중복·측정 횟수, V1 모듈)는 후속
+- 사용자 결정 (2026-11-03): 추천 닉네임을 받는 동안 "다음"을 막는다. 건너뛰기는 넣어 둔 키워드를 비우고 가입한다
+- 바꾼 내용:
+  - 추천 중 다음 막기: `isRecommendingNickname`. 추천 시작 때 true, 응답·직접 입력·확인 때 false. 버튼과 `nextFromNicknameTapped` 둘 다 막음
+  - 건너뛰기: `skipTapped`에서 `keywords`·`keywordInput`을 비우고 가입 (`isAlerted: false`)
+  - 단계 전환 애니메이션: `stepPages`에 `.animation(value: currentStep)` — 뒤로 가기, 닉네임 중복 복귀, 완료 화면 이동도 밀림
+  - 닉네임 확인 규칙: `validateNicknameTapped`가 `localValidationState(for:)`를 씀. 빈 칸은 `.tooShort`
+  - 제한 알림 문구: `키워드는 최대 %lld개 까지만 등록 가능합니다.`, `maxKeywordCount` 사용
+- 바꾼 테스트와 이유: 추천 관련 테스트 4개에 `isRecommendingNickname` 기대를 더함(새 state), `s05SignupSuccessShowsCompleteStep`에 건너뛰기 때 `keywords = []` 기대를 더함(건너뛰기 동작 변경)
+- 새 테스트: `skipSignsUpWithoutKeywords`, `nextIsBlockedWhileRecommending`, `validateUsesLocalRules`
+- 확인:
+  - `xcodebuild test … -scheme AuthFeatureV2 -only-testing:AuthFeatureV2Tests` → 통과 (29 tests in 2 suites)
+  - `xcodebuild build … -scheme PopPangApp` → BUILD SUCCEEDED
+  - `xcodebuild build … -scheme AuthFeatureV2Demo` → BUILD SUCCEEDED
