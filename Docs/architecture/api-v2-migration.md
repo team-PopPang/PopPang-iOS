@@ -225,7 +225,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | --- | --- | --- | --- |
 | 1 | SearchFeature | 회원 팝업 검색 (UPOP-11) | 완료 (#131) |
 | 2 | FavoritesFeature | 찜 목록 (FAV-04), 찜 등록·해제 (FAV-01·02) | 완료 (#133) |
-| 3 | PopupDetailFeature | 조회수 기록 (POP-14), 관련 팝업 (UPOP-03), 찜 등록·해제 | 예정 |
+| 3 | PopupDetailFeature | 조회수 기록 (POP-14), 관련 팝업 (UPOP-03), 찜 등록·해제, 단건 조회, 관리자 비활성화 | 완료 (#140) |
 | 4 | CalendarFeature | 필터 팝업 (UPOP-04), 지역 목록 (POP-10), 찜 등록·해제 | 예정 |
 | 5 | HomeFeatureV2 | 오픈 예정 (UPOP-12), 필터 팝업, 랜덤 (UPOP-07), 지역 목록, 찜 등록·해제 | 예정 |
 | 6 | MapFeature | 지도 필터 (UPOP-05), 인기 추천 카테고리 (RECO-02), 카테고리별 팝업 (UPOP-09), 지역 목록, 찜 등록·해제 | 예정 |
@@ -242,10 +242,27 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 - `userUuid`는 아직 V1인 화면이 쓰므로 마지막 정리 단계에서 지워요. 예를 들어 검색 결과에서 여는 팝업 상세는 V1이라, `SearchDestination`이 `userUuid`를 들고 있다가 상세에 넘겨요.
 
 **확인 필요 (백엔드)**
-- 팝업 상세의 관리자 팝업 비활성화(`/api/v1/admin/popup/{popupUuid}/deactivate`)를 앱이 직접 불러요. 명세에서 Admin API는 범위 밖이에요.
 - 팝업 제보(SUB-01)는 Swift 코드에서 부르지 않아요. React Native 화면이 직접 부르는지 PopPang-RN 저장소에서 확인해야 해요.
 
 헬스 체크(`GET /api/v1/health`)는 대응 V2가 없어서 V1 그대로 써요.
+
+### 팝업 상세 (#140)
+
+상세 화면은 `popupUuid`만 받아 열리고, 화면 내용을 직접 불러와요. 목록이 넘기던 `Popup`을 그대로 보여 주지 않아요. 상세 내용은 앞으로 팝업보다 넓어질 수 있고, SDUI로 바꿀 때도 상세가 직접 부르는 방식이 교체하기 쉬워서예요. 결정과 이유는 `Docs/specs/002-popup-detail-v2/`에 있어요.
+
+| 기능 | V2 | 응답 | 함수 |
+| --- | --- | --- | --- |
+| 단건 조회 | `GET /api/v2/user/popups/{popupUuid}` | 감싸지 않은 팝업 하나 (`PopupDetailDTO`) | `getPopupDetail(popupUuid:) -> PopupDetail` |
+| 조회 기록 | `POST /api/v2/popup/{popupUuid}/view` | 본문 쓰지 않음 | `increaseViewCount(popupUuid:)` |
+| 관련 팝업 | `GET /api/v2/user/popups/{popupUuid}/related` | 감싸지 않은 팝업 배열 (`PopupDTO`) | `getRelatedPopupList(popupUuid:)` |
+| 찜 등록·해제 | #132의 V2 찜 | | `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)` |
+| 관리자 비활성화 | `PATCH /api/v2/admin/popup/{popupUuid}/deactivate` (query 없음) | 본문 없음 | `deactivatePopup(popupUuid:)` (`V2AdminAPI`) |
+
+- 모두 Access Token을 써요. 상세 화면과 MainTab의 상세 진입에서 `userUuid`를 지웠어요. 각 탭이 MainTab에 보내는 `popupSelected(Popup)`는 그대로 두고, MainTab이 `popupUuid`만 꺼내 상세에 넘겨요. 각 탭을 V2로 옮길 때 uuid로 바꿔요.
+- 단건 조회·관련 팝업·조회 기록은 따로 보내요. 관련 팝업이나 조회 기록이 실패해도 상세 내용은 보여 줘요.
+- 단건 조회가 실패하면 오류 화면을 보여 줘요. 없는 팝업(404 4301)은 `PopupError.notFound`로 바꿔 "팝업을 찾을 수 없어요"와 뒤로 가기를, 그 밖의 실패(`PopupError.failed`)는 "팝업을 불러오지 못했어요"와 다시 시도를 보여 줘요. 404 4301 변환은 V2 팝업 요청 공통(`PopupRepositoryImpl.popupRequest`)이에요.
+- 상세 데이터는 Domain `PopupDetail`이에요. 지금은 `Popup`과 같은 값이고, 상세 전용 값이 생기면 여기에 더해요. 이미지 주소·도로명 주소·미디어 종류 변환은 `PopupFieldMapping`에 모아 목록과 상세가 같은 기준을 써요.
+- V1 `PopupAPI.increaseViewCount`·`getPersonalRelatedPopupList`와 `AdminAPI.deactivatePopup`은 지웠어요. 상세 화면에서만 쓰던 API라 9번 정리 단계를 기다리지 않았어요.
 
 ## 정해야 할 것
 
