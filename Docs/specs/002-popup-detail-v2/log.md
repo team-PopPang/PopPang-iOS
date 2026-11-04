@@ -126,3 +126,11 @@
 - 판단: 빛 효과는 블록마다가 아니라 묶음에 한 번 입혀 같은 박자로 움직임. "동작 줄이기"면 끔
 - 확인: `xcodebuild build … -scheme PopupDetailFeatureDemo` → BUILD SUCCEEDED, iPhone 16 Pro 데모(`-demoDetail failed`) 캡처로 스켈레톤·빛 띠·내용 전환 확인
 - 확인: `xcodebuild test … -scheme PopupDetailFeature -only-testing:PopupDetailFeatureTests` → 통과 (8 tests), `xcodebuild build … -scheme PopPangApp`·`-scheme DSKit` → BUILD SUCCEEDED
+
+## 2026-11-05 스켈레톤 리뷰 지적 반영 (push 전 리뷰 PASS, 제안 1·2·7)
+- 사용자 결정: "1,2,7번 고쳐줘"
+- 1: 스켈레톤 높이(약 760pt)가 iPhone SE보다 길어 아래 바가 화면 밖으로 밀림 → 블록 묶음을 스크롤을 막은 `ScrollView`로 감싸 위에서부터 보이고 아래 바는 맨 아래에 붙게 함. 사진 자리는 상단 바 아래까지(`ignoresSafeArea`, `ppScrollEdgeEffectHidden`)
+  - 처음 시도(`frame(maxHeight: .infinity, alignment: .top)` + `clipped()`)는 아래 바가 여전히 밀려나서 바꿈
+- 2: 화면을 벗어났다 돌아오면 빛 효과가 멈춤 → `onDisappear`에서 처음 값으로 돌리고, 다시 나타나거나 "동작 줄이기"가 바뀌면 다음 프레임에 다시 시작
+- 7: `content()`의 그림자 주석을 지금 동작(스켈레톤도 그림자를 깔고 찾을 수 없음 화면은 안 깜)에 맞춤
+- 확인: `xcodebuild test … -scheme PopupDetailFeature -only-testing:PopupDetailFeatureTests` → 통과 (8 tests), `xcodebuild build … -scheme PopPangApp`·`-scheme PopupDetailFeatureDemo` → BUILD SUCCEEDED, iPhone SE 데모(`-demoDetail failed`) 캡처로 위부터 보임·아래 바·빛 띠 확인
