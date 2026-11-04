@@ -192,6 +192,15 @@ struct PopupRepositoryTests {
         }
     }
 
+    @Test("S03 없는 팝업(404 4301) 구분은 단건 조회에만 적용하고 관련 팝업은 지금처럼 failed로 바꾼다")
+    func s03NotFoundOnlyForDetail() async {
+        let context = PopupRepositoryContext(response: (404, #"{"success":false,"code":4301,"message":"error","data":null}"#))
+
+        await #expect(throws: PopupError.failed) {
+            _ = try await context.repository.getRelatedPopupList(popupUuid: "popup-1")
+        }
+    }
+
     @Test("S03 단건 조회도 다시 로그인해야 하는 실패는 그대로 던진다")
     func s03DetailPassesLoginRequiredThrough() async {
         let context = PopupRepositoryContext(response: (401, #"{"success":false,"code":5001,"message":"error","data":null}"#))

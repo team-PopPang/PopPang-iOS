@@ -108,10 +108,14 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
     }
 
     public func getPopupDetail(popupUuid: String) async throws -> PopupDetail {
-        // 없는 팝업(404 4301)은 popupRequest가 PopupError.notFound로 바꾼다.
+        // 없는 팝업(404 4301)은 단건 조회에서만 PopupError.notFound로 구분한다. 다른 요청은 지금처럼 failed다.
         try await popupRequest {
-            try await makeV2Provider().asyncRequest(.detail(popupUuid: popupUuid), decodeTo: PopupDetailDTO.self)
-                .toEntity()
+            do {
+                return try await makeV2Provider().asyncRequest(.detail(popupUuid: popupUuid), decodeTo: PopupDetailDTO.self)
+                    .toEntity()
+            } catch let error as NetworkError where error.statusCode == 404 && error.serverErrorCode == Self.popupNotFoundCode {
+                throw PopupError.notFound
+            }
         }
     }
 
@@ -196,8 +200,9 @@ private extension PopupRepositoryImpl {
             throw error
         } catch is CancellationError {
             throw CancellationError()
-        } catch let error as NetworkError where error.statusCode == 404 && error.serverErrorCode == Self.popupNotFoundCode {
-            throw PopupError.notFound
+        } catch let error as PopupError {
+            // 요청 안에서 이미 구분한 실패(단건 조회의 notFound)는 그대로 던진다.
+            throw error
         } catch {
             // 화면에는 PopupError로 안내하지만 원인을 찾을 수 있게 남긴다.
             // 출시 빌드에도 찍히므로 서버 응답 본문이나 검색어가 담긴 URL은 남기지 않고 코드와 오류 종류만 남긴다.

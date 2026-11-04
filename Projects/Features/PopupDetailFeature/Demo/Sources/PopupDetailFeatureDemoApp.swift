@@ -4,8 +4,8 @@ import Foundation
 import PopupDetailFeature
 import SwiftUI
 
-/// `-demoDetail notFound`면 없는 팝업 화면, `-demoDetail failed`면 다시 시도 화면을 띄운다.
-/// 다시 시도를 누르면 그다음부터는 성공한다. 인자가 없으면 1초 로딩 뒤 내용을 보여 준다.
+/// `-demoDetail notFound`면 없는 팝업 화면을 띄운다. `-demoDetail failed`면 첫 요청이 실패하고
+/// 로딩을 유지한 채 자동으로 다시 요청해 내용을 보여 준다. 인자가 없으면 1초 로딩 뒤 내용을 보여 준다.
 @main
 struct PopupDetailFeatureDemoApp: App {
     var body: some Scene {

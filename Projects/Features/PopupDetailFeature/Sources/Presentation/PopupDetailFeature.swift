@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Core
 import Domain
 import Foundation
 import Kingfisher
@@ -32,23 +33,17 @@ public struct PopupDetailFeature {
     }
 
     public enum DetailState: Equatable, Sendable {
+        /// 받는 중. 서버 오류·네트워크 문제로 실패하면 이 상태로 계속 다시 요청한다 (D-10).
         case loading
         case loaded(PopupDetail)
-        case failed(LoadFailure)
-    }
-
-    public enum LoadFailure: Equatable, Sendable {
-        /// 없는 팝업이다 (404 4301). 다시 시도해도 같아서 뒤로 가기만 보여 준다.
+        /// 없는 팝업이다 (404 4301). 다시 요청해도 같아서 뒤로 가기만 보여 준다.
         case notFound
-        /// 서버 오류나 네트워크 문제다. 다시 시도를 보여 준다.
-        case failed
     }
 
     public enum Action: Equatable, Sendable {
         case onAppear
-        case retryTapped
         case detailLoaded(PopupDetail)
-        case detailFailed(LoadFailure)
+        case detailNotFound
         case toggleLike
         case deactivatePopup
         case relatedPopupListLoaded([Popup])
@@ -64,6 +59,10 @@ public struct PopupDetailFeature {
     }
 
     @Dependency(\.popupDetailClient) private var popupDetailClient: PopupDetailClient
+    @Dependency(\.continuousClock) private var clock
+
+    /// 상세 요청이 실패한 뒤 다시 요청하기 전 기다리는 시간. 실패할수록 늘리고 최대 값에서 멈춘다.
+    static let retryDelays: [Duration] = [.seconds(1), .seconds(2), .seconds(4), .seconds(8)]
 
     private enum CancelID {
         case detail
@@ -77,29 +76,20 @@ public struct PopupDetailFeature {
             case .onAppear:
                 guard state.hasLoaded == false else { return .none }
                 state.hasLoaded = true
-                state.detailState = .loading
-                state.didDeactivate = false
-                state.errorMessage = nil
-                // 상세·조회 기록·관련 팝업은 따로 보낸다. 하나가 실패해도 나머지는 반영한다.
-                return .merge(
-                    loadDetail(popupUuid: state.popupUuid),
-                    increaseViewCount(popupUuid: state.popupUuid),
-                    loadRelatedPopups(popupUuid: state.popupUuid)
-                )
-
-            case .retryTapped:
-                // 없는 팝업은 다시 시도해도 같다. 다시 시도는 상세 데이터만 다시 받는다.
-                guard state.detailState == .failed(.failed) else { return .none }
-                state.detailState = .loading
                 return loadDetail(popupUuid: state.popupUuid)
 
             case .detailLoaded(let detail):
                 state.detailState = .loaded(detail)
                 let urls = detail.imageUrlList
-                return .run { _ in prefetchImages(urls: urls) }
+                // 조회 기록과 관련 팝업은 상세를 받은 뒤에 보낸다. 다시 요청해서 받은 경우에도 함께 보내진다.
+                return .merge(
+                    .run { _ in prefetchImages(urls: urls) },
+                    increaseViewCount(popupUuid: detail.popupUuid),
+                    loadRelatedPopups(popupUuid: detail.popupUuid)
+                )
 
-            case .detailFailed(let failure):
-                state.detailState = .failed(failure)
+            case .detailNotFound:
+                state.detailState = .notFound
                 return .none
 
             case .toggleLike:
@@ -168,16 +158,29 @@ public struct PopupDetailFeature {
 }
 
 private extension PopupDetailFeature {
+    /// 상세를 받을 때까지 다시 요청한다 (D-10). 없는 팝업과 로그인 끊김은 다시 요청하지 않는다.
+    /// 화면을 닫으면 effect가 취소되어 멈춘다.
     func loadDetail(popupUuid: String) -> Effect<Action> {
-        .run { [popupDetailClient] send in
-            do {
-                let detail = try await popupDetailClient.getPopupDetail(popupUuid)
-                await send(.detailLoaded(detail))
-            } catch is CancellationError {
-                return
-            } catch {
-                let failure: LoadFailure = (error as? PopupError) == .notFound ? .notFound : .failed
-                await send(.detailFailed(failure))
+        .run { [popupDetailClient, clock] send in
+            var attempt = 0
+            while true {
+                do {
+                    let detail = try await popupDetailClient.getPopupDetail(popupUuid)
+                    await send(.detailLoaded(detail))
+                    return
+                } catch PopupError.notFound {
+                    await send(.detailNotFound)
+                    return
+                } catch is AuthSessionError {
+                    // 로그인 화면 전환은 AppFeature가 한다. 다시 요청해도 같으므로 로딩으로 둔다.
+                    return
+                } catch is CancellationError {
+                    return
+                } catch {
+                    let delay = Self.retryDelays[min(attempt, Self.retryDelays.count - 1)]
+                    attempt += 1
+                    try await clock.sleep(for: delay)
+                }
             }
         }
         .cancellable(id: CancelID.detail, cancelInFlight: true)

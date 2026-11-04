@@ -57,6 +57,7 @@ let project = Project(
             dependencies: [
                 .target(name: "PopupDetailFeature"),
                 .project(target: "Domain", path: "../../Domain"),
+                .project(target: "Core", path: "../../Shared/Core"),
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]
         ),

@@ -66,8 +66,8 @@ public struct PopupDetailFeatureView: View {
                 loadingView
             case .loaded(let detail):
                 content(detail)
-            case .failed(let failure):
-                failureView(failure)
+            case .notFound:
+                notFoundView
             }
         }
         .if(hidesSystemTabBar) {
@@ -182,39 +182,27 @@ public struct PopupDetailFeatureView: View {
             .background(Color.mainWhite)
     }
 
-    /// 상세 데이터를 받지 못했을 때. 없는 팝업은 뒤로 가기, 그 밖의 실패는 다시 시도를 보여 준다 (스펙 D-8).
-    private func failureView(_ failure: PopupDetailFeature.LoadFailure) -> some View {
+    /// 없는 팝업일 때 (스펙 D-8). 서버 오류·네트워크 실패는 로딩을 보여 주며 계속 다시 요청한다 (D-10).
+    private var notFoundView: some View {
         VStack(spacing: 16) {
-            Image(systemName: failure == .notFound ? "questionmark.circle" : "exclamationmark.circle")
+            Image(systemName: "questionmark.circle")
                 .font(.system(size: 40, weight: .regular))
                 .foregroundStyle(Color.mainGray)
 
-            Text(
-                failure == .notFound
-                    ? String(localized: "팝업을 찾을 수 없어요", bundle: .module, comment: "Popup detail failed: the popup no longer exists")
-                    : String(localized: "팝업을 불러오지 못했어요", bundle: .module, comment: "Popup detail failed to load for a network or server reason")
-            )
-            .font(Font(UIFont.scdream(.medium, size: 16)))
-            .foregroundStyle(Color.mainBlack)
-            .multilineTextAlignment(.center)
+            Text("팝업을 찾을 수 없어요", bundle: .module, comment: "Popup detail failed: the popup no longer exists")
+                .font(Font(UIFont.scdream(.medium, size: 16)))
+                .foregroundStyle(Color.mainBlack)
+                .multilineTextAlignment(.center)
 
             Button {
-                if failure == .notFound {
-                    dismiss()
-                } else {
-                    store.send(.retryTapped)
-                }
+                dismiss()
             } label: {
-                Text(
-                    failure == .notFound
-                        ? String(localized: "뒤로 가기", bundle: .module, comment: "Button that leaves the popup detail when the popup no longer exists")
-                        : String(localized: "다시 시도", bundle: .module, comment: "Button that loads the popup detail again")
-                )
-                .font(Font(UIFont.scdream(.medium, size: 14)))
-                .foregroundStyle(Color.subWhite)
-                .padding(.horizontal, 20)
-                .frame(height: 40)
-                .background(Capsule().fill(Color.mainOrange))
+                Text("뒤로 가기", bundle: .module, comment: "Button that leaves the popup detail when the popup no longer exists")
+                    .font(Font(UIFont.scdream(.medium, size: 14)))
+                    .foregroundStyle(Color.subWhite)
+                    .padding(.horizontal, 20)
+                    .frame(height: 40)
+                    .background(Capsule().fill(Color.mainOrange))
             }
             .buttonStyle(PressableButtonStyle())
         }

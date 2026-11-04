@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Core
 import Domain
 import Foundation
 import Testing
@@ -38,60 +39,85 @@ struct PopupDetailFeatureTests {
         #expect(Set(requested.value) == ["detail:popup-1", "view:popup-1", "related:popup-1"])
     }
 
-    @Test("S04 없는 팝업이면 찾을 수 없음 화면을 보여 주고 다시 시도는 하지 않는다")
+    @Test("S04 없는 팝업이면 찾을 수 없음 화면을 보여 주고, 조회 기록과 관련 팝업은 보내지 않는다")
     func s04NotFoundShowsNotFound() async {
-        let detailCalls = LockIsolated(0)
-        let store = TestStore(initialState: PopupDetailFeature.State(popupUuid: "popup-1")) {
-            PopupDetailFeature()
-        } withDependencies: {
-            $0.popupDetailClient = .mock(getPopupDetail: { _ in
-                detailCalls.withValue { $0 += 1 }
-                throw PopupError.notFound
-            })
-        }
-        store.exhaustivity = .off(showSkippedAssertions: false)
-
-        await store.send(.onAppear)
-        await store.receive(\.detailFailed) {
-            $0.detailState = .failed(.notFound)
-        }
-        await store.send(.retryTapped)
-        await store.finish()
-        #expect(store.state.detailState == .failed(.notFound))
-        #expect(detailCalls.value == 1)
-    }
-
-    @Test("S04 그 밖의 실패면 다시 시도 화면을 보여 주고, 다시 시도하면 상세만 다시 받는다")
-    func s04FailureCanRetry() async {
-        let detailCalls = LockIsolated(0)
-        let viewCalls = LockIsolated(0)
+        let calls = LockIsolated<[String]>([])
         let store = TestStore(initialState: PopupDetailFeature.State(popupUuid: "popup-1")) {
             PopupDetailFeature()
         } withDependencies: {
             $0.popupDetailClient = .mock(
                 getPopupDetail: { _ in
+                    calls.withValue { $0.append("detail") }
+                    throw PopupError.notFound
+                },
+                increaseViewCount: { _ in calls.withValue { $0.append("view") } },
+                getRelatedPopupList: { _ in
+                    calls.withValue { $0.append("related") }
+                    return []
+                }
+            )
+        }
+
+        await store.send(.onAppear) {
+            $0.hasLoaded = true
+        }
+        await store.receive(\.detailNotFound) {
+            $0.detailState = .notFound
+        }
+        #expect(calls.value == ["detail"])
+    }
+
+    @Test("S04 서버 오류·네트워크로 실패하면 로딩을 유지한 채 받을 때까지 다시 요청하고, 받은 뒤 조회 기록과 관련 팝업을 보낸다")
+    func s04FailureRetriesUntilLoaded() async {
+        let detailCalls = LockIsolated(0)
+        let viewCalls = LockIsolated(0)
+        let store = TestStore(initialState: PopupDetailFeature.State(popupUuid: "popup-1")) {
+            PopupDetailFeature()
+        } withDependencies: {
+            $0.continuousClock = ImmediateClock()
+            $0.popupDetailClient = .mock(
+                getPopupDetail: { _ in
                     let count = detailCalls.withValue { $0 += 1; return $0 }
-                    if count == 1 { throw PopupError.failed }
+                    if count < 3 { throw PopupError.failed }
                     return .sample
                 },
-                increaseViewCount: { _ in viewCalls.withValue { $0 += 1 } }
+                increaseViewCount: { _ in viewCalls.withValue { $0 += 1 } },
+                getRelatedPopupList: { _ in [.popupMock] }
             )
         }
         store.exhaustivity = .off(showSkippedAssertions: false)
 
         await store.send(.onAppear)
-        await store.receive(\.detailFailed) {
-            $0.detailState = .failed(.failed)
-        }
-        await store.send(.retryTapped) {
-            $0.detailState = .loading
-        }
+        // 실패하는 동안 화면은 로딩 그대로다 (다시 시도 버튼 없음).
         await store.receive(\.detailLoaded) {
             $0.detailState = .loaded(.sample)
         }
         await store.finish()
-        #expect(detailCalls.value == 2)
+        await store.skipReceivedActions(strict: false)
+        #expect(detailCalls.value == 3)
         #expect(viewCalls.value == 1)
+        #expect(store.state.relatedPopupList == [.popupMock])
+    }
+
+    @Test("S04 로그인이 끊기면 다시 요청하지 않고 로딩으로 둔다 (로그인 화면 전환은 앱이 한다)")
+    func s04LoginRequiredStopsRetrying() async {
+        let detailCalls = LockIsolated(0)
+        let store = TestStore(initialState: PopupDetailFeature.State(popupUuid: "popup-1")) {
+            PopupDetailFeature()
+        } withDependencies: {
+            $0.continuousClock = ImmediateClock()
+            $0.popupDetailClient = .mock(getPopupDetail: { _ in
+                detailCalls.withValue { $0 += 1 }
+                throw AuthSessionError.loginRequired
+            })
+        }
+
+        await store.send(.onAppear) {
+            $0.hasLoaded = true
+        }
+        await store.finish()
+        #expect(store.state.detailState == .loading)
+        #expect(detailCalls.value == 1)
     }
 
     @Test("S04 관련 팝업이나 조회 기록이 실패해도 상세 내용은 보여 준다")
