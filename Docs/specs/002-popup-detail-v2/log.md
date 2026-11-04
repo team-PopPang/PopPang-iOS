@@ -152,3 +152,4 @@
 - push 전 리뷰 FAIL (데모 감싸기 커밋): 데모 `navigationDestination` 안에서 Store를 만들어 다시 그릴 때마다 상세가 로딩으로 돌아갈 수 있음, 실행 인자·가짜 client를 매번 다시 만듦, 경로가 문자열, 관련 팝업 이동 미연결 → 데모를 고침: 경로 타입 `PopupDetailDemoRoute`, 상세마다 `@State`로 Store를 한 번만 만드는 `PopupDetailDemoScreen`, 실행 인자는 시작할 때 한 번만 읽음, 관련 팝업을 누르면 push
 - 같은 리뷰의 지적 5(찾을 수 없음 화면의 흰 뒤로 가기 버튼)는 앱 코드라 사용자 결정 대기
 - 확인: `xcodebuild build … -scheme PopupDetailFeatureDemo` → BUILD SUCCEEDED, iPhone SE 데모 실행 확인
+- 사용자 결정 (2026-11-05): 지적 5(찾을 수 없음 화면의 흰 뒤로 가기 버튼)는 "드문경우라 일단 패스" — 화면 가운데 "뒤로 가기" 버튼으로 나갈 수 있음. 후속 작업으로 남김
