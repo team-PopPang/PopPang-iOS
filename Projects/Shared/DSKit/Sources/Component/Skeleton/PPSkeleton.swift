@@ -59,11 +59,22 @@ private struct PPSkeletonShimmerModifier: ViewModifier {
                     .allowsHitTesting(false)
                 }
             }
-            .onAppear {
-                guard !reduceMotion else { return }
-                withAnimation(.linear(duration: 1.3).repeatForever(autoreverses: false)) {
-                    phase = 1
-                }
+            .onAppear { startShimmer() }
+            // 화면을 벗어났다 돌아오면 phase가 이미 1이라 애니메이션이 다시 걸리지 않는다. 처음 값으로 돌려 둔다.
+            .onDisappear { phase = 0 }
+            .onChange(of: reduceMotion) { _, _ in
+                phase = 0
+                startShimmer()
             }
+    }
+
+    private func startShimmer() {
+        guard !reduceMotion else { return }
+        // 처음 값(0)에서 다음 프레임에 시작해야 반복 애니메이션이 새로 걸린다.
+        DispatchQueue.main.async {
+            withAnimation(.linear(duration: 1.3).repeatForever(autoreverses: false)) {
+                phase = 1
+            }
+        }
     }
 }

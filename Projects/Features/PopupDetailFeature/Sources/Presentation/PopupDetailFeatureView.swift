@@ -171,7 +171,7 @@ public struct PopupDetailFeatureView: View {
             .padding(.trailing, 10)
             .background(Color.mainGray4)
         }
-        // 사진 위 상단 바가 보이게 깔던 그림자다. 로딩·오류 화면에는 사진이 없어 내용 화면에만 둔다.
+        // 사진 위 상단 바(뒤로 가기)가 보이게 까는 그림자다. 스켈레톤(loadingView)도 사진 자리가 있어 같이 깐다. 찾을 수 없음 화면에는 두지 않는다.
         .topShadowGradient()
     }
 
