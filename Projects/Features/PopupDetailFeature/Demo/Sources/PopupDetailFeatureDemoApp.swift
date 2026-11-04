@@ -6,42 +6,65 @@ import SwiftUI
 
 /// `-demoDetail notFound`면 없는 팝업 화면을 띄운다. `-demoDetail failed`면 첫 요청이 실패하고
 /// 로딩을 유지한 채 자동으로 다시 요청해 내용을 보여 준다. 인자가 없으면 1초 로딩 뒤 내용을 보여 준다.
+///
+/// 실제 앱처럼 `NavigationStack`에서 상세를 push로 연다. 그래야 상세의 뒤로 가기 버튼(툴바)이 보인다.
+/// 실행하면 상세가 바로 열린 상태로 시작하고, 뒤로 가면 시작 화면에서 다시 열 수 있다.
 @main
 struct PopupDetailFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
-            PopupDetailFeatureView(
-                store: Store(
-                    initialState: PopupDetailFeature.State(popupUuid: PopupDetail.popupDetailDemo.popupUuid)
-                ) {
-                    PopupDetailFeature()
-                } withDependencies: {
-                    let mode = DemoDetailMode.fromLaunchArguments()
-                    let attempts = DemoAttemptCounter()
-                    $0.popupDetailClient = PopupDetailClient(
-                        getPopupDetail: { _ in
-                            try await Task.sleep(for: .seconds(1))
-                            let attempt = attempts.next()
-                            switch mode {
-                            case .notFound:
-                                throw PopupError.notFound
-                            case .failed where attempt == 1:
-                                throw PopupError.failed
-                            case .failed, .success:
-                                return .popupDetailDemo
-                            }
-                        },
-                        increaseViewCount: { _ in },
-                        getRelatedPopupList: { _ in
-                            [.relatedPopupDetailDemo]
-                        },
-                        addFavorite: { _ in },
-                        removeFavorite: { _ in },
-                        deactivatePopup: { _ in }
-                    )
-                }
-            )
+            PopupDetailDemoRootView()
         }
+    }
+}
+
+private struct PopupDetailDemoRootView: View {
+    @State private var path: [String] = [PopupDetail.popupDetailDemo.popupUuid]
+
+    var body: some View {
+        NavigationStack(path: $path) {
+            Button("팝업 상세 열기") {
+                path.append(PopupDetail.popupDetailDemo.popupUuid)
+            }
+            .navigationTitle("PopupDetail 데모")
+            .navigationDestination(for: String.self) { popupUuid in
+                PopupDetailFeatureView(
+                    store: Store(initialState: PopupDetailFeature.State(popupUuid: popupUuid)) {
+                        PopupDetailFeature()
+                    } withDependencies: {
+                        $0.popupDetailClient = .demo(mode: DemoDetailMode.fromLaunchArguments())
+                    }
+                )
+            }
+        }
+    }
+}
+
+private extension PopupDetailClient {
+    /// 데모용 가짜 client. 화면을 열 때마다 새로 만들어 실패 모드가 다시 첫 요청부터 적용된다.
+    static func demo(mode: DemoDetailMode) -> Self {
+        let attempts = DemoAttemptCounter()
+        return PopupDetailClient(
+            getPopupDetail: { _ in
+                try await Task.sleep(for: .seconds(1))
+                let attempt = attempts.next()
+                switch mode {
+                case .notFound:
+                    throw PopupError.notFound
+                case .failed where attempt == 1:
+                    throw PopupError.failed
+                case .failed, .success:
+                    return .popupDetailDemo
+                }
+            },
+            increaseViewCount: { _ in },
+            getRelatedPopupList: { _ in
+                [.relatedPopupDetailDemo]
+            },
+            addFavorite: { _ in },
+            removeFavorite: { _ in },
+            deactivatePopup: { _ in }
+        )
     }
 }
 

@@ -142,3 +142,10 @@
   - 작은 화면 처리를 스크롤 막은 ScrollView 대신 `frame(minHeight: 0, maxHeight: .infinity, alignment: .top)` + `clipped()`로 바꿈 (처음 시도에 `minHeight: 0`이 빠져 아래 바가 밀렸던 것). 안전 영역 처리 중복과 쓰이지 않던 `Spacer` 정리
   - 스켈레톤 그림자 설명을 `loadingView` 주석으로 옮김
 - 확인: `xcodebuild test … -scheme PopupDetailFeature -only-testing:PopupDetailFeatureTests` → 통과 (8 tests), `xcodebuild build … -scheme PopPangApp`·`-scheme PopupDetailFeatureDemo` → BUILD SUCCEEDED, iPhone SE 데모 캡처로 위부터 보임·아래 바·빛 띠 확인
+
+## 2026-11-05 데모를 NavigationStack으로 감쌈
+- 계기: 사용자가 iPhone SE 데모에서 뒤로 가기 버튼이 안 보인다고 알림. 상세의 뒤로 가기는 툴바 버튼이라 `NavigationStack` 안에서만 그려지는데, 데모가 상세를 바로 띄우고 있었음 (모든 기기 공통, 실제 앱은 MainTab 내비게이션 안이라 영향 없음)
+- 사용자 결정: "데모 NavigationStack으로 감싸줘"
+- 바꾼 파일: `PopupDetailFeature/Demo/Sources/PopupDetailFeatureDemoApp.swift` — 시작 화면 + `navigationDestination`으로 상세를 push. 실행하면 상세가 열린 상태로 시작. 가짜 client는 화면을 열 때마다 새로 만들어 실패 모드가 첫 요청부터 다시 적용
+- 확인: `xcodebuild build … -scheme PopupDetailFeatureDemo` → BUILD SUCCEEDED, iPhone SE 캡처로 스켈레톤·내용 화면에서 뒤로 가기 버튼이 그림자 위에 보임
+- 관찰: 찾을 수 없음 화면은 그림자가 없어 흰 뒤로 가기 버튼이 거의 안 보임 (push 전 리뷰 지적 1, 사용자가 넘긴 항목). 화면 가운데 "뒤로 가기" 버튼은 있음
