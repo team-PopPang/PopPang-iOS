@@ -101,3 +101,20 @@
 - 사용자 확인 (2026-11-04): "확인했어 문제없어" — 로그인한 앱에서 실제 서버로 상세 진입(로딩 → 내용), 하트 유지, 관련 팝업 이동 확인 (완료 조건 1번)
 - 결과: 완료 ([x])
 - 상태 변경: 모든 단계 완료 → 완료
+
+## 2026-11-04 push 전 리뷰 지적 반영 (D-10)
+- 계기: push 전 리뷰 hook FAIL (453d17e..50aa192). 지적 1(로딩·오류 화면 뒤로 가기 버튼이 흰색), 3(없는 팝업에도 조회 기록), 6~10은 이번에 하지 않음 (사용자: 1·3 패스, 9·10 답 없음)
+- 사용자 결정 (2026-11-04): "다시시도 이런버튼 없애 무한 재요청하도록해", 5번 승인
+- 바꾼 내용:
+  - 상세 요청이 실패하면 로딩을 유지한 채 1·2·4·8초(이후 8초) 간격으로 다시 요청 (`continuousClock`). 화면을 닫으면 effect 취소로 멈춤
+  - 다시 시도 버튼, "팝업을 불러오지 못했어요" 화면과 문구 2개 삭제. `DetailState`는 `loading`·`loaded`·`notFound`
+  - 조회 기록·관련 팝업은 상세를 받은 뒤에 보냄 (지적 2: 다시 요청으로 받은 경우에도 함께 나감)
+  - 로그인 끊김(`AuthSessionError`)은 다시 요청하지 않고 로딩으로 둠 (지적 4)
+  - 404 4301 → `notFound`를 단건 조회에서만 구분, `popupRequest`는 이미 구분한 `PopupError`를 그대로 던짐 (지적 5)
+  - 데모 `-demoDetail failed`: 첫 요청 실패 뒤 자동으로 다시 요청해 내용 표시
+- 바꾼 테스트와 이유: `s04NotFoundShowsNotFound`(조회 기록·관련 팝업을 보내지 않음 확인), `s04FailureCanRetry` → `s04FailureRetriesUntilLoaded`(버튼 대신 자동 재요청, D-10), 새 `s04LoginRequiredStopsRetrying`, Data 새 `s03NotFoundOnlyForDetail`
+- 확인:
+  - `xcodebuild test … -scheme PopupDetailFeature -only-testing:PopupDetailFeatureTests` → 통과 (8 tests)
+  - `xcodebuild test … -scheme Data` → 통과 (100 tests in 8 suites)
+  - `xcodebuild test … -scheme MainTabFeature -only-testing:MainTabFeatureTests` → 통과 (7 tests)
+  - `xcodebuild build … -scheme PopPangApp`, `-scheme PopupDetailFeatureDemo` → BUILD SUCCEEDED

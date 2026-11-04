@@ -259,8 +259,8 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 관리자 비활성화 | `PATCH /api/v2/admin/popup/{popupUuid}/deactivate` (query 없음) | 본문 없음 | `deactivatePopup(popupUuid:)` (`V2AdminAPI`) |
 
 - 모두 Access Token을 써요. 상세 화면과 MainTab의 상세 진입에서 `userUuid`를 지웠어요. 각 탭이 MainTab에 보내는 `popupSelected(Popup)`는 그대로 두고, MainTab이 `popupUuid`만 꺼내 상세에 넘겨요. 각 탭을 V2로 옮길 때 uuid로 바꿔요.
-- 단건 조회·관련 팝업·조회 기록은 따로 보내요. 관련 팝업이나 조회 기록이 실패해도 상세 내용은 보여 줘요.
-- 단건 조회가 실패하면 오류 화면을 보여 줘요. 없는 팝업(404 4301)은 `PopupError.notFound`로 바꿔 "팝업을 찾을 수 없어요"와 뒤로 가기를, 그 밖의 실패(`PopupError.failed`)는 "팝업을 불러오지 못했어요"와 다시 시도를 보여 줘요. 404 4301 변환은 V2 팝업 요청 공통(`PopupRepositoryImpl.popupRequest`)이에요.
+- 조회 기록과 관련 팝업은 단건 조회로 상세를 받은 뒤에 보내요. 둘이 실패해도 상세 내용은 보여 줘요.
+- 단건 조회가 서버 오류·네트워크로 실패하면(`PopupError.failed`) 로딩을 유지한 채 1·2·4·8초 간격으로 받을 때까지 다시 요청해요. 없는 팝업(404 4301)은 단건 조회에서만 `PopupError.notFound`로 바꿔 "팝업을 찾을 수 없어요"와 뒤로 가기를 보여 줘요. 로그인이 끊기면(`AuthSessionError`) 다시 요청하지 않아요. 로그인 화면 전환은 AppFeature가 해요.
 - 상세 데이터는 Domain `PopupDetail`이에요. 지금은 `Popup`과 같은 값이고, 상세 전용 값이 생기면 여기에 더해요. 이미지 주소·도로명 주소·미디어 종류 변환은 `PopupFieldMapping`에 모아 목록과 상세가 같은 기준을 써요.
 - V1 `PopupAPI.increaseViewCount`·`getPersonalRelatedPopupList`와 `AdminAPI.deactivatePopup`은 지웠어요. 상세 화면에서만 쓰던 API라 9번 정리 단계를 기다리지 않았어요.
 
