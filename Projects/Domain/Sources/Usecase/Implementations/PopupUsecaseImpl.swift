@@ -77,11 +77,8 @@ public final class PopupUsecaseImpl: PopupUsecaseProtocol {
         )
     }
 
-    public func getPersonalRelatedPopupList(userUuid: String, popupUuid: String) async throws -> [Popup] {
-        try await popupRepository.getPersonalRelatedPopupList(
-            userUuid: userUuid,
-            popupUuid: popupUuid
-        )
+    public func getRelatedPopupList(popupUuid: String) async throws -> [Popup] {
+        try await popupRepository.getRelatedPopupList(popupUuid: popupUuid)
     }
 
     public func getPersonalRandomPopupList(userUuid: String) async throws -> [Popup] {
@@ -94,6 +91,10 @@ public final class PopupUsecaseImpl: PopupUsecaseProtocol {
 
     public func removeAlertPopup(userUuid: String, popupUuid: String) async throws {
         try await popupRepository.removeAlertPopup(userUuid: userUuid, popupUuid: popupUuid)
+    }
+
+    public func getPopupDetail(popupUuid: String) async throws -> PopupDetail {
+        try await popupRepository.getPopupDetail(popupUuid: popupUuid)
     }
 
     public func increaseViewCount(popupUuid: String) async throws {

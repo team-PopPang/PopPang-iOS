@@ -379,7 +379,6 @@ struct DataTests {
         #expect(AdminAPI.getPopupSubmissionList.path == "/admin/popup-submissions")
         #expect(AdminAPI.createPopupSubmission(requestDTO: .fixture).path == "/admin/popup-submissions")
         #expect(AdminAPI.deactivatePopupByUser(userUuid: "user-1", popupUuid: "popup-1").path == "/admin/user/user-1/popup/popup-1/deactivate")
-        #expect(AdminAPI.deactivatePopup(adminUuid: "admin-1", popupUuid: "popup-1").path == "/admin/popup/popup-1/deactivate")
         #expect(AdminAPI.updatePopupSubmissionStatus(
             submissionId: 7,
             requestDTO: PopupSubmissionStatus.approved.toDTO()
@@ -398,14 +397,12 @@ struct DataTests {
         #expect(PopupAPI.getUpcomingPopupList.path == "/popup/upcoming")
         #expect(PopupAPI.getInProgressPopupList.path == "/popup/inProgress")
         #expect(PopupAPI.searchPopupList(searchText: "성수").path == "/popup/search")
-        #expect(PopupAPI.increaseViewCount(popupUuid: "popup-1").path == "/popup/popup-1/view")
         #expect(PopupAPI.getRandomPopupList.path == "/popup/random")
         #expect(PopupAPI.getPersonalPopupList(userUuid: "user-1").path == "/users/user-1/popups")
         #expect(PopupAPI.getPersonalUseerRecommendPopupList(userUuid: "user-1").path == "/users/user-1/popups/recommend")
         #expect(PopupAPI.getPersonalUpcomingPopupList(userUuid: "user-1").path == "/users/user-1/popups/upcoming")
         #expect(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").path == "/users/user-1/popups/filtered/home")
         #expect(PopupAPI.getPersonalMapFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", latitude: nil, longitude: nil, mapSortStandard: "DISTANCE").path == "/users/user-1/popups/filtered/map")
-        #expect(PopupAPI.getPersonalRelatedPopupList(userUuid: "user-1", popupUuid: "popup-1").path == "/users/user-1/popups/popup-1/related")
         #expect(PopupAPI.getPersonalRandomPopupList(userUuid: "user-1").path == "/users/user-1/popups/random")
         #expect(PopupAPI.getAlertPopupList(userUuid: "user-1").path == "/users/user-1/alert/popups")
         #expect(PopupAPI.removeAlertPopup(userUuid: "user-1", popupUuid: "popup-1").path == "/users/user-1/alert")
@@ -428,7 +425,6 @@ struct DataTests {
         #expect(AdminAPI.getPopupSubmissionList.method == .get)
         #expect(AdminAPI.createPopupSubmission(requestDTO: .fixture).method == .post)
         #expect(AdminAPI.deactivatePopupByUser(userUuid: "user-1", popupUuid: "popup-1").method == .patch)
-        #expect(AdminAPI.deactivatePopup(adminUuid: "admin-1", popupUuid: "popup-1").method == .patch)
         #expect(AdminAPI.updatePopupSubmissionStatus(
             submissionId: 7,
             requestDTO: PopupSubmissionStatus.approved.toDTO()
@@ -447,14 +443,12 @@ struct DataTests {
         #expect(PopupAPI.getUpcomingPopupList.method == .get)
         #expect(PopupAPI.getInProgressPopupList.method == .get)
         #expect(PopupAPI.searchPopupList(searchText: "성수").method == .get)
-        #expect(PopupAPI.increaseViewCount(popupUuid: "popup-1").method == .post)
         #expect(PopupAPI.getRandomPopupList.method == .get)
         #expect(PopupAPI.getPersonalPopupList(userUuid: "user-1").method == .get)
         #expect(PopupAPI.getPersonalUseerRecommendPopupList(userUuid: "user-1").method == .get)
         #expect(PopupAPI.getPersonalUpcomingPopupList(userUuid: "user-1").method == .get)
         #expect(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").method == .get)
         #expect(PopupAPI.getPersonalMapFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", latitude: 37.5, longitude: 127.0, mapSortStandard: "DISTANCE").method == .get)
-        #expect(PopupAPI.getPersonalRelatedPopupList(userUuid: "user-1", popupUuid: "popup-1").method == .get)
         #expect(PopupAPI.getPersonalRandomPopupList(userUuid: "user-1").method == .get)
         #expect(PopupAPI.getAlertPopupList(userUuid: "user-1").method == .get)
         #expect(PopupAPI.removeAlertPopup(userUuid: "user-1", popupUuid: "popup-1").method == .delete)
@@ -474,10 +468,6 @@ struct DataTests {
 
     @Test("API 요청 파라미터가 현재 명세와 일치한다")
     func apiRequestParametersMatchEndpointDefinitions() {
-        #expect(stringParameter(
-            AdminAPI.deactivatePopup(adminUuid: "admin-1", popupUuid: "popup-1").task,
-            key: "uuid"
-        ) == "admin-1")
         #expect(stringParameter(PopupAPI.searchPopupList(searchText: "성수").task, key: "q") == "성수")
         #expect(stringParameter(PopupAPI.getPersonalPopupList(userUuid: "user-1").task, key: "userUuid") == "user-1")
         #expect(stringParameter(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").task, key: "region") == "서울")

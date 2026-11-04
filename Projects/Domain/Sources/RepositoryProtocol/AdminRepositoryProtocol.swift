@@ -34,22 +34,18 @@ public protocol AdminRepositoryProtocol {
     /// - Parameters:
     ///   - userUuid: 관리자 권한 검증에 사용할 사용자 uuid.
     ///   - popupUuid: 비활성화할 팝업 uuid.
-    @available(*, deprecated, message: "deactivatePopup(adminUuid:popupUuid:)를 사용하세요.")
+    @available(*, deprecated, message: "deactivatePopup(popupUuid:)를 사용하세요.")
     func deactivatePopupByUser(userUuid: String, popupUuid: String) async throws
 
     /// 관리자 권한으로 팝업을 비활성화한다.
     ///
-    /// Swagger:
-    /// `PATCH /api/v1/admin/popup/{popupUuid}/deactivate`
+    /// `PATCH /api/v2/admin/popup/{popupUuid}/deactivate`
     ///
-    /// 권장되는 V2 비활성화 API다.
-    /// `uuid` query parameter의 사용자가 관리자 권한일 때만 처리된다.
-    /// 대상 팝업의 `activated` 값을 `false`로 변경한다.
+    /// Access Token의 사용자가 관리자일 때만 처리된다.
+    /// 대상 팝업의 `activated` 값을 `false`로 변경한다. 실패하면 `PopupError`를 던진다.
     ///
-    /// - Parameters:
-    ///   - adminUuid: 관리자 권한 검증에 사용할 사용자 uuid.
-    ///   - popupUuid: 비활성화할 팝업 uuid.
-    func deactivatePopup(adminUuid: String, popupUuid: String) async throws
+    /// - Parameter popupUuid: 비활성화할 팝업 uuid.
+    func deactivatePopup(popupUuid: String) async throws
 
     /// 팝업스토어 제보 상태를 변경한다.
     ///

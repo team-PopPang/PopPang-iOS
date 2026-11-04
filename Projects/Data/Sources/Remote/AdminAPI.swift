@@ -7,7 +7,6 @@ enum AdminAPI {
     /// Swagger 기준 사용자 제보 등록도 `/admin/popup-submissions` 경로를 사용한다.
     case createPopupSubmission(requestDTO: PopupSubmissionCreateRequestDTO)
     case deactivatePopupByUser(userUuid: String, popupUuid: String)
-    case deactivatePopup(adminUuid: String, popupUuid: String)
     case updatePopupSubmissionStatus(
         submissionId: Int,
         requestDTO: PopupSubmissionStatusUpdateRequestDTO
@@ -21,8 +20,6 @@ extension AdminAPI: BaseAPI {
             return "/admin/popup-submissions"
         case .deactivatePopupByUser(let userUuid, let popupUuid):
             return "/admin/user/\(userUuid)/popup/\(popupUuid)/deactivate"
-        case .deactivatePopup(_, let popupUuid):
-            return "/admin/popup/\(popupUuid)/deactivate"
         case .updatePopupSubmissionStatus(let submissionId, _):
             return "/admin/popup-submissions/\(submissionId)/status"
         }
@@ -35,7 +32,6 @@ extension AdminAPI: BaseAPI {
         case .createPopupSubmission:
             return .post
         case .deactivatePopupByUser,
-             .deactivatePopup,
              .updatePopupSubmissionStatus:
             return .patch
         }
@@ -46,11 +42,6 @@ extension AdminAPI: BaseAPI {
         case .getPopupSubmissionList,
              .deactivatePopupByUser:
             return .requestPlain
-        case .deactivatePopup(let adminUuid, _):
-            return .requestParameters(
-                parameters: ["uuid": adminUuid],
-                encoding: URLEncoding.queryString
-            )
         case .createPopupSubmission(let requestDTO):
             return .requestJSONEncodable(requestDTO)
         case .updatePopupSubmissionStatus(_, let requestDTO):
