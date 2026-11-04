@@ -171,12 +171,12 @@ public struct PopupDetailFeatureView: View {
             .padding(.trailing, 10)
             .background(Color.mainGray4)
         }
-        // 사진 위 상단 바(뒤로 가기)가 보이게 까는 그림자다. 스켈레톤(loadingView)도 사진 자리가 있어 같이 깐다. 찾을 수 없음 화면에는 두지 않는다.
+        // 사진 위 상단 바(뒤로 가기)가 보이게 까는 그림자다.
         .topShadowGradient()
     }
 
     /// 받는 동안은 실제 배치를 따라 그린 스켈레톤을 보여 준다 (D-11).
-    /// 사진 자리 위에 그림자를 깔아 흰 뒤로 가기 버튼이 보이게 한다 (내용 화면과 같음).
+    /// 스켈레톤에도 사진 자리가 있어 내용 화면처럼 그림자를 따로 깐다. 흰 뒤로 가기 버튼이 보이게 하려는 것이다.
     private var loadingView: some View {
         PopupDetailSkeletonView()
             .topShadowGradient()

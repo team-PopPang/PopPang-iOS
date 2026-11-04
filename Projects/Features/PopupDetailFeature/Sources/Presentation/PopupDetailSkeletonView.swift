@@ -11,47 +11,40 @@ struct PopupDetailSkeletonView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            // 화면보다 길면(iPhone SE 등) 실제 화면처럼 위에서부터 보이고 아래는 아래 바 뒤로 가려지게 한다.
-            // 스크롤은 막아 둔다. 스켈레톤은 넘겨 볼 내용이 아니다.
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    // 사진 자리. 실제 화면처럼 상단 바 아래까지 깐다.
-                    Rectangle()
-                        .fill(PPColor.divider)
-                        .frame(height: 450)
+            VStack(alignment: .leading, spacing: 0) {
+                // 사진 자리. 실제 화면처럼 상단 바 아래까지 깐다.
+                Rectangle()
+                    .fill(PPColor.divider)
+                    .frame(height: 450)
 
-                    VStack(alignment: .leading, spacing: PPSpacing.s12) {
-                        PPSkeletonBlock(width: 220, height: 22)
-                        PPSkeletonBlock(width: 48, height: 22, radius: 11)
+                VStack(alignment: .leading, spacing: PPSpacing.s12) {
+                    PPSkeletonBlock(width: 220, height: 22)
+                    PPSkeletonBlock(width: 48, height: 22, radius: 11)
 
-                        divider
+                    divider
 
-                        ForEach(infoValueWidths.indices, id: \.self) { index in
-                            HStack(spacing: PPSpacing.s20) {
-                                PPSkeletonBlock(width: 62, height: 17)
-                                PPSkeletonBlock(width: infoValueWidths[index], height: 17)
-                            }
+                    ForEach(infoValueWidths.indices, id: \.self) { index in
+                        HStack(spacing: PPSpacing.s20) {
+                            PPSkeletonBlock(width: 62, height: 17)
+                            PPSkeletonBlock(width: infoValueWidths[index], height: 17)
                         }
-
-                        divider
-
-                        ForEach(0..<3, id: \.self) { _ in
-                            PPSkeletonBlock(height: 15)
-                        }
-                        PPSkeletonBlock(height: 15)
-                            .padding(.trailing, 80)
                     }
-                    .padding(.top, PPSpacing.s20)
-                    .padding(.horizontal, PPSpacing.screenHorizontal)
 
-                    Spacer(minLength: 0)
+                    divider
+
+                    ForEach(0..<3, id: \.self) { _ in
+                        PPSkeletonBlock(height: 15)
+                    }
+                    PPSkeletonBlock(height: 15)
+                        .padding(.trailing, 80)
                 }
+                .padding(.top, PPSpacing.s20)
+                .padding(.horizontal, PPSpacing.screenHorizontal)
             }
-            .scrollDisabled(true)
-            // 내용 화면과 같이 사진 자리를 상단 바 아래까지 깔고, 위쪽 흐림 효과는 끈다.
-            .ppScrollEdgeEffectHidden(for: .top)
-            .ignoresSafeArea(edges: .top)
-            .scrollIndicators(.hidden)
+            // 화면보다 길면(iPhone SE 등) 실제 화면처럼 위에서부터 보이고 아래는 잘린다.
+            // minHeight 0이 있어야 내용 높이(약 760pt)보다 작게 줄어든다.
+            .frame(maxWidth: .infinity, minHeight: 0, maxHeight: .infinity, alignment: .top)
+            .clipped()
 
             // 아래 바 자리: 공유 버튼과 하트
             HStack(spacing: PPSpacing.s20) {

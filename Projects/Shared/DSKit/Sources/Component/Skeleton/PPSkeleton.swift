@@ -35,46 +35,36 @@ public extension View {
 
 private struct PPSkeletonShimmerModifier: ViewModifier {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var phase: CGFloat = 0
 
     /// 빛 띠의 폭 (묶음 폭에 대한 비율)
     private let bandRatio: CGFloat = 0.6
+    /// 빛이 한 번 지나가는 시간(초)
+    private let cycle: Double = 1.3
 
     func body(content: Content) -> some View {
         content
             .overlay {
                 if !reduceMotion {
-                    GeometryReader { proxy in
-                        let width = proxy.size.width
-                        LinearGradient(
-                            colors: [.clear, PPColor.background.opacity(0.7), .clear],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                        .frame(width: width * bandRatio)
-                        // 띠가 왼쪽 밖에서 시작해 오른쪽 밖까지 지나간다.
-                        .offset(x: -width * bandRatio + phase * width * (1 + bandRatio))
+                    // 시계로 빛 위치를 계산한다. 화면에 보일 때만 갱신되고, 다시 나타나면 이어서 돈다.
+                    // 따로 시작·정지하는 상태가 없어 화면 전환이나 설정 변경과 경쟁하지 않는다.
+                    TimelineView(.animation) { timeline in
+                        let progress = timeline.date.timeIntervalSinceReferenceDate
+                            .truncatingRemainder(dividingBy: cycle) / cycle
+                        GeometryReader { proxy in
+                            let width = proxy.size.width
+                            LinearGradient(
+                                colors: [.clear, PPColor.background.opacity(0.7), .clear],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                            .frame(width: width * bandRatio)
+                            // 띠가 왼쪽 밖에서 시작해 오른쪽 밖까지 지나간다.
+                            .offset(x: -width * bandRatio + CGFloat(progress) * width * (1 + bandRatio))
+                        }
                     }
                     .mask(content)
                     .allowsHitTesting(false)
                 }
             }
-            .onAppear { startShimmer() }
-            // 화면을 벗어났다 돌아오면 phase가 이미 1이라 애니메이션이 다시 걸리지 않는다. 처음 값으로 돌려 둔다.
-            .onDisappear { phase = 0 }
-            .onChange(of: reduceMotion) { _, _ in
-                phase = 0
-                startShimmer()
-            }
-    }
-
-    private func startShimmer() {
-        guard !reduceMotion else { return }
-        // 처음 값(0)에서 다음 프레임에 시작해야 반복 애니메이션이 새로 걸린다.
-        DispatchQueue.main.async {
-            withAnimation(.linear(duration: 1.3).repeatForever(autoreverses: false)) {
-                phase = 1
-            }
-        }
     }
 }
