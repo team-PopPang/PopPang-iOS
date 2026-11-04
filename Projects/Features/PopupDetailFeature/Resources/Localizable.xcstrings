@@ -452,6 +452,30 @@
         }
       }
     },
+    "팝업 정보를 불러오는 중" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Loading popup details"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "ポップアップ情報を読み込み中"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "팝업 정보를 불러오는 중"
+          }
+        }
+      },
+      "comment" : "VoiceOver label while the popup detail is loading"
+    },
     "팝업을 찾을 수 없어요" : {
       "extractionState" : "manual",
       "localizations" : {

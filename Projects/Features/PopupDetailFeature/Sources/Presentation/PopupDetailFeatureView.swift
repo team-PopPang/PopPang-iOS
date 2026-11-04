@@ -175,11 +175,11 @@ public struct PopupDetailFeatureView: View {
         .topShadowGradient()
     }
 
+    /// 받는 동안은 실제 배치를 따라 그린 스켈레톤을 보여 준다 (D-11).
+    /// 사진 자리 위에 그림자를 깔아 흰 뒤로 가기 버튼이 보이게 한다 (내용 화면과 같음).
     private var loadingView: some View {
-        ProgressView()
-            .controlSize(.large)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color.mainWhite)
+        PopupDetailSkeletonView()
+            .topShadowGradient()
     }
 
     /// 없는 팝업일 때 (스펙 D-8). 서버 오류·네트워크 실패는 로딩을 보여 주며 계속 다시 요청한다 (D-10).
