@@ -134,3 +134,11 @@
 - 2: 화면을 벗어났다 돌아오면 빛 효과가 멈춤 → `onDisappear`에서 처음 값으로 돌리고, 다시 나타나거나 "동작 줄이기"가 바뀌면 다음 프레임에 다시 시작
 - 7: `content()`의 그림자 주석을 지금 동작(스켈레톤도 그림자를 깔고 찾을 수 없음 화면은 안 깜)에 맞춤
 - 확인: `xcodebuild test … -scheme PopupDetailFeature -only-testing:PopupDetailFeatureTests` → 통과 (8 tests), `xcodebuild build … -scheme PopPangApp`·`-scheme PopupDetailFeatureDemo` → BUILD SUCCEEDED, iPhone SE 데모(`-demoDetail failed`) 캡처로 위부터 보임·아래 바·빛 띠 확인
+
+## 2026-11-05 스켈레톤 수정에 대한 push 전 리뷰 FAIL 반영
+- 계기: push 전 리뷰 FAIL (bfb1cd5..15c9f49). 빛 효과를 `DispatchQueue.main.async`로 다시 시작하는 예약을 취소하지 않아, 화면이 바로 사라지거나 "동작 줄이기"를 켠 직후 사라진 화면에서 애니메이션이 다시 걸릴 수 있음
+- 바꾼 내용:
+  - 빛 효과를 `TimelineView(.animation)`가 시계로 위치를 계산하는 방식으로 바꿈. 시작·정지 상태와 예약이 없어 화면 전환·설정 변경과 경쟁하지 않음
+  - 작은 화면 처리를 스크롤 막은 ScrollView 대신 `frame(minHeight: 0, maxHeight: .infinity, alignment: .top)` + `clipped()`로 바꿈 (처음 시도에 `minHeight: 0`이 빠져 아래 바가 밀렸던 것). 안전 영역 처리 중복과 쓰이지 않던 `Spacer` 정리
+  - 스켈레톤 그림자 설명을 `loadingView` 주석으로 옮김
+- 확인: `xcodebuild test … -scheme PopupDetailFeature -only-testing:PopupDetailFeatureTests` → 통과 (8 tests), `xcodebuild build … -scheme PopPangApp`·`-scheme PopupDetailFeatureDemo` → BUILD SUCCEEDED, iPhone SE 데모 캡처로 위부터 보임·아래 바·빛 띠 확인
