@@ -149,3 +149,6 @@
 - 바꾼 파일: `PopupDetailFeature/Demo/Sources/PopupDetailFeatureDemoApp.swift` — 시작 화면 + `navigationDestination`으로 상세를 push. 실행하면 상세가 열린 상태로 시작. 가짜 client는 화면을 열 때마다 새로 만들어 실패 모드가 첫 요청부터 다시 적용
 - 확인: `xcodebuild build … -scheme PopupDetailFeatureDemo` → BUILD SUCCEEDED, iPhone SE 캡처로 스켈레톤·내용 화면에서 뒤로 가기 버튼이 그림자 위에 보임
 - 관찰: 찾을 수 없음 화면은 그림자가 없어 흰 뒤로 가기 버튼이 거의 안 보임 (push 전 리뷰 지적 1, 사용자가 넘긴 항목). 화면 가운데 "뒤로 가기" 버튼은 있음
+- push 전 리뷰 FAIL (데모 감싸기 커밋): 데모 `navigationDestination` 안에서 Store를 만들어 다시 그릴 때마다 상세가 로딩으로 돌아갈 수 있음, 실행 인자·가짜 client를 매번 다시 만듦, 경로가 문자열, 관련 팝업 이동 미연결 → 데모를 고침: 경로 타입 `PopupDetailDemoRoute`, 상세마다 `@State`로 Store를 한 번만 만드는 `PopupDetailDemoScreen`, 실행 인자는 시작할 때 한 번만 읽음, 관련 팝업을 누르면 push
+- 같은 리뷰의 지적 5(찾을 수 없음 화면의 흰 뒤로 가기 버튼)는 앱 코드라 사용자 결정 대기
+- 확인: `xcodebuild build … -scheme PopupDetailFeatureDemo` → BUILD SUCCEEDED, iPhone SE 데모 실행 확인

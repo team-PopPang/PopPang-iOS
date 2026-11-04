@@ -9,6 +9,7 @@ import SwiftUI
 ///
 /// 실제 앱처럼 `NavigationStack`에서 상세를 push로 연다. 그래야 상세의 뒤로 가기 버튼(툴바)이 보인다.
 /// 실행하면 상세가 바로 열린 상태로 시작하고, 뒤로 가면 시작 화면에서 다시 열 수 있다.
+/// 관련 팝업을 누르면 그 상세가 push된다 (데모 데이터라 같은 팝업이 다시 열린다).
 @main
 struct PopupDetailFeatureDemoApp: App {
     var body: some Scene {
@@ -18,30 +19,55 @@ struct PopupDetailFeatureDemoApp: App {
     }
 }
 
+/// 데모 화면 이동 경로
+private enum PopupDetailDemoRoute: Hashable {
+    case detail(popupUuid: String)
+}
+
 private struct PopupDetailDemoRootView: View {
-    @State private var path: [String] = [PopupDetail.popupDetailDemo.popupUuid]
+    @State private var path: [PopupDetailDemoRoute] = [.detail(popupUuid: PopupDetail.popupDetailDemo.popupUuid)]
+    /// 실행 인자는 처음에 한 번만 읽는다.
+    private let mode = DemoDetailMode.fromLaunchArguments()
 
     var body: some View {
         NavigationStack(path: $path) {
             Button("팝업 상세 열기") {
-                path.append(PopupDetail.popupDetailDemo.popupUuid)
+                path.append(.detail(popupUuid: PopupDetail.popupDetailDemo.popupUuid))
             }
             .navigationTitle("PopupDetail 데모")
-            .navigationDestination(for: String.self) { popupUuid in
-                PopupDetailFeatureView(
-                    store: Store(initialState: PopupDetailFeature.State(popupUuid: popupUuid)) {
-                        PopupDetailFeature()
-                    } withDependencies: {
-                        $0.popupDetailClient = .demo(mode: DemoDetailMode.fromLaunchArguments())
+            .navigationDestination(for: PopupDetailDemoRoute.self) { route in
+                switch route {
+                case .detail(let popupUuid):
+                    PopupDetailDemoScreen(popupUuid: popupUuid, mode: mode) { relatedUuid in
+                        path.append(.detail(popupUuid: relatedUuid))
                     }
-                )
+                }
             }
         }
     }
 }
 
+/// 상세 하나. Store와 가짜 client를 `@State`로 한 번만 만들어, 상위 화면이 다시 그려져도 상세 상태가 유지된다.
+private struct PopupDetailDemoScreen: View {
+    @State private var store: StoreOf<PopupDetailFeature>
+    private let onSelectRelatedPopup: (String) -> Void
+
+    init(popupUuid: String, mode: DemoDetailMode, onSelectRelatedPopup: @escaping (String) -> Void) {
+        _store = State(initialValue: Store(initialState: PopupDetailFeature.State(popupUuid: popupUuid)) {
+            PopupDetailFeature()
+        } withDependencies: {
+            $0.popupDetailClient = .demo(mode: mode)
+        })
+        self.onSelectRelatedPopup = onSelectRelatedPopup
+    }
+
+    var body: some View {
+        PopupDetailFeatureView(store: store, onSelectRelatedPopup: onSelectRelatedPopup)
+    }
+}
+
 private extension PopupDetailClient {
-    /// 데모용 가짜 client. 화면을 열 때마다 새로 만들어 실패 모드가 다시 첫 요청부터 적용된다.
+    /// 데모용 가짜 client. 상세를 열 때마다 하나씩 만들어 실패 모드가 그 화면의 첫 요청부터 적용된다.
     static func demo(mode: DemoDetailMode) -> Self {
         let attempts = DemoAttemptCounter()
         return PopupDetailClient(
