@@ -65,7 +65,7 @@ PopupDetailFeature (비활성화) ─▶ AdminUsecase ─▶ AdminRepositoryImpl
 <p>Domain 함수 (V1 함수를 바꾼다. D-2):</p>
 <ul><li><code>getPopupDetail(popupUuid:) -&gt; PopupDetail</code> (새로 추가)</li><li><code>increaseViewCount(popupUuid:)</code> (이름 그대로, 경로만 V2)</li><li><code>getPersonalRelatedPopupList(userUuid:popupUuid:)</code> → <code>getRelatedPopupList(popupUuid:)</code></li><li><code>deactivatePopup(adminUuid:popupUuid:)</code> → <code>deactivatePopup(popupUuid:)</code></li></ul>
 <h3 id="ui">UI</h3>
-<ul><li>로딩: 화면 가운데 로딩 표시. 위쪽 뒤로 가기 버튼은 그대로 둔다.</li><li>오류: 없는 팝업(<code>notFound</code>)만 가운데 "팝업을 찾을 수 없어요" + 뒤로 가기. 그 밖의 실패는 로딩을 유지하며 다시 요청한다 (D-10). 문구는 ko·en·ja.</li><li>불러온 뒤 화면 배치는 지금과 같다.</li></ul>
+<ul><li>로딩: 실제 배치를 따라 그린 스켈레톤(사진 자리·제목·태그·운영 정보 3줄·설명·아래 바)에 빛이 지나가는 효과. 사진 자리 위에 그림자를 깔아 뒤로 가기 버튼이 보이게 한다 (D-11).</li><li>오류: 없는 팝업(<code>notFound</code>)만 가운데 "팝업을 찾을 수 없어요" + 뒤로 가기. 그 밖의 실패는 로딩을 유지하며 다시 요청한다 (D-10). 문구는 ko·en·ja.</li><li>불러온 뒤 화면 배치는 지금과 같다.</li></ul>
 <h3 id="에러예외-처리">에러·예외 처리</h3>
 <ul><li>Repository는 <code>popupRequest {}</code>로 감싼다. <code>AuthSessionError</code>와 취소는 그대로 던지고, 나머지는 로그를 남기고 <code>PopupError</code>로 던진다. 단건 조회의 404 4301은 <code>PopupError.notFound</code>로 구분한다 (새 case).</li><li>단건 조회 실패: 오류 화면 (R6).</li><li>조회 기록·관련 팝업·비활성화 실패: 지금처럼 <code>errorMessage</code>에 넣는다. 화면에는 보이지 않는다.</li><li>하트 실패: 지금처럼 되돌린다.</li><li>로그인이 끊기면(<code>AuthSessionError</code>) 지금처럼 앱의 로그인 흐름이 처리한다.</li></ul>
 <h3 id="테스트-방법">테스트 방법</h3>
@@ -89,6 +89,8 @@ PopupDetailFeature (비활성화) ─▶ AdminUsecase ─▶ AdminRepositoryImpl
 <ul><li>결정: 받기 전에는 가운데 로딩. 404 4301이면 "팝업을 찾을 수 없어요" + 뒤로 가기, 그 밖의 실패면 "팝업을 불러오지 못했어요" + 다시 시도 (2차 답 "오류 문구 하지 않음"을 상세 데이터 실패에 한해 바꿈)</li><li>이유: B 방식에서는 실패하면 보여 줄 데이터가 없다. 없어진 팝업은 다시 시도해도 같다</li><li>검토한 대안: 실패하면 바로 뒤로 닫기 (사용자가 이유를 모른다)</li><li>영향: R1, R6</li><li>정한 사람: AI 제안, 사용자 확인 (2026-11-04)</li></ul>
 <h3 id="d-10-실패하면-다시-시도-버튼-대신-자동으로-다시-요청">D-10 실패하면 다시 시도 버튼 대신 자동으로 다시 요청</h3>
 <ul><li>결정: 단건 조회가 서버 오류·네트워크로 실패하면 로딩을 유지한 채 1·2·4·8초(이후 8초) 간격으로 받을 때까지 다시 요청한다. "다시 시도" 버튼과 "팝업을 불러오지 못했어요" 화면을 없앤다. 없는 팝업(404 4301)은 지금처럼 찾을 수 없음 화면, 로그인 끊김(<code>AuthSessionError</code>)은 다시 요청하지 않고 로딩으로 둔다(로그인 화면 전환은 AppFeature). 조회 기록과 관련 팝업은 상세를 받은 뒤에 보낸다</li><li>이유: 사용자 결정. 다시 요청으로 상세를 받은 경우에도 관련 팝업·조회 기록이 함께 나가게 한다 (push 전 리뷰 지적 2). 간격을 늘려 서버에 연달아 요청하지 않는다</li><li>검토한 대안: 다시 시도 버튼 (D-8, 이전 결정)</li><li>영향: R6</li><li>정한 사람: 사용자 (2026-11-04, "다시시도 이런버튼 없애 무한 재요청하도록해")</li></ul>
+<h3 id="d-11-로딩은-스켈레톤으로">D-11 로딩은 스켈레톤으로</h3>
+<ul><li>결정: 받는 동안 가운데 <code>ProgressView</code> 대신 상세 배치를 따라 그린 스켈레톤(<code>PopupDetailSkeletonView</code>)을 보여 준다. 공통 부품(<code>PPSkeletonBlock</code>, <code>ppSkeletonShimmer()</code>)은 DSKit에 둔다. "동작 줄이기"면 빛 효과를 끈다. VoiceOver는 "팝업 정보를 불러오는 중"</li><li>이유: 사용자 요청. B 방식은 진입할 때마다 로딩이 보이므로 내용이 들어올 때 화면이 덜 흔들리게 한다. 다른 화면도 V2로 옮기며 같은 부품을 쓸 수 있게 DSKit에 둔다</li><li>검토한 대안: 상세 모듈 안에만 만들기 (다른 화면에서 쓰려면 나중에 옮겨야 함)</li><li>영향: R1</li><li>정한 사람: 사용자 (2026-11-05, "로딩아이콘대신 스켈레톤 UI", DSKit 공통 부품안 선택)</li></ul>
 <h3 id="d-9-탭의-팝업-선택-신호">D-9 탭의 팝업 선택 신호</h3>
 <ul><li>결정: 각 탭이 보내는 <code>popupSelected(Popup)</code>는 이번에 바꾸지 않고, MainTab이 <code>popupUuid</code>만 꺼낸다</li><li>이유: 탭 화면 6곳을 이번 범위에 넣지 않는다. 각 탭을 V2로 옮길 때 uuid로 바꾼다</li><li>검토한 대안: 지금 모든 탭의 신호를 <code>popupUuid</code>로 바꾼다 (범위가 커진다)</li><li>영향: R8</li><li>정한 사람: AI 제안, 사용자 확인 (2026-11-04)</li></ul>
 <h2 id="6-가정과-보류">6. 가정과 보류</h2>

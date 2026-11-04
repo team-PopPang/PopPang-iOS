@@ -118,3 +118,11 @@
   - `xcodebuild test … -scheme Data` → 통과 (100 tests in 8 suites)
   - `xcodebuild test … -scheme MainTabFeature -only-testing:MainTabFeatureTests` → 통과 (7 tests)
   - `xcodebuild build … -scheme PopPangApp`, `-scheme PopupDetailFeatureDemo` → BUILD SUCCEEDED
+
+## 2026-11-05 로딩을 스켈레톤으로 (D-11)
+- 사용자 요청: "팝업상세화면 처음에 로딩중일때 로딩아이콘대신 스켈레톤 UI로 하고싶어", 위치는 DSKit 공통 부품 + 상세 배치는 상세 모듈 (1번안)
+- 바꾼 파일: `DSKit/Sources/Component/Skeleton/PPSkeleton.swift` (새 파일: `PPSkeletonBlock`, `ppSkeletonShimmer()`), `PopupDetailFeature/Sources/Presentation/PopupDetailSkeletonView.swift` (새 파일), `PopupDetailFeatureView.swift` (`loadingView`), `Resources/Localizable.xcstrings` (VoiceOver 문구 1개), `Docs/architecture/design-system.md`, `spec.md`
+- 판단: 사진 자리 위에 `topShadowGradient()`를 깔아 흰 뒤로 가기 버튼이 보이게 함 (내용 화면과 같은 모양, 리뷰 지적 1의 로딩 상태 부분도 함께 해결)
+- 판단: 빛 효과는 블록마다가 아니라 묶음에 한 번 입혀 같은 박자로 움직임. "동작 줄이기"면 끔
+- 확인: `xcodebuild build … -scheme PopupDetailFeatureDemo` → BUILD SUCCEEDED, iPhone 16 Pro 데모(`-demoDetail failed`) 캡처로 스켈레톤·빛 띠·내용 전환 확인
+- 확인: `xcodebuild test … -scheme PopupDetailFeature -only-testing:PopupDetailFeatureTests` → 통과 (8 tests), `xcodebuild build … -scheme PopPangApp`·`-scheme DSKit` → BUILD SUCCEEDED
