@@ -4,27 +4,40 @@ import Foundation
 import PopupDetailFeature
 import SwiftUI
 
+/// `-demoDetail notFound`면 없는 팝업 화면, `-demoDetail failed`면 다시 시도 화면을 띄운다.
+/// 다시 시도를 누르면 그다음부터는 성공한다. 인자가 없으면 1초 로딩 뒤 내용을 보여 준다.
 @main
 struct PopupDetailFeatureDemoApp: App {
     var body: some Scene {
         WindowGroup {
             PopupDetailFeatureView(
                 store: Store(
-                    initialState: PopupDetailFeature.State(
-                        userUuid: "demo-user",
-                        popup: .popupDetailDemo
-                    )
+                    initialState: PopupDetailFeature.State(popupUuid: PopupDetail.popupDetailDemo.popupUuid)
                 ) {
                     PopupDetailFeature()
                 } withDependencies: {
+                    let mode = DemoDetailMode.fromLaunchArguments()
+                    let attempts = DemoAttemptCounter()
                     $0.popupDetailClient = PopupDetailClient(
+                        getPopupDetail: { _ in
+                            try await Task.sleep(for: .seconds(1))
+                            let attempt = attempts.next()
+                            switch mode {
+                            case .notFound:
+                                throw PopupError.notFound
+                            case .failed where attempt == 1:
+                                throw PopupError.failed
+                            case .failed, .success:
+                                return .popupDetailDemo
+                            }
+                        },
                         increaseViewCount: { _ in },
-                        getPersonalRelatedPopupList: { _, _ in
+                        getRelatedPopupList: { _ in
                             [.relatedPopupDetailDemo]
                         },
-                        addFavorite: { _, _ in },
-                        removeFavorite: { _, _ in },
-                        deactivatePopup: { _, _ in }
+                        addFavorite: { _ in },
+                        removeFavorite: { _ in },
+                        deactivatePopup: { _ in }
                     )
                 }
             )
@@ -32,8 +45,39 @@ struct PopupDetailFeatureDemoApp: App {
     }
 }
 
-private extension Popup {
-    static let popupDetailDemo = Popup(
+private enum DemoDetailMode {
+    case success
+    case notFound
+    case failed
+
+    static func fromLaunchArguments() -> Self {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-demoDetail"), arguments.indices.contains(index + 1) else {
+            return .success
+        }
+        switch arguments[index + 1] {
+        case "notFound": return .notFound
+        case "failed": return .failed
+        default: return .success
+        }
+    }
+}
+
+/// 데모의 다시 시도 확인용. 몇 번째 요청인지 센다.
+private final class DemoAttemptCounter: @unchecked Sendable {
+    private let lock = NSLock()
+    private var count = 0
+
+    func next() -> Int {
+        lock.withLock {
+            count += 1
+            return count
+        }
+    }
+}
+
+private extension PopupDetail {
+    static let popupDetailDemo = PopupDetail(
         popupUuid: "popup-detail-demo",
         name: "더현대 서울 x 도시크랩",
         startDate: .popupDetailDemoDate(year: 2026, month: 7, day: 24),
@@ -70,7 +114,9 @@ private extension Popup {
         isFavorited: false,
         recommendList: ["디저트"]
     )
+}
 
+private extension Popup {
     static let relatedPopupDetailDemo = Popup(
         popupUuid: "related-popup-detail-demo",
         name: "여의도 디저트 팝업",

@@ -27,6 +27,13 @@ let project = Project(
             deploymentTargets: .iOS("17.0"),
             infoPlist: .extendingDefault(
                 with: [
+                    // 본 앱과 같은 언어 목록. 없으면 iOS가 데모 앱을 영어 앱으로 보고 문구를 영어로 띄운다.
+                    "CFBundleAllowMixedLocalizations": true,
+                    "CFBundleLocalizations": [
+                        "ko",
+                        "en",
+                        "ja",
+                    ],
                     "UILaunchScreen": [
                         "UIColorName": "",
                         "UIImageName": "",
@@ -38,6 +45,28 @@ let project = Project(
                 .target(name: "PopupDetailFeature"),
                 .project(target: "Domain", path: "../../Domain"),
             ]
+        ),
+        .target(
+            name: "PopupDetailFeatureTests",
+            destinations: [.iPhone],
+            product: .unitTests,
+            bundleId: "com.poppang.features.popupdetail.tests",
+            deploymentTargets: .iOS("17.0"),
+            infoPlist: .default,
+            sources: ["Tests/**"],
+            dependencies: [
+                .target(name: "PopupDetailFeature"),
+                .project(target: "Domain", path: "../../Domain"),
+                .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
+            ]
+        ),
+    ],
+    schemes: [
+        .scheme(
+            name: "PopupDetailFeatureDemo",
+            shared: true,
+            buildAction: .buildAction(targets: ["PopupDetailFeatureDemo"]),
+            runAction: .runAction(executable: .target("PopupDetailFeatureDemo"))
         ),
     ]
 )

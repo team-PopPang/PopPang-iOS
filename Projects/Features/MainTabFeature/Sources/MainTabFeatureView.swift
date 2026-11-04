@@ -112,8 +112,8 @@ private struct PopupDetailDestinationView: View {
             store: store.scope(state: \.content, action: \.content),
             isAdmin: store.isAdmin,
             hidesSystemTabBar: store.hidesSystemTabBar,
-            onSelectRelatedPopup: { userUuid, popup in
-                store.send(.relatedPopupSelected(userUuid, popup))
+            onSelectRelatedPopup: { popupUuid in
+                store.send(.relatedPopupSelected(popupUuid: popupUuid))
             },
             onDeactivateComplete: {
                 store.send(.deactivateCompleted)
