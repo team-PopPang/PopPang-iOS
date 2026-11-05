@@ -59,6 +59,7 @@ let project = Project(
             dependencies: [
                 .target(name: "CalendarFeatureV2"),
                 .project(target: "Domain", path: "../../Domain"),
+                .project(target: "Core", path: "../../Shared/Core"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
             ]

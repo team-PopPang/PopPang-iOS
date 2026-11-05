@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Core
 import Domain
 import Foundation
 import Testing
@@ -153,9 +154,83 @@ struct CalendarFeatureTests {
         await store.finish()
         await store.skipReceivedActions(strict: false)
 
-        #expect(store.state.errorMessage != nil)
+        #expect(store.state.errorMessage == CalendarFeature.loadFailedMessage)
         #expect(store.state.isLoading == false)
         #expect(store.state.calendarPopups.isEmpty)
+    }
+
+    @Test("로그인이 끊긴 실패는 오류 문구를 띄우지 않는다")
+    func loginRequiredShowsNoMessage() async {
+        let store = TestStore(initialState: CalendarFeature.State()) {
+            CalendarFeature()
+        } withDependencies: {
+            $0.calendarFeatureClient = .mock(
+                getRegionList: { [.all] },
+                getFilteredPopupList: { _, _, _ in throw AuthSessionError.loginRequired }
+            )
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.onAppear)
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+
+        #expect(store.state.errorMessage == nil)
+        #expect(store.state.isLoading == false)
+    }
+
+    @Test("찜 변경이 실패하면 찜 상태를 두고 안내 문구를 띄운다")
+    func toggleLikeFailureShowsMessage() async {
+        let popup = Popup.fixture(isFavorited: false, favoriteCount: 3)
+        var state = CalendarFeature.State()
+        state.calendarPopups = [popup]
+        let store = TestStore(initialState: state) {
+            CalendarFeature()
+        } withDependencies: {
+            $0.calendarFeatureClient = .mock(addFavorite: { _ in throw PopupError.failed })
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.toggleLike(popup))
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+
+        #expect(store.state.errorMessage == CalendarFeature.favoriteFailedMessage)
+        #expect(store.state.calendarPopups.first?.isFavorited == false)
+        #expect(store.state.calendarPopups.first?.favoriteCount == 3)
+    }
+
+    @Test("필터를 빠르게 바꾸면 앞 요청을 취소하고 마지막 조건의 응답만 반영한다")
+    func newerFilterCancelsOlderRequest() async {
+        let clock = TestClock()
+        var state = CalendarFeature.State()
+        state.selectedRegion = .seoul
+        state.selectedDistrict = "전체"
+        let store = TestStore(initialState: state) {
+            CalendarFeature()
+        } withDependencies: {
+            $0.calendarFeatureClient = .mock(
+                getFilteredPopupList: { _, _, sort in
+                    // 앞 요청(최신순)은 뒤 요청(마감임박)보다 늦게 끝나게 한다.
+                    if sort == "NEWEST" {
+                        try await clock.sleep(for: .seconds(5))
+                        return [.fixture(isFavorited: false, favoriteCount: 1)]
+                    }
+                    return [.fixture(isFavorited: false, favoriteCount: 2)]
+                }
+            )
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.districtSelected("성동구"))
+        await store.send(.sortOptionSelected(.closingSoon))
+        await clock.advance(by: .seconds(5))
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+
+        // 늦게 끝난 최신순 응답(찜 1개)이 마감임박 응답(찜 2개)을 덮어쓰지 않아야 한다.
+        #expect(store.state.calendarPopups.map(\.favoriteCount) == [2])
+        #expect(store.state.isLoading == false)
     }
 }
 

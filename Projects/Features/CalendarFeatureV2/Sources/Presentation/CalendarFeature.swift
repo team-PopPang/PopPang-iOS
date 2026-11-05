@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Core
 import Domain
 import DSKit
 import Foundation
@@ -51,6 +52,11 @@ public struct CalendarFeature {
     }
 
     @Dependency(\.calendarFeatureClient) private var calendarFeatureClient: CalendarFeatureClient
+
+    /// 처음 불러오기와 필터 불러오기가 함께 쓴다. 새 요청을 보내면 앞 요청을 취소해 가장 최근 조건의 응답만 반영한다.
+    private enum CancelID {
+        case load
+    }
 
     public init() {}
 
@@ -144,6 +150,21 @@ public struct CalendarFeature {
     }
 }
 
+extension CalendarFeature {
+    /// 로그인이 끊긴 실패는 문구를 띄우지 않는다. 로그인 화면 전환은 AppFeature가 세션 이벤트로 한다.
+    static func message(for error: Error, fallback: String) -> String? {
+        error is AuthSessionError ? nil : fallback
+    }
+
+    static var loadFailedMessage: String {
+        String(localized: "팝업을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
+    }
+
+    static var favoriteFailedMessage: String {
+        String(localized: "찜을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
+    }
+}
+
 private extension CalendarFeature {
     func loadAllPopupData(state: State) -> Effect<Action> {
         let calendarFeatureClient = calendarFeatureClient
@@ -169,11 +190,12 @@ private extension CalendarFeature {
                     popups: popups
                 )))
             } catch {
-                await send(.errorMessageChanged(error.localizedDescription))
+                await send(.errorMessageChanged(Self.message(for: error, fallback: Self.loadFailedMessage)))
             }
 
             await send(.loadingChanged(false))
         }
+        .cancellable(id: CancelID.load, cancelInFlight: true)
     }
 
     func updateFilteredPopupList(
@@ -192,11 +214,12 @@ private extension CalendarFeature {
                 )
                 await send(.filteredPopupListLoaded(popups))
             } catch {
-                await send(.errorMessageChanged(error.localizedDescription))
+                await send(.errorMessageChanged(Self.message(for: error, fallback: Self.loadFailedMessage)))
             }
 
             await send(.loadingChanged(false))
         }
+        .cancellable(id: CancelID.load, cancelInFlight: true)
     }
 
     func toggleLike(state: State, popup: Popup) -> Effect<Action> {
@@ -222,7 +245,7 @@ private extension CalendarFeature {
                 ))
                 await send(.errorMessageChanged(nil))
             } catch {
-                await send(.errorMessageChanged(error.localizedDescription))
+                await send(.errorMessageChanged(Self.message(for: error, fallback: Self.favoriteFailedMessage)))
             }
         }
     }
