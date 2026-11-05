@@ -51,7 +51,7 @@ struct HomeFeatureV2DemoApp: App {
 
 
 
-//                    $0.homePopupClient.getPersonalRandomPopupList = { _ in
+//                    $0.homePopupClient.getRandomPopupList = {
 //                        Array(repeating: .popupMock, count: 20)
 //                    }
 

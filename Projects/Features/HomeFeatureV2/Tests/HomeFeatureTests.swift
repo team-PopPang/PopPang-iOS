@@ -1,5 +1,6 @@
 import ADKit
 import ComposableArchitecture
+import Core
 import Domain
 import DSKit
 import Foundation
@@ -126,17 +127,14 @@ struct HomeFeatureTests {
             $0.homePopupClient.getRegionList = {
                 [busan, seoul]
             }
-            $0.homePopupClient.getPersonalRandomPopupList = { userUuid in
-                #expect(userUuid == "user-1")
-                return bestPopups
+            $0.homePopupClient.getRandomPopupList = {
+                bestPopups
             }
-            $0.homePopupClient.getPersonalUpcomingPopupList = { userUuid in
-                #expect(userUuid == "user-1")
-                return [comingLater, comingSooner]
+            $0.homePopupClient.getUpcomingPopupList = {
+                [comingLater, comingSooner]
             }
-            $0.homePopupClient.getPersonalFilteredPopupList = {
-                userUuid, selectedRegion, district, sort in
-                #expect(userUuid == "user-1")
+            $0.homePopupClient.getFilteredPopupList = {
+                selectedRegion, district, sort in
                 #expect(selectedRegion == "서울")
                 #expect(district == "전체")
                 #expect(sort == SortButton.SortOption.newest.rawValue)
@@ -213,9 +211,8 @@ struct HomeFeatureTests {
         let store = TestStore(initialState: initialState) {
             HomeFeature()
         } withDependencies: {
-            $0.homePopupClient.getPersonalFilteredPopupList = {
-                userUuid, selectedRegion, district, sort in
-                #expect(userUuid == "user-1")
+            $0.homePopupClient.getFilteredPopupList = {
+                selectedRegion, district, sort in
                 #expect(selectedRegion == "서울")
                 #expect(district == "성동구")
                 #expect(sort == SortButton.SortOption.mostFavorited.rawValue)
@@ -298,12 +295,13 @@ struct HomeFeatureTests {
         ) {
             ComingPopupDetailFeature()
         } withDependencies: {
-            $0.homePopupClient.addFavorite = { _, _ in
+            $0.homePopupClient.addFavorite = { _ in
                 throw TestError.expectedFailure
             }
         }
 
         await store.send(.toggleLike(popup)) {
+            $0.favoriteInFlight = ["popup-1"]
             $0.popups[0].isFavorited = true
             $0.popups[0].favoriteCount = 4
         }
@@ -320,11 +318,107 @@ struct HomeFeatureTests {
         }
 
         await store.receive(
-            .errorMessageChanged(TestError.expectedFailure.localizedDescription)
+            .errorMessageChanged(ComingPopupDetailFeature.favoriteFailedMessage)
         ) {
             $0.isLoading = false
-            $0.errorMessage = TestError.expectedFailure.localizedDescription
+            $0.errorMessage = ComingPopupDetailFeature.favoriteFailedMessage
         }
+
+        await store.receive(.favoriteRequestFinished(popupUuid: "popup-1")) {
+            $0.favoriteInFlight = []
+        }
+    }
+
+    @Test("HomeFeature는 찜 응답을 기다리는 동안 같은 하트를 다시 누르면 요청을 다시 보내지 않는다")
+    func homeFeatureIgnoresFavoriteTapWhileInFlight() async {
+        let clock = TestClock()
+        let calls = LockIsolated<[String]>([])
+        let popup = makePopup(popupUuid: "popup-1", name: "성수 팝업", favoriteCount: 3)
+        var initialState = HomeFeature.State(user: makeUser())
+        initialState.gridPopups = [popup]
+
+        let store = TestStore(initialState: initialState) {
+            HomeFeature()
+        } withDependencies: {
+            $0.homePopupClient.addFavorite = { uuid in
+                calls.withValue { $0.append("add:\(uuid)") }
+                try await clock.sleep(for: .seconds(1))
+            }
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.favoriteToggleTapped(popupUuid: "popup-1"))
+        await store.send(.favoriteToggleTapped(popupUuid: "popup-1"))
+        await clock.advance(by: .seconds(1))
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+
+        #expect(calls.value == ["add:popup-1"])
+        #expect(store.state.gridPopups.first?.favoriteCount == 4)
+        #expect(store.state.favoriteInFlight.isEmpty)
+    }
+
+    @Test("HomeFeature는 그리드를 빠르게 다시 불러오면 마지막 요청의 응답만 반영한다")
+    func homeFeatureKeepsOnlyLatestGridResponse() async {
+        let clock = TestClock()
+        let callCount = LockIsolated(0)
+        let store = TestStore(initialState: HomeFeature.State(user: makeUser())) {
+            HomeFeature()
+        } withDependencies: {
+            $0.homePopupClient.getFilteredPopupList = { _, _, _ in
+                let call = callCount.withValue { count -> Int in
+                    count += 1
+                    return count
+                }
+                // 첫 요청은 늦게 끝나게 한다.
+                if call == 1 {
+                    try await clock.sleep(for: .seconds(5))
+                    return [makePopup(popupUuid: "old", name: "이전 응답")]
+                }
+                return [makePopup(popupUuid: "new", name: "최신 응답")]
+            }
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.refreshFilteredPopupList)
+        await store.send(.refreshFilteredPopupList)
+        await clock.advance(by: .seconds(5))
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+
+        #expect(store.state.gridPopups.map(\.popupUuid) == ["new"])
+        #expect(store.state.isLoading == false)
+    }
+
+    @Test("ComingPopupDetailFeature는 목록을 불러오지 못하면 안내 문구를, 로그인이 끊기면 문구 없이 둔다")
+    func comingPopupDetailFeatureLoadFailureMessages() async {
+        let failing = TestStore(
+            initialState: ComingPopupDetailFeature.State(userUuid: "user-1", popups: [])
+        ) {
+            ComingPopupDetailFeature()
+        } withDependencies: {
+            $0.homePopupClient.getUpcomingPopupList = { throw PopupError.failed }
+        }
+        failing.exhaustivity = .off(showSkippedAssertions: false)
+        await failing.send(.onAppear)
+        await failing.finish()
+        await failing.skipReceivedActions(strict: false)
+        #expect(failing.state.errorMessage == ComingPopupDetailFeature.loadFailedMessage)
+        #expect(failing.state.isLoading == false)
+
+        let loggedOut = TestStore(
+            initialState: ComingPopupDetailFeature.State(userUuid: "user-1", popups: [])
+        ) {
+            ComingPopupDetailFeature()
+        } withDependencies: {
+            $0.homePopupClient.getUpcomingPopupList = { throw AuthSessionError.loginRequired }
+        }
+        loggedOut.exhaustivity = .off(showSkippedAssertions: false)
+        await loggedOut.send(.onAppear)
+        await loggedOut.finish()
+        await loggedOut.skipReceivedActions(strict: false)
+        #expect(loggedOut.state.errorMessage == nil)
+        #expect(loggedOut.state.isLoading == false)
     }
 }
 
