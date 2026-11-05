@@ -1,5 +1,5 @@
 import AlertFeature
-import CalendarFeature
+import CalendarFeatureV2
 import ComposableArchitecture
 import DSKit
 import FavoritesFeature

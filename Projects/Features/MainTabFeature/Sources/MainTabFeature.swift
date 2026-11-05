@@ -1,6 +1,6 @@
 import ComposableArchitecture
 import AlertFeature
-import CalendarFeature
+import CalendarFeatureV2
 import Core
 import Domain
 import FavoritesFeature
@@ -77,7 +77,7 @@ public struct MainTabFeature {
 
         public init(user: User) {
             self.user = user
-            self.calendar = .init(userUuid: user.userUuid)
+            self.calendar = .init()
             self.favorites = .init()
             self.home = .init(user: user)
             self.map = .init(userUuid: user.userUuid)
