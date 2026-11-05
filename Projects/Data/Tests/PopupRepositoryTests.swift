@@ -72,6 +72,143 @@ struct PopupRepositoryTests {
 
         #expect(try await context.repository.getPersonalSearchPopupList(searchText: "없는팝업").isEmpty)
     }
+
+    // MARK: - S01 조회 기록·관련 팝업 (V2)
+
+    @Test("S01 조회 기록은 V2 경로에 POST로 본문 없이 보내고 Access Token을 쓴다")
+    func s01ViewRequestMatchesV2Contract() throws {
+        let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .view(popupUuid: "popup-1")).urlRequest()
+
+        #expect(request.url?.path == "/api/v2/popup/popup-1/view")
+        #expect(request.url?.query == nil)
+        #expect(request.httpMethod == "POST")
+        #expect(request.httpBody == nil)
+        #expect(V2PopupAPI.view(popupUuid: "popup-1").resolvedAuthorization == .access)
+    }
+
+    @Test("S01 조회 기록이 성공하면 Access Token을 담아 한 번 보낸다")
+    func s01ViewSendsAccessToken() async throws {
+        let context = PopupRepositoryContext(response: (200, ""))
+
+        try await context.repository.increaseViewCount(popupUuid: "popup-1")
+
+        #expect(context.recorder.authorizationHeaders == ["Bearer access"])
+        #expect(context.recorder.httpMethods == ["POST"])
+    }
+
+    @Test("S01 조회 기록이 서버 오류로 실패하면 PopupError로 바꾼다")
+    func s01ViewMapsServerErrorToPopupError() async {
+        let context = PopupRepositoryContext(response: (500, #"{"success":false,"code":9999,"message":"error","data":null}"#))
+
+        await #expect(throws: PopupError.failed) {
+            try await context.repository.increaseViewCount(popupUuid: "popup-1")
+        }
+    }
+
+    @Test("S01 관련 팝업은 V2 경로에 사용자 UUID 없이 GET으로 보내고 Access Token을 쓴다")
+    func s01RelatedRequestMatchesV2Contract() throws {
+        let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .related(popupUuid: "popup-1")).urlRequest()
+
+        #expect(request.url?.path == "/api/v2/user/popups/popup-1/related")
+        #expect(request.url?.query == nil)
+        #expect(request.httpMethod == "GET")
+        #expect(V2PopupAPI.related(popupUuid: "popup-1").resolvedAuthorization == .access)
+    }
+
+    @Test("S01 관련 팝업은 감싸지 않은 팝업 배열을 읽는다")
+    func s01RelatedReadsPopupArray() async throws {
+        let context = PopupRepositoryContext(response: (200, "[\(PopupFixture.popup)]"))
+
+        let popups = try await context.repository.getRelatedPopupList(popupUuid: "popup-0")
+
+        #expect(popups.map(\.popupUuid) == ["popup-1"])
+        #expect(context.recorder.authorizationHeaders == ["Bearer access"])
+    }
+
+    @Test("S01 관련 팝업이 서버 오류로 실패하면 PopupError로 바꾼다")
+    func s01RelatedMapsServerErrorToPopupError() async {
+        let context = PopupRepositoryContext(response: (500, #"{"success":false,"code":9999,"message":"error","data":null}"#))
+
+        await #expect(throws: PopupError.failed) {
+            _ = try await context.repository.getRelatedPopupList(popupUuid: "popup-0")
+        }
+    }
+
+    // MARK: - S03 상세 단건 조회 (V2)
+
+    @Test("S03 단건 조회는 V2 경로에 GET으로 보내고 Access Token을 쓴다")
+    func s03DetailRequestMatchesV2Contract() throws {
+        let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .detail(popupUuid: "popup-1")).urlRequest()
+
+        #expect(request.url?.path == "/api/v2/user/popups/popup-1")
+        #expect(request.url?.query == nil)
+        #expect(request.httpMethod == "GET")
+        #expect(V2PopupAPI.detail(popupUuid: "popup-1").resolvedAuthorization == .access)
+    }
+
+    @Test("S03 단건 조회는 감싸지 않은 팝업 하나를 하트 상태와 함께 PopupDetail로 읽는다")
+    func s03DetailReadsPopupDetail() async throws {
+        let context = PopupRepositoryContext(response: (200, PopupFixture.popup))
+
+        let detail = try await context.repository.getPopupDetail(popupUuid: "popup-1")
+
+        #expect(detail.popupUuid == "popup-1")
+        #expect(detail.name == "성수 팝업")
+        #expect(detail.isFavorited == true)
+        #expect(detail.favoriteCount == 12)
+        #expect(detail.viewCount == 34)
+        #expect(context.recorder.authorizationHeaders == ["Bearer access"])
+    }
+
+    @Test("S03 단건 조회는 null일 수 있는 도로명 주소·미디어 종류·추천 카테고리를 목록과 같은 기준으로 바꾼다")
+    func s03DetailReadsNullableFields() async throws {
+        let context = PopupRepositoryContext(response: (200, PopupFixture.popup))
+
+        let detail = try await context.repository.getPopupDetail(popupUuid: "popup-1")
+
+        #expect(detail.roadAddress == "서울 성동구")
+        #expect(detail.mediaType == .image)
+        #expect(detail.recommendList.isEmpty)
+    }
+
+    @Test("S03 없는 팝업(404 4301)은 PopupError.notFound로 바꾼다")
+    func s03DetailMapsNotFound() async {
+        let context = PopupRepositoryContext(response: (404, #"{"success":false,"code":4301,"message":"error","data":null}"#))
+
+        await #expect(throws: PopupError.notFound) {
+            _ = try await context.repository.getPopupDetail(popupUuid: "popup-1")
+        }
+    }
+
+    @Test("S03 그 밖의 실패는 PopupError.failed로 바꾼다", arguments: [
+        (404, #"{"success":false,"code":9999,"message":"error","data":null}"#),
+        (500, #"{"success":false,"code":9999,"message":"error","data":null}"#),
+    ])
+    func s03DetailMapsOtherFailures(response: (Int, String)) async {
+        let context = PopupRepositoryContext(response: response)
+
+        await #expect(throws: PopupError.failed) {
+            _ = try await context.repository.getPopupDetail(popupUuid: "popup-1")
+        }
+    }
+
+    @Test("S03 없는 팝업(404 4301) 구분은 단건 조회에만 적용하고 관련 팝업은 지금처럼 failed로 바꾼다")
+    func s03NotFoundOnlyForDetail() async {
+        let context = PopupRepositoryContext(response: (404, #"{"success":false,"code":4301,"message":"error","data":null}"#))
+
+        await #expect(throws: PopupError.failed) {
+            _ = try await context.repository.getRelatedPopupList(popupUuid: "popup-1")
+        }
+    }
+
+    @Test("S03 단건 조회도 다시 로그인해야 하는 실패는 그대로 던진다")
+    func s03DetailPassesLoginRequiredThrough() async {
+        let context = PopupRepositoryContext(response: (401, #"{"success":false,"code":5001,"message":"error","data":null}"#))
+
+        await #expect(throws: AuthSessionError.loginRequired) {
+            _ = try await context.repository.getPopupDetail(popupUuid: "popup-1")
+        }
+    }
 }
 
 // MARK: - 테스트 도구

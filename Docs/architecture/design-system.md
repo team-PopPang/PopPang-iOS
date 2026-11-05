@@ -20,6 +20,7 @@
 | 스타일 | 버튼 모양(`PPButtonStyle`), 눌림 효과(`PressableButtonStyle`) | `Projects/Shared/DSKit/Sources/Component/Button/` |
 | 구성 요소 | `MainOrangeButton`, `SocialLoginButton`, 텍스트필드 등 | `Projects/Shared/DSKit/Sources/Component/` |
 | 하단 시트 모양 | SheetKit 시트에 PopPang 모양(흰 배경, 위쪽 모서리 30)을 입히는 `ppBottomSheetStyle()` | `Projects/Shared/DSKit/Sources/Component/Sheet/` |
+| 스켈레톤 | 불러오는 동안 내용 자리에 두는 회색 블록 `PPSkeletonBlock`(색 `PPColor.divider`)과 묶음에 한 번 입히는 빛 효과 `ppSkeletonShimmer()`. "동작 줄이기"를 켜면 움직이지 않는다. 화면 배치는 각 feature가 블록으로 따라 그린다 (예: `PopupDetailSkeletonView`) | `Projects/Shared/DSKit/Sources/Component/Skeleton/` |
 
 토큰과 버튼 스타일은 DSKit 데모(`DSKit` 스킴의 `DSKitDemo`) 카탈로그 화면에서 확인한다.
 

@@ -7,7 +7,6 @@ public enum PopupAPI {
     case getUpcomingPopupList
     case getInProgressPopupList
     case searchPopupList(searchText: String)
-    case increaseViewCount(popupUuid: String)
     case getRandomPopupList
 
     case getPersonalPopupList(userUuid: String)
@@ -22,7 +21,6 @@ public enum PopupAPI {
         longitude: Double?,
         mapSortStandard: String
     )
-    case getPersonalRelatedPopupList(userUuid: String, popupUuid: String)
     case getPersonalRandomPopupList(userUuid: String)
 
     case getAlertPopupList(userUuid: String)
@@ -47,8 +45,6 @@ extension PopupAPI: BaseAPI {
             return "/popup/inProgress"
         case .searchPopupList:
             return "/popup/search"
-        case .increaseViewCount(let popupUuid):
-            return "/popup/\(popupUuid)/view"
         case .getRandomPopupList:
             return "/popup/random"
         case .getPersonalPopupList(let userUuid):
@@ -61,8 +57,6 @@ extension PopupAPI: BaseAPI {
             return "/users/\(userUuid)/popups/filtered/home"
         case .getPersonalMapFilteredPopupList(let userUuid, _, _, _, _, _):
             return "/users/\(userUuid)/popups/filtered/map"
-        case .getPersonalRelatedPopupList(let userUuid, let popupUuid):
-            return "/users/\(userUuid)/popups/\(popupUuid)/related"
         case .getPersonalRandomPopupList(let userUuid):
             return "/users/\(userUuid)/popups/random"
         case .getAlertPopupList(let userUuid):
@@ -92,14 +86,13 @@ extension PopupAPI: BaseAPI {
              .getPersonalUpcomingPopupList,
              .getPersonalFilteredPopupList,
              .getPersonalMapFilteredPopupList,
-             .getPersonalRelatedPopupList,
              .getPersonalRandomPopupList,
              .getAlertPopupList,
              .getRegionList,
              .getPopularRecommendList,
              .getPopularRecommendPopupList:
             return .get
-        case .increaseViewCount, .addFavorite:
+        case .addFavorite:
             return .post
         case .removeAlertPopup, .removeFavorite:
             return .delete
@@ -112,7 +105,6 @@ extension PopupAPI: BaseAPI {
              .getUpcomingPopupList,
              .getInProgressPopupList,
              .getRandomPopupList,
-             .increaseViewCount,
              .getAlertPopupList,
              .getRegionList,
              .getPopularRecommendList,
@@ -145,14 +137,6 @@ extension PopupAPI: BaseAPI {
                 params["longitude"] = longitude
             }
             return .requestParameters(parameters: params, encoding: URLEncoding.queryString)
-        case .getPersonalRelatedPopupList(let userUuid, let popupUuid):
-            return .requestParameters(
-                parameters: [
-                    "userUuid": userUuid,
-                    "popupUuid": popupUuid,
-                ],
-                encoding: URLEncoding.queryString
-            )
         case .removeAlertPopup(_, let popupUuid):
             return .requestParameters(parameters: ["popupUuid": popupUuid], encoding: JSONEncoding.default)
         case .addFavorite(let userUuid, let popupUuid), .removeFavorite(let userUuid, let popupUuid):

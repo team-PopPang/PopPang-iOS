@@ -16,7 +16,8 @@ public struct PopupDetailFeatureView: View {
 
     private let isAdmin: Bool
     private let hidesSystemTabBar: Bool
-    private let onSelectRelatedPopup: (String, Popup) -> Void
+    /// 관련 팝업을 누르면 그 팝업의 `popupUuid`를 넘긴다.
+    private let onSelectRelatedPopup: (String) -> Void
     private let onDeactivateComplete: () -> Void
     private let onShowReviews: ([Review]) -> Void
 
@@ -24,7 +25,7 @@ public struct PopupDetailFeatureView: View {
         store: StoreOf<PopupDetailFeature>,
         isAdmin: Bool = false,
         hidesSystemTabBar: Bool = true,
-        onSelectRelatedPopup: @escaping (String, Popup) -> Void = { _, _ in },
+        onSelectRelatedPopup: @escaping (String) -> Void = { _ in },
         onDeactivateComplete: @escaping () -> Void = {},
         onShowReviews: @escaping ([Review]) -> Void = { _ in }
     ) {
@@ -37,20 +38,16 @@ public struct PopupDetailFeatureView: View {
     }
 
     public init(
-        userUuid: String = "demo-user",
-        popup: Popup = .popupMock,
+        popupUuid: String = Popup.popupMock.popupUuid,
         isAdmin: Bool = false,
         hidesSystemTabBar: Bool = true,
-        onSelectRelatedPopup: @escaping (String, Popup) -> Void = { _, _ in },
+        onSelectRelatedPopup: @escaping (String) -> Void = { _ in },
         onDeactivateComplete: @escaping () -> Void = {},
         onShowReviews: @escaping ([Review]) -> Void = { _ in }
     ) {
         self.init(
             store: Store(
-                initialState: PopupDetailFeature.State(
-                    userUuid: userUuid,
-                    popup: popup
-                )
+                initialState: PopupDetailFeature.State(popupUuid: popupUuid)
             ) {
                 PopupDetailFeature()
             },
@@ -63,63 +60,15 @@ public struct PopupDetailFeatureView: View {
     }
 
     public var body: some View {
-        ZStack(alignment: .bottom) {
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 0) {
-                    ImageSliderView(
-                        popup: store.popup,
-                        isAdmin: isAdmin,
-                        showDeactivateAlert: $showDeactivateAlert
-                    )
-
-                    VStack(alignment: .leading, spacing: 0) {
-                        TitleView(popup: store.popup)
-
-                        PopupDivider()
-
-                        InfoView(showingPopup: $showingPopup, popup: store.popup)
-
-                        PopupDivider(padding: 20)
-
-                        BodyView(
-                            popup: store.popup,
-                            reviews: Review.mock,
-                            relatedPopupList: store.relatedPopupList,
-                            onShowReviews: onShowReviews,
-                            onSelectRelatedPopup: { popup in
-                                onSelectRelatedPopup(store.userUuid, popup)
-                            }
-                        )
-                    }
-                    .padding(.top, 20)
-                    .padding(.horizontal, .contentPadding)
-
-                    Spacer()
-                        .frame(height: 130)
-                }
+        Group {
+            switch store.detailState {
+            case .loading:
+                loadingView
+            case .loaded(let detail):
+                content(detail)
+            case .notFound:
+                notFoundView
             }
-            // 사진을 상단 바 아래까지 깔기 때문에, 상단 바 아래 흐린 가장자리 효과가 사진을 흐린 띠로 덮지 않게 끈다.
-            .ppScrollEdgeEffectHidden(for: .top)
-            .ignoresSafeArea()
-
-            BottomTabBarView(
-                popup: store.popup,
-                onShare: {
-                    KakaoShareManager.shared.shareAppOnly(
-                        title: store.popup.name,
-                        description: store.popup.captionSummary,
-                        imageUrl: store.popup.imageUrlList.first ?? "",
-                        popupId: store.popup.popupUuid
-                    )
-                },
-                onToggleLike: {
-                    store.send(.toggleLike)
-                }
-            )
-            .padding(.vertical, 10)
-            .padding(.horizontal, .contentPadding)
-            .padding(.trailing, 10)
-            .background(Color.mainGray4)
         }
         .if(hidesSystemTabBar) {
             $0.toolbar(.hidden, for: .tabBar)
@@ -130,7 +79,6 @@ public struct PopupDetailFeatureView: View {
         .popupDetailNavigationBack {
             dismiss()
         }
-        .topShadowGradient()
         .overlay(alignment: .top) {
             if showingPopup {
                 Text("복사되었습니다.", bundle: .module)
@@ -163,10 +111,109 @@ public struct PopupDetailFeatureView: View {
             onDeactivateComplete()
         }
     }
+
+    private func content(_ detail: PopupDetail) -> some View {
+        ZStack(alignment: .bottom) {
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 0) {
+                    ImageSliderView(
+                        popup: detail,
+                        isAdmin: isAdmin,
+                        showDeactivateAlert: $showDeactivateAlert
+                    )
+
+                    VStack(alignment: .leading, spacing: 0) {
+                        TitleView(popup: detail)
+
+                        PopupDivider()
+
+                        InfoView(showingPopup: $showingPopup, popup: detail)
+
+                        PopupDivider(padding: 20)
+
+                        BodyView(
+                            popup: detail,
+                            reviews: Review.mock,
+                            relatedPopupList: store.relatedPopupList,
+                            onShowReviews: onShowReviews,
+                            onSelectRelatedPopup: { popup in
+                                onSelectRelatedPopup(popup.popupUuid)
+                            }
+                        )
+                    }
+                    .padding(.top, 20)
+                    .padding(.horizontal, .contentPadding)
+
+                    Spacer()
+                        .frame(height: 130)
+                }
+            }
+            // 사진을 상단 바 아래까지 깔기 때문에, 상단 바 아래 흐린 가장자리 효과가 사진을 흐린 띠로 덮지 않게 끈다.
+            .ppScrollEdgeEffectHidden(for: .top)
+            .ignoresSafeArea()
+
+            BottomTabBarView(
+                popup: detail,
+                onShare: {
+                    KakaoShareManager.shared.shareAppOnly(
+                        title: detail.name,
+                        description: detail.captionSummary,
+                        imageUrl: detail.imageUrlList.first ?? "",
+                        popupId: detail.popupUuid
+                    )
+                },
+                onToggleLike: {
+                    store.send(.toggleLike)
+                }
+            )
+            .padding(.vertical, 10)
+            .padding(.horizontal, .contentPadding)
+            .padding(.trailing, 10)
+            .background(Color.mainGray4)
+        }
+        // 사진 위 상단 바(뒤로 가기)가 보이게 까는 그림자다.
+        .topShadowGradient()
+    }
+
+    /// 받는 동안은 실제 배치를 따라 그린 스켈레톤을 보여 준다 (D-11).
+    /// 스켈레톤에도 사진 자리가 있어 내용 화면처럼 그림자를 따로 깐다. 흰 뒤로 가기 버튼이 보이게 하려는 것이다.
+    private var loadingView: some View {
+        PopupDetailSkeletonView()
+            .topShadowGradient()
+    }
+
+    /// 없는 팝업일 때 (스펙 D-8). 서버 오류·네트워크 실패는 로딩을 보여 주며 계속 다시 요청한다 (D-10).
+    private var notFoundView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "questionmark.circle")
+                .font(.system(size: 40, weight: .regular))
+                .foregroundStyle(Color.mainGray)
+
+            Text("팝업을 찾을 수 없어요", bundle: .module, comment: "Popup detail failed: the popup no longer exists")
+                .font(Font(UIFont.scdream(.medium, size: 16)))
+                .foregroundStyle(Color.mainBlack)
+                .multilineTextAlignment(.center)
+
+            Button {
+                dismiss()
+            } label: {
+                Text("뒤로 가기", bundle: .module, comment: "Button that leaves the popup detail when the popup no longer exists")
+                    .font(Font(UIFont.scdream(.medium, size: 14)))
+                    .foregroundStyle(Color.subWhite)
+                    .padding(.horizontal, 20)
+                    .frame(height: 40)
+                    .background(Capsule().fill(Color.mainOrange))
+            }
+            .buttonStyle(PressableButtonStyle())
+        }
+        .padding(.horizontal, .contentPadding)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.mainWhite)
+    }
 }
 
 private struct ImageSliderView: View {
-    let popup: Popup
+    let popup: PopupDetail
     let isAdmin: Bool
     @Binding var showDeactivateAlert: Bool
 
@@ -221,7 +268,7 @@ private struct ImageSliderView: View {
 }
 
 private struct TitleView: View {
-    let popup: Popup
+    let popup: PopupDetail
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -245,7 +292,7 @@ private struct TitleView: View {
 
 private struct InfoView: View {
     @Binding var showingPopup: Bool
-    let popup: Popup
+    let popup: PopupDetail
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -328,7 +375,7 @@ private struct InfoView: View {
 private struct BodyView: View {
     @Environment(\.openURL) private var openURL
 
-    let popup: Popup
+    let popup: PopupDetail
     let reviews: [Review]
     let relatedPopupList: [Popup]
     let onShowReviews: ([Review]) -> Void
@@ -396,7 +443,7 @@ private struct BodyView: View {
 }
 
 private struct BottomTabBarView: View {
-    let popup: Popup
+    let popup: PopupDetail
     let onShare: () -> Void
     let onToggleLike: () -> Void
 

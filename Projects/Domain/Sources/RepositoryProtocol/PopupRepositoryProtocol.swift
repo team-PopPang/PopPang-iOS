@@ -73,11 +73,9 @@ public protocol PopupRepositoryProtocol {
         mapSortStandard: String
     ) async throws -> [Popup]
 
-    /// 유저별 연관 팝업 추천 조회
-    /// - Parameters:
-    ///   - userUuid: userUuid
-    ///   - popupUuid: popupUuid
-    func getPersonalRelatedPopupList(userUuid: String, popupUuid: String) async throws -> [Popup]
+    /// 상세 화면의 관련 팝업을 조회합니다. 사용자는 Access Token으로 정해집니다 (V2).
+    /// - Parameter popupUuid: 기준 팝업 고유값
+    func getRelatedPopupList(popupUuid: String) async throws -> [Popup]
 
     /// 랜덤 팝업 10개를 반환합니다
     /// - Parameter userUuid: userUuid
@@ -94,6 +92,10 @@ public protocol PopupRepositoryProtocol {
     ///   - userUuid: 유저 고유값
     ///   - popupUuid: 팝업 고유값
     func removeAlertPopup(userUuid: String, popupUuid: String) async throws
+
+    /// 상세 화면의 팝업 하나를 조회합니다 (V2). 없는 팝업이면 `PopupError.notFound`를 던집니다.
+    /// - Parameter popupUuid: 팝업 고유값
+    func getPopupDetail(popupUuid: String) async throws -> PopupDetail
 
     /// 팝업 조회수를 증가시킵니다
     /// - Parameter popupUuid: popupUuid

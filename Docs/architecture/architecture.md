@@ -67,7 +67,8 @@ Projects
 | Shared/ThirdParty | framework | 외부 패키지만 | 없음 |
 | MainTabFeature | staticFramework | Alert, Calendar, Favorites, HomeFeatureV2, Map, PopupDetail, PopPangRN, Profile, Review, Search Feature, Domain, Core, DSKit | `MainTabFeatureTests` |
 | HomeFeatureV2 | staticFramework | ADKit, Domain, DSKit, Core, ThirdParty | Demo, `HomeFeatureV2Tests` |
-| Alert, Calendar, Favorites, PopupDetail, Profile Feature | staticFramework | Domain, Core, DSKit, ThirdParty | Demo |
+| Alert, Calendar, Favorites, Profile Feature | staticFramework | Domain, Core, DSKit, ThirdParty | Demo |
+| PopupDetailFeature | staticFramework | Domain, Core, DSKit, ThirdParty | Demo, `PopupDetailFeatureTests` |
 | MapFeature | staticFramework | Domain, DSKit, Core, SheetKit, ThirdParty | Demo |
 | SearchFeature | staticFramework | Domain, DSKit, Core, ThirdParty | 없음 |
 | Auth, Onboarding, Review Feature | staticFramework | Domain, DSKit, ThirdParty | 없음 (Demo 주석 처리) |

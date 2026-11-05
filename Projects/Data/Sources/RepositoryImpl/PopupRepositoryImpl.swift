@@ -107,11 +107,24 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
         ).map { $0.toEntity() }
     }
 
-    public func getPersonalRelatedPopupList(userUuid: String, popupUuid: String) async throws -> [Popup] {
-        try await popupProvider.asyncRequest(
-            .getPersonalRelatedPopupList(userUuid: userUuid, popupUuid: popupUuid),
-            decodeTo: [PopupDTO].self
-        ).map { $0.toEntity() }
+    public func getPopupDetail(popupUuid: String) async throws -> PopupDetail {
+        // 없는 팝업(404 4301)은 단건 조회에서만 PopupError.notFound로 구분한다. 다른 요청은 지금처럼 failed다.
+        try await popupRequest {
+            do {
+                return try await makeV2Provider().asyncRequest(.detail(popupUuid: popupUuid), decodeTo: PopupDetailDTO.self)
+                    .toEntity()
+            } catch let error as NetworkError where error.statusCode == 404 && error.serverErrorCode == Self.popupNotFoundCode {
+                throw PopupError.notFound
+            }
+        }
+    }
+
+    public func getRelatedPopupList(popupUuid: String) async throws -> [Popup] {
+        // 명세 UPOP-03: 검색처럼 감싸지 않은 팝업 배열이다.
+        try await popupRequest {
+            try await makeV2Provider().asyncRequest(.related(popupUuid: popupUuid), decodeTo: [PopupDTO].self)
+                .map { $0.toEntity() }
+        }
     }
 
     public func getPersonalRandomPopupList(userUuid: String) async throws -> [Popup] {
@@ -130,7 +143,10 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
     }
 
     public func increaseViewCount(popupUuid: String) async throws {
-        try await popupProvider.asyncRequestVoid(.increaseViewCount(popupUuid: popupUuid))
+        // 명세 POP-14: 조회 기록만 남기고 응답 본문은 쓰지 않는다.
+        try await popupRequest {
+            try await makeV2Provider().asyncRequestVoid(.view(popupUuid: popupUuid))
+        }
     }
 
     public func addFavorite(userUuid: String, popupUuid: String) async throws {
@@ -184,6 +200,9 @@ private extension PopupRepositoryImpl {
             throw error
         } catch is CancellationError {
             throw CancellationError()
+        } catch let error as PopupError {
+            // 요청 안에서 이미 구분한 실패(단건 조회의 notFound)는 그대로 던진다.
+            throw error
         } catch {
             // 화면에는 PopupError로 안내하지만 원인을 찾을 수 있게 남긴다.
             // 출시 빌드에도 찍히므로 서버 응답 본문이나 검색어가 담긴 URL은 남기지 않고 코드와 오류 종류만 남긴다.
@@ -191,6 +210,9 @@ private extension PopupRepositoryImpl {
             throw PopupError.failed
         }
     }
+
+    /// 명세: 없는 팝업은 404 4301이다.
+    static let popupNotFoundCode = 4301
 
     static func logDescription(of error: Error) -> String {
         guard let error = error as? NetworkError else {

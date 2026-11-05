@@ -76,17 +76,34 @@ struct MainTabFeatureTests {
         }
 
         await store.send(.search(.delegate(.popupSelected(popup)))) {
+            // 상세 화면은 popupUuid만 받아 직접 불러온다.
             $0.path.append(
                 .popupDetail(
                     .init(
-                        userUuid: "user-1",
-                        popup: popup,
+                        popupUuid: popup.popupUuid,
                         isAdmin: false,
                         hidesSystemTabBar: true
                     )
                 )
             )
         }
+    }
+
+    @Test("S04 탭에서 팝업을 고르면 상세 화면에 popupUuid만 넘겨 연다")
+    func tabPopupSelectionPushesDetailWithPopupUuid() async {
+        let popup = Popup.popupMock
+        let store = TestStore(initialState: MainTabFeature.State(session: makeSession())) {
+            MainTabFeature()
+        }
+        store.exhaustivity = .off
+
+        await store.send(.home(.delegate(.popupSelected(popup))))
+
+        guard case let .popupDetail(detailState)? = store.state.core.path.last else {
+            Issue.record("popup detail path should be pushed")
+            return
+        }
+        #expect(detailState.content.popupUuid == popup.popupUuid)
     }
 
     @Test("프로필 이름 변경을 HomeFeature에 전달하고 설정 화면을 닫는다")

@@ -4,4 +4,6 @@
 public enum PopupError: Error, Equatable, Sendable {
     /// 서버 오류나 네트워크 문제로 불러오지 못했다. 잠시 후 다시 시도한다.
     case failed
+    /// 없는 팝업이다 (404 4301). 삭제됐거나 비활성화됐을 수 있어 다시 시도해도 같다.
+    case notFound
 }

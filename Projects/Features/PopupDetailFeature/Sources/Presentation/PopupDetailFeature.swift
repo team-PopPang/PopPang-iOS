@@ -1,38 +1,54 @@
 import ComposableArchitecture
+import Core
 import Domain
 import Foundation
 import Kingfisher
 
+/// 팝업 상세 화면
+///
+/// `popupUuid`만 받아 열리고, 화면 내용은 단건 조회로 직접 불러온다 (스펙 D-6).
+/// 목록 모델(`Popup`)에 묶이지 않아 상세 전용 데이터를 더하거나 SDUI로 바꾸기 쉽다.
 @Reducer
 public struct PopupDetailFeature {
     @ObservableState
     public struct State: Equatable, Sendable {
-        var userUuid: String
-        var popup: Popup
+        public let popupUuid: String
+        var detailState: DetailState = .loading
         var relatedPopupList: [Popup] = []
-        var isLoading = false
         var isDeactivating = false
         var didDeactivate = false
         var hasLoaded = false
+        /// 조회 기록·관련 팝업·하트·비활성화 실패. 화면에는 보여 주지 않는다 (스펙 2차 답).
         var errorMessage: String?
 
-        public init(
-            userUuid: String,
-            popup: Popup
-        ) {
-            self.userUuid = userUuid
-            self.popup = popup
+        public init(popupUuid: String) {
+            self.popupUuid = popupUuid
         }
+
+        /// 불러온 상세 데이터. 받기 전이거나 실패했으면 `nil`이다.
+        var detail: PopupDetail? {
+            guard case .loaded(let detail) = detailState else { return nil }
+            return detail
+        }
+    }
+
+    public enum DetailState: Equatable, Sendable {
+        /// 받는 중. 서버 오류·네트워크 문제로 실패하면 이 상태로 계속 다시 요청한다 (D-10).
+        case loading
+        case loaded(PopupDetail)
+        /// 없는 팝업이다 (404 4301). 다시 요청해도 같아서 뒤로 가기만 보여 준다.
+        case notFound
     }
 
     public enum Action: Equatable, Sendable {
         case onAppear
+        case detailLoaded(PopupDetail)
+        case detailNotFound
         case toggleLike
         case deactivatePopup
         case relatedPopupListLoaded([Popup])
         case favoriteUpdated(isFavorited: Bool, favoriteCount: Int)
         case deactivateCompleted
-        case loadingChanged(Bool)
         case deactivatingChanged(Bool)
         case errorMessageChanged(String?)
         case delegate(Delegate)
@@ -43,6 +59,14 @@ public struct PopupDetailFeature {
     }
 
     @Dependency(\.popupDetailClient) private var popupDetailClient: PopupDetailClient
+    @Dependency(\.continuousClock) private var clock
+
+    /// 상세 요청이 실패한 뒤 다시 요청하기 전 기다리는 시간. 실패할수록 늘리고 최대 값에서 멈춘다.
+    static let retryDelays: [Duration] = [.seconds(1), .seconds(2), .seconds(4), .seconds(8)]
+
+    private enum CancelID {
+        case detail
+    }
 
     public init() {}
 
@@ -52,59 +76,70 @@ public struct PopupDetailFeature {
             case .onAppear:
                 guard state.hasLoaded == false else { return .none }
                 state.hasLoaded = true
-                state.isLoading = true
-                state.didDeactivate = false
-                state.errorMessage = nil
-                return loadPopupDetail(state: state)
+                return loadDetail(popupUuid: state.popupUuid)
+
+            case .detailLoaded(let detail):
+                state.detailState = .loaded(detail)
+                let urls = detail.imageUrlList
+                // 조회 기록과 관련 팝업은 상세를 받은 뒤에 보낸다. 다시 요청해서 받은 경우에도 함께 보내진다.
+                return .merge(
+                    .run { _ in prefetchImages(urls: urls) },
+                    increaseViewCount(popupUuid: detail.popupUuid),
+                    loadRelatedPopups(popupUuid: detail.popupUuid)
+                )
+
+            case .detailNotFound:
+                state.detailState = .notFound
+                return .none
 
             case .toggleLike:
-                let previousPopup = state.popup
-                let nextIsFavorited = !previousPopup.isFavorited
+                // 하트는 불러온 뒤에만 누를 수 있다.
+                guard var detail = state.detail else { return .none }
+                let previousIsFavorited = detail.isFavorited
+                let previousFavoriteCount = detail.favoriteCount
+                let nextIsFavorited = !previousIsFavorited
                 let nextFavoriteCount = nextIsFavorited
-                    ? previousPopup.favoriteCount + 1
-                    : max(0, previousPopup.favoriteCount - 1)
+                    ? previousFavoriteCount + 1
+                    : max(0, previousFavoriteCount - 1)
 
-                state.popup.isFavorited = nextIsFavorited
-                state.popup.favoriteCount = nextFavoriteCount
+                detail.isFavorited = nextIsFavorited
+                detail.favoriteCount = nextFavoriteCount
+                state.detailState = .loaded(detail)
 
                 return .merge(
                     .send(.delegate(.favoriteChanged(
-                        popupUuid: previousPopup.popupUuid,
+                        popupUuid: detail.popupUuid,
                         isFavorited: nextIsFavorited,
                         favoriteCount: nextFavoriteCount
                     ))),
                     toggleLike(
-                        userUuid: state.userUuid,
-                        previousPopup: previousPopup
+                        popupUuid: detail.popupUuid,
+                        wasFavorited: previousIsFavorited,
+                        previousFavoriteCount: previousFavoriteCount
                     )
                 )
 
             case .deactivatePopup:
+                guard state.detail != nil else { return .none }
                 state.isDeactivating = true
                 state.errorMessage = nil
-                return deactivatePopup(
-                    adminUuid: state.userUuid,
-                    popupUuid: state.popup.popupUuid
-                )
+                return deactivatePopup(popupUuid: state.popupUuid)
 
             case .relatedPopupListLoaded(let popups):
                 state.relatedPopupList = popups
-                state.errorMessage = nil
                 return .none
 
             case let .favoriteUpdated(isFavorited, favoriteCount):
-                state.popup.isFavorited = isFavorited
-                state.popup.favoriteCount = favoriteCount
+                guard var detail = state.detail else { return .none }
+                detail.isFavorited = isFavorited
+                detail.favoriteCount = favoriteCount
+                state.detailState = .loaded(detail)
                 return .none
 
             case .deactivateCompleted:
                 state.isDeactivating = false
                 state.didDeactivate = true
                 state.errorMessage = nil
-                return .none
-
-            case .loadingChanged(let isLoading):
-                state.isLoading = isLoading
                 return .none
 
             case .deactivatingChanged(let isDeactivating):
@@ -123,65 +158,88 @@ public struct PopupDetailFeature {
 }
 
 private extension PopupDetailFeature {
-    func loadPopupDetail(state: State) -> Effect<Action> {
-        let popupDetailClient = popupDetailClient
+    /// 상세를 받을 때까지 다시 요청한다 (D-10). 없는 팝업과 로그인 끊김은 다시 요청하지 않는다.
+    /// 화면을 닫으면 effect가 취소되어 멈춘다.
+    func loadDetail(popupUuid: String) -> Effect<Action> {
+        .run { [popupDetailClient, clock] send in
+            var attempt = 0
+            while true {
+                do {
+                    let detail = try await popupDetailClient.getPopupDetail(popupUuid)
+                    await send(.detailLoaded(detail))
+                    return
+                } catch PopupError.notFound {
+                    await send(.detailNotFound)
+                    return
+                } catch is AuthSessionError {
+                    // 로그인 화면 전환은 AppFeature가 한다. 다시 요청해도 같으므로 로딩으로 둔다.
+                    return
+                } catch is CancellationError {
+                    return
+                } catch {
+                    let delay = Self.retryDelays[min(attempt, Self.retryDelays.count - 1)]
+                    attempt += 1
+                    try await clock.sleep(for: delay)
+                }
+            }
+        }
+        .cancellable(id: CancelID.detail, cancelInFlight: true)
+    }
 
-        return .run { [state, popupDetailClient] send in
-            prefetchImages(urls: state.popup.imageUrlList)
-
+    func increaseViewCount(popupUuid: String) -> Effect<Action> {
+        .run { [popupDetailClient] send in
             do {
-                async let increaseViewCount: Void = popupDetailClient.increaseViewCount(state.popup.popupUuid)
-                async let relatedPopups = popupDetailClient.getPersonalRelatedPopupList(
-                    state.userUuid,
-                    state.popup.popupUuid
-                )
-
-                _ = try await increaseViewCount
-                await send(.relatedPopupListLoaded(try await relatedPopups))
+                try await popupDetailClient.increaseViewCount(popupUuid)
             } catch {
                 await send(.errorMessageChanged(error.localizedDescription))
             }
+        }
+    }
 
-            await send(.loadingChanged(false))
+    func loadRelatedPopups(popupUuid: String) -> Effect<Action> {
+        .run { [popupDetailClient] send in
+            do {
+                await send(.relatedPopupListLoaded(try await popupDetailClient.getRelatedPopupList(popupUuid)))
+            } catch {
+                await send(.errorMessageChanged(error.localizedDescription))
+            }
         }
     }
 
     func toggleLike(
-        userUuid: String,
-        previousPopup: Popup
+        popupUuid: String,
+        wasFavorited: Bool,
+        previousFavoriteCount: Int
     ) -> Effect<Action> {
-        let popupDetailClient = popupDetailClient
-
-        return .run { [popupDetailClient, userUuid, previousPopup] send in
+        .run { [popupDetailClient] send in
             do {
-                if previousPopup.isFavorited {
-                    try await popupDetailClient.removeFavorite(userUuid, previousPopup.popupUuid)
+                if wasFavorited {
+                    try await popupDetailClient.removeFavorite(popupUuid)
                 } else {
-                    try await popupDetailClient.addFavorite(userUuid, previousPopup.popupUuid)
+                    try await popupDetailClient.addFavorite(popupUuid)
                 }
 
                 await send(.errorMessageChanged(nil))
             } catch {
+                // 실패하면 이전 값으로 되돌리고 목록에도 다시 알린다.
                 await send(.favoriteUpdated(
-                    isFavorited: previousPopup.isFavorited,
-                    favoriteCount: previousPopup.favoriteCount
+                    isFavorited: wasFavorited,
+                    favoriteCount: previousFavoriteCount
                 ))
                 await send(.delegate(.favoriteChanged(
-                    popupUuid: previousPopup.popupUuid,
-                    isFavorited: previousPopup.isFavorited,
-                    favoriteCount: previousPopup.favoriteCount
+                    popupUuid: popupUuid,
+                    isFavorited: wasFavorited,
+                    favoriteCount: previousFavoriteCount
                 )))
                 await send(.errorMessageChanged(error.localizedDescription))
             }
         }
     }
 
-    func deactivatePopup(adminUuid: String, popupUuid: String) -> Effect<Action> {
-        let popupDetailClient = popupDetailClient
-
-        return .run { [popupDetailClient, adminUuid, popupUuid] send in
+    func deactivatePopup(popupUuid: String) -> Effect<Action> {
+        .run { [popupDetailClient] send in
             do {
-                try await popupDetailClient.deactivatePopup(adminUuid, popupUuid)
+                try await popupDetailClient.deactivatePopup(popupUuid)
                 await send(.deactivateCompleted)
             } catch {
                 await send(.errorMessageChanged(error.localizedDescription))

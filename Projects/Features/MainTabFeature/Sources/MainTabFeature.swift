@@ -232,19 +232,19 @@ public struct MainTabFeature {
                 return .none
                 
             case .home(.delegate(.popupSelected(let popup))):
-                appendPopupDetail(popup, state: &state)
+                appendPopupDetail(popupUuid: popup.popupUuid, state: &state)
                 return .none
                 
             case .calendar(.delegate(.popupSelected(let popup))):
-                appendPopupDetail(popup, state: &state)
+                appendPopupDetail(popupUuid: popup.popupUuid, state: &state)
                 return .none
                 
             case .favorites(.delegate(.popupSelected(let popup))):
-                appendPopupDetail(popup, state: &state)
+                appendPopupDetail(popupUuid: popup.popupUuid, state: &state)
                 return .none
                 
             case .map(.delegate(.popupSelected(let popup))):
-                appendPopupDetail(popup, state: &state)
+                appendPopupDetail(popupUuid: popup.popupUuid, state: &state)
                 return .none
                 
             case .home(.delegate(.comingPopupsTapped(let popups))):
@@ -382,12 +382,12 @@ public struct MainTabFeature {
 }
 
 private extension MainTabFeature {
-    func appendPopupDetail(_ popup: Popup, state: inout State) {
+    /// 상세 화면은 `popupUuid`만 받아 직접 불러온다 (PopupDetail 스펙 D-6).
+    func appendPopupDetail(popupUuid: String, state: inout State) {
         state.core.path.append(
             .popupDetail(
                 .init(
-                    userUuid: state.core.user.userUuid,
-                    popup: popup,
+                    popupUuid: popupUuid,
                     isAdmin: state.core.user.isAdmin
                 )
             )
@@ -405,12 +405,15 @@ private extension MainTabFeature {
             return .none
             
         case .homeComingPopupDetail(.delegate(.selectPopup(let popup))):
-            appendPopupDetail(popup, state: &state)
+            appendPopupDetail(popupUuid: popup.popupUuid, state: &state)
             return .none
             
-        case .popupDetail(.delegate(.pushPopupDetail(_, let popup))),
-                .alert(.delegate(.popupSelected(let popup))):
-            appendPopupDetail(popup, state: &state)
+        case .popupDetail(.delegate(.pushPopupDetail(let popupUuid))):
+            appendPopupDetail(popupUuid: popupUuid, state: &state)
+            return .none
+
+        case .alert(.delegate(.popupSelected(let popup))):
+            appendPopupDetail(popupUuid: popup.popupUuid, state: &state)
             return .none
             
         case .popupDetail(.delegate(.showReviews(let reviews))):
@@ -458,15 +461,11 @@ public struct PopupDetailDestinationFeature {
         let hidesSystemTabBar: Bool
 
         public init(
-            userUuid: String,
-            popup: Popup,
+            popupUuid: String,
             isAdmin: Bool,
             hidesSystemTabBar: Bool = false
         ) {
-            self.content = .init(
-                userUuid: userUuid,
-                popup: popup
-            )
+            self.content = .init(popupUuid: popupUuid)
             self.isAdmin = isAdmin
             self.hidesSystemTabBar = hidesSystemTabBar
         }
@@ -474,13 +473,13 @@ public struct PopupDetailDestinationFeature {
     
     public enum Action: Equatable {
         case content(PopupDetailFeature.Action)
-        case relatedPopupSelected(String, Popup)
+        case relatedPopupSelected(popupUuid: String)
         case deactivateCompleted
         case reviewsTapped([Review])
         case delegate(Delegate)
         
         public enum Delegate: Equatable {
-            case pushPopupDetail(String, Popup)
+            case pushPopupDetail(popupUuid: String)
             case showReviews([Review])
             case favoriteChanged(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
             case close
@@ -504,8 +503,8 @@ public struct PopupDetailDestinationFeature {
                 )))
             case .content:
                 return .none
-            case .relatedPopupSelected(let userUuid, let popup):
-                return .send(.delegate(.pushPopupDetail(userUuid, popup)))
+            case .relatedPopupSelected(let popupUuid):
+                return .send(.delegate(.pushPopupDetail(popupUuid: popupUuid)))
             case .deactivateCompleted:
                 return .send(.delegate(.close))
             case .reviewsTapped(let reviews):
@@ -593,7 +592,7 @@ public struct SearchDestinationFeature {
                 return .send(.delegate(.dismiss))
 
             case .search(.delegate(.popupSelected(let popup))):
-                appendPopupDetail(popup, state: &state)
+                appendPopupDetail(popupUuid: popup.popupUuid, state: &state)
                 return .none
 
             case .path(.element(let id, let action)):
@@ -610,12 +609,12 @@ public struct SearchDestinationFeature {
 }
 
 private extension SearchDestinationFeature {
-    func appendPopupDetail(_ popup: Popup, state: inout State) {
+    /// 상세 화면은 `popupUuid`만 받아 직접 불러온다 (PopupDetail 스펙 D-6).
+    func appendPopupDetail(popupUuid: String, state: inout State) {
         state.path.append(
             .popupDetail(
                 .init(
-                    userUuid: state.userUuid,
-                    popup: popup,
+                    popupUuid: popupUuid,
                     isAdmin: false,
                     hidesSystemTabBar: true
                 )
@@ -629,8 +628,8 @@ private extension SearchDestinationFeature {
         state: inout State
     ) -> Effect<Action> {
         switch action {
-        case .popupDetail(.delegate(.pushPopupDetail(_, let popup))):
-            appendPopupDetail(popup, state: &state)
+        case .popupDetail(.delegate(.pushPopupDetail(let popupUuid))):
+            appendPopupDetail(popupUuid: popupUuid, state: &state)
             return .none
 
         case .popupDetail(.delegate(.showReviews(let reviews))):

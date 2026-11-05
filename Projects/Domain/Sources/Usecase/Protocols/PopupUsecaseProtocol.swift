@@ -47,8 +47,8 @@ public protocol PopupUsecaseProtocol {
         mapSortStandard: String
     ) async throws -> [Popup]
 
-    /// 유저별 연관 팝업 추천 조회
-    func getPersonalRelatedPopupList(userUuid: String, popupUuid: String) async throws -> [Popup]
+    /// 상세 화면의 관련 팝업 조회 (V2, 사용자는 Access Token으로 정해짐)
+    func getRelatedPopupList(popupUuid: String) async throws -> [Popup]
 
     /// 랜덤 팝업 10개를 반환합니다
     func getPersonalRandomPopupList(userUuid: String) async throws -> [Popup]
@@ -58,6 +58,9 @@ public protocol PopupUsecaseProtocol {
 
     /// 알림 팝업 단건 지우기
     func removeAlertPopup(userUuid: String, popupUuid: String) async throws
+
+    /// 상세 화면의 팝업 하나를 조회합니다 (V2). 없는 팝업이면 `PopupError.notFound`를 던집니다.
+    func getPopupDetail(popupUuid: String) async throws -> PopupDetail
 
     /// 팝업 조회수를 증가시킵니다
     func increaseViewCount(popupUuid: String) async throws
