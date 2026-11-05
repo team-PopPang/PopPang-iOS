@@ -297,6 +297,38 @@ extension CalendarFeatureTests {
     }
 }
 
+extension CalendarFeatureTests {
+    @Test("찜 응답을 기다리는 동안 같은 하트를 다시 누르면 요청을 다시 보내지 않는다")
+    func doubleTapSendsOneFavoriteRequest() async {
+        let clock = TestClock()
+        let calls = LockIsolated<[String]>([])
+        let popup = Popup.fixture(isFavorited: false, favoriteCount: 3)
+        var state = CalendarFeature.State()
+        state.calendarPopups = [popup]
+        let store = TestStore(initialState: state) {
+            CalendarFeature()
+        } withDependencies: {
+            $0.calendarFeatureClient = .mock(
+                addFavorite: { uuid in
+                    calls.withValue { $0.append("add:\(uuid)") }
+                    try await clock.sleep(for: .seconds(1))
+                }
+            )
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.toggleLike(popup))
+        await store.send(.toggleLike(popup))
+        await clock.advance(by: .seconds(1))
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+
+        #expect(calls.value == ["add:popup-1"])
+        #expect(store.state.calendarPopups.first?.favoriteCount == 4)
+        #expect(store.state.favoriteInFlight.isEmpty)
+    }
+}
+
 private struct FilterRequest: Equatable, Sendable {
     let region: String
     let district: String

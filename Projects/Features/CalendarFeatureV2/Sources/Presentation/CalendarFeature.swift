@@ -18,6 +18,9 @@ public struct CalendarFeature {
         public var selectedOption: SortButton.SortOption = .newest
         public var isLoading = false
         public var errorMessage: String?
+        /// 찜 요청을 보내고 응답을 기다리는 팝업. 응답 전에 같은 하트를 다시 누르면 무시한다.
+        /// V2 찜은 같은 요청을 두 번 보내면 409·404로 거절하므로 중복 요청을 막는다.
+        public var favoriteInFlight: Set<String> = []
 
         public init() {}
     }
@@ -34,6 +37,7 @@ public struct CalendarFeature {
         case regionsLoaded([RegionList])
         case filteredPopupListLoaded([Popup])
         case favoriteUpdated(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
+        case favoriteRequestFinished(popupUuid: String)
         case loadingChanged(Bool)
         case errorMessageChanged(String?)
         case delegate(Delegate)
@@ -98,7 +102,13 @@ public struct CalendarFeature {
                 )
 
             case .toggleLike(let popup):
+                guard !state.favoriteInFlight.contains(popup.popupUuid) else { return .none }
+                state.favoriteInFlight.insert(popup.popupUuid)
                 return toggleLike(state: state, popup: popup)
+
+            case .favoriteRequestFinished(let popupUuid):
+                state.favoriteInFlight.remove(popupUuid)
+                return .none
 
             case .popupSelected(let popup):
                 return .send(.delegate(.popupSelected(popup)))
@@ -242,6 +252,7 @@ private extension CalendarFeature {
             } catch {
                 await send(.errorMessageChanged(Self.message(for: error, fallback: Self.favoriteFailedMessage)))
             }
+            await send(.favoriteRequestFinished(popupUuid: currentPopup.popupUuid))
         }
     }
 
