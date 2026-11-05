@@ -76,7 +76,9 @@ public struct CalendarFeature {
             case .regionSelected(let region):
                 state.selectedRegion = region
                 state.selectedDistrict = region.districtList.first
-                return .none
+                // 앞서 보낸 불러오기가 늦게 와서 고른 지역을 덮어쓰지 않게 취소한다. 목록은 구를 고를 때 다시 받는다.
+                state.isLoading = false
+                return .cancel(id: CancelID.load)
 
             case .districtSelected(let district):
                 state.selectedDistrict = district
@@ -133,6 +135,10 @@ public struct CalendarFeature {
                     isFavorited: isFavorited,
                     favoriteCount: favoriteCount
                 )
+                // 앞선 찜 실패 문구만 지운다. 불러오기 실패 문구는 그대로 둔다.
+                if state.errorMessage == Self.favoriteFailedMessage {
+                    state.errorMessage = nil
+                }
                 return .none
 
             case .loadingChanged(let isLoading):
@@ -243,7 +249,6 @@ private extension CalendarFeature {
                     isFavorited: nextFavoriteState,
                     favoriteCount: nextFavoriteCount
                 ))
-                await send(.errorMessageChanged(nil))
             } catch {
                 await send(.errorMessageChanged(Self.message(for: error, fallback: Self.favoriteFailedMessage)))
             }

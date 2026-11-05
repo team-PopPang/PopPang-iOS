@@ -234,6 +234,35 @@ struct CalendarFeatureTests {
     }
 }
 
+extension CalendarFeatureTests {
+    @Test("불러오는 중에 지역을 고르면 늦게 온 응답이 고른 지역을 덮어쓰지 않는다")
+    func regionSelectedDuringLoadKeepsSelection() async {
+        let clock = TestClock()
+        let store = TestStore(initialState: CalendarFeature.State()) {
+            CalendarFeature()
+        } withDependencies: {
+            $0.calendarFeatureClient = .mock(
+                getRegionList: { [.all, .seoul] },
+                getFilteredPopupList: { _, _, _ in
+                    try await clock.sleep(for: .seconds(5))
+                    return [.fixture()]
+                }
+            )
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.onAppear)
+        await store.send(.regionSelected(.seoul))
+        await clock.advance(by: .seconds(5))
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+
+        #expect(store.state.selectedRegion == .seoul)
+        #expect(store.state.selectedDistrict == "전체")
+        #expect(store.state.isLoading == false)
+    }
+}
+
 private struct FilterRequest: Equatable, Sendable {
     let region: String
     let district: String

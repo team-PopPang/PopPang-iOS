@@ -54,22 +54,24 @@ public struct CalendarFeatureClient: Sendable {
     }
 }
 
-extension CalendarFeatureClient: DependencyKey {
-    public static let liveValue = Self(
-        getRegionList: { [] },
-        getFilteredPopupList: { _, _, _ in [] },
-        addFavorite: { _ in },
-        removeFavorite: { _ in }
+/// composition root에서 주입을 빠뜨리면 화면이 조용히 비지 않고 오류로 드러나게 한다.
+struct CalendarFeatureUnimplementedError: Error {}
+
+extension CalendarFeatureClient {
+    public static let unimplemented = Self(
+        getRegionList: { throw CalendarFeatureUnimplementedError() },
+        getFilteredPopupList: { _, _, _ in throw CalendarFeatureUnimplementedError() },
+        addFavorite: { _ in throw CalendarFeatureUnimplementedError() },
+        removeFavorite: { _ in throw CalendarFeatureUnimplementedError() }
     )
 }
 
+extension CalendarFeatureClient: DependencyKey {
+    public static let liveValue = Self.unimplemented
+}
+
 extension CalendarFeatureClient: TestDependencyKey {
-    public static let testValue = Self(
-        getRegionList: { [] },
-        getFilteredPopupList: { _, _, _ in [] },
-        addFavorite: { _ in },
-        removeFavorite: { _ in }
-    )
+    public static let testValue = Self.unimplemented
 }
 
 extension DependencyValues {
