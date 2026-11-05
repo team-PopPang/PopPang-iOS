@@ -226,7 +226,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 1 | SearchFeature | 회원 팝업 검색 (UPOP-11) | 완료 (#131) |
 | 2 | FavoritesFeature | 찜 목록 (FAV-04), 찜 등록·해제 (FAV-01·02) | 완료 (#133) |
 | 3 | PopupDetailFeature | 조회수 기록 (POP-14), 관련 팝업 (UPOP-03), 찜 등록·해제, 단건 조회, 관리자 비활성화 | 완료 (#140) |
-| 4 | CalendarFeature | 필터 팝업 (UPOP-04), 지역 목록 (POP-10), 찜 등록·해제 | 예정 |
+| 4 | CalendarFeature | 필터 팝업 (UPOP-04), 지역 목록 (POP-10), 찜 등록·해제 | 완료 (#142, `CalendarFeatureV2`) |
 | 5 | HomeFeatureV2 | 오픈 예정 (UPOP-12), 필터 팝업, 랜덤 (UPOP-07), 지역 목록, 찜 등록·해제 | 예정 |
 | 6 | MapFeature | 지도 필터 (UPOP-05), 인기 추천 카테고리 (RECO-02), 카테고리별 팝업 (UPOP-09), 지역 목록, 찜 등록·해제 | 예정 |
 | 7 | AlertFeature | 알림 키워드 목록·등록·삭제 (ALERT-01~03), 알림함 목록·삭제 (ALERT-04·05), 찜 등록·해제 | 예정 |
@@ -263,6 +263,21 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 - 단건 조회가 서버 오류·네트워크로 실패하면(`PopupError.failed`) 로딩을 유지한 채 1·2·4·8초 간격으로 받을 때까지 다시 요청해요. 없는 팝업(404 4301)은 단건 조회에서만 `PopupError.notFound`로 바꿔 "팝업을 찾을 수 없어요"와 뒤로 가기를 보여 줘요. 로그인이 끊기면(`AuthSessionError`) 다시 요청하지 않아요. 로그인 화면 전환은 AppFeature가 해요.
 - 상세 데이터는 Domain `PopupDetail`이에요. 지금은 `Popup`과 같은 값이고, 상세 전용 값이 생기면 여기에 더해요. 이미지 주소·도로명 주소·미디어 종류 변환은 `PopupFieldMapping`에 모아 목록과 상세가 같은 기준을 써요.
 - V1 `PopupAPI.increaseViewCount`·`getPersonalRelatedPopupList`와 `AdminAPI.deactivatePopup`은 지웠어요. 상세 화면에서만 쓰던 API라 9번 정리 단계를 기다리지 않았어요.
+
+### 달력 (#142)
+
+달력은 새 모듈 `CalendarFeatureV2`로 옮겼어요. 화면과 동작은 기존 `CalendarFeature`와 같고, State와 client에서 `userUuid`를 뺐어요. 기존 모듈은 남겨 두고 `MainTabFeature`가 새 모듈을 써요.
+
+| 기능 | V2 | 응답 | 함수 |
+| --- | --- | --- | --- |
+| 필터 팝업 | `GET /api/v2/user/popups/filtered/home?region&district&homeSortStandard` | 감싸지 않은 팝업 배열 (`PopupDTO`) | `getFilteredPopupList(region:district:homeSortStandard:)` |
+| 지역 목록 | `GET /api/v2/popup/regions/districts` | 감싸지 않은 지역 배열 (`RegionListDTO`) | `getRegionList()` |
+| 찜 등록·해제 | #132의 V2 찜 | | `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)` |
+
+- 두 API 모두 Access Token으로 불러요(`V2PopupAPI.filteredHome`, `.regionList`). 실패하면 `PopupError.failed`로 바꿔요.
+- 지역 목록은 함수 이름을 그대로 두고 안쪽 요청만 V2로 바꿨어요. 홈과 지도도 같은 함수를 쓰므로 이 PR부터 함께 V2를 불러요. 서버 데이터가 같아 화면은 바뀌지 않아요.
+- 필터 팝업은 새 함수를 더했어요. 홈은 아직 V1 `getPersonalFilteredPopupList(userUuid:...)`를 쓰고, 5번에서 새 함수로 바꿔요.
+- V2 경로와 인증 종류는 PopPang-AOS의 `HomePopupfilterApi`·`RegionsApi`(Access Token)로 확인했어요. 명세 원문(UPOP-04, POP-10)과 맞는지는 확인 필요예요.
 
 ## 정해야 할 것
 
