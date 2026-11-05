@@ -22,13 +22,6 @@ public struct CalendarFeature {
         public init() {}
     }
 
-    public struct CalendarPopupLoadResult: Equatable {
-        let regions: [RegionList]
-        let selectedRegion: RegionList?
-        let selectedDistrict: String?
-        let popups: [Popup]
-    }
-
     public enum Action {
         case onAppear
         case dateSelected(Date)
@@ -38,7 +31,7 @@ public struct CalendarFeature {
         case toggleLike(Popup)
         case popupSelected(Popup)
         case alertTapped
-        case popupDataLoaded(CalendarPopupLoadResult)
+        case regionsLoaded([RegionList])
         case filteredPopupListLoaded([Popup])
         case favoriteUpdated(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
         case loadingChanged(Bool)
@@ -53,9 +46,12 @@ public struct CalendarFeature {
 
     @Dependency(\.calendarFeatureClient) private var calendarFeatureClient: CalendarFeatureClient
 
-    /// 처음 불러오기와 필터 불러오기가 함께 쓴다. 새 요청을 보내면 앞 요청을 취소해 가장 최근 조건의 응답만 반영한다.
+    /// 지역 목록과 팝업 목록 요청을 나눠 취소한다.
+    /// 팝업 목록은 모두 `popups` 하나로 보내므로, 새 요청이 앞 요청을 취소해 가장 최근 조건의 응답만 반영한다.
+    /// 지역 목록은 팝업 요청에 취소되지 않아, 첫 화면에서 정렬을 먼저 바꿔도 지역을 받는다.
     private enum CancelID {
-        case load
+        case regions
+        case popups
     }
 
     public init() {}
@@ -66,7 +62,10 @@ public struct CalendarFeature {
             case .onAppear:
                 state.isLoading = true
                 state.errorMessage = nil
-                return loadAllPopupData(state: state)
+                if state.regions.isEmpty {
+                    return loadRegions()
+                }
+                return loadCurrentPopups(state: state)
 
             case .dateSelected(let date):
                 state.selectedDate = date
@@ -107,16 +106,15 @@ public struct CalendarFeature {
             case .alertTapped:
                 return .send(.delegate(.alertRequested))
 
-            case .popupDataLoaded(let result):
-                state.regions = result.regions
-                // 불러오는 동안 사용자가 지역을 골랐으면 그 선택을 덮어쓰지 않는다.
+            case .regionsLoaded(let regions):
+                state.regions = regions
                 if state.selectedRegion == nil {
-                    state.selectedRegion = result.selectedRegion
-                    state.selectedDistrict = result.selectedDistrict
+                    state.selectedRegion = regions.first
+                    state.selectedDistrict = regions.first?.districtList.first
                 }
-                applyPopups(result.popups, state: &state)
-                state.errorMessage = nil
-                return .none
+                // 팝업은 지역을 받은 뒤 지금 선택으로 받는다. 그사이 사용자가 바꾼 정렬도 반영된다.
+                state.isLoading = true
+                return loadCurrentPopups(state: state)
 
             case .filteredPopupListLoaded(let popups):
                 applyPopups(popups, state: &state)
@@ -173,36 +171,27 @@ extension CalendarFeature {
 }
 
 private extension CalendarFeature {
-    func loadAllPopupData(state: State) -> Effect<Action> {
+    func loadRegions() -> Effect<Action> {
         let calendarFeatureClient = calendarFeatureClient
 
-        return .run { [state, calendarFeatureClient] send in
+        return .run { [calendarFeatureClient] send in
             do {
-                let regions = state.regions.isEmpty
-                    ? try await calendarFeatureClient.getRegionList().sortedByCalendarPriority()
-                    : state.regions
-                let selectedRegion = state.selectedRegion ?? regions.first
-                let selectedDistrict = state.selectedDistrict ?? selectedRegion?.districtList.first
-
-                let popups = try await calendarFeatureClient.getFilteredPopupList(
-                    selectedRegion?.region ?? "전체",
-                    selectedDistrict ?? "전체",
-                    state.selectedOption.rawValue
-                )
-
-                await send(.popupDataLoaded(.init(
-                    regions: regions,
-                    selectedRegion: selectedRegion,
-                    selectedDistrict: selectedDistrict,
-                    popups: popups
-                )))
+                let regions = try await calendarFeatureClient.getRegionList().sortedByCalendarPriority()
+                await send(.regionsLoaded(regions))
             } catch {
                 await send(.errorMessageChanged(Self.message(for: error, fallback: Self.loadFailedMessage)))
+                await send(.loadingChanged(false))
             }
-
-            await send(.loadingChanged(false))
         }
-        .cancellable(id: CancelID.load, cancelInFlight: true)
+        .cancellable(id: CancelID.regions, cancelInFlight: true)
+    }
+
+    func loadCurrentPopups(state: State) -> Effect<Action> {
+        updateFilteredPopupList(
+            region: state.selectedRegion?.region ?? "전체",
+            district: state.selectedDistrict ?? "전체",
+            sortOption: state.selectedOption
+        )
     }
 
     func updateFilteredPopupList(
@@ -226,7 +215,7 @@ private extension CalendarFeature {
 
             await send(.loadingChanged(false))
         }
-        .cancellable(id: CancelID.load, cancelInFlight: true)
+        .cancellable(id: CancelID.popups, cancelInFlight: true)
     }
 
     func toggleLike(state: State, popup: Popup) -> Effect<Action> {

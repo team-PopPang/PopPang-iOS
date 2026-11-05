@@ -275,7 +275,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 찜 등록·해제 | #132의 V2 찜 | | `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)` |
 
 - 두 API 모두 Access Token으로 불러요(`V2PopupAPI.filteredHome`, `.regionList`). 필터 팝업이 실패하면 `PopupError.failed`로 바꿔요. 지역 목록은 홈·지도가 V1 때처럼 오류 문구를 보여 주도록 받은 오류를 그대로 던져요. V1 `PopupAPI.getRegionList`는 지웠어요.
-- 달력은 불러오기 실패에 "팝업을 불러오지 못했어요", 찜 실패에 "찜을 바꾸지 못했어요"를 보여 줘요. 로그인이 끊긴 실패(`AuthSessionError`)는 문구를 띄우지 않아요. 불러오기와 필터 요청은 같은 취소 ID를 써서 마지막 요청의 응답만 반영해요.
+- 달력은 불러오기 실패에 "팝업을 불러오지 못했어요", 찜 실패에 "찜을 바꾸지 못했어요"를 보여 줘요. 로그인이 끊긴 실패(`AuthSessionError`)는 문구를 띄우지 않아요. 처음 열 때는 지역 목록을 먼저 받고, 팝업은 그 뒤에 지금 선택으로 받아요. 팝업 요청은 모두 같은 취소 ID를 써서 마지막 요청의 응답만 반영하고, 지역 목록 요청은 따로 취소해요.
 - 지역 목록은 함수 이름을 그대로 두고 안쪽 요청만 V2로 바꿨어요. 홈과 지도도 같은 함수를 쓰므로 이 PR부터 함께 V2를 불러요. 서버 데이터가 같아 화면은 바뀌지 않아요.
 - 필터 팝업은 새 함수를 더했어요. 홈은 아직 V1 `getPersonalFilteredPopupList(userUuid:...)`를 쓰고, 5번에서 새 함수로 바꿔요.
 - V2 경로와 인증 종류는 PopPang-AOS의 `HomePopupfilterApi`·`RegionsApi`(Access Token)로 확인했어요. 명세 원문(UPOP-04, POP-10)과 맞는지는 확인 필요예요.

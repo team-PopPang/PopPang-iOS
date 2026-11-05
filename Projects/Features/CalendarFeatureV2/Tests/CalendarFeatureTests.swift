@@ -263,6 +263,40 @@ extension CalendarFeatureTests {
     }
 }
 
+extension CalendarFeatureTests {
+    @Test("지역을 받는 중에 정렬을 바꿔도 지역 목록을 받고, 팝업은 바꾼 정렬로 받는다")
+    func sortChangeDuringRegionLoadKeepsRegions() async {
+        let clock = TestClock()
+        let requests = LockIsolated<[FilterRequest]>([])
+        let store = TestStore(initialState: CalendarFeature.State()) {
+            CalendarFeature()
+        } withDependencies: {
+            $0.calendarFeatureClient = .mock(
+                getRegionList: {
+                    try await clock.sleep(for: .seconds(5))
+                    return [.all, .seoul]
+                },
+                getFilteredPopupList: { region, district, sort in
+                    requests.withValue { $0.append(.init(region: region, district: district, sort: sort)) }
+                    return []
+                }
+            )
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.onAppear)
+        await store.send(.sortOptionSelected(.closingSoon))
+        await clock.advance(by: .seconds(5))
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+
+        #expect(store.state.regions.map(\.region) == ["전체", "서울"])
+        #expect(store.state.selectedRegion == .all)
+        #expect(requests.value.last == .init(region: "전체", district: "전체", sort: "CLOSING_SOON"))
+        #expect(store.state.isLoading == false)
+    }
+}
+
 private struct FilterRequest: Equatable, Sendable {
     let region: String
     let district: String
