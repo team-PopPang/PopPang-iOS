@@ -66,8 +66,12 @@ public struct HomeFilterFeature {
                 
             case .regionSelectionPrepared(let selection):
                 state.regions = selection.regions
-                state.selectedRegion = selection.selectedRegion
-                state.selectedDistrict = selection.selectedDistrict
+                // 불러오는 동안 사용자가 이미 지역·구를 골랐으면 그 선택을 덮어쓰지 않는다.
+                // 지역과 구는 한 쌍으로만 정한다 (다른 지역의 구와 섞이지 않게).
+                if state.selectedRegion == nil {
+                    state.selectedRegion = selection.selectedRegion
+                    state.selectedDistrict = selection.selectedDistrict
+                }
                 return .none
             }
         }

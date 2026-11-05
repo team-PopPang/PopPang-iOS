@@ -247,6 +247,44 @@ struct PopupRepositoryTests {
         }
     }
 
+    // MARK: - 홈 랜덤·오픈 예정 (V2)
+
+    @Test("랜덤·오픈 예정은 V2 경로에 사용자 UUID와 query 없이 GET으로 보내고 Access Token을 쓴다")
+    func homeRequestsMatchV2Contract() throws {
+        let random = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .random).urlRequest()
+        let upcoming = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .upcoming).urlRequest()
+
+        #expect(random.url?.path == "/api/v2/user/popups/random")
+        #expect(upcoming.url?.path == "/api/v2/user/popups/upcoming")
+        #expect(random.url?.query == nil)
+        #expect(upcoming.url?.query == nil)
+        #expect(random.httpMethod == "GET")
+        #expect(upcoming.httpMethod == "GET")
+        #expect(V2PopupAPI.random.resolvedAuthorization == .access)
+        #expect(V2PopupAPI.upcoming.resolvedAuthorization == .access)
+    }
+
+    @Test("랜덤·오픈 예정은 감싸지 않은 팝업 배열을 읽고 Access Token을 보낸다")
+    func homeListsReadPopupArray() async throws {
+        let context = PopupRepositoryContext(response: (200, "[\(PopupFixture.popup)]"))
+
+        #expect(try await context.repository.getUserRandomPopupList().map(\.popupUuid) == ["popup-1"])
+        #expect(try await context.repository.getUserUpcomingPopupList().map(\.popupUuid) == ["popup-1"])
+        #expect(context.recorder.authorizationHeaders == ["Bearer access", "Bearer access"])
+    }
+
+    @Test("랜덤·오픈 예정이 서버 오류로 실패하면 PopupError로 바꾼다")
+    func homeListsMapServerErrorToPopupError() async {
+        let context = PopupRepositoryContext(response: (500, #"{"success":false,"code":6000,"message":"서버 에러","data":null}"#))
+
+        await #expect(throws: PopupError.failed) {
+            _ = try await context.repository.getUserRandomPopupList()
+        }
+        await #expect(throws: PopupError.failed) {
+            _ = try await context.repository.getUserUpcomingPopupList()
+        }
+    }
+
     @Test("지역 목록은 V2 경로에 GET으로 보내고 Access Token을 쓴다")
     func regionListRequestMatchesV2Contract() throws {
         let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .regionList).urlRequest()

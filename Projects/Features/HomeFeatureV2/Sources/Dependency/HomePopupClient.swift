@@ -2,18 +2,18 @@ import ComposableArchitecture
 import Domain
 import Foundation
 
+/// 홈이 쓰는 서버 요청. 모두 V2라 Access Token의 사용자를 기준으로 하고 `userUuid`를 받지 않는다.
 public struct HomePopupClient: Sendable {
     var getRegionList: @Sendable () async throws -> [RegionList]
-    public var getPersonalRandomPopupList: @Sendable (_ userUuid: String) async throws -> [Popup]
-    var getPersonalUpcomingPopupList: @Sendable (_ userUuid: String) async throws -> [Popup]
-    var getPersonalFilteredPopupList: @Sendable (
-        _ userUuid: String,
+    public var getRandomPopupList: @Sendable () async throws -> [Popup]
+    var getUpcomingPopupList: @Sendable () async throws -> [Popup]
+    var getFilteredPopupList: @Sendable (
         _ region: String,
         _ district: String,
         _ homeSortStandard: String
     ) async throws -> [Popup]
-    var addFavorite: @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void
-    var removeFavorite: @Sendable (_ userUuid: String, _ popupUuid: String) async throws -> Void
+    var addFavorite: @Sendable (_ popupUuid: String) async throws -> Void
+    var removeFavorite: @Sendable (_ popupUuid: String) async throws -> Void
 }
 
 extension HomePopupClient {
@@ -25,25 +25,24 @@ extension HomePopupClient {
             getRegionList: {
                 try await popupUsecase.getRegionList()
             },
-            getPersonalRandomPopupList: { userUuid in
-                try await popupUsecase.getPersonalRandomPopupList(userUuid: userUuid)
+            getRandomPopupList: {
+                try await popupUsecase.getUserRandomPopupList()
             },
-            getPersonalUpcomingPopupList: { userUuid in
-                try await popupUsecase.getPersonalUpcomingPopupList(userUuid: userUuid)
+            getUpcomingPopupList: {
+                try await popupUsecase.getUserUpcomingPopupList()
             },
-            getPersonalFilteredPopupList: { userUuid, region, district, homeSortStandard in
-                try await popupUsecase.getPersonalFilteredPopupList(
-                    userUuid: userUuid,
+            getFilteredPopupList: { region, district, homeSortStandard in
+                try await popupUsecase.getFilteredPopupList(
                     region: region,
                     district: district,
                     homeSortStandard: homeSortStandard
                 )
             },
-            addFavorite: { userUuid, popupUuid in
-                try await popupUsecase.addFavorite(userUuid: userUuid, popupUuid: popupUuid)
+            addFavorite: { popupUuid in
+                try await popupUsecase.addFavorite(popupUuid: popupUuid)
             },
-            removeFavorite: { userUuid, popupUuid in
-                try await popupUsecase.removeFavorite(userUuid: userUuid, popupUuid: popupUuid)
+            removeFavorite: { popupUuid in
+                try await popupUsecase.removeFavorite(popupUuid: popupUuid)
             }
         )
     }
@@ -52,11 +51,11 @@ extension HomePopupClient {
 extension HomePopupClient: DependencyKey {
     public static let liveValue = HomePopupClient(
         getRegionList: { [] },
-        getPersonalRandomPopupList: { _ in [] },
-        getPersonalUpcomingPopupList: { _ in [] },
-        getPersonalFilteredPopupList: { _, _, _, _ in [] },
-        addFavorite: { _, _ in },
-        removeFavorite: { _, _ in }
+        getRandomPopupList: { [] },
+        getUpcomingPopupList: { [] },
+        getFilteredPopupList: { _, _, _ in [] },
+        addFavorite: { _ in },
+        removeFavorite: { _ in }
     )
     
 #if DEBUG
@@ -137,13 +136,13 @@ extension HomePopupClient: DependencyKey {
                     ),
                 ]
             },
-            getPersonalRandomPopupList: { _ in bestPopups },
-            getPersonalUpcomingPopupList: { _ in comingPopups },
-            getPersonalFilteredPopupList: { _, _, _, _ in gridPopups },
-            addFavorite: { _, _ in
+            getRandomPopupList: { bestPopups },
+            getUpcomingPopupList: { comingPopups },
+            getFilteredPopupList: { _, _, _ in gridPopups },
+            addFavorite: { _ in
                 print("previewValue: 팝업 좋아요 + 1")
             },
-            removeFavorite: { _, _ in
+            removeFavorite: { _ in
                 print("previewValue: 팝업 좋아요 - 1")
             }
         )
@@ -196,11 +195,11 @@ extension HomePopupClient: TestDependencyKey {
     public static var testValue: HomePopupClient {
         HomePopupClient(
             getRegionList: { [] },
-            getPersonalRandomPopupList: { _ in [] },
-            getPersonalUpcomingPopupList: { _ in [] },
-            getPersonalFilteredPopupList: { _, _, _, _ in [] },
-            addFavorite: { _, _ in },
-            removeFavorite: { _, _ in }
+            getRandomPopupList: { [] },
+            getUpcomingPopupList: { [] },
+            getFilteredPopupList: { _, _, _ in [] },
+            addFavorite: { _ in },
+            removeFavorite: { _ in }
         )
     }
 }

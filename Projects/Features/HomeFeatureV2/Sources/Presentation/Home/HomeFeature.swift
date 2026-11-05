@@ -19,6 +19,9 @@ public struct HomeFeature {
         
         var isLoading = false
         var errorMessage: String?
+        /// 찜 요청을 보내고 응답을 기다리는 팝업. 응답 전에 같은 하트를 다시 누르면 무시한다.
+        /// V2 찜은 같은 요청을 두 번 보내면 409·404로 거절하므로 중복 요청을 막는다.
+        var favoriteInFlight: Set<String> = []
         
         // child state
         var filter = HomeFilterFeature.State()
@@ -45,6 +48,7 @@ public struct HomeFeature {
         // toggle
         case favoriteToggleTapped(popupUuid: String)
         case favoriteUpdateResponse(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
+        case favoriteRequestFinished(popupUuid: String)
         
         // child action
         case filter(HomeFilterFeature.Action)
@@ -67,6 +71,12 @@ public struct HomeFeature {
             case popupRequestTapped
             case popupRequestManagementTapped
         }
+    }
+    
+    /// 전체 불러오기와 그리드 다시 불러오기를 각각 취소한다. 같은 요청을 다시 보내면 앞 요청을 취소해 마지막 요청의 응답만 반영한다.
+    private enum CancelID {
+        case load
+        case grid
     }
     
     public init() {}
@@ -92,10 +102,7 @@ public struct HomeFeature {
             case .onAppear:
                 state.isLoading = true
                 state.errorMessage = nil
-                return loadAllPopupData(
-                    userUuid: state.userUuid,
-                    filter: state.filter
-                )
+                return loadAllPopupData(filter: state.filter)
                 
             case .nicknameUpdated(let nickname):
                 state.nickname = nickname
@@ -110,7 +117,6 @@ public struct HomeFeature {
                 state.comingPopups = sections
                     .comingPopups
                     .sorted { $0.startDate < $1.startDate }
-                state.gridPopups = sections.gridPopups
                 state.errorMessage = nil
                 return .none
                 
@@ -120,10 +126,7 @@ public struct HomeFeature {
                 
             case .refreshFilteredPopupList:
                 state.isLoading = true
-                return updatePersonalFilteredPopupList(
-                    userUuid: state.userUuid,
-                    filter: state.filter
-                )
+                return updateFilteredPopupList(filter: state.filter)
                 
             case .filteredGridPopupList(let popups):
                 state.gridPopups = popups
@@ -154,14 +157,16 @@ public struct HomeFeature {
                 guard let popup = currentPopup(
                     in: state,
                     popupUuid: popupUuid
-                ) else {
+                ), !state.favoriteInFlight.contains(popupUuid) else {
                     return .none
                 }
                 
-                return requestFavoriteToggle(
-                    userUuid: state.userUuid,
-                    popup: popup
-                )
+                state.favoriteInFlight.insert(popupUuid)
+                return requestFavoriteToggle(popup: popup)
+                
+            case .favoriteRequestFinished(let popupUuid):
+                state.favoriteInFlight.remove(popupUuid)
+                return .none
                 
             case .favoriteUpdateResponse(let popupUuid, let isFavorited, let favoriteCount):
                 state.bestPopups.applyFavoriteUpdate(
@@ -224,12 +229,11 @@ extension HomeFeature {
      
      */
     private func loadAllPopupData(
-        userUuid: String,
         filter: HomeFilterFeature.State
     ) -> Effect<Action> {
         let popupClient = self.popupClient
         return Effect.run { send in
-            // popupClient, userUuid, filter 캡처
+            // popupClient, filter 캡처
             do {
                 
                 /// 1. 서버에서 지역 목록을 가져온다
@@ -255,19 +259,16 @@ extension HomeFeature {
                     selectedDistrict: selectedDistrict
                 ))))
                 
-                async let bestPopups = popupClient.getPersonalRandomPopupList(userUuid)
-                async let comingPopups = popupClient.getPersonalUpcomingPopupList(userUuid)
-                async let gridPopups = popupClient.getPersonalFilteredPopupList(
-                    userUuid,
-                    selectedRegion?.region ?? "전체",
-                    selectedDistrict ?? "전체",
-                    filter.selectedOption.rawValue
-                )
+                /// 5. 그리드는 그리드 다시 불러오기와 같은 경로(CancelID.grid)로 받는다.
+                /// 그래야 전체 불러오기가 늦게 끝나도 그사이 사용자가 바꾼 지역·정렬의 그리드를 덮어쓰지 않는다.
+                await send(.refreshFilteredPopupList)
+                
+                async let bestPopups = popupClient.getRandomPopupList()
+                async let comingPopups = popupClient.getUpcomingPopupList()
                 
                 await send(.popupSectionsLoaded(HomePopupSections(
                     bestPopups: try await bestPopups,
-                    comingPopups: try await comingPopups,
-                    gridPopups: try await gridPopups
+                    comingPopups: try await comingPopups
                 )))
             } catch {
                 await send(.errorMessageChanged(error.localizedDescription))
@@ -275,20 +276,19 @@ extension HomeFeature {
             
             await send(.loadingChanged(false))
         }
+        .cancellable(id: CancelID.load, cancelInFlight: true)
     }
 }
 
 // MARK: - 필터링된 팝업 로딩
 extension HomeFeature {
-    private func updatePersonalFilteredPopupList(
-        userUuid: String,
+    private func updateFilteredPopupList(
         filter: HomeFilterFeature.State
     ) -> Effect<Action> {
         let popupClient = self.popupClient
         return .run { send in
             do {
-                let popups = try await popupClient.getPersonalFilteredPopupList(
-                    userUuid,
+                let popups = try await popupClient.getFilteredPopupList(
                     filter.selectedRegion?.region ?? "전체",
                     filter.selectedDistrict ?? "전체",
                     filter.selectedOption.rawValue
@@ -301,6 +301,7 @@ extension HomeFeature {
             
             await send(.loadingChanged(false))
         }
+        .cancellable(id: CancelID.grid, cancelInFlight: true)
     }
 }
 
@@ -323,21 +324,14 @@ extension Array where Element == Popup {
 // MARK: - 서버 팝업 좋아요 업데이트 요청
 extension HomeFeature {
     private func requestFavoriteToggle(
-        userUuid: String,
         popup: Popup
     ) -> Effect<Action> {
         .run { send in
             do {
                 if popup.isFavorited {
-                    try await popupClient.removeFavorite(
-                        userUuid,
-                        popup.popupUuid
-                    )
+                    try await popupClient.removeFavorite(popup.popupUuid)
                 } else {
-                    try await popupClient.addFavorite(
-                        userUuid,
-                        popup.popupUuid
-                    )
+                    try await popupClient.addFavorite(popup.popupUuid)
                 }
                 
                 let nextIsFavorited = !popup.isFavorited
@@ -358,6 +352,7 @@ extension HomeFeature {
                     .errorMessageChanged(error.localizedDescription)
                 )
             }
+            await send(.favoriteRequestFinished(popupUuid: popup.popupUuid))
         }
     }
 }
@@ -377,15 +372,12 @@ extension [RegionList] {
 public struct HomePopupSections: Equatable, Sendable {
     var bestPopups: [Popup]
     var comingPopups: [Popup]
-    var gridPopups: [Popup]
 
     public init(
         bestPopups: [Popup],
-        comingPopups: [Popup],
-        gridPopups: [Popup]
+        comingPopups: [Popup]
     ) {
         self.bestPopups = bestPopups
         self.comingPopups = comingPopups
-        self.gridPopups = gridPopups
     }
 }

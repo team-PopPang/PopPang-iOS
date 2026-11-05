@@ -19,6 +19,10 @@ public enum V2PopupAPI {
     case filteredHome(region: String, district: String, homeSortStandard: String)
     /// `GET /api/v2/popup/regions/districts` (POP-10). 지역과 그 안의 구 목록이다.
     case regionList
+    /// `GET /api/v2/user/popups/random` (UPOP-07). 운영 중 팝업에서 무작위로 최대 10개, 광고 팝업이 앞에 온다. 홈 추천이 쓴다.
+    case random
+    /// `GET /api/v2/user/popups/upcoming` (UPOP-12). 오픈 예정 팝업이다. `upcomingDays`(기본 10)는 V1처럼 보내지 않는다.
+    case upcoming
 }
 
 extension V2PopupAPI: BaseAPI {
@@ -44,12 +48,16 @@ extension V2PopupAPI: BaseAPI {
             return "/user/popups/filtered/home"
         case .regionList:
             return "/popup/regions/districts"
+        case .random:
+            return "/user/popups/random"
+        case .upcoming:
+            return "/user/popups/upcoming"
         }
     }
 
     public var method: Moya.Method {
         switch self {
-        case .search, .detail, .related, .filteredHome, .regionList:
+        case .search, .detail, .related, .filteredHome, .regionList, .random, .upcoming:
             return .get
         case .view:
             return .post
@@ -69,7 +77,7 @@ extension V2PopupAPI: BaseAPI {
                 ],
                 encoding: URLEncoding.queryString
             )
-        case .detail, .view, .related, .regionList:
+        case .detail, .view, .related, .regionList, .random, .upcoming:
             return .requestPlain
         }
     }
