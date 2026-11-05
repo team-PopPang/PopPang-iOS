@@ -88,6 +88,20 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
         }
     }
 
+    public func getUserRandomPopupList() async throws -> [Popup] {
+        // 명세 UPOP-07: 감싸지 않은 팝업 배열이다.
+        try await popupRequest {
+            try await makeV2Provider().asyncRequest(.random, decodeTo: [PopupDTO].self).map { $0.toEntity() }
+        }
+    }
+
+    public func getUserUpcomingPopupList() async throws -> [Popup] {
+        // 명세 UPOP-12: 감싸지 않은 팝업 배열이다.
+        try await popupRequest {
+            try await makeV2Provider().asyncRequest(.upcoming, decodeTo: [PopupDTO].self).map { $0.toEntity() }
+        }
+    }
+
     public func getPersonalSearchPopupList(searchText: String) async throws -> [Popup] {
         // 명세 UPOP-11: 성공 응답은 `APIResponse`로 감싸지 않은 팝업 배열이다(`wrapper NONE → NONE`).
         try await popupRequest {

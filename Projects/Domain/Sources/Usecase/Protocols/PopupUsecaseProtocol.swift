@@ -40,6 +40,12 @@ public protocol PopupUsecaseProtocol {
     /// 지역·구·정렬로 거른 팝업 목록을 반환합니다(V2). 찜 여부는 로그인한 사용자 기준입니다.
     func getFilteredPopupList(region: String, district: String, homeSortStandard: String) async throws -> [Popup]
 
+    /// 로그인한 사용자의 랜덤 팝업 목록을 반환합니다(V2). 홈 추천에 씁니다.
+    func getUserRandomPopupList() async throws -> [Popup]
+
+    /// 로그인한 사용자의 오픈 예정 팝업 목록을 반환합니다(V2).
+    func getUserUpcomingPopupList() async throws -> [Popup]
+
     /// 맵 팝업 필터 조회
     func getPersonalMapFilteredPopupList(
         userUuid: String,
