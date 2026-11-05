@@ -227,7 +227,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 2 | FavoritesFeature | 찜 목록 (FAV-04), 찜 등록·해제 (FAV-01·02) | 완료 (#133) |
 | 3 | PopupDetailFeature | 조회수 기록 (POP-14), 관련 팝업 (UPOP-03), 찜 등록·해제, 단건 조회, 관리자 비활성화 | 완료 (#140) |
 | 4 | CalendarFeature | 필터 팝업 (UPOP-04), 지역 목록 (POP-10), 찜 등록·해제 | 완료 (#142, `CalendarFeatureV2`) |
-| 5 | HomeFeatureV2 | 오픈 예정 (UPOP-12), 필터 팝업, 랜덤 (UPOP-07), 지역 목록, 찜 등록·해제 | 예정 |
+| 5 | HomeFeatureV2 | 오픈 예정 (UPOP-12), 필터 팝업, 랜덤 (UPOP-07), 지역 목록, 찜 등록·해제 | 완료 (#144) |
 | 6 | MapFeature | 지도 필터 (UPOP-05), 인기 추천 카테고리 (RECO-02), 카테고리별 팝업 (UPOP-09), 지역 목록, 찜 등록·해제 | 예정 |
 | 7 | AlertFeature | 알림 키워드 목록·등록·삭제 (ALERT-01~03), 알림함 목록·삭제 (ALERT-04·05), 찜 등록·해제 | 예정 |
 | 8 | App (푸시) | FCM 토큰 중복 확인·갱신 두 요청을 `PUT /api/v2/user/fcm-token` 하나로 (USER-06) | 예정 |
@@ -278,7 +278,25 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 - 달력은 불러오기 실패에 "팝업을 불러오지 못했어요", 찜 실패에 "찜을 바꾸지 못했어요"를 보여 줘요. 로그인이 끊긴 실패(`AuthSessionError`)는 문구를 띄우지 않아요. 처음 열 때는 지역 목록을 먼저 받고, 팝업은 그 뒤에 지금 선택으로 받아요. 팝업 요청은 모두 같은 취소 ID를 써서 마지막 요청의 응답만 반영하고, 지역 목록 요청은 따로 취소해요.
 - 지역 목록은 함수 이름을 그대로 두고 안쪽 요청만 V2로 바꿨어요. 홈과 지도도 같은 함수를 쓰므로 이 PR부터 함께 V2를 불러요. 서버 데이터가 같아 화면은 바뀌지 않아요.
 - 필터 팝업은 새 함수를 더했어요. 홈은 아직 V1 `getPersonalFilteredPopupList(userUuid:...)`를 쓰고, 5번에서 새 함수로 바꿔요.
-- V2 경로와 인증 종류는 PopPang-AOS의 `HomePopupfilterApi`·`RegionsApi`(Access Token)로 확인했어요. 명세 원문(UPOP-04, POP-10)과 맞는지는 확인 필요예요.
+- V2 경로와 인증 종류는 API 계약 문서(2026-10-30)로 확인했어요. 두 API 모두 Access Token이에요.
+
+### 홈 (#144)
+
+홈은 이미 `HomeFeatureV2` 모듈이라 API만 V2로 바꿨어요. 화면은 그대로이고, `HomePopupClient`와 오픈 예정 목록(`ComingPopupDetailFeature`)의 요청에서 `userUuid` 인자를 뺐어요. State의 `userUuid`는 광고 식별자와 화면 ID에 쓰여서 9번 정리 단계까지 남겨요.
+
+| 기능 | V2 | 응답 | 함수 |
+| --- | --- | --- | --- |
+| 추천 (랜덤) | `GET /api/v2/user/popups/random` | 감싸지 않은 팝업 배열 (`PopupDTO`) | `getUserRandomPopupList()` |
+| 오픈 예정 | `GET /api/v2/user/popups/upcoming` | 감싸지 않은 팝업 배열 (`PopupDTO`) | `getUserUpcomingPopupList()` |
+| 그리드 필터·지역 목록 | 달력(#143)과 같음 | | `getFilteredPopupList(...)`·`getRegionList()` |
+| 찜 등록·해제 | #132의 V2 찜 | | `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)` |
+
+- 경로·인증·응답은 API 계약 문서(2026-10-30)로 확인했어요. 모두 Access Token이에요.
+- 함수 이름에 `User`를 붙였어요. 같은 이름의 V1 비회원 함수(`getRandomPopupList()`·`getUpcomingPopupList()`)가 아직 있어서예요.
+- 랜덤은 운영 중 팝업 중 최대 10개를 무작위로 고르고, 유효한 광고 팝업을 앞에 넣어요.
+- 오픈 예정의 `upcomingDays`(선택, 기본 10)는 V1처럼 보내지 않아요. 명세상 실제 범위는 내일부터 D+11이에요.
+- 실패하면 `PopupError.failed`로 바꿔요. 홈은 오류 문구를 화면에 띄우지 않고, 오픈 예정 목록은 "오픈 예정 팝업을 불러오지 못했어요", "찜을 바꾸지 못했어요"를 알림으로 보여 줘요. 로그인이 끊긴 실패(`AuthSessionError`)는 알림을 띄우지 않아요.
+- 그리드 다시 불러오기와 전체 불러오기는 각각 취소 ID를 써서 마지막 요청의 응답만 반영해요. 찜은 응답을 기다리는 동안 같은 하트를 다시 누르면 무시해요(V2 찜은 같은 요청을 두 번 보내면 409·404로 거절해요).
 
 ## 정해야 할 것
 
