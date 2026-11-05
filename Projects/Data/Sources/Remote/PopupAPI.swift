@@ -29,7 +29,6 @@ public enum PopupAPI {
     case addFavorite(userUuid: String, popupUuid: String)
     case removeFavorite(userUuid: String, popupUuid: String)
 
-    case getRegionList
     case getPopularRecommendList
     case getPopularRecommendPopupList(userUuid: String, recommendId: Int)
 }
@@ -65,8 +64,6 @@ extension PopupAPI: BaseAPI {
             return "/users/\(userUuid)/alert"
         case .addFavorite, .removeFavorite:
             return "/favorite"
-        case .getRegionList:
-            return "/popup/regions/districts"
         case .getPopularRecommendList:
             return "recommend/featured"
         case .getPopularRecommendPopupList(let userUuid, let recommendId):
@@ -88,7 +85,6 @@ extension PopupAPI: BaseAPI {
              .getPersonalMapFilteredPopupList,
              .getPersonalRandomPopupList,
              .getAlertPopupList,
-             .getRegionList,
              .getPopularRecommendList,
              .getPopularRecommendPopupList:
             return .get
@@ -106,7 +102,6 @@ extension PopupAPI: BaseAPI {
              .getInProgressPopupList,
              .getRandomPopupList,
              .getAlertPopupList,
-             .getRegionList,
              .getPopularRecommendList,
              .getPopularRecommendPopupList:
             return .requestPlain

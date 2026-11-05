@@ -408,7 +408,6 @@ struct DataTests {
         #expect(PopupAPI.removeAlertPopup(userUuid: "user-1", popupUuid: "popup-1").path == "/users/user-1/alert")
         #expect(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").path == "/favorite")
         #expect(PopupAPI.removeFavorite(userUuid: "user-1", popupUuid: "popup-1").path == "/favorite")
-        #expect(PopupAPI.getRegionList.path == "/popup/regions/districts")
         #expect(PopupAPI.getPopularRecommendList.path == "recommend/featured")
         #expect(PopupAPI.getPopularRecommendPopupList(userUuid: "user-1", recommendId: 7).path == "/users/user-1/popups/recommendations/7")
 
@@ -454,7 +453,6 @@ struct DataTests {
         #expect(PopupAPI.removeAlertPopup(userUuid: "user-1", popupUuid: "popup-1").method == .delete)
         #expect(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").method == .post)
         #expect(PopupAPI.removeFavorite(userUuid: "user-1", popupUuid: "popup-1").method == .delete)
-        #expect(PopupAPI.getRegionList.method == .get)
         #expect(PopupAPI.getPopularRecommendList.method == .get)
         #expect(PopupAPI.getPopularRecommendPopupList(userUuid: "user-1", recommendId: 7).method == .get)
 
