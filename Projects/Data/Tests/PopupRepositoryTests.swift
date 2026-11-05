@@ -209,6 +209,71 @@ struct PopupRepositoryTests {
             _ = try await context.repository.getPopupDetail(popupUuid: "popup-1")
         }
     }
+
+    // MARK: - 달력 필터 팝업·지역 목록 (V2)
+
+    @Test("필터 팝업은 V2 경로에 사용자 UUID 없이 지역·구·정렬을 query로 보내고 Access Token을 쓴다")
+    func filteredRequestMatchesV2Contract() throws {
+        let target = V2PopupAPI.filteredHome(region: "서울", district: "성동구", homeSortStandard: "NEWEST")
+        let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: target).urlRequest()
+        let queryItems = URLComponents(url: try #require(request.url), resolvingAgainstBaseURL: false)?.queryItems ?? []
+
+        #expect(request.url?.path == "/api/v2/user/popups/filtered/home")
+        #expect(Set(queryItems) == [
+            URLQueryItem(name: "region", value: "서울"),
+            URLQueryItem(name: "district", value: "성동구"),
+            URLQueryItem(name: "homeSortStandard", value: "NEWEST"),
+        ])
+        #expect(request.httpMethod == "GET")
+        #expect(target.resolvedAuthorization == .access)
+    }
+
+    @Test("필터 팝업은 감싸지 않은 팝업 배열을 읽고 Access Token을 보낸다")
+    func filteredReadsPopupArray() async throws {
+        let context = PopupRepositoryContext(response: (200, "[\(PopupFixture.popup)]"))
+
+        let popups = try await context.repository.getFilteredPopupList(region: "전체", district: "전체", homeSortStandard: "NEWEST")
+
+        #expect(popups.map(\.popupUuid) == ["popup-1"])
+        #expect(context.recorder.authorizationHeaders == ["Bearer access"])
+    }
+
+    @Test("필터 팝업이 서버 오류로 실패하면 PopupError로 바꾼다")
+    func filteredMapsServerErrorToPopupError() async {
+        let context = PopupRepositoryContext(response: (500, #"{"success":false,"code":6000,"message":"서버 에러","data":null}"#))
+
+        await #expect(throws: PopupError.failed) {
+            _ = try await context.repository.getFilteredPopupList(region: "전체", district: "전체", homeSortStandard: "NEWEST")
+        }
+    }
+
+    @Test("지역 목록은 V2 경로에 GET으로 보내고 Access Token을 쓴다")
+    func regionListRequestMatchesV2Contract() throws {
+        let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .regionList).urlRequest()
+
+        #expect(request.url?.path == "/api/v2/popup/regions/districts")
+        #expect(request.httpMethod == "GET")
+        #expect(V2PopupAPI.regionList.resolvedAuthorization == .access)
+    }
+
+    @Test("지역 목록은 감싸지 않은 지역 배열을 읽는다")
+    func regionListReadsArray() async throws {
+        let context = PopupRepositoryContext(response: (200, #"[{"region":"서울","districtList":["전체","성동구"]}]"#))
+
+        let regions = try await context.repository.getRegionList()
+
+        #expect(regions == [RegionList(region: "서울", districtList: ["전체", "성동구"])])
+        #expect(context.recorder.authorizationHeaders == ["Bearer access"])
+    }
+
+    @Test("지역 목록이 실패하면 PopupError로 바꾼다")
+    func regionListMapsServerErrorToPopupError() async {
+        let context = PopupRepositoryContext(response: (500, #"{"success":false,"code":6000,"message":"서버 에러","data":null}"#))
+
+        await #expect(throws: PopupError.failed) {
+            _ = try await context.repository.getRegionList()
+        }
+    }
 }
 
 // MARK: - 테스트 도구

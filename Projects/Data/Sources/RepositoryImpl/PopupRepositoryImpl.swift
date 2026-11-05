@@ -78,6 +78,16 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
         ).map { $0.toEntity() }
     }
 
+    public func getFilteredPopupList(region: String, district: String, homeSortStandard: String) async throws -> [Popup] {
+        // 명세 UPOP-04: 검색처럼 감싸지 않은 팝업 배열이다.
+        try await popupRequest {
+            try await makeV2Provider().asyncRequest(
+                .filteredHome(region: region, district: district, homeSortStandard: homeSortStandard),
+                decodeTo: [PopupDTO].self
+            ).map { $0.toEntity() }
+        }
+    }
+
     public func getPersonalSearchPopupList(searchText: String) async throws -> [Popup] {
         // 명세 UPOP-11: 성공 응답은 `APIResponse`로 감싸지 않은 팝업 배열이다(`wrapper NONE → NONE`).
         try await popupRequest {
@@ -172,7 +182,10 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
     }
 
     public func getRegionList() async throws -> [RegionList] {
-        try await popupProvider.asyncRequest(.getRegionList, decodeTo: [RegionListDTO].self).map { $0.toEntity() }
+        // 명세 POP-10: 감싸지 않은 지역 배열이다. 달력·홈·지도가 함께 쓴다.
+        try await popupRequest {
+            try await makeV2Provider().asyncRequest(.regionList, decodeTo: [RegionListDTO].self).map { $0.toEntity() }
+        }
     }
 
     public func getPopularRecommendList() async throws -> [Recommend] {

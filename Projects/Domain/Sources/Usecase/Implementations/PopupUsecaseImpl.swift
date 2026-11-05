@@ -55,6 +55,10 @@ public final class PopupUsecaseImpl: PopupUsecaseProtocol {
         )
     }
 
+    public func getFilteredPopupList(region: String, district: String, homeSortStandard: String) async throws -> [Popup] {
+        try await popupRepository.getFilteredPopupList(region: region, district: district, homeSortStandard: homeSortStandard)
+    }
+
     public func getPersonalSearchPopupList(searchText: String) async throws -> [Popup] {
         try await popupRepository.getPersonalSearchPopupList(searchText: searchText)
     }
