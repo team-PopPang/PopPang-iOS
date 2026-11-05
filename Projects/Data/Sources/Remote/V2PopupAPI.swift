@@ -15,6 +15,10 @@ public enum V2PopupAPI {
     case view(popupUuid: String)
     /// `GET /api/v2/user/popups/{popupUuid}/related` (UPOP-03). 상세 화면의 관련 팝업이다.
     case related(popupUuid: String)
+    /// `GET /api/v2/user/popups/filtered/home` (UPOP-04). 지역·구·정렬로 거른 팝업 목록이다. 달력·홈이 쓴다.
+    case filteredHome(region: String, district: String, homeSortStandard: String)
+    /// `GET /api/v2/popup/regions/districts` (POP-10). 지역과 그 안의 구 목록이다.
+    case regionList
 }
 
 extension V2PopupAPI: BaseAPI {
@@ -36,12 +40,16 @@ extension V2PopupAPI: BaseAPI {
             return "/popup/\(popupUuid)/view"
         case .related(let popupUuid):
             return "/user/popups/\(popupUuid)/related"
+        case .filteredHome:
+            return "/user/popups/filtered/home"
+        case .regionList:
+            return "/popup/regions/districts"
         }
     }
 
     public var method: Moya.Method {
         switch self {
-        case .search, .detail, .related:
+        case .search, .detail, .related, .filteredHome, .regionList:
             return .get
         case .view:
             return .post
@@ -52,7 +60,16 @@ extension V2PopupAPI: BaseAPI {
         switch self {
         case .search(let q):
             return .requestParameters(parameters: ["q": q], encoding: URLEncoding.queryString)
-        case .detail, .view, .related:
+        case let .filteredHome(region, district, homeSortStandard):
+            return .requestParameters(
+                parameters: [
+                    "region": region,
+                    "district": district,
+                    "homeSortStandard": homeSortStandard,
+                ],
+                encoding: URLEncoding.queryString
+            )
+        case .detail, .view, .related, .regionList:
             return .requestPlain
         }
     }

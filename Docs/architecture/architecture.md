@@ -37,6 +37,7 @@ Projects
 ├── Features
 │   ├── MainTabFeature        로그인 이후 탭과 탭 공통 push·fullScreen 소유
 │   ├── HomeFeatureV2         홈 탭 (MainTabFeature가 사용하는 홈)
+│   ├── CalendarFeatureV2     달력 탭 (MainTabFeature가 사용하는 달력, 기존 CalendarFeature는 남겨 둠)
 │   ├── CalendarFeature, MapFeature, FavoritesFeature, ProfileFeature
 │   ├── AuthFeatureV2         로그인·회원가입 화면 (App이 사용하는 인증, 기존 AuthFeature는 남겨 둠)
 │   ├── OnboardingFeatureV2   온보딩 화면 (App이 사용하는 온보딩, 기존 OnboardingFeature는 남겨 둠)
@@ -65,8 +66,9 @@ Projects
 | Shared/SheetKit | framework | 없음 | Demo (지도 모양 시트), `SheetKitTests` |
 | Shared/ADKit | framework | Core, GoogleMobileAds, JavaScriptCore | 없음 |
 | Shared/ThirdParty | framework | 외부 패키지만 | 없음 |
-| MainTabFeature | staticFramework | Alert, Calendar, Favorites, HomeFeatureV2, Map, PopupDetail, PopPangRN, Profile, Review, Search Feature, Domain, Core, DSKit | `MainTabFeatureTests` |
+| MainTabFeature | staticFramework | Alert, CalendarFeatureV2, Favorites, HomeFeatureV2, Map, PopupDetail, PopPangRN, Profile, Review, Search Feature, Domain, Core, DSKit | `MainTabFeatureTests` |
 | HomeFeatureV2 | staticFramework | ADKit, Domain, DSKit, Core, ThirdParty | Demo, `HomeFeatureV2Tests` |
+| CalendarFeatureV2 | staticFramework | Domain, Core, DSKit, ThirdParty | Demo, `CalendarFeatureV2Tests` |
 | Alert, Calendar, Favorites, Profile Feature | staticFramework | Domain, Core, DSKit, ThirdParty | Demo |
 | PopupDetailFeature | staticFramework | Domain, Core, DSKit, ThirdParty | Demo, `PopupDetailFeatureTests` |
 | MapFeature | staticFramework | Domain, DSKit, Core, SheetKit, ThirdParty | Demo |

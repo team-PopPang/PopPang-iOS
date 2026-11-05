@@ -14,7 +14,7 @@ let project = Project(
             resources: ["Resources/**"],
             dependencies: [
                 .project(target: "AlertFeature", path: "../AlertFeature"),
-                .project(target: "CalendarFeature", path: "../CalendarFeature"),
+                .project(target: "CalendarFeatureV2", path: "../CalendarFeatureV2"),
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "Core", path: "../../Shared/Core"),
                 .project(target: "DSKit", path: "../../Shared/DSKit"),

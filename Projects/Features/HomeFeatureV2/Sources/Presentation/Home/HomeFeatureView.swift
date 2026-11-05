@@ -97,10 +97,12 @@ public struct HomeFeatureView: View {
                     districts: { $0.districtList }
                 )
                 .presentationDetents([.medium])
+                .ppSystemSheetStyle()
                 
             case .sortSheet:
                 SortButtonSheet(selectedOption: selectedOptionBinding)
                     .presentationDetents([.height(270)])
+                    .ppSystemSheetStyle()
             }
         }
         .onAppear {

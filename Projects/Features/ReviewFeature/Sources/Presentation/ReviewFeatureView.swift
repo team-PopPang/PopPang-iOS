@@ -48,6 +48,7 @@ public struct ReviewFeatureView: View {
                 }
             )
             .presentationDetents([.height(320)])
+            .ppSystemSheetStyle()
         }
     }
 }
