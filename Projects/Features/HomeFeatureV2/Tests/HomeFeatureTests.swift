@@ -163,24 +163,46 @@ struct HomeFeatureTests {
             $0.filter.selectedDistrict = "전체"
         }
 
-        await store.receive(
-            .popupSectionsLoaded(
-                HomePopupSections(
-                    bestPopups: bestPopups,
-                    comingPopups: [comingLater, comingSooner],
-                    gridPopups: gridPopups
-                )
-            )
-        ) {
-            $0.bestPopups = bestPopups
-            $0.comingPopups = [comingSooner, comingLater]
-            $0.gridPopups = gridPopups
-            $0.errorMessage = nil
-        }
+        // 그리드는 그리드 다시 불러오기 경로로, 추천·오픈 예정은 전체 불러오기로 따로 받는다. 응답 순서는 정해져 있지 않다.
+        store.exhaustivity = .off(showSkippedAssertions: false)
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
 
-        await store.receive(.loadingChanged(false)) {
-            $0.isLoading = false
+        #expect(store.state.bestPopups == bestPopups)
+        #expect(store.state.comingPopups == [comingSooner, comingLater])
+        #expect(store.state.gridPopups == gridPopups)
+        #expect(store.state.errorMessage == nil)
+        #expect(store.state.isLoading == false)
+    }
+
+    @Test("HomeFeature는 전체 불러오기가 늦게 끝나도 그사이 바꾼 조건의 그리드를 덮어쓰지 않는다")
+    func homeFeatureLateFullLoadKeepsNewerGrid() async {
+        let clock = TestClock()
+        let seoul = RegionList(region: "서울", districtList: ["전체", "성동구"])
+        let store = TestStore(initialState: HomeFeature.State(user: makeUser())) {
+            HomeFeature()
+        } withDependencies: {
+            $0.homePopupClient.getRegionList = { [seoul] }
+            $0.homePopupClient.getRandomPopupList = {
+                try await clock.sleep(for: .seconds(5))
+                return []
+            }
+            $0.homePopupClient.getUpcomingPopupList = { [] }
+            $0.homePopupClient.getFilteredPopupList = { _, district, _ in
+                [makePopup(popupUuid: "grid-\(district)", name: district)]
+            }
         }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.onAppear)
+        await store.send(.filter(.districtSelected("성동구")))
+        await store.send(.refreshFilteredPopupList)
+        await clock.advance(by: .seconds(5))
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+
+        #expect(store.state.gridPopups.map(\.popupUuid) == ["grid-성동구"])
+        #expect(store.state.isLoading == false)
     }
 
     @Test("HomeFeature가 닉네임 갱신 action을 상태에 반영한다")

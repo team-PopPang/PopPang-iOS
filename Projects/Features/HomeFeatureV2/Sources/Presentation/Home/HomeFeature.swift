@@ -117,7 +117,6 @@ public struct HomeFeature {
                 state.comingPopups = sections
                     .comingPopups
                     .sorted { $0.startDate < $1.startDate }
-                state.gridPopups = sections.gridPopups
                 state.errorMessage = nil
                 return .none
                 
@@ -260,18 +259,16 @@ extension HomeFeature {
                     selectedDistrict: selectedDistrict
                 ))))
                 
+                /// 5. 그리드는 그리드 다시 불러오기와 같은 경로(CancelID.grid)로 받는다.
+                /// 그래야 전체 불러오기가 늦게 끝나도 그사이 사용자가 바꾼 지역·정렬의 그리드를 덮어쓰지 않는다.
+                await send(.refreshFilteredPopupList)
+                
                 async let bestPopups = popupClient.getRandomPopupList()
                 async let comingPopups = popupClient.getUpcomingPopupList()
-                async let gridPopups = popupClient.getFilteredPopupList(
-                    selectedRegion?.region ?? "전체",
-                    selectedDistrict ?? "전체",
-                    filter.selectedOption.rawValue
-                )
                 
                 await send(.popupSectionsLoaded(HomePopupSections(
                     bestPopups: try await bestPopups,
-                    comingPopups: try await comingPopups,
-                    gridPopups: try await gridPopups
+                    comingPopups: try await comingPopups
                 )))
             } catch {
                 await send(.errorMessageChanged(error.localizedDescription))
@@ -375,15 +372,12 @@ extension [RegionList] {
 public struct HomePopupSections: Equatable, Sendable {
     var bestPopups: [Popup]
     var comingPopups: [Popup]
-    var gridPopups: [Popup]
 
     public init(
         bestPopups: [Popup],
-        comingPopups: [Popup],
-        gridPopups: [Popup]
+        comingPopups: [Popup]
     ) {
         self.bestPopups = bestPopups
         self.comingPopups = comingPopups
-        self.gridPopups = gridPopups
     }
 }
