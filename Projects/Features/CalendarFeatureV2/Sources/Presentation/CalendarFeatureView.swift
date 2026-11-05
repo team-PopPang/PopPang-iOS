@@ -107,9 +107,11 @@ public struct CalendarFeatureView: View {
                     districts: { $0.districtList }
                 )
                 .presentationDetents([.fraction(0.4)])
+                    .ppSystemSheetStyle()
             case .sort:
                 SortButtonSheet(selectedOption: selectedOptionBinding)
                     .presentationDetents([.fraction(0.4)])
+                    .ppSystemSheetStyle()
             }
         }
     }
