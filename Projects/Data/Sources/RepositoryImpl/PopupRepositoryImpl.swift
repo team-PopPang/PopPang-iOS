@@ -183,9 +183,8 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
 
     public func getRegionList() async throws -> [RegionList] {
         // 명세 POP-10: 감싸지 않은 지역 배열이다. 달력·홈·지도가 함께 쓴다.
-        try await popupRequest {
-            try await makeV2Provider().asyncRequest(.regionList, decodeTo: [RegionListDTO].self).map { $0.toEntity() }
-        }
+        // 홈·지도가 V1 때처럼 오류 문구를 보여 주도록 PopupError로 바꾸지 않고 받은 오류를 그대로 던진다.
+        try await makeV2Provider().asyncRequest(.regionList, decodeTo: [RegionListDTO].self).map { $0.toEntity() }
     }
 
     public func getPopularRecommendList() async throws -> [Recommend] {

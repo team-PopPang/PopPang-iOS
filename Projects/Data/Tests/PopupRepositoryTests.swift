@@ -266,11 +266,11 @@ struct PopupRepositoryTests {
         #expect(context.recorder.authorizationHeaders == ["Bearer access"])
     }
 
-    @Test("지역 목록이 실패하면 PopupError로 바꾼다")
-    func regionListMapsServerErrorToPopupError() async {
+    @Test("지역 목록이 실패하면 홈·지도가 V1 때처럼 문구를 보여 주도록 받은 네트워크 오류를 그대로 던진다")
+    func regionListPassesNetworkErrorThrough() async {
         let context = PopupRepositoryContext(response: (500, #"{"success":false,"code":6000,"message":"서버 에러","data":null}"#))
 
-        await #expect(throws: PopupError.failed) {
+        await #expect(throws: NetworkError.self) {
             _ = try await context.repository.getRegionList()
         }
     }

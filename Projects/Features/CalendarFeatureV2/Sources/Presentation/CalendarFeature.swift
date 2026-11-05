@@ -76,9 +76,7 @@ public struct CalendarFeature {
             case .regionSelected(let region):
                 state.selectedRegion = region
                 state.selectedDistrict = region.districtList.first
-                // 앞서 보낸 불러오기가 늦게 와서 고른 지역을 덮어쓰지 않게 취소한다. 목록은 구를 고를 때 다시 받는다.
-                state.isLoading = false
-                return .cancel(id: CancelID.load)
+                return .none
 
             case .districtSelected(let district):
                 state.selectedDistrict = district
@@ -111,8 +109,11 @@ public struct CalendarFeature {
 
             case .popupDataLoaded(let result):
                 state.regions = result.regions
-                state.selectedRegion = result.selectedRegion
-                state.selectedDistrict = result.selectedDistrict
+                // 불러오는 동안 사용자가 지역을 골랐으면 그 선택을 덮어쓰지 않는다.
+                if state.selectedRegion == nil {
+                    state.selectedRegion = result.selectedRegion
+                    state.selectedDistrict = result.selectedDistrict
+                }
                 applyPopups(result.popups, state: &state)
                 state.errorMessage = nil
                 return .none
