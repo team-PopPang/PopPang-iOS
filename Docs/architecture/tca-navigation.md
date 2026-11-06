@@ -184,7 +184,7 @@ SwiftUI가 view tree를 해제하는 중에 state를 먼저 지우면 lifecycle 
 | --- | --- | --- |
 | 화면 전환용 escaping closure | `PopupDetailFeatureView`의 `onSelectRelatedPopup`·`onShowReviews`, `ComingPopupDetailFeatureView`의 `onSelectPopup`처럼 다음 화면 이동을 parent에 맡기는 closure | 새로 추가하지 않는다. 남아 있는 closure는 해당 화면을 고칠 때 delegate action으로 바꾼다. |
 | UI 이벤트 closure | `GridPopupCell`의 `toggleLike: { store.send(.favoriteToggleTapped(popupUuid: popup.popupUuid)) }`, `HomeNavigationBar`의 `onSearch`·`onAlert` | 허용한다. closure 안에서는 store action만 보낸다. |
-| SDK delegate bridge | `NaverMapCoordinator`(MapFeature)의 지도·위치 delegate, `AppNotificationManager`의 알림 callback | 허용한다. 이름에 Coordinator가 있어도 화면 전환을 맡지 않는다. 가능하면 client dependency나 adapter로 감싸 reducer action으로 들어오게 한다. |
+| SDK delegate bridge | `NaverMapCoordinator`(MapFeatureV2)의 지도·위치 delegate, `AppNotificationManager`의 알림 callback | 허용한다. 이름에 Coordinator가 있어도 화면 전환을 맡지 않는다. 가능하면 client dependency나 adapter로 감싸 reducer action으로 들어오게 한다. |
 
 `PopupDetailFeatureView`처럼 아직 callback 파라미터가 남은 화면은 parent의 destination view에서 callback을 `store.send(...)`로 바꿔 연결한다. callback을 늘리지 말고, 해당 feature를 고칠 때 delegate action으로 옮긴다.
 

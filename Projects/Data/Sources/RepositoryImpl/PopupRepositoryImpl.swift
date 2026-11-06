@@ -102,6 +102,35 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
         }
     }
 
+    public func getMapPopupList(
+        region: String,
+        district: String,
+        latitude: Double?,
+        longitude: Double?,
+        mapSortStandard: String
+    ) async throws -> [Popup] {
+        // 명세 UPOP-05: 감싸지 않은 팝업 배열이다. 운영 중 팝업만 준다.
+        try await popupRequest {
+            try await makeV2Provider().asyncRequest(
+                .filteredMap(
+                    region: region,
+                    district: district,
+                    latitude: latitude,
+                    longitude: longitude,
+                    mapSortStandard: mapSortStandard
+                ),
+                decodeTo: [PopupDTO].self
+            ).map { $0.toEntity() }
+        }
+    }
+
+    public func getRecommendList() async throws -> [Recommend] {
+        // 명세 RECO-01: 감싸지 않은 `{id, recommendName}` 배열이다.
+        try await popupRequest {
+            try await makeV2Provider().asyncRequest(.recommendList, decodeTo: [RecommendListDTO].self).map { $0.toModel() }
+        }
+    }
+
     public func getPersonalSearchPopupList(searchText: String) async throws -> [Popup] {
         // 명세 UPOP-11: 성공 응답은 `APIResponse`로 감싸지 않은 팝업 배열이다(`wrapper NONE → NONE`).
         try await popupRequest {

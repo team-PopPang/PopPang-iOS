@@ -67,6 +67,26 @@ public final class PopupUsecaseImpl: PopupUsecaseProtocol {
         try await popupRepository.getUserUpcomingPopupList()
     }
 
+    public func getMapPopupList(
+        region: String,
+        district: String,
+        latitude: Double?,
+        longitude: Double?,
+        mapSortStandard: String
+    ) async throws -> [Popup] {
+        try await popupRepository.getMapPopupList(
+            region: region,
+            district: district,
+            latitude: latitude,
+            longitude: longitude,
+            mapSortStandard: mapSortStandard
+        )
+    }
+
+    public func getRecommendList() async throws -> [Recommend] {
+        try await popupRepository.getRecommendList()
+    }
+
     public func getPersonalSearchPopupList(searchText: String) async throws -> [Popup] {
         try await popupRepository.getPersonalSearchPopupList(searchText: searchText)
     }

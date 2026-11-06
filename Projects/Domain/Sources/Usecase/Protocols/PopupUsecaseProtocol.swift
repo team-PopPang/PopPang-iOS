@@ -46,6 +46,18 @@ public protocol PopupUsecaseProtocol {
     /// 로그인한 사용자의 오픈 예정 팝업 목록을 반환합니다(V2).
     func getUserUpcomingPopupList() async throws -> [Popup]
 
+    /// 지도에 보일 운영 중 팝업 목록을 반환합니다(V2). 위치는 가까운순에 씁니다.
+    func getMapPopupList(
+        region: String,
+        district: String,
+        latitude: Double?,
+        longitude: Double?,
+        mapSortStandard: String
+    ) async throws -> [Popup]
+
+    /// 추천 카테고리 전체를 반환합니다(V2).
+    func getRecommendList() async throws -> [Recommend]
+
     /// 맵 팝업 필터 조회
     func getPersonalMapFilteredPopupList(
         userUuid: String,

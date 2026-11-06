@@ -6,7 +6,7 @@ import Domain
 import FavoritesFeature
 import Foundation
 import HomeFeatureV2
-import MapFeature
+import MapFeatureV2
 import PopupDetailFeature
 import PopPangRNFeature
 import ProfileFeature
@@ -80,7 +80,7 @@ public struct MainTabFeature {
             self.calendar = .init()
             self.favorites = .init()
             self.home = .init(user: user)
-            self.map = .init(userUuid: user.userUuid)
+            self.map = .init()
             self.profile = .init(user: user)
         }
 

@@ -247,6 +247,50 @@ struct PopupRepositoryTests {
         }
     }
 
+    // MARK: - 지도 목록·카테고리 (V2)
+
+    @Test("지도 목록은 V2 경로에 지역·구·위치·정렬을 query로 보내고 Access Token을 쓴다")
+    func mapRequestMatchesV2Contract() throws {
+        let target = V2PopupAPI.filteredMap(region: "서울", district: "전체", latitude: 37.5, longitude: 127.05, mapSortStandard: "CLOSEST")
+        let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: target).urlRequest()
+        let queryItems = URLComponents(url: try #require(request.url), resolvingAgainstBaseURL: false)?.queryItems ?? []
+
+        #expect(request.url?.path == "/api/v2/user/popups/filtered/map")
+        #expect(Set(queryItems) == [
+            URLQueryItem(name: "region", value: "서울"),
+            URLQueryItem(name: "district", value: "전체"),
+            URLQueryItem(name: "latitude", value: "37.5"),
+            URLQueryItem(name: "longitude", value: "127.05"),
+            URLQueryItem(name: "mapSortStandard", value: "CLOSEST"),
+        ])
+        #expect(target.resolvedAuthorization == .access)
+    }
+
+    @Test("지도 목록은 위치를 모르면 위도·경도를 보내지 않는다")
+    func mapRequestOmitsUnknownLocation() throws {
+        let target = V2PopupAPI.filteredMap(region: "전체", district: "전체", latitude: nil, longitude: nil, mapSortStandard: "NEWEST")
+        let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: target).urlRequest()
+        let names = Set((URLComponents(url: try #require(request.url), resolvingAgainstBaseURL: false)?.queryItems ?? []).map(\.name))
+
+        #expect(names == ["region", "district", "mapSortStandard"])
+    }
+
+    @Test("지도 목록과 카테고리 목록은 감싸지 않은 배열을 읽고, 실패하면 PopupError로 바꾼다")
+    func mapAndRecommendRead() async throws {
+        let context = PopupRepositoryContext(response: (200, "[\(PopupFixture.popup)]"))
+        let popups = try await context.repository.getMapPopupList(region: "전체", district: "전체", latitude: nil, longitude: nil, mapSortStandard: "NEWEST")
+        #expect(popups.map(\.popupUuid) == ["popup-1"])
+
+        let recommendContext = PopupRepositoryContext(response: (200, #"[{"id":1,"recommendName":"디저트"}]"#))
+        #expect(try await recommendContext.repository.getRecommendList() == [Recommend(id: 1, recommendName: "디저트")])
+        #expect(try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .recommendList).urlRequest().url?.path == "/api/v2/recommend")
+
+        let failing = PopupRepositoryContext(response: (500, #"{"success":false,"code":6000,"message":"서버 에러","data":null}"#))
+        await #expect(throws: PopupError.failed) {
+            _ = try await failing.repository.getRecommendList()
+        }
+    }
+
     // MARK: - 홈 랜덤·오픈 예정 (V2)
 
     @Test("랜덤·오픈 예정은 V2 경로에 사용자 UUID와 query 없이 GET으로 보내고 Access Token을 쓴다")
