@@ -24,11 +24,10 @@ struct NaverMapView: UIViewRepresentable {
     }
 }
 
-final class NaverMapCoordinator: NSObject, CLLocationManagerDelegate, NMFMapViewCameraDelegate, NMFMapViewTouchDelegate {
+final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewTouchDelegate {
     static let shared = NaverMapCoordinator()
 
     private let view = NMFNaverMapView(frame: .zero)
-    private var locationManager: CLLocationManager?
     private var popups: [Popup] = []
     private var selectedPopupUuid: String?
     private var clusterer: NMCClusterer<ItemKey>?
@@ -36,6 +35,8 @@ final class NaverMapCoordinator: NSObject, CLLocationManagerDelegate, NMFMapView
     private var leafUpdater: LeafMarkerUpdater?
     /// 마커 사진. 선택이 바뀔 때마다 다시 받지 않도록 주소별로 들고 있는다.
     private var thumbnails: [String: UIImage] = [:]
+    /// 받는 중인 사진 주소. 같은 사진을 여러 번 요청하지 않는다.
+    private var loadingThumbnails: Set<String> = []
 
     var onMarkerSelected: ((Popup) -> Void)?
     var onMapTapped: (() -> Void)?
@@ -53,21 +54,6 @@ final class NaverMapCoordinator: NSObject, CLLocationManagerDelegate, NMFMapView
 
     func getNaverMapView() -> NMFNaverMapView {
         view
-    }
-
-    func checkIfLocationServiceIsEnabled() {
-        DispatchQueue.global().async {
-            guard CLLocationManager.locationServicesEnabled() else {
-                Logger.w("위치 서비스가 꺼져 있습니다.")
-                return
-            }
-
-            DispatchQueue.main.async {
-                self.locationManager = CLLocationManager()
-                self.locationManager?.delegate = self
-                self.locationManager?.desiredAccuracy = kCLLocationAccuracyBest
-            }
-        }
     }
 
     func moveToUserLocation(zoomLevel: Double = 15, yOffset: CGFloat = 0) {
@@ -230,14 +216,22 @@ final class NaverMapCoordinator: NSObject, CLLocationManagerDelegate, NMFMapView
         marker.anchor = CGPoint(x: 0.5, y: rendered.ringCenterY / rendered.image.size.height)
         marker.zIndex = style == .selected ? 999_999 : 0
 
-        guard thumbnail == nil, let imageURL = key.imageURL, let url = URL(string: imageURL) else { return }
+        guard thumbnail == nil,
+              let imageURL = key.imageURL,
+              let url = URL(string: imageURL),
+              loadingThumbnails.contains(imageURL) == false
+        else { return }
+        loadingThumbnails.insert(imageURL)
         Task { [weak self] in
-            guard let result = try? await KingfisherManager.shared.retrieveImage(with: url) else { return }
+            let result = try? await KingfisherManager.shared.retrieveImage(with: url)
             await MainActor.run {
                 guard let self else { return }
+                self.loadingThumbnails.remove(imageURL)
+                guard let result else { return }
                 self.thumbnails[imageURL] = result.image
-                if let entry = self.markers[key.identifier], entry.marker === marker {
-                    self.applyMarkerImage(marker, key: key)
+                // 사진을 기다린 마커들을 다시 그린다.
+                for (_, entry) in self.markers where entry.key.imageURL == imageURL {
+                    self.applyMarkerImage(entry.marker, key: entry.key)
                 }
             }
         }

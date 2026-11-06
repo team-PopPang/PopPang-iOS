@@ -18,8 +18,8 @@ public struct MapFeatureView: View {
     @Environment(\.popPangTabBarStyle) private var tabBarStyle
     @State private var tabBarHeight: CGFloat = 0
     @State private var showLocationPermissionAlert = false
-    /// 위치 권한 알림은 화면이 처음 나타날 때 한 번만 띄운다. 탭을 열 때마다 띄우지 않는다.
-    @State private var hasHandledPermissionDenied = false
+    /// 위치 권한 알림은 한 번만 띄운다. 탭을 열 때마다 띄우지 않는다.
+    @State private var hasShownPermissionAlert = false
     /// 목록 시트 높이. nil이면 시트를 숨긴다(마커를 골랐을 때).
     @State private var listDetent: BottomSheetDetent? = .medium
     @State private var openMenu: MapMenu?
@@ -291,7 +291,6 @@ private extension MapFeatureView {
     }
 
     func configureCallbacks() {
-        NaverMapCoordinator.shared.checkIfLocationServiceIsEnabled()
         NaverMapCoordinator.shared.onMarkerSelected = { popup in
             store.send(.mapMarkerTapped(popup))
         }
@@ -304,9 +303,11 @@ private extension MapFeatureView {
         }
 
         LocationPermissionManager.shared.onPermissionDenied = {
-            guard hasHandledPermissionDenied == false else { return }
-            hasHandledPermissionDenied = true
-            showLocationPermissionAlert = true
+            // 거부는 매번 알려 가까운순이 오지 않을 위치를 기다리지 않게 한다. 알림만 한 번 띄운다.
+            if hasShownPermissionAlert == false {
+                hasShownPermissionAlert = true
+                showLocationPermissionAlert = true
+            }
             store.send(.locationPermissionDenied)
         }
         LocationPermissionManager.shared.onLocationUpdated = { coordinate in

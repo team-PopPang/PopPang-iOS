@@ -154,7 +154,9 @@ public struct MapFeature {
             case .mapCenterChanged(let coordinate):
                 state.mapCenter = coordinate
                 // 예전 지도처럼 가까운순일 때만 옮긴 중심으로 다시 받는다. 짧게 여러 번 움직이면 마지막 위치만 쓴다.
+                // 미리보기 카드를 보는 중(목록에서 고른 팝업으로 지도를 옮긴 경우 포함)에는 다시 받지 않는다.
                 guard state.sort == .closest,
+                      state.selectedPopupUuid == nil,
                       state.regions.isEmpty == false,
                       (state.searchedCenter?.distance(to: coordinate) ?? .infinity) > Self.refetchDistance
                 else { return .none }
@@ -291,12 +293,14 @@ private extension MapFeature {
 
     /// 지금 조건으로 목록을 다시 받는다. 앞선 요청은 취소해 마지막 조건의 응답만 반영한다.
     func search(state: inout State, center: MapCoordinate?) -> Effect<Action> {
-        // 가까운순인데 아직 위치를 모르면 위치를 받은 뒤에 부른다.
-        if state.sort == .closest, center == nil, state.hasUserLocation == false {
+        // 가까운순인데 아직 내 위치를 모르면 위치를 받은 뒤에 부른다. 지도 기본 위치(시청)로 부르지 않는다.
+        // 앞서 보낸 조회는 취소해 지난 조건의 결과가 늦게 와서 목록을 바꾸지 않게 한다.
+        if state.sort == .closest, state.hasUserLocation == false {
             state.isWaitingForUserLocation = true
-            return .none
+            return .cancel(id: CancelID.search)
         }
 
+        state.isWaitingForUserLocation = false
         state.isLoading = true
         state.errorMessage = nil
         let query = state.query(center: center)
