@@ -31,8 +31,10 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
     private var popups: [Popup] = []
     private var selectedPopupUuid: String?
     private var clusterer: NMCClusterer<ItemKey>?
-    private var markers: [Int: (marker: NMFMarker, key: ItemKey)] = [:]
+    /// 지금 팝업 마커로 그려진 마커. 클러스터러가 마커 객체를 다시 쓰므로 마커 객체 기준으로 들고 있는다.
+    private var markers: [ObjectIdentifier: (marker: NMFMarker, key: ItemKey)] = [:]
     private var leafUpdater: LeafMarkerUpdater?
+    private var clusterUpdater: ClusterMarkerUpdater?
     /// 마커 사진. 선택이 바뀔 때마다 다시 받지 않도록 주소별로 들고 있는다.
     private var thumbnails: [String: UIImage] = [:]
     /// 받는 중인 사진 주소. 같은 사진을 여러 번 요청하지 않는다.
@@ -168,10 +170,8 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
         self.leafUpdater = leafUpdater
         leafUpdater.onMarkerUpdated = { [weak self] marker, key in
             guard let self else { return }
-            // 클러스터러는 마커 객체를 다른 팝업에 다시 쓴다. 같은 마커가 다른 키로 남아 있으면 지워
-            // 선택·사진을 다시 그릴 때 다른 팝업의 이름과 사진이 그려지지 않게 한다.
-            markers = markers.filter { $0.value.marker !== marker }
-            markers[key.identifier] = (marker, key)
+            // 클러스터러는 마커 객체를 다른 팝업에 다시 쓴다. 마커 객체 기준으로 덮어써서 지난 팝업 정보가 남지 않는다.
+            markers[ObjectIdentifier(marker)] = (marker, key)
             applyMarkerImage(marker, key: key)
             marker.touchHandler = { [weak self] _ in
                 guard let self, key.identifier < popups.count else { return true }
@@ -180,7 +180,13 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
             }
         }
         builder.leafMarkerUpdater = leafUpdater
-        builder.clusterMarkerUpdater = ClusterMarkerUpdater()
+        let clusterUpdater = ClusterMarkerUpdater()
+        // 같은 마커 객체가 숫자 묶음으로 다시 쓰이면 팝업 마커 목록에서 뺀다. 빼지 않으면 선택이 바뀔 때 숫자 원을 팝업 마커로 다시 그린다.
+        clusterUpdater.onClusterUpdated = { [weak self] marker in
+            self?.markers.removeValue(forKey: ObjectIdentifier(marker))
+        }
+        self.clusterUpdater = clusterUpdater
+        builder.clusterMarkerUpdater = clusterUpdater
         builder.minZoom = 5
         builder.maxZoom = 12
 
@@ -349,8 +355,11 @@ final class ItemKey: NSObject, NMCClusteringKey {
 
 /// 가까운 마커를 묶은 숫자 원. 피그마의 빨간 원과 흰 숫자다.
 final class ClusterMarkerUpdater: NMCDefaultClusterMarkerUpdater {
+    var onClusterUpdated: ((NMFMarker) -> Void)?
+
     override func updateClusterMarker(_ info: NMCClusterMarkerInfo, _ marker: NMFMarker) {
         super.updateClusterMarker(info, marker)
+        onClusterUpdated?(marker)
         let image = MapMarkerRenderer.clusterImage(count: Int(info.size))
         marker.iconImage = NMFOverlayImage(image: image)
         marker.width = image.size.width

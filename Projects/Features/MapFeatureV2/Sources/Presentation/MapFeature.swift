@@ -106,6 +106,8 @@ public struct MapFeature {
         case favoriteUpdated(popupUuid: String, isFavorited: Bool, favoriteCount: Int)
         case favoriteRequestFinished(popupUuid: String)
         case searchResultLoaded(MapPopupSearchResult, center: MapCoordinate?)
+        /// 조회 실패. 바뀐 조건과 맞지 않는 이전 목록을 비우고 안내한다.
+        case searchFailed(String?)
         case loadingChanged(Bool)
         case errorMessageChanged(String?)
         case delegate(Delegate)
@@ -181,7 +183,8 @@ public struct MapFeature {
                 let shouldSearch = state.isWaitingForUserLocation || state.searchedCenter == nil
                 state.hasUserLocation = true
                 state.isWaitingForUserLocation = false
-                state.mapCenter = coordinate
+                // 지도 중심은 카메라가 정한다. 이미 보고 있는 곳이 있으면 GPS 위치로 덮어쓰지 않는다.
+                if state.mapCenter == nil { state.mapCenter = coordinate }
                 guard shouldSearch, state.regions.isEmpty == false else { return .none }
                 return search(state: &state, center: coordinate)
 
@@ -248,6 +251,13 @@ public struct MapFeature {
                    result.items.contains(where: { $0.popupUuid == selected }) == false {
                     state.selectedPopupUuid = nil
                 }
+                return .none
+
+            case .searchFailed(let message):
+                state.popups = []
+                state.totalCount = 0
+                state.selectedPopupUuid = nil
+                state.errorMessage = message
                 return .none
 
             case .loadingChanged(let isLoading):
@@ -333,7 +343,7 @@ private extension MapFeature {
                 return
             } catch {
                 Logger.e("지도 목록 실패: \(error)")
-                await send(.errorMessageChanged(Self.message(for: error, fallback: Self.loadFailedMessage)))
+                await send(.searchFailed(Self.message(for: error, fallback: Self.loadFailedMessage)))
             }
             await send(.loadingChanged(false))
         }
