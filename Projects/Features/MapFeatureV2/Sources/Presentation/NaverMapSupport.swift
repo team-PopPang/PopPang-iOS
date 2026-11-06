@@ -105,9 +105,18 @@ final class NaverMapCoordinator: NSObject, CLLocationManagerDelegate, NMFMapView
         view.mapView.positionMode = .normal
     }
 
+    /// 팝업 목록이 바뀌면 마커를 다시 만든다. 찜처럼 위치·이름·사진이 그대로인 변경은 다시 만들지 않는다.
     func updateSpots(_ newPopups: [Popup]) {
-        guard newPopups != popups else { return }
+        let isSameMarkers = newPopups.count == popups.count
+            && zip(newPopups, popups).allSatisfy { new, old in
+                new.popupUuid == old.popupUuid
+                    && new.latitude == old.latitude
+                    && new.longitude == old.longitude
+                    && new.name == old.name
+                    && new.imageUrlList.first == old.imageUrlList.first
+            }
         popups = newPopups
+        guard isSameMarkers == false else { return }
         makeClusterer()
     }
 

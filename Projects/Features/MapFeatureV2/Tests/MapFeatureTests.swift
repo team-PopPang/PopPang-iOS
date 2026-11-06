@@ -202,6 +202,33 @@ struct MapFeatureTests {
         #expect(loggedOut.state.errorMessage == nil)
     }
 
+    @Test("지역 목록을 받기 전에 위치 권한이 거부돼도 최신순으로 바꿔 두고, 지역을 받으면 최신순으로 조회한다")
+    func permissionDeniedBeforeRegionsLoaded() async {
+        let queries = LockIsolated<[MapPopupQuery]>([])
+        let store = TestStore(initialState: MapFeature.State()) {
+            MapFeature()
+        } withDependencies: {
+            $0.mapFeatureClient = .mock(
+                searchMapPopups: { query in
+                    queries.withValue { $0.append(query) }
+                    return MapPopupSearchResult(items: [.fixture()], totalCount: 1)
+                }
+            )
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.locationPermissionDenied)
+        #expect(store.state.sort == .newest)
+
+        await store.send(.onAppear)
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+
+        #expect(queries.value.map(\.sort) == [.newest])
+        #expect(store.state.isWaitingForUserLocation == false)
+        #expect(store.state.isLoading == false)
+    }
+
     /// 지역을 받고 위치도 아는 상태.
     static func loadedState() -> MapFeature.State {
         var state = MapFeature.State()

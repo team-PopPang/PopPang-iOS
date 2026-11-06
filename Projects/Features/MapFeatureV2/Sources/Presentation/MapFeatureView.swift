@@ -18,6 +18,8 @@ public struct MapFeatureView: View {
     @Environment(\.popPangTabBarStyle) private var tabBarStyle
     @State private var tabBarHeight: CGFloat = 0
     @State private var showLocationPermissionAlert = false
+    /// 위치 권한 알림은 화면이 처음 나타날 때 한 번만 띄운다. 탭을 열 때마다 띄우지 않는다.
+    @State private var hasHandledPermissionDenied = false
     /// 목록 시트 높이. nil이면 시트를 숨긴다(마커를 골랐을 때).
     @State private var listDetent: BottomSheetDetent? = .medium
     @State private var openMenu: MapMenu?
@@ -302,6 +304,8 @@ private extension MapFeatureView {
         }
 
         LocationPermissionManager.shared.onPermissionDenied = {
+            guard hasHandledPermissionDenied == false else { return }
+            hasHandledPermissionDenied = true
             showLocationPermissionAlert = true
             store.send(.locationPermissionDenied)
         }

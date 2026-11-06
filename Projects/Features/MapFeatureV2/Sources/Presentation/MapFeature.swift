@@ -136,7 +136,7 @@ public struct MapFeature {
                     state.isLoading = true
                     return loadInitialData()
                 }
-                return search(state: &state, center: state.searchedCenter ?? state.mapCenter)
+                return search(state: &state, center: state.mapCenter ?? state.searchedCenter)
 
             case .initialDataLoaded(let data):
                 state.regions = data.regions
@@ -168,7 +168,8 @@ public struct MapFeature {
                 return search(state: &state, center: coordinate)
 
             case .userLocationChanged(let coordinate):
-                let shouldSearch = state.isWaitingForUserLocation || state.popups.isEmpty
+                // 위치를 기다리고 있었거나 아직 한 번도 받지 않았을 때만 조회한다. 결과가 비어도 위치가 올 때마다 다시 부르지 않는다.
+                let shouldSearch = state.isWaitingForUserLocation || state.searchedCenter == nil
                 state.hasUserLocation = true
                 state.isWaitingForUserLocation = false
                 state.mapCenter = coordinate
@@ -177,9 +178,9 @@ public struct MapFeature {
 
             case .locationPermissionDenied:
                 state.isWaitingForUserLocation = false
-                guard state.regions.isEmpty == false else { return .none }
-                // 위치를 모르면 가까운순 대신 최신순으로 받는다.
+                // 위치를 모르면 가까운순 대신 최신순으로 받는다. 지역 목록을 받기 전이어도 정렬은 먼저 바꿔 둔다.
                 if state.sort == .closest { state.sort = .newest }
+                guard state.regions.isEmpty == false else { return .none }
                 return search(state: &state, center: nil)
 
             case .mapMarkerTapped(let popup):
@@ -197,19 +198,19 @@ public struct MapFeature {
                 state.selectedRegion = region
                 state.selectedDistrict = region.districtList.first
                 // 구를 고르지 않고 닫아도 목록이 고른 지역과 맞도록 바로 다시 받는다.
-                return search(state: &state, center: state.searchedCenter ?? state.mapCenter)
+                return search(state: &state, center: state.mapCenter ?? state.searchedCenter)
 
             case .districtSelected(let district):
                 state.selectedDistrict = district
-                return search(state: &state, center: state.searchedCenter ?? state.mapCenter)
+                return search(state: &state, center: state.mapCenter ?? state.searchedCenter)
 
             case .sortOptionSelected(let option):
                 state.sort = option
-                return search(state: &state, center: state.searchedCenter ?? state.mapCenter)
+                return search(state: &state, center: state.mapCenter ?? state.searchedCenter)
 
             case .filterApplied(let filter):
                 state.filter = filter
-                return search(state: &state, center: state.searchedCenter ?? state.mapCenter)
+                return search(state: &state, center: state.mapCenter ?? state.searchedCenter)
 
             case .toggleLike(let popup):
                 guard let current = state.popups.first(where: { $0.popupUuid == popup.popupUuid }),
@@ -349,10 +350,16 @@ private extension MapFeature {
 private extension Array where Element == RegionList {
     /// 전체, 서울을 앞에 두고 나머지는 이름순이다.
     func sortedForMap() -> [RegionList] {
-        sorted { lhs, rhs in
-            let priority = ["전체": 0, "서울": 1]
-            let left = priority[lhs.region] ?? 2
-            let right = priority[rhs.region] ?? 2
+        func priority(_ region: String) -> Int {
+            switch region {
+            case "전체": 0
+            case "서울": 1
+            default: 2
+            }
+        }
+        return sorted { lhs, rhs in
+            let left = priority(lhs.region)
+            let right = priority(rhs.region)
             return left == right ? lhs.region < rhs.region : left < right
         }
     }
