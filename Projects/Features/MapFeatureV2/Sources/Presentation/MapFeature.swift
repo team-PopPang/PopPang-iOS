@@ -44,6 +44,8 @@ public struct MapFeature {
         /// 마지막으로 목록을 받은 지도 중심.
         var searchedCenter: MapCoordinate?
         var hasUserLocation = false
+        /// 위치 권한을 거부했는지. 거부했으면 가까운순을 골라도 위치를 기다리지 않고 최신순으로 받는다.
+        var isLocationDenied = false
         var isLoading = false
         var isWaitingForUserLocation = false
         var errorMessage: String?
@@ -167,6 +169,8 @@ public struct MapFeature {
                 .cancellable(id: CancelID.mapCenter, cancelInFlight: true)
 
             case .mapCenterSettled(let coordinate):
+                // 기다리는 사이 마커를 고르거나 정렬을 바꿨으면 다시 받지 않는다.
+                guard state.sort == .closest, state.selectedPopupUuid == nil else { return .none }
                 return search(state: &state, center: coordinate)
 
             case .userLocationChanged(let coordinate):
@@ -179,6 +183,7 @@ public struct MapFeature {
                 return search(state: &state, center: coordinate)
 
             case .locationPermissionDenied:
+                state.isLocationDenied = true
                 state.isWaitingForUserLocation = false
                 // 위치를 모르면 가까운순 대신 최신순으로 받는다. 지역 목록을 받기 전이어도 정렬은 먼저 바꿔 둔다.
                 if state.sort == .closest { state.sort = .newest }
@@ -295,8 +300,13 @@ private extension MapFeature {
     func search(state: inout State, center: MapCoordinate?) -> Effect<Action> {
         // 가까운순인데 아직 내 위치를 모르면 위치를 받은 뒤에 부른다. 지도 기본 위치(시청)로 부르지 않는다.
         // 앞서 보낸 조회는 취소해 지난 조건의 결과가 늦게 와서 목록을 바꾸지 않게 한다.
+        // 위치 권한을 거부했으면 기다리지 않고 최신순으로 받는다.
+        if state.sort == .closest, state.hasUserLocation == false, state.isLocationDenied {
+            state.sort = .newest
+        }
         if state.sort == .closest, state.hasUserLocation == false {
             state.isWaitingForUserLocation = true
+            state.isLoading = false
             return .cancel(id: CancelID.search)
         }
 
