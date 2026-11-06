@@ -5,7 +5,7 @@ import DSKit
 import FavoritesFeature
 import struct HomeFeatureV2.HomeComingPopupDetailDestinationView
 import struct HomeFeatureV2.HomeFeatureView
-import MapFeature
+import MapFeatureV2
 import PopupDetailFeature
 import PopPangRNFeature
 import ProfileFeature
