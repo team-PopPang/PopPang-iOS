@@ -161,7 +161,10 @@ public struct MapFeature {
                       state.selectedPopupUuid == nil,
                       state.regions.isEmpty == false,
                       (state.searchedCenter?.distance(to: coordinate) ?? .infinity) > Self.refetchDistance
-                else { return .none }
+                else {
+                    // 다시 가까이 돌아왔으면 앞서 걸어 둔 재조회를 취소한다.
+                    return .cancel(id: CancelID.mapCenter)
+                }
                 return .run { [clock] send in
                     try await clock.sleep(for: .milliseconds(400))
                     await send(.mapCenterSettled(coordinate))

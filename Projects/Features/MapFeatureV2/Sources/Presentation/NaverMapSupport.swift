@@ -168,6 +168,9 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
         self.leafUpdater = leafUpdater
         leafUpdater.onMarkerUpdated = { [weak self] marker, key in
             guard let self else { return }
+            // 클러스터러는 마커 객체를 다른 팝업에 다시 쓴다. 같은 마커가 다른 키로 남아 있으면 지워
+            // 선택·사진을 다시 그릴 때 다른 팝업의 이름과 사진이 그려지지 않게 한다.
+            markers = markers.filter { $0.value.marker !== marker }
             markers[key.identifier] = (marker, key)
             applyMarkerImage(marker, key: key)
             marker.touchHandler = { [weak self] _ in
@@ -287,10 +290,10 @@ final class LocationPermissionManager: NSObject, CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last, hasMovedToUserLocation == false else { return }
+        guard let location = locations.last else { return }
+        // 카메라는 처음 한 번만 옮기고, 위치는 받을 때마다 알린다. 화면이 다시 나타나 기다리는 가까운순 조회도 위치를 받는다.
+        publishLocation(location, moveCamera: hasMovedToUserLocation == false)
         hasMovedToUserLocation = true
-
-        publishLocation(location, moveCamera: true)
         manager.stopUpdatingLocation()
     }
 
