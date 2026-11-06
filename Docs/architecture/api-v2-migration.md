@@ -228,7 +228,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 3 | PopupDetailFeature | 조회수 기록 (POP-14), 관련 팝업 (UPOP-03), 찜 등록·해제, 단건 조회, 관리자 비활성화 | 완료 (#140) |
 | 4 | CalendarFeature | 필터 팝업 (UPOP-04), 지역 목록 (POP-10), 찜 등록·해제 | 완료 (#142, `CalendarFeatureV2`) |
 | 5 | HomeFeatureV2 | 오픈 예정 (UPOP-12), 필터 팝업, 랜덤 (UPOP-07), 지역 목록, 찜 등록·해제 | 완료 (#144) |
-| 6 | MapFeature | 지도 필터 (UPOP-05), 인기 추천 카테고리 (RECO-02), 카테고리별 팝업 (UPOP-09), 지역 목록, 찜 등록·해제 | 예정 |
+| 6 | MapFeature | 지도 필터 (UPOP-05), 인기 추천 카테고리 (RECO-02), 카테고리별 팝업 (UPOP-09), 지역 목록, 찜 등록·해제 | 화면 먼저 진행 중 (#146, `MapFeatureV2`). 필터 API는 백엔드 확인 중 |
 | 7 | AlertFeature | 알림 키워드 목록·등록·삭제 (ALERT-01~03), 알림함 목록·삭제 (ALERT-04·05), 찜 등록·해제 | 예정 |
 | 8 | App (푸시) | FCM 토큰 중복 확인·갱신 두 요청을 `PUT /api/v2/user/fcm-token` 하나로 (USER-06) | 예정 |
 | 9 | 정리 | 쓰지 않는 V1 case(비회원 팝업 목록 등), Repository·Usecase의 `userUuid` 인자, 세션의 `userUuid` 저장 | 예정 |
@@ -297,6 +297,21 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 - 오픈 예정의 `upcomingDays`(선택, 기본 10)는 V1처럼 보내지 않아요. 명세상 실제 범위는 내일부터 D+11이에요.
 - 실패하면 `PopupError.failed`로 바꿔요. 홈은 오류 문구를 화면에 띄우지 않고, 오픈 예정 목록은 "오픈 예정 팝업을 불러오지 못했어요", "찜을 바꾸지 못했어요"를 알림으로 보여 줘요. 로그인이 끊긴 실패(`AuthSessionError`)는 알림을 띄우지 않아요.
 - 그리드는 처음 불러올 때도 그리드 다시 불러오기와 같은 경로(취소 ID 하나)로 받아서, 마지막 조건의 응답만 반영해요. 지역 목록이 늦게 와도 그사이 사용자가 고른 지역·구를 덮어쓰지 않아요. 찜은 응답을 기다리는 동안 같은 하트를 다시 누르면 무시해요(V2 찜은 같은 요청을 두 번 보내면 409·404로 거절해요).
+
+### 지도 (#146, 진행 중)
+
+지도 탭을 피그마 "팝팡 지도 탭 개선안"(2432:9069)에 맞춘 새 모듈 `MapFeatureV2`로 바꿔요. 예전 지도 모듈은 `MapFeatureV1`로 이름만 바꿔 남겨 뒀어요(앱에서는 쓰지 않아요). 지도 화면만 빨강(`#A3172B`)을 메인 색으로 써요.
+
+| 기능 | V2 | 비고 |
+| --- | --- | --- |
+| 지도 목록 | `GET /api/v2/user/popups/filtered/map?region&district&latitude&longitude&mapSortStandard` | 운영 중 팝업만 줘요 |
+| 카테고리 목록 | `GET /api/v2/recommend` | 필터 메뉴에 써요 |
+| 지역 목록 | `GET /api/v2/popup/regions/districts` | 달력(#143)과 같음 |
+| 찜 등록·해제 | #132의 V2 찜 | |
+
+- 앱은 목록을 거르지 않아요. 화면에서 고른 조건을 `MapPopupQuery`로 모아 `MapFeatureClient.searchMapPopups`에 넘기고, 받은 결과를 그대로 그려요.
+- 지금 지도 API는 지역·구·위치·정렬만 받아요. 카테고리·상태·기간·검색어 조건과 결과 개수 미리 보기, 마감 임박 개수는 API가 없어서 화면에 "(x)"를 붙여 표시하고 서버에 보내지 않아요(`MapAPISupport`). API가 생기면 `MapAPISupport` 값과 `MapFeatureClient.live`만 고쳐요.
+- 백엔드에 지도 API 확장(상태·기간·카테고리·검색어 조건, 오픈 예정 포함, 결과 개수·카테고리별 개수, 상태 배지 값)을 요청했어요. 확인이 필요해요.
 
 ## 정해야 할 것
 
