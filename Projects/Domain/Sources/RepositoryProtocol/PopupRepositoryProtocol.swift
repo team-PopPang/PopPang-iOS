@@ -62,6 +62,18 @@ public protocol PopupRepositoryProtocol {
     /// 로그인한 사용자의 오픈 예정 팝업 목록을 반환합니다(V2).
     func getUserUpcomingPopupList() async throws -> [Popup]
 
+    /// 지도에 보일 운영 중 팝업 목록을 반환합니다(V2). 위치는 가까운순에 씁니다.
+    func getMapPopupList(
+        region: String,
+        district: String,
+        latitude: Double?,
+        longitude: Double?,
+        mapSortStandard: String
+    ) async throws -> [Popup]
+
+    /// 추천 카테고리 전체를 반환합니다(V2).
+    func getRecommendList() async throws -> [Recommend]
+
     /// 회원 팝업 검색 결과를 반환합니다. 찜 여부는 로그인한 사용자 기준입니다.
     func getPersonalSearchPopupList(searchText: String) async throws -> [Popup]
 

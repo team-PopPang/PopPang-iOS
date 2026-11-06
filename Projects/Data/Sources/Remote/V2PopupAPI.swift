@@ -23,6 +23,10 @@ public enum V2PopupAPI {
     case random
     /// `GET /api/v2/user/popups/upcoming` (UPOP-12). 오픈 예정 팝업이다. `upcomingDays`(기본 10)는 V1처럼 보내지 않는다.
     case upcoming
+    /// `GET /api/v2/user/popups/filtered/map` (UPOP-05). 지도 목록이다. 운영 중 팝업만 준다. 위치는 가까운순(CLOSEST)에 쓴다.
+    case filteredMap(region: String, district: String, latitude: Double?, longitude: Double?, mapSortStandard: String)
+    /// `GET /api/v2/recommend` (RECO-01). 추천 카테고리 전체다. 감싸지 않은 `{id, recommendName}` 배열이다.
+    case recommendList
 }
 
 extension V2PopupAPI: BaseAPI {
@@ -52,12 +56,16 @@ extension V2PopupAPI: BaseAPI {
             return "/user/popups/random"
         case .upcoming:
             return "/user/popups/upcoming"
+        case .filteredMap:
+            return "/user/popups/filtered/map"
+        case .recommendList:
+            return "/recommend"
         }
     }
 
     public var method: Moya.Method {
         switch self {
-        case .search, .detail, .related, .filteredHome, .regionList, .random, .upcoming:
+        case .search, .detail, .related, .filteredHome, .regionList, .random, .upcoming, .filteredMap, .recommendList:
             return .get
         case .view:
             return .post
@@ -77,7 +85,19 @@ extension V2PopupAPI: BaseAPI {
                 ],
                 encoding: URLEncoding.queryString
             )
-        case .detail, .view, .related, .regionList, .random, .upcoming:
+        case let .filteredMap(region, district, latitude, longitude, mapSortStandard):
+            var parameters: [String: Any] = [
+                "region": region,
+                "district": district,
+                "mapSortStandard": mapSortStandard,
+            ]
+            // 위치를 모르면 보내지 않는다. 서버는 가까운순에서 좌표 없는 팝업을 뒤로 보낸다.
+            if let latitude, let longitude {
+                parameters["latitude"] = latitude
+                parameters["longitude"] = longitude
+            }
+            return .requestParameters(parameters: parameters, encoding: URLEncoding.queryString)
+        case .detail, .view, .related, .regionList, .random, .upcoming, .recommendList:
             return .requestPlain
         }
     }
