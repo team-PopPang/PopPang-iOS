@@ -6,13 +6,16 @@ import Moya
 public final class PopupRepositoryImpl: PopupRepositoryProtocol {
     private let makeV2Provider: () -> MoyaProvider<V2PopupAPI>
     private let makeV2FavoriteProvider: () -> MoyaProvider<V2FavoriteAPI>
+    private let makeV2AlertProvider: () -> MoyaProvider<V2AlertAPI>
 
     public init(
         makeV2Provider: @escaping () -> MoyaProvider<V2PopupAPI> = { NetworkProvider.shared.makeProvider() },
-        makeV2FavoriteProvider: @escaping () -> MoyaProvider<V2FavoriteAPI> = { NetworkProvider.shared.makeProvider() }
+        makeV2FavoriteProvider: @escaping () -> MoyaProvider<V2FavoriteAPI> = { NetworkProvider.shared.makeProvider() },
+        makeV2AlertProvider: @escaping () -> MoyaProvider<V2AlertAPI> = { NetworkProvider.shared.makeProvider() }
     ) {
         self.makeV2Provider = makeV2Provider
         self.makeV2FavoriteProvider = makeV2FavoriteProvider
+        self.makeV2AlertProvider = makeV2AlertProvider
     }
 
     public func getPopupList() async throws -> [Popup] {
@@ -164,6 +167,21 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
 
     public func removeAlertPopup(userUuid: String, popupUuid: String) async throws {
         try await popupProvider.asyncRequestVoid(.removeAlertPopup(userUuid: userUuid, popupUuid: popupUuid))
+    }
+
+    public func getAlertPopupList() async throws -> [Popup] {
+        // 알림함 목록은 `APIResponse`로 감싼 팝업 배열이다. 팝업마다 오는 읽음 여부(`isRead`)는 아직 쓰지 않는다.
+        try await popupRequest {
+            try await makeV2AlertProvider().asyncRequest(.popups, decodeDataTo: [PopupDTO].self)
+                .map { $0.toEntity() }
+        }
+    }
+
+    public func removeAlertPopup(popupUuid: String) async throws {
+        // 알림 기록이 없으면(404 4001) 서버와 어긋난 것이라 성공으로 보지 않고 다른 실패와 같이 PopupError로 바꾼다.
+        try await popupRequest {
+            try await makeV2AlertProvider().asyncRequestVoid(.remove(popupUuid: popupUuid))
+        }
     }
 
     public func increaseViewCount(popupUuid: String) async throws {

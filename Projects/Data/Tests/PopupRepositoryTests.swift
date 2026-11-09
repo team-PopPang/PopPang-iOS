@@ -393,7 +393,8 @@ struct PopupRepositoryContext {
         self.recorder = recorder
         self.repository = PopupRepositoryImpl(
             makeV2Provider: { makeProvider() },
-            makeV2FavoriteProvider: { makeProvider() }
+            makeV2FavoriteProvider: { makeProvider() },
+            makeV2AlertProvider: { makeProvider() }
         )
     }
 }

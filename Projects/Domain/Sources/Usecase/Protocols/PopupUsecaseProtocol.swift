@@ -68,6 +68,12 @@ public protocol PopupUsecaseProtocol {
     /// 알림 팝업 단건 지우기
     func removeAlertPopup(userUuid: String, popupUuid: String) async throws
 
+    /// 로그인한 사용자의 알림함 팝업 목록을 가져옵니다 (V2)
+    func getAlertPopupList() async throws -> [Popup]
+
+    /// 로그인한 사용자의 알림함에서 팝업 하나를 지웁니다 (V2)
+    func removeAlertPopup(popupUuid: String) async throws
+
     /// 상세 화면의 팝업 하나를 조회합니다 (V2). 없는 팝업이면 `PopupError.notFound`를 던집니다.
     func getPopupDetail(popupUuid: String) async throws -> PopupDetail
 

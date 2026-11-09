@@ -108,6 +108,72 @@ struct UserRepositoryTests {
     }
 }
 
+extension UserRepositoryTests {
+    // MARK: - 알림 키워드
+
+    @Test("알림 키워드 목록·등록·삭제는 V2 경로에 사용자 UUID 없이 Access Token으로 보내고, 등록·삭제는 본문에 keyword만 담는다")
+    func alertKeywordRequestsMatchV2Contract() throws {
+        let list = try MoyaProvider<V2AlertKeywordAPI>.defaultEndpointMapping(for: .list).urlRequest()
+        #expect(list.url?.path == "/api/v2/alert-keyword")
+        #expect(list.httpMethod == "GET")
+        #expect(list.httpBody == nil)
+
+        for (target, method) in [(V2AlertKeywordAPI.add(keyword: "캐릭터"), "POST"), (.remove(keyword: "캐릭터"), "DELETE")] {
+            let request = try MoyaProvider<V2AlertKeywordAPI>.defaultEndpointMapping(for: target).urlRequest()
+            #expect(request.url?.path == "/api/v2/alert-keyword")
+            #expect(request.httpMethod == method)
+            #expect(try jsonObject(request.httpBody) as? [String: String] == ["keyword": "캐릭터"])
+        }
+
+        let targets: [V2AlertKeywordAPI] = [.list, .add(keyword: "캐릭터"), .remove(keyword: "캐릭터")]
+        #expect(targets.allSatisfy { $0.resolvedAuthorization == .access })
+    }
+
+    @Test("알림 키워드 목록은 APIResponse의 data에서 alertKeyword 배열을 읽는다")
+    func alertKeywordListReadsWrappedResponse() async throws {
+        let context = Context(response: (200, #"{"success":true,"code":0,"message":"요청 성공!","data":[{"alertKeyword":"캐릭터"},{"alertKeyword":"전시"}]}"#))
+
+        #expect(try await context.repository.getAlertKeywordList().map(\.keyword) == ["캐릭터", "전시"])
+    }
+
+    @Test("알림 키워드 등록·삭제는 빈 본문을 성공으로 처리한다")
+    func alertKeywordAddAndRemoveAcceptEmptyBody() async throws {
+        let context = Context(response: (200, ""))
+
+        try await context.repository.addAlertKeyword(alertKeyword: "캐릭터")
+        try await context.repository.removeAlertKeyword(alertKeyword: "캐릭터")
+    }
+
+    @Test("이미 있는 키워드 등록(409 4004)은 alreadyExists로, 서버 오류는 failed로 바꾼다")
+    func alertKeywordAddMapsErrors() async throws {
+        await #expect(throws: AlertKeywordError.alreadyExists) {
+            try await Context(response: (409, error(4004))).repository.addAlertKeyword(alertKeyword: "캐릭터")
+        }
+        await #expect(throws: AlertKeywordError.failed) {
+            try await Context(response: (500, error(6000))).repository.addAlertKeyword(alertKeyword: "캐릭터")
+        }
+        await #expect(throws: AlertKeywordError.failed) {
+            _ = try await Context(response: (500, error(6000))).repository.getAlertKeywordList()
+        }
+    }
+
+    @Test("서버에 없는 키워드 삭제(404 4003)는 지운 것으로 보고, 서버 오류는 failed로 바꾼다")
+    func alertKeywordRemoveTreatsMissingAsRemoved() async throws {
+        try await Context(response: (404, error(4003))).repository.removeAlertKeyword(alertKeyword: "캐릭터")
+
+        await #expect(throws: AlertKeywordError.failed) {
+            try await Context(response: (500, error(6000))).repository.removeAlertKeyword(alertKeyword: "캐릭터")
+        }
+    }
+
+    @Test("알림 키워드 요청에서 다시 로그인해야 하는 실패는 그대로 던진다")
+    func alertKeywordLoginRequiredIsRethrown() async throws {
+        await #expect(throws: AuthSessionError.loginRequired) {
+            _ = try await Context(response: (401, error(5006))).repository.getAlertKeywordList()
+        }
+    }
+}
+
 private func urlRequest(for target: V2UserAPI) throws -> URLRequest {
     try MoyaProvider<V2UserAPI>.defaultEndpointMapping(for: target).urlRequest()
 }
@@ -141,21 +207,24 @@ private struct Context {
             authentication: authentication
         )
 
+        func makeProvider<T: TargetType>() -> MoyaProvider<T> {
+            networkProvider.makeProvider(
+                endpointClosure: { target in
+                    Endpoint(
+                        url: target.baseURL.appendingPathComponent(target.path).absoluteString,
+                        sampleResponseClosure: { .networkResponse(response.0, Data(response.1.utf8)) },
+                        method: target.method,
+                        task: target.task,
+                        httpHeaderFields: target.headers
+                    )
+                }
+            )
+        }
+
         self.storage = storage
         self.repository = UserRepositoryImpl(
-            makeV2Provider: {
-                networkProvider.makeProvider(
-                    endpointClosure: { target in
-                        Endpoint(
-                            url: target.baseURL.appendingPathComponent(target.path).absoluteString,
-                            sampleResponseClosure: { .networkResponse(response.0, Data(response.1.utf8)) },
-                            method: target.method,
-                            task: target.task,
-                            httpHeaderFields: target.headers
-                        )
-                    }
-                )
-            }
+            makeV2Provider: { makeProvider() },
+            makeV2AlertKeywordProvider: { makeProvider() }
         )
     }
 }

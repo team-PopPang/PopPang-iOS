@@ -105,6 +105,14 @@ public final class PopupUsecaseImpl: PopupUsecaseProtocol {
         try await popupRepository.removeAlertPopup(userUuid: userUuid, popupUuid: popupUuid)
     }
 
+    public func getAlertPopupList() async throws -> [Popup] {
+        try await popupRepository.getAlertPopupList()
+    }
+
+    public func removeAlertPopup(popupUuid: String) async throws {
+        try await popupRepository.removeAlertPopup(popupUuid: popupUuid)
+    }
+
     public func getPopupDetail(popupUuid: String) async throws -> PopupDetail {
         try await popupRepository.getPopupDetail(popupUuid: popupUuid)
     }
