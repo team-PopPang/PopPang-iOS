@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Core
 import Domain
 import Foundation
 
@@ -20,7 +21,6 @@ public struct AlertFeature {
 
     @ObservableState
     public struct State: Equatable {
-        public var userUuid: String
         public var nickname: String
         public var selectedTab: AlertTab = .activity
         public var alertPopups: [Popup] = []
@@ -30,15 +30,15 @@ public struct AlertFeature {
         public var isEditing = false
         public var isLoading = false
         public var errorMessage: String?
+        /// 찜 요청이 끝나지 않은 팝업. 응답 전에 같은 팝업의 하트를 다시 누르면 무시한다.
+        public var favoriteUpdatingPopupUuids: Set<String> = []
 
         public init(user: User) {
-            self.userUuid = user.userUuid
             self.nickname = user.nickname ?? String(localized: "닉네임", bundle: .module)
         }
 
         public static func == (lhs: Self, rhs: Self) -> Bool {
-            lhs.userUuid == rhs.userUuid
-                && lhs.nickname == rhs.nickname
+            lhs.nickname == rhs.nickname
                 && lhs.selectedTab == rhs.selectedTab
                 && lhs.alertPopups == rhs.alertPopups
                 && lhs.keywords == rhs.keywords
@@ -47,6 +47,7 @@ public struct AlertFeature {
                 && lhs.isEditing == rhs.isEditing
                 && lhs.isLoading == rhs.isLoading
                 && lhs.errorMessage == rhs.errorMessage
+                && lhs.favoriteUpdatingPopupUuids == rhs.favoriteUpdatingPopupUuids
         }
     }
 
@@ -103,10 +104,9 @@ public struct AlertFeature {
                 return .send(.delegate(.popupSelected(popup)))
 
             case .deletePopupTapped(let popupUuid):
-                let userUuid = state.userUuid
                 return .run { [alertFeatureClient] send in
                     do {
-                        try await alertFeatureClient.removeAlertPopup(userUuid, popupUuid)
+                        try await alertFeatureClient.removeAlertPopup(popupUuid)
                         await send(.deletePopupResponse(.success(popupUuid)))
                     } catch {
                         await send(.deletePopupResponse(.failure(error)))
@@ -119,16 +119,16 @@ public struct AlertFeature {
                 return .none
 
             case .deletePopupResponse(.failure(let error)):
-                state.errorMessage = error.localizedDescription
+                state.errorMessage = Self.message(for: error, fallback: Self.deleteFailedMessage)
                 return .none
 
             case .deleteAllPopupsTapped:
-                let userUuid = state.userUuid
                 let popupUuids = state.alertPopups.map(\.popupUuid)
                 return .run { [alertFeatureClient] send in
                     do {
+                        // V2에도 한꺼번에 지우는 API가 없어 하나씩 지운다.
                         for popupUuid in popupUuids {
-                            try await alertFeatureClient.removeAlertPopup(userUuid, popupUuid)
+                            try await alertFeatureClient.removeAlertPopup(popupUuid)
                         }
                         await send(.deleteAllPopupsResponse(.success(())))
                     } catch {
@@ -142,13 +142,15 @@ public struct AlertFeature {
                 return .none
 
             case .deleteAllPopupsResponse(.failure(let error)):
-                state.errorMessage = error.localizedDescription
+                state.errorMessage = Self.message(for: error, fallback: Self.deleteFailedMessage)
                 return .none
 
             case .toggleLikeTapped(let popupUuid):
-                guard let currentPopup = state.alertPopups.first(where: { $0.popupUuid == popupUuid }) else {
+                guard !state.favoriteUpdatingPopupUuids.contains(popupUuid),
+                      let currentPopup = state.alertPopups.first(where: { $0.popupUuid == popupUuid }) else {
                     return .none
                 }
+                state.favoriteUpdatingPopupUuids.insert(popupUuid)
 
                 let nextIsFavorited = !currentPopup.isFavorited
                 let nextFavoriteCount = nextIsFavorited
@@ -161,13 +163,12 @@ public struct AlertFeature {
                     favoriteCount: nextFavoriteCount
                 )
 
-                let userUuid = state.userUuid
                 return .run { [alertFeatureClient] send in
                     do {
                         if currentPopup.isFavorited {
-                            try await alertFeatureClient.removeFavorite(userUuid, currentPopup.popupUuid)
+                            try await alertFeatureClient.removeFavorite(currentPopup.popupUuid)
                         } else {
-                            try await alertFeatureClient.addFavorite(userUuid, currentPopup.popupUuid)
+                            try await alertFeatureClient.addFavorite(currentPopup.popupUuid)
                         }
                         await send(.toggleLikeResponse(.success(()), currentPopup))
                     } catch {
@@ -175,13 +176,15 @@ public struct AlertFeature {
                     }
                 }
 
-            case .toggleLikeResponse(.success, _):
+            case .toggleLikeResponse(.success, let originalPopup):
+                state.favoriteUpdatingPopupUuids.remove(originalPopup.popupUuid)
                 state.errorMessage = nil
                 return .none
 
             case .toggleLikeResponse(.failure(let error), let originalPopup):
+                state.favoriteUpdatingPopupUuids.remove(originalPopup.popupUuid)
                 replacePopup(in: &state.alertPopups, popup: originalPopup)
-                state.errorMessage = error.localizedDescription
+                state.errorMessage = Self.message(for: error, fallback: Self.favoriteFailedMessage)
                 return .none
 
             case .keywordTextChanged(let text):
@@ -204,10 +207,9 @@ public struct AlertFeature {
                 state.keywordText = ""
                 state.errorMessage = nil
 
-                let userUuid = state.userUuid
                 return .run { [alertFeatureClient] send in
                     do {
-                        try await alertFeatureClient.addAlertKeyword(userUuid, keyword.keyword)
+                        try await alertFeatureClient.addAlertKeyword(keyword.keyword)
                         await send(.addKeywordResponse(.success(()), keyword))
                     } catch {
                         await send(.addKeywordResponse(.failure(error), keyword))
@@ -217,18 +219,21 @@ public struct AlertFeature {
             case .addKeywordResponse(.success, _):
                 return .none
 
+            case .addKeywordResponse(.failure(let error), _) where error as? AlertKeywordError == .alreadyExists:
+                // 서버에 이미 있는 키워드다. 등록하려던 상태와 같으므로 목록에 남긴다.
+                return .none
+
             case .addKeywordResponse(.failure(let error), let keyword):
                 state.keywords.removeAll { $0 == keyword }
-                state.errorMessage = error.localizedDescription
+                state.errorMessage = Self.message(for: error, fallback: Self.addKeywordFailedMessage)
                 return .none
 
             case .removeKeywordTapped(let keyword):
                 state.keywords.removeAll { $0 == keyword }
 
-                let userUuid = state.userUuid
                 return .run { [alertFeatureClient] send in
                     do {
-                        try await alertFeatureClient.removeAlertKeyword(userUuid, keyword.keyword)
+                        try await alertFeatureClient.removeAlertKeyword(keyword.keyword)
                         await send(.removeKeywordResponse(.success(()), keyword))
                     } catch {
                         await send(.removeKeywordResponse(.failure(error), keyword))
@@ -240,12 +245,10 @@ public struct AlertFeature {
                 return .none
 
             case .removeKeywordResponse(.failure(let error), let keyword):
-                guard !state.keywords.contains(keyword) else {
-                    state.errorMessage = error.localizedDescription
-                    return .none
+                if !state.keywords.contains(keyword) {
+                    state.keywords.append(keyword)
                 }
-                state.keywords.append(keyword)
-                state.errorMessage = error.localizedDescription
+                state.errorMessage = Self.message(for: error, fallback: Self.removeKeywordFailedMessage)
                 return .none
 
             case .recentKeywordTapped(let keyword):
@@ -280,12 +283,10 @@ public struct AlertFeature {
 
 private extension AlertFeature {
     func loadInitialData(state: State) -> Effect<Action> {
-        let userUuid = state.userUuid
-
-        return .run { [alertFeatureClient] send in
+        .run { [alertFeatureClient] send in
             do {
-                async let alertPopups = alertFeatureClient.getAlertPopupList(userUuid)
-                async let keywords = alertFeatureClient.getAlertKeywordList(userUuid)
+                async let alertPopups = alertFeatureClient.getAlertPopupList()
+                async let keywords = alertFeatureClient.getAlertKeywordList()
                 let recentKeywords = alertFeatureClient.loadRecentKeywords()
 
                 await send(.initialDataLoaded(
@@ -294,7 +295,7 @@ private extension AlertFeature {
                     recentKeywords
                 ))
             } catch {
-                await send(.errorMessageChanged(error.localizedDescription))
+                await send(.errorMessageChanged(Self.message(for: error, fallback: Self.loadFailedMessage)))
             }
 
             await send(.loadingChanged(false))
@@ -315,5 +316,30 @@ private extension AlertFeature {
     func replacePopup(in popups: inout [Popup], popup: Popup) {
         guard let index = popups.firstIndex(where: { $0.popupUuid == popup.popupUuid }) else { return }
         popups[index] = popup
+    }
+
+    /// 실패를 화면 문구로 바꾼다. 다시 로그인해야 하는 실패는 앱이 로그인 화면으로 보내므로 문구를 띄우지 않는다.
+    static func message(for error: Error, fallback: String) -> String? {
+        error is AuthSessionError ? nil : fallback
+    }
+
+    static var loadFailedMessage: String {
+        String(localized: "알림을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
+    }
+
+    static var deleteFailedMessage: String {
+        String(localized: "알림을 지우지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
+    }
+
+    static var favoriteFailedMessage: String {
+        String(localized: "찜을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
+    }
+
+    static var addKeywordFailedMessage: String {
+        String(localized: "키워드를 등록하지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
+    }
+
+    static var removeKeywordFailedMessage: String {
+        String(localized: "키워드를 지우지 못했어요. 잠시 후 다시 시도해 주세요.", bundle: .module)
     }
 }

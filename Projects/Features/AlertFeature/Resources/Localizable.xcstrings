@@ -133,6 +133,54 @@
         }
       }
     },
+    "알림을 불러오지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "comment" : "Shown when the notification list fails to load",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't load notifications. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "通知を読み込めませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알림을 불러오지 못했어요. 잠시 후 다시 시도해 주세요."
+          }
+        }
+      }
+    },
+    "알림을 지우지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "comment" : "Shown when deleting a notification fails",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't delete the notification. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "通知を削除できませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "알림을 지우지 못했어요. 잠시 후 다시 시도해 주세요."
+          }
+        }
+      }
+    },
     "완료" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -175,6 +223,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "전체 삭제"
+          }
+        }
+      }
+    },
+    "찜을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "comment" : "Shown when saving or unsaving a pop-up fails",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't update your saved pop-ups. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "お気に入りを変更できませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "찜을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요."
           }
         }
       }
@@ -245,6 +317,54 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "키워드는 최대 5개 까지만 등록 가능합니다."
+          }
+        }
+      }
+    },
+    "키워드를 등록하지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "comment" : "Shown when adding an alert keyword fails",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't add the keyword. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "キーワードを登録できませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "키워드를 등록하지 못했어요. 잠시 후 다시 시도해 주세요."
+          }
+        }
+      }
+    },
+    "키워드를 지우지 못했어요. 잠시 후 다시 시도해 주세요." : {
+      "comment" : "Shown when removing an alert keyword fails",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "Couldn't remove the keyword. Please try again later."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "キーワードを削除できませんでした。しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "키워드를 지우지 못했어요. 잠시 후 다시 시도해 주세요."
           }
         }
       }
