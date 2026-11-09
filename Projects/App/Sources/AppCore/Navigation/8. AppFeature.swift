@@ -206,6 +206,8 @@ struct AppFeature {
                 )
                 // 자동 로그인으로 메인 화면에 들어가면 남은 마이그레이션을 실행
                 guard state.destination == .main, let user = session.user else { return .none }
+                // 로그인 복구가 끝났으므로 푸시 토큰을 서버에 보낸다(로그인으로 들어온 경우는 configureAuthenticatedSession에서 보낸다)
+                AppNotificationManager.shared.startSession()
                 return runPendingMigrations(userUuid: user.userUuid)
 
             case .serverHealthCheckFailed(let reason):

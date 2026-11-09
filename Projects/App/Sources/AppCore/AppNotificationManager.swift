@@ -149,6 +149,12 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
         syncLock.unlock()
     }
 
+    private func isSessionActiveNow() -> Bool {
+        syncLock.lock()
+        defer { syncLock.unlock() }
+        return isSessionActive
+    }
+
     private func syncStoredToken() {
         syncLock.lock()
         defer { syncLock.unlock() }
@@ -158,7 +164,8 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
         let previous = syncTask
         syncTask = Task { [weak self] in
             await previous?.value
-            guard let self, Task.isCancelled == false else { return }
+            // 앞 요청을 기다리는 사이 로그아웃했으면 보내지 않는다. 보내기 직전에 다시 확인한다.
+            guard let self, Task.isCancelled == false, self.isSessionActiveNow() else { return }
             // 로그인 토큰이 없으면 서버가 거절하므로 보내지 않는다. 로그인을 마치면 AppFeature가 다시 부른다.
             guard self.authTokenStorage.loadTokens() != nil else { return }
             guard let fcmToken = self.pushTokenStorage.load(), fcmToken.isEmpty == false else { return }
