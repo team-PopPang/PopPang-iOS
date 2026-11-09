@@ -57,6 +57,7 @@ struct AppBootstrap {
         AppNotificationManager.shared.configure(
             sessionStorage: sessionStorage,
             pushTokenStorage: pushTokenStorage,
+            authTokenStorage: tokenStorage,
             userUsecase: dependencies.usecases.userUsecase
         )
 
