@@ -34,6 +34,27 @@ struct UserRepositoryTests {
         #expect(targets.allSatisfy { $0.resolvedAuthorization == .access })
     }
 
+    @Test("FCM 토큰 갱신은 V2 경로에 PUT으로 토큰을 JSON 본문에 담고 Access Token을 쓴다")
+    func fcmTokenRequestMatchesV2Contract() throws {
+        let request = try urlRequest(for: .updateFcmToken(fcmToken: "device-token"))
+
+        #expect(request.url?.path == "/api/v2/user/fcm-token")
+        #expect(request.httpMethod == "PUT")
+        #expect(try jsonObject(request.httpBody) as? [String: String] == ["fcmToken": "device-token"])
+        #expect(V2UserAPI.updateFcmToken(fcmToken: "device-token").resolvedAuthorization == .access)
+    }
+
+    @Test("FCM 토큰 갱신은 빈 본문을 성공으로 처리하고, 서버 오류는 실패로 던진다")
+    func fcmTokenAcceptsEmptyBodyAndMapsFailure() async throws {
+        let context = Context(response: (200, ""))
+        try await context.repository.updateFcmToken(fcmToken: "device-token")
+
+        let failing = Context(response: (404, #"{"success":false,"code":4201,"message":"유저를 찾을 수 없습니다.","data":null}"#))
+        await #expect(throws: UserError.failed) {
+            try await failing.repository.updateFcmToken(fcmToken: "device-token")
+        }
+    }
+
     // MARK: - 응답
 
     @Test("닉네임 중복 확인은 APIResponse의 data에서 결과를 읽는다")

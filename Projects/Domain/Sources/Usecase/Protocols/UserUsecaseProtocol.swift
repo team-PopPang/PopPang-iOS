@@ -48,4 +48,7 @@ public protocol UserUsecaseProtocol {
     ///   - userUuid: userUuid
     ///   - fcmToken: fcmToken
     func updateFcmToken(userUuid: String, fcmToken: String) async throws
+
+    /// 로그인한 사용자의 FCM 토큰을 서버에 저장합니다(V2).
+    func updateFcmToken(fcmToken: String) async throws
 }
