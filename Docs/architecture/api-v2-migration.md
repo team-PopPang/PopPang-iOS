@@ -230,7 +230,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 5 | HomeFeatureV2 | 오픈 예정 (UPOP-12), 필터 팝업, 랜덤 (UPOP-07), 지역 목록, 찜 등록·해제 | 완료 (#144) |
 | 6 | MapFeature | 지도 필터 (UPOP-05), 인기 추천 카테고리 (RECO-02), 카테고리별 팝업 (UPOP-09), 지역 목록, 찜 등록·해제 | 예정 |
 | 7 | AlertFeature | 알림 키워드 목록·등록·삭제 (ALERT-01~03), 알림함 목록·삭제 (ALERT-04·05), 찜 등록·해제 | 예정 |
-| 8 | App (푸시) | FCM 토큰 중복 확인·갱신 두 요청을 `PUT /api/v2/user/fcm-token` 하나로 (USER-06) | 예정 |
+| 8 | App (푸시) | FCM 토큰 중복 확인·갱신 두 요청을 `PUT /api/v2/user/fcm-token` 하나로 (USER-06) | 완료 (#148) |
 | 9 | 정리 | 쓰지 않는 V1 case(비회원 팝업 목록 등), Repository·Usecase의 `userUuid` 인자, 세션의 `userUuid` 저장 | 예정 |
 
 - 여러 feature가 같이 쓰는 API(찜 등록·해제, 지역 목록, 필터 팝업)는 **처음 쓰는 feature에서 V2로 만들고**, 뒤의 feature는 가져다 써요. 옮기는 동안 화면마다 V1·V2가 섞여도 서버 데이터가 같아서 괜찮아요(명세 C-9).
@@ -297,6 +297,15 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 - 오픈 예정의 `upcomingDays`(선택, 기본 10)는 V1처럼 보내지 않아요. 명세상 실제 범위는 내일부터 D+11이에요.
 - 실패하면 `PopupError.failed`로 바꿔요. 홈은 오류 문구를 화면에 띄우지 않고, 오픈 예정 목록은 "오픈 예정 팝업을 불러오지 못했어요", "찜을 바꾸지 못했어요"를 알림으로 보여 줘요. 로그인이 끊긴 실패(`AuthSessionError`)는 알림을 띄우지 않아요.
 - 그리드는 처음 불러올 때도 그리드 다시 불러오기와 같은 경로(취소 ID 하나)로 받아서, 마지막 조건의 응답만 반영해요. 지역 목록이 늦게 와도 그사이 사용자가 고른 지역·구를 덮어쓰지 않아요. 찜은 응답을 기다리는 동안 같은 하트를 다시 누르면 무시해요(V2 찜은 같은 요청을 두 번 보내면 409·404로 거절해요).
+
+### 푸시 토큰 (#148)
+
+`AppNotificationManager.syncStoredToken()`이 로그인한 사용자의 FCM 토큰을 `PUT /api/v2/user/fcm-token`(Access Token, 본문 `{"fcmToken"}`, 빈 본문 응답)으로 보내요. 서버는 저장만 하므로 V1의 중복 확인(GET) 단계를 없앴어요.
+
+- 보내는 때: 로그인을 마쳤을 때(`AppFeature.configureAuthenticatedSession`), 로그인한 상태에서 FCM 토큰을 새로 받았을 때(APNs 등록 직후, Firebase 갱신). 로그인 전에는 기기에만 저장해요.
+- 같은 실행에서 같은 토큰을 이미 보냈으면 다시 보내지 않아요. 실패하면 기록을 지워 다음 기회에 다시 보내요.
+- 실패는 화면에 알리지 않고 로그만 남겨요(404 4201 사용자 없음, 400 4205 토큰 누락은 `UserError.failed`).
+- V1 `checkFcmToken`·`updateFcmToken(userUuid:)`은 9번 정리 단계에서 지워요.
 
 ## 정해야 할 것
 
