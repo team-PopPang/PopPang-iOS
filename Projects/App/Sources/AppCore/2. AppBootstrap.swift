@@ -55,7 +55,6 @@ struct AppBootstrap {
         
         // 알림 처리 객체에도 동일한 세션 저장소와 UserUsecase를 전달
         AppNotificationManager.shared.configure(
-            sessionStorage: sessionStorage,
             pushTokenStorage: pushTokenStorage,
             authTokenStorage: tokenStorage,
             userUsecase: dependencies.usecases.userUsecase

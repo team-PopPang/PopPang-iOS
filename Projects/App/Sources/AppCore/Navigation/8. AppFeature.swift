@@ -346,6 +346,8 @@ struct AppFeature {
 
 private extension AppFeature {
     func beginLoggedOutTransition(state: inout State) {
+        // 로그아웃·세션 만료: 기다리던 푸시 토큰 전송을 취소하고 다시 로그인할 때까지 보내지 않는다.
+        AppNotificationManager.shared.endSession()
         state.isLoggingOut = true
         state.destination = .onboarding
         state.auth = .init()
@@ -497,6 +499,6 @@ private extension AppFeature {
         sessionStorage.setOnboardingCompleted(true)
         
         // 로그인 전 저장됐던 푸시 토큰을 현재 사용자 계정과 동기화
-        AppNotificationManager.shared.syncStoredToken()
+        AppNotificationManager.shared.startSession()
     }
 }

@@ -37,31 +37,29 @@ final class PopPangAppDelegate: NSObject, UIApplicationDelegate {
 final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, MessagingDelegate {
     static let shared = AppNotificationManager()
 
-    private var sessionStorage: LocalSessionStorage
     private var pushTokenStorage: PushTokenStorage
     /// 로그인 여부를 판단한다. V2 요청은 로그인 토큰으로 가므로 저장된 사용자 ID가 아니라 토큰이 있는지로 본다.
     private var authTokenStorage: AuthTokenStorage
     private var userUsecase: UserUsecaseProtocol?
     /// 마지막으로 시작한 토큰 저장 요청. 다음 요청은 이 요청이 끝난 뒤에 보내 순서를 지킨다.
     private var syncTask: Task<Void, Never>?
+    /// 로그인 복구가 끝나 메인 화면에 들어간 상태인지. 앱이 켜지는 중(로그인 확인 중)이나 로그아웃 뒤에는 보내지 않는다.
+    private var isSessionActive = false
     private let syncLock = NSLock()
 
     override convenience init() {
         let store = UserDefaultsStore()
         self.init(
-            sessionStorage: LocalSessionStorage(store: store),
             pushTokenStorage: PushTokenStorage(store: store),
             authTokenStorage: AuthTokenStorage(store: store)
         )
     }
 
     init(
-        sessionStorage: LocalSessionStorage,
         pushTokenStorage: PushTokenStorage,
         authTokenStorage: AuthTokenStorage,
         userUsecase: UserUsecaseProtocol? = nil
     ) {
-        self.sessionStorage = sessionStorage
         self.pushTokenStorage = pushTokenStorage
         self.authTokenStorage = authTokenStorage
         self.userUsecase = userUsecase
@@ -69,12 +67,10 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
     }
 
     func configure(
-        sessionStorage: LocalSessionStorage,
         pushTokenStorage: PushTokenStorage,
         authTokenStorage: AuthTokenStorage,
         userUsecase: UserUsecaseProtocol
     ) {
-        self.sessionStorage = sessionStorage
         self.pushTokenStorage = pushTokenStorage
         self.authTokenStorage = authTokenStorage
         self.userUsecase = userUsecase
@@ -136,14 +132,33 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
     ///
     /// 요청은 하나씩 순서대로 보내고, 보낼 때 저장된 최신 토큰을 읽는다.
     /// 앱 시작 직후 Firebase가 토큰을 바꿔 두 번 보내도 마지막에 도착하는 값이 최신 토큰이 된다.
-    func syncStoredToken() {
-        guard let userUsecase else { return }
-
+    /// 로그인 복구나 로그인이 끝나 메인 화면에 들어갈 때 AppFeature가 부른다. 이때부터 토큰을 서버에 보낸다.
+    func startSession() {
         syncLock.lock()
+        isSessionActive = true
+        syncLock.unlock()
+        syncStoredToken()
+    }
+
+    /// 로그아웃·세션 만료 때 AppFeature가 부른다. 기다리던 전송을 취소하고 다시 로그인할 때까지 보내지 않는다.
+    func endSession() {
+        syncLock.lock()
+        isSessionActive = false
+        syncTask?.cancel()
+        syncTask = nil
+        syncLock.unlock()
+    }
+
+    private func syncStoredToken() {
+        syncLock.lock()
+        defer { syncLock.unlock() }
+        // 앱이 켜지는 중에는 보내지 않는다. 로그인 확인 중에 이 요청이 401을 받으면 실행 판단 전에 로그아웃될 수 있다.
+        guard isSessionActive, let userUsecase else { return }
+
         let previous = syncTask
         syncTask = Task { [weak self] in
             await previous?.value
-            guard let self else { return }
+            guard let self, Task.isCancelled == false else { return }
             // 로그인 토큰이 없으면 서버가 거절하므로 보내지 않는다. 로그인을 마치면 AppFeature가 다시 부른다.
             guard self.authTokenStorage.loadTokens() != nil else { return }
             guard let fcmToken = self.pushTokenStorage.load(), fcmToken.isEmpty == false else { return }
@@ -155,7 +170,6 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
                 Logger.e("❌ FCM 토큰 저장 실패: \(error)")
             }
         }
-        syncLock.unlock()
     }
 
     // 🔔 포그라운드 상태에서 알림이 도착했을 때 호출됨
@@ -188,7 +202,7 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
         pushTokenStorage.save(fcmToken)
         Logger.d("FCM 토큰 저장 완료 source=\(source)")
 
-        // 로그인 전이면 저장만 하고, 로그인한 뒤 AppFeature가 보낸다(로그인 여부는 syncStoredToken이 토큰으로 판단).
+        // 메인 화면에 들어간 상태면 바로 보내고, 아니면 저장만 해 두었다가 startSession에서 보낸다.
         syncStoredToken()
     }
 }

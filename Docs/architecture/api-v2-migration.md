@@ -302,7 +302,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 
 `AppNotificationManager.syncStoredToken()`이 로그인한 사용자의 FCM 토큰을 `PUT /api/v2/user/fcm-token`(Access Token, 본문 `{"fcmToken"}`, 빈 본문 응답)으로 보내요. 서버는 저장만 하므로 V1의 중복 확인(GET) 단계를 없앴어요.
 
-- 보내는 때: 로그인을 마쳤을 때(`AppFeature.configureAuthenticatedSession`), 로그인한 상태에서 FCM 토큰을 새로 받았을 때(APNs 등록 직후, Firebase 갱신). 로그인 여부는 로그인 토큰(`AuthTokenStorage`)이 있는지로 판단하고, 로그인 전에는 기기에만 저장해요.
+- 보내는 때: 로그인 복구나 로그인이 끝나 메인 화면에 들어갈 때(`AppFeature.configureAuthenticatedSession` → `startSession()`), 그 뒤 FCM 토큰을 새로 받았을 때(APNs 등록 직후, Firebase 갱신). 앱이 켜지는 중(로그인 확인 중)에는 보내지 않아요. 이 요청이 401을 받으면 실행 판단 전에 로그아웃될 수 있어서예요. 로그인 토큰(`AuthTokenStorage`)이 없으면 보내지 않고, 로그아웃·세션 만료 때(`endSession()`) 기다리던 전송을 취소해요.
 - 요청은 하나씩 순서대로 보내고, 보낼 때 저장된 최신 토큰을 읽어요. 앱 시작 직후 Firebase가 토큰을 바꿔 두 번 보내도 서버에 옛 토큰이 남지 않아요.
 - 로그아웃해도 서버의 토큰은 그대로 남아요(이전 계정 알림이 이 기기로 올 수 있음). 로그아웃 시 토큰 해제 API가 필요해 백엔드 확인 항목으로 남겨요.
 - 서버는 저장만 하므로 같은 토큰을 다시 보내도 결과가 같아요. 그래서 중복 전송을 따로 막지 않아요(막으면 같은 실행에서 다른 계정으로 로그인했을 때 그 계정의 토큰이 가지 않아요).
