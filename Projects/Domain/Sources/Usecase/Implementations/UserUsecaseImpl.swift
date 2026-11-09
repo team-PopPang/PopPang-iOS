@@ -29,6 +29,18 @@ public final class UserUsecaseImpl: UserUsecaseProtocol {
         try await userRepository.removeAlertKeyword(userUuid: userUuid, alertKeyword: alertKeyword)
     }
 
+    public func getAlertKeywordList() async throws -> [Keyword] {
+        try await userRepository.getAlertKeywordList()
+    }
+
+    public func addAlertKeyword(alertKeyword: String) async throws {
+        try await userRepository.addAlertKeyword(alertKeyword: alertKeyword)
+    }
+
+    public func removeAlertKeyword(alertKeyword: String) async throws {
+        try await userRepository.removeAlertKeyword(alertKeyword: alertKeyword)
+    }
+
     public func alertStatus(isAlerted: Bool) async throws -> Bool {
         try await userRepository.alertStatus(isAlerted: isAlerted)
     }

@@ -10,25 +10,26 @@ import Core
 import Domain
 import Foundation
 
+/// 알림 화면이 쓰는 요청. 모두 Access Token의 사용자로 처리하는 V2 API라 `userUuid`를 받지 않는다.
 public struct AlertFeatureClient: Sendable {
-    public var getAlertPopupList: @Sendable (String) async throws -> [Popup]
-    public var removeAlertPopup: @Sendable (String, String) async throws -> Void
-    public var addFavorite: @Sendable (String, String) async throws -> Void
-    public var removeFavorite: @Sendable (String, String) async throws -> Void
-    public var getAlertKeywordList: @Sendable (String) async throws -> [Keyword]
-    public var addAlertKeyword: @Sendable (String, String) async throws -> Void
-    public var removeAlertKeyword: @Sendable (String, String) async throws -> Void
+    public var getAlertPopupList: @Sendable () async throws -> [Popup]
+    public var removeAlertPopup: @Sendable (_ popupUuid: String) async throws -> Void
+    public var addFavorite: @Sendable (_ popupUuid: String) async throws -> Void
+    public var removeFavorite: @Sendable (_ popupUuid: String) async throws -> Void
+    public var getAlertKeywordList: @Sendable () async throws -> [Keyword]
+    public var addAlertKeyword: @Sendable (_ keyword: String) async throws -> Void
+    public var removeAlertKeyword: @Sendable (_ keyword: String) async throws -> Void
     public var loadRecentKeywords: @Sendable () -> [String]
     public var removeRecentKeyword: @Sendable (String) -> Void
 
     public init(
-        getAlertPopupList: @escaping @Sendable (String) async throws -> [Popup],
-        removeAlertPopup: @escaping @Sendable (String, String) async throws -> Void,
-        addFavorite: @escaping @Sendable (String, String) async throws -> Void,
-        removeFavorite: @escaping @Sendable (String, String) async throws -> Void,
-        getAlertKeywordList: @escaping @Sendable (String) async throws -> [Keyword],
-        addAlertKeyword: @escaping @Sendable (String, String) async throws -> Void,
-        removeAlertKeyword: @escaping @Sendable (String, String) async throws -> Void,
+        getAlertPopupList: @escaping @Sendable () async throws -> [Popup],
+        removeAlertPopup: @escaping @Sendable (_ popupUuid: String) async throws -> Void,
+        addFavorite: @escaping @Sendable (_ popupUuid: String) async throws -> Void,
+        removeFavorite: @escaping @Sendable (_ popupUuid: String) async throws -> Void,
+        getAlertKeywordList: @escaping @Sendable () async throws -> [Keyword],
+        addAlertKeyword: @escaping @Sendable (_ keyword: String) async throws -> Void,
+        removeAlertKeyword: @escaping @Sendable (_ keyword: String) async throws -> Void,
         loadRecentKeywords: @escaping @Sendable () -> [String],
         removeRecentKeyword: @escaping @Sendable (String) -> Void
     ) {
@@ -52,35 +53,26 @@ public struct AlertFeatureClient: Sendable {
         let userUsecaseBox = UserUsecaseBox(userUsecase)
 
         return Self(
-            getAlertPopupList: { userUuid in
-                try await popupUsecaseBox.usecase.getAlertPopupList(userUuid: userUuid)
+            getAlertPopupList: {
+                try await popupUsecaseBox.usecase.getAlertPopupList()
             },
-            removeAlertPopup: { userUuid, popupUuid in
-                try await popupUsecaseBox.usecase.removeAlertPopup(
-                    userUuid: userUuid,
-                    popupUuid: popupUuid
-                )
+            removeAlertPopup: { popupUuid in
+                try await popupUsecaseBox.usecase.removeAlertPopup(popupUuid: popupUuid)
             },
-            addFavorite: { userUuid, popupUuid in
-                try await popupUsecaseBox.usecase.addFavorite(userUuid: userUuid, popupUuid: popupUuid)
+            addFavorite: { popupUuid in
+                try await popupUsecaseBox.usecase.addFavorite(popupUuid: popupUuid)
             },
-            removeFavorite: { userUuid, popupUuid in
-                try await popupUsecaseBox.usecase.removeFavorite(userUuid: userUuid, popupUuid: popupUuid)
+            removeFavorite: { popupUuid in
+                try await popupUsecaseBox.usecase.removeFavorite(popupUuid: popupUuid)
             },
-            getAlertKeywordList: { userUuid in
-                try await userUsecaseBox.usecase.getAlertKeywordList(userUuid: userUuid)
+            getAlertKeywordList: {
+                try await userUsecaseBox.usecase.getAlertKeywordList()
             },
-            addAlertKeyword: { userUuid, keyword in
-                try await userUsecaseBox.usecase.addAlertKeyword(
-                    userUuid: userUuid,
-                    alertKeyword: keyword
-                )
+            addAlertKeyword: { keyword in
+                try await userUsecaseBox.usecase.addAlertKeyword(alertKeyword: keyword)
             },
-            removeAlertKeyword: { userUuid, keyword in
-                try await userUsecaseBox.usecase.removeAlertKeyword(
-                    userUuid: userUuid,
-                    alertKeyword: keyword
-                )
+            removeAlertKeyword: { keyword in
+                try await userUsecaseBox.usecase.removeAlertKeyword(alertKeyword: keyword)
             },
             loadRecentKeywords: {
                 recentSearchStorage.load()
@@ -96,13 +88,13 @@ private struct AlertFeatureUnimplementedError: Error {}
 
 extension AlertFeatureClient {
     public static let unimplemented = Self(
-        getAlertPopupList: { _ in throw AlertFeatureUnimplementedError() },
-        removeAlertPopup: { _, _ in throw AlertFeatureUnimplementedError() },
-        addFavorite: { _, _ in throw AlertFeatureUnimplementedError() },
-        removeFavorite: { _, _ in throw AlertFeatureUnimplementedError() },
-        getAlertKeywordList: { _ in throw AlertFeatureUnimplementedError() },
-        addAlertKeyword: { _, _ in throw AlertFeatureUnimplementedError() },
-        removeAlertKeyword: { _, _ in throw AlertFeatureUnimplementedError() },
+        getAlertPopupList: { throw AlertFeatureUnimplementedError() },
+        removeAlertPopup: { _ in throw AlertFeatureUnimplementedError() },
+        addFavorite: { _ in throw AlertFeatureUnimplementedError() },
+        removeFavorite: { _ in throw AlertFeatureUnimplementedError() },
+        getAlertKeywordList: { throw AlertFeatureUnimplementedError() },
+        addAlertKeyword: { _ in throw AlertFeatureUnimplementedError() },
+        removeAlertKeyword: { _ in throw AlertFeatureUnimplementedError() },
         loadRecentKeywords: { [] },
         removeRecentKeyword: { _ in }
     )

@@ -229,7 +229,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 4 | CalendarFeature | 필터 팝업 (UPOP-04), 지역 목록 (POP-10), 찜 등록·해제 | 완료 (#142, `CalendarFeatureV2`) |
 | 5 | HomeFeatureV2 | 오픈 예정 (UPOP-12), 필터 팝업, 랜덤 (UPOP-07), 지역 목록, 찜 등록·해제 | 완료 (#144) |
 | 6 | MapFeature | 지도 필터 (UPOP-05), 인기 추천 카테고리 (RECO-02), 카테고리별 팝업 (UPOP-09), 지역 목록, 찜 등록·해제 | 예정 |
-| 7 | AlertFeature | 알림 키워드 목록·등록·삭제 (ALERT-01~03), 알림함 목록·삭제 (ALERT-04·05), 찜 등록·해제 | 예정 |
+| 7 | AlertFeature | 알림 키워드 목록·등록·삭제 (ALERT-01~03), 알림함 목록·삭제 (ALERT-04·05), 찜 등록·해제 | 완료 (#150) |
 | 8 | App (푸시) | FCM 토큰 중복 확인·갱신 두 요청을 `PUT /api/v2/user/fcm-token` 하나로 (USER-06) | 완료 (#148) |
 | 9 | 정리 | 쓰지 않는 V1 case(비회원 팝업 목록 등), Repository·Usecase의 `userUuid` 인자, 세션의 `userUuid` 저장 | 예정 |
 
@@ -297,6 +297,28 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 - 오픈 예정의 `upcomingDays`(선택, 기본 10)는 V1처럼 보내지 않아요. 명세상 실제 범위는 내일부터 D+11이에요.
 - 실패하면 `PopupError.failed`로 바꿔요. 홈은 오류 문구를 화면에 띄우지 않고, 오픈 예정 목록은 "오픈 예정 팝업을 불러오지 못했어요", "찜을 바꾸지 못했어요"를 알림으로 보여 줘요. 로그인이 끊긴 실패(`AuthSessionError`)는 알림을 띄우지 않아요.
 - 그리드는 처음 불러올 때도 그리드 다시 불러오기와 같은 경로(취소 ID 하나)로 받아서, 마지막 조건의 응답만 반영해요. 지역 목록이 늦게 와도 그사이 사용자가 고른 지역·구를 덮어쓰지 않아요. 찜은 응답을 기다리는 동안 같은 하트를 다시 누르면 무시해요(V2 찜은 같은 요청을 두 번 보내면 409·404로 거절해요).
+
+### 알림 (#150)
+
+알림 화면(`AlertFeature`)은 화면을 그대로 두고 API만 V2로 바꿨어요. `AlertFeatureClient`의 요청과 State에서 `userUuid`를 뺐어요. `State.init(user:)`는 닉네임을 받으려고 그대로 둬요.
+
+| 기능 | V2 | 응답 | 함수 |
+| --- | --- | --- | --- |
+| 알림함 목록 | `GET /api/v2/user/alert/popups` | `APIResponse`로 감싼 팝업 배열 (`PopupDTO`) | `getAlertPopupList()` |
+| 알림 삭제 | `DELETE /api/v2/user/alert` (본문 `{ popupUuid }`) | 본문 없음 | `removeAlertPopup(popupUuid:)` |
+| 키워드 목록 | `GET /api/v2/alert-keyword` | `APIResponse`로 감싼 `[{ alertKeyword }]` (`KeywordDTO`) | `getAlertKeywordList()` |
+| 키워드 등록 | `POST /api/v2/alert-keyword` (본문 `{ keyword }`) | 본문 없음 | `addAlertKeyword(alertKeyword:)` |
+| 키워드 삭제 | `DELETE /api/v2/alert-keyword` (본문 `{ keyword }`) | 본문 없음 | `removeAlertKeyword(alertKeyword:)` |
+| 찜 등록·해제 | #132의 V2 찜 | | `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)` |
+
+- 경로·인증·응답·오류 코드는 API 계약 문서(2026-10-30)로 확인했어요. 모두 Access Token이에요. 알림함 API는 `V2AlertAPI`, 키워드 API는 `V2AlertKeywordAPI`에 둬요.
+- 알림함 요청이 실패하면 `PopupError.failed`로 바꿔요. 이미 지운 알림(404 4001)은 Repository가 지운 것으로 봐요. 키워드 실패도 팝업처럼 HTTP 상태와 서버 코드만 로그로 남겨요.
+- 키워드 요청이 실패하면 Domain `AlertKeywordError`로 바꿔요. 이미 있는 키워드(409 4004)는 `alreadyExists`로 구분하고, 화면은 등록하려던 상태와 같으므로 목록에 남기고 문구를 띄우지 않아요. 서버에 없는 키워드 삭제(404 4003)는 Repository가 지운 것으로 봐요.
+- 화면은 원본 오류 대신 "알림을 불러오지 못했어요", "알림을 지우지 못했어요", "찜을 바꾸지 못했어요", "키워드를 등록하지 못했어요", "키워드를 지우지 못했어요"를 보여 줘요. 로그인이 끊긴 실패(`AuthSessionError`)는 문구를 띄우지 않아요.
+- 찜·알림 삭제·키워드 등록과 삭제는 응답을 기다리는 동안 같은 대상을 다시 누르면 무시해요. 같은 키워드의 등록과 삭제가 겹치면 서버와 화면이 어긋날 수 있어서예요.
+- 처음 열 때 알림함과 키워드를 따로 받아, 한쪽이 실패해도 받은 쪽은 보여 줘요.
+- 알림함 응답의 읽음 여부(`isRead`)와 읽음 처리 API(`PATCH /api/v2/user/alert/read`)는 아직 쓰지 않아요. 전체 삭제는 V2에도 한꺼번에 지우는 API가 없어 하나씩 차례로 지우고, 중간에 실패하면 그때까지 지운 알림만 목록에서 빼요. 지우는 동안 새로 받은 알림은 남겨요.
+- V1 알림·키워드 함수는 9번 정리 단계에서 지워요.
 
 ### 푸시 토큰 (#148)
 

@@ -5,11 +5,14 @@ import Moya
 
 public final class UserRepositoryImpl: UserRepositoryProtocol {
     private let makeV2Provider: () -> MoyaProvider<V2UserAPI>
+    private let makeV2AlertKeywordProvider: () -> MoyaProvider<V2AlertKeywordAPI>
 
     public init(
-        makeV2Provider: @escaping () -> MoyaProvider<V2UserAPI> = { NetworkProvider.shared.makeProvider() }
+        makeV2Provider: @escaping () -> MoyaProvider<V2UserAPI> = { NetworkProvider.shared.makeProvider() },
+        makeV2AlertKeywordProvider: @escaping () -> MoyaProvider<V2AlertKeywordAPI> = { NetworkProvider.shared.makeProvider() }
     ) {
         self.makeV2Provider = makeV2Provider
+        self.makeV2AlertKeywordProvider = makeV2AlertKeywordProvider
     }
 
     public func checkNickname(nickname: String) async throws -> Bool {
@@ -54,6 +57,29 @@ public final class UserRepositoryImpl: UserRepositoryProtocol {
         try await userProvider.asyncRequestVoid(
             .removeAlertKeyword(userUuid: userUuid, deleteAlertKeyword: alertKeyword)
         )
+    }
+
+    public func getAlertKeywordList() async throws -> [Keyword] {
+        try await alertKeywordRequest {
+            try await makeV2AlertKeywordProvider().asyncRequest(.list, decodeDataTo: [KeywordDTO].self)
+                .map { $0.toModel() }
+        }
+    }
+
+    public func addAlertKeyword(alertKeyword: String) async throws {
+        try await alertKeywordRequest {
+            try await makeV2AlertKeywordProvider().asyncRequestVoid(.add(keyword: alertKeyword))
+        }
+    }
+
+    public func removeAlertKeyword(alertKeyword: String) async throws {
+        try await alertKeywordRequest {
+            do {
+                try await makeV2AlertKeywordProvider().asyncRequestVoid(.remove(keyword: alertKeyword))
+            } catch let error as NetworkError where error.statusCode == 404 && error.serverErrorCode == 4003 {
+                // 서버에 이미 없는 키워드다. 지우려던 상태와 같으므로 지운 것으로 본다.
+            }
+        }
     }
 
     public func alertStatus(isAlerted: Bool) async throws -> Bool {
@@ -109,6 +135,27 @@ private extension UserRepositoryImpl {
             throw error
         } catch {
             throw UserError.failed
+        }
+    }
+
+    /// V2 알림 키워드 요청의 실패를 화면이 처리할 `AlertKeywordError`로 바꾼다. 다시 로그인해야 하는 실패는 그대로 던진다.
+    func alertKeywordRequest<T>(_ request: () async throws -> T) async throws -> T {
+        do {
+            return try await request()
+        } catch let error as AuthSessionError {
+            throw error
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let error as NetworkError where error.statusCode == 409 && error.serverErrorCode == 4004 {
+            throw AlertKeywordError.alreadyExists
+        } catch {
+            // 화면에는 안내 문구만 보이므로 원인을 찾을 수 있게 남긴다. 출시 빌드에도 찍혀 키워드나 응답 본문은 남기지 않는다.
+            if let error = error as? NetworkError {
+                Logger.e("알림 키워드 요청 실패: HTTP \(error.statusCode), code \(error.serverErrorCode.map(String.init) ?? "없음")")
+            } else {
+                Logger.e("알림 키워드 요청 실패: \(String(describing: type(of: error)))")
+            }
+            throw AlertKeywordError.failed
         }
     }
 

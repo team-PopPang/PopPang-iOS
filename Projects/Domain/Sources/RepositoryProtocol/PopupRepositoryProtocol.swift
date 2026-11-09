@@ -102,6 +102,15 @@ public protocol PopupRepositoryProtocol {
     ///   - popupUuid: 팝업 고유값
     func removeAlertPopup(userUuid: String, popupUuid: String) async throws
 
+    /// 로그인한 사용자의 알림함 팝업 목록을 가져옵니다 (V2). 최근에 받은 알림부터 옵니다.
+    /// - Throws: `PopupError`, 다시 로그인해야 하면 `AuthSessionError`
+    func getAlertPopupList() async throws -> [Popup]
+
+    /// 로그인한 사용자의 알림함에서 팝업 하나를 지웁니다 (V2).
+    /// - Parameter popupUuid: 팝업 고유값
+    /// - Throws: `PopupError`, 다시 로그인해야 하면 `AuthSessionError`
+    func removeAlertPopup(popupUuid: String) async throws
+
     /// 상세 화면의 팝업 하나를 조회합니다 (V2). 없는 팝업이면 `PopupError.notFound`를 던집니다.
     /// - Parameter popupUuid: 팝업 고유값
     func getPopupDetail(popupUuid: String) async throws -> PopupDetail
