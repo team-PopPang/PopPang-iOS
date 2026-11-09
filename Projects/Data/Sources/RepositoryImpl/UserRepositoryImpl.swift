@@ -110,6 +110,13 @@ public final class UserRepositoryImpl: UserRepositoryProtocol {
         )
     }
 
+    public func updateFcmToken(fcmToken: String) async throws {
+        // 명세 USER-06: 저장만 하고 빈 본문을 준다.
+        try await userRequest {
+            try await makeV2Provider().asyncRequestVoid(.updateFcmToken(fcmToken: fcmToken))
+        }
+    }
+
     private var userProvider: MoyaProvider<UserAPI> {
         NetworkProvider.shared.makeProvider()
     }

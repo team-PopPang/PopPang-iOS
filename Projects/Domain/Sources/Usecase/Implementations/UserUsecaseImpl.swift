@@ -56,4 +56,8 @@ public final class UserUsecaseImpl: UserUsecaseProtocol {
     public func updateFcmToken(userUuid: String, fcmToken: String) async throws {
         try await userRepository.updateFcmToken(userUuid: userUuid, fcmToken: fcmToken)
     }
+
+    public func updateFcmToken(fcmToken: String) async throws {
+        try await userRepository.updateFcmToken(fcmToken: fcmToken)
+    }
 }
