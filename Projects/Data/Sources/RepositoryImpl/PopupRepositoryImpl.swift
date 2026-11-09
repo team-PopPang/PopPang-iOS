@@ -178,9 +178,12 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
     }
 
     public func removeAlertPopup(popupUuid: String) async throws {
-        // 알림 기록이 없으면(404 4001) 서버와 어긋난 것이라 성공으로 보지 않고 다른 실패와 같이 PopupError로 바꾼다.
         try await popupRequest {
-            try await makeV2AlertProvider().asyncRequestVoid(.remove(popupUuid: popupUuid))
+            do {
+                try await makeV2AlertProvider().asyncRequestVoid(.remove(popupUuid: popupUuid))
+            } catch let error as NetworkError where error.statusCode == 404 && error.serverErrorCode == 4001 {
+                // 알림 기록이 이미 없다(다른 기기에서 지웠거나 앞선 요청이 지웠다). 지우려던 상태와 같으므로 지운 것으로 본다.
+            }
         }
     }
 

@@ -23,20 +23,24 @@ struct AlertFeatureTests {
             $0.keywords = [Keyword(keyword: "캐릭터")]
             $0.recentKeywords = ["전시"]
         }
+        await store.receive(\.errorMessageChanged)
         await store.receive(\.loadingChanged) {
             $0.isLoading = false
         }
     }
 
-    @Test("불러오기에 실패하면 한국어 안내 문구를 보여 준다")
-    func loadFailureShowsMessage() async {
+    @Test("키워드만 실패해도 받은 알림함은 보여 주고 안내 문구를 띄운다")
+    func keywordFailureStillShowsPopups() async {
         let store = makeStore {
-            $0.getAlertPopupList = { throw PopupError.failed }
-            $0.getAlertKeywordList = { [] }
+            $0.getAlertPopupList = { [.a] }
+            $0.getAlertKeywordList = { throw AlertKeywordError.failed }
         }
 
         await store.send(.onAppear) {
             $0.isLoading = true
+        }
+        await store.receive(\.initialDataLoaded) {
+            $0.alertPopups = [.a]
         }
         await store.receive(\.errorMessageChanged) {
             $0.errorMessage = "알림을 불러오지 못했어요. 잠시 후 다시 시도해 주세요."
@@ -56,6 +60,7 @@ struct AlertFeatureTests {
         await store.send(.onAppear) {
             $0.isLoading = true
         }
+        await store.receive(\.initialDataLoaded)
         await store.receive(\.errorMessageChanged)
         await store.receive(\.loadingChanged) {
             $0.isLoading = false
@@ -70,11 +75,85 @@ struct AlertFeatureTests {
             $0.removeAlertPopup = { popupUuid in removed.withValue { $0.append(popupUuid) } }
         }
 
-        await store.send(.deletePopupTapped("a"))
+        await store.send(.deletePopupTapped("a")) {
+            $0.deletingPopupUuids = ["a"]
+        }
         await store.receive(\.deletePopupResponse) {
+            $0.deletingPopupUuids = []
             $0.alertPopups = [.b]
         }
         #expect(removed.value == ["a"])
+    }
+
+    @Test("삭제 응답 전에 같은 알림을 다시 지우거나 전체 삭제를 다시 눌러도 요청을 다시 보내지 않는다")
+    func deleteTapIsIgnoredWhileInFlight() async {
+        let gate = AsyncGate()
+        let removed = LockIsolated<[String]>([])
+        let store = makeStore(popups: [.a]) {
+            $0.removeAlertPopup = { popupUuid in
+                removed.withValue { $0.append(popupUuid) }
+                await gate.wait()
+            }
+        }
+
+        await store.send(.deletePopupTapped("a")) {
+            $0.deletingPopupUuids = ["a"]
+        }
+        await store.send(.deletePopupTapped("a"))
+        await store.send(.deleteAllPopupsTapped)
+
+        await gate.open()
+        await store.receive(\.deletePopupResponse) {
+            $0.deletingPopupUuids = []
+            $0.alertPopups = []
+        }
+        #expect(removed.value == ["a"])
+    }
+
+    @Test("전체 삭제가 중간에 실패하면 그때까지 지운 알림만 빼고, 그사이 새로 받은 알림은 남긴다")
+    func deleteAllRemovesOnlyDeletedPopups() async {
+        let store = makeStore(popups: [.a, .b]) {
+            $0.removeAlertPopup = { popupUuid in
+                if popupUuid == "b" { throw PopupError.failed }
+            }
+        }
+
+        await store.send(.deleteAllPopupsTapped) {
+            $0.deletingPopupUuids = ["a", "b"]
+        }
+        await store.receive(\.deleteAllPopupsFinished) {
+            $0.deletingPopupUuids = []
+            $0.alertPopups = [.b]
+            $0.errorMessage = "알림을 지우지 못했어요. 잠시 후 다시 시도해 주세요."
+        }
+    }
+
+    @Test("키워드 요청 응답 전에는 같은 키워드의 삭제·등록을 다시 보내지 않는다")
+    func keywordTapIsIgnoredWhileInFlight() async {
+        let gate = AsyncGate()
+        let removedCount = LockIsolated(0)
+        let keyword = Keyword(keyword: "캐릭터")
+        let store = makeStore {
+            $0.removeAlertKeyword = { _ in
+                removedCount.withValue { $0 += 1 }
+                await gate.wait()
+            }
+        }
+        await store.send(.initialDataLoaded(nil, [keyword], [])) {
+            $0.keywords = [keyword]
+        }
+
+        await store.send(.removeKeywordTapped(keyword)) {
+            $0.keywords = []
+            $0.updatingKeywords = ["캐릭터"]
+        }
+        await store.send(.addKeywordTapped("캐릭터"))
+
+        await gate.open()
+        await store.receive(\.removeKeywordResponse) {
+            $0.updatingKeywords = []
+        }
+        #expect(removedCount.value == 1)
     }
 
     @Test("찜 응답 전에 같은 하트를 다시 누르면 요청을 다시 보내지 않는다")
@@ -128,8 +207,11 @@ struct AlertFeatureTests {
 
         await store.send(.addKeywordTapped(" 캐릭터 ")) {
             $0.keywords = [Keyword(keyword: "캐릭터")]
+            $0.updatingKeywords = ["캐릭터"]
         }
-        await store.receive(\.addKeywordResponse)
+        await store.receive(\.addKeywordResponse) {
+            $0.updatingKeywords = []
+        }
         #expect(store.state.keywords == [Keyword(keyword: "캐릭터")])
         #expect(store.state.errorMessage == nil)
     }
@@ -146,8 +228,10 @@ struct AlertFeatureTests {
 
         await store.send(.addKeywordTapped("캐릭터")) {
             $0.keywords = [Keyword(keyword: "캐릭터")]
+            $0.updatingKeywords = ["캐릭터"]
         }
         await store.receive(\.addKeywordResponse) {
+            $0.updatingKeywords = []
             $0.keywords = []
             $0.errorMessage = "키워드를 등록하지 못했어요. 잠시 후 다시 시도해 주세요."
         }
@@ -166,8 +250,10 @@ struct AlertFeatureTests {
 
         await store.send(.removeKeywordTapped(keyword)) {
             $0.keywords = []
+            $0.updatingKeywords = ["캐릭터"]
         }
         await store.receive(\.removeKeywordResponse) {
+            $0.updatingKeywords = []
             $0.keywords = [keyword]
             $0.errorMessage = "키워드를 지우지 못했어요. 잠시 후 다시 시도해 주세요."
         }

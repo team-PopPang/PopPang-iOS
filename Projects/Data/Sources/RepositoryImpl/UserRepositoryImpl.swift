@@ -142,6 +142,12 @@ private extension UserRepositoryImpl {
         } catch let error as NetworkError where error.statusCode == 409 && error.serverErrorCode == 4004 {
             throw AlertKeywordError.alreadyExists
         } catch {
+            // 화면에는 안내 문구만 보이므로 원인을 찾을 수 있게 남긴다. 출시 빌드에도 찍혀 키워드나 응답 본문은 남기지 않는다.
+            if let error = error as? NetworkError {
+                Logger.e("알림 키워드 요청 실패: HTTP \(error.statusCode), code \(error.serverErrorCode.map(String.init) ?? "없음")")
+            } else {
+                Logger.e("알림 키워드 요청 실패: \(String(describing: type(of: error)))")
+            }
             throw AlertKeywordError.failed
         }
     }

@@ -43,8 +43,15 @@ struct AlertRepositoryTests {
         #expect(context.recorder.httpMethods == ["DELETE"])
     }
 
-    @Test("알림 기록 없음(404 4001)·서버 오류는 PopupError로 바꾼다", arguments: [
-        (404, #"{"success":false,"code":4001,"message":"해당 팝업에 대한 알림 이력이 존재하지 않습니다.","data":null}"#),
+    @Test("이미 지운 알림(404 4001)은 지운 것으로 본다")
+    func removeTreatsMissingAlertAsRemoved() async throws {
+        let context = PopupRepositoryContext(response: (404, #"{"success":false,"code":4001,"message":"해당 팝업에 대한 알림 이력이 존재하지 않습니다.","data":null}"#))
+
+        try await context.repository.removeAlertPopup(popupUuid: "popup-1")
+    }
+
+    @Test("없는 팝업(404 4301)·서버 오류는 PopupError로 바꾼다", arguments: [
+        (404, #"{"success":false,"code":4301,"message":"팝업을 찾을 수 없습니다.","data":null}"#),
         (500, #"{"success":false,"code":6000,"message":"서버 에러","data":null}"#),
     ])
     func failuresMapToPopupError(response: (Int, String)) async {
