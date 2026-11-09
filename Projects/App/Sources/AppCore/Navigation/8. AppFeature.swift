@@ -206,6 +206,8 @@ struct AppFeature {
                 )
                 // 자동 로그인으로 메인 화면에 들어가면 남은 마이그레이션을 실행
                 guard state.destination == .main, let user = session.user else { return .none }
+                // 로그인 복구가 끝났으므로 푸시 토큰을 서버에 보낸다(로그인으로 들어온 경우는 configureAuthenticatedSession에서 보낸다)
+                AppNotificationManager.shared.startSession()
                 return runPendingMigrations(userUuid: user.userUuid)
 
             case .serverHealthCheckFailed(let reason):
@@ -346,6 +348,8 @@ struct AppFeature {
 
 private extension AppFeature {
     func beginLoggedOutTransition(state: inout State) {
+        // 로그아웃·세션 만료: 기다리던 푸시 토큰 전송을 취소하고 다시 로그인할 때까지 보내지 않는다.
+        AppNotificationManager.shared.endSession()
         state.isLoggingOut = true
         state.destination = .onboarding
         state.auth = .init()
@@ -497,6 +501,6 @@ private extension AppFeature {
         sessionStorage.setOnboardingCompleted(true)
         
         // 로그인 전 저장됐던 푸시 토큰을 현재 사용자 계정과 동기화
-        AppNotificationManager.shared.syncStoredToken(userUuid: user.userUuid)
+        AppNotificationManager.shared.startSession()
     }
 }
