@@ -90,6 +90,10 @@ public struct AlertFeature {
     @Dependency(\.alertFeatureClient) private var alertFeatureClient: AlertFeatureClient
     private let maxKeywordCount = 5
 
+    private enum CancelID {
+        case load
+    }
+
     public init() {}
 
     public var body: some ReducerOf<Self> {
@@ -290,7 +294,8 @@ public struct AlertFeature {
 
             case .initialDataLoaded(let alertPopups, let keywords, let recentKeywords):
                 if let alertPopups {
-                    state.alertPopups = alertPopups
+                    // 지우는 중인 알림은 늦게 온 목록에 있어도 다시 보이지 않게 뺀다.
+                    state.alertPopups = alertPopups.filter { !state.deletingPopupUuids.contains($0.popupUuid) }
                 }
                 if let keywords {
                     state.keywords = keywords
@@ -331,11 +336,15 @@ private extension AlertFeature {
             if case .failure(let error) = popupsResult { errors.append(error) }
             if case .failure(let error) = keywordsResult { errors.append(error) }
             // 로그인이 끊긴 실패가 섞여 있으면 문구를 띄우지 않는다. 앱이 로그인 화면으로 보낸다.
-            let message = errors.isEmpty || errors.contains { $0 is AuthSessionError } ? nil : Self.loadFailedMessage
-            await send(.errorMessageChanged(message))
+            // 다 받았을 때는 문구를 건드리지 않아, 그사이 다른 요청이 띄운 실패 문구를 지우지 않는다.
+            if !errors.isEmpty, !errors.contains(where: { $0 is AuthSessionError }) {
+                await send(.errorMessageChanged(Self.loadFailedMessage))
+            }
 
             await send(.loadingChanged(false))
         }
+        // 다시 들어와 새로 불러오면 앞선 요청은 취소해 마지막 응답만 반영한다.
+        .cancellable(id: CancelID.load, cancelInFlight: true)
     }
 
     func updateFavorite(

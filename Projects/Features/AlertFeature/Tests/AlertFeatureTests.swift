@@ -23,7 +23,6 @@ struct AlertFeatureTests {
             $0.keywords = [Keyword(keyword: "캐릭터")]
             $0.recentKeywords = ["전시"]
         }
-        await store.receive(\.errorMessageChanged)
         await store.receive(\.loadingChanged) {
             $0.isLoading = false
         }
@@ -61,7 +60,6 @@ struct AlertFeatureTests {
             $0.isLoading = true
         }
         await store.receive(\.initialDataLoaded)
-        await store.receive(\.errorMessageChanged)
         await store.receive(\.loadingChanged) {
             $0.isLoading = false
         }
