@@ -303,8 +303,8 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 `AppNotificationManager.syncStoredToken()`이 로그인한 사용자의 FCM 토큰을 `PUT /api/v2/user/fcm-token`(Access Token, 본문 `{"fcmToken"}`, 빈 본문 응답)으로 보내요. 서버는 저장만 하므로 V1의 중복 확인(GET) 단계를 없앴어요.
 
 - 보내는 때: 로그인을 마쳤을 때(`AppFeature.configureAuthenticatedSession`), 로그인한 상태에서 FCM 토큰을 새로 받았을 때(APNs 등록 직후, Firebase 갱신). 로그인 전에는 기기에만 저장해요.
-- 같은 실행에서 같은 토큰을 이미 보냈으면 다시 보내지 않아요. 실패하면 기록을 지워 다음 기회에 다시 보내요.
-- 실패는 화면에 알리지 않고 로그만 남겨요(404 4201 사용자 없음, 400 4205 토큰 누락은 `UserError.failed`).
+- 서버는 저장만 하므로 같은 토큰을 다시 보내도 결과가 같아요. 그래서 중복 전송을 따로 막지 않아요(막으면 같은 실행에서 다른 계정으로 로그인했을 때 그 계정의 토큰이 가지 않아요).
+- 실패(404 4201 사용자 없음, 400 4205 토큰 누락 등)는 화면에 알리지 않고 로그만 남겨요. 다음 기회(앱 시작·로그인·토큰 갱신)에 다시 보내요.
 - V1 `checkFcmToken`·`updateFcmToken(userUuid:)`은 9번 정리 단계에서 지워요.
 
 ## 정해야 할 것

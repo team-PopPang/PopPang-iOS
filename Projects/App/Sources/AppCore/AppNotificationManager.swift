@@ -40,8 +40,6 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
     private var sessionStorage: LocalSessionStorage
     private var pushTokenStorage: PushTokenStorage
     private var userUsecase: UserUsecaseProtocol?
-    /// 이번 실행에서 서버에 보낸 토큰. 앱 시작 때 APNs 등록 직후와 로그인 직후에 같은 토큰을 두 번 보내지 않게 한다.
-    private var lastSyncedFCMToken: String?
 
     override convenience init() {
         let store = UserDefaultsStore()
@@ -123,17 +121,11 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
     }
 
     /// 로그인한 사용자의 푸시 토큰을 서버에 저장한다(V2 `PUT /api/v2/user/fcm-token`).
-    /// 서버는 저장만 하므로 V1처럼 중복 확인을 먼저 하지 않는다. 같은 실행에서 같은 토큰을 이미 보냈으면 다시 보내지 않는다.
+    /// 서버는 받은 값을 저장만 하므로 V1처럼 중복 확인을 먼저 하지 않는다. 같은 토큰을 다시 보내도 결과가 같아 따로 막지 않는다
+    /// (막으면 같은 실행에서 다른 계정으로 로그인했을 때 그 계정의 토큰이 서버에 가지 않는다).
     func syncStoredToken() {
-        // Firebase 콜백(다른 스레드)과 AppFeature에서 불린다. 보낸 토큰 기록은 메인 스레드에서만 읽고 쓴다.
-        guard Thread.isMainThread else {
-            DispatchQueue.main.async { self.syncStoredToken() }
-            return
-        }
         guard let fcmToken = pushTokenStorage.load(), fcmToken.isEmpty == false else { return }
         guard let userUsecase else { return }
-        guard fcmToken != lastSyncedFCMToken else { return }
-        lastSyncedFCMToken = fcmToken
 
         Task {
             do {
@@ -141,14 +133,9 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
                 Logger.d("FCM 토큰을 서버에 저장 완료")
             } catch {
                 // 실패하면 다음 기회(앱 시작·로그인·토큰 갱신)에 다시 보낸다.
-                await MainActor.run { self.clearLastSyncedToken(ifEqualTo: fcmToken) }
                 Logger.e("❌ FCM 토큰 저장 실패: \(error)")
             }
         }
-    }
-
-    private func clearLastSyncedToken(ifEqualTo fcmToken: String) {
-        if lastSyncedFCMToken == fcmToken { lastSyncedFCMToken = nil }
     }
 
     // 🔔 포그라운드 상태에서 알림이 도착했을 때 호출됨
