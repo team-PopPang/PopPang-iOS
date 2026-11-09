@@ -71,6 +71,9 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
         authTokenStorage: AuthTokenStorage,
         userUsecase: UserUsecaseProtocol
     ) {
+        // 전송 Task가 다른 스레드에서 읽으므로 syncLock 안에서 바꾼다.
+        syncLock.lock()
+        defer { syncLock.unlock() }
         self.pushTokenStorage = pushTokenStorage
         self.authTokenStorage = authTokenStorage
         self.userUsecase = userUsecase
@@ -149,28 +152,30 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
         syncLock.unlock()
     }
 
-    private func isSessionActiveNow() -> Bool {
+    /// 보내기 직전에 쓸 값을 syncLock 안에서 한 번에 읽는다. 로그인 상태가 아니면 nil이다.
+    private func sendContext() -> (pushTokenStorage: PushTokenStorage, authTokenStorage: AuthTokenStorage, userUsecase: UserUsecaseProtocol)? {
         syncLock.lock()
         defer { syncLock.unlock() }
-        return isSessionActive
+        guard isSessionActive, let userUsecase else { return nil }
+        return (pushTokenStorage, authTokenStorage, userUsecase)
     }
 
     private func syncStoredToken() {
         syncLock.lock()
         defer { syncLock.unlock() }
         // 앱이 켜지는 중에는 보내지 않는다. 로그인 확인 중에 이 요청이 401을 받으면 실행 판단 전에 로그아웃될 수 있다.
-        guard isSessionActive, let userUsecase else { return }
+        guard isSessionActive, userUsecase != nil else { return }
 
         let previous = syncTask
         syncTask = Task { [weak self] in
             await previous?.value
             // 앞 요청을 기다리는 사이 로그아웃했으면 보내지 않는다. 보내기 직전에 다시 확인한다.
-            guard let self, Task.isCancelled == false, self.isSessionActiveNow() else { return }
+            guard let self, Task.isCancelled == false, let context = self.sendContext() else { return }
             // 로그인 토큰이 없으면 서버가 거절하므로 보내지 않는다. 로그인을 마치면 AppFeature가 다시 부른다.
-            guard self.authTokenStorage.loadTokens() != nil else { return }
-            guard let fcmToken = self.pushTokenStorage.load(), fcmToken.isEmpty == false else { return }
+            guard context.authTokenStorage.loadTokens() != nil else { return }
+            guard let fcmToken = context.pushTokenStorage.load(), fcmToken.isEmpty == false else { return }
             do {
-                try await userUsecase.updateFcmToken(fcmToken: fcmToken)
+                try await context.userUsecase.updateFcmToken(fcmToken: fcmToken)
                 Logger.d("FCM 토큰을 서버에 저장 완료")
             } catch {
                 // 실패하면 다음 기회(앱 시작·로그인·토큰 갱신)에 다시 보낸다.
