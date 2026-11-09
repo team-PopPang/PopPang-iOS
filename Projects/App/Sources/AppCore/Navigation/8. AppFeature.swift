@@ -497,6 +497,6 @@ private extension AppFeature {
         sessionStorage.setOnboardingCompleted(true)
         
         // 로그인 전 저장됐던 푸시 토큰을 현재 사용자 계정과 동기화
-        AppNotificationManager.shared.syncStoredToken(userUuid: user.userUuid)
+        AppNotificationManager.shared.syncStoredToken()
     }
 }
