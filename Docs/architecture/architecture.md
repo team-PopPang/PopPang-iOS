@@ -198,11 +198,11 @@ Demo 앱 타깃은 mock 대신 실제 Repository를 쓰기 위해 `Data`를 참�
 HomeFeatureView (HomeFeatureV2)
   → store.send(.onAppear)
   → HomeFeature reducer: state.isLoading = true, loadAllPopupData(...)가 Effect.run 반환
-  → @Dependency(\.homePopupClient) HomePopupClient.getPersonalRandomPopupList(userUuid) 등 3개 요청을 async let으로 동시에 실행
-  → PopupUsecaseProtocol.getPersonalRandomPopupList(userUuid:)     (Domain, AppBootstrap에서 주입)
+  → @Dependency(\.homePopupClient) HomePopupClient.getRandomPopupList() 등 요청을 async let으로 동시에 실행
+  → PopupUsecaseProtocol.getUserRandomPopupList()                  (Domain, AppBootstrap에서 주입)
   → PopupUsecaseImpl → PopupRepositoryProtocol                     (Domain)
   → PopupRepositoryImpl                                            (Data)
-  → MoyaProvider<PopupAPI>.asyncRequest(_:decodeTo: [PopupDTO].self)
+  → MoyaProvider<V2PopupAPI>.asyncRequest(_:decodeTo: [PopupDTO].self)
   → PopupDTO.toEntity() → [Popup]
   → send(.popupSectionsLoaded(HomePopupSections(...))) → reducer가 state 갱신 → view 다시 그림
 ```

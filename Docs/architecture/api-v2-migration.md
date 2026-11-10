@@ -85,7 +85,7 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 V2로 옮기는 target은 버전과 인증 종류를 정하고, 경로는 명세의 V2 경로에서 `/api/v2`를 뺀 값을 써요.
 
 ```swift
-extension UserAPI: BaseAPI {
+extension V2UserAPI: BaseAPI {
     public var apiVersion: APIVersion {
         .v2
     }
@@ -231,12 +231,12 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 6 | MapFeature | 지도 필터 (UPOP-05), 인기 추천 카테고리 (RECO-02), 카테고리별 팝업 (UPOP-09), 지역 목록, 찜 등록·해제 | 예정 |
 | 7 | AlertFeature | 알림 키워드 목록·등록·삭제 (ALERT-01~03), 알림함 목록·삭제 (ALERT-04·05), 찜 등록·해제 | 완료 (#150) |
 | 8 | App (푸시) | FCM 토큰 중복 확인·갱신 두 요청을 `PUT /api/v2/user/fcm-token` 하나로 (USER-06) | 완료 (#148) |
-| 9 | 정리 | 쓰지 않는 V1 case(비회원 팝업 목록 등), Repository·Usecase의 `userUuid` 인자, 세션의 `userUuid` 저장 | 예정 |
+| 9 | 정리 | 쓰지 않는 V1 case(비회원 팝업 목록 등), Repository·Usecase의 `userUuid` 인자, 세션의 `userUuid` 저장 | 진행 중 (#152에서 앱이 부르지 않는 V1 함수 삭제. 지도가 쓰는 V1 함수와 `userUuid`는 지도 전환 뒤) |
 
 - 여러 feature가 같이 쓰는 API(찜 등록·해제, 지역 목록, 필터 팝업)는 **처음 쓰는 feature에서 V2로 만들고**, 뒤의 feature는 가져다 써요. 옮기는 동안 화면마다 V1·V2가 섞여도 서버 데이터가 같아서 괜찮아요(명세 C-9).
 - 회원 팝업 V2 API는 `Data/Sources/Remote/V2PopupAPI.swift`에 모아요. 응답은 V1과 같은 감싸지 않은 팝업 배열이라 `PopupDTO`를 그대로 써요.
 - 찜 V2 API는 경로(`/favorite`)가 달라 `Data/Sources/Remote/V2FavoriteAPI.swift`에 따로 둬요. 찜 목록은 검색과 달리 `APIResponse`로 감싼 팝업 배열이에요. 등록·해제는 본문에 `popupUuid`만 담고, DELETE도 JSON 본문을 보내요.
-- 찜 등록·해제 V2는 `PopupUsecaseProtocol`의 `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)`예요(#132). 3번부터의 화면은 기존 `addFavorite(userUuid:popupUuid:)` 대신 이 함수를 가져다 써요. 기존 함수는 모든 화면이 옮긴 뒤 9번 정리 단계에서 지워요.
+- 찜 등록·해제 V2는 `PopupUsecaseProtocol`의 `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)`예요(#132). 3번부터의 화면은 기존 `addFavorite(userUuid:popupUuid:)` 대신 이 함수를 가져다 써요. 기존 함수는 지도 탭(`MapFeature`)과 남겨 둔 옛 달력 모듈(`CalendarFeature`)이 아직 써서 남아 있어요.
 - V2 팝업·찜 요청이 실패하면 Repository가 `PopupError.failed`로 바꾸고, 화면은 원본 오류 대신 안내 문구를 보여 줘요. 이미 찜함(409 4101)·찜 없음(404 4102)도 성공으로 보지 않아요. 찜 탭의 하트는 해제만 해요. 누르면 응답을 기다리지 않고 `popupUuid`를 해제 중 Set에 넣어 숨기고, 그동안 온 목록 응답에서도 빼고 보여 줘요. 해제가 끝나면 그 전의 목록 요청을 취소하고 목록을 새로 받아요. 실패하면 Set에서 빼서 다시 보여 줘요(로그인 끊김은 다시 받지 않아요).
 - `PopupDTO`는 명세상 null일 수 있는 `roadAddress`·`mediaType`·`recommendList`를 null로 받아요. null이면 각각 일반 주소(`address`)·이미지·빈 배열로 바꿔요. 도로명 주소가 빈 문자열이어도 일반 주소를 써요. 전에는 null을 받으면 목록 전체를 읽지 못했어요(V1부터 있던 문제, #130에서 수정).
 - `userUuid`는 아직 V1인 화면이 쓰므로 마지막 정리 단계에서 지워요. 예를 들어 검색 결과에서 여는 팝업 상세는 V1이라, `SearchDestination`이 `userUuid`를 들고 있다가 상세에 넘겨요.
@@ -318,7 +318,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 - 찜·알림 삭제·키워드 등록과 삭제는 응답을 기다리는 동안 같은 대상을 다시 누르면 무시해요. 같은 키워드의 등록과 삭제가 겹치면 서버와 화면이 어긋날 수 있어서예요.
 - 처음 열 때 알림함과 키워드를 따로 받아, 한쪽이 실패해도 받은 쪽은 보여 줘요.
 - 알림함 응답의 읽음 여부(`isRead`)와 읽음 처리 API(`PATCH /api/v2/user/alert/read`)는 아직 쓰지 않아요. 전체 삭제는 V2에도 한꺼번에 지우는 API가 없어 하나씩 차례로 지우고, 중간에 실패하면 그때까지 지운 알림만 목록에서 빼요. 지우는 동안 새로 받은 알림은 남겨요.
-- V1 알림·키워드 함수는 9번 정리 단계에서 지워요.
+- V1 알림·키워드 함수는 #152에서 지웠어요.
 
 ### 푸시 토큰 (#148)
 
@@ -329,7 +329,21 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 - 로그아웃해도 서버의 토큰은 그대로 남아요(이전 계정 알림이 이 기기로 올 수 있음). 로그아웃 시 토큰 해제 API가 필요해 백엔드 확인 항목으로 남겨요.
 - 서버는 저장만 하므로 같은 토큰을 다시 보내도 결과가 같아요. 그래서 중복 전송을 따로 막지 않아요(막으면 같은 실행에서 다른 계정으로 로그인했을 때 그 계정의 토큰이 가지 않아요).
 - 실패(404 4201 사용자 없음, 400 4205 토큰 누락 등)는 화면에 알리지 않고 로그만 남겨요. 다음 기회(앱 시작·로그인·토큰 갱신)에 다시 보내요.
-- V1 `checkFcmToken`·`updateFcmToken(userUuid:)`은 9번 정리 단계에서 지워요.
+- V1 `checkFcmToken`·`updateFcmToken(userUuid:)`은 #152에서 지웠어요.
+
+### 정리 (#152)
+
+화면을 V2로 옮기며 남겨 둔 V1 함수 중 앱이 더 부르지 않는 것을 지웠어요. 화면 동작과 보내는 요청은 바뀌지 않아요.
+
+| 묶음 | 지운 V1 함수 |
+| --- | --- |
+| 팝업 | `getPopupList`, `getUpcomingPopupList`, `getInProgressPopupList`, `searchPopupList`, `getRandomPopupList`, `getPersonalPopupList`, `getPersonalUseerRecommendPopupList`, `getPersonalUpcomingPopupList`, `getPersonalRandomPopupList`, `getAlertPopupList(userUuid:)`, `removeAlertPopup(userUuid:popupUuid:)` |
+| 사용자 | `getRecommandList`, `getAlertKeywordList(userUuid:)`, `addAlertKeyword(userUuid:alertKeyword:)`, `removeAlertKeyword(userUuid:alertKeyword:)`, `checkFcmToken`, `updateFcmToken(userUuid:fcmToken:)` |
+| 관리자 | `getPopupSubmissionList`, `createPopupSubmission`, `deactivatePopupByUser`, `updatePopupSubmissionStatus` |
+
+- Repository·Usecase protocol과 구현, V1 API case를 함께 지웠어요. case가 모두 없어진 `UserAPI`·`AdminAPI`는 파일째 지웠어요. 관리자 V1 함수만 쓰던 `PopupSubmissionDTO`·`PopupSubmissionStatusUpdateRequestDTO`와 매핑, Domain `PopupSubmission`도 지웠어요. 다른 제보 매핑이 쓰는 `PopupSubmissionMappingError`는 따로 파일로 남겼어요.
+- 남긴 것: 지도 탭(`MapFeature`)과 옛 달력 모듈(`CalendarFeature`)이 쓰는 `PopupAPI`의 필터 팝업(home·map), 인기 추천 카테고리, 카테고리별 팝업, `userUuid` 찜 등록·해제. 세션의 `userUuid`도 지도가 요청에 넣어 보내므로 남겨요. 지도를 V2로 옮긴 뒤 지워요.
+- `PopupSubmission` repository(`PopupSubmissionAPI`)는 Swift 화면에서 부르지 않지만, 제보 화면(React Native)과 관련이 있어 이번 범위에서 뺐어요. 확인 필요: PopPang-RN 저장소가 이 API를 쓰는지.
 
 ## 정해야 할 것
 
