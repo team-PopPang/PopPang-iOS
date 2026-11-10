@@ -1,43 +1,8 @@
 public protocol PopupRepositoryProtocol {
-    /// 팝업리스트를 가져옵니다
-    /// - Returns: [Popup]
-    func getPopupList() async throws -> [Popup]
-
-    /// 다가올 팝업 리스트를 가져옵니다
-    /// - Returns: [Popup]
-    func getUpcomingPopupList() async throws -> [Popup]
-
-    /// 진행 중인 팝업 리스트를 가져옵니다
-    /// - Returns: [Popup]
-    func getInProgressPopupList() async throws -> [Popup]
 
     /// 로그인한 사용자의 찜 리스트를 가져옵니다
     /// - Returns: [Popup]
     func getFavoriteList() async throws -> [Popup]
-
-    /// 팝업 검색 결과를 반환합니다
-    /// - Parameter searchText: searchText
-    /// - Returns: [Popup]
-    func searchPopupList(searchText: String) async throws -> [Popup]
-
-    /// 랜덤 팝업 10개를 반환합니다
-    /// - Returns: [Popup]
-    func getRandomPopupList() async throws -> [Popup]
-
-    /// 팝업리스트를 가져옵니다
-    /// - Parameter userUuid: userUuid
-    /// - Returns: [Popup]
-    func getPersonalPopupList(userUuid: String) async throws -> [Popup]
-
-    /// 유저별 개인화 추천 팝업리스트를 가져옵니다
-    /// - Parameter userUuid: userUuid
-    /// - Returns: [Popup]
-    func getPersonalUseerRecommendPopupList(userUuid: String) async throws -> [Popup]
-
-    /// 다가올 팝업 리스트를 가져옵니다
-    /// - Parameter userUuid: userUuid
-    /// - Returns: [Popup]
-    func getPersonalUpcomingPopupList(userUuid: String) async throws -> [Popup]
 
     /// 홈 화면용 팝업 필터 조회
     /// - Parameters:
@@ -85,22 +50,6 @@ public protocol PopupRepositoryProtocol {
     /// 상세 화면의 관련 팝업을 조회합니다. 사용자는 Access Token으로 정해집니다 (V2).
     /// - Parameter popupUuid: 기준 팝업 고유값
     func getRelatedPopupList(popupUuid: String) async throws -> [Popup]
-
-    /// 랜덤 팝업 10개를 반환합니다
-    /// - Parameter userUuid: userUuid
-    /// - Returns: [Popup]
-    func getPersonalRandomPopupList(userUuid: String) async throws -> [Popup]
-
-    /// 알림 팝업 리스트 가져오기
-    /// - Parameter userUuid: 유저 고유값
-    /// - Returns: [Popup]
-    func getAlertPopupList(userUuid: String) async throws -> [Popup]
-
-    /// 알림 팝업 단건 지우기
-    /// - Parameters:
-    ///   - userUuid: 유저 고유값
-    ///   - popupUuid: 팝업 고유값
-    func removeAlertPopup(userUuid: String, popupUuid: String) async throws
 
     /// 로그인한 사용자의 알림함 팝업 목록을 가져옵니다 (V2). 최근에 받은 알림부터 옵니다.
     /// - Throws: `PopupError`, 다시 로그인해야 하면 `AuthSessionError`
