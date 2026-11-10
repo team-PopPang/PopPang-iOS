@@ -239,7 +239,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 - 찜 등록·해제 V2는 `PopupUsecaseProtocol`의 `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)`예요(#132). 3번부터의 화면은 기존 `addFavorite(userUuid:popupUuid:)` 대신 이 함수를 가져다 써요. 기존 함수는 지도 탭(`MapFeature`)과 남겨 둔 옛 달력 모듈(`CalendarFeature`)이 아직 써서 남아 있어요.
 - V2 팝업·찜 요청이 실패하면 Repository가 `PopupError.failed`로 바꾸고, 화면은 원본 오류 대신 안내 문구를 보여 줘요. 이미 찜함(409 4101)·찜 없음(404 4102)도 성공으로 보지 않아요. 찜 탭의 하트는 해제만 해요. 누르면 응답을 기다리지 않고 `popupUuid`를 해제 중 Set에 넣어 숨기고, 그동안 온 목록 응답에서도 빼고 보여 줘요. 해제가 끝나면 그 전의 목록 요청을 취소하고 목록을 새로 받아요. 실패하면 Set에서 빼서 다시 보여 줘요(로그인 끊김은 다시 받지 않아요).
 - `PopupDTO`는 명세상 null일 수 있는 `roadAddress`·`mediaType`·`recommendList`를 null로 받아요. null이면 각각 일반 주소(`address`)·이미지·빈 배열로 바꿔요. 도로명 주소가 빈 문자열이어도 일반 주소를 써요. 전에는 null을 받으면 목록 전체를 읽지 못했어요(V1부터 있던 문제, #130에서 수정).
-- `userUuid`는 아직 V1인 화면이 쓰므로 마지막 정리 단계에서 지워요. 예를 들어 검색 결과에서 여는 팝업 상세는 V1이라, `SearchDestination`이 `userUuid`를 들고 있다가 상세에 넘겨요.
+- 세션의 `userUuid`는 아직 V1인 지도 탭(`MapFeature`)이 요청에 넣어 보내므로 남겨요. 검색·팝업 상세는 V2로 옮겨 `userUuid`를 쓰지 않아요.
 
 **확인 필요 (백엔드)**
 - 팝업 제보(SUB-01)는 Swift 코드에서 부르지 않아요. React Native 화면이 직접 부르는지 PopPang-RN 저장소에서 확인해야 해요.
@@ -337,9 +337,9 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 
 | 묶음 | 지운 V1 함수 |
 | --- | --- |
-| 팝업 | `getPopupList`, `getUpcomingPopupList`, `getInProgressPopupList`, `searchPopupList`, `getRandomPopupList`, `getPersonalPopupList`, `getPersonalUseerRecommendPopupList`, `getPersonalUpcomingPopupList`, `getPersonalRandomPopupList`, `getAlertPopupList(userUuid:)`, `removeAlertPopup(userUuid:popupUuid:)` |
-| 사용자 | `getRecommandList`, `getAlertKeywordList(userUuid:)`, `addAlertKeyword(userUuid:alertKeyword:)`, `removeAlertKeyword(userUuid:alertKeyword:)`, `checkFcmToken`, `updateFcmToken(userUuid:fcmToken:)` |
-| 관리자 | `getPopupSubmissionList`, `createPopupSubmission`, `deactivatePopupByUser`, `updatePopupSubmissionStatus` |
+| 팝업 (`PopupRepository`·`PopupUsecase`·`PopupAPI`) | `getPopupList`, `getUpcomingPopupList`, `getInProgressPopupList`, `searchPopupList`, `getRandomPopupList`, `getPersonalPopupList`, `getPersonalUseerRecommendPopupList`, `getPersonalUpcomingPopupList`, `getPersonalRandomPopupList`, `getAlertPopupList(userUuid:)`, `removeAlertPopup(userUuid:popupUuid:)` |
+| 사용자 (`UserRepository`·`UserUsecase`·`UserAPI`) | `getRecommandList`, `getAlertKeywordList(userUuid:)`, `addAlertKeyword(userUuid:alertKeyword:)`, `removeAlertKeyword(userUuid:alertKeyword:)`, `checkFcmToken`, `updateFcmToken(userUuid:fcmToken:)` |
+| 관리자 (`AdminRepository`·`AdminUsecase`·`AdminAPI`) | `getPopupSubmissionList`, `createPopupSubmission`, `deactivatePopupByUser`, `updatePopupSubmissionStatus`. 같은 이름의 `PopupSubmissionRepository` 함수는 남겼어요. |
 
 - Repository·Usecase protocol과 구현, V1 API case를 함께 지웠어요. case가 모두 없어진 `UserAPI`·`AdminAPI`는 파일째 지웠어요. 관리자 V1 함수만 쓰던 `PopupSubmissionDTO`·`PopupSubmissionStatusUpdateRequestDTO`와 매핑, Domain `PopupSubmission`도 지웠어요. 다른 제보 매핑이 쓰는 `PopupSubmissionMappingError`는 따로 파일로 남겼어요.
 - 남긴 것: 지도 탭(`MapFeature`)과 옛 달력 모듈(`CalendarFeature`)이 쓰는 `PopupAPI`의 필터 팝업(home·map), 인기 추천 카테고리, 카테고리별 팝업, `userUuid` 찜 등록·해제. 세션의 `userUuid`도 지도가 요청에 넣어 보내므로 남겨요. 지도를 V2로 옮긴 뒤 지워요.

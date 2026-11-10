@@ -239,6 +239,28 @@ struct DataTests {
         #expect(item.status == .pending)
     }
 
+    @Test("관리자 제보 목록 DTO가 알 수 없는 상태를 실패로 처리한다")
+    func popupSubmissionAdminListDTORejectsUnknownStatus() throws {
+        let json = """
+        {
+          "popupSubmissionId": 7,
+          "name": "성수 팝업",
+          "roadAddress": "서울 성동구 성수이로 00",
+          "region": "서울",
+          "submitterUserUuid": "user-1",
+          "submitterNickname": "팝팡",
+          "submittedAt": "2026-06-05T10:20:30",
+          "status": "ARCHIVED"
+        }
+        """.data(using: .utf8)!
+
+        let dto = try JSONDecoder().decode(PopupSubmissionAdminListResponseDTO.self, from: json)
+
+        #expect(throws: PopupSubmissionMappingError.unknownStatus("ARCHIVED")) {
+            try dto.toEntity()
+        }
+    }
+
     @Test("관리자 제보 상세 DTO가 새 서버 응답을 도메인 모델로 변환한다")
     func popupSubmissionAdminDetailDTOMapsToDomainModel() throws {
         let json = """
