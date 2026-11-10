@@ -2,16 +2,10 @@ import Core
 import Foundation
 import Moya
 
+/// V1 회원 팝업 API
+///
+/// 다른 화면은 모두 V2로 옮겼다. 지도 탭(`MapFeature`)과 남겨 둔 옛 달력 모듈(`CalendarFeature`)이 쓰는 case만 남았다.
 public enum PopupAPI {
-    case getPopupList
-    case getUpcomingPopupList
-    case getInProgressPopupList
-    case searchPopupList(searchText: String)
-    case getRandomPopupList
-
-    case getPersonalPopupList(userUuid: String)
-    case getPersonalUseerRecommendPopupList(userUuid: String)
-    case getPersonalUpcomingPopupList(userUuid: String)
     case getPersonalFilteredPopupList(userUuid: String, region: String, district: String, homeSortStandard: String)
     case getPersonalMapFilteredPopupList(
         userUuid: String,
@@ -21,10 +15,6 @@ public enum PopupAPI {
         longitude: Double?,
         mapSortStandard: String
     )
-    case getPersonalRandomPopupList(userUuid: String)
-
-    case getAlertPopupList(userUuid: String)
-    case removeAlertPopup(userUuid: String, popupUuid: String)
 
     case addFavorite(userUuid: String, popupUuid: String)
     case removeFavorite(userUuid: String, popupUuid: String)
@@ -36,32 +26,10 @@ public enum PopupAPI {
 extension PopupAPI: BaseAPI {
     public var path: String {
         switch self {
-        case .getPopupList:
-            return "/popup"
-        case .getUpcomingPopupList:
-            return "/popup/upcoming"
-        case .getInProgressPopupList:
-            return "/popup/inProgress"
-        case .searchPopupList:
-            return "/popup/search"
-        case .getRandomPopupList:
-            return "/popup/random"
-        case .getPersonalPopupList(let userUuid):
-            return "/users/\(userUuid)/popups"
-        case .getPersonalUseerRecommendPopupList(let userUuid):
-            return "/users/\(userUuid)/popups/recommend"
-        case .getPersonalUpcomingPopupList(let userUuid):
-            return "/users/\(userUuid)/popups/upcoming"
         case .getPersonalFilteredPopupList(let userUuid, _, _, _):
             return "/users/\(userUuid)/popups/filtered/home"
         case .getPersonalMapFilteredPopupList(let userUuid, _, _, _, _, _):
             return "/users/\(userUuid)/popups/filtered/map"
-        case .getPersonalRandomPopupList(let userUuid):
-            return "/users/\(userUuid)/popups/random"
-        case .getAlertPopupList(let userUuid):
-            return "/users/\(userUuid)/alert/popups"
-        case .removeAlertPopup(let userUuid, _):
-            return "/users/\(userUuid)/alert"
         case .addFavorite, .removeFavorite:
             return "/favorite"
         case .getPopularRecommendList:
@@ -73,45 +41,23 @@ extension PopupAPI: BaseAPI {
 
     public var method: Moya.Method {
         switch self {
-        case .getPopupList,
-             .getUpcomingPopupList,
-             .getInProgressPopupList,
-             .searchPopupList,
-             .getRandomPopupList,
-             .getPersonalPopupList,
-             .getPersonalUseerRecommendPopupList,
-             .getPersonalUpcomingPopupList,
-             .getPersonalFilteredPopupList,
+        case .getPersonalFilteredPopupList,
              .getPersonalMapFilteredPopupList,
-             .getPersonalRandomPopupList,
-             .getAlertPopupList,
              .getPopularRecommendList,
              .getPopularRecommendPopupList:
             return .get
         case .addFavorite:
             return .post
-        case .removeAlertPopup, .removeFavorite:
+        case .removeFavorite:
             return .delete
         }
     }
 
     public var task: Task {
         switch self {
-        case .getPopupList,
-             .getUpcomingPopupList,
-             .getInProgressPopupList,
-             .getRandomPopupList,
-             .getAlertPopupList,
-             .getPopularRecommendList,
+        case .getPopularRecommendList,
              .getPopularRecommendPopupList:
             return .requestPlain
-        case .searchPopupList(let searchText):
-            return .requestParameters(parameters: ["q": searchText], encoding: URLEncoding.queryString)
-        case .getPersonalPopupList(let userUuid),
-             .getPersonalUseerRecommendPopupList(let userUuid),
-             .getPersonalUpcomingPopupList(let userUuid),
-             .getPersonalRandomPopupList(let userUuid):
-            return .requestParameters(parameters: ["userUuid": userUuid], encoding: URLEncoding.queryString)
         case .getPersonalFilteredPopupList(_, let region, let district, let homeSortStandard):
             return .requestParameters(
                 parameters: [
@@ -132,8 +78,6 @@ extension PopupAPI: BaseAPI {
                 params["longitude"] = longitude
             }
             return .requestParameters(parameters: params, encoding: URLEncoding.queryString)
-        case .removeAlertPopup(_, let popupUuid):
-            return .requestParameters(parameters: ["popupUuid": popupUuid], encoding: JSONEncoding.default)
         case .addFavorite(let userUuid, let popupUuid), .removeFavorite(let userUuid, let popupUuid):
             return .requestParameters(
                 parameters: [
