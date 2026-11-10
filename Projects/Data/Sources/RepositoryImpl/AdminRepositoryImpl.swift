@@ -12,24 +12,6 @@ public final class AdminRepositoryImpl: AdminRepositoryProtocol {
         self.makeV2Provider = makeV2Provider
     }
 
-    public func getPopupSubmissionList() async throws -> [PopupSubmission] {
-        let dtos = try await adminProvider.asyncRequest(
-            .getPopupSubmissionList,
-            decodeTo: [PopupSubmissionDTO].self
-        )
-
-        return try dtos.map { try $0.toEntity() }
-    }
-
-    public func createPopupSubmission(_ request: PopupSubmissionCreateRequest) async throws {
-        try await adminProvider.asyncRequestVoid(.createPopupSubmission(requestDTO: request.toDTO()))
-    }
-
-    @available(*, deprecated, message: "deactivatePopup(popupUuid:)를 사용하세요.")
-    public func deactivatePopupByUser(userUuid: String, popupUuid: String) async throws {
-        try await adminProvider.asyncRequestVoid(.deactivatePopupByUser(userUuid: userUuid, popupUuid: popupUuid))
-    }
-
     public func deactivatePopup(popupUuid: String) async throws {
         do {
             try await makeV2Provider().asyncRequestVoid(.deactivatePopup(popupUuid: popupUuid))
@@ -48,18 +30,5 @@ public final class AdminRepositoryImpl: AdminRepositoryProtocol {
             Logger.e("팝업 비활성화 실패: \(description)")
             throw PopupError.failed
         }
-    }
-
-    public func updatePopupSubmissionStatus(submissionId: Int, status: PopupSubmissionStatus) async throws {
-        try await adminProvider.asyncRequestVoid(
-            .updatePopupSubmissionStatus(
-                submissionId: submissionId,
-                requestDTO: status.toDTO()
-            )
-        )
-    }
-
-    private var adminProvider: MoyaProvider<AdminAPI> {
-        NetworkProvider.shared.makeProvider()
     }
 }

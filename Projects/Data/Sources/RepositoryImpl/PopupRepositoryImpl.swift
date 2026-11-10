@@ -18,50 +18,12 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
         self.makeV2AlertProvider = makeV2AlertProvider
     }
 
-    public func getPopupList() async throws -> [Popup] {
-        try await popupProvider.asyncRequest(.getPopupList, decodeTo: [PopupDTO].self).map { $0.toEntity() }
-    }
-
-    public func getUpcomingPopupList() async throws -> [Popup] {
-        try await popupProvider.asyncRequest(.getUpcomingPopupList, decodeTo: [PopupDTO].self).map { $0.toEntity() }
-    }
-
-    public func getInProgressPopupList() async throws -> [Popup] {
-        try await popupProvider.asyncRequest(.getInProgressPopupList, decodeTo: [PopupDTO].self).map { $0.toEntity() }
-    }
-
     public func getFavoriteList() async throws -> [Popup] {
         // 명세 FAV-04: 검색과 달리 성공 응답이 `APIResponse`로 감싸져 있다.
         try await popupRequest {
             try await makeV2FavoriteProvider().asyncRequest(.list, decodeDataTo: [PopupDTO].self)
                 .map { $0.toEntity() }
         }
-    }
-
-    public func searchPopupList(searchText: String) async throws -> [Popup] {
-        try await popupProvider.asyncRequest(.searchPopupList(searchText: searchText), decodeTo: [PopupDTO].self).map { $0.toEntity() }
-    }
-
-    public func getRandomPopupList() async throws -> [Popup] {
-        try await popupProvider.asyncRequest(.getRandomPopupList, decodeTo: [PopupDTO].self).map { $0.toEntity() }
-    }
-
-    public func getPersonalPopupList(userUuid: String) async throws -> [Popup] {
-        try await popupProvider.asyncRequest(.getPersonalPopupList(userUuid: userUuid), decodeTo: [PopupDTO].self).map { $0.toEntity() }
-    }
-
-    public func getPersonalUseerRecommendPopupList(userUuid: String) async throws -> [Popup] {
-        try await popupProvider.asyncRequest(
-            .getPersonalUseerRecommendPopupList(userUuid: userUuid),
-            decodeTo: [PopupDTO].self
-        ).map { $0.toEntity() }
-    }
-
-    public func getPersonalUpcomingPopupList(userUuid: String) async throws -> [Popup] {
-        try await popupProvider.asyncRequest(
-            .getPersonalUpcomingPopupList(userUuid: userUuid),
-            decodeTo: [PopupDTO].self
-        ).map { $0.toEntity() }
     }
 
     public func getPersonalFilteredPopupList(
@@ -152,21 +114,6 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
             try await makeV2Provider().asyncRequest(.related(popupUuid: popupUuid), decodeTo: [PopupDTO].self)
                 .map { $0.toEntity() }
         }
-    }
-
-    public func getPersonalRandomPopupList(userUuid: String) async throws -> [Popup] {
-        try await popupProvider.asyncRequest(
-            .getPersonalRandomPopupList(userUuid: userUuid),
-            decodeTo: [PopupDTO].self
-        ).map { $0.toEntity() }
-    }
-
-    public func getAlertPopupList(userUuid: String) async throws -> [Popup] {
-        try await popupProvider.asyncRequest(.getAlertPopupList(userUuid: userUuid), decodeTo: [PopupDTO].self).map { $0.toEntity() }
-    }
-
-    public func removeAlertPopup(userUuid: String, popupUuid: String) async throws {
-        try await popupProvider.asyncRequestVoid(.removeAlertPopup(userUuid: userUuid, popupUuid: popupUuid))
     }
 
     public func getAlertPopupList() async throws -> [Popup] {

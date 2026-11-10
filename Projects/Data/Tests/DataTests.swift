@@ -239,6 +239,28 @@ struct DataTests {
         #expect(item.status == .pending)
     }
 
+    @Test("관리자 제보 목록 DTO가 알 수 없는 상태를 실패로 처리한다")
+    func popupSubmissionAdminListDTORejectsUnknownStatus() throws {
+        let json = """
+        {
+          "popupSubmissionId": 7,
+          "name": "성수 팝업",
+          "roadAddress": "서울 성동구 성수이로 00",
+          "region": "서울",
+          "submitterUserUuid": "user-1",
+          "submitterNickname": "팝팡",
+          "submittedAt": "2026-06-05T10:20:30",
+          "status": "ARCHIVED"
+        }
+        """.data(using: .utf8)!
+
+        let dto = try JSONDecoder().decode(PopupSubmissionAdminListResponseDTO.self, from: json)
+
+        #expect(throws: PopupSubmissionMappingError.unknownStatus("ARCHIVED")) {
+            try dto.toEntity()
+        }
+    }
+
     @Test("관리자 제보 상세 DTO가 새 서버 응답을 도메인 모델로 변환한다")
     func popupSubmissionAdminDetailDTOMapsToDomainModel() throws {
         let json = """
@@ -316,73 +338,8 @@ struct DataTests {
         #expect(dtoObject?["activated"] as? Bool == true)
     }
 
-    @Test("팝업 제보 상태 엔티티가 서버 DTO로 변환된다")
-    func popupSubmissionStatusMapsToServerDTO() throws {
-        let dto = PopupSubmissionStatus.approved.toDTO()
-        let dtoObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(dto)) as? [String: Any]
-
-        #expect(dto.popupSubmissionStatus == "APPROVED")
-        #expect(dtoObject?["popupSubmissionStatus"] as? String == "APPROVED")
-    }
-
-    @Test("팝업 제보 목록 DTO가 서버 응답을 도메인 모델로 변환한다")
-    func popupSubmissionDTOMapsToDomainModel() throws {
-        let json = """
-        {
-          "id": 7,
-          "name": "성수 팝업",
-          "startDate": "2026-06-03",
-          "endDate": "2026-06-10",
-          "address": "서울 성동구 성수이로 00",
-          "description": "브랜드 팝업 제보",
-          "status": "PENDING",
-          "createdAt": "2026-06-05T10:20:30.000Z"
-        }
-        """.data(using: .utf8)!
-
-        let submission = try JSONDecoder().decode(PopupSubmissionDTO.self, from: json).toEntity()
-
-        #expect(submission.id == 7)
-        #expect(submission.name == "성수 팝업")
-        #expect(submission.startDate == "2026-06-03")
-        #expect(submission.endDate == "2026-06-10")
-        #expect(submission.address == "서울 성동구 성수이로 00")
-        #expect(submission.description == "브랜드 팝업 제보")
-        #expect(submission.status == .pending)
-        #expect(submission.createdAt == "2026-06-05T10:20:30.000Z")
-    }
-
-    @Test("팝업 제보 목록 DTO가 알 수 없는 상태를 실패로 처리한다")
-    func popupSubmissionDTORejectsUnknownStatus() throws {
-        let json = """
-        {
-          "id": 7,
-          "name": "성수 팝업",
-          "startDate": "2026-06-03",
-          "endDate": "2026-06-10",
-          "address": "서울 성동구 성수이로 00",
-          "description": "브랜드 팝업 제보",
-          "status": "ARCHIVED",
-          "createdAt": "2026-06-05T10:20:30.000Z"
-        }
-        """.data(using: .utf8)!
-
-        let dto = try JSONDecoder().decode(PopupSubmissionDTO.self, from: json)
-
-        #expect(throws: PopupSubmissionMappingError.unknownStatus("ARCHIVED")) {
-            try dto.toEntity()
-        }
-    }
-
     @Test("API 경로가 현재 명세와 일치한다")
     func apiPathsMatchEndpointDefinitions() {
-        #expect(AdminAPI.getPopupSubmissionList.path == "/admin/popup-submissions")
-        #expect(AdminAPI.createPopupSubmission(requestDTO: .fixture).path == "/admin/popup-submissions")
-        #expect(AdminAPI.deactivatePopupByUser(userUuid: "user-1", popupUuid: "popup-1").path == "/admin/user/user-1/popup/popup-1/deactivate")
-        #expect(AdminAPI.updatePopupSubmissionStatus(
-            submissionId: 7,
-            requestDTO: PopupSubmissionStatus.approved.toDTO()
-        ).path == "/admin/popup-submissions/7/status")
         #expect(PopupSubmissionAPI.createPopupSubmission(requestDTO: .fixture).path == "/popup-submissions")
         #expect(PopupSubmissionAPI.getPopupSubmissionList(adminUuid: "admin-1", status: "전체").path == "/admin/popup-submissions")
         #expect(PopupSubmissionAPI.getPopupSubmissionDetail(adminUuid: "admin-1", submissionId: 7).path == "/admin/popup-submissions/7")
@@ -392,42 +349,16 @@ struct DataTests {
             requestDTO: .adminFixture
         ).path == "/admin/popup-submissions/7")
 
-
-        #expect(PopupAPI.getPopupList.path == "/popup")
-        #expect(PopupAPI.getUpcomingPopupList.path == "/popup/upcoming")
-        #expect(PopupAPI.getInProgressPopupList.path == "/popup/inProgress")
-        #expect(PopupAPI.searchPopupList(searchText: "성수").path == "/popup/search")
-        #expect(PopupAPI.getRandomPopupList.path == "/popup/random")
-        #expect(PopupAPI.getPersonalPopupList(userUuid: "user-1").path == "/users/user-1/popups")
-        #expect(PopupAPI.getPersonalUseerRecommendPopupList(userUuid: "user-1").path == "/users/user-1/popups/recommend")
-        #expect(PopupAPI.getPersonalUpcomingPopupList(userUuid: "user-1").path == "/users/user-1/popups/upcoming")
         #expect(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").path == "/users/user-1/popups/filtered/home")
         #expect(PopupAPI.getPersonalMapFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", latitude: nil, longitude: nil, mapSortStandard: "DISTANCE").path == "/users/user-1/popups/filtered/map")
-        #expect(PopupAPI.getPersonalRandomPopupList(userUuid: "user-1").path == "/users/user-1/popups/random")
-        #expect(PopupAPI.getAlertPopupList(userUuid: "user-1").path == "/users/user-1/alert/popups")
-        #expect(PopupAPI.removeAlertPopup(userUuid: "user-1", popupUuid: "popup-1").path == "/users/user-1/alert")
         #expect(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").path == "/favorite")
         #expect(PopupAPI.removeFavorite(userUuid: "user-1", popupUuid: "popup-1").path == "/favorite")
         #expect(PopupAPI.getPopularRecommendList.path == "recommend/featured")
         #expect(PopupAPI.getPopularRecommendPopupList(userUuid: "user-1", recommendId: 7).path == "/users/user-1/popups/recommendations/7")
-
-        #expect(UserAPI.getRecommendList.path == "/recommend")
-        #expect(UserAPI.getAlertKeywordList(userUuid: "user-1").path == "/alert-keyword")
-        #expect(UserAPI.addAlertKeyword(userUuid: "user-1", newAlertKeyword: "성수").path == "/alert-keyword")
-        #expect(UserAPI.removeAlertKeyword(userUuid: "user-1", deleteAlertKeyword: "성수").path == "/alert-keyword")
-        #expect(UserAPI.checkFcmToken(userUuid: "user-1", fcmToken: "fcm").path == "/user/user-1/fcm-token/duplicate-check")
-        #expect(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").path == "/user/user-1/fcm-token/update")
     }
 
     @Test("API 메서드가 현재 명세와 일치한다")
     func apiMethodsMatchEndpointDefinitions() {
-        #expect(AdminAPI.getPopupSubmissionList.method == .get)
-        #expect(AdminAPI.createPopupSubmission(requestDTO: .fixture).method == .post)
-        #expect(AdminAPI.deactivatePopupByUser(userUuid: "user-1", popupUuid: "popup-1").method == .patch)
-        #expect(AdminAPI.updatePopupSubmissionStatus(
-            submissionId: 7,
-            requestDTO: PopupSubmissionStatus.approved.toDTO()
-        ).method == .patch)
         #expect(PopupSubmissionAPI.createPopupSubmission(requestDTO: .fixture).method == .post)
         #expect(PopupSubmissionAPI.getPopupSubmissionList(adminUuid: "admin-1", status: "전체").method == .get)
         #expect(PopupSubmissionAPI.getPopupSubmissionDetail(adminUuid: "admin-1", submissionId: 7).method == .get)
@@ -437,37 +368,16 @@ struct DataTests {
             requestDTO: .adminFixture
         ).method == .put)
 
-
-        #expect(PopupAPI.getPopupList.method == .get)
-        #expect(PopupAPI.getUpcomingPopupList.method == .get)
-        #expect(PopupAPI.getInProgressPopupList.method == .get)
-        #expect(PopupAPI.searchPopupList(searchText: "성수").method == .get)
-        #expect(PopupAPI.getRandomPopupList.method == .get)
-        #expect(PopupAPI.getPersonalPopupList(userUuid: "user-1").method == .get)
-        #expect(PopupAPI.getPersonalUseerRecommendPopupList(userUuid: "user-1").method == .get)
-        #expect(PopupAPI.getPersonalUpcomingPopupList(userUuid: "user-1").method == .get)
         #expect(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").method == .get)
         #expect(PopupAPI.getPersonalMapFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", latitude: 37.5, longitude: 127.0, mapSortStandard: "DISTANCE").method == .get)
-        #expect(PopupAPI.getPersonalRandomPopupList(userUuid: "user-1").method == .get)
-        #expect(PopupAPI.getAlertPopupList(userUuid: "user-1").method == .get)
-        #expect(PopupAPI.removeAlertPopup(userUuid: "user-1", popupUuid: "popup-1").method == .delete)
         #expect(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").method == .post)
         #expect(PopupAPI.removeFavorite(userUuid: "user-1", popupUuid: "popup-1").method == .delete)
         #expect(PopupAPI.getPopularRecommendList.method == .get)
         #expect(PopupAPI.getPopularRecommendPopupList(userUuid: "user-1", recommendId: 7).method == .get)
-
-        #expect(UserAPI.getRecommendList.method == .get)
-        #expect(UserAPI.getAlertKeywordList(userUuid: "user-1").method == .get)
-        #expect(UserAPI.addAlertKeyword(userUuid: "user-1", newAlertKeyword: "성수").method == .post)
-        #expect(UserAPI.removeAlertKeyword(userUuid: "user-1", deleteAlertKeyword: "성수").method == .delete)
-        #expect(UserAPI.checkFcmToken(userUuid: "user-1", fcmToken: "fcm").method == .get)
-        #expect(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").method == .put)
     }
 
     @Test("API 요청 파라미터가 현재 명세와 일치한다")
     func apiRequestParametersMatchEndpointDefinitions() {
-        #expect(stringParameter(PopupAPI.searchPopupList(searchText: "성수").task, key: "q") == "성수")
-        #expect(stringParameter(PopupAPI.getPersonalPopupList(userUuid: "user-1").task, key: "userUuid") == "user-1")
         #expect(stringParameter(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").task, key: "region") == "서울")
         #expect(stringParameter(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").task, key: "district") == "성동구")
         #expect(stringParameter(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").task, key: "homeSortStandard") == "NEWEST")
@@ -486,15 +396,8 @@ struct DataTests {
         #expect(doubleParameter(mapTask, key: "longitude") == 127.0)
         #expect(stringParameter(mapTask, key: "mapSortStandard") == "DISTANCE")
 
-        #expect(stringParameter(PopupAPI.removeAlertPopup(userUuid: "user-1", popupUuid: "popup-1").task, key: "popupUuid") == "popup-1")
         #expect(stringParameter(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").task, key: "userUuid") == "user-1")
         #expect(stringParameter(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").task, key: "popupUuid") == "popup-1")
-
-        #expect(stringParameter(UserAPI.getAlertKeywordList(userUuid: "user-1").task, key: "userUuid") == "user-1")
-        #expect(stringParameter(UserAPI.addAlertKeyword(userUuid: "user-1", newAlertKeyword: "성수").task, key: "newAlertKeyword") == "성수")
-        #expect(stringParameter(UserAPI.removeAlertKeyword(userUuid: "user-1", deleteAlertKeyword: "성수").task, key: "deleteAlertKeyword") == "성수")
-        #expect(stringParameter(UserAPI.checkFcmToken(userUuid: "user-1", fcmToken: "fcm").task, key: "fcmToken") == "fcm")
-        #expect(stringParameter(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").task, key: "fcmToken") == "fcm")
     }
 
     private func stringParameter(_ task: Moya.Task, key: String) -> String? {

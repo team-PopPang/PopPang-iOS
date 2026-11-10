@@ -24,10 +24,6 @@ public final class UserRepositoryImpl: UserRepositoryProtocol {
         }
     }
 
-    public func getRecommandList() async throws -> [Recommend] {
-        try await userProvider.asyncRequest(.getRecommendList, decodeTo: [RecommendListDTO].self).map { $0.toModel() }
-    }
-
     public func withdraw() async throws {
         // 기기의 토큰은 뒤이은 로그아웃 전환이 지운다. 여기서 먼저 지우면 아직 화면에서 진행 중인 요청이
         // 토큰 없이 실패해 세션 만료 알림이 로그아웃 전환과 겹친다.
@@ -38,25 +34,6 @@ public final class UserRepositoryImpl: UserRepositoryProtocol {
                 // 앞선 탈퇴 요청의 응답을 받지 못한 채 다시 보냈다. 사용자가 이미 없으므로 탈퇴한 것으로 본다.
             }
         }
-    }
-
-    public func getAlertKeywordList(userUuid: String) async throws -> [Keyword] {
-        try await userProvider.asyncRequest(
-            .getAlertKeywordList(userUuid: userUuid),
-            decodeTo: [KeywordDTO].self
-        ).map { $0.toModel() }
-    }
-
-    public func addAlertKeyword(userUuid: String, alertKeyword: String) async throws {
-        try await userProvider.asyncRequestVoid(
-            .addAlertKeyword(userUuid: userUuid, newAlertKeyword: alertKeyword)
-        )
-    }
-
-    public func removeAlertKeyword(userUuid: String, alertKeyword: String) async throws {
-        try await userProvider.asyncRequestVoid(
-            .removeAlertKeyword(userUuid: userUuid, deleteAlertKeyword: alertKeyword)
-        )
     }
 
     public func getAlertKeywordList() async throws -> [Keyword] {
@@ -97,28 +74,11 @@ public final class UserRepositoryImpl: UserRepositoryProtocol {
         }
     }
 
-    public func checkFcmToken(userUuid: String, fcmToken: String) async throws -> Bool {
-        try await userProvider.asyncRequest(
-            .checkFcmToken(userUuid: userUuid, fcmToken: fcmToken),
-            decodeTo: Bool.self
-        )
-    }
-
-    public func updateFcmToken(userUuid: String, fcmToken: String) async throws {
-        try await userProvider.asyncRequestVoid(
-            .updateFcmToken(userUuid: userUuid, newFcmToken: fcmToken)
-        )
-    }
-
     public func updateFcmToken(fcmToken: String) async throws {
         // 명세 USER-06: 저장만 하고 빈 본문을 준다.
         try await userRequest {
             try await makeV2Provider().asyncRequestVoid(.updateFcmToken(fcmToken: fcmToken))
         }
-    }
-
-    private var userProvider: MoyaProvider<UserAPI> {
-        NetworkProvider.shared.makeProvider()
     }
 }
 

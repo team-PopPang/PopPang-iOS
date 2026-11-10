@@ -138,7 +138,7 @@ Store(initialState: AppFeature.State()) {
 
 ### 철자가 틀린 기존 이름
 
-`getPersonalUseerRecommendPopupList`, `getRecommandList`, section id `"comming"`은 철자가 틀렸지만 API·public protocol·화면 동작과 연결되어 있다. 호출할 때는 기존 이름을 그대로 쓰고, 이름을 고치는 작업은 별도로 계획한다.
+section id `"comming"`은 철자가 틀렸지만 화면 동작과 연결되어 있다. 호출할 때는 기존 이름을 그대로 쓰고, 이름을 고치는 작업은 별도로 계획한다.
 
 ## 접근 제어와 타입
 

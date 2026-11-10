@@ -5,40 +5,8 @@ public final class PopupUsecaseImpl: PopupUsecaseProtocol {
         self.popupRepository = popupRepository
     }
 
-    public func getPopupList() async throws -> [Popup] {
-        try await popupRepository.getPopupList()
-    }
-
-    public func getUpcomingPopupList() async throws -> [Popup] {
-        try await popupRepository.getUpcomingPopupList()
-    }
-
-    public func getInProgressPopupList() async throws -> [Popup] {
-        try await popupRepository.getInProgressPopupList()
-    }
-
     public func getFavoriteList() async throws -> [Popup] {
         try await popupRepository.getFavoriteList()
-    }
-
-    public func searchPopupList(searchText: String) async throws -> [Popup] {
-        try await popupRepository.searchPopupList(searchText: searchText)
-    }
-
-    public func getRandomPopupList() async throws -> [Popup] {
-        try await popupRepository.getRandomPopupList()
-    }
-
-    public func getPersonalPopupList(userUuid: String) async throws -> [Popup] {
-        try await popupRepository.getPersonalPopupList(userUuid: userUuid)
-    }
-
-    public func getPersonalUseerRecommendPopupList(userUuid: String) async throws -> [Popup] {
-        try await popupRepository.getPersonalUseerRecommendPopupList(userUuid: userUuid)
-    }
-
-    public func getPersonalUpcomingPopupList(userUuid: String) async throws -> [Popup] {
-        try await popupRepository.getPersonalUpcomingPopupList(userUuid: userUuid)
     }
 
     public func getPersonalFilteredPopupList(
@@ -91,18 +59,6 @@ public final class PopupUsecaseImpl: PopupUsecaseProtocol {
 
     public func getRelatedPopupList(popupUuid: String) async throws -> [Popup] {
         try await popupRepository.getRelatedPopupList(popupUuid: popupUuid)
-    }
-
-    public func getPersonalRandomPopupList(userUuid: String) async throws -> [Popup] {
-        try await popupRepository.getPersonalRandomPopupList(userUuid: userUuid)
-    }
-
-    public func getAlertPopupList(userUuid: String) async throws -> [Popup] {
-        try await popupRepository.getAlertPopupList(userUuid: userUuid)
-    }
-
-    public func removeAlertPopup(userUuid: String, popupUuid: String) async throws {
-        try await popupRepository.removeAlertPopup(userUuid: userUuid, popupUuid: popupUuid)
     }
 
     public func getAlertPopupList() async throws -> [Popup] {
