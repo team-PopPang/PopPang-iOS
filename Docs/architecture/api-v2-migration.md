@@ -232,6 +232,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 7 | AlertFeature | 알림 키워드 목록·등록·삭제 (ALERT-01~03), 알림함 목록·삭제 (ALERT-04·05), 찜 등록·해제 | 완료 (#150) |
 | 8 | App (푸시) | FCM 토큰 중복 확인·갱신 두 요청을 `PUT /api/v2/user/fcm-token` 하나로 (USER-06) | 완료 (#148) |
 | 9 | 정리 | 쓰지 않는 V1 case(비회원 팝업 목록 등), Repository·Usecase의 `userUuid` 인자, 세션의 `userUuid` 저장 | 진행 중 (#152에서 앱이 부르지 않는 V1 함수 삭제. 지도가 쓰는 V1 함수와 `userUuid`는 지도 전환 뒤) |
+| 10 | React Native 제보·제보 관리 (PopPang-RN) | 추천 카테고리 (RECO-01), 팝업 제보 (SUB-01), 관리자 제보 목록·수정 | 완료 (#154, RN `v1.1.0`) |
 
 - 여러 feature가 같이 쓰는 API(찜 등록·해제, 지역 목록, 필터 팝업)는 **처음 쓰는 feature에서 V2로 만들고**, 뒤의 feature는 가져다 써요. 옮기는 동안 화면마다 V1·V2가 섞여도 서버 데이터가 같아서 괜찮아요(명세 C-9).
 - 회원 팝업 V2 API는 `Data/Sources/Remote/V2PopupAPI.swift`에 모아요. 응답은 V1과 같은 감싸지 않은 팝업 배열이라 `PopupDTO`를 그대로 써요.
@@ -242,7 +243,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 - 세션의 `userUuid`는 아직 V1인 지도 탭(`MapFeature`)이 요청에 넣어 보내므로 남겨요. 검색·팝업 상세는 V2로 옮겨 `userUuid`를 쓰지 않아요.
 
 **확인 필요 (백엔드)**
-- 팝업 제보(SUB-01)는 Swift 코드에서 부르지 않아요. React Native 화면이 직접 부르는지 PopPang-RN 저장소에서 확인해야 해요.
+- 팝업 제보(SUB-01)는 Swift 코드에서 부르지 않고 React Native 화면이 직접 불러요. #154에서 V2로 옮겼어요([React Native 제보 화면](#react-native-제보-화면-154)).
 
 헬스 체크(`GET /api/v1/health`)는 대응 V2가 없어서 V1 그대로 써요.
 
@@ -343,7 +344,21 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 
 - Repository·Usecase protocol과 구현, V1 API case를 함께 지웠어요. case가 모두 없어진 `UserAPI`·`AdminAPI`는 파일째 지웠어요. 관리자 V1 함수만 쓰던 `PopupSubmissionDTO`·`PopupSubmissionStatusUpdateRequestDTO`와 매핑, Domain `PopupSubmission`도 지웠어요. 다른 제보 매핑이 쓰는 `PopupSubmissionMappingError`는 따로 파일로 남겼어요.
 - 남긴 것: 지도 탭(`MapFeature`)과 옛 달력 모듈(`CalendarFeature`)이 쓰는 `PopupAPI`의 필터 팝업(home·map), 인기 추천 카테고리, 카테고리별 팝업, `userUuid` 찜 등록·해제. 세션의 `userUuid`도 지도가 요청에 넣어 보내므로 남겨요. 지도를 V2로 옮긴 뒤 지워요.
-- `PopupSubmission` repository(`PopupSubmissionAPI`)는 Swift 화면에서 부르지 않지만, 제보 화면(React Native)과 관련이 있어 이번 범위에서 뺐어요. 확인 필요: PopPang-RN 저장소가 이 API를 쓰는지.
+- `PopupSubmission` repository(`PopupSubmissionAPI`)는 Swift 화면에서 부르지 않지만, 제보 화면(React Native)과 관련이 있어 이번 범위에서 뺐어요. PopPang-RN은 이 Swift API를 쓰지 않고 같은 서버 API를 직접 불러요(#154에서 V2로 전환). Swift 쪽은 지워도 되는 후속 정리 대상이에요.
+
+### React Native 제보 화면 (#154)
+
+팝업 제보·제보 관리 화면은 PopPang-RN 저장소의 React Native 화면이 서버를 직접 불러요. V2는 Access Token이 필요해서, 앱이 RN에 토큰을 넘기는 길을 만들고 RN이 V2를 부르게 했어요.
+
+| 화면 | V1 | V2 |
+| --- | --- | --- |
+| 팝업 제보 | `GET /api/v1/recommend`, `POST /api/v1/popup-submissions` | `GET /api/v2/recommend`, `POST /api/v2/popup-submissions` (본문에 `userUuid` 없음) |
+| 제보 관리 (관리자) | `GET`·`PUT /api/v1/admin/popup-submissions?uuid=관리자 userUuid` | `GET`·`PUT /api/v2/admin/popup-submissions` (`uuid` 없음) |
+
+- 토큰 전달: RN 네이티브 모듈 `PopPangHostAuth`(RN `v1.1.0` 산출물의 `HostSources`)가 `getAccessToken(forceRefresh)`를 JS에 열어요. 앱은 시작할 때 `MainTabFeatureDependencies`에서 `PopPangRNHostAuth.setAccessTokenProvider`로 공급자를 등록해요.
+- 공급자는 `AuthenticationPlugin.accessToken(forceRefresh:)`예요. 저장된 Access Token을 돌려주고, `forceRefresh`면 네트워크 요청과 같은 `AccessTokenRefresher`로 갱신해요. 갱신이 로그인 필요로 실패하면 네트워크 요청과 똑같이 로그인 화면으로 보내요.
+- RN은 V2 요청이 401이면 `forceRefresh: true`로 토큰을 한 번 다시 받아 재시도해요. 그래도 실패하면 "로그인 정보가 만료되었습니다." 안내를 보여요. 403은 권한 없음 안내예요.
+- 이전 RN 산출물(`v1.0.0`)에는 이 모듈이 없어요. 앱과 RN 버전을 함께 올려야 해요([React Native 산출물](../development/react-native.md)).
 
 ## 정해야 할 것
 
