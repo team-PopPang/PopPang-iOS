@@ -27,6 +27,66 @@ struct AuthenticationTests {
         #expect(plugin.prepare(request, target: AuthTestAPI.signup).authorizationHeader == nil)
     }
 
+    // MARK: - 네트워크 밖에서 쓰는 Access Token
+
+    @Test("갱신을 요청하지 않으면 저장된 Access Token을 그대로 돌려주고 갱신하지 않는다")
+    func accessTokenReturnsStoredToken() async throws {
+        let storage = try makeStorage()
+        let counter = CallCounter()
+        let plugin = AuthenticationPlugin(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
+
+        #expect(await plugin.accessToken(forceRefresh: false) == "old-access")
+        #expect(await counter.count == 0)
+    }
+
+    @Test("401 뒤에 갱신을 요청하면 갱신한 새 Access Token을 돌려준다")
+    func accessTokenRefreshesWhenForced() async throws {
+        let storage = try makeStorage()
+        let counter = CallCounter()
+        let plugin = AuthenticationPlugin(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
+
+        #expect(await plugin.accessToken(forceRefresh: true) == "new-access")
+        #expect(await counter.refreshTokens == ["old-refresh"])
+    }
+
+    @Test("로그아웃 상태면 갱신하지 않고 nil을 돌려준다")
+    func accessTokenIsNilWhenLoggedOut() async {
+        let storage = AuthTokenStorage(store: InMemoryStore())
+        let counter = CallCounter()
+        let plugin = AuthenticationPlugin(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
+
+        #expect(await plugin.accessToken(forceRefresh: false) == nil)
+        #expect(await plugin.accessToken(forceRefresh: true) == nil)
+        #expect(await counter.count == 0)
+    }
+
+    @Test("갱신도 401이면 nil을 돌려주고 다시 로그인해야 한다고 알린다")
+    func accessTokenNotifiesLoginRequiredWhenRefreshIsUnauthorized() async throws {
+        let storage = try makeStorage()
+        let events = AuthSessionEvents()
+        let stream = events.loginRequired()
+        let refresher = AccessTokenRefresher(storage: storage) { _ in
+            throw NetworkError.invalidStatusCode(401, message: errorBody(code: 5007))
+        }
+        let plugin = AuthenticationPlugin(storage: storage, refresher: refresher, sessionEvents: events)
+
+        #expect(await plugin.accessToken(forceRefresh: true) == nil)
+        var iterator = stream.makeAsyncIterator()
+        #expect(await iterator.next() != nil)
+    }
+
+    @Test("갱신이 401이 아닌 이유로 실패하면 nil을 돌려주고 토큰은 그대로 둔다")
+    func accessTokenKeepsTokensWhenRefreshFailsOtherwise() async throws {
+        let storage = try makeStorage()
+        let refresher = AccessTokenRefresher(storage: storage) { _ in
+            throw NetworkError.invalidStatusCode(503, message: errorBody(code: 5013))
+        }
+        let plugin = AuthenticationPlugin(storage: storage, refresher: refresher)
+
+        #expect(await plugin.accessToken(forceRefresh: true) == nil)
+        #expect(storage.loadTokens() == .oldTokens)
+    }
+
     // MARK: - AccessTokenRefresher
 
     @Test("동시에 만료돼도 갱신 요청은 한 번만 보내고 모두 새 토큰을 받는다")
