@@ -24,13 +24,12 @@ struct AppBootstrap {
         // V2 인증 토큰 저장소와 갱신을 조립해, 모든 요청이 쓰는 NetworkProvider에 요청 전에 연결
         let tokenStorage = AuthTokenStorage(store: store)
         let sessionEvents = AuthSessionEvents()
-        NetworkProvider.shared.configureAuthentication(
-            AuthenticationPlugin(
-                storage: tokenStorage,
-                refresher: AccessTokenRefresher(storage: tokenStorage, refresh: AuthTokenRefresh.live()),
-                sessionEvents: sessionEvents
-            )
+        let authentication = AuthenticationPlugin(
+            storage: tokenStorage,
+            refresher: AccessTokenRefresher(storage: tokenStorage, refresh: AuthTokenRefresh.live()),
+            sessionEvents: sessionEvents
         )
+        NetworkProvider.shared.configureAuthentication(authentication)
 
         // Repository와 UseCase를 포함한 앱의 실제 의존성 그래프
         let dependencies = AppDependencyRegistry.live(tokenStorage: tokenStorage, store: store)
@@ -47,7 +46,11 @@ struct AppBootstrap {
             store: store,
             adminUsecase: dependencies.usecases.adminUsecase,
             popupUsecase: dependencies.usecases.popupUsecase,
-            userUsecase: dependencies.usecases.userUsecase
+            userUsecase: dependencies.usecases.userUsecase,
+            // React Native 화면도 앱 요청과 같은 토큰 저장소·갱신을 쓴다.
+            reactNativeAccessToken: { forceRefresh in
+                await authentication.accessToken(forceRefresh: forceRefresh)
+            }
         )
         
         // 푸시 토큰을 로컬에 저장하기 위한 저장소를 생성
