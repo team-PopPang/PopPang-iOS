@@ -28,26 +28,6 @@ public struct AuthenticationPlugin: PluginType {
         return request
     }
 
-    /// 네트워크 계층 밖(React Native 화면 등)에서 V2 API를 부를 때 쓸 Access Token을 돌려준다.
-    ///
-    /// - Parameter forceRefresh: 그 토큰으로 보낸 요청이 401을 받았으면 `true`. 저장된 토큰을 갱신해 돌려준다.
-    ///   다른 요청이 이미 갱신했으면 다시 갱신하지 않고 새 토큰을 돌려준다.
-    /// - Returns: 로그아웃 상태이거나 갱신에 실패하면 `nil`.
-    ///   Refresh Token도 쓸 수 없으면(`AuthSessionError.loginRequired`) 앱의 다른 요청처럼 다시 로그인해야 한다고 알린다.
-    public func accessToken(forceRefresh: Bool) async -> String? {
-        guard let accessToken = storage.loadTokens()?.accessToken else { return nil }
-        guard forceRefresh else { return accessToken }
-
-        do {
-            return try await refresher.refreshAccessToken(expired: accessToken)
-        } catch AuthSessionError.loginRequired {
-            sessionEvents?.notifyLoginRequired()
-            return nil
-        } catch {
-            return nil
-        }
-    }
-
     /// 요청에 담을 토큰. 인증이 필요 없는 요청이거나 토큰이 없으면 `nil`이다.
     func token(for target: TargetType) -> String? {
         switch Self.authorization(of: target) {

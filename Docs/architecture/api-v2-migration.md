@@ -355,8 +355,9 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 팝업 제보 | `GET /api/v1/recommend`, `POST /api/v1/popup-submissions` | `GET /api/v2/recommend`, `POST /api/v2/popup-submissions` (본문에 `userUuid` 없음) |
 | 제보 관리 (관리자) | `GET`·`PUT /api/v1/admin/popup-submissions?uuid=관리자 userUuid` | `GET`·`PUT /api/v2/admin/popup-submissions` (`uuid` 없음) |
 
-- 토큰 전달: RN 네이티브 모듈 `PopPangHostAuth`(RN `v1.1.0` 산출물의 `HostSources`)가 `getAccessToken(forceRefresh)`를 JS에 열어요. 앱은 시작할 때 `MainTabFeatureDependencies`에서 `PopPangRNHostAuth.setAccessTokenProvider`로 공급자를 등록해요.
-- 공급자는 `AuthenticationPlugin.accessToken(forceRefresh:)`예요. 저장된 Access Token을 돌려주고, `forceRefresh`면 네트워크 요청과 같은 `AccessTokenRefresher`로 갱신해요. 갱신이 로그인 필요로 실패하면 네트워크 요청과 똑같이 로그인 화면으로 보내요.
+- 토큰 전달: RN 네이티브 모듈 `PopPangHostAuth`(RN `v1.1.0` 산출물의 `HostSources`)가 `getAccessToken(forceRefresh)`를 JS에 열어요. 앱은 시작할 때 `AppBootstrap`에서 `MainTabFeatureDependencies.registerReactNativeAccessTokenProvider(_:)`로 공급자를 등록해요.
+- 공급자는 `Core`의 `HostAccessTokenProvider`(actor)예요. 저장된 Access Token을 돌려주며 마지막으로 건넨 토큰을 기억해요. `forceRefresh`면 그 토큰을 만료된 토큰으로 넘겨 네트워크 요청과 같은 `AccessTokenRefresher`로 갱신해요. 다른 요청이 이미 갱신했으면 다시 갱신하지 않고 새 토큰을 돌려줘요. 갱신이 로그인 필요로 실패하면 네트워크 요청과 똑같이 로그인 화면으로 보내요.
+- 네트워크 요청과 다른 점: 네트워크 요청은 401 중 코드 5002(토큰 만료)만 갱신하지만, RN은 응답 코드를 넘기지 않아 401이면 모두 한 번 갱신을 요청해요. 갱신이 401이 아닌 이유(503 등)로 실패해도 RN에는 `nil`이 가서 만료 안내가 떠요(토큰은 그대로라 다시 열면 돼요). 둘 다 RN과 함께 바꿔야 해서 후속으로 남겨요.
 - RN은 V2 요청이 401이면 `forceRefresh: true`로 토큰을 한 번 다시 받아 재시도해요. 그래도 실패하면 "로그인 정보가 만료되었습니다." 안내를 보여요. 403은 권한 없음 안내예요.
 - 이전 RN 산출물(`v1.0.0`)에는 이 모듈이 없어요. 앱과 RN 버전을 함께 올려야 해요([React Native 산출물](../development/react-native.md)).
 

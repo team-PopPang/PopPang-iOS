@@ -40,8 +40,8 @@ reducer는 `DependencyValues`로만 의존성을 받는다. 실제 구현은 com
 | 파일 | 하는 일 |
 | --- | --- |
 | `Projects/App/Sources/AppCore/1. AppDependencyRegistry.swift` | `AppRepositoryRegistry`가 `PopupRepositoryImpl()` 같은 Repository를, `AppUsecaseRegistry`가 `PopupUsecaseImpl(popupRepository:)` 같은 Usecase를 만든다. |
-| `Projects/App/Sources/AppCore/2. AppBootstrap.swift` | 같은 `Storing` 저장소와 Usecase 인스턴스를 여러 객체에 나눠 주고, `makeAppStore()`에서 `withDependencies`로 주입한다. |
-| `Projects/Features/MainTabFeature/Sources/MainTabFeatureDependencies.swift` | 탭과 상세 feature client(`alertFeatureClient`, `calendarFeatureClient`, `homePopupClient` 등)의 `.live(...)`를 만들고 `configure(_:)`로 `DependencyValues`에 넣는다. |
+| `Projects/App/Sources/AppCore/2. AppBootstrap.swift` | 같은 `Storing` 저장소와 Usecase 인스턴스를 여러 객체에 나눠 주고, `makeAppStore()`에서 `withDependencies`로 주입한다. React Native 화면이 쓸 Access Token 공급자(`HostAccessTokenProvider`)도 여기서 만들어 `MainTabFeatureDependencies.registerReactNativeAccessTokenProvider(_:)`로 한 번 등록한다. |
+| `Projects/Features/MainTabFeature/Sources/MainTabFeatureDependencies.swift` | 탭과 상세 feature client(`alertFeatureClient`, `calendarFeatureClient`, `homePopupClient` 등)의 `.live(...)`를 만들고 `configure(_:)`로 `DependencyValues`에 넣는다. `registerReactNativeAccessTokenProvider(_:)`는 RN 네이티브 모듈 `PopPangHostAuth`의 전역 공급자를 바꾸는 static 함수다. RN 화면은 TCA reducer가 아니라서 `DependencyValues`로 받지 않는다. |
 
 `makeAppStore()`의 주입 코드:
 

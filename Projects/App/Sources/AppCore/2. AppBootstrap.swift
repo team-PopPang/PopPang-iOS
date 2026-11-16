@@ -46,12 +46,14 @@ struct AppBootstrap {
             store: store,
             adminUsecase: dependencies.usecases.adminUsecase,
             popupUsecase: dependencies.usecases.popupUsecase,
-            userUsecase: dependencies.usecases.userUsecase,
-            // React Native 화면도 앱 요청과 같은 토큰 저장소·갱신을 쓴다.
-            reactNativeAccessToken: { forceRefresh in
-                await authentication.accessToken(forceRefresh: forceRefresh)
-            }
+            userUsecase: dependencies.usecases.userUsecase
         )
+
+        // React Native 화면도 앱 요청과 같은 토큰 저장소·갱신을 쓴다.
+        let hostAccessTokenProvider = HostAccessTokenProvider(authentication: authentication)
+        MainTabFeatureDependencies.registerReactNativeAccessTokenProvider { forceRefresh in
+            await hostAccessTokenProvider.accessToken(forceRefresh: forceRefresh)
+        }
         
         // 푸시 토큰을 로컬에 저장하기 위한 저장소를 생성
         let pushTokenStorage = PushTokenStorage(store: store)

@@ -21,17 +21,12 @@ public struct MainTabFeatureDependencies {
     private let profileFeatureClient: ProfileFeatureClient
     private let searchFeatureClient: SearchFeatureClient
 
-    /// - Parameter reactNativeAccessToken: React Native 화면(팝업 제보·제보 관리)이 V2 API를 부를 때 쓸 Access Token.
-    ///   `forceRefresh`가 `true`면 갱신해 돌려준다. 로그아웃 상태이거나 갱신에 실패하면 `nil`.
     public init(
         store: Storing,
         adminUsecase: AdminUsecaseProtocol,
         popupUsecase: PopupUsecaseProtocol,
-        userUsecase: UserUsecaseProtocol,
-        reactNativeAccessToken: @escaping @Sendable (_ forceRefresh: Bool) async -> String?
+        userUsecase: UserUsecaseProtocol
     ) {
-        PopPangRNHostAuth.setAccessTokenProvider(reactNativeAccessToken)
-
         alertFeatureClient = .live(
             popupUsecase: popupUsecase,
             userUsecase: userUsecase,
@@ -50,6 +45,16 @@ public struct MainTabFeatureDependencies {
             popupUsecase: popupUsecase,
             recentSearchStorage: RecentSearchStorage(store: store)
         )
+    }
+
+    /// React Native 화면(팝업 제보·제보 관리)이 V2 API를 부를 때 쓸 Access Token 공급자를 앱 전체에 한 번 등록한다.
+    ///
+    /// RN 네이티브 모듈(`PopPangHostAuth`)이 전역으로 들고 있으므로 마지막에 등록한 공급자를 쓴다.
+    /// - Parameter provider: `forceRefresh`가 `true`면 갱신해 돌려준다. 로그아웃 상태이거나 갱신에 실패하면 `nil`.
+    public static func registerReactNativeAccessTokenProvider(
+        _ provider: @escaping @Sendable (_ forceRefresh: Bool) async -> String?
+    ) {
+        PopPangRNHostAuth.setAccessTokenProvider(provider)
     }
 
     public func configure(_ values: inout DependencyValues) {

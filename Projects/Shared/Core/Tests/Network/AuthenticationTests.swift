@@ -27,15 +27,15 @@ struct AuthenticationTests {
         #expect(plugin.prepare(request, target: AuthTestAPI.signup).authorizationHeader == nil)
     }
 
-    // MARK: - 네트워크 밖에서 쓰는 Access Token
+    // MARK: - HostAccessTokenProvider (네트워크 밖에서 쓰는 Access Token)
 
     @Test("갱신을 요청하지 않으면 저장된 Access Token을 그대로 돌려주고 갱신하지 않는다")
     func accessTokenReturnsStoredToken() async throws {
         let storage = try makeStorage()
         let counter = CallCounter()
-        let plugin = AuthenticationPlugin(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
+        let provider = makeHostProvider(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
 
-        #expect(await plugin.accessToken(forceRefresh: false) == "old-access")
+        #expect(await provider.accessToken(forceRefresh: false) == "old-access")
         #expect(await counter.count == 0)
     }
 
@@ -43,20 +43,46 @@ struct AuthenticationTests {
     func accessTokenRefreshesWhenForced() async throws {
         let storage = try makeStorage()
         let counter = CallCounter()
-        let plugin = AuthenticationPlugin(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
+        let provider = makeHostProvider(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
 
-        #expect(await plugin.accessToken(forceRefresh: true) == "new-access")
+        #expect(await provider.accessToken(forceRefresh: false) == "old-access")
+        #expect(await provider.accessToken(forceRefresh: true) == "new-access")
         #expect(await counter.refreshTokens == ["old-refresh"])
+    }
+
+    @Test("같은 토큰으로 보낸 요청 여러 개가 401을 받아도 한 번만 갱신한다")
+    func accessTokenRefreshesOnceForSameExpiredToken() async throws {
+        let storage = try makeStorage()
+        let counter = CallCounter()
+        let provider = makeHostProvider(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
+
+        #expect(await provider.accessToken(forceRefresh: false) == "old-access")
+        #expect(await provider.accessToken(forceRefresh: true) == "new-access")
+        #expect(await provider.accessToken(forceRefresh: true) == "new-access")
+        #expect(await counter.count == 1)
+    }
+
+    @Test("건넨 뒤 앱 요청이 이미 갱신했으면 다시 갱신하지 않고 새 토큰을 돌려준다")
+    func accessTokenSkipsRefreshWhenAlreadyRefreshed() async throws {
+        let storage = try makeStorage()
+        let counter = CallCounter()
+        let provider = makeHostProvider(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
+
+        #expect(await provider.accessToken(forceRefresh: false) == "old-access")
+        try storage.saveTokens(.newTokens)
+
+        #expect(await provider.accessToken(forceRefresh: true) == "new-access")
+        #expect(await counter.count == 0)
     }
 
     @Test("로그아웃 상태면 갱신하지 않고 nil을 돌려준다")
     func accessTokenIsNilWhenLoggedOut() async {
         let storage = AuthTokenStorage(store: InMemoryStore())
         let counter = CallCounter()
-        let plugin = AuthenticationPlugin(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
+        let provider = makeHostProvider(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
 
-        #expect(await plugin.accessToken(forceRefresh: false) == nil)
-        #expect(await plugin.accessToken(forceRefresh: true) == nil)
+        #expect(await provider.accessToken(forceRefresh: false) == nil)
+        #expect(await provider.accessToken(forceRefresh: true) == nil)
         #expect(await counter.count == 0)
     }
 
@@ -68,9 +94,9 @@ struct AuthenticationTests {
         let refresher = AccessTokenRefresher(storage: storage) { _ in
             throw NetworkError.invalidStatusCode(401, message: errorBody(code: 5007))
         }
-        let plugin = AuthenticationPlugin(storage: storage, refresher: refresher, sessionEvents: events)
+        let provider = makeHostProvider(storage: storage, refresher: refresher, sessionEvents: events)
 
-        #expect(await plugin.accessToken(forceRefresh: true) == nil)
+        #expect(await provider.accessToken(forceRefresh: true) == nil)
         var iterator = stream.makeAsyncIterator()
         #expect(await iterator.next() != nil)
     }
@@ -81,9 +107,9 @@ struct AuthenticationTests {
         let refresher = AccessTokenRefresher(storage: storage) { _ in
             throw NetworkError.invalidStatusCode(503, message: errorBody(code: 5013))
         }
-        let plugin = AuthenticationPlugin(storage: storage, refresher: refresher)
+        let provider = makeHostProvider(storage: storage, refresher: refresher)
 
-        #expect(await plugin.accessToken(forceRefresh: true) == nil)
+        #expect(await provider.accessToken(forceRefresh: true) == nil)
         #expect(storage.loadTokens() == .oldTokens)
     }
 
@@ -426,6 +452,16 @@ private func makeStorage(
         try storage.saveSignupToken(signupToken)
     }
     return storage
+}
+
+private func makeHostProvider(
+    storage: AuthTokenStorage,
+    refresher: AccessTokenRefresher,
+    sessionEvents: AuthSessionEvents? = nil
+) -> HostAccessTokenProvider {
+    HostAccessTokenProvider(
+        authentication: AuthenticationPlugin(storage: storage, refresher: refresher, sessionEvents: sessionEvents)
+    )
 }
 
 private func makeRefresher(
