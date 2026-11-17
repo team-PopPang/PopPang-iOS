@@ -31,9 +31,8 @@ Swift Package에는 React Native·Hermes·네이티브 모듈 XCFramework(GitHub
 
 | 구성 요소 | 위치 | 하는 일 |
 | --- | --- | --- |
-| `PopPangRNRuntime` | `PopPangRNFeature/Sources/Support/PopPangRNRuntime.swift` | `PopPangRN.start(host:prewarm:)`로 런타임을 시작하고, 계약의 `getAccessToken` 요청을 앱의 토큰 공급자로 처리한다. 런타임은 미리 띄우지 않고(`prewarm: false`) 화면을 처음 열 때 번들을 불러온다. |
-| `MainTabFeatureDependencies.startReactNative(accessTokenProvider:)` | `MainTabFeature/Sources/MainTabFeatureDependencies.swift` | 앱 target이 `PopPangRNFeature`에 직접 의존하지 않아 `PopPangRNRuntime.start`를 대신 부른다. |
-| `AppBootstrap.live()` | `App/Sources/AppCore/2. AppBootstrap.swift` | 앱을 시작할 때 한 번 `startReactNative`를 부른다. 공급자는 `AuthenticationPlugin.hostAccessToken(rejected:expired:)`를 쓴다. |
+| `PopPangRNRuntime` | `PopPangRNFeature/Sources/Support/PopPangRNRuntime.swift` | `start(authentication:)`이 `PopPangRN.start(host:prewarm:)`로 런타임을 시작하고, 계약의 `getAccessToken` 요청을 `AuthenticationPlugin.hostAccessToken(rejected:expired:)`로 처리한다. 런타임은 미리 띄우지 않고(`prewarm: false`) 화면을 처음 열 때 번들을 불러온다. Nativepiece 런타임은 앱 전체에 하나라 TCA `DependencyValues`가 아니라 앱 시작 때 한 번 연결한다. |
+| `AppBootstrap.live()` | `App/Sources/AppCore/2. AppBootstrap.swift` | 앱을 시작할 때 한 번 `PopPangRNRuntime.start(authentication:)`을 부른다. 앱 요청과 같은 `AuthenticationPlugin`을 넘긴다. |
 | `PopPangRNFeature` | `Sources/Presentation/PopPangRNFeature.swift` | `Screen`과 `userUuid`를 state로 갖고, RN 이벤트를 delegate로 바꾼다. |
 | `PopPangRNFeatureView` | `Sources/Presentation/PopPangRNFeatureView.swift` | `NativepieceView(PopPangRN.Screen)`로 화면을 띄우고 `.onEvent`·`.onClose`를 reducer action으로 보낸다. |
 
@@ -78,7 +77,7 @@ RN 화면 자체의 수정은 RN 저장소에서 한다. 앱 저장소에 RN 소
 | 앱이 실행하자마자 `Library not loaded: @rpath/React.framework/React`로 종료된다. | 앱 target에 `PopPangRN`이 연결되어 있지 않아 RN 동적 framework가 앱에 들어가지 않았다. | `Projects/App/Project.swift`에 패키지와 `.package(product: "PopPangRN")`이 있는지 확인한다. |
 | 빌드 전에 `PopPangRN` 패키지를 받지 못한다. | 네트워크 문제이거나 Xcode 패키지 캐시가 깨졌다. | Xcode의 File → Packages → Reset Package Caches 후 다시 빌드한다. |
 | RN 화면이 비어 있고 번들을 찾지 못했다는 로그가 남는다. | 패키지에 `ReactNative/main.jsbundle`이 없다. `1.3.0`은 RN 저장소의 `.gitignore`(`*.jsbundle`) 때문에 번들이 빠진 채 배포됐다. | `1.4.0` 이상을 쓴다. 새 버전을 받기 전에 태그에 `swift-package/PopPangRN/ReactNative/main.jsbundle`이 있는지 확인한다. |
-| 제보 화면에서 "로그인 정보를 확인할 수 없습니다. 앱을 최신 버전으로 업데이트해 주세요."가 뜬다. | `getAccessToken` 처리기가 없다(`unhandled`). | `AppBootstrap.live()`가 `startReactNative`를 부르는지 확인한다. |
+| 제보 화면에서 "로그인 정보를 확인할 수 없습니다. 앱을 최신 버전으로 업데이트해 주세요."가 뜬다. | `getAccessToken` 처리기가 없다(`unhandled`). | `AppBootstrap.live()`가 `PopPangRNRuntime.start(authentication:)`을 부르는지 확인한다. |
 | `cannot find type 'PopPangRNHost'`처럼 생성 타입을 찾지 못한다. | 계약이 바뀐 버전을 받았거나 패키지를 받지 못했다. | 버전의 `swift-package/PopPangRN/PopPangRNContract.swift`를 확인하고 앱 코드를 맞춘다. |
 
 ## 에이전트 작업 규칙

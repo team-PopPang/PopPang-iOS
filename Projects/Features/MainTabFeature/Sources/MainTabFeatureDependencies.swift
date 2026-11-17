@@ -6,7 +6,6 @@ import Domain
 import FavoritesFeature
 import HomeFeatureV2
 import MapFeature
-import PopPangRNFeature
 import PopupDetailFeature
 import ProfileFeature
 import SearchFeature
@@ -45,15 +44,6 @@ public struct MainTabFeatureDependencies {
             popupUsecase: popupUsecase,
             recentSearchStorage: RecentSearchStorage(store: store)
         )
-    }
-
-    /// React Native 런타임(팝업 제보·제보 관리 화면)을 시작하고, RN이 V2 API용 Access Token을 요청할 때 쓸 공급자를 연결한다.
-    ///
-    /// 앱을 시작할 때 한 번 부른다. 앱 target은 `PopPangRNFeature`에 직접 의존하지 않아 이 함수로 넘긴다.
-    /// 인자는 `PopPangRNAccessTokenProvider`를 본다.
-    @MainActor
-    public static func startReactNative(accessTokenProvider: @escaping PopPangRNAccessTokenProvider) {
-        PopPangRNRuntime.start(accessTokenProvider: accessTokenProvider)
     }
 
     public func configure(_ values: inout DependencyValues) {

@@ -47,7 +47,7 @@
 ```markdown
 # React Native 관련 내용
 
-App과 PopPangRNFeature는 Vendor/PrebuiltReactNativeFrameworks를 참조한다. 이 폴더가 없으면 tuist install과 tuist generate가 실패한다. 폴더는 scripts/download-rn-release.sh로 받는다. 그 전에 gh 로그인이 필요하다. Secrets.xcconfig도 미리 있어야 한다.
+PopPangRNFeature는 PopPang-RN Swift Package를 원격으로 참조한다. Xcode가 빌드할 때 받는다. tuist install을 먼저 해야 한다. Secrets.xcconfig도 미리 있어야 한다. 없으면 빌드가 실패한다.
 ```
 
 **수정 후**
@@ -55,16 +55,11 @@ App과 PopPangRNFeature는 Vendor/PrebuiltReactNativeFrameworks를 참조한다.
 ````markdown
 # workspace 만들기
 
-`tuist generate`가 성공하려면 비밀 설정 파일과 React Native 산출물이 먼저 있어야 해요.
+`tuist generate` 뒤 빌드가 성공하려면 비밀 설정 파일이 먼저 있어야 해요.
 
 1. 팀에서 받은 `Projects/App/Secrets.xcconfig`와 `GoogleService-Info.plist`를 배치해요.
-2. `gh auth login` 상태에서 React Native 산출물을 받아요.
-
-   ```bash
-   ./scripts/download-rn-release.sh v1.0.0
-   ```
-
-3. `tuist install`과 `tuist generate`를 실행해요.
+2. `tuist install`과 `tuist generate`를 실행해요.
+3. 빌드해요. React Native 패키지(`PopPangRN`)는 Xcode가 빌드할 때 받아요.
 ````
 
 독자의 목적은 React Native 구조를 이해하는 게 아니라 workspace를 만드는 거예요. 제목에 작업을 드러내고, 준비 단계부터 실행까지 순서대로 놓았어요. 문장 윤문만 요청받았다면 이런 제목·목록 변경을 자동으로 적용하지 않아요.

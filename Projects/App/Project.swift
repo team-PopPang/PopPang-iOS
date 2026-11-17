@@ -138,6 +138,7 @@ let project = Project(
                 .project(target: "AuthFeatureV2", path: "../Features/AuthFeatureV2"),
                 .project(target: "OnboardingFeatureV2", path: "../Features/OnboardingFeatureV2"),
                 .project(target: "MainTabFeature", path: "../Features/MainTabFeature"),
+                .project(target: "PopPangRNFeature", path: "../Features/PopPangRNFeature"),
                 .project(target: "MaintenanceFeature", path: "../Features/MaintenanceFeature"),
                 .project(target: "Domain", path: "../Domain"),
                 .project(target: "Data", path: "../Data"),

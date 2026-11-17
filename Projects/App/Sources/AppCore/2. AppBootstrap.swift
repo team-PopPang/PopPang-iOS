@@ -4,6 +4,7 @@ import Foundation
 import AuthFeatureV2
 import Data
 import MainTabFeature
+import PopPangRNFeature
 
 struct AppBootstrap {
     let sessionStorage: LocalSessionStorage
@@ -51,17 +52,8 @@ struct AppBootstrap {
         )
 
         // React Native 화면도 앱 요청과 같은 토큰 저장소·갱신·401 규칙을 쓴다.
-        MainTabFeatureDependencies.startReactNative { rejectedAccessToken, expired in
-            switch await authentication.hostAccessToken(rejected: rejectedAccessToken, expired: expired) {
-            case let .accessToken(accessToken):
-                return .accessToken(accessToken)
-            case .loginRequired:
-                return .loginRequired
-            case .temporaryFailure:
-                return .temporaryFailure
-            }
-        }
-        
+        PopPangRNRuntime.start(authentication: authentication)
+
         // 푸시 토큰을 로컬에 저장하기 위한 저장소를 생성
         let pushTokenStorage = PushTokenStorage(store: store)
         

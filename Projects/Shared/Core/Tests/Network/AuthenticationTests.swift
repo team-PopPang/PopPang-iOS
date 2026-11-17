@@ -84,15 +84,19 @@ struct AuthenticationTests {
         )
 
         #expect(await plugin.hostAccessToken(rejected: "old-access", expired: false) == .loginRequired)
+        #expect(await counter.count == 0)
+        #expect(try await receivesLoginRequired(stream) == false)
+    }
 
+    /// 지금까지 로그인 필요 알림이 왔는지 본다. 알림은 stream에 쌓여 있으므로 잠깐 기다린 뒤 취소해 확인한다.
+    private func receivesLoginRequired(_ stream: AsyncStream<Void>) async throws -> Bool {
         let notified = _Concurrency.Task {
             var iterator = stream.makeAsyncIterator()
             return await iterator.next() != nil
         }
         try await ContinuousClock().sleep(for: .milliseconds(50))
         notified.cancel()
-        #expect(await notified.value == false)
-        #expect(await counter.count == 0)
+        return await notified.value
     }
 
     @Test("새 토큰으로 보낸 요청이 다시 5002를 받으면 그 토큰으로 다시 갱신한다")
@@ -137,8 +141,8 @@ struct AuthenticationTests {
         #expect(await counter.count == 0)
     }
 
-    @Test("로그아웃 상태면 갱신하지 않고 다시 로그인하라고 알린다")
-    func hostAccessTokenRequiresLoginWhenLoggedOut() async {
+    @Test("요청 전인데 토큰 쌍이 없으면 토큰을 건드리거나 알리지 않고 로그인 필요로 답한다")
+    func hostAccessTokenRequiresLoginWhenLoggedOut() async throws {
         let storage = AuthTokenStorage(store: InMemoryStore())
         let events = AuthSessionEvents()
         let stream = events.loginRequired()
@@ -151,8 +155,24 @@ struct AuthenticationTests {
 
         #expect(await plugin.hostAccessToken(rejected: nil, expired: false) == .loginRequired)
         #expect(await counter.count == 0)
-        var iterator = stream.makeAsyncIterator()
-        #expect(await iterator.next() != nil)
+        #expect(try await receivesLoginRequired(stream) == false)
+    }
+
+    @Test("5002를 받았는데 그사이 다른 요청이 토큰을 지웠으면 갱신하지 않고 다시 알리지 않는다")
+    func hostAccessTokenSkipsRefreshWhenAlreadyLoggedOut() async throws {
+        let storage = AuthTokenStorage(store: InMemoryStore())
+        let events = AuthSessionEvents()
+        let stream = events.loginRequired()
+        let counter = CallCounter()
+        let plugin = AuthenticationPlugin(
+            storage: storage,
+            refresher: makeRefresher(storage: storage, counter: counter),
+            sessionEvents: events
+        )
+
+        #expect(await plugin.hostAccessToken(rejected: "old-access", expired: true) == .loginRequired)
+        #expect(await counter.count == 0)
+        #expect(try await receivesLoginRequired(stream) == false)
     }
 
     @Test("갱신도 401이면 다시 로그인하라고 알린다")

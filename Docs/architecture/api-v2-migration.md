@@ -355,16 +355,16 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 팝업 제보 | `GET /api/v1/recommend`, `POST /api/v1/popup-submissions` | `GET /api/v2/recommend`, `POST /api/v2/popup-submissions` (본문에 `userUuid` 없음) |
 | 제보 관리 (관리자) | `GET`·`PUT /api/v1/admin/popup-submissions?uuid=관리자 userUuid` | `GET`·`PUT /api/v2/admin/popup-submissions` (`uuid` 없음) |
 
-- 토큰 전달: RN `1.4.0`(Nativepiece Swift Package)의 계약 `calls.getAccessToken({ rejectedAccessToken, expired })`로 받아요. 앱은 시작할 때 `AppBootstrap`에서 `MainTabFeatureDependencies.startReactNative(accessTokenProvider:)`로 RN 런타임을 시작하며 공급자를 넘기고, `PopPangRNRuntime`이 생성된 `PopPangRNHost`로 요청을 처리해요. 공급자는 `AuthenticationPlugin.hostAccessToken(rejected:expired:)`를 불러요.
+- 토큰 전달: RN `1.4.0`(Nativepiece Swift Package)의 계약 `calls.getAccessToken({ rejectedAccessToken, expired })`로 받아요. 앱은 시작할 때 `AppBootstrap`에서 `PopPangRNRuntime.start(authentication:)`으로 RN 런타임을 시작하고, 생성된 `PopPangRNHost`가 `AuthenticationPlugin.hostAccessToken(rejected:expired:)`로 답해요.
 - RN은 요청 전에 `rejectedAccessToken` 없이 토큰을 받아요. V2 요청이 401이면 보냈던 토큰과 응답 코드가 5002(토큰 만료)인지를 넘겨 토큰을 한 번 다시 받고 재시도해요(요청마다 한 번). 앱은 네트워크 요청(`MoyaProvider+Async`)과 같은 판단을 써요. 5002가 아닌 401의 판단은 `AuthenticationPlugin.handleUnauthorized(sentAccessToken:)` 하나를 두 경로가 함께 불러요.
 
 | RN이 넘긴 값 | 앱이 하는 일 |
 | --- | --- |
-| `rejectedAccessToken` 없음 (요청 전) | 저장된 Access Token을 돌려줘요. 없으면 "토큰 없이 보낸 요청이 401을 받은" 경우와 똑같이 처리해요. RN 화면은 Access Token이 필요한 API만 부르므로 토큰 없이 보내지 않아요. 토큰 쌍이 없으면 남은 토큰을 지우고 로그인 필요로 답해요. |
-| 보낸 토큰 + `expired: true` (401 5002) | 그 토큰을 만료된 토큰으로 넘겨 `AccessTokenRefresher`로 갱신해요. 다른 요청이 이미 갱신했으면 다시 갱신하지 않고 새 토큰을 돌려줘요. |
+| `rejectedAccessToken` 없음 (요청 전) | 저장된 Access Token을 돌려줘요. 없으면 로그인 필요로 답하되 토큰을 지우거나 로그인 화면으로 보내지 않아요. 아직 서버가 세션을 거절한 근거가 없어서, 판단은 앱 요청의 서버 응답에 맡겨요. |
+| 보낸 토큰 + `expired: true` (401 5002) | 그 토큰을 만료된 토큰으로 넘겨 `AccessTokenRefresher`로 갱신해요. 다른 요청이 이미 갱신했으면 다시 갱신하지 않고 새 토큰을 돌려줘요. 다른 요청이 이미 토큰을 지웠으면 갱신하지 않고 로그인 필요로 답하되 다시 알리지 않아요. |
 | 보낸 토큰 + `expired: false` (다른 401) | 그 토큰이 아직 저장돼 있으면 토큰을 지우고 로그인 필요로 답해요. 그 사이 다른 토큰으로 바뀌었으면 새 토큰을 돌려줘요. 다른 요청이 이미 토큰을 지웠으면 로그인 필요로 답하되 로그인 화면 알림은 다시 보내지 않아요. |
 
-- 로그인 필요로 답할 때는 네트워크 요청과 똑같이 로그인 화면으로 보내요(`AuthSessionEvents.notifyLoginRequired`). 여러 요청이 동시에 실패하면 앱 요청처럼 알림이 여러 번 갈 수 있지만, `AppFeature`는 메인 화면에 있고 로그아웃 중이 아닐 때만 처리해서 화면 전환은 한 번만 일어나요. 앱은 `NativepieceCallError(code: "login_required")`로 거절하고, RN은 "로그인 정보가 만료되었습니다. 다시 로그인해 주세요."를 보여요.
+- 로그인 필요로 답할 때는 네트워크 요청과 똑같이 로그인 화면으로 보내요(`AuthSessionEvents.notifyLoginRequired`). 토큰을 지운 쪽만 알려요. 다른 요청이 이미 지운 뒤에는 다시 알리지 않아요(`AppFeature`도 메인 화면에 있고 로그아웃 중이 아닐 때만 처리해요). 앱은 `NativepieceCallError(code: "login_required")`로 거절하고, RN은 "로그인 정보가 만료되었습니다. 다시 로그인해 주세요."를 보여요.
 - 갱신이 로그인 필요가 아닌 이유(503, 네트워크 오류 등)로 실패하면 토큰을 그대로 두고 일시 실패로 답해요. 앱은 `NativepieceCallError(code: "temporary_failure")`로 거절하고, RN은 "로그인 정보를 잠시 확인하지 못했습니다. 잠시 후 다시 시도해 주세요."를 보여요.
 - 403은 RN이 권한 없음 안내를 보여요.
 - RN 패키지 연결과 버전은 [React Native 패키지](../development/react-native.md)를 봐요. 이전 prebuild 산출물(`v1.1.0`·`v1.2.0`의 `PopPangHostAuth` 네이티브 모듈)은 앱에 쓰지 않아요.

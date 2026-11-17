@@ -3,10 +3,8 @@ import Foundation
 /// 네트워크 계층 밖(React Native 화면 등)이 Access Token을 요청했을 때의 답.
 public enum HostAccessTokenResult: Equatable, Sendable {
     case accessToken(String)
-    /// 다시 로그인해야 한다. 로그인 화면으로 보내는 알림(`AuthSessionEvents`)은 이 요청이 보냈거나, 토큰을 지운 다른 요청이 보냈다.
-    ///
-    /// 여러 요청이 동시에 실패하면 앱 요청(`MoyaProvider.asyncRequest`)과 마찬가지로 알림이 여러 번 갈 수 있다.
-    /// `AppFeature`는 메인 화면에 있고 로그아웃 중이 아닐 때만 처리하므로 화면 전환은 한 번만 일어난다.
+    /// 다시 로그인해야 한다. 이 요청이 토큰을 지웠거나 갱신이 거절됐으면 로그인 화면으로 보내라고 알렸다(`AuthSessionEvents`).
+    /// 다른 요청이 이미 토큰을 지운 뒤라면 그 요청이 알렸으므로 다시 알리지 않는다.
     case loginRequired
     /// 네트워크·서버 문제로 지금은 토큰을 주지 못했다. 저장된 토큰은 그대로다.
     case temporaryFailure
@@ -25,17 +23,18 @@ public extension AuthenticationPlugin {
     ///     다른 요청이 이미 갱신했으면 다시 갱신하지 않고 새 토큰을 돌려준다.
     func hostAccessToken(rejected rejectedAccessToken: String?, expired: Bool) async -> HostAccessTokenResult {
         guard let rejectedAccessToken else {
-            if let accessToken = storage.loadTokens()?.accessToken {
-                return .accessToken(accessToken)
-            }
-            // RN 화면은 Access Token이 필요한 V2 API만 부른다. 토큰 없이 보내면 401이 오므로
-            // 보내지 않고 "토큰 없이 보낸 요청이 401을 받은" 경우와 똑같이 처리한다.
-            return resolveUnauthorized(sentAccessToken: nil)
+            // 아직 요청을 보내지 않았으므로 서버가 세션을 거절했다는 근거가 없다. 토큰을 지우거나 로그인 화면으로 보내지 않는다.
+            // 토큰 쌍이 없으면 이미 로그아웃됐거나(그 경로가 알렸다) 앱 요청이 서버 응답으로 판단한다.
+            guard let accessToken = storage.loadTokens()?.accessToken else { return .loginRequired }
+            return .accessToken(accessToken)
         }
 
         guard expired else {
             return resolveUnauthorized(sentAccessToken: rejectedAccessToken)
         }
+
+        // 보낸 뒤에 다른 요청이 토큰을 지웠다. 그 요청이 이미 로그인 화면으로 보냈으므로 갱신하지 않고 다시 알리지 않는다.
+        guard storage.loadTokens() != nil else { return .loginRequired }
 
         do {
             return .accessToken(try await refresher.refreshAccessToken(expired: rejectedAccessToken))
@@ -49,7 +48,7 @@ public extension AuthenticationPlugin {
 }
 
 private extension AuthenticationPlugin {
-    func resolveUnauthorized(sentAccessToken: String?) -> HostAccessTokenResult {
+    func resolveUnauthorized(sentAccessToken: String) -> HostAccessTokenResult {
         switch handleUnauthorized(sentAccessToken: sentAccessToken) {
         case .loginRequired:
             sessionEvents?.notifyLoginRequired()

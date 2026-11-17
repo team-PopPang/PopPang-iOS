@@ -16,6 +16,7 @@ let project = Project(
             infoPlist: .default,
             sources: ["Sources/**"],
             dependencies: [
+                .project(target: "Core", path: "../../Shared/Core"),
                 .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
                 .package(product: "PopPangRN"),
             ]
