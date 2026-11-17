@@ -364,7 +364,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 보낸 토큰 + `expired: true` (401 5002) | 그 토큰을 만료된 토큰으로 넘겨 `AccessTokenRefresher`로 갱신해요. 다른 요청이 이미 갱신했으면 다시 갱신하지 않고 새 토큰을 돌려줘요. |
 | 보낸 토큰 + `expired: false` (다른 401) | 그 토큰이 아직 저장돼 있으면 토큰을 지우고 로그인 필요로 답해요. 그 사이 다른 토큰으로 바뀌었으면 새 토큰을 돌려줘요. 다른 요청이 이미 토큰을 지웠으면 로그인 필요로 답하되 로그인 화면 알림은 다시 보내지 않아요. |
 
-- 로그인 필요로 답할 때는 네트워크 요청과 똑같이 로그인 화면으로 보내요(`AuthSessionEvents.notifyLoginRequired`). 앱은 `NativepieceCallError(code: "login_required")`로 거절하고, RN은 "로그인 정보가 만료되었습니다. 다시 로그인해 주세요."를 보여요.
+- 로그인 필요로 답할 때는 네트워크 요청과 똑같이 로그인 화면으로 보내요(`AuthSessionEvents.notifyLoginRequired`). 여러 요청이 동시에 실패하면 앱 요청처럼 알림이 여러 번 갈 수 있지만, `AppFeature`는 메인 화면에 있고 로그아웃 중이 아닐 때만 처리해서 화면 전환은 한 번만 일어나요. 앱은 `NativepieceCallError(code: "login_required")`로 거절하고, RN은 "로그인 정보가 만료되었습니다. 다시 로그인해 주세요."를 보여요.
 - 갱신이 로그인 필요가 아닌 이유(503, 네트워크 오류 등)로 실패하면 토큰을 그대로 두고 일시 실패로 답해요. 앱은 `NativepieceCallError(code: "temporary_failure")`로 거절하고, RN은 "로그인 정보를 잠시 확인하지 못했습니다. 잠시 후 다시 시도해 주세요."를 보여요.
 - 403은 RN이 권한 없음 안내를 보여요.
 - RN 패키지 연결과 버전은 [React Native 패키지](../development/react-native.md)를 봐요. 이전 prebuild 산출물(`v1.1.0`·`v1.2.0`의 `PopPangHostAuth` 네이티브 모듈)은 앱에 쓰지 않아요.

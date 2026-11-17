@@ -20,5 +20,18 @@ let project = Project(
                 .package(product: "PopPangRN"),
             ]
         ),
+        .target(
+            name: "PopPangRNFeatureTests",
+            destinations: [.iPhone],
+            product: .unitTests,
+            bundleId: "com.poppang.features.poppangrn.tests",
+            deploymentTargets: .iOS("17.0"),
+            infoPlist: .default,
+            sources: ["Tests/**"],
+            dependencies: [
+                .target(name: "PopPangRNFeature"),
+                .project(target: "ThirdParty", path: "../../Shared/ThirdParty"),
+            ]
+        ),
     ]
 )

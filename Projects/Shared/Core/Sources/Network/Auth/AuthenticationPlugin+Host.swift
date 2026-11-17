@@ -3,7 +3,10 @@ import Foundation
 /// 네트워크 계층 밖(React Native 화면 등)이 Access Token을 요청했을 때의 답.
 public enum HostAccessTokenResult: Equatable, Sendable {
     case accessToken(String)
-    /// 다시 로그인해야 한다. 로그인 화면으로 보내는 알림은 이 요청이나 먼저 실패한 다른 요청이 이미 보냈다.
+    /// 다시 로그인해야 한다. 로그인 화면으로 보내는 알림(`AuthSessionEvents`)은 이 요청이 보냈거나, 토큰을 지운 다른 요청이 보냈다.
+    ///
+    /// 여러 요청이 동시에 실패하면 앱 요청(`MoyaProvider.asyncRequest`)과 마찬가지로 알림이 여러 번 갈 수 있다.
+    /// `AppFeature`는 메인 화면에 있고 로그아웃 중이 아닐 때만 처리하므로 화면 전환은 한 번만 일어난다.
     case loginRequired
     /// 네트워크·서버 문제로 지금은 토큰을 주지 못했다. 저장된 토큰은 그대로다.
     case temporaryFailure

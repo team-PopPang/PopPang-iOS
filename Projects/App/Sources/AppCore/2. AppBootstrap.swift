@@ -54,11 +54,11 @@ struct AppBootstrap {
         MainTabFeatureDependencies.startReactNative { rejectedAccessToken, expired in
             switch await authentication.hostAccessToken(rejected: rejectedAccessToken, expired: expired) {
             case let .accessToken(accessToken):
-                return (accessToken, false)
+                return .accessToken(accessToken)
             case .loginRequired:
-                return (nil, false)
+                return .loginRequired
             case .temporaryFailure:
-                return (nil, true)
+                return .temporaryFailure
             }
         }
         
