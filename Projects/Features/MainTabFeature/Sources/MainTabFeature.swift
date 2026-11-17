@@ -35,18 +35,20 @@ public enum MainTab: Hashable, CaseIterable, Sendable {
         }
     }
     
+    /// 탭바 전용 아이콘(DSKit `Tab/tab_*`). 피그마 "팝팡 리뉴얼 최종" 탭바(2467:10374) 아이콘이다.
+    /// `favorite`·`favorite_fill`은 찜 하트 버튼이 쓰므로 탭바는 따로 둔다.
     private var rawImageName: String {
         switch self {
         case .home:
-            "home"
+            "tab_home"
         case .calendar:
-            "calendar"
+            "tab_calendar"
         case .map:
-            "map"
+            "tab_map"
         case .favorites:
-            "favorite"
+            "tab_favorite"
         case .profile:
-            "profile"
+            "tab_profile"
         }
     }
     

@@ -71,11 +71,11 @@ private enum DemoTab: Hashable, CaseIterable {
 
     func imageName(selected: Bool) -> String {
         let name = switch self {
-        case .home: "home"
-        case .calendar: "calendar"
-        case .map: "map"
-        case .favorites: "favorite"
-        case .profile: "profile"
+        case .home: "tab_home"
+        case .calendar: "tab_calendar"
+        case .map: "tab_map"
+        case .favorites: "tab_favorite"
+        case .profile: "tab_profile"
         }
         return selected ? "\(name)_fill" : name
     }

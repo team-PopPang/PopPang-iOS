@@ -34,4 +34,7 @@ public enum PPColor {
     public static let error = Color.mainRed
     /// 성공 안내
     public static let success = Color.mainGreen
+
+    /// 탭바에서 고른 탭의 아이콘·글자. 피그마 "팝팡 리뉴얼 최종" 탭바(2467:10374)의 `#A3172B`다.
+    public static let tabSelected = Color(hex: "#A3172B")
 }

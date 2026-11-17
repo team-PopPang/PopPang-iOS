@@ -67,7 +67,11 @@ public struct PopPangTabView<Tab: Hashable, Content: View>: View {
         // 탭 화면의 여백은 위에서 더했으므로, 탭바는 레이아웃에 영향을 주지 않도록 overlay로 그린다.
         .overlay(alignment: .bottom) {
             if style == .classic {
+                // overlay는 키보드 safe area 안에 놓여, 키보드가 올라오면 탭바도 키보드 위로 따라 올라간다.
+                // 화면 전체 높이로 펼친 뒤 키보드 safe area를 무시해 탭바를 화면 바닥에 고정한다(키보드가 탭바를 덮는다).
                 PopPangTabBar(tabs: tabs, selection: $selection, title: title, image: image)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .ignoresSafeArea(.keyboard, edges: .bottom)
             }
         }
         .environment(\.popPangTabBarStyle, style)
@@ -118,17 +122,19 @@ public struct PopPangTabBar<Tab: Hashable>: View {
         Button {
             selection = tab
         } label: {
-            // 기존 시스템 탭바처럼 아이콘을 에셋 원래 색·원래 크기로 그리고, 중심 위치를 고정한다.
+            // 기존 시스템 탭바처럼 아이콘을 에셋 원래 크기로 그리고, 중심 위치를 고정한다.
+            // 고른 탭은 아이콘 모양만 쓰고 `PPColor.tabSelected`로 칠한다. 고르지 않은 탭은 에셋 원래 색(피그마 #9A9A9A)이다.
             // 높이가 0인 frame은 내용을 윗변에 중심 맞춰 두므로, offset이 곧 중심의 세로 위치가 된다.
             ZStack(alignment: .top) {
                 image(tab, isSelected)
-                    .renderingMode(.original)
+                    .renderingMode(isSelected ? .template : .original)
+                    .foregroundStyle(PPColor.tabSelected)
                     .frame(height: 0)
                     .offset(x: PopPangTabBarMetrics.iconOffsetX, y: PopPangTabBarMetrics.iconCenterY)
 
                 Text(title(tab))
                     .font(.scdream(isSelected ? .bold : .light, size: 10))
-                    .foregroundStyle(isSelected ? Color.black : Color(uiColor: .gray))
+                    .foregroundStyle(isSelected ? PPColor.tabSelected : Color(uiColor: .gray))
                     .frame(height: 0)
                     .offset(y: PopPangTabBarMetrics.titleCenterY)
             }
