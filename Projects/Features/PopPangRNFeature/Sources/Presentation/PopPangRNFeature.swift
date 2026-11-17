@@ -6,18 +6,6 @@ public struct PopPangRNFeature {
     public enum Screen: String, Equatable, Sendable {
         case popupRequest = "request"
         case popupRequestManagement = "request-management"
-
-        var nativeEvents: [String] {
-            switch self {
-            case .popupRequest:
-                [
-                    PopPangRNEvent.popupRequestSubmitted,
-                    PopPangRNEvent.popupRequestBack,
-                ]
-            case .popupRequestManagement:
-                [PopPangRNEvent.popupRequestManagementBack]
-            }
-        }
     }
 
     @ObservableState
@@ -37,7 +25,10 @@ public struct PopPangRNFeature {
     }
 
     public enum Action: Equatable {
-        case nativeEventReceived(String)
+        /// 제보를 등록하고 완료 알림의 확인을 눌렀다 (RN 이벤트 `popupRequestSubmitted`).
+        case popupRequestSubmitted
+        /// RN 화면이 닫기를 요청했다 (뒤로가기, Nativepiece 표준 닫기).
+        case closeRequested
         case delegate(Delegate)
 
         public enum Delegate: Equatable {
@@ -51,17 +42,16 @@ public struct PopPangRNFeature {
     public var body: some ReducerOf<Self> {
         Reduce { state, action in
             switch action {
-            case .nativeEventReceived(let eventName):
-                switch (state.screen, eventName) {
-                case (.popupRequest, PopPangRNEvent.popupRequestSubmitted),
-                     (.popupRequest, PopPangRNEvent.popupRequestBack):
+            case .popupRequestSubmitted:
+                guard state.screen == .popupRequest else { return .none }
+                return .send(.delegate(.dismiss))
+
+            case .closeRequested:
+                switch state.screen {
+                case .popupRequest:
                     return .send(.delegate(.dismiss))
-
-                case (.popupRequestManagement, PopPangRNEvent.popupRequestManagementBack):
+                case .popupRequestManagement:
                     return .send(.delegate(.pop))
-
-                default:
-                    return .none
                 }
 
             case .delegate:
@@ -69,10 +59,4 @@ public struct PopPangRNFeature {
             }
         }
     }
-}
-
-private enum PopPangRNEvent {
-    static let popupRequestSubmitted = "popupRequestSubmitted"
-    static let popupRequestBack = "popupRequestBack"
-    static let popupRequestManagementBack = "popupRequestManagementBack"
 }

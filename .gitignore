@@ -10,7 +10,8 @@ GoogleService-Info.plist
 # personal git hooks (push 전 Claude 코드 리뷰)
 .githooks/
 
-# React Native release artifacts
+# 예전 React Native prebuild 산출물 (download-rn-release.sh로 받던 위치). 지금은 PopPangRN Swift Package를 쓴다.
+# 받아 둔 폴더가 남아 있어도 커밋되지 않게 무시한다.
 .rn-release-temp/
 Vendor/PrebuiltReactNativeFrameworks/
 Projects/App/Resources/ReactNative/

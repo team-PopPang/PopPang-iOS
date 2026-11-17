@@ -76,15 +76,9 @@ tuist version
 
 `Projects/App/Secrets.xcconfig`와 `GoogleService-Info.plist`는 저장소에 없다(`.gitignore`). 팀에서 받아 배치한다. 예전 `make download-privates` 타깃은 주석 처리되어 있다. 이 파일들의 내용을 문서나 로그에 옮기지 않는다.
 
-### 2. React Native 산출물 받기
+### 2. React Native 패키지
 
-`App`과 `PopPangRNFeature`는 `Vendor/PrebuiltReactNativeFrameworks` local package를 참조한다. 이 폴더가 없으면 `tuist install`과 `tuist generate`가 실패하므로 먼저 받는다. `gh auth login`이 되어 있고 `team-PopPang/PopPang-RN` 저장소에 접근할 수 있어야 한다.
-
-```bash
-./scripts/download-rn-release.sh v1.0.0
-```
-
-스크립트는 `Projects/App/Resources/ReactNative`(번들)와 `Vendor/PrebuiltReactNativeFrameworks`(SPM 패키지)를 채운다. 두 경로 모두 `.gitignore`에 들어 있다. 산출물 내용과 버전 변경 방법은 [React Native 산출물](react-native.md)을 본다.
+따로 받을 것이 없다. `PopPangRNFeature`가 PopPang-RN 저장소의 Swift Package(`PopPangRN`)를 원격으로 참조하므로, `tuist generate` 뒤 Xcode가 빌드할 때 받는다. 버전과 연결 방법은 [React Native 패키지](react-native.md)를 본다.
 
 ### 3. 패키지 설치와 workspace 생성
 
@@ -166,6 +160,6 @@ sudo xcode-select --install
 
 ## 에이전트 작업 규칙
 
-- `tuist generate`, `tuist install`, `make regen`, `make trash`, `make clean`, `make reinstall`, `make module`, `scripts/download-rn-release.sh`는 파일을 만들거나 지우므로 사용자 승인 없이 실행하지 않는다.
+- `tuist generate`, `tuist install`, `make regen`, `make trash`, `make clean`, `make reinstall`, `make module`은 파일을 만들거나 지우므로 사용자 승인 없이 실행하지 않는다.
 - Tuist 버전을 바꾸는 작업은 빌드 영향이 있으므로 계획에 적고 승인을 받는다.
 - 링크 오류가 나면 [모듈 구조](../architecture/modules.md)의 product type과 ThirdParty 기준부터 확인한다.

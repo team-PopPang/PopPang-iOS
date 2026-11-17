@@ -114,23 +114,15 @@ private extension MoyaProvider {
 
         guard error.statusCode == 401 else { throw error }
 
-        let storage = authentication.storage
-        guard let sentAccessToken else {
-            // 토큰 없이 보냈다. 토큰 쌍이 없으면 로그아웃 상태이고,
-            // 보낸 뒤에 로그인으로 쌍이 생겼으면 새 토큰으로 다시 보낸다.
-            if storage.removeIncompleteTokens() {
-                throw AuthSessionError.loginRequired
-            }
-            return .rejectedWithStaleToken(sentAccessToken: nil, error: error)
-        }
-
-        if storage.removeTokens(ifAccessTokenIs: sentAccessToken) {
+        switch authentication.handleUnauthorized(sentAccessToken: sentAccessToken) {
+        case .loginRequired:
             throw AuthSessionError.loginRequired
+        case .alreadyLoggedOut:
+            throw error
+        case .retryWithStoredToken:
+            // 다시 보낼 때 plugin이 그때 저장된 토큰을 붙인다.
+            return .rejectedWithStaleToken(sentAccessToken: sentAccessToken, error: error)
         }
-
-        // 보낸 뒤에 다른 요청이 토큰을 갱신했다. 새 토큰이 있으면 그 토큰으로 다시 보낸다.
-        guard storage.loadTokens() != nil else { throw error }
-        return .rejectedWithStaleToken(sentAccessToken: sentAccessToken, error: error)
     }
 
     func sendRequest(_ target: Target) async throws -> Response {
