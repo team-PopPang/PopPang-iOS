@@ -49,10 +49,10 @@ struct AppBootstrap {
             userUsecase: dependencies.usecases.userUsecase
         )
 
-        // React Native 화면도 앱 요청과 같은 토큰 저장소·갱신을 쓴다.
-        let hostAccessTokenProvider = HostAccessTokenProvider(authentication: authentication)
-        MainTabFeatureDependencies.registerReactNativeAccessTokenProvider { forceRefresh in
-            await hostAccessTokenProvider.accessToken(forceRefresh: forceRefresh)
+        // React Native 화면도 앱 요청과 같은 토큰 저장소·갱신·401 규칙을 쓴다.
+        MainTabFeatureDependencies.registerReactNativeAccessTokenProvider { rejectedAccessToken, expired in
+            let result = await authentication.hostAccessToken(rejected: rejectedAccessToken, expired: expired)
+            return (result.accessToken, result.isTemporaryFailure)
         }
         
         // 푸시 토큰을 로컬에 저장하기 위한 저장소를 생성

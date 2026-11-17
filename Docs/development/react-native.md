@@ -7,9 +7,9 @@
 | 항목 | 값 |
 | --- | --- |
 | RN 저장소 | [`team-PopPang/PopPang-RN`](https://github.com/team-PopPang/PopPang-RN) (우리 팀 저장소) |
-| 앱이 쓰는 버전 | `v1.1.0` (2026-11-16 릴리즈. 제보·제보 관리 화면이 V2 API와 앱의 Access Token을 쓴다) |
+| 앱이 쓰는 버전 | `v1.2.0` (2026-11-17 릴리즈. 제보·제보 관리 화면이 V2 API와 앱의 Access Token을 쓴다. 401이면 보낸 토큰과 만료(5002) 여부를 앱에 넘겨 토큰을 다시 받는다) |
 | 앱에서 쓰는 곳 | `PopPangRNFeature` 모듈의 팝업 제보(`request`), 팝업 제보 관리(`request-management`) 화면 |
-| 받는 방법 | `./scripts/download-rn-release.sh v1.1.0` |
+| 받는 방법 | `./scripts/download-rn-release.sh v1.2.0` |
 
 RN 저장소는 React Native 런타임과 네이티브 의존성을 미리 빌드해 XCFramework로 묶어 배포한다(Prebuild 방식). 앱 저장소는 RN 프로젝트와 CocoaPods를 품지 않고, GitHub 릴리즈의 산출물만 받아 SPM local package로 붙인다.
 
@@ -40,10 +40,10 @@ RN 저장소는 React Native 런타임과 네이티브 의존성을 미리 빌�
 ### 실행
 
 ```bash
-./scripts/download-rn-release.sh v1.1.0
+./scripts/download-rn-release.sh v1.2.0
 ```
 
-버전을 생략하면 `v1.1.0`을 받는다. 스크립트는 아래 순서로 동작한다.
+버전을 생략하면 `v1.2.0`을 받는다. 스크립트는 아래 순서로 동작한다.
 
 1. `.rn-release-temp/`에 두 zip을 받는다.
 2. 압축을 풀고 `main.jsbundle`과 `PrebuiltReactNativeFrameworks/Package.swift`가 있는지 확인한다. 없으면 실패한다.
@@ -87,8 +87,8 @@ RN 이벤트 처리:
 2. 앱 저장소에서 새 버전으로 받는다: `./scripts/download-rn-release.sh v<버전>`.
 3. 앱에서 팝업 제보와 제보 관리 화면을 열어 확인한다.
 4. 버전을 고정한 곳을 함께 바꾼다. 이 변경은 의존성 변경이므로 계획에 적고 승인을 받는다.
-   - `scripts/download-rn-release.sh`의 기본값 `VERSION="${1:-v1.1.0}"`
-   - CI workflow `1. poppang-build.yml`, `2. poppang-test.yml`, `3. poppang-build-and-test.yml`의 `./scripts/download-rn-release.sh v1.1.0`
+   - `scripts/download-rn-release.sh`의 기본값 `VERSION="${1:-v1.2.0}"`
+   - CI workflow `1. poppang-build.yml`, `2. poppang-test.yml`, `3. poppang-build-and-test.yml`의 `./scripts/download-rn-release.sh v1.2.0`
    - 이 문서의 버전
 
 RN 화면 자체의 수정은 RN 저장소에서 한다. 앱 저장소에 RN 소스를 복사하거나 받은 번들을 직접 고치지 않는다.
@@ -97,11 +97,11 @@ RN 화면 자체의 수정은 RN 저장소에서 한다. 앱 저장소에 RN 소
 
 | 증상 | 원인 | 해결 |
 | --- | --- | --- |
-| `tuist install`·`tuist generate`가 `PrebuiltReactNativeFrameworks`를 찾지 못한다. | SPM 산출물을 받지 않았다. | `./scripts/download-rn-release.sh v1.1.0`을 실행한다. |
+| `tuist install`·`tuist generate`가 `PrebuiltReactNativeFrameworks`를 찾지 못한다. | SPM 산출물을 받지 않았다. | `./scripts/download-rn-release.sh v1.2.0`을 실행한다. |
 | 앱에서 RN 화면을 열 때 `main.jsbundle을 찾을 수 없습니다.`로 멈춘다. | 번들을 받지 않았거나 받은 뒤 다시 빌드하지 않았다. | 스크립트를 실행하고 다시 빌드한다. |
-| Xcode 27에서 `PrebuiltReactNativeFrameworks` 링크가 `unknown argument: '-ObjC'`로 실패한다. | v1.0.0보다 이전 산출물이다. Xcode 27은 SwiftPM 패키지를 `swiftc`로 링크하는데, 이전 산출물은 `-Xlinker` 없이 `-ObjC`를 넘긴다. | `./scripts/download-rn-release.sh v1.1.0`으로 다시 받는다. |
-| `cannot find 'PopPangHostAuth' in scope`로 빌드가 실패한다. | v1.1.0보다 이전 산출물이다. Access Token을 RN에 넘기는 `PopPangHostAuth`는 v1.1.0 `HostSources`에 들어 있다. | `./scripts/download-rn-release.sh v1.1.0`으로 다시 받는다. 받은 뒤에도 같으면 DerivedData의 모듈 캐시를 지운다. |
-| 제보 화면에서 "로그인 정보를 확인할 수 없습니다. 앱을 최신 버전으로 업데이트해 주세요."가 뜬다. | JS 번들은 v1.1.0인데 네이티브에 `PopPangHostAuth` 모듈이 없다. | 두 산출물을 같은 버전으로 받는다. |
+| Xcode 27에서 `PrebuiltReactNativeFrameworks` 링크가 `unknown argument: '-ObjC'`로 실패한다. | v1.0.0보다 이전 산출물이다. Xcode 27은 SwiftPM 패키지를 `swiftc`로 링크하는데, 이전 산출물은 `-Xlinker` 없이 `-ObjC`를 넘긴다. | `./scripts/download-rn-release.sh v1.2.0`으로 다시 받는다. |
+| `cannot find 'PopPangHostAuth' in scope`로 빌드가 실패하거나 `setAccessTokenProvider`의 인자 개수가 맞지 않는다. | v1.2.0보다 이전 산출물이다. `PopPangHostAuth`는 v1.1.0에 처음 들어갔고, 앱이 쓰는 `(rejectedAccessToken, expired)` 계약은 v1.2.0 `HostSources`에 있다. | `./scripts/download-rn-release.sh v1.2.0`으로 다시 받는다. 받은 뒤에도 같으면 DerivedData의 모듈 캐시를 지운다. |
+| 제보 화면에서 "로그인 정보를 확인할 수 없습니다. 앱을 최신 버전으로 업데이트해 주세요."가 뜬다. | JS 번들은 v1.2.0인데 네이티브에 `PopPangHostAuth` 모듈이 없다. | 두 산출물을 같은 버전으로 받는다. |
 | `gh release download`가 인증 오류로 실패한다. | GitHub CLI 로그인이 안 되어 있다. | `gh auth login` 후 다시 실행한다. |
 | SPM 패키지를 받다가 `connection reset by peer`로 끝난다. | SPM zip을 받는 중 네트워크 연결이 끊겼다. 스크립트는 실패하고 임시 폴더를 지운다. | 스크립트를 다시 실행한다. `| tail`처럼 파이프로 실행하면 실패가 가려지므로 종료 코드를 확인한다. |
 | `main.jsbundle을 찾을 수 없습니다.` 또는 `Package.swift를 찾을 수 없습니다.`로 스크립트가 끝난다. | 릴리즈 zip 구조가 스크립트가 기대하는 구조와 다르다. | 해당 버전 릴리즈의 zip 내용을 RN 저장소에서 확인한다. |

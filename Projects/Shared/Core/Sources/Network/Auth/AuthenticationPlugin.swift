@@ -4,7 +4,7 @@ import Moya
 /// V2 요청에 `Authorization` 헤더를 붙이고, Access Token 만료를 처리할 refresher를 들고 있는 Moya plugin.
 ///
 /// 만료 응답을 받은 요청을 다시 보내는 일은 `MoyaProvider.asyncRequest(_:)`가 이 plugin을 찾아서 한다.
-public struct AuthenticationPlugin: PluginType {
+public struct AuthenticationPlugin: PluginType, Sendable {
     public let storage: AuthTokenStorage
     public let refresher: AccessTokenRefresher
     /// Access Token이 필요한 요청이 `AuthSessionError.loginRequired`로 끝났음을 알릴 곳
