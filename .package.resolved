@@ -1,13 +1,13 @@
 {
-  "originHash" : "d5e2a9d0b602dc2a4e9f5da7626a96afc7742d936c55328cf0a53e60bb65ca93",
+  "originHash" : "ddc44317e4d4e53ccc7ed0566044f62565483b7b787861a09112669ee3f3bfaf",
   "pins" : [
     {
-      "identity" : "differencekit",
+      "identity" : "poppang-rn",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/ra1028/DifferenceKit.git",
+      "location" : "https://github.com/team-PopPang/PopPang-RN",
       "state" : {
-        "revision" : "073b9671ce2b9b5b96398611427a1f929927e428",
-        "version" : "1.3.0"
+        "revision" : "0c2af9bff5548b3c34ecd522da014c96a89ed6b1",
+        "version" : "1.4.0"
       }
     }
   ],

@@ -9,21 +9,18 @@ struct DataTests {
     @Test("Data repository 구현체가 Domain repository contract와 usecase 주입 계약을 만족한다")
     func repositoryImplementationsSatisfyDomainContracts() {
         let popupRepository: PopupRepositoryProtocol = PopupRepositoryImpl()
-        let popupSubmissionRepository: PopupSubmissionRepositoryProtocol = PopupSubmissionRepositoryImpl()
         let userRepository: UserRepositoryProtocol = UserRepositoryImpl()
         let adminRepository: AdminRepositoryProtocol = AdminRepositoryImpl()
         let authRepository: AuthRepositoryProtocol = AuthRepositoryImpl(tokenStorage: AuthTokenStorage())
         let serverHealthRepository: ServerHealthRepositoryProtocol = ServerHealthRepositoryImpl()
 
         let popupUsecase: PopupUsecaseProtocol = PopupUsecaseImpl(popupRepository: popupRepository)
-        let popupSubmissionUsecase: PopupSubmissionUsecaseProtocol = PopupSubmissionUsecaseImpl(repository: popupSubmissionRepository)
         let userUsecase: UserUsecaseProtocol = UserUsecaseImpl(userRepository: userRepository)
         let adminUsecase: AdminUsecaseProtocol = AdminUsecaseImpl(adminRepository: adminRepository)
         let authUsecase: AuthUsecaseProtocol = AuthUsecaseImpl(authRepository: authRepository)
         let serverHealthUsecase: ServerHealthUsecaseProtocol = ServerHealthUsecaseImpl(serverHealthRepository: serverHealthRepository)
 
         #expect(contractTypeName(of: popupUsecase) == "PopupUsecaseImpl")
-        #expect(contractTypeName(of: popupSubmissionUsecase) == "PopupSubmissionUsecaseImpl")
         #expect(contractTypeName(of: userUsecase) == "UserUsecaseImpl")
         #expect(contractTypeName(of: adminUsecase) == "AdminUsecaseImpl")
         #expect(contractTypeName(of: authUsecase) == "AuthUsecaseImpl")
@@ -166,308 +163,28 @@ struct DataTests {
         #expect(user.isAlerted)
     }
 
-    @Test("팝업 제보 요청 엔티티가 서버 DTO 날짜 형식으로 변환된다")
-    func popupSubmissionCreateRequestMapsToServerDTO() throws {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "ko_KR")
-        formatter.dateFormat = "yyyy-MM-dd"
-
-        let request = PopupSubmissionCreateRequest(
-            userUuid: "user-1",
-            name: "성수 팝업",
-            startDate: try #require(formatter.date(from: "2026-06-03")),
-            endDate: try #require(formatter.date(from: "2026-06-10")),
-            openTime: .init(hour: 10, minute: 30),
-            closeTime: .init(hour: 20, minute: 0),
-            address: "서울 성동구 성수이로 00",
-            roadAddress: "서울 성동구 성수이로 00",
-            region: "서울",
-            instaPostUrl: "https://instagram.com/p/demo",
-            description: "브랜드 팝업 제보",
-            imageList: [
-                .init(imageUrl: "https://cdn.example.com/a.jpg", sortOrder: 0),
-                .init(imageUrl: "https://cdn.example.com/b.jpg", sortOrder: 1),
-            ],
-            recommendIdList: [1, 2]
-        )
-
-        let dto = request.toDTO()
-
-        #expect(dto.userUuid == "user-1")
-        #expect(dto.name == "성수 팝업")
-        #expect(dto.startDate == "2026-06-03")
-        #expect(dto.endDate == "2026-06-10")
-        #expect(dto.openTime?.hour == 10)
-        #expect(dto.closeTime?.minute == 0)
-        #expect(dto.address == "서울 성동구 성수이로 00")
-        #expect(dto.roadAddress == "서울 성동구 성수이로 00")
-        #expect(dto.region == "서울")
-        #expect(dto.instaPostUrl == "https://instagram.com/p/demo")
-        #expect(dto.description == "브랜드 팝업 제보")
-        #expect(dto.imageList.count == 2)
-        #expect(dto.recommendIdList == [1, 2])
-
-        let dtoObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(dto)) as? [String: Any]
-        #expect(dtoObject?["userUuid"] as? String == "user-1")
-        #expect(dtoObject?["submitterUserId"] == nil)
-    }
-
-    @Test("관리자 제보 목록 DTO가 새 서버 응답을 도메인 모델로 변환한다")
-    func popupSubmissionAdminListDTOMapsToDomainModel() throws {
-        let json = """
-        {
-          "popupSubmissionId": 7,
-          "name": "성수 팝업",
-          "roadAddress": "서울 성동구 성수이로 00",
-          "region": "서울",
-          "submitterUserUuid": "user-1",
-          "submitterNickname": "팝팡",
-          "submittedAt": "2026-06-05T10:20:30",
-          "status": "PENDING"
-        }
-        """.data(using: .utf8)!
-
-        let item = try JSONDecoder().decode(PopupSubmissionAdminListResponseDTO.self, from: json).toEntity()
-
-        #expect(item.id == 7)
-        #expect(item.name == "성수 팝업")
-        #expect(item.roadAddress == "서울 성동구 성수이로 00")
-        #expect(item.region == "서울")
-        #expect(item.submitterUserUuid == "user-1")
-        #expect(item.submitterNickname == "팝팡")
-        #expect(item.submittedAt == "2026-06-05T10:20:30")
-        #expect(item.status == .pending)
-    }
-
-    @Test("관리자 제보 상세 DTO가 새 서버 응답을 도메인 모델로 변환한다")
-    func popupSubmissionAdminDetailDTOMapsToDomainModel() throws {
-        let json = """
-        {
-          "popupSubmissionId": 7,
-          "name": "성수 팝업",
-          "startDate": "2026-06-03",
-          "endDate": "2026-06-10",
-          "roadAddress": "서울 성동구 성수이로 00",
-          "region": "서울",
-          "description": "브랜드 팝업 제보",
-          "recommendIdList": [1, 2],
-          "recommendList": [
-            { "recommendId": 1, "recommendName": "패션" },
-            { "recommendId": 2, "recommendName": "라이프스타일" }
-          ],
-          "imageList": [
-            { "imageUrl": "https://cdn.example.com/a.jpg", "sortOrder": 0 }
-          ],
-          "address": "서울 성동구 성수동 00-0",
-          "openTime": { "hour": 10, "minute": 0, "second": 0, "nano": 0 },
-          "closeTime": { "hour": 20, "minute": 0, "second": 0, "nano": 0 },
-          "instaPostUrl": "https://instagram.com/p/demo",
-          "status": "APPROVED"
-        }
-        """.data(using: .utf8)!
-
-        let detail = try JSONDecoder().decode(PopupSubmissionAdminDetailResponseDTO.self, from: json).toEntity()
-
-        #expect(detail.id == 7)
-        #expect(detail.name == "성수 팝업")
-        #expect(detail.region == "서울")
-        #expect(detail.recommendIdList == [1, 2])
-        #expect(detail.recommendList.map(\.recommendName) == ["패션", "라이프스타일"])
-        #expect(detail.imageList.map(\.imageUrl) == ["https://cdn.example.com/a.jpg"])
-        #expect(detail.openTime == .init(hour: 10, minute: 0))
-        #expect(detail.closeTime == .init(hour: 20, minute: 0))
-        #expect(detail.instaPostUrl == "https://instagram.com/p/demo")
-        #expect(detail.status == .approved)
-    }
-
-    @Test("관리자 승인 요청 엔티티가 새 서버 DTO로 변환된다")
-    func popupSubmissionAdminUpdateRequestMapsToDTO() throws {
-        let request = PopupSubmissionAdminUpdateRequest(
-            status: .approved,
-            name: "성수 팝업",
-            startDate: Date(timeIntervalSince1970: 1_717_472_000),
-            endDate: Date(timeIntervalSince1970: 1_718_076_800),
-            roadAddress: "서울 성동구 성수이로 00",
-            region: "서울",
-            address: "서울 성동구 성수동 00-0",
-            openTime: .init(hour: 10, minute: 0),
-            closeTime: .init(hour: 20, minute: 0),
-            latitude: 37.544,
-            longitude: 127.055,
-            captionSummary: "한줄 소개",
-            caption: "상세 소개",
-            mediaType: .image,
-            instaPostUrl: nil,
-            instaPostId: nil,
-            geocodingQuery: nil,
-            imageList: [.init(imageUrl: "https://cdn.example.com/a.jpg", sortOrder: 0)],
-            recommendIdList: [1, 2],
-            isActive: true
-        )
-
-        let dto = request.toDTO()
-        let dtoObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(dto)) as? [String: Any]
-
-        #expect(dto.status == "APPROVED")
-        #expect(dto.imageList.count == 1)
-        #expect(dto.recommendIdList == [1, 2])
-        #expect(dtoObject?["status"] as? String == "APPROVED")
-        #expect(dtoObject?["isActive"] as? Bool == true)
-        #expect(dtoObject?["activated"] as? Bool == true)
-    }
-
-    @Test("팝업 제보 상태 엔티티가 서버 DTO로 변환된다")
-    func popupSubmissionStatusMapsToServerDTO() throws {
-        let dto = PopupSubmissionStatus.approved.toDTO()
-        let dtoObject = try JSONSerialization.jsonObject(with: JSONEncoder().encode(dto)) as? [String: Any]
-
-        #expect(dto.popupSubmissionStatus == "APPROVED")
-        #expect(dtoObject?["popupSubmissionStatus"] as? String == "APPROVED")
-    }
-
-    @Test("팝업 제보 목록 DTO가 서버 응답을 도메인 모델로 변환한다")
-    func popupSubmissionDTOMapsToDomainModel() throws {
-        let json = """
-        {
-          "id": 7,
-          "name": "성수 팝업",
-          "startDate": "2026-06-03",
-          "endDate": "2026-06-10",
-          "address": "서울 성동구 성수이로 00",
-          "description": "브랜드 팝업 제보",
-          "status": "PENDING",
-          "createdAt": "2026-06-05T10:20:30.000Z"
-        }
-        """.data(using: .utf8)!
-
-        let submission = try JSONDecoder().decode(PopupSubmissionDTO.self, from: json).toEntity()
-
-        #expect(submission.id == 7)
-        #expect(submission.name == "성수 팝업")
-        #expect(submission.startDate == "2026-06-03")
-        #expect(submission.endDate == "2026-06-10")
-        #expect(submission.address == "서울 성동구 성수이로 00")
-        #expect(submission.description == "브랜드 팝업 제보")
-        #expect(submission.status == .pending)
-        #expect(submission.createdAt == "2026-06-05T10:20:30.000Z")
-    }
-
-    @Test("팝업 제보 목록 DTO가 알 수 없는 상태를 실패로 처리한다")
-    func popupSubmissionDTORejectsUnknownStatus() throws {
-        let json = """
-        {
-          "id": 7,
-          "name": "성수 팝업",
-          "startDate": "2026-06-03",
-          "endDate": "2026-06-10",
-          "address": "서울 성동구 성수이로 00",
-          "description": "브랜드 팝업 제보",
-          "status": "ARCHIVED",
-          "createdAt": "2026-06-05T10:20:30.000Z"
-        }
-        """.data(using: .utf8)!
-
-        let dto = try JSONDecoder().decode(PopupSubmissionDTO.self, from: json)
-
-        #expect(throws: PopupSubmissionMappingError.unknownStatus("ARCHIVED")) {
-            try dto.toEntity()
-        }
-    }
-
     @Test("API 경로가 현재 명세와 일치한다")
     func apiPathsMatchEndpointDefinitions() {
-        #expect(AdminAPI.getPopupSubmissionList.path == "/admin/popup-submissions")
-        #expect(AdminAPI.createPopupSubmission(requestDTO: .fixture).path == "/admin/popup-submissions")
-        #expect(AdminAPI.deactivatePopupByUser(userUuid: "user-1", popupUuid: "popup-1").path == "/admin/user/user-1/popup/popup-1/deactivate")
-        #expect(AdminAPI.updatePopupSubmissionStatus(
-            submissionId: 7,
-            requestDTO: PopupSubmissionStatus.approved.toDTO()
-        ).path == "/admin/popup-submissions/7/status")
-        #expect(PopupSubmissionAPI.createPopupSubmission(requestDTO: .fixture).path == "/popup-submissions")
-        #expect(PopupSubmissionAPI.getPopupSubmissionList(adminUuid: "admin-1", status: "전체").path == "/admin/popup-submissions")
-        #expect(PopupSubmissionAPI.getPopupSubmissionDetail(adminUuid: "admin-1", submissionId: 7).path == "/admin/popup-submissions/7")
-        #expect(PopupSubmissionAPI.updatePopupSubmission(
-            adminUuid: "admin-1",
-            submissionId: 7,
-            requestDTO: .adminFixture
-        ).path == "/admin/popup-submissions/7")
-
-
-        #expect(PopupAPI.getPopupList.path == "/popup")
-        #expect(PopupAPI.getUpcomingPopupList.path == "/popup/upcoming")
-        #expect(PopupAPI.getInProgressPopupList.path == "/popup/inProgress")
-        #expect(PopupAPI.searchPopupList(searchText: "성수").path == "/popup/search")
-        #expect(PopupAPI.getRandomPopupList.path == "/popup/random")
-        #expect(PopupAPI.getPersonalPopupList(userUuid: "user-1").path == "/users/user-1/popups")
-        #expect(PopupAPI.getPersonalUseerRecommendPopupList(userUuid: "user-1").path == "/users/user-1/popups/recommend")
-        #expect(PopupAPI.getPersonalUpcomingPopupList(userUuid: "user-1").path == "/users/user-1/popups/upcoming")
         #expect(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").path == "/users/user-1/popups/filtered/home")
         #expect(PopupAPI.getPersonalMapFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", latitude: nil, longitude: nil, mapSortStandard: "DISTANCE").path == "/users/user-1/popups/filtered/map")
-        #expect(PopupAPI.getPersonalRandomPopupList(userUuid: "user-1").path == "/users/user-1/popups/random")
-        #expect(PopupAPI.getAlertPopupList(userUuid: "user-1").path == "/users/user-1/alert/popups")
-        #expect(PopupAPI.removeAlertPopup(userUuid: "user-1", popupUuid: "popup-1").path == "/users/user-1/alert")
         #expect(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").path == "/favorite")
         #expect(PopupAPI.removeFavorite(userUuid: "user-1", popupUuid: "popup-1").path == "/favorite")
         #expect(PopupAPI.getPopularRecommendList.path == "recommend/featured")
         #expect(PopupAPI.getPopularRecommendPopupList(userUuid: "user-1", recommendId: 7).path == "/users/user-1/popups/recommendations/7")
-
-        #expect(UserAPI.getRecommendList.path == "/recommend")
-        #expect(UserAPI.getAlertKeywordList(userUuid: "user-1").path == "/alert-keyword")
-        #expect(UserAPI.addAlertKeyword(userUuid: "user-1", newAlertKeyword: "성수").path == "/alert-keyword")
-        #expect(UserAPI.removeAlertKeyword(userUuid: "user-1", deleteAlertKeyword: "성수").path == "/alert-keyword")
-        #expect(UserAPI.checkFcmToken(userUuid: "user-1", fcmToken: "fcm").path == "/user/user-1/fcm-token/duplicate-check")
-        #expect(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").path == "/user/user-1/fcm-token/update")
     }
 
     @Test("API 메서드가 현재 명세와 일치한다")
     func apiMethodsMatchEndpointDefinitions() {
-        #expect(AdminAPI.getPopupSubmissionList.method == .get)
-        #expect(AdminAPI.createPopupSubmission(requestDTO: .fixture).method == .post)
-        #expect(AdminAPI.deactivatePopupByUser(userUuid: "user-1", popupUuid: "popup-1").method == .patch)
-        #expect(AdminAPI.updatePopupSubmissionStatus(
-            submissionId: 7,
-            requestDTO: PopupSubmissionStatus.approved.toDTO()
-        ).method == .patch)
-        #expect(PopupSubmissionAPI.createPopupSubmission(requestDTO: .fixture).method == .post)
-        #expect(PopupSubmissionAPI.getPopupSubmissionList(adminUuid: "admin-1", status: "전체").method == .get)
-        #expect(PopupSubmissionAPI.getPopupSubmissionDetail(adminUuid: "admin-1", submissionId: 7).method == .get)
-        #expect(PopupSubmissionAPI.updatePopupSubmission(
-            adminUuid: "admin-1",
-            submissionId: 7,
-            requestDTO: .adminFixture
-        ).method == .put)
-
-
-        #expect(PopupAPI.getPopupList.method == .get)
-        #expect(PopupAPI.getUpcomingPopupList.method == .get)
-        #expect(PopupAPI.getInProgressPopupList.method == .get)
-        #expect(PopupAPI.searchPopupList(searchText: "성수").method == .get)
-        #expect(PopupAPI.getRandomPopupList.method == .get)
-        #expect(PopupAPI.getPersonalPopupList(userUuid: "user-1").method == .get)
-        #expect(PopupAPI.getPersonalUseerRecommendPopupList(userUuid: "user-1").method == .get)
-        #expect(PopupAPI.getPersonalUpcomingPopupList(userUuid: "user-1").method == .get)
         #expect(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").method == .get)
         #expect(PopupAPI.getPersonalMapFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", latitude: 37.5, longitude: 127.0, mapSortStandard: "DISTANCE").method == .get)
-        #expect(PopupAPI.getPersonalRandomPopupList(userUuid: "user-1").method == .get)
-        #expect(PopupAPI.getAlertPopupList(userUuid: "user-1").method == .get)
-        #expect(PopupAPI.removeAlertPopup(userUuid: "user-1", popupUuid: "popup-1").method == .delete)
         #expect(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").method == .post)
         #expect(PopupAPI.removeFavorite(userUuid: "user-1", popupUuid: "popup-1").method == .delete)
         #expect(PopupAPI.getPopularRecommendList.method == .get)
         #expect(PopupAPI.getPopularRecommendPopupList(userUuid: "user-1", recommendId: 7).method == .get)
-
-        #expect(UserAPI.getRecommendList.method == .get)
-        #expect(UserAPI.getAlertKeywordList(userUuid: "user-1").method == .get)
-        #expect(UserAPI.addAlertKeyword(userUuid: "user-1", newAlertKeyword: "성수").method == .post)
-        #expect(UserAPI.removeAlertKeyword(userUuid: "user-1", deleteAlertKeyword: "성수").method == .delete)
-        #expect(UserAPI.checkFcmToken(userUuid: "user-1", fcmToken: "fcm").method == .get)
-        #expect(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").method == .put)
     }
 
     @Test("API 요청 파라미터가 현재 명세와 일치한다")
     func apiRequestParametersMatchEndpointDefinitions() {
-        #expect(stringParameter(PopupAPI.searchPopupList(searchText: "성수").task, key: "q") == "성수")
-        #expect(stringParameter(PopupAPI.getPersonalPopupList(userUuid: "user-1").task, key: "userUuid") == "user-1")
         #expect(stringParameter(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").task, key: "region") == "서울")
         #expect(stringParameter(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").task, key: "district") == "성동구")
         #expect(stringParameter(PopupAPI.getPersonalFilteredPopupList(userUuid: "user-1", region: "서울", district: "성동구", homeSortStandard: "NEWEST").task, key: "homeSortStandard") == "NEWEST")
@@ -486,15 +203,8 @@ struct DataTests {
         #expect(doubleParameter(mapTask, key: "longitude") == 127.0)
         #expect(stringParameter(mapTask, key: "mapSortStandard") == "DISTANCE")
 
-        #expect(stringParameter(PopupAPI.removeAlertPopup(userUuid: "user-1", popupUuid: "popup-1").task, key: "popupUuid") == "popup-1")
         #expect(stringParameter(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").task, key: "userUuid") == "user-1")
         #expect(stringParameter(PopupAPI.addFavorite(userUuid: "user-1", popupUuid: "popup-1").task, key: "popupUuid") == "popup-1")
-
-        #expect(stringParameter(UserAPI.getAlertKeywordList(userUuid: "user-1").task, key: "userUuid") == "user-1")
-        #expect(stringParameter(UserAPI.addAlertKeyword(userUuid: "user-1", newAlertKeyword: "성수").task, key: "newAlertKeyword") == "성수")
-        #expect(stringParameter(UserAPI.removeAlertKeyword(userUuid: "user-1", deleteAlertKeyword: "성수").task, key: "deleteAlertKeyword") == "성수")
-        #expect(stringParameter(UserAPI.checkFcmToken(userUuid: "user-1", fcmToken: "fcm").task, key: "fcmToken") == "fcm")
-        #expect(stringParameter(UserAPI.updateFcmToken(userUuid: "user-1", newFcmToken: "fcm").task, key: "fcmToken") == "fcm")
     }
 
     private func stringParameter(_ task: Moya.Task, key: String) -> String? {
@@ -519,48 +229,4 @@ struct DataTests {
     private func contractTypeName(of value: Any) -> String {
         String(describing: type(of: value))
     }
-}
-
-private extension PopupSubmissionCreateRequestDTO {
-    static let fixture = PopupSubmissionCreateRequestDTO(
-        userUuid: "user-1",
-        name: "성수 팝업",
-        startDate: "2026-06-03",
-        endDate: "2026-06-10",
-        openTime: PopupSubmissionLocalTimeDTO(hour: 10, minute: 0, second: 0, nano: 0),
-        closeTime: PopupSubmissionLocalTimeDTO(hour: 20, minute: 0, second: 0, nano: 0),
-        address: "서울 성동구 성수이로 00",
-        roadAddress: "서울 성동구 성수이로 00",
-        region: "서울",
-        instaPostUrl: "https://instagram.com/p/demo",
-        description: "브랜드 팝업 제보",
-        imageList: [PopupSubmissionImageRequestDTO(imageUrl: "https://cdn.example.com/a.jpg", sortOrder: 0)],
-        recommendIdList: [1]
-    )
-
-}
-
-private extension PopupSubmissionAdminUpdateRequestDTO {
-    static let adminFixture = PopupSubmissionAdminUpdateRequestDTO(
-        status: "APPROVED",
-        name: "성수 팝업",
-        startDate: "2026-06-03",
-        endDate: "2026-06-10",
-        roadAddress: "서울 성동구 성수이로 00",
-        region: "서울",
-        address: "서울 성동구 성수동 00-0",
-        openTime: PopupSubmissionLocalTimeDTO(hour: 10, minute: 0, second: 0, nano: 0),
-        closeTime: PopupSubmissionLocalTimeDTO(hour: 20, minute: 0, second: 0, nano: 0),
-        latitude: 37.544,
-        longitude: 127.055,
-        captionSummary: "한줄 소개",
-        caption: "상세 소개",
-        mediaType: "IMAGE",
-        instaPostUrl: nil,
-        instaPostId: nil,
-        geocodingQuery: nil,
-        imageList: [PopupSubmissionImageRequestDTO(imageUrl: "https://cdn.example.com/a.jpg", sortOrder: 0)],
-        recommendIdList: [1, 2],
-        isActive: true
-    )
 }

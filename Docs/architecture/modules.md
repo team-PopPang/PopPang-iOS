@@ -31,7 +31,7 @@ Tuist 설치와 명령은 [Tuist 설치와 실행](../development/tuist.md)을 �
 | `App` (`PopPangApp`) | `.app` | 앱 타깃 |
 | `Domain`, `Data`, `Core`, `DSKit`, `SheetKit`, `ThirdParty`, `ADKit` | `.framework` | 여러 모듈이 공유하는 경계다. `SheetKit`은 DSKit과 feature가 함께 링크하므로 `.framework`여야 코드가 두 번 들어가지 않는다. |
 | `Features/*Feature` | `.staticFramework` | 앱 안에서만 쓰는 leaf feature다. 실행 시점에 따로 로드할 framework 수를 줄인다. |
-| `PopPangRNFeature` | `.framework` | React Native prebuilt 패키지(`Vendor/PrebuiltReactNativeFrameworks`)를 링크한다. feature 중 유일하게 `.framework`다(이유는 코드에 적혀 있지 않음, `확인 필요`). |
+| `PopPangRNFeature` | `.framework` | React Native Swift Package(`PopPangRN`, PopPang-RN 저장소의 Nativepiece 배포)를 링크한다. feature 중 유일하게 `.framework`다(이유는 코드에 적혀 있지 않음, `확인 필요`). |
 | `*Tests` | `.unitTests` | |
 | `*Demo` | `.app` | feature 단독 실행용 데모 앱 |
 
@@ -63,7 +63,7 @@ bundle id 형식:
 - 다른 프로젝트 모듈은 `.project(target: "Domain", path: "../../Domain")`처럼 상대 경로로 쓴다.
 - 같은 project 안의 타깃은 `.target(name: "HomeFeatureV2")`로 쓴다.
 - `.external(name:)`은 `ThirdParty`와 `ADKit`에서만 쓴다.
-- React Native는 `.package(product:)`와 `packages: [.local(path: "../../Vendor/PrebuiltReactNativeFrameworks")]`로 연결한다.
+- React Native는 예외로 `ThirdParty`·`Tuist/Package.swift`가 아니라 `App`과 `PopPangRNFeature`에서 `packages: [.remote(url: "https://github.com/team-PopPang/PopPang-RN", requirement: .exact("<버전>"))]`와 `.package(product: "PopPangRN")`로 연결한다. 두 target이 함께 써야 Xcode가 product를 동적 framework 하나로 만들고 React 동적 framework를 앱에 넣는다. 이 패키지는 RN 저장소가 Nativepiece로 만든 binary target·리소스·C target 묶음이라, Tuist의 외부 의존성 변환이 아니라 Xcode의 Swift Package 연결을 그대로 쓴다. 이전 prebuild 패키지도 같은 방식이었다([React Native 패키지](../development/react-native.md)).
 
 scheme:
 

@@ -4,6 +4,7 @@ import Foundation
 import AuthFeatureV2
 import Data
 import MainTabFeature
+import PopPangRNFeature
 
 struct AppBootstrap {
     let sessionStorage: LocalSessionStorage
@@ -15,6 +16,7 @@ struct AppBootstrap {
     /// 실제 앱 실행 환경에서 사용할 의존성 그래프를 생성합니다.
     /// 동일한 `store`와 UseCase 인스턴스를 여러 객체에 전달하여
     /// 앱 내부에서 같은 저장소와 비즈니스 로직 인스턴스를 공유하도록 합니다.
+    @MainActor
     static func live(
         store: Storing = UserDefaultsStore()
     ) -> AppBootstrap {
@@ -24,13 +26,12 @@ struct AppBootstrap {
         // V2 인증 토큰 저장소와 갱신을 조립해, 모든 요청이 쓰는 NetworkProvider에 요청 전에 연결
         let tokenStorage = AuthTokenStorage(store: store)
         let sessionEvents = AuthSessionEvents()
-        NetworkProvider.shared.configureAuthentication(
-            AuthenticationPlugin(
-                storage: tokenStorage,
-                refresher: AccessTokenRefresher(storage: tokenStorage, refresh: AuthTokenRefresh.live()),
-                sessionEvents: sessionEvents
-            )
+        let authentication = AuthenticationPlugin(
+            storage: tokenStorage,
+            refresher: AccessTokenRefresher(storage: tokenStorage, refresh: AuthTokenRefresh.live()),
+            sessionEvents: sessionEvents
         )
+        NetworkProvider.shared.configureAuthentication(authentication)
 
         // Repository와 UseCase를 포함한 앱의 실제 의존성 그래프
         let dependencies = AppDependencyRegistry.live(tokenStorage: tokenStorage, store: store)
@@ -49,14 +50,17 @@ struct AppBootstrap {
             popupUsecase: dependencies.usecases.popupUsecase,
             userUsecase: dependencies.usecases.userUsecase
         )
-        
+
+        // React Native 화면도 앱 요청과 같은 토큰 저장소·갱신·401 규칙을 쓴다.
+        PopPangRNRuntime.start(authentication: authentication)
+
         // 푸시 토큰을 로컬에 저장하기 위한 저장소를 생성
         let pushTokenStorage = PushTokenStorage(store: store)
         
         // 알림 처리 객체에도 동일한 세션 저장소와 UserUsecase를 전달
         AppNotificationManager.shared.configure(
-            sessionStorage: sessionStorage,
             pushTokenStorage: pushTokenStorage,
+            authTokenStorage: tokenStorage,
             userUsecase: dependencies.usecases.userUsecase
         )
 

@@ -192,7 +192,7 @@ PR 제목과 본문은 최종 diff와 실제 검증 결과로 써요. 제목은 
 - Swift 타입, 프로토콜, 메서드, 프로퍼티, action case 이름의 원형 유지 (`MainTabFeature`, `popupSelected(Popup)`, `userUuid`)
 - TCA, PopPangListKit, Tuist, Moya 같은 제품·라이브러리 이름 원형 유지
 - Tuist target, scheme, bundle id, 파일 경로 원형 유지
-- 철자가 틀린 기존 이름(`getPersonalUseerRecommendPopupList`, section id `"comming"`)을 문서에서 임의로 고치지 않음
+- 철자가 틀린 기존 이름(section id `"comming"`)을 문서에서 임의로 고치지 않음
 - 오류 메시지와 로그 원문 유지
 - 코드 예제와 명령의 동작을 문체 수정 과정에서 바꾸지 않음
 - `Projects/` 코드로 확인하지 않은 동작이나 성과 추가 금지

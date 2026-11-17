@@ -27,6 +27,182 @@ struct AuthenticationTests {
         #expect(plugin.prepare(request, target: AuthTestAPI.signup).authorizationHeader == nil)
     }
 
+    // MARK: - hostAccessToken (네트워크 밖에서 쓰는 Access Token)
+
+    @Test("요청 전에는 저장된 Access Token을 그대로 돌려주고 갱신하지 않는다")
+    func hostAccessTokenReturnsStoredToken() async throws {
+        let storage = try makeStorage()
+        let counter = CallCounter()
+        let plugin = AuthenticationPlugin(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
+
+        #expect(await plugin.hostAccessToken(rejected: nil, expired: false) == .accessToken("old-access"))
+        #expect(await counter.count == 0)
+    }
+
+    @Test("401 5002를 받은 토큰을 넘기면 그 토큰을 만료된 토큰으로 갱신한다")
+    func hostAccessTokenRefreshesExpiredToken() async throws {
+        let storage = try makeStorage()
+        let counter = CallCounter()
+        let plugin = AuthenticationPlugin(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
+
+        #expect(await plugin.hostAccessToken(rejected: "old-access", expired: true) == .accessToken("new-access"))
+        #expect(await counter.refreshTokens == ["old-refresh"])
+    }
+
+    @Test("같은 토큰으로 보낸 요청 여러 개가 동시에 5002를 받아도 한 번만 갱신한다")
+    func hostAccessTokenRefreshesOnceForSameExpiredToken() async throws {
+        let storage = try makeStorage()
+        let counter = CallCounter()
+        let refresher = AccessTokenRefresher(storage: storage) { refreshToken in
+            await counter.increment(refreshToken)
+            try await ContinuousClock().sleep(for: .milliseconds(50))
+            return .newTokens
+        }
+        let plugin = AuthenticationPlugin(storage: storage, refresher: refresher)
+
+        let results = await withTaskGroup(of: HostAccessTokenResult.self) { group in
+            for _ in 0..<3 {
+                group.addTask { await plugin.hostAccessToken(rejected: "old-access", expired: true) }
+            }
+            return await group.reduce(into: [HostAccessTokenResult]()) { $0.append($1) }
+        }
+
+        #expect(results == Array(repeating: .accessToken("new-access"), count: 3))
+        #expect(await counter.refreshTokens == ["old-refresh"])
+    }
+
+    @Test("만료가 아닌 401인데 그사이 다른 요청이 이미 로그아웃시켰으면 다시 알리지 않는다")
+    func hostAccessTokenDoesNotNotifyTwiceWhenAlreadyLoggedOut() async throws {
+        let storage = AuthTokenStorage(store: InMemoryStore())
+        let events = AuthSessionEvents()
+        let stream = events.loginRequired()
+        let counter = CallCounter()
+        let plugin = AuthenticationPlugin(
+            storage: storage,
+            refresher: makeRefresher(storage: storage, counter: counter),
+            sessionEvents: events
+        )
+
+        #expect(await plugin.hostAccessToken(rejected: "old-access", expired: false) == .loginRequired)
+        #expect(await counter.count == 0)
+        #expect(try await receivesLoginRequired(stream) == false)
+    }
+
+    /// 지금까지 로그인 필요 알림이 왔는지 본다. `notifyLoginRequired`는 hostAccessToken 안에서 동기로 불리고 stream에 쌓이므로,
+    /// 호출이 끝난 뒤에는 늦게 오는 알림이 없다. 쌓인 값이 있으면 바로 읽히고, 없으면 잠깐 뒤 취소해 `false`가 된다.
+    private func receivesLoginRequired(_ stream: AsyncStream<Void>) async throws -> Bool {
+        let notified = _Concurrency.Task {
+            var iterator = stream.makeAsyncIterator()
+            return await iterator.next() != nil
+        }
+        try await ContinuousClock().sleep(for: .milliseconds(50))
+        notified.cancel()
+        return await notified.value
+    }
+
+    @Test("새 토큰으로 보낸 요청이 다시 5002를 받으면 그 토큰으로 다시 갱신한다")
+    func hostAccessTokenRefreshesAgainForNewExpiredToken() async throws {
+        let storage = try makeStorage()
+        try storage.saveTokens(.newTokens)
+        let counter = CallCounter()
+        let plugin = AuthenticationPlugin(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
+
+        #expect(await plugin.hostAccessToken(rejected: "new-access", expired: true) == .accessToken("new-access"))
+        #expect(await counter.refreshTokens == ["new-refresh"])
+    }
+
+    @Test("만료가 아닌 401이고 그 토큰이 아직 저장돼 있으면 토큰을 지우고 다시 로그인하라고 알린다")
+    func hostAccessTokenLogsOutForRejectedCurrentToken() async throws {
+        let storage = try makeStorage()
+        let events = AuthSessionEvents()
+        let stream = events.loginRequired()
+        let counter = CallCounter()
+        let plugin = AuthenticationPlugin(
+            storage: storage,
+            refresher: makeRefresher(storage: storage, counter: counter),
+            sessionEvents: events
+        )
+
+        #expect(await plugin.hostAccessToken(rejected: "old-access", expired: false) == .loginRequired)
+        #expect(storage.loadTokens() == nil)
+        #expect(await counter.count == 0)
+        var iterator = stream.makeAsyncIterator()
+        #expect(await iterator.next() != nil)
+    }
+
+    @Test("만료가 아닌 401이어도 그사이 토큰이 바뀌었으면 새 토큰을 돌려준다")
+    func hostAccessTokenReturnsNewTokenWhenRejectedTokenIsStale() async throws {
+        let storage = try makeStorage()
+        try storage.saveTokens(.newTokens)
+        let counter = CallCounter()
+        let plugin = AuthenticationPlugin(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
+
+        #expect(await plugin.hostAccessToken(rejected: "old-access", expired: false) == .accessToken("new-access"))
+        #expect(storage.loadTokens() == .newTokens)
+        #expect(await counter.count == 0)
+    }
+
+    @Test("요청 전인데 토큰 쌍이 없으면 토큰을 건드리거나 알리지 않고 로그인 필요로 답한다")
+    func hostAccessTokenRequiresLoginWhenLoggedOut() async throws {
+        let storage = AuthTokenStorage(store: InMemoryStore())
+        let events = AuthSessionEvents()
+        let stream = events.loginRequired()
+        let counter = CallCounter()
+        let plugin = AuthenticationPlugin(
+            storage: storage,
+            refresher: makeRefresher(storage: storage, counter: counter),
+            sessionEvents: events
+        )
+
+        #expect(await plugin.hostAccessToken(rejected: nil, expired: false) == .loginRequired)
+        #expect(await counter.count == 0)
+        #expect(try await receivesLoginRequired(stream) == false)
+    }
+
+    @Test("5002를 받았는데 그사이 다른 요청이 토큰을 지웠으면 갱신하지 않고 다시 알리지 않는다")
+    func hostAccessTokenSkipsRefreshWhenAlreadyLoggedOut() async throws {
+        let storage = AuthTokenStorage(store: InMemoryStore())
+        let events = AuthSessionEvents()
+        let stream = events.loginRequired()
+        let counter = CallCounter()
+        let plugin = AuthenticationPlugin(
+            storage: storage,
+            refresher: makeRefresher(storage: storage, counter: counter),
+            sessionEvents: events
+        )
+
+        #expect(await plugin.hostAccessToken(rejected: "old-access", expired: true) == .loginRequired)
+        #expect(await counter.count == 0)
+        #expect(try await receivesLoginRequired(stream) == false)
+    }
+
+    @Test("갱신도 401이면 다시 로그인하라고 알린다")
+    func hostAccessTokenNotifiesLoginRequiredWhenRefreshIsUnauthorized() async throws {
+        let storage = try makeStorage()
+        let events = AuthSessionEvents()
+        let stream = events.loginRequired()
+        let refresher = AccessTokenRefresher(storage: storage) { _ in
+            throw NetworkError.invalidStatusCode(401, message: errorBody(code: 5007))
+        }
+        let plugin = AuthenticationPlugin(storage: storage, refresher: refresher, sessionEvents: events)
+
+        #expect(await plugin.hostAccessToken(rejected: "old-access", expired: true) == .loginRequired)
+        var iterator = stream.makeAsyncIterator()
+        #expect(await iterator.next() != nil)
+    }
+
+    @Test("갱신이 401이 아닌 이유로 실패하면 일시 실패로 답하고 토큰은 그대로 둔다")
+    func hostAccessTokenReportsTemporaryFailure() async throws {
+        let storage = try makeStorage()
+        let refresher = AccessTokenRefresher(storage: storage) { _ in
+            throw NetworkError.invalidStatusCode(503, message: errorBody(code: 5013))
+        }
+        let plugin = AuthenticationPlugin(storage: storage, refresher: refresher)
+
+        #expect(await plugin.hostAccessToken(rejected: "old-access", expired: true) == .temporaryFailure)
+        #expect(storage.loadTokens() == .oldTokens)
+    }
+
     // MARK: - AccessTokenRefresher
 
     @Test("동시에 만료돼도 갱신 요청은 한 번만 보내고 모두 새 토큰을 받는다")

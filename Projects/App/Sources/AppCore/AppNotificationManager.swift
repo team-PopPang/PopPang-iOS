@@ -37,36 +37,45 @@ final class PopPangAppDelegate: NSObject, UIApplicationDelegate {
 final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, MessagingDelegate {
     static let shared = AppNotificationManager()
 
-    private var sessionStorage: LocalSessionStorage
     private var pushTokenStorage: PushTokenStorage
+    /// 로그인 여부를 판단한다. V2 요청은 로그인 토큰으로 가므로 저장된 사용자 ID가 아니라 토큰이 있는지로 본다.
+    private var authTokenStorage: AuthTokenStorage
     private var userUsecase: UserUsecaseProtocol?
+    /// 마지막으로 시작한 토큰 저장 요청. 다음 요청은 이 요청이 끝난 뒤에 보내 순서를 지킨다.
+    private var syncTask: Task<Void, Never>?
+    /// 로그인 복구가 끝나 메인 화면에 들어간 상태인지. 앱이 켜지는 중(로그인 확인 중)이나 로그아웃 뒤에는 보내지 않는다.
+    private var isSessionActive = false
+    private let syncLock = NSLock()
 
     override convenience init() {
         let store = UserDefaultsStore()
         self.init(
-            sessionStorage: LocalSessionStorage(store: store),
-            pushTokenStorage: PushTokenStorage(store: store)
+            pushTokenStorage: PushTokenStorage(store: store),
+            authTokenStorage: AuthTokenStorage(store: store)
         )
     }
 
     init(
-        sessionStorage: LocalSessionStorage,
         pushTokenStorage: PushTokenStorage,
+        authTokenStorage: AuthTokenStorage,
         userUsecase: UserUsecaseProtocol? = nil
     ) {
-        self.sessionStorage = sessionStorage
         self.pushTokenStorage = pushTokenStorage
+        self.authTokenStorage = authTokenStorage
         self.userUsecase = userUsecase
         super.init()
     }
 
     func configure(
-        sessionStorage: LocalSessionStorage,
         pushTokenStorage: PushTokenStorage,
+        authTokenStorage: AuthTokenStorage,
         userUsecase: UserUsecaseProtocol
     ) {
-        self.sessionStorage = sessionStorage
+        // 전송 Task가 다른 스레드에서 읽으므로 syncLock 안에서 바꾼다.
+        syncLock.lock()
+        defer { syncLock.unlock() }
         self.pushTokenStorage = pushTokenStorage
+        self.authTokenStorage = authTokenStorage
         self.userUsecase = userUsecase
     }
 
@@ -120,27 +129,57 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
         Logger.e("❌ APNs 등록 실패: \(error.localizedDescription)")
     }
 
-    func syncStoredToken(userUuid: String) {
-        guard let fcmToken = pushTokenStorage.load(), fcmToken.isEmpty == false else { return }
-        guard let userUsecase else { return }
+    /// 로그인한 사용자의 푸시 토큰을 서버에 저장한다(V2 `PUT /api/v2/user/fcm-token`).
+    /// 서버는 받은 값을 저장만 하므로 V1처럼 중복 확인을 먼저 하지 않는다(V2에는 확인 API가 없다).
+    /// 같은 토큰을 다시 보내도 결과가 같아 따로 막지 않는다. 막으면 같은 실행에서 다른 계정으로 로그인했을 때 그 계정의 토큰이 가지 않는다.
+    ///
+    /// 요청은 하나씩 순서대로 보내고, 보낼 때 저장된 최신 토큰을 읽는다.
+    /// 앱 시작 직후 Firebase가 토큰을 바꿔 두 번 보내도 마지막에 도착하는 값이 최신 토큰이 된다.
+    /// 로그인 복구나 로그인이 끝나 메인 화면에 들어갈 때 AppFeature가 부른다. 이때부터 토큰을 서버에 보낸다.
+    func startSession() {
+        syncLock.lock()
+        isSessionActive = true
+        syncLock.unlock()
+        syncStoredToken()
+    }
 
-        Task {
+    /// 로그아웃·세션 만료 때 AppFeature가 부른다. 기다리던 전송을 취소하고 다시 로그인할 때까지 보내지 않는다.
+    func endSession() {
+        syncLock.lock()
+        isSessionActive = false
+        syncTask?.cancel()
+        syncTask = nil
+        syncLock.unlock()
+    }
+
+    /// 보내기 직전에 쓸 값을 syncLock 안에서 한 번에 읽는다. 로그인 상태가 아니면 nil이다.
+    private func sendContext() -> (pushTokenStorage: PushTokenStorage, authTokenStorage: AuthTokenStorage, userUsecase: UserUsecaseProtocol)? {
+        syncLock.lock()
+        defer { syncLock.unlock() }
+        guard isSessionActive, let userUsecase else { return nil }
+        return (pushTokenStorage, authTokenStorage, userUsecase)
+    }
+
+    private func syncStoredToken() {
+        syncLock.lock()
+        defer { syncLock.unlock() }
+        // 앱이 켜지는 중에는 보내지 않는다. 로그인 확인 중에 이 요청이 401을 받으면 실행 판단 전에 로그아웃될 수 있다.
+        guard isSessionActive, userUsecase != nil else { return }
+
+        let previous = syncTask
+        syncTask = Task { [weak self] in
+            await previous?.value
+            // 앞 요청을 기다리는 사이 로그아웃했으면 보내지 않는다. 보내기 직전에 다시 확인한다.
+            guard let self, Task.isCancelled == false, let context = self.sendContext() else { return }
+            // 로그인 토큰이 없으면 서버가 거절하므로 보내지 않는다. 로그인을 마치면 AppFeature가 다시 부른다.
+            guard context.authTokenStorage.loadTokens() != nil else { return }
+            guard let fcmToken = context.pushTokenStorage.load(), fcmToken.isEmpty == false else { return }
             do {
-                Logger.d("로그인된 uuid가 있어 FCM 토큰 서버 일치 여부 확인")
-                let isSameToken = try await userUsecase.checkFcmToken(
-                    userUuid: userUuid,
-                    fcmToken: fcmToken
-                )
-
-                guard isSameToken == false else { return }
-
-                try await userUsecase.updateFcmToken(
-                    userUuid: userUuid,
-                    fcmToken: fcmToken
-                )
-                Logger.d("로컬 FCM 토큰을 서버로 전송 및 갱신 완료")
+                try await context.userUsecase.updateFcmToken(fcmToken: fcmToken)
+                Logger.d("FCM 토큰을 서버에 저장 완료")
             } catch {
-                Logger.e("❌ FCM 토큰 중복 확인 실패: \(error)")
+                // 실패하면 다음 기회(앱 시작·로그인·토큰 갱신)에 다시 보낸다.
+                Logger.e("❌ FCM 토큰 저장 실패: \(error)")
             }
         }
     }
@@ -175,12 +214,8 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
         pushTokenStorage.save(fcmToken)
         Logger.d("FCM 토큰 저장 완료 source=\(source)")
 
-        let snapshot = sessionStorage.loadSnapshot()
-        guard let userID = snapshot.userID else {
-            Logger.w("⚠️ uuid 없음")
-            return
-        }
-        syncStoredToken(userUuid: userID)
+        // 메인 화면에 들어간 상태면 바로 보내고, 아니면 저장만 해 두었다가 startSession에서 보낸다.
+        syncStoredToken()
     }
 }
 

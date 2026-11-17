@@ -200,11 +200,11 @@ Demo 앱 타깃은 mock 대신 실제 Repository를 쓰기 위해 `Data`를 참�
 HomeFeatureView (HomeFeatureV2)
   → store.send(.onAppear)
   → HomeFeature reducer: state.isLoading = true, loadAllPopupData(...)가 Effect.run 반환
-  → @Dependency(\.homePopupClient) HomePopupClient.getPersonalRandomPopupList(userUuid) 등 3개 요청을 async let으로 동시에 실행
-  → PopupUsecaseProtocol.getPersonalRandomPopupList(userUuid:)     (Domain, AppBootstrap에서 주입)
+  → @Dependency(\.homePopupClient) HomePopupClient.getRandomPopupList() 등 요청을 async let으로 동시에 실행
+  → PopupUsecaseProtocol.getUserRandomPopupList()                  (Domain, AppBootstrap에서 주입)
   → PopupUsecaseImpl → PopupRepositoryProtocol                     (Domain)
   → PopupRepositoryImpl                                            (Data)
-  → MoyaProvider<PopupAPI>.asyncRequest(_:decodeTo: [PopupDTO].self)
+  → MoyaProvider<V2PopupAPI>.asyncRequest(_:decodeTo: [PopupDTO].self)
   → PopupDTO.toEntity() → [Popup]
   → send(.popupSectionsLoaded(HomePopupSections(...))) → reducer가 state 갱신 → view 다시 그림
 ```
@@ -219,7 +219,7 @@ HomeFeatureView (HomeFeatureV2)
 2. `AppBootstrap.live()`가 `LocalSessionStorage`, `AppDependencyRegistry`, `LocalSessionClient`, `MainTabFeatureDependencies`를 만들고 `AppNotificationManager`를 설정한다.
 3. `makeAppStore()`가 `AppFeature` store를 만들고 의존성을 주입한다.
 4. `AppRootFlowView`가 `.launch`에서 `launchTask`를 보낸다. 확인이 1.5초를 넘기면 시작 이미지 위에 로딩 표시를 띄운다.
-5. `AppFeature.resolveLaunch()`가 서버 헬스 체크(`ServerHealthClient`, `GET /api/v1/health`, 최대 5초)와 자동 로그인(`LocalSessionClient.load()`)을 동시에 시작한다.
+5. `AppFeature.resolveLaunch()`가 서버 헬스 체크(`ServerHealthClient`, `GET /api/v2/health`, 인증 없음, 최대 5초)와 자동 로그인(`LocalSessionClient.load()`)을 동시에 시작한다.
 6. 헬스 체크 결과에 따라 갈라진다.
    - 정상: `LocalSessionStorage.loadSnapshot()`과 세션으로 `AppLaunchStateResolver`가 시작 화면을 정하고, `launchResolved`에서 `session`과 `destination`을 반영한다. main이면 `MainTabFeature.State`를 만든다.
    - 서버 이상·오프라인: `serverHealthCheckFailed`로 `.maintenance` 화면(`MaintenanceFeatureView`)을 띄운다. 저장된 로그인 정보는 지우지 않는다.

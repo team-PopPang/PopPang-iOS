@@ -17,6 +17,9 @@ public enum V2UserAPI {
     /// 명세(`cc55e51`)는 탈퇴 표시만 하는 soft delete였지만, 서버가 영구 삭제로 바꿔 배포했다(2026-10-25).
     /// 탈퇴한 뒤 같은 소셜 계정으로 다시 가입할 수 있다.
     case withdraw
+    /// `PUT /api/v2/user/fcm-token` (USER-06). 푸시 토큰을 저장한다. 성공 응답은 빈 본문이다.
+    /// V1의 중복 확인(GET)과 갱신(PUT) 두 요청을 대신한다.
+    case updateFcmToken(fcmToken: String)
 }
 
 extension V2UserAPI: BaseAPI {
@@ -36,6 +39,8 @@ extension V2UserAPI: BaseAPI {
             return "/user"
         case .alertStatus:
             return "/user/alert-status"
+        case .updateFcmToken:
+            return "/user/fcm-token"
         }
     }
 
@@ -47,6 +52,8 @@ extension V2UserAPI: BaseAPI {
             return .patch
         case .withdraw:
             return .delete
+        case .updateFcmToken:
+            return .put
         }
     }
 
@@ -60,6 +67,8 @@ extension V2UserAPI: BaseAPI {
             return .requestJSONEncodable(["isAlerted": isAlerted])
         case .withdraw:
             return .requestPlain
+        case .updateFcmToken(let fcmToken):
+            return .requestJSONEncodable(["fcmToken": fcmToken])
         }
     }
 }

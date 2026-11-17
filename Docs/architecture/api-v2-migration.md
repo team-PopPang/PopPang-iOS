@@ -85,7 +85,7 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 V2로 옮기는 target은 버전과 인증 종류를 정하고, 경로는 명세의 V2 경로에서 `/api/v2`를 뺀 값을 써요.
 
 ```swift
-extension UserAPI: BaseAPI {
+extension V2UserAPI: BaseAPI {
     public var apiVersion: APIVersion {
         .v2
     }
@@ -229,22 +229,23 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 4 | CalendarFeature | 필터 팝업 (UPOP-04), 지역 목록 (POP-10), 찜 등록·해제 | 완료 (#142, `CalendarFeatureV2`) |
 | 5 | HomeFeatureV2 | 오픈 예정 (UPOP-12), 필터 팝업, 랜덤 (UPOP-07), 지역 목록, 찜 등록·해제 | 완료 (#144) |
 | 6 | MapFeature | 지도 필터 (UPOP-05), 인기 추천 카테고리 (RECO-02), 카테고리별 팝업 (UPOP-09), 지역 목록, 찜 등록·해제 | 화면 먼저 진행 중 (#146, `MapFeatureV2`). 필터 API는 백엔드 확인 중 |
-| 7 | AlertFeature | 알림 키워드 목록·등록·삭제 (ALERT-01~03), 알림함 목록·삭제 (ALERT-04·05), 찜 등록·해제 | 예정 |
-| 8 | App (푸시) | FCM 토큰 중복 확인·갱신 두 요청을 `PUT /api/v2/user/fcm-token` 하나로 (USER-06) | 예정 |
-| 9 | 정리 | 쓰지 않는 V1 case(비회원 팝업 목록 등), Repository·Usecase의 `userUuid` 인자, 세션의 `userUuid` 저장 | 예정 |
+| 7 | AlertFeature | 알림 키워드 목록·등록·삭제 (ALERT-01~03), 알림함 목록·삭제 (ALERT-04·05), 찜 등록·해제 | 완료 (#150) |
+| 8 | App (푸시) | FCM 토큰 중복 확인·갱신 두 요청을 `PUT /api/v2/user/fcm-token` 하나로 (USER-06) | 완료 (#148) |
+| 9 | 정리 | 쓰지 않는 V1 case(비회원 팝업 목록 등), Repository·Usecase의 `userUuid` 인자, 세션의 `userUuid` 저장 | 진행 중 (#152에서 앱이 부르지 않는 V1 함수 삭제. 지도가 쓰는 V1 함수와 `userUuid`는 지도 전환 뒤) |
+| 10 | React Native 제보·제보 관리 (PopPang-RN) | 추천 카테고리 (RECO-01), 팝업 제보 (SUB-01), 관리자 제보 목록·수정 | 완료 (#154, RN `1.4.0`) |
 
 - 여러 feature가 같이 쓰는 API(찜 등록·해제, 지역 목록, 필터 팝업)는 **처음 쓰는 feature에서 V2로 만들고**, 뒤의 feature는 가져다 써요. 옮기는 동안 화면마다 V1·V2가 섞여도 서버 데이터가 같아서 괜찮아요(명세 C-9).
 - 회원 팝업 V2 API는 `Data/Sources/Remote/V2PopupAPI.swift`에 모아요. 응답은 V1과 같은 감싸지 않은 팝업 배열이라 `PopupDTO`를 그대로 써요.
 - 찜 V2 API는 경로(`/favorite`)가 달라 `Data/Sources/Remote/V2FavoriteAPI.swift`에 따로 둬요. 찜 목록은 검색과 달리 `APIResponse`로 감싼 팝업 배열이에요. 등록·해제는 본문에 `popupUuid`만 담고, DELETE도 JSON 본문을 보내요.
-- 찜 등록·해제 V2는 `PopupUsecaseProtocol`의 `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)`예요(#132). 3번부터의 화면은 기존 `addFavorite(userUuid:popupUuid:)` 대신 이 함수를 가져다 써요. 기존 함수는 모든 화면이 옮긴 뒤 9번 정리 단계에서 지워요.
+- 찜 등록·해제 V2는 `PopupUsecaseProtocol`의 `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)`예요(#132). 3번부터의 화면은 기존 `addFavorite(userUuid:popupUuid:)` 대신 이 함수를 가져다 써요. 기존 함수는 지도 탭(`MapFeature`)과 남겨 둔 옛 달력 모듈(`CalendarFeature`)이 아직 써서 남아 있어요.
 - V2 팝업·찜 요청이 실패하면 Repository가 `PopupError.failed`로 바꾸고, 화면은 원본 오류 대신 안내 문구를 보여 줘요. 이미 찜함(409 4101)·찜 없음(404 4102)도 성공으로 보지 않아요. 찜 탭의 하트는 해제만 해요. 누르면 응답을 기다리지 않고 `popupUuid`를 해제 중 Set에 넣어 숨기고, 그동안 온 목록 응답에서도 빼고 보여 줘요. 해제가 끝나면 그 전의 목록 요청을 취소하고 목록을 새로 받아요. 실패하면 Set에서 빼서 다시 보여 줘요(로그인 끊김은 다시 받지 않아요).
 - `PopupDTO`는 명세상 null일 수 있는 `roadAddress`·`mediaType`·`recommendList`를 null로 받아요. null이면 각각 일반 주소(`address`)·이미지·빈 배열로 바꿔요. 도로명 주소가 빈 문자열이어도 일반 주소를 써요. 전에는 null을 받으면 목록 전체를 읽지 못했어요(V1부터 있던 문제, #130에서 수정).
-- `userUuid`는 아직 V1인 화면이 쓰므로 마지막 정리 단계에서 지워요. 예를 들어 검색 결과에서 여는 팝업 상세는 V1이라, `SearchDestination`이 `userUuid`를 들고 있다가 상세에 넘겨요.
+- 세션의 `userUuid`는 아직 V1인 지도 탭(`MapFeature`)이 요청에 넣어 보내므로 남겨요. 검색·팝업 상세는 V2로 옮겨 `userUuid`를 쓰지 않아요.
 
 **확인 필요 (백엔드)**
-- 팝업 제보(SUB-01)는 Swift 코드에서 부르지 않아요. React Native 화면이 직접 부르는지 PopPang-RN 저장소에서 확인해야 해요.
+- 팝업 제보(SUB-01)는 Swift 코드에서 부르지 않고 React Native 화면이 직접 불러요. #154에서 V2로 옮겼어요([React Native 제보 화면](#react-native-제보-화면-154)).
 
-헬스 체크(`GET /api/v1/health`)는 대응 V2가 없어서 V1 그대로 써요.
+헬스 체크는 `GET /api/v2/health`를 써요(#156). 백엔드가 2026-11-17에 운영에 배포했어요. V1처럼 인증 없이 부르고 응답도 같은 `{ "isHealthy": Bool }`이에요(`Cache-Control: no-store`). 처리 규칙은 그대로예요: `200`에 `isHealthy: true`면 들어가고, `false`·200이 아닌 응답·본문 형식 오류·5초 타임아웃·연결 실패면 안내 화면, 기기 인터넷이 없으면 오프라인 안내예요(`ServerHealthRepositoryImpl`). 서버는 DB·Redis 상태를 검사하지 않아요. `GET /api/v1/health`도 서버에 그대로 남아 있어요.
 
 ### 팝업 상세 (#140)
 
@@ -312,6 +313,76 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 - 앱은 목록을 거르지 않아요. 화면에서 고른 조건을 `MapPopupQuery`로 모아 `MapFeatureClient.searchMapPopups`에 넘기고, 받은 결과를 그대로 그려요.
 - 지금 지도 API는 지역·구·위치·정렬만 받아요. 카테고리·상태·기간·검색어 조건과 결과 개수 미리 보기, 마감 임박 개수는 API가 없어서 화면에 "(x)"를 붙여 표시하고 서버에 보내지 않아요(`MapAPISupport`). API가 생기면 `MapAPISupport` 값과 `MapFeatureClient.live`만 고쳐요.
 - 백엔드에 지도 API 확장(상태·기간·카테고리·검색어 조건, 오픈 예정 포함, 결과 개수·카테고리별 개수, 상태 배지 값)을 요청했어요. 확인이 필요해요.
+
+### 알림 (#150)
+
+알림 화면(`AlertFeature`)은 화면을 그대로 두고 API만 V2로 바꿨어요. `AlertFeatureClient`의 요청과 State에서 `userUuid`를 뺐어요. `State.init(user:)`는 닉네임을 받으려고 그대로 둬요.
+
+| 기능 | V2 | 응답 | 함수 |
+| --- | --- | --- | --- |
+| 알림함 목록 | `GET /api/v2/user/alert/popups` | `APIResponse`로 감싼 팝업 배열 (`PopupDTO`) | `getAlertPopupList()` |
+| 알림 삭제 | `DELETE /api/v2/user/alert` (본문 `{ popupUuid }`) | 본문 없음 | `removeAlertPopup(popupUuid:)` |
+| 키워드 목록 | `GET /api/v2/alert-keyword` | `APIResponse`로 감싼 `[{ alertKeyword }]` (`KeywordDTO`) | `getAlertKeywordList()` |
+| 키워드 등록 | `POST /api/v2/alert-keyword` (본문 `{ keyword }`) | 본문 없음 | `addAlertKeyword(alertKeyword:)` |
+| 키워드 삭제 | `DELETE /api/v2/alert-keyword` (본문 `{ keyword }`) | 본문 없음 | `removeAlertKeyword(alertKeyword:)` |
+| 찜 등록·해제 | #132의 V2 찜 | | `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)` |
+
+- 경로·인증·응답·오류 코드는 API 계약 문서(2026-10-30)로 확인했어요. 모두 Access Token이에요. 알림함 API는 `V2AlertAPI`, 키워드 API는 `V2AlertKeywordAPI`에 둬요.
+- 알림함 요청이 실패하면 `PopupError.failed`로 바꿔요. 이미 지운 알림(404 4001)은 Repository가 지운 것으로 봐요. 키워드 실패도 팝업처럼 HTTP 상태와 서버 코드만 로그로 남겨요.
+- 키워드 요청이 실패하면 Domain `AlertKeywordError`로 바꿔요. 이미 있는 키워드(409 4004)는 `alreadyExists`로 구분하고, 화면은 등록하려던 상태와 같으므로 목록에 남기고 문구를 띄우지 않아요. 서버에 없는 키워드 삭제(404 4003)는 Repository가 지운 것으로 봐요.
+- 화면은 원본 오류 대신 "알림을 불러오지 못했어요", "알림을 지우지 못했어요", "찜을 바꾸지 못했어요", "키워드를 등록하지 못했어요", "키워드를 지우지 못했어요"를 보여 줘요. 로그인이 끊긴 실패(`AuthSessionError`)는 문구를 띄우지 않아요.
+- 찜·알림 삭제·키워드 등록과 삭제는 응답을 기다리는 동안 같은 대상을 다시 누르면 무시해요. 같은 키워드의 등록과 삭제가 겹치면 서버와 화면이 어긋날 수 있어서예요.
+- 처음 열 때 알림함과 키워드를 따로 받아, 한쪽이 실패해도 받은 쪽은 보여 줘요.
+- 알림함 응답의 읽음 여부(`isRead`)와 읽음 처리 API(`PATCH /api/v2/user/alert/read`)는 아직 쓰지 않아요. 전체 삭제는 V2에도 한꺼번에 지우는 API가 없어 하나씩 차례로 지우고, 중간에 실패하면 그때까지 지운 알림만 목록에서 빼요. 지우는 동안 새로 받은 알림은 남겨요.
+- V1 알림·키워드 함수는 #152에서 지웠어요.
+
+### 푸시 토큰 (#148)
+
+`AppNotificationManager.syncStoredToken()`이 로그인한 사용자의 FCM 토큰을 `PUT /api/v2/user/fcm-token`(Access Token, 본문 `{"fcmToken"}`, 빈 본문 응답)으로 보내요. 서버는 저장만 하므로 V1의 중복 확인(GET) 단계를 없앴어요.
+
+- 보내는 때: 로그인 복구나 로그인이 끝나 메인 화면에 들어갈 때(`AppFeature.configureAuthenticatedSession` → `startSession()`), 그 뒤 FCM 토큰을 새로 받았을 때(APNs 등록 직후, Firebase 갱신). 앱이 켜지는 중(로그인 확인 중)에는 보내지 않아요. 이 요청이 401을 받으면 실행 판단 전에 로그아웃될 수 있어서예요. 로그인 토큰(`AuthTokenStorage`)이 없으면 보내지 않고, 로그아웃·세션 만료 때(`endSession()`) 기다리던 전송을 취소해요.
+- 요청은 하나씩 순서대로 보내고, 보낼 때 저장된 최신 토큰을 읽어요. 앱 시작 직후 Firebase가 토큰을 바꿔 두 번 보내도 서버에 옛 토큰이 남지 않아요.
+- 로그아웃해도 서버의 토큰은 그대로 남아요(이전 계정 알림이 이 기기로 올 수 있음). 로그아웃 시 토큰 해제 API가 필요해 백엔드 확인 항목으로 남겨요.
+- 서버는 저장만 하므로 같은 토큰을 다시 보내도 결과가 같아요. 그래서 중복 전송을 따로 막지 않아요(막으면 같은 실행에서 다른 계정으로 로그인했을 때 그 계정의 토큰이 가지 않아요).
+- 실패(404 4201 사용자 없음, 400 4205 토큰 누락 등)는 화면에 알리지 않고 로그만 남겨요. 다음 기회(앱 시작·로그인·토큰 갱신)에 다시 보내요.
+- V1 `checkFcmToken`·`updateFcmToken(userUuid:)`은 #152에서 지웠어요.
+
+### 정리 (#152)
+
+화면을 V2로 옮기며 남겨 둔 V1 함수 중 앱이 더 부르지 않는 것을 지웠어요. 화면 동작과 보내는 요청은 바뀌지 않아요.
+
+| 묶음 | 지운 V1 함수 |
+| --- | --- |
+| 팝업 (`PopupRepository`·`PopupUsecase`·`PopupAPI`) | `getPopupList`, `getUpcomingPopupList`, `getInProgressPopupList`, `searchPopupList`, `getRandomPopupList`, `getPersonalPopupList`, `getPersonalUseerRecommendPopupList`, `getPersonalUpcomingPopupList`, `getPersonalRandomPopupList`, `getAlertPopupList(userUuid:)`, `removeAlertPopup(userUuid:popupUuid:)` |
+| 사용자 (`UserRepository`·`UserUsecase`·`UserAPI`) | `getRecommandList`, `getAlertKeywordList(userUuid:)`, `addAlertKeyword(userUuid:alertKeyword:)`, `removeAlertKeyword(userUuid:alertKeyword:)`, `checkFcmToken`, `updateFcmToken(userUuid:fcmToken:)` |
+| 관리자 (`AdminRepository`·`AdminUsecase`·`AdminAPI`) | `getPopupSubmissionList`, `createPopupSubmission`, `deactivatePopupByUser`, `updatePopupSubmissionStatus`. 같은 이름의 `PopupSubmissionRepository` 함수는 남겼다가 #158에서 지웠어요. |
+
+- Repository·Usecase protocol과 구현, V1 API case를 함께 지웠어요. case가 모두 없어진 `UserAPI`·`AdminAPI`는 파일째 지웠어요. 관리자 V1 함수만 쓰던 `PopupSubmissionDTO`·`PopupSubmissionStatusUpdateRequestDTO`와 매핑, Domain `PopupSubmission`도 지웠어요. 다른 제보 매핑이 쓰던 `PopupSubmissionMappingError`는 따로 파일로 남겼다가 #158에서 함께 지웠어요.
+- 남긴 것: 지도 탭(`MapFeature`)과 옛 달력 모듈(`CalendarFeature`)이 쓰는 `PopupAPI`의 필터 팝업(home·map), 인기 추천 카테고리, 카테고리별 팝업, `userUuid` 찜 등록·해제. 세션의 `userUuid`도 지도가 요청에 넣어 보내므로 남겨요. 지도를 V2로 옮긴 뒤 지워요.
+- `PopupSubmission` repository(`PopupSubmissionAPI`)는 Swift 화면에서 부르지 않지만 제보 화면(React Native)과 관련이 있어 이 범위에서 뺐어요. PopPang-RN은 이 Swift API를 쓰지 않고 같은 서버 API를 직접 불러서(#154에서 V2로 전환), #158에서 V1 API·DTO·매핑·Repository·Usecase·Entity를 모두 지웠어요. 팝업 제보는 이제 RN 화면만 해요.
+
+### React Native 제보 화면 (#154)
+
+팝업 제보·제보 관리 화면은 PopPang-RN 저장소의 React Native 화면이 서버를 직접 불러요. V2는 Access Token이 필요해서, 앱이 RN에 토큰을 넘기는 길을 만들고 RN이 V2를 부르게 했어요.
+
+| 화면 | V1 | V2 |
+| --- | --- | --- |
+| 팝업 제보 | `GET /api/v1/recommend`, `POST /api/v1/popup-submissions` | `GET /api/v2/recommend`, `POST /api/v2/popup-submissions` (본문에 `userUuid` 없음) |
+| 제보 관리 (관리자) | `GET`·`PUT /api/v1/admin/popup-submissions?uuid=관리자 userUuid` | `GET`·`PUT /api/v2/admin/popup-submissions` (`uuid` 없음) |
+
+- 토큰 전달: RN `1.4.0`(Nativepiece Swift Package)의 계약 `calls.getAccessToken({ rejectedAccessToken, expired })`로 받아요. 앱은 시작할 때 `AppBootstrap`에서 `PopPangRNRuntime.start(authentication:)`으로 RN 런타임을 시작하고, 생성된 `PopPangRNHost`가 `AuthenticationPlugin.hostAccessToken(rejected:expired:)`로 답해요.
+- RN은 요청 전에 `rejectedAccessToken` 없이 토큰을 받아요. V2 요청이 401이면 보냈던 토큰과 응답 코드가 5002(토큰 만료)인지를 넘겨 토큰을 한 번 다시 받고 재시도해요(요청마다 한 번). 앱은 네트워크 요청(`MoyaProvider+Async`)과 같은 판단을 써요. 5002가 아닌 401의 판단은 `AuthenticationPlugin.handleUnauthorized(sentAccessToken:)` 하나를 두 경로가 함께 불러요.
+
+| RN이 넘긴 값 | 앱이 하는 일 |
+| --- | --- |
+| `rejectedAccessToken` 없음 (요청 전) | 저장된 Access Token을 돌려줘요. 없으면 로그인 필요로 답하되 토큰을 지우거나 로그인 화면으로 보내지 않아요. 아직 서버가 세션을 거절한 근거가 없어서, 판단은 앱 요청의 서버 응답에 맡겨요. |
+| 보낸 토큰 + `expired: true` (401 5002) | 그 토큰을 만료된 토큰으로 넘겨 `AccessTokenRefresher`로 갱신해요. 다른 요청이 이미 갱신했으면 다시 갱신하지 않고 새 토큰을 돌려줘요. 다른 요청이 이미 토큰을 지웠으면 갱신하지 않고 로그인 필요로 답하되 다시 알리지 않아요. |
+| 보낸 토큰 + `expired: false` (다른 401) | 그 토큰이 아직 저장돼 있으면 토큰을 지우고 로그인 필요로 답해요. 그 사이 다른 토큰으로 바뀌었으면 새 토큰을 돌려줘요. 다른 요청이 이미 토큰을 지웠으면 로그인 필요로 답하되 로그인 화면 알림은 다시 보내지 않아요. |
+
+- 로그인 필요로 답할 때는 네트워크 요청과 똑같이 로그인 화면으로 보내요(`AuthSessionEvents.notifyLoginRequired`). 토큰을 지운 쪽만 알려요. 다른 요청이 이미 지운 뒤에는 다시 알리지 않아요(`AppFeature`도 메인 화면에 있고 로그아웃 중이 아닐 때만 처리해요). 앱은 `NativepieceCallError(code: "login_required")`로 거절하고, RN은 "로그인 정보가 만료되었습니다. 다시 로그인해 주세요."를 보여요.
+- 갱신이 로그인 필요가 아닌 이유(503, 네트워크 오류 등)로 실패하면 토큰을 그대로 두고 일시 실패로 답해요. 앱은 `NativepieceCallError(code: "temporary_failure")`로 거절하고, RN은 "로그인 정보를 잠시 확인하지 못했습니다. 잠시 후 다시 시도해 주세요."를 보여요.
+- 403은 RN이 권한 없음 안내를 보여요.
+- RN 패키지 연결과 버전은 [React Native 패키지](../development/react-native.md)를 봐요. 이전 prebuild 산출물(`v1.1.0`·`v1.2.0`의 `PopPangHostAuth` 네이티브 모듈)은 앱에 쓰지 않아요.
 
 ## 정해야 할 것
 

@@ -40,7 +40,7 @@ reducer는 `DependencyValues`로만 의존성을 받는다. 실제 구현은 com
 | 파일 | 하는 일 |
 | --- | --- |
 | `Projects/App/Sources/AppCore/1. AppDependencyRegistry.swift` | `AppRepositoryRegistry`가 `PopupRepositoryImpl()` 같은 Repository를, `AppUsecaseRegistry`가 `PopupUsecaseImpl(popupRepository:)` 같은 Usecase를 만든다. |
-| `Projects/App/Sources/AppCore/2. AppBootstrap.swift` | 같은 `Storing` 저장소와 Usecase 인스턴스를 여러 객체에 나눠 주고, `makeAppStore()`에서 `withDependencies`로 주입한다. |
+| `Projects/App/Sources/AppCore/2. AppBootstrap.swift` | 같은 `Storing` 저장소와 Usecase 인스턴스를 여러 객체에 나눠 주고, `makeAppStore()`에서 `withDependencies`로 주입한다. React Native 런타임도 여기서 `PopPangRNRuntime.start(authentication:)`으로 한 번 시작한다. 네트워크와 같은 `AuthenticationPlugin`을 넘겨 RN의 토큰 요청에 `hostAccessToken(rejected:expired:)`로 답한다. Nativepiece 런타임은 앱 전체에 하나라 `DependencyValues`로 넣지 않는다. |
 | `Projects/Features/MainTabFeature/Sources/MainTabFeatureDependencies.swift` | 탭과 상세 feature client(`alertFeatureClient`, `calendarFeatureClient`, `homePopupClient` 등)의 `.live(...)`를 만들고 `configure(_:)`로 `DependencyValues`에 넣는다. |
 
 `makeAppStore()`의 주입 코드:
