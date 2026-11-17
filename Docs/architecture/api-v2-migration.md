@@ -340,11 +340,11 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | --- | --- |
 | 팝업 (`PopupRepository`·`PopupUsecase`·`PopupAPI`) | `getPopupList`, `getUpcomingPopupList`, `getInProgressPopupList`, `searchPopupList`, `getRandomPopupList`, `getPersonalPopupList`, `getPersonalUseerRecommendPopupList`, `getPersonalUpcomingPopupList`, `getPersonalRandomPopupList`, `getAlertPopupList(userUuid:)`, `removeAlertPopup(userUuid:popupUuid:)` |
 | 사용자 (`UserRepository`·`UserUsecase`·`UserAPI`) | `getRecommandList`, `getAlertKeywordList(userUuid:)`, `addAlertKeyword(userUuid:alertKeyword:)`, `removeAlertKeyword(userUuid:alertKeyword:)`, `checkFcmToken`, `updateFcmToken(userUuid:fcmToken:)` |
-| 관리자 (`AdminRepository`·`AdminUsecase`·`AdminAPI`) | `getPopupSubmissionList`, `createPopupSubmission`, `deactivatePopupByUser`, `updatePopupSubmissionStatus`. 같은 이름의 `PopupSubmissionRepository` 함수는 남겼어요. |
+| 관리자 (`AdminRepository`·`AdminUsecase`·`AdminAPI`) | `getPopupSubmissionList`, `createPopupSubmission`, `deactivatePopupByUser`, `updatePopupSubmissionStatus`. 같은 이름의 `PopupSubmissionRepository` 함수는 남겼다가 #158에서 지웠어요. |
 
-- Repository·Usecase protocol과 구현, V1 API case를 함께 지웠어요. case가 모두 없어진 `UserAPI`·`AdminAPI`는 파일째 지웠어요. 관리자 V1 함수만 쓰던 `PopupSubmissionDTO`·`PopupSubmissionStatusUpdateRequestDTO`와 매핑, Domain `PopupSubmission`도 지웠어요. 다른 제보 매핑이 쓰는 `PopupSubmissionMappingError`는 따로 파일로 남겼어요.
+- Repository·Usecase protocol과 구현, V1 API case를 함께 지웠어요. case가 모두 없어진 `UserAPI`·`AdminAPI`는 파일째 지웠어요. 관리자 V1 함수만 쓰던 `PopupSubmissionDTO`·`PopupSubmissionStatusUpdateRequestDTO`와 매핑, Domain `PopupSubmission`도 지웠어요. 다른 제보 매핑이 쓰던 `PopupSubmissionMappingError`는 따로 파일로 남겼다가 #158에서 함께 지웠어요.
 - 남긴 것: 지도 탭(`MapFeature`)과 옛 달력 모듈(`CalendarFeature`)이 쓰는 `PopupAPI`의 필터 팝업(home·map), 인기 추천 카테고리, 카테고리별 팝업, `userUuid` 찜 등록·해제. 세션의 `userUuid`도 지도가 요청에 넣어 보내므로 남겨요. 지도를 V2로 옮긴 뒤 지워요.
-- `PopupSubmission` repository(`PopupSubmissionAPI`)는 Swift 화면에서 부르지 않지만, 제보 화면(React Native)과 관련이 있어 이번 범위에서 뺐어요. PopPang-RN은 이 Swift API를 쓰지 않고 같은 서버 API를 직접 불러요(#154에서 V2로 전환). Swift 쪽은 지워도 되는 후속 정리 대상이에요.
+- `PopupSubmission` repository(`PopupSubmissionAPI`)는 Swift 화면에서 부르지 않지만 제보 화면(React Native)과 관련이 있어 이 범위에서 뺐어요. PopPang-RN은 이 Swift API를 쓰지 않고 같은 서버 API를 직접 불러서(#154에서 V2로 전환), #158에서 V1 API·DTO·매핑·Repository·Usecase·Entity를 모두 지웠어요. 팝업 제보는 이제 RN 화면만 해요.
 
 ### React Native 제보 화면 (#154)
 
