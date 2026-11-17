@@ -19,8 +19,11 @@ Swift Package에는 React Native·Hermes·네이티브 모듈 XCFramework(GitHub
 | 파일 | 연결 |
 | --- | --- |
 | `Projects/Features/PopPangRNFeature/Project.swift` | `packages: [.remote(url: "https://github.com/team-PopPang/PopPang-RN", requirement: .exact("1.4.0"))]`, `.package(product: "PopPangRN")` |
+| `Projects/App/Project.swift` | 같은 `.remote(...)`와 `.package(product: "PopPangRN")` |
 
-- 패키지는 `PopPangRNFeature`에만 연결한다. 앱 target에도 연결하면 RN 런타임이 두 번 링크된다.
+- 앱 target과 `PopPangRNFeature` 두 곳에 연결한다. 두 target이 함께 쓰면 Xcode가 product를 동적 framework 하나(`PopPangRN_…_PackageProduct.framework`)로 만들어 코드가 한 번만 들어가고, 패키지의 동적 XCFramework(`React`, `hermesvm`, `ReactNativeDependencies`)도 앱 `Frameworks/`에 들어간다.
+- `PopPangRNFeature`(`.framework`)에만 연결하면 이 framework들이 앱에 들어가지 않아 실행하자마자 `Library not loaded: @rpath/React.framework/React`로 종료된다. Nativepiece README도 모듈 제품을 앱 target에 추가하라고 안내한다.
+- 버전을 바꿀 때는 두 `Project.swift`의 `.exact(...)`를 함께 바꾼다.
 - JS 번들은 패키지 리소스(`PopPangRN_PopPangRN.bundle/ReactNative/main.jsbundle`)로 앱에 들어간다. 앱의 `Resources`에 번들을 두지 않는다.
 - RN 저장소가 공개라서 `~/.netrc` 토큰 없이 받는다. CI도 따로 받는 단계가 없다.
 
@@ -61,7 +64,7 @@ Access Token 요청(`calls.getAccessToken`)의 규칙은 [V2 API 마이그레이
 ## 새 RN 버전 반영
 
 1. RN 저장소에서 화면을 고치고 `package.json`의 `version`을 올려 main에 머지한 뒤, main에서 `npx nativepiece build ios && npx nativepiece publish ios`로 배포한다. 배포는 RN 저장소의 일이며 사용자가 요청할 때만 한다. 태그는 `1.4.0`처럼 `v` 없이 붙는다.
-2. 앱 저장소에서 `Projects/Features/PopPangRNFeature/Project.swift`의 `.exact("<버전>")`과 이 문서의 버전을 바꾼다. 이 변경은 의존성 변경이므로 계획에 적고 승인을 받는다.
+2. 앱 저장소에서 `Projects/App/Project.swift`와 `Projects/Features/PopPangRNFeature/Project.swift`의 `.exact("<버전>")`, 이 문서의 버전을 함께 바꾼다. 이 변경은 의존성 변경이므로 계획에 적고 승인을 받는다.
 3. `tuist generate`로 workspace를 다시 만들고 빌드한다. Xcode가 새 버전을 받는다.
 4. 계약(`nativepiece.contract.ts`)이 바뀌었으면 생성된 타입이 바뀌므로 `PopPangRNFeatureView`와 `PopPangRNRuntime`이 컴파일되는지 확인한다.
 5. 앱에서 팝업 제보와 제보 관리 화면을 열어 확인한다.
@@ -72,6 +75,7 @@ RN 화면 자체의 수정은 RN 저장소에서 한다. 앱 저장소에 RN 소
 
 | 증상 | 원인 | 해결 |
 | --- | --- | --- |
+| 앱이 실행하자마자 `Library not loaded: @rpath/React.framework/React`로 종료된다. | 앱 target에 `PopPangRN`이 연결되어 있지 않아 RN 동적 framework가 앱에 들어가지 않았다. | `Projects/App/Project.swift`에 패키지와 `.package(product: "PopPangRN")`이 있는지 확인한다. |
 | 빌드 전에 `PopPangRN` 패키지를 받지 못한다. | 네트워크 문제이거나 Xcode 패키지 캐시가 깨졌다. | Xcode의 File → Packages → Reset Package Caches 후 다시 빌드한다. |
 | RN 화면이 비어 있고 번들을 찾지 못했다는 로그가 남는다. | 패키지에 `ReactNative/main.jsbundle`이 없다. `1.3.0`은 RN 저장소의 `.gitignore`(`*.jsbundle`) 때문에 번들이 빠진 채 배포됐다. | `1.4.0` 이상을 쓴다. 새 버전을 받기 전에 태그에 `swift-package/PopPangRN/ReactNative/main.jsbundle`이 있는지 확인한다. |
 | 제보 화면에서 "로그인 정보를 확인할 수 없습니다. 앱을 최신 버전으로 업데이트해 주세요."가 뜬다. | `getAccessToken` 처리기가 없다(`unhandled`). | `AppBootstrap.live()`가 `startReactNative`를 부르는지 확인한다. |

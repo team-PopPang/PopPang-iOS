@@ -63,7 +63,7 @@ bundle id 형식:
 - 다른 프로젝트 모듈은 `.project(target: "Domain", path: "../../Domain")`처럼 상대 경로로 쓴다.
 - 같은 project 안의 타깃은 `.target(name: "HomeFeatureV2")`로 쓴다.
 - `.external(name:)`은 `ThirdParty`와 `ADKit`에서만 쓴다.
-- React Native는 `PopPangRNFeature`에서만 `packages: [.remote(url: "https://github.com/team-PopPang/PopPang-RN", requirement: .exact("<버전>"))]`와 `.package(product: "PopPangRN")`로 연결한다. 앱 target에도 연결하면 RN 런타임이 두 번 링크된다([React Native 패키지](../development/react-native.md)).
+- React Native는 `App`과 `PopPangRNFeature`에서 `packages: [.remote(url: "https://github.com/team-PopPang/PopPang-RN", requirement: .exact("<버전>"))]`와 `.package(product: "PopPangRN")`로 연결한다. 두 target이 함께 써야 Xcode가 product를 동적 framework 하나로 만들고 React 동적 framework를 앱에 넣는다([React Native 패키지](../development/react-native.md)).
 
 scheme:
 
