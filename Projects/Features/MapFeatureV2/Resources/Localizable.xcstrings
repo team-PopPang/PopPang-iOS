@@ -1,7 +1,6 @@
 {
   "sourceLanguage" : "ko",
   "strings" : {
-    "%@" : {},
     "%lld개 적용" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -44,52 +43,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "가까운순"
-          }
-        }
-      }
-    },
-    "기간" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Period"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "期間"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "기간"
-          }
-        }
-      }
-    },
-    "날짜 선택" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Select dates"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "日付を選択"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "날짜 선택"
           }
         }
       }
@@ -209,29 +162,6 @@
         }
       }
     },
-    "상태" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Status"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "状態"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "상태"
-          }
-        }
-      }
-    },
     "설정으로 이동" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -251,75 +181,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "설정으로 이동"
-          }
-        }
-      }
-    },
-    "오늘" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Today"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "今日"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오늘"
-          }
-        }
-      }
-    },
-    "오픈 예정" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Coming soon"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "開催予定"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "오픈 예정"
-          }
-        }
-      }
-    },
-    "운영중" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Open"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "営業中"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "운영중"
           }
         }
       }
@@ -366,52 +227,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "이 지역에 팝업이 없어요."
-          }
-        }
-      }
-    },
-    "이번 주" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "This week"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "今週"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이번 주"
-          }
-        }
-      }
-    },
-    "이번 주 종료" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ends this week"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "今週終了"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "이번 주 종료"
           }
         }
       }
@@ -577,29 +392,6 @@
         }
       }
     },
-    "진행 중" : {
-      "extractionState" : "manual",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "Ongoing"
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "needs_review",
-            "value" : "開催中"
-          }
-        },
-        "ko" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "진행 중"
-          }
-        }
-      }
-    },
     "찜을 바꾸지 못했어요. 잠시 후 다시 시도해 주세요." : {
       "extractionState" : "manual",
       "localizations" : {
@@ -738,25 +530,25 @@
         }
       }
     },
-    "팝업 (x)개 보기" : {
+    "팝업 보기" : {
       "extractionState" : "manual",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "Show (x) pop-ups"
+            "value" : "Show pop-ups"
           }
         },
         "ja" : {
           "stringUnit" : {
             "state" : "needs_review",
-            "value" : "ポップアップ(x)件を見る"
+            "value" : "ポップアップを見る"
           }
         },
         "ko" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "팝업 (x)개 보기"
+            "value" : "팝업 보기"
           }
         }
       }

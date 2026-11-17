@@ -1,13 +1,14 @@
 import Core
 import CoreLocation
 import Domain
-import Kingfisher
 import NMapsMap
 import SwiftUI
 import UIKit
 
 struct NaverMapView: UIViewRepresentable {
     var popups: [Popup]
+    /// 팝업별 마커 색(`#RRGGBB`). 없는 팝업은 회색으로 그린다.
+    var markerColors: [String: String]
     var selectedPopupUuid: String?
 
     func makeCoordinator() -> NaverMapCoordinator {
@@ -19,7 +20,7 @@ struct NaverMapView: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: NMFNaverMapView, context: Context) {
-        context.coordinator.updateSpots(popups)
+        context.coordinator.updateSpots(popups, markerColors: markerColors)
         context.coordinator.updateSelection(selectedPopupUuid)
     }
 }
@@ -27,18 +28,21 @@ struct NaverMapView: UIViewRepresentable {
 final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewTouchDelegate {
     static let shared = NaverMapCoordinator()
 
+    /// 이 줌부터 마커 아래에 팝업 이름을 보인다. 숫자 묶음은 줌 12까지라, 13은 동그라미만 보이고 14부터 이름이 붙는다.
+    /// 내 위치로 옮길 때 기본 줌(15)에서는 이름이 보인다. 고른 마커는 줌과 상관없이 이름을 보인다.
+    static let labelMinZoom: Double = 14
+
     private let view = NMFNaverMapView(frame: .zero)
     private var popups: [Popup] = []
+    private var markerColors: [String: String] = [:]
+    /// 지금 줌에서 마커 이름을 보이는지. `labelMinZoom`을 넘나들 때만 마커를 다시 그린다.
+    private var showsLabels = false
     private var selectedPopupUuid: String?
     private var clusterer: NMCClusterer<ItemKey>?
     /// 지금 팝업 마커로 그려진 마커. 클러스터러가 마커 객체를 다시 쓰므로 마커 객체 기준으로 들고 있는다.
     private var markers: [ObjectIdentifier: (marker: NMFMarker, key: ItemKey)] = [:]
     private var leafUpdater: LeafMarkerUpdater?
     private var clusterUpdater: ClusterMarkerUpdater?
-    /// 마커 사진. 선택이 바뀔 때마다 다시 받지 않도록 주소별로 들고 있는다.
-    private var thumbnails: [String: UIImage] = [:]
-    /// 받는 중인 사진 주소. 같은 사진을 여러 번 요청하지 않는다.
-    private var loadingThumbnails: Set<String> = []
 
     var onMarkerSelected: ((Popup) -> Void)?
     var onMapTapped: (() -> Void)?
@@ -93,17 +97,19 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
         view.mapView.positionMode = .normal
     }
 
-    /// 팝업 목록이 바뀌면 마커를 다시 만든다. 찜처럼 위치·이름·사진이 그대로인 변경은 다시 만들지 않는다.
-    func updateSpots(_ newPopups: [Popup]) {
-        let isSameMarkers = newPopups.count == popups.count
+    /// 팝업 목록이나 마커 색이 바뀌면 마커를 다시 만든다. 찜처럼 위치·이름·색이 그대로인 변경은 다시 만들지 않는다.
+    /// 색은 카테고리를 늦게 받았거나 카테고리 필터를 바꾸면 달라진다.
+    func updateSpots(_ newPopups: [Popup], markerColors newColors: [String: String]) {
+        let isSameMarkers = newColors == markerColors
+            && newPopups.count == popups.count
             && zip(newPopups, popups).allSatisfy { new, old in
                 new.popupUuid == old.popupUuid
                     && new.latitude == old.latitude
                     && new.longitude == old.longitude
                     && new.name == old.name
-                    && new.imageUrlList.first == old.imageUrlList.first
             }
         popups = newPopups
+        markerColors = newColors
         guard isSameMarkers == false else { return }
         makeClusterer()
     }
@@ -128,7 +134,22 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
         view.mapView.moveCamera(update)
     }
 
+    func mapView(_ mapView: NMFMapView, cameraIsChangingByReason reason: Int) {
+        updateLabelVisibility(zoomLevel: mapView.zoomLevel)
+    }
+
+    /// 줌이 `labelMinZoom`을 넘나들면 모든 팝업 마커를 이름이 있게·없게 다시 그린다.
+    private func updateLabelVisibility(zoomLevel: Double) {
+        let shows = zoomLevel >= Self.labelMinZoom
+        guard shows != showsLabels else { return }
+        showsLabels = shows
+        for (_, entry) in markers {
+            applyMarkerImage(entry.marker, key: entry.key)
+        }
+    }
+
     func mapViewCameraIdle(_ mapView: NMFMapView) {
+        updateLabelVisibility(zoomLevel: mapView.zoomLevel)
         let center = mapView.cameraPosition.target
         DispatchQueue.main.async {
             self.onCenterChanged?(MapCoordinate(latitude: center.lat, longitude: center.lng))
@@ -200,7 +221,7 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
                 popupUuid: popup.popupUuid,
                 name: popup.name,
                 position: NMGLatLng(lat: lat, lng: lng),
-                imageURL: popup.imageUrlList.first
+                colorHex: markerColors[popup.popupUuid]
             )
             keyTagMap[key] = NSNull()
         }
@@ -216,34 +237,18 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
             style = .normal
         }
 
-        let thumbnail = key.imageURL.flatMap { thumbnails[$0] }
-        let rendered = MapMarkerRenderer.image(thumbnail: thumbnail, name: key.name, style: style)
+        let rendered = MapMarkerRenderer.image(
+            colorHex: key.colorHex,
+            name: key.name,
+            style: style,
+            showsLabel: showsLabels || style == .selected
+        )
         marker.iconImage = NMFOverlayImage(image: rendered.image)
         marker.width = rendered.image.size.width
         marker.height = rendered.image.size.height
         // 좌표가 링 가운데에 오게 한다.
         marker.anchor = CGPoint(x: 0.5, y: rendered.ringCenterY / rendered.image.size.height)
         marker.zIndex = style == .selected ? 999_999 : 0
-
-        guard thumbnail == nil,
-              let imageURL = key.imageURL,
-              let url = URL(string: imageURL),
-              loadingThumbnails.contains(imageURL) == false
-        else { return }
-        loadingThumbnails.insert(imageURL)
-        Task { [weak self] in
-            let result = try? await KingfisherManager.shared.retrieveImage(with: url)
-            await MainActor.run {
-                guard let self else { return }
-                self.loadingThumbnails.remove(imageURL)
-                guard let result else { return }
-                self.thumbnails[imageURL] = result.image
-                // 사진을 기다린 마커들을 다시 그린다.
-                for (_, entry) in self.markers where entry.key.imageURL == imageURL {
-                    self.applyMarkerImage(entry.marker, key: entry.key)
-                }
-            }
-        }
     }
 }
 
@@ -328,14 +333,15 @@ final class ItemKey: NSObject, NMCClusteringKey {
     let popupUuid: String
     let name: String
     let position: NMGLatLng
-    let imageURL: String?
+    /// 마커 색(`#RRGGBB`). 맞는 카테고리가 없으면 `nil`이다.
+    let colorHex: String?
 
-    init(identifier: Int, popupUuid: String, name: String, position: NMGLatLng, imageURL: String?) {
+    init(identifier: Int, popupUuid: String, name: String, position: NMGLatLng, colorHex: String?) {
         self.identifier = identifier
         self.popupUuid = popupUuid
         self.name = name
         self.position = position
-        self.imageURL = imageURL
+        self.colorHex = colorHex
     }
 
     override func isEqual(_ object: Any?) -> Bool {
@@ -349,7 +355,7 @@ final class ItemKey: NSObject, NMCClusteringKey {
     }
 
     func copy(with zone: NSZone? = nil) -> Any {
-        ItemKey(identifier: identifier, popupUuid: popupUuid, name: name, position: position, imageURL: imageURL)
+        ItemKey(identifier: identifier, popupUuid: popupUuid, name: name, position: position, colorHex: colorHex)
     }
 }
 
@@ -379,7 +385,8 @@ final class LeafMarkerUpdater: NMCDefaultLeafMarkerUpdater {
     }
 }
 
-/// 마커 그림. 사진 + 상태 색 테두리 원 아래에 이름 말풍선을 붙인다.
+/// 마커 그림. 피그마 지도 화면(2467:10301)처럼 모양이 고정된 동그라미다.
+/// 카테고리 색 테두리와 연한 같은 색 원 위에 갈색 가게 아이콘을 두고, 아래에 이름 말풍선을 붙인다.
 enum MapMarkerRenderer {
     enum Style {
         case normal
@@ -392,27 +399,70 @@ enum MapMarkerRenderer {
         let ringCenterY: CGFloat
     }
 
-    /// 운영 중 테두리 색. 상태별 색(오늘 종료·오픈 예정)은 서버가 상태 값을 주면 나눈다.
-    static let ringColor = UIColor(red: 0x22 / 255, green: 0xA3 / 255, blue: 0x5A / 255, alpha: 1)
-    static let selectedRingColor = UIColor(red: 0xE5 / 255, green: 0x35 / 255, blue: 0x2B / 255, alpha: 1)
+    /// 맞는 카테고리가 없는 팝업의 색.
+    static let fallbackColor = UIColor(red: 0x9E / 255, green: 0x9E / 255, blue: 0x9E / 255, alpha: 1)
     static let clusterColor = UIColor(red: 0xA3 / 255, green: 0x17 / 255, blue: 0x2B / 255, alpha: 1)
     static let textColor = UIColor(red: 0x19 / 255, green: 0x19 / 255, blue: 0x19 / 255, alpha: 1)
 
-    static func image(thumbnail: UIImage?, name: String, style: Style) -> Rendered {
-        let isSelected = style == .selected
-        let ring: CGFloat = isSelected ? 58 : 46
-        let ringWidth: CGFloat = isSelected ? 4 : 3
-        let thumbInset: CGFloat = isSelected ? 7 : 6
-        let font = UIFont.systemFont(ofSize: isSelected ? 13 : 11, weight: .bold)
-        let labelHeight: CGFloat = isSelected ? 24 : 19
-        let gap: CGFloat = 3
+    /// 그린 마커. 같은 색·이름·모양이면 다시 그리지 않는다. 선택이 바뀔 때 모든 마커를 다시 그리므로 캐시해 둔다.
+    private static let cache: NSCache<NSString, RenderedBox> = {
+        let cache = NSCache<NSString, RenderedBox>()
+        cache.countLimit = 500
+        return cache
+    }()
+
+    private final class RenderedBox {
+        let rendered: Rendered
+        init(_ rendered: Rendered) { self.rendered = rendered }
+    }
+
+    static func image(colorHex: String?, name: String, style: Style, showsLabel: Bool) -> Rendered {
+        let cacheKey = "\(colorHex ?? "-")|\(style)|\(showsLabel)|\(name)" as NSString
+        if let cached = cache.object(forKey: cacheKey) { return cached.rendered }
+        let rendered = draw(
+            color: colorHex.flatMap(color(hex:)) ?? fallbackColor,
+            name: showsLabel ? name : nil,
+            style: style
+        )
+        cache.setObject(RenderedBox(rendered), forKey: cacheKey)
+        return rendered
+    }
+
+    /// 서버 색(`#RRGGBB`)을 UIColor로 바꾼다. 형식이 다르면 `nil`이다.
+    static func color(hex: String) -> UIColor? {
+        var text = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        if text.hasPrefix("#") { text.removeFirst() }
+        guard text.count == 6, let value = UInt32(text, radix: 16) else { return nil }
+        return UIColor(
+            red: CGFloat((value >> 16) & 0xFF) / 255,
+            green: CGFloat((value >> 8) & 0xFF) / 255,
+            blue: CGFloat(value & 0xFF) / 255,
+            alpha: 1
+        )
+    }
+
+    /// 가게 아이콘. 피그마 `MapPin`의 `icon/store`(갈색)를 그대로 쓴다. 카테고리 색과 상관없이 같다.
+    private static let storeIcon = UIImage(named: "map_marker_store", in: .module, with: nil)
+
+    /// 피그마 `MapPin`(2467:10337) 치수. 고른 마커(2467:10435)는 1.35배다.
+    /// `name`이 `nil`이면 이름표 없이 동그라미만 그린다.
+    private static func draw(color: UIColor, name: String?, style: Style) -> Rendered {
+        let scale: CGFloat = style == .selected ? 1.35 : 1
+        let ring = 46 * scale
+        let ringWidth = 4 * scale
+        let thumbInset = 6 * scale
+        let iconSize = 16 * scale
+        let font = UIFont.systemFont(ofSize: 11 * scale, weight: .bold)
+        let labelHeight = 19 * scale
+        let labelRadius = 8 * scale
+        let gap = 4 * scale
         let shadow: CGFloat = 3
 
-        let text = name as NSString
-        let textSize = text.size(withAttributes: [.font: font])
-        let labelWidth = min(textSize.width + 16, 140)
+        let text = name.map { $0 as NSString }
+        let textSize = text?.size(withAttributes: [.font: font, .kern: -0.02 * font.pointSize]) ?? .zero
+        let labelWidth = text == nil ? 0 : min(textSize.width + 16 * scale, 140 * scale)
         let width = max(ring, labelWidth) + shadow * 2
-        let height = ring + gap + labelHeight + shadow * 2
+        let height = ring + shadow * 2 + (text == nil ? 0 : gap + labelHeight)
 
         let format = UIGraphicsImageRendererFormat()
         format.scale = UIScreen.main.scale
@@ -421,6 +471,7 @@ enum MapMarkerRenderer {
             let cg = context.cgContext
             if style == .dimmed { cg.setAlpha(0.55) }
 
+            // 흰 원(그림자) → 카테고리 색 테두리 → 흰 띠 → 연한 카테고리 색 원 → 갈색 가게 아이콘
             let ringRect = CGRect(x: (width - ring) / 2, y: shadow, width: ring, height: ring)
             cg.saveGState()
             cg.setShadow(offset: CGSize(width: 0, height: 1), blur: 3, color: UIColor.black.withAlphaComponent(0.2).cgColor)
@@ -428,48 +479,60 @@ enum MapMarkerRenderer {
             UIBezierPath(ovalIn: ringRect).fill()
             cg.restoreGState()
 
-            let thumbRect = ringRect.insetBy(dx: thumbInset, dy: thumbInset)
-            cg.saveGState()
-            UIBezierPath(ovalIn: thumbRect).addClip()
-            if let thumbnail {
-                let scale = max(thumbRect.width / thumbnail.size.width, thumbRect.height / thumbnail.size.height)
-                let size = CGSize(width: thumbnail.size.width * scale, height: thumbnail.size.height * scale)
-                thumbnail.draw(in: CGRect(
-                    x: thumbRect.midX - size.width / 2,
-                    y: thumbRect.midY - size.height / 2,
-                    width: size.width,
-                    height: size.height
-                ))
-            } else {
-                UIColor(white: 0.92, alpha: 1).setFill()
-                UIRectFill(thumbRect)
-            }
-            cg.restoreGState()
-
             let border = UIBezierPath(ovalIn: ringRect.insetBy(dx: ringWidth / 2, dy: ringWidth / 2))
             border.lineWidth = ringWidth
-            (isSelected ? selectedRingColor : ringColor).setStroke()
+            color.setStroke()
             border.stroke()
 
+            let thumbRect = ringRect.insetBy(dx: thumbInset, dy: thumbInset)
+            tint(color).setFill()
+            UIBezierPath(ovalIn: thumbRect).fill()
+
+            storeIcon?.draw(in: CGRect(
+                x: thumbRect.midX - iconSize / 2,
+                y: thumbRect.midY - iconSize / 2,
+                width: iconSize,
+                height: iconSize
+            ))
+
+            guard let text else { return }
             let labelRect = CGRect(x: (width - labelWidth) / 2, y: ringRect.maxY + gap, width: labelWidth, height: labelHeight)
             cg.saveGState()
             cg.setShadow(offset: CGSize(width: 0, height: 1), blur: 2, color: UIColor.black.withAlphaComponent(0.15).cgColor)
             UIColor.white.setFill()
-            UIBezierPath(roundedRect: labelRect, cornerRadius: 8).fill()
+            UIBezierPath(roundedRect: labelRect, cornerRadius: labelRadius).fill()
             cg.restoreGState()
 
             let paragraph = NSMutableParagraphStyle()
             paragraph.alignment = .center
             paragraph.lineBreakMode = .byTruncatingTail
             let textRect = CGRect(
-                x: labelRect.minX + 8,
+                x: labelRect.minX + 8 * scale,
                 y: labelRect.midY - textSize.height / 2,
-                width: labelRect.width - 16,
+                width: labelRect.width - 16 * scale,
                 height: textSize.height
             )
-            text.draw(in: textRect, withAttributes: [.font: font, .foregroundColor: textColor, .paragraphStyle: paragraph])
+            text.draw(in: textRect, withAttributes: [
+                .font: font,
+                .kern: -0.02 * font.pointSize,
+                .foregroundColor: textColor,
+                .paragraphStyle: paragraph,
+            ])
         }
         return Rendered(image: image, ringCenterY: shadow + ring / 2)
+    }
+
+    /// 안쪽 원 색. 피그마는 테두리 색을 흰색에 약 30% 섞은 연한 색이다(예: `#22A35A` → `#C9DDB9`).
+    private static func tint(_ color: UIColor) -> UIColor {
+        var red: CGFloat = 0, green: CGFloat = 0, blue: CGFloat = 0, alpha: CGFloat = 0
+        guard color.getRed(&red, green: &green, blue: &blue, alpha: &alpha) else { return color.withAlphaComponent(0.3) }
+        let amount: CGFloat = 0.3
+        return UIColor(
+            red: 1 - (1 - red) * amount,
+            green: 1 - (1 - green) * amount,
+            blue: 1 - (1 - blue) * amount,
+            alpha: 1
+        )
     }
 
     static func clusterImage(count: Int) -> UIImage {

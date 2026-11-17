@@ -228,7 +228,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 3 | PopupDetailFeature | 조회수 기록 (POP-14), 관련 팝업 (UPOP-03), 찜 등록·해제, 단건 조회, 관리자 비활성화 | 완료 (#140) |
 | 4 | CalendarFeature | 필터 팝업 (UPOP-04), 지역 목록 (POP-10), 찜 등록·해제 | 완료 (#142, `CalendarFeatureV2`) |
 | 5 | HomeFeatureV2 | 오픈 예정 (UPOP-12), 필터 팝업, 랜덤 (UPOP-07), 지역 목록, 찜 등록·해제 | 완료 (#144) |
-| 6 | MapFeature | 지도 필터 (UPOP-05), 인기 추천 카테고리 (RECO-02), 카테고리별 팝업 (UPOP-09), 지역 목록, 찜 등록·해제 | 화면 먼저 진행 중 (#146, `MapFeatureV2`). 필터 API는 백엔드 확인 중 |
+| 6 | MapFeature | 지도 필터 (UPOP-05, 카테고리 `recommendIds`), 지도 카테고리·마커 색 (`recommend/map`), 지역 목록, 찜 등록·해제 | 진행 중 (#146, `MapFeatureV2`) |
 | 7 | AlertFeature | 알림 키워드 목록·등록·삭제 (ALERT-01~03), 알림함 목록·삭제 (ALERT-04·05), 찜 등록·해제 | 완료 (#150) |
 | 8 | App (푸시) | FCM 토큰 중복 확인·갱신 두 요청을 `PUT /api/v2/user/fcm-token` 하나로 (USER-06) | 완료 (#148) |
 | 9 | 정리 | 쓰지 않는 V1 case(비회원 팝업 목록 등), Repository·Usecase의 `userUuid` 인자, 세션의 `userUuid` 저장 | 진행 중 (#152에서 앱이 부르지 않는 V1 함수 삭제. 지도가 쓰는 V1 함수와 `userUuid`는 지도 전환 뒤) |
@@ -301,18 +301,22 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 
 ### 지도 (#146, 진행 중)
 
-지도 탭을 피그마 "팝팡 지도 탭 개선안"(2432:9069)에 맞춘 새 모듈 `MapFeatureV2`로 바꿔요. 예전 지도 모듈은 `MapFeatureV1`로 이름만 바꿔 남겨 뒀어요(앱에서는 쓰지 않아요). 지도 화면만 빨강(`#A3172B`)을 메인 색으로 써요.
+지도 탭을 피그마 "팝팡 리뉴얼 최종"(2467:10300)의 지도 화면에 맞춘 새 모듈 `MapFeatureV2`로 바꿔요. 예전 지도 모듈은 `MapFeatureV1`로 이름만 바꿔 남겨 뒀어요(앱에서는 쓰지 않아요). 메인 색은 앱 색(`PPColor.brand`)이에요.
 
 | 기능 | V2 | 비고 |
 | --- | --- | --- |
-| 지도 목록 | `GET /api/v2/user/popups/filtered/map?region&district&latitude&longitude&mapSortStandard` | 운영 중 팝업만 줘요 |
-| 카테고리 목록 | `GET /api/v2/recommend` | 필터 메뉴에 써요 |
+| 지도 목록 | `GET /api/v2/user/popups/filtered/map?region&district&mapSortStandard&latitude&longitude&recommendIds` | 운영 중 팝업만 줘요. `recommendIds`는 쉼표로 여러 개(`3,5`), 하나라도 해당하는 팝업을 받아요. 고른 카테고리가 없으면 보내지 않아요. |
+| 지도 카테고리·마커 색 | `GET /api/v2/recommend/map` | 감싸지 않은 `{id, recommendName, color}` 배열이에요. `color`는 대문자 `#RRGGBB`예요. 필터 칩과 마커 색에 써요. |
 | 지역 목록 | `GET /api/v2/popup/regions/districts` | 달력(#143)과 같음 |
 | 찜 등록·해제 | #132의 V2 찜 | |
 
 - 앱은 목록을 거르지 않아요. 화면에서 고른 조건을 `MapPopupQuery`로 모아 `MapFeatureClient.searchMapPopups`에 넘기고, 받은 결과를 그대로 그려요.
-- 지금 지도 API는 지역·구·위치·정렬만 받아요. 카테고리·상태·기간·검색어 조건과 결과 개수 미리 보기, 마감 임박 개수는 API가 없어서 화면에 "(x)"를 붙여 표시하고 서버에 보내지 않아요(`MapAPISupport`). API가 생기면 `MapAPISupport` 값과 `MapFeatureClient.live`만 고쳐요.
-- 백엔드에 지도 API 확장(상태·기간·카테고리·검색어 조건, 오픈 예정 포함, 결과 개수·카테고리별 개수, 상태 배지 값)을 요청했어요. 확인이 필요해요.
+- 필터는 카테고리만 둬요(2026-11-17 피그마 결정으로 상태·기간을 뺐어요). 필터 시트 버튼은 결과 개수만 받는 API가 없어 "팝업 보기"로 개수 없이 보여 줘요.
+- 카테고리와 색은 지도 탭에 처음 들어갈 때 지역 목록과 함께 한 번 받아요. `MapFeature.State`는 메인 탭에 남아 있어서 탭에 다시 들어와도 받지 않아요. 받지 못했으면 다음에 탭에 들어올 때만 다시 받아요.
+- 마커는 모양이 고정된 동그라미예요. 피그마 `MapPin`(2467:10337)처럼 카테고리 색 테두리, 흰 띠, 연한 같은 색 원 위에 갈색 가게 아이콘(`map_marker_store` 에셋, 피그마 `icon/store`)을 그리고 아래에 이름을 붙여요. 고른 마커는 1.35배로 크게, 나머지는 흐리게 그려요. 이름표는 줌 14 이상에서만 보이고(`NaverMapCoordinator.labelMinZoom`), 그보다 멀리 보면 동그라미만 보여요. 숫자 묶음은 줌 12까지예요. 고른 마커는 줌과 상관없이 이름을 보여요.
+- 목록·미리보기 배지는 카테고리와 지역만 보여요. 지도 API는 운영 중 팝업만 주므로 "운영중" 배지는 뺐어요(2026-11-18).
+- 마커 색은 팝업 응답의 `recommendList`(카테고리 이름)를 `recommend/map`의 `recommendName`과 맞춰 정해요(`MapMarkerColor`). 카테고리 필터를 걸었으면 고른 카테고리를 먼저 보고, 아니면 `recommendList` 순서대로 색이 있는 첫 카테고리예요. 맞는 카테고리가 없으면 회색(`#9E9E9E`)이에요.
+- 검색어 조건은 지도 API가 받지 않아 화면에 "(x)"를 붙여 표시하고 서버에 보내지 않아요(`MapAPISupport.keyword`).
 
 ### 알림 (#150)
 

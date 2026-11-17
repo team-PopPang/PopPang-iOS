@@ -78,7 +78,7 @@ private struct DemoTabRoot: View {
             style: .classic,
             title: \.title,
             image: { tab, isSelected in
-                DSKitResource.image(isSelected ? "\(tab.rawValue)_fill" : tab.rawValue)
+                DSKitResource.image(isSelected ? "tab_\(tab.rawValue)_fill" : "tab_\(tab.rawValue)")
             }
         ) { tab in
             if tab == .map {
@@ -125,7 +125,7 @@ private struct DemoMapRoot {
 }
 
 private extension MapFeatureClient {
-    /// 가짜 서버. 서버가 거른 결과를 준다고 보고, 받은 조건과 상관없이 같은 목록을 준다.
+    /// 가짜 서버. 서버가 거른 결과를 준다고 보고, 받은 조건과 상관없이 같은 목록을 준다. 카테고리 색은 예시 값이다.
     static let demo = MapFeatureClient(
         getRegionList: {
             [
@@ -134,9 +134,12 @@ private extension MapFeatureClient {
                 RegionList(region: "부산", districtList: ["전체", "해운대구"]),
             ]
         },
-        getRecommendList: {
-            ["디저트", "캐릭터", "패션", "뷰티", "라이프", "전시"].enumerated().map {
-                Recommend(id: $0.offset + 1, recommendName: $0.element)
+        getMapCategoryList: {
+            [
+                ("디저트", "#7A8B3C"), ("캐릭터", "#2563EB"), ("패션", "#DB2777"),
+                ("뷰티", "#F97316"), ("라이프", "#16A34A"), ("전시", "#7C3AED"),
+            ].enumerated().map {
+                MapCategory(id: $0.offset + 1, name: $0.element.0, colorHex: $0.element.1)
             }
         },
         searchMapPopups: { _ in

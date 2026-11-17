@@ -37,7 +37,11 @@ public struct MapFeatureView: View {
     public var body: some View {
         GeometryReader { proxy in
             let bottomBarHeight = bottomTabBarHeight(safeArea: proxy.safeAreaInsets)
-            NaverMapView(popups: store.popups, selectedPopupUuid: store.selectedPopupUuid)
+            NaverMapView(
+                popups: store.popups,
+                markerColors: store.markerColors,
+                selectedPopupUuid: store.selectedPopupUuid
+            )
                 .ignoresSafeArea()
                 // 내 위치 버튼(왼쪽)은 시트 위를 따라 움직인다. 화면 크기 계산에 끼지 않게 overlay에 둔다.
                 .overlay(alignment: .bottomLeading) {
@@ -45,7 +49,9 @@ public struct MapFeatureView: View {
                     if store.selectedPopup == nil, listDetent != .large {
                         MapSideButtonLayer(
                             position: sheetPosition,
-                            restingBottomPadding: bottomBarHeight + 64,
+                            // 시트를 끝까지 내리면 가운데 "목록 보기" 버튼(탭바 위 12pt, 높이 38)과 같은 줄 왼쪽에 둔다.
+                            restingBottomPadding: bottomBarHeight + Self.floatingPillBottom
+                                + (MapFloatingPill.height - MapCircleButton.size) / 2,
                             onLocate: moveToUserLocation
                         )
                     }
@@ -76,7 +82,7 @@ public struct MapFeatureView: View {
                 }
                 .overlay(alignment: .bottom) {
                     bottomControls
-                        .padding(.bottom, bottomBarHeight + 12)
+                        .padding(.bottom, bottomBarHeight + Self.floatingPillBottom)
                         .animation(.easeInOut(duration: 0.2), value: store.selectedPopupUuid)
                 }
                 .overlayPreferenceValue(MapMenuAnchorKey.self) { anchors in
@@ -149,6 +155,9 @@ public struct MapFeatureView: View {
 }
 
 private extension MapFeatureView {
+    /// 아래 떠 있는 버튼("목록 보기"·"지도 보기")과 미리보기 카드의 탭바 위 여백.
+    static let floatingPillBottom: CGFloat = 12
+
     var topControls: some View {
         VStack(spacing: 10) {
             MapSearchBar(
@@ -192,7 +201,7 @@ private extension MapFeatureView {
                     title: String(localized: "목록 보기", bundle: .module),
                     systemImage: "list.bullet",
                     style: .light,
-                    action: showList
+                    action: { showList(.large) }
                 )
 
                 MapPreviewCard(
@@ -206,11 +215,12 @@ private extension MapFeatureView {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         } else if listDetent == nil {
+            // 시트를 끝까지 내렸을 때: 절반 높이로 다시 올린다.
             MapFloatingPill(
                 title: String(localized: "목록 보기", bundle: .module),
                 systemImage: "list.bullet",
                 style: .light,
-                action: showList
+                action: { showList(.medium) }
             )
         } else if listDetent == .large {
             // ③ "지도 보기" → ① 지도 기본
@@ -258,9 +268,10 @@ private extension MapFeatureView {
         store.send(.mapMarkerTapped(popup))
     }
 
-    func showList() {
+    /// 미리보기 카드의 "목록 보기"는 끝까지(③), 시트를 내렸을 때의 "목록 보기"는 절반(①)으로 올린다.
+    func showList(_ detent: BottomSheetDetent) {
         store.send(.previewDismissed)
-        listDetent = .large
+        listDetent = detent
     }
 
     func closePreview() {
@@ -399,7 +410,7 @@ private struct MapListSheet: View {
     }
 }
 
-/// 왼쪽 내 위치 버튼. 시트 위쪽 끝을 따라 움직이고, 시트를 숨기면 목록 보기 버튼 높이에 멈춘다.
+/// 왼쪽 내 위치 버튼. 시트 위쪽 끝을 따라 움직이고, 시트를 숨기면 "목록 보기" 버튼과 같은 줄에 멈춘다.
 /// 시트를 끝까지 올리면 흐려지며 숨는다.
 private struct MapSideButtonLayer: View {
     private static let spacing: CGFloat = 12

@@ -32,7 +32,8 @@ public struct MapFeature {
     public struct State: Equatable {
         var popups: [Popup] = []
         var totalCount = 0
-        var categories: [Recommend] = []
+        /// 지도 카테고리와 마커 색. 지도 탭에 처음 들어갈 때 한 번 받고, State가 메인 탭에 남아 있는 동안 다시 받지 않는다.
+        var categories: [MapCategory] = []
         var regions: [RegionList] = []
         var selectedRegion: RegionList?
         var selectedDistrict: String?
@@ -55,6 +56,19 @@ public struct MapFeature {
         var favoriteInFlight: Set<String> = []
 
         public init() {}
+
+        /// 팝업별 마커 색(`#RRGGBB`). 맞는 카테고리가 없는 팝업은 넣지 않고, 지도는 회색으로 그린다.
+        var markerColors: [String: String] {
+            var colors: [String: String] = [:]
+            for popup in popups {
+                colors[popup.popupUuid] = MapMarkerColor.colorHex(
+                    for: popup,
+                    categories: categories,
+                    selectedIds: filter.categoryIds
+                )
+            }
+            return colors
+        }
 
         var selectedPopup: Popup? {
             guard let selectedPopupUuid else { return nil }
@@ -83,12 +97,14 @@ public struct MapFeature {
 
     public struct InitialData: Equatable, Sendable {
         let regions: [RegionList]
-        let categories: [Recommend]
+        let categories: [MapCategory]
     }
 
     public enum Action {
         case onAppear
         case initialDataLoaded(InitialData)
+        /// 처음에 카테고리를 받지 못했을 때 다시 받은 결과.
+        case categoriesLoaded([MapCategory])
         case searchTextChanged(String)
         case mapCenterChanged(MapCoordinate)
         case userLocationChanged(MapCoordinate)
@@ -122,6 +138,7 @@ public struct MapFeature {
 
     private enum CancelID {
         case initialData
+        case categories
         case search
         case mapCenter
     }
@@ -140,7 +157,10 @@ public struct MapFeature {
                     state.isLoading = true
                     return loadInitialData()
                 }
-                return search(state: &state, center: state.mapCenter ?? state.searchedCenter)
+                // 카테고리(마커 색)는 받지 못했을 때만 다시 받는다. 받은 뒤에는 탭에 들어올 때마다 받지 않는다.
+                let searchEffect = search(state: &state, center: state.mapCenter ?? state.searchedCenter)
+                guard state.categories.isEmpty else { return searchEffect }
+                return .merge(searchEffect, loadCategories())
 
             case .initialDataLoaded(let data):
                 state.regions = data.regions
@@ -150,6 +170,10 @@ public struct MapFeature {
                     state.selectedDistrict = data.regions.first?.districtList.first
                 }
                 return search(state: &state, center: state.mapCenter)
+
+            case .categoriesLoaded(let categories):
+                state.categories = categories
+                return .none
 
             case .searchTextChanged(let text):
                 state.searchText = text
@@ -296,8 +320,8 @@ private extension MapFeature {
 
         return .run { send in
             do {
-                // 카테고리는 필터 메뉴에만 쓰므로 실패해도 지도는 보여 준다.
-                async let categories = (try? await mapFeatureClient.getRecommendList()) ?? []
+                // 카테고리는 필터 칩과 마커 색에만 쓰므로 실패해도 지도는 보여 준다(마커는 회색). 다음에 탭에 들어올 때 다시 받는다.
+                async let categories = (try? await mapFeatureClient.getMapCategoryList()) ?? []
                 let regions = try await mapFeatureClient.getRegionList().sortedForMap()
                 await send(.initialDataLoaded(.init(regions: regions, categories: await categories)))
             } catch {
@@ -307,6 +331,19 @@ private extension MapFeature {
             }
         }
         .cancellable(id: CancelID.initialData, cancelInFlight: true)
+    }
+
+    func loadCategories() -> Effect<Action> {
+        let mapFeatureClient = mapFeatureClient
+
+        return .run { send in
+            do {
+                await send(.categoriesLoaded(try await mapFeatureClient.getMapCategoryList()))
+            } catch {
+                Logger.e("지도 카테고리 실패: \(error)")
+            }
+        }
+        .cancellable(id: CancelID.categories, cancelInFlight: true)
     }
 
     /// 지금 조건으로 목록을 다시 받는다. 앞선 요청은 취소해 마지막 조건의 응답만 반영한다.

@@ -19,8 +19,6 @@ enum MapColor {
     static let divider = Color(hex: "#F0F0F0")
     static let segment = Color(hex: "#F4F4F4")
     static let dark = Color(hex: "#191919")
-    static let statusText = Color(hex: "#089700")
-    static let statusBackground = Color(hex: "#F4FFEE")
     static let categoryText = Color(hex: "#D9530B")
     static let categoryBackground = Color(hex: "#FDEFE6")
     static let regionText = Color(hex: "#AAAAAA")
@@ -45,7 +43,8 @@ struct MapSearchBar: View {
         HStack(spacing: 10) {
             Button(action: onRegionTap) {
                 HStack(spacing: 4) {
-                    DSKitResource.image("map")
+                    // 피그마 검색바(2467:10347)의 icon/pin
+                    Image("map_search_pin", bundle: .module)
                         .renderingMode(.template)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
@@ -82,18 +81,17 @@ struct MapSearchBar: View {
         }
         .padding(.horizontal, 16)
         .frame(height: 48)
-        .background(isOnList ? MapColor.segment : Color.white, in: RoundedRectangle(cornerRadius: 12))
-        .shadow(color: .black.opacity(isOnList ? 0 : 0.08), radius: 8, y: 2)
+        .background(isOnList ? MapColor.segment : Color.white, in: RoundedRectangle(cornerRadius: 14))
+        // 피그마 검색바 그림자(0 2 12, 검정 10%). 피그마 이미지의 그림자 픽셀로 잰 값이다.
+        .shadow(color: .black.opacity(isOnList ? 0 : 0.10), radius: 6, y: 2)
     }
 }
 
 // MARK: - 필터 칩
 
-/// 칩을 눌러 여는 드롭다운 메뉴 종류.
+/// 칩을 눌러 여는 드롭다운 메뉴 종류. 피그마 결정(2026-11-17)으로 상태·기간 칩은 빼고 카테고리만 둔다.
 enum MapMenu: Hashable {
     case category
-    case status
-    case period
 }
 
 struct MapFilterChipRow: View {
@@ -115,26 +113,12 @@ struct MapFilterChipRow: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("필터", bundle: .module))
 
-                chip(.category, title: categoryTitle, isActive: filter.categoryIds.isEmpty == false)
-                chip(.status, title: statusTitle, isActive: filter.status != .all)
-                chip(.period, title: periodTitle, isActive: filter.period != .all)
+                chip(.category, title: String(localized: "카테고리", bundle: .module), isActive: filter.categoryIds.isEmpty == false)
             }
             .padding(.horizontal, 16)
         }
-    }
-
-    private var categoryTitle: String {
-        mapUnsupported(String(localized: "카테고리", bundle: .module), supported: MapAPISupport.category)
-    }
-
-    private var statusTitle: String {
-        let title = filter.status == .all ? String(localized: "상태", bundle: .module) : filter.status.title
-        return mapUnsupported(title, supported: MapAPISupport.status)
-    }
-
-    private var periodTitle: String {
-        let title = filter.period == .all ? String(localized: "기간", bundle: .module) : filter.period.title
-        return mapUnsupported(title, supported: MapAPISupport.period)
+        // 가로 스크롤뷰는 칩 높이(30)로 잘라 그림자 위아래가 잘린다. 칩 영역 밖도 그리게 한다.
+        .scrollClipDisabled()
     }
 
     private func chip(_ menu: MapMenu, title: String, isActive: Bool) -> some View {
@@ -178,7 +162,7 @@ struct MapMenuAnchorKey: PreferenceKey {
 
 struct MapDropdownMenu: View {
     let menu: MapMenu
-    let categories: [Recommend]
+    let categories: [MapCategory]
     let filter: MapPopupFilter
     let onFilterChange: (MapPopupFilter) -> Void
     let onClose: () -> Void
@@ -190,23 +174,6 @@ struct MapDropdownMenu: View {
             switch menu {
             case .category:
                 categoryMenu
-            case .status:
-                ForEach(MapStatusFilter.allCases, id: \.self) { status in
-                    option(status.title, isSelected: filter.status == status) {
-                        var next = filter
-                        next.status = status
-                        onFilterChange(next)
-                    }
-                }
-            case .period:
-                // 직접 선택(달력)은 API가 생긴 뒤에 붙인다.
-                ForEach(MapPeriodFilter.allCases.filter { $0 != .custom }, id: \.self) { period in
-                    option(period.title, isSelected: filter.period == period) {
-                        var next = filter
-                        next.period = period
-                        onFilterChange(next)
-                    }
-                }
             }
         }
         .padding(8)
@@ -224,7 +191,7 @@ struct MapDropdownMenu: View {
             ScrollView {
                 VStack(spacing: 0) {
                     ForEach(categories) { category in
-                        option(category.recommendName, isSelected: draftCategoryIds.contains(category.id)) {
+                        option(category.name, isSelected: draftCategoryIds.contains(category.id)) {
                             if draftCategoryIds.contains(category.id) {
                                 draftCategoryIds.remove(category.id)
                             } else {
@@ -291,7 +258,7 @@ struct MapDropdownMenu: View {
 // MARK: - 필터 시트 (④)
 
 struct MapFilterSheet: View {
-    let categories: [Recommend]
+    let categories: [MapCategory]
     let filter: MapPopupFilter
     let onApply: (MapPopupFilter) -> Void
 
@@ -317,25 +284,9 @@ struct MapFilterSheet: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 22) {
-                    section(String(localized: "상태", bundle: .module), supported: MapAPISupport.status) {
-                        ForEach(MapStatusFilter.allCases.filter { $0 != .all }, id: \.self) { status in
-                            chip(status.title, isSelected: draft.status == status) {
-                                draft.status = draft.status == status ? .all : status
-                            }
-                        }
-                    }
-
-                    section(String(localized: "기간", bundle: .module), supported: MapAPISupport.period) {
-                        ForEach(MapPeriodFilter.allCases.filter { $0 != .all && $0 != .custom }, id: \.self) { period in
-                            chip(period.title, isSelected: draft.period == period) {
-                                draft.period = draft.period == period ? .all : period
-                            }
-                        }
-                    }
-
-                    section(String(localized: "카테고리", bundle: .module), supported: MapAPISupport.category) {
+                    section(String(localized: "카테고리", bundle: .module)) {
                         ForEach(categories) { category in
-                            chip(category.recommendName, isSelected: draft.categoryIds.contains(category.id)) {
+                            chip(category.name, isSelected: draft.categoryIds.contains(category.id)) {
                                 if draft.categoryIds.contains(category.id) {
                                     draft.categoryIds.remove(category.id)
                                 } else {
@@ -364,8 +315,8 @@ struct MapFilterSheet: View {
                 Button {
                     onApply(draft)
                 } label: {
-                    // 결과 개수 미리 보기는 API가 생긴 뒤에 붙인다.
-                    Text(String(localized: "팝업 (x)개 보기", bundle: .module))
+                    // 결과 개수만 받는 API가 없어 개수 없이 보여 준다.
+                    Text(String(localized: "팝업 보기", bundle: .module))
                         .font(.scdream(.bold, size: 16))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -384,11 +335,10 @@ struct MapFilterSheet: View {
 
     private func section<Content: View>(
         _ title: String,
-        supported: Bool,
         @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(mapUnsupported(title, supported: supported))
+            Text(title)
                 .font(.scdream(.bold, size: 15))
                 .foregroundStyle(MapColor.text)
             MapFlowLayout(spacing: 8, lineSpacing: 8) {
@@ -468,7 +418,6 @@ struct MapFlowLayout: Layout {
 
 struct MapBadge: View {
     enum Style {
-        case status
         case category
         case region
     }
@@ -488,7 +437,6 @@ struct MapBadge: View {
 
     private var foreground: Color {
         switch style {
-        case .status: MapColor.statusText
         case .category: MapColor.categoryText
         case .region: MapColor.regionText
         }
@@ -496,7 +444,6 @@ struct MapBadge: View {
 
     private var background: Color {
         switch style {
-        case .status: MapColor.statusBackground
         case .category: MapColor.categoryBackground
         case .region: MapColor.regionBackground
         }
@@ -504,12 +451,6 @@ struct MapBadge: View {
 }
 
 extension Popup {
-    /// 지도 API는 운영 중 팝업만 주므로 상태 배지는 "운영중"이다.
-    /// 오늘 종료·D-n·오픈 예정 배지는 서버가 상태 값을 주면 바꾼다(MapAPISupport.status).
-    var mapStatusText: String {
-        String(localized: "운영중", bundle: .module)
-    }
-
     var mapCategoryText: String? {
         recommendList.first
     }
@@ -619,13 +560,12 @@ struct MapPreviewCard: View {
     }
 }
 
-/// 운영중 · 카테고리 · 지역 배지 한 줄.
+/// 카테고리 · 지역 배지 한 줄. 지도 API는 운영 중 팝업만 주므로 "운영중" 배지는 두지 않는다(2026-11-18 결정).
 struct MapBadgeRow: View {
     let popup: Popup
 
     var body: some View {
         HStack(spacing: 4) {
-            MapBadge(text: popup.mapStatusText, style: .status)
             if let category = popup.mapCategoryText {
                 MapBadge(text: category, style: .category)
             }
@@ -718,6 +658,8 @@ struct MapListPopupCell: View {
 // MARK: - 떠 있는 버튼
 
 struct MapFloatingPill: View {
+    static let height: CGFloat = 38
+
     enum Style {
         case light
         case dark
@@ -738,7 +680,7 @@ struct MapFloatingPill: View {
             }
             .foregroundStyle(style == .dark ? Color.white : MapColor.text)
             .padding(.horizontal, 18)
-            .frame(height: 38)
+            .frame(height: Self.height)
             .background(Capsule().fill(style == .dark ? MapColor.dark : Color.white))
             .shadow(color: .black.opacity(0.15), radius: 8, y: 2)
         }
@@ -747,6 +689,8 @@ struct MapFloatingPill: View {
 }
 
 struct MapCircleButton: View {
+    static let size: CGFloat = 42
+
     let systemImage: String
     let accessibilityLabel: Text
     let action: () -> Void
@@ -756,7 +700,7 @@ struct MapCircleButton: View {
             Image(systemName: systemImage)
                 .font(.system(size: 17, weight: .semibold))
                 .foregroundStyle(MapColor.text)
-                .frame(width: 42, height: 42)
+                .frame(width: Self.size, height: Self.size)
                 .background(Circle().fill(Color.white))
                 .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
         }

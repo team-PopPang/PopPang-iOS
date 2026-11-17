@@ -4,8 +4,8 @@ import Domain
 /// 지도 화면이 쓰는 서버 요청. 모두 V2라 Access Token의 사용자를 기준으로 하고 `userUuid`를 받지 않는다.
 public struct MapFeatureClient: Sendable {
     public var getRegionList: @Sendable () async throws -> [RegionList]
-    /// 추천 카테고리 전체. 필터의 카테고리 목록에 쓴다.
-    public var getRecommendList: @Sendable () async throws -> [Recommend]
+    /// 지도 카테고리 전체와 마커 색. 필터의 카테고리 칩과 마커 색에 쓴다. 지도 탭에 처음 들어갈 때 한 번 받는다.
+    public var getMapCategoryList: @Sendable () async throws -> [MapCategory]
     /// 지도 목록. 고른 조건을 서버에 보내고, 서버가 거른 결과를 받는다.
     public var searchMapPopups: @Sendable (_ query: MapPopupQuery) async throws -> MapPopupSearchResult
     public var addFavorite: @Sendable (_ popupUuid: String) async throws -> Void
@@ -13,13 +13,13 @@ public struct MapFeatureClient: Sendable {
 
     public init(
         getRegionList: @escaping @Sendable () async throws -> [RegionList],
-        getRecommendList: @escaping @Sendable () async throws -> [Recommend],
+        getMapCategoryList: @escaping @Sendable () async throws -> [MapCategory],
         searchMapPopups: @escaping @Sendable (_ query: MapPopupQuery) async throws -> MapPopupSearchResult,
         addFavorite: @escaping @Sendable (_ popupUuid: String) async throws -> Void,
         removeFavorite: @escaping @Sendable (_ popupUuid: String) async throws -> Void
     ) {
         self.getRegionList = getRegionList
-        self.getRecommendList = getRecommendList
+        self.getMapCategoryList = getMapCategoryList
         self.searchMapPopups = searchMapPopups
         self.addFavorite = addFavorite
         self.removeFavorite = removeFavorite
@@ -34,18 +34,18 @@ public struct MapFeatureClient: Sendable {
             getRegionList: {
                 try await popupUsecaseBox.usecase.getRegionList()
             },
-            getRecommendList: {
-                try await popupUsecaseBox.usecase.getRecommendList()
+            getMapCategoryList: {
+                try await popupUsecaseBox.usecase.getMapCategoryList()
             },
             searchMapPopups: { query in
-                // 지금 지도 API(GET /api/v2/user/popups/filtered/map)는 지역·구·위치·정렬만 받는다.
-                // 카테고리·상태·기간 조건은 API가 생기면 여기서 보낸다(MapAPISupport). 앱에서 거르지 않는다.
+                // 지역·구·위치·정렬·카테고리를 서버에 보낸다. 앱에서 거르지 않는다.
                 let items = try await popupUsecaseBox.usecase.getMapPopupList(
                     region: query.region,
                     district: query.district,
                     latitude: query.latitude,
                     longitude: query.longitude,
-                    mapSortStandard: query.sort.rawValue
+                    mapSortStandard: query.sort.rawValue,
+                    recommendIds: query.filter.categoryIds.sorted()
                 )
                 return MapPopupSearchResult(items: items, totalCount: items.count)
             },
@@ -65,7 +65,7 @@ struct MapFeatureUnimplementedError: Error {}
 extension MapFeatureClient {
     public static let unimplemented = Self(
         getRegionList: { throw MapFeatureUnimplementedError() },
-        getRecommendList: { throw MapFeatureUnimplementedError() },
+        getMapCategoryList: { throw MapFeatureUnimplementedError() },
         searchMapPopups: { _ in throw MapFeatureUnimplementedError() },
         addFavorite: { _ in throw MapFeatureUnimplementedError() },
         removeFavorite: { _ in throw MapFeatureUnimplementedError() }

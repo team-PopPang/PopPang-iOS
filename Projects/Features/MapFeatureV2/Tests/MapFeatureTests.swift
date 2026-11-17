@@ -37,7 +37,7 @@ struct MapFeatureTests {
         #expect(queries.value.first?.region == "전체")
         #expect(store.state.popups == [.fixture()])
         #expect(store.state.totalCount == 1)
-        #expect(store.state.categories.map(\.recommendName) == ["디저트"])
+        #expect(store.state.categories.map(\.name) == ["디저트"])
         #expect(store.state.isLoading == false)
     }
 
@@ -56,7 +56,7 @@ struct MapFeatureTests {
         }
         store.exhaustivity = .off(showSkippedAssertions: false)
 
-        let filter = MapPopupFilter(categoryIds: [1], status: .endingThisWeek, period: .thisWeek)
+        let filter = MapPopupFilter(categoryIds: [1, 3])
         await store.send(.filterApplied(filter))
         await store.finish()
         await store.skipReceivedActions(strict: false)
@@ -65,6 +65,97 @@ struct MapFeatureTests {
         // 서버가 준 결과를 그대로 보여 준다.
         #expect(store.state.popups.count == 2)
         #expect(store.state.totalCount == 2)
+    }
+
+    @Test("카테고리(마커 색)는 지도 탭에 처음 들어갈 때 한 번 받고, 다시 들어와도 받지 않는다")
+    func categoriesLoadOnce() async {
+        let categoryCalls = LockIsolated(0)
+        let store = TestStore(initialState: MapFeature.State()) {
+            MapFeature()
+        } withDependencies: {
+            $0.mapFeatureClient = .mock(getMapCategoryList: {
+                categoryCalls.withValue { $0 += 1 }
+                return [MapCategory(id: 1, name: "디저트", colorHex: "#7A8B3C")]
+            })
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.onAppear)
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+        await store.send(.onAppear)
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+
+        #expect(categoryCalls.value == 1)
+        #expect(store.state.categories == [MapCategory(id: 1, name: "디저트", colorHex: "#7A8B3C")])
+    }
+
+    @Test("처음에 카테고리를 받지 못했으면 다음에 탭에 들어올 때 다시 받는다")
+    func categoriesRetryAfterFailure() async {
+        let categoryCalls = LockIsolated(0)
+        let store = TestStore(initialState: MapFeature.State()) {
+            MapFeature()
+        } withDependencies: {
+            $0.mapFeatureClient = .mock(getMapCategoryList: {
+                let call = categoryCalls.withValue { $0 += 1; return $0 }
+                if call == 1 { throw PopupError.failed }
+                return [MapCategory(id: 1, name: "디저트", colorHex: "#7A8B3C")]
+            })
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.onAppear)
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+        #expect(store.state.categories.isEmpty)
+        #expect(store.state.regions.isEmpty == false)
+
+        await store.send(.onAppear)
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+        #expect(categoryCalls.value == 2)
+        #expect(store.state.categories.map(\.id) == [1])
+    }
+
+    @Test("마커 색은 팝업 카테고리 이름으로 찾고, 필터로 고른 카테고리를 먼저 보며, 맞는 카테고리가 없으면 없다")
+    func markerColorRule() {
+        let categories = [
+            MapCategory(id: 1, name: "디저트", colorHex: "#7A8B3C"),
+            MapCategory(id: 2, name: "캐릭터", colorHex: "#2563EB"),
+        ]
+        let both = Popup.fixture(recommendList: ["디저트", " 캐릭터 "])
+
+        #expect(MapMarkerColor.colorHex(for: both, categories: categories, selectedIds: []) == "#7A8B3C")
+        #expect(MapMarkerColor.colorHex(for: both, categories: categories, selectedIds: [2]) == "#2563EB")
+        #expect(MapMarkerColor.colorHex(for: .fixture(recommendList: ["없는 카테고리", "캐릭터"]), categories: categories, selectedIds: []) == "#2563EB")
+        #expect(MapMarkerColor.colorHex(for: .fixture(recommendList: ["없는 카테고리"]), categories: categories, selectedIds: []) == nil)
+        #expect(MapMarkerColor.colorHex(for: .fixture(recommendList: []), categories: categories, selectedIds: []) == nil)
+
+        var state = Self.loadedState()
+        state.categories = categories
+        state.popups = [both, .fixture(uuid: "popup-2", recommendList: [])]
+        state.filter = MapPopupFilter(categoryIds: [2])
+        #expect(state.markerColors == ["popup-1": "#2563EB"])
+    }
+
+    @Test("서버 색 문자열을 색으로 바꾸고, 형식이 다르면 nil이다")
+    func markerHexParsing() {
+        #expect(MapMarkerRenderer.color(hex: "#7A8B3C") != nil)
+        #expect(MapMarkerRenderer.color(hex: "16A34A") != nil)
+        #expect(MapMarkerRenderer.color(hex: "#GGGGGG") == nil)
+        #expect(MapMarkerRenderer.color(hex: "#FFF") == nil)
+    }
+
+    @Test("마커 이름표는 보일 때만 그리고, 이름표가 없어도 좌표는 동그라미 가운데에 둔다")
+    func markerLabelVisibility() {
+        let withLabel = MapMarkerRenderer.image(colorHex: "#7A8B3C", name: "두바이쫀득쿠키", style: .normal, showsLabel: true)
+        let withoutLabel = MapMarkerRenderer.image(colorHex: "#7A8B3C", name: "두바이쫀득쿠키", style: .normal, showsLabel: false)
+
+        #expect(withoutLabel.image.size.height < withLabel.image.size.height)
+        #expect(withoutLabel.ringCenterY == withLabel.ringCenterY)
+        #expect(withoutLabel.image.size.height == withoutLabel.ringCenterY * 2)
+        #expect(NaverMapCoordinator.labelMinZoom == 14)
     }
 
     @Test("가까운순 결과가 비면 최신순으로 다시 조회한다")
@@ -244,7 +335,7 @@ struct MapFeatureTests {
 private extension MapFeatureClient {
     static func mock(
         getRegionList: @escaping @Sendable () async throws -> [RegionList] = { [RegionList(region: "전체", districtList: ["전체"])] },
-        getRecommendList: @escaping @Sendable () async throws -> [Recommend] = { [Recommend(id: 1, recommendName: "디저트")] },
+        getMapCategoryList: @escaping @Sendable () async throws -> [MapCategory] = { [MapCategory(id: 1, name: "디저트", colorHex: "#7A8B3C")] },
         searchMapPopups: @escaping @Sendable (MapPopupQuery) async throws -> MapPopupSearchResult = { _ in
             MapPopupSearchResult(items: [], totalCount: 0)
         },
@@ -253,7 +344,7 @@ private extension MapFeatureClient {
     ) -> Self {
         Self(
             getRegionList: getRegionList,
-            getRecommendList: getRecommendList,
+            getMapCategoryList: getMapCategoryList,
             searchMapPopups: searchMapPopups,
             addFavorite: addFavorite,
             removeFavorite: removeFavorite
@@ -262,7 +353,7 @@ private extension MapFeatureClient {
 }
 
 private extension Popup {
-    static func fixture(uuid: String = "popup-1", favoriteCount: Int = 0) -> Popup {
+    static func fixture(uuid: String = "popup-1", favoriteCount: Int = 0, recommendList: [String] = ["디저트"]) -> Popup {
         let start = Calendar.current.startOfDay(for: Date())
         return Popup(
             popupUuid: uuid,
@@ -284,7 +375,7 @@ private extension Popup {
             favoriteCount: favoriteCount,
             viewCount: 0,
             isFavorited: false,
-            recommendList: ["디저트"]
+            recommendList: recommendList
         )
     }
 }
