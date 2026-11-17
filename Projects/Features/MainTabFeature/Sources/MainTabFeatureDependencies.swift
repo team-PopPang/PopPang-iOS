@@ -47,12 +47,13 @@ public struct MainTabFeatureDependencies {
         )
     }
 
-    /// React Native 화면(팝업 제보·제보 관리)이 V2 API를 부를 때 쓸 Access Token 공급자를 앱 전체에 한 번 등록한다.
+    /// React Native 런타임(팝업 제보·제보 관리 화면)을 시작하고, RN이 V2 API용 Access Token을 요청할 때 쓸 공급자를 연결한다.
     ///
-    /// RN 네이티브 모듈(`PopPangHostAuth`)이 전역으로 들고 있으므로 마지막에 등록한 공급자를 쓴다.
-    /// 앱 target은 `PopPangRNFeature`에 직접 의존하지 않아 이 함수로 넘긴다. 인자는 `PopPangRNAccessTokenProvider`를 본다.
-    public static func registerReactNativeAccessTokenProvider(_ provider: @escaping PopPangRNAccessTokenProvider) {
-        PopPangRNHostAuth.setAccessTokenProvider(provider)
+    /// 앱을 시작할 때 한 번 부른다. 앱 target은 `PopPangRNFeature`에 직접 의존하지 않아 이 함수로 넘긴다.
+    /// 인자는 `PopPangRNAccessTokenProvider`를 본다.
+    @MainActor
+    public static func startReactNative(accessTokenProvider: @escaping PopPangRNAccessTokenProvider) {
+        PopPangRNRuntime.start(accessTokenProvider: accessTokenProvider)
     }
 
     public func configure(_ values: inout DependencyValues) {

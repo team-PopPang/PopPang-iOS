@@ -15,6 +15,7 @@ struct AppBootstrap {
     /// 실제 앱 실행 환경에서 사용할 의존성 그래프를 생성합니다.
     /// 동일한 `store`와 UseCase 인스턴스를 여러 객체에 전달하여
     /// 앱 내부에서 같은 저장소와 비즈니스 로직 인스턴스를 공유하도록 합니다.
+    @MainActor
     static func live(
         store: Storing = UserDefaultsStore()
     ) -> AppBootstrap {
@@ -50,7 +51,7 @@ struct AppBootstrap {
         )
 
         // React Native 화면도 앱 요청과 같은 토큰 저장소·갱신·401 규칙을 쓴다.
-        MainTabFeatureDependencies.registerReactNativeAccessTokenProvider { rejectedAccessToken, expired in
+        MainTabFeatureDependencies.startReactNative { rejectedAccessToken, expired in
             switch await authentication.hostAccessToken(rejected: rejectedAccessToken, expired: expired) {
             case let .accessToken(accessToken):
                 return (accessToken, false)

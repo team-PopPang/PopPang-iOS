@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import PopPangRN
 import SwiftUI
 
 public struct PopPangRNFeatureView: View {
@@ -9,18 +10,30 @@ public struct PopPangRNFeatureView: View {
     }
 
     public var body: some View {
-        ReactNativeScreen(
-            moduleName: "PopPangRNRoot",
-            initialProperties: [
-                "feature": store.screen.rawValue,
-                "userUuid": store.userUuid,
-                "nativeEvents": store.screen.nativeEvents,
-            ],
-            onNativeEvent: { eventName in
-                store.send(.nativeEventReceived(eventName))
+        NativepieceView(store.screen.nativepieceScreen(userUuid: store.userUuid))
+            .onEvent(PopPangRN.Event.self) { event in
+                switch event {
+                case .popupRequestSubmitted:
+                    store.send(.popupRequestSubmitted)
+                }
             }
-        )
-        .ignoresSafeArea()
-        .toolbar(.hidden, for: .navigationBar)
+            // 닫기는 Nativepiece 기본 동작(dismiss·pop) 대신 TCA parent가 화면 상태로 처리한다.
+            .onClose {
+                store.send(.closeRequested)
+            }
+            .ignoresSafeArea()
+            .toolbar(.hidden, for: .navigationBar)
+    }
+}
+
+private extension PopPangRNFeature.Screen {
+    func nativepieceScreen(userUuid: String) -> PopPangRN.Screen {
+        let props = PopPangRN.PopPangScreenProps(userUuid: userUuid)
+        switch self {
+        case .popupRequest:
+            return .popupRequest(props)
+        case .popupRequestManagement:
+            return .popupRequestManagement(props)
+        }
     }
 }

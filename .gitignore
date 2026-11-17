@@ -10,11 +10,6 @@ GoogleService-Info.plist
 # personal git hooks (push 전 Claude 코드 리뷰)
 .githooks/
 
-# React Native release artifacts
-.rn-release-temp/
-Vendor/PrebuiltReactNativeFrameworks/
-Projects/App/Resources/ReactNative/
-
 # macOS
 .DS_Store
 ._*
