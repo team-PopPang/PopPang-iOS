@@ -92,7 +92,7 @@ grep -rnE 'Text\("[^"]*[가-힣]' Projects --include='*.swift' | grep -v '/Deriv
 | --- | --- |
 | 로그와 개발자용 메시지 | `Logger.d(...)`, `print(...)`, `fatalError(...)` 메시지 |
 | 미리보기와 목 데이터 | `#Preview` 이름, `previewValue`, Domain 엔티티의 미리보기 값 |
-| 서버 값 | 지역·구 이름과 `전체`, API 파라미터(`PopupSubmissionListFilter` 원시값 등) |
+| 서버 값 | 지역·구 이름과 `전체`, API 파라미터(정렬 기준 원시값 등) |
 | 오류 메시지 | `error.localizedDescription`으로 보여 주는 Domain·네트워크 오류 문구 |
 
 - 지역 이름과 `전체`는 서버가 내려 주는 값이고 요청 파라미터로도 쓰여서 번역하지 않아요. 영어·일본어에서도 한국어로 보여요.
