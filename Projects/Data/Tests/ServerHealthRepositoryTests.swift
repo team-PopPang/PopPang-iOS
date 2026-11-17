@@ -64,7 +64,7 @@ struct ServerHealthRepositoryTests {
         #expect(await repository.checkHealth() == .offline)
     }
 
-    @Test("헬스 체크는 GET /api/v1/health를 5초 제한으로 요청한다")
+    @Test("헬스 체크는 GET /api/v2/health를 인증 헤더 없이 5초 제한으로 요청한다")
     func requestsHealthEndpointWithTimeout() async throws {
         let repository = makeRepository(stub: .response(statusCode: 200, body: #"{"isHealthy":true}"#))
 
@@ -72,7 +72,8 @@ struct ServerHealthRepositoryTests {
 
         let request = try #require(ServerHealthStubURLProtocol.lastRequest)
         #expect(request.httpMethod == "GET")
-        #expect(request.url?.absoluteString == "https://poppang.co.kr/api/v1/health")
+        #expect(request.url?.absoluteString == "https://poppang.co.kr/api/v2/health")
+        #expect(request.value(forHTTPHeaderField: "Authorization") == nil)
         #expect(request.timeoutInterval == 5)
     }
 

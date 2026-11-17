@@ -245,7 +245,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 **확인 필요 (백엔드)**
 - 팝업 제보(SUB-01)는 Swift 코드에서 부르지 않고 React Native 화면이 직접 불러요. #154에서 V2로 옮겼어요([React Native 제보 화면](#react-native-제보-화면-154)).
 
-헬스 체크(`GET /api/v1/health`)는 대응 V2가 없어서 V1 그대로 써요.
+헬스 체크는 `GET /api/v2/health`를 써요(#156). 백엔드가 2026-11-17에 운영에 배포했어요. V1처럼 인증 없이 부르고 응답도 같은 `{ "isHealthy": Bool }`이에요(`Cache-Control: no-store`). 처리 규칙은 그대로예요: `200`에 `isHealthy: true`면 들어가고, `false`·200이 아닌 응답·본문 형식 오류·5초 타임아웃·연결 실패면 안내 화면, 기기 인터넷이 없으면 오프라인 안내예요(`ServerHealthRepositoryImpl`). 서버는 DB·Redis 상태를 검사하지 않아요. `GET /api/v1/health`도 서버에 그대로 남아 있어요.
 
 ### 팝업 상세 (#140)
 
