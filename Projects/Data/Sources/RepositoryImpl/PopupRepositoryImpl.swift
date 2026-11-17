@@ -72,7 +72,8 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
         district: String,
         latitude: Double?,
         longitude: Double?,
-        mapSortStandard: String
+        mapSortStandard: String,
+        recommendIds: [Int]
     ) async throws -> [Popup] {
         // 명세 UPOP-05: 감싸지 않은 팝업 배열이다. 운영 중 팝업만 준다.
         try await popupRequest {
@@ -82,17 +83,18 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
                     district: district,
                     latitude: latitude,
                     longitude: longitude,
-                    mapSortStandard: mapSortStandard
+                    mapSortStandard: mapSortStandard,
+                    recommendIds: recommendIds
                 ),
                 decodeTo: [PopupDTO].self
             ).map { $0.toEntity() }
         }
     }
 
-    public func getRecommendList() async throws -> [Recommend] {
-        // 명세 RECO-01: 감싸지 않은 `{id, recommendName}` 배열이다.
+    public func getMapCategoryList() async throws -> [MapCategory] {
+        // 감싸지 않은 `{id, recommendName, color}` 배열이다.
         try await popupRequest {
-            try await makeV2Provider().asyncRequest(.recommendList, decodeTo: [RecommendListDTO].self).map { $0.toModel() }
+            try await makeV2Provider().asyncRequest(.recommendMap, decodeTo: [RecommendMapDTO].self).map { $0.toEntity() }
         }
     }
 

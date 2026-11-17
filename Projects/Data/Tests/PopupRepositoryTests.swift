@@ -249,9 +249,9 @@ struct PopupRepositoryTests {
 
     // MARK: - 지도 목록·카테고리 (V2)
 
-    @Test("지도 목록은 V2 경로에 지역·구·위치·정렬을 query로 보내고 Access Token을 쓴다")
+    @Test("지도 목록은 V2 경로에 지역·구·위치·정렬·카테고리를 query로 보내고 Access Token을 쓴다")
     func mapRequestMatchesV2Contract() throws {
-        let target = V2PopupAPI.filteredMap(region: "서울", district: "전체", latitude: 37.5, longitude: 127.05, mapSortStandard: "CLOSEST")
+        let target = V2PopupAPI.filteredMap(region: "서울", district: "전체", latitude: 37.5, longitude: 127.05, mapSortStandard: "CLOSEST", recommendIds: [3, 5])
         let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: target).urlRequest()
         let queryItems = URLComponents(url: try #require(request.url), resolvingAgainstBaseURL: false)?.queryItems ?? []
 
@@ -262,32 +262,34 @@ struct PopupRepositoryTests {
             URLQueryItem(name: "latitude", value: "37.5"),
             URLQueryItem(name: "longitude", value: "127.05"),
             URLQueryItem(name: "mapSortStandard", value: "CLOSEST"),
+            URLQueryItem(name: "recommendIds", value: "3,5"),
         ])
         #expect(target.resolvedAuthorization == .access)
     }
 
-    @Test("지도 목록은 위치를 모르면 위도·경도를 보내지 않는다")
+    @Test("지도 목록은 위치를 모르면 위도·경도를, 카테고리를 고르지 않으면 카테고리를 보내지 않는다")
     func mapRequestOmitsUnknownLocation() throws {
-        let target = V2PopupAPI.filteredMap(region: "전체", district: "전체", latitude: nil, longitude: nil, mapSortStandard: "NEWEST")
+        let target = V2PopupAPI.filteredMap(region: "전체", district: "전체", latitude: nil, longitude: nil, mapSortStandard: "NEWEST", recommendIds: [])
         let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: target).urlRequest()
         let names = Set((URLComponents(url: try #require(request.url), resolvingAgainstBaseURL: false)?.queryItems ?? []).map(\.name))
 
         #expect(names == ["region", "district", "mapSortStandard"])
     }
 
-    @Test("지도 목록과 카테고리 목록은 감싸지 않은 배열을 읽고, 실패하면 PopupError로 바꾼다")
+    @Test("지도 목록과 지도 카테고리(색)는 감싸지 않은 배열을 읽고, 실패하면 PopupError로 바꾼다")
     func mapAndRecommendRead() async throws {
         let context = PopupRepositoryContext(response: (200, "[\(PopupFixture.popup)]"))
-        let popups = try await context.repository.getMapPopupList(region: "전체", district: "전체", latitude: nil, longitude: nil, mapSortStandard: "NEWEST")
+        let popups = try await context.repository.getMapPopupList(region: "전체", district: "전체", latitude: nil, longitude: nil, mapSortStandard: "NEWEST", recommendIds: [])
         #expect(popups.map(\.popupUuid) == ["popup-1"])
 
-        let recommendContext = PopupRepositoryContext(response: (200, #"[{"id":1,"recommendName":"디저트"}]"#))
-        #expect(try await recommendContext.repository.getRecommendList() == [Recommend(id: 1, recommendName: "디저트")])
-        #expect(try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .recommendList).urlRequest().url?.path == "/api/v2/recommend")
+        let categoryContext = PopupRepositoryContext(response: (200, ##"[{"id":21,"recommendName":"두바이쫀득쿠키","color":"#7A8B3C"}]"##))
+        #expect(try await categoryContext.repository.getMapCategoryList() == [MapCategory(id: 21, name: "두바이쫀득쿠키", colorHex: "#7A8B3C")])
+        #expect(categoryContext.recorder.authorizationHeaders == ["Bearer access"])
+        #expect(try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .recommendMap).urlRequest().url?.path == "/api/v2/recommend/map")
 
         let failing = PopupRepositoryContext(response: (500, #"{"success":false,"code":6000,"message":"서버 에러","data":null}"#))
         await #expect(throws: PopupError.failed) {
-            _ = try await failing.repository.getRecommendList()
+            _ = try await failing.repository.getMapCategoryList()
         }
     }
 

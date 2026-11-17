@@ -40,19 +40,21 @@ public final class PopupUsecaseImpl: PopupUsecaseProtocol {
         district: String,
         latitude: Double?,
         longitude: Double?,
-        mapSortStandard: String
+        mapSortStandard: String,
+        recommendIds: [Int]
     ) async throws -> [Popup] {
         try await popupRepository.getMapPopupList(
             region: region,
             district: district,
             latitude: latitude,
             longitude: longitude,
-            mapSortStandard: mapSortStandard
+            mapSortStandard: mapSortStandard,
+            recommendIds: recommendIds
         )
     }
 
-    public func getRecommendList() async throws -> [Recommend] {
-        try await popupRepository.getRecommendList()
+    public func getMapCategoryList() async throws -> [MapCategory] {
+        try await popupRepository.getMapCategoryList()
     }
 
     public func getPersonalSearchPopupList(searchText: String) async throws -> [Popup] {

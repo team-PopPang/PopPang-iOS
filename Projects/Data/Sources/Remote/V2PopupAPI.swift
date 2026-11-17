@@ -24,9 +24,10 @@ public enum V2PopupAPI {
     /// `GET /api/v2/user/popups/upcoming` (UPOP-12). 오픈 예정 팝업이다. `upcomingDays`(기본 10)는 V1처럼 보내지 않는다.
     case upcoming
     /// `GET /api/v2/user/popups/filtered/map` (UPOP-05). 지도 목록이다. 운영 중 팝업만 준다. 위치는 가까운순(CLOSEST)에 쓴다.
-    case filteredMap(region: String, district: String, latitude: Double?, longitude: Double?, mapSortStandard: String)
-    /// `GET /api/v2/recommend` (RECO-01). 추천 카테고리 전체다. 감싸지 않은 `{id, recommendName}` 배열이다.
-    case recommendList
+    /// `recommendIds`는 카테고리 필터다. 하나라도 해당하는 팝업을 받고, 비어 있으면 보내지 않는다(카테고리로 거르지 않음).
+    case filteredMap(region: String, district: String, latitude: Double?, longitude: Double?, mapSortStandard: String, recommendIds: [Int])
+    /// `GET /api/v2/recommend/map`. 지도 마커 색을 담은 카테고리 전체다. 감싸지 않은 `{id, recommendName, color}` 배열이고 `id` 오름차순이다.
+    case recommendMap
 }
 
 extension V2PopupAPI: BaseAPI {
@@ -58,14 +59,14 @@ extension V2PopupAPI: BaseAPI {
             return "/user/popups/upcoming"
         case .filteredMap:
             return "/user/popups/filtered/map"
-        case .recommendList:
-            return "/recommend"
+        case .recommendMap:
+            return "/recommend/map"
         }
     }
 
     public var method: Moya.Method {
         switch self {
-        case .search, .detail, .related, .filteredHome, .regionList, .random, .upcoming, .filteredMap, .recommendList:
+        case .search, .detail, .related, .filteredHome, .regionList, .random, .upcoming, .filteredMap, .recommendMap:
             return .get
         case .view:
             return .post
@@ -85,7 +86,7 @@ extension V2PopupAPI: BaseAPI {
                 ],
                 encoding: URLEncoding.queryString
             )
-        case let .filteredMap(region, district, latitude, longitude, mapSortStandard):
+        case let .filteredMap(region, district, latitude, longitude, mapSortStandard, recommendIds):
             var parameters: [String: Any] = [
                 "region": region,
                 "district": district,
@@ -96,8 +97,11 @@ extension V2PopupAPI: BaseAPI {
                 parameters["latitude"] = latitude
                 parameters["longitude"] = longitude
             }
+            if recommendIds.isEmpty == false {
+                parameters["recommendIds"] = recommendIds.map(String.init).joined(separator: ",")
+            }
             return .requestParameters(parameters: parameters, encoding: URLEncoding.queryString)
-        case .detail, .view, .related, .regionList, .random, .upcoming, .recommendList:
+        case .detail, .view, .related, .regionList, .random, .upcoming, .recommendMap:
             return .requestPlain
         }
     }
