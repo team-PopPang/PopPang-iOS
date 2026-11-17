@@ -417,7 +417,8 @@ enum MapMarkerRenderer {
     }
 
     static func image(colorHex: String?, name: String, style: Style, showsLabel: Bool) -> Rendered {
-        let cacheKey = "\(colorHex ?? "-")|\(style)|\(showsLabel)|\(name)" as NSString
+        // 이름표가 없으면 그림이 색·모양만으로 정해지므로 이름을 키에 넣지 않는다.
+        let cacheKey = (showsLabel ? "\(colorHex ?? "-")|\(style)|\(name)" : "\(colorHex ?? "-")|\(style)|-") as NSString
         if let cached = cache.object(forKey: cacheKey) { return cached.rendered }
         let rendered = draw(
             color: colorHex.flatMap(color(hex:)) ?? fallbackColor,

@@ -78,7 +78,7 @@ private struct DemoTabRoot: View {
             style: .classic,
             title: \.title,
             image: { tab, isSelected in
-                DSKitResource.image(isSelected ? "tab_\(tab.rawValue)_fill" : "tab_\(tab.rawValue)")
+                DSKitResource.image("tab_\(tab.rawValue)")
             }
         ) { tab in
             if tab == .map {

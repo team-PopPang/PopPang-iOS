@@ -36,8 +36,9 @@ public enum MainTab: Hashable, CaseIterable, Sendable {
     }
     
     /// 탭바 전용 아이콘(DSKit `Tab/tab_*`). 피그마 "팝팡 리뉴얼 최종" 탭바(2467:10374) 아이콘이다.
-    /// `favorite`·`favorite_fill`은 찜 하트 버튼이 쓰므로 탭바는 따로 둔다.
-    private var rawImageName: String {
+    /// 고른 탭은 탭바가 같은 아이콘을 `PPColor.tabSelected`로 칠하므로 선택용 에셋을 따로 두지 않는다.
+    /// `favorite`·`favorite_fill`은 찜 하트 버튼이 쓰므로 탭바는 이름을 나눈다.
+    var tabImageName: String {
         switch self {
         case .home:
             "tab_home"
@@ -51,10 +52,7 @@ public enum MainTab: Hashable, CaseIterable, Sendable {
             "tab_profile"
         }
     }
-    
-    func tabImageName(selected: Bool) -> String {
-        selected ? "\(rawImageName)_fill" : rawImageName
-    }
+
 }
 
 @Reducer

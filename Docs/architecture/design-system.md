@@ -46,7 +46,7 @@ Figma 같은 디자인 원본이 없다. 그래서 토큰의 역할과 단계는
 | `divider` | `mainGray5` | #EEEEEE | 구분선 |
 | `error` | `mainRed` | #DD0000 | 오류 안내 |
 | `success` | `mainGreen` | #006813 | 성공 안내 |
-| `tabSelected` | (팔레트 없음, `Color(hex:)`) | #A3172B | 탭바에서 고른 탭의 아이콘·글자. 피그마 "팝팡 리뉴얼 최종" 탭바(2467:10374). 탭바 아이콘은 피그마 탭바 아이콘을 담은 `Tab/tab_*` 에셋이고(고르지 않으면 에셋 색 #9A9A9A), 고른 탭은 `tab_*_fill` 모양을 이 색으로 칠한다. 찜 하트가 쓰는 `favorite`·`favorite_fill`과 이름을 나눴다. |
+| `tabSelected` | (팔레트 없음, `Color(hex:)`) | #A3172B | 탭바에서 고른 탭의 아이콘·글자. 피그마 "팝팡 리뉴얼 최종" 탭바(2467:10374). 탭바 아이콘은 피그마 탭바 아이콘을 담은 `Tab/tab_*` 에셋이고(고르지 않으면 에셋 색 #9A9A9A), 고른 탭은 같은 아이콘 모양을 이 색으로 칠한다(선택용 에셋을 따로 두지 않는다). 찜 하트가 쓰는 `favorite`·`favorite_fill`과 이름을 나눴다. |
 
 - `subWhite2`, `bestPostTitle`, `bestPostAddress`는 각각 `mainGray3`, `subWhite`, `mainGray5`와 값이 같다. 그래서 새 값을 따로 정의하지 않고 그 색을 가리킨다.
 - 표에 없는 팔레트 색(`kakao`, `apple` 등)은 해당 구성 요소 안에서만 쓴다.

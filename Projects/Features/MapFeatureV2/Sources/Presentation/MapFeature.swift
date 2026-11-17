@@ -59,15 +59,7 @@ public struct MapFeature {
 
         /// 팝업별 마커 색(`#RRGGBB`). 맞는 카테고리가 없는 팝업은 넣지 않고, 지도는 회색으로 그린다.
         var markerColors: [String: String] {
-            var colors: [String: String] = [:]
-            for popup in popups {
-                colors[popup.popupUuid] = MapMarkerColor.colorHex(
-                    for: popup,
-                    categories: categories,
-                    selectedIds: filter.categoryIds
-                )
-            }
-            return colors
+            MapMarkerColor.colorHexes(for: popups, categories: categories, selectedIds: filter.categoryIds)
         }
 
         var selectedPopup: Popup? {

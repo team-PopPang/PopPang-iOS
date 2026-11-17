@@ -92,11 +92,30 @@ enum MapMarkerColor {
     /// - 카테고리 필터를 걸었으면 팝업의 카테고리 중 고른 카테고리를 먼저 본다. 고른 것과 다른 색이 보이지 않게 하려는 것이다.
     /// - 그 밖에는 팝업의 `recommendList` 순서대로 색이 있는 첫 카테고리의 색이다.
     static func colorHex(for popup: Popup, categories: [MapCategory], selectedIds: Set<Int>) -> String? {
+        colorHex(for: popup, byName: index(categories), selectedIds: selectedIds)
+    }
+
+    /// 팝업별 마커 색. 카테고리 이름표를 한 번만 만들어 모든 팝업에 쓴다. 맞는 카테고리가 없는 팝업은 넣지 않는다.
+    static func colorHexes(for popups: [Popup], categories: [MapCategory], selectedIds: Set<Int>) -> [String: String] {
+        let byName = index(categories)
+        var colors: [String: String] = [:]
+        for popup in popups {
+            colors[popup.popupUuid] = colorHex(for: popup, byName: byName, selectedIds: selectedIds)
+        }
+        return colors
+    }
+
+    /// 카테고리 이름(앞뒤 공백 제거) → 카테고리. 이름이 겹치면 앞의 것을 쓴다.
+    private static func index(_ categories: [MapCategory]) -> [String: MapCategory] {
         var byName: [String: MapCategory] = [:]
         for category in categories {
             let name = category.name.trimmingCharacters(in: .whitespacesAndNewlines)
             if byName[name] == nil { byName[name] = category }
         }
+        return byName
+    }
+
+    private static func colorHex(for popup: Popup, byName: [String: MapCategory], selectedIds: Set<Int>) -> String? {
         let matched = popup.recommendList.compactMap {
             byName[$0.trimmingCharacters(in: .whitespacesAndNewlines)]
         }

@@ -155,6 +155,9 @@ struct MapFeatureTests {
         #expect(withoutLabel.image.size.height < withLabel.image.size.height)
         #expect(withoutLabel.ringCenterY == withLabel.ringCenterY)
         #expect(withoutLabel.image.size.height == withoutLabel.ringCenterY * 2)
+        // 이름표가 없으면 이름이 달라도 같은 그림을 다시 쓴다.
+        let otherName = MapMarkerRenderer.image(colorHex: "#7A8B3C", name: "다른 팝업", style: .normal, showsLabel: false)
+        #expect(otherName.image === withoutLabel.image)
         #expect(NaverMapCoordinator.labelMinZoom == 14)
     }
 

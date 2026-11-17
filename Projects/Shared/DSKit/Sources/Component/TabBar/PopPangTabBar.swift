@@ -123,7 +123,7 @@ public struct PopPangTabBar<Tab: Hashable>: View {
             selection = tab
         } label: {
             // 기존 시스템 탭바처럼 아이콘을 에셋 원래 크기로 그리고, 중심 위치를 고정한다.
-            // 고른 탭은 아이콘 모양만 쓰고 `PPColor.tabSelected`로 칠한다. 고르지 않은 탭은 에셋 원래 색(피그마 #9A9A9A)이다.
+            // 고른 탭은 같은 아이콘의 모양만 쓰고 `PPColor.tabSelected`로 칠한다. 고르지 않은 탭은 에셋 원래 색(피그마 #9A9A9A)이다.
             // 높이가 0인 frame은 내용을 윗변에 중심 맞춰 두므로, offset이 곧 중심의 세로 위치가 된다.
             ZStack(alignment: .top) {
                 image(tab, isSelected)

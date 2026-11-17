@@ -14,8 +14,8 @@ struct TabBarDemoView: View {
             tabs: DemoTab.allCases,
             style: style,
             title: \.title,
-            image: { tab, isSelected in
-                DSKitResource.image(tab.imageName(selected: isSelected))
+            image: { tab, _ in
+                DSKitResource.image(tab.imageName)
             }
         ) { tab in
             Group {
@@ -69,15 +69,15 @@ private enum DemoTab: Hashable, CaseIterable {
         }
     }
 
-    func imageName(selected: Bool) -> String {
-        let name = switch self {
+    /// 고른 탭은 탭바가 같은 아이콘을 칠한다.
+    var imageName: String {
+        switch self {
         case .home: "tab_home"
         case .calendar: "tab_calendar"
         case .map: "tab_map"
         case .favorites: "tab_favorite"
         case .profile: "tab_profile"
         }
-        return selected ? "\(name)_fill" : name
     }
 }
 
