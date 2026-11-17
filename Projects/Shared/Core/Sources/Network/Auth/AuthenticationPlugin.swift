@@ -45,3 +45,32 @@ public struct AuthenticationPlugin: PluginType, Sendable {
         return (target as? BaseAPI)?.resolvedAuthorization ?? .none
     }
 }
+
+/// Access Token으로 보낸 요청이 5002(만료)가 아닌 401을 받은 뒤 할 일.
+///
+/// 앱 요청(`MoyaProvider.asyncRequest(_:)`)과 React Native 토큰 요청(`hostAccessToken(rejected:expired:)`)이 같은 판단을 쓴다.
+enum UnauthorizedAccessTokenOutcome: Equatable {
+    /// 보낸 토큰이 아직 저장돼 있어 지웠거나, 토큰 없이 보냈는데 토큰 쌍이 없다. 로그인 화면으로 보내야 한다.
+    case loginRequired
+    /// 보낸 뒤에 갱신이나 로그인으로 다른 토큰이 저장됐다. 그 토큰으로 한 번 다시 보낸다.
+    case retryWithStoredToken
+    /// 보낸 뒤에 다른 요청이 토큰을 지웠다. 그 요청이 이미 로그인 화면으로 보냈으므로 다시 알리지 않는다.
+    case alreadyLoggedOut
+}
+
+extension AuthenticationPlugin {
+    /// 5002가 아닌 401을 받은 요청의 토큰을 정리하고 다음에 할 일을 정한다.
+    ///
+    /// - Parameter sentAccessToken: 그 요청에 실제로 담았던 Access Token. 토큰 없이 보냈으면 `nil`
+    func handleUnauthorized(sentAccessToken: String?) -> UnauthorizedAccessTokenOutcome {
+        guard let sentAccessToken else {
+            // 토큰 쌍이 없으면 로그아웃 상태다. 보낸 뒤에 로그인으로 쌍이 생겼으면 새 토큰으로 다시 보낸다.
+            return storage.removeIncompleteTokens() ? .loginRequired : .retryWithStoredToken
+        }
+
+        if storage.removeTokens(ifAccessTokenIs: sentAccessToken) {
+            return .loginRequired
+        }
+        return storage.loadTokens() == nil ? .alreadyLoggedOut : .retryWithStoredToken
+    }
+}

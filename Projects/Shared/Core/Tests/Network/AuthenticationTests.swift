@@ -49,15 +49,50 @@ struct AuthenticationTests {
         #expect(await counter.refreshTokens == ["old-refresh"])
     }
 
-    @Test("같은 토큰으로 보낸 요청 여러 개가 5002를 받아도 한 번만 갱신한다")
+    @Test("같은 토큰으로 보낸 요청 여러 개가 동시에 5002를 받아도 한 번만 갱신한다")
     func hostAccessTokenRefreshesOnceForSameExpiredToken() async throws {
         let storage = try makeStorage()
         let counter = CallCounter()
-        let plugin = AuthenticationPlugin(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
+        let refresher = AccessTokenRefresher(storage: storage) { refreshToken in
+            await counter.increment(refreshToken)
+            try await ContinuousClock().sleep(for: .milliseconds(50))
+            return .newTokens
+        }
+        let plugin = AuthenticationPlugin(storage: storage, refresher: refresher)
 
-        #expect(await plugin.hostAccessToken(rejected: "old-access", expired: true) == .accessToken("new-access"))
-        #expect(await plugin.hostAccessToken(rejected: "old-access", expired: true) == .accessToken("new-access"))
-        #expect(await counter.count == 1)
+        let results = await withTaskGroup(of: HostAccessTokenResult.self) { group in
+            for _ in 0..<3 {
+                group.addTask { await plugin.hostAccessToken(rejected: "old-access", expired: true) }
+            }
+            return await group.reduce(into: [HostAccessTokenResult]()) { $0.append($1) }
+        }
+
+        #expect(results == Array(repeating: .accessToken("new-access"), count: 3))
+        #expect(await counter.refreshTokens == ["old-refresh"])
+    }
+
+    @Test("만료가 아닌 401인데 그사이 다른 요청이 이미 로그아웃시켰으면 다시 알리지 않는다")
+    func hostAccessTokenDoesNotNotifyTwiceWhenAlreadyLoggedOut() async throws {
+        let storage = AuthTokenStorage(store: InMemoryStore())
+        let events = AuthSessionEvents()
+        let stream = events.loginRequired()
+        let counter = CallCounter()
+        let plugin = AuthenticationPlugin(
+            storage: storage,
+            refresher: makeRefresher(storage: storage, counter: counter),
+            sessionEvents: events
+        )
+
+        #expect(await plugin.hostAccessToken(rejected: "old-access", expired: false) == .loginRequired)
+
+        let notified = _Concurrency.Task {
+            var iterator = stream.makeAsyncIterator()
+            return await iterator.next() != nil
+        }
+        try await ContinuousClock().sleep(for: .milliseconds(50))
+        notified.cancel()
+        #expect(await notified.value == false)
+        #expect(await counter.count == 0)
     }
 
     @Test("새 토큰으로 보낸 요청이 다시 5002를 받으면 그 토큰으로 다시 갱신한다")
