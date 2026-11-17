@@ -120,6 +120,7 @@ private extension MoyaProvider {
         case .alreadyLoggedOut:
             throw error
         case .retryWithStoredToken:
+            // 다시 보낼 때 plugin이 그때 저장된 토큰을 붙인다.
             return .rejectedWithStaleToken(sentAccessToken: sentAccessToken, error: error)
         }
     }

@@ -26,7 +26,8 @@ private final class AccessTokenHost: PopPangRNHost {
     }
 
     func getAccessToken(_ request: PopPangRN.GetAccessTokenRequest) async throws -> PopPangRN.GetAccessTokenResponse {
-        // RN은 오류 code로 안내 문구를 고른다 (PopPang-RN `HOST_AUTH_ERROR`).
+        // RN은 오류 code로 자기 안내 문구를 고르고 message는 화면에 보이지 않는다 (PopPang-RN `hostAuthErrorMessage`).
+        // message는 로그·디버깅용이라 String Catalog에 넣지 않는다.
         switch await authentication.hostAccessToken(rejected: request.rejectedAccessToken, expired: request.expired) {
         case let .accessToken(accessToken):
             return .init(accessToken: accessToken)

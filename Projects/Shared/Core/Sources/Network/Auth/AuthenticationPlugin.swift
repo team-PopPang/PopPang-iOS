@@ -53,7 +53,8 @@ enum UnauthorizedAccessTokenOutcome: Equatable {
     /// 보낸 토큰이 아직 저장돼 있어 지웠거나, 토큰 없이 보냈는데 토큰 쌍이 없다. 로그인 화면으로 보내야 한다.
     case loginRequired
     /// 보낸 뒤에 갱신이나 로그인으로 다른 토큰이 저장됐다. 그 토큰으로 한 번 다시 보낸다.
-    case retryWithStoredToken
+    /// 토큰 없이 보낸 요청이면 판단 시점에 쌍이 있었다는 뜻이고, 값은 그때 저장된 Access Token이다.
+    case retryWithStoredToken(accessToken: String)
     /// 보낸 뒤에 다른 요청이 토큰을 지웠다. 그 요청이 이미 로그인 화면으로 보냈으므로 다시 알리지 않는다.
     case alreadyLoggedOut
 }
@@ -65,12 +66,15 @@ extension AuthenticationPlugin {
     func handleUnauthorized(sentAccessToken: String?) -> UnauthorizedAccessTokenOutcome {
         guard let sentAccessToken else {
             // 토큰 쌍이 없으면 로그아웃 상태다. 보낸 뒤에 로그인으로 쌍이 생겼으면 새 토큰으로 다시 보낸다.
-            return storage.removeIncompleteTokens() ? .loginRequired : .retryWithStoredToken
+            if storage.removeIncompleteTokens() { return .loginRequired }
+            guard let accessToken = storage.loadTokens()?.accessToken else { return .alreadyLoggedOut }
+            return .retryWithStoredToken(accessToken: accessToken)
         }
 
         if storage.removeTokens(ifAccessTokenIs: sentAccessToken) {
             return .loginRequired
         }
-        return storage.loadTokens() == nil ? .alreadyLoggedOut : .retryWithStoredToken
+        guard let accessToken = storage.loadTokens()?.accessToken else { return .alreadyLoggedOut }
+        return .retryWithStoredToken(accessToken: accessToken)
     }
 }

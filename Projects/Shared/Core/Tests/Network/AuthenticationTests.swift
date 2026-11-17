@@ -88,7 +88,8 @@ struct AuthenticationTests {
         #expect(try await receivesLoginRequired(stream) == false)
     }
 
-    /// 지금까지 로그인 필요 알림이 왔는지 본다. 알림은 stream에 쌓여 있으므로 잠깐 기다린 뒤 취소해 확인한다.
+    /// 지금까지 로그인 필요 알림이 왔는지 본다. `notifyLoginRequired`는 hostAccessToken 안에서 동기로 불리고 stream에 쌓이므로,
+    /// 호출이 끝난 뒤에는 늦게 오는 알림이 없다. 쌓인 값이 있으면 바로 읽히고, 없으면 잠깐 뒤 취소해 `false`가 된다.
     private func receivesLoginRequired(_ stream: AsyncStream<Void>) async throws -> Bool {
         let notified = _Concurrency.Task {
             var iterator = stream.makeAsyncIterator()
@@ -106,7 +107,7 @@ struct AuthenticationTests {
         let counter = CallCounter()
         let plugin = AuthenticationPlugin(storage: storage, refresher: makeRefresher(storage: storage, counter: counter))
 
-        _ = await plugin.hostAccessToken(rejected: "new-access", expired: true)
+        #expect(await plugin.hostAccessToken(rejected: "new-access", expired: true) == .accessToken("new-access"))
         #expect(await counter.refreshTokens == ["new-refresh"])
     }
 

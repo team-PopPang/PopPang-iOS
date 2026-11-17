@@ -57,9 +57,7 @@ private extension AuthenticationPlugin {
         case .alreadyLoggedOut:
             return .loginRequired
 
-        case .retryWithStoredToken:
-            // 판단과 읽기 사이에 다시 로그아웃됐으면, 토큰을 지운 쪽이 이미 알렸다.
-            guard let accessToken = storage.loadTokens()?.accessToken else { return .loginRequired }
+        case let .retryWithStoredToken(accessToken):
             return .accessToken(accessToken)
         }
     }
