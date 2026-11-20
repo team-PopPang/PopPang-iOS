@@ -11,7 +11,7 @@ public enum AuthTokenRefreshAPI {
 
 extension AuthTokenRefreshAPI: BaseAPI {
     public var apiVersion: APIVersion {
-        .v2
+        .mobile
     }
 
     public var path: String {

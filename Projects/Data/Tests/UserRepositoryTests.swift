@@ -11,22 +11,22 @@ struct UserRepositoryTests {
     @Test("내 정보 API 4개는 V2 경로에 사용자 UUID 없이 Access Token을 쓴다")
     func requestsMatchV2Contract() throws {
         let check = try urlRequest(for: .checkNickname(nickname: "팝팡"))
-        #expect(check.url?.path == "/api/v2/user/nickname/duplicated")
+        #expect(check.url?.path == "/api/v2/mobile/user/nickname/duplicated")
         #expect(URLComponents(url: try #require(check.url), resolvingAgainstBaseURL: false)?.queryItems == [URLQueryItem(name: "nickname", value: "팝팡")])
         #expect(check.httpMethod == "GET")
 
         let update = try urlRequest(for: .updateNickname(nickname: "새팝팡"))
-        #expect(update.url?.path == "/api/v2/user")
+        #expect(update.url?.path == "/api/v2/mobile/user")
         #expect(update.httpMethod == "PATCH")
         #expect(try jsonObject(update.httpBody) as? [String: String] == ["nickname": "새팝팡"])
 
         let alert = try urlRequest(for: .alertStatus(isAlerted: false))
-        #expect(alert.url?.path == "/api/v2/user/alert-status")
+        #expect(alert.url?.path == "/api/v2/mobile/user/alert-status")
         #expect(alert.httpMethod == "PATCH")
         #expect(try jsonObject(alert.httpBody) as? [String: Bool] == ["isAlerted": false])
 
         let withdraw = try urlRequest(for: .withdraw)
-        #expect(withdraw.url?.path == "/api/v2/user")
+        #expect(withdraw.url?.path == "/api/v2/mobile/user")
         #expect(withdraw.httpMethod == "DELETE")
         #expect(withdraw.httpBody == nil)
 
@@ -38,7 +38,7 @@ struct UserRepositoryTests {
     func fcmTokenRequestMatchesV2Contract() throws {
         let request = try urlRequest(for: .updateFcmToken(fcmToken: "device-token"))
 
-        #expect(request.url?.path == "/api/v2/user/fcm-token")
+        #expect(request.url?.path == "/api/v2/mobile/user/fcm-token")
         #expect(request.httpMethod == "PUT")
         #expect(try jsonObject(request.httpBody) as? [String: String] == ["fcmToken": "device-token"])
         #expect(V2UserAPI.updateFcmToken(fcmToken: "device-token").resolvedAuthorization == .access)
@@ -135,13 +135,13 @@ extension UserRepositoryTests {
     @Test("알림 키워드 목록·등록·삭제는 V2 경로에 사용자 UUID 없이 Access Token으로 보내고, 등록·삭제는 본문에 keyword만 담는다")
     func alertKeywordRequestsMatchV2Contract() throws {
         let list = try MoyaProvider<V2AlertKeywordAPI>.defaultEndpointMapping(for: .list).urlRequest()
-        #expect(list.url?.path == "/api/v2/alert-keyword")
+        #expect(list.url?.path == "/api/v2/mobile/alert-keyword")
         #expect(list.httpMethod == "GET")
         #expect(list.httpBody == nil)
 
         for (target, method) in [(V2AlertKeywordAPI.add(keyword: "캐릭터"), "POST"), (.remove(keyword: "캐릭터"), "DELETE")] {
             let request = try MoyaProvider<V2AlertKeywordAPI>.defaultEndpointMapping(for: target).urlRequest()
-            #expect(request.url?.path == "/api/v2/alert-keyword")
+            #expect(request.url?.path == "/api/v2/mobile/alert-keyword")
             #expect(request.httpMethod == method)
             #expect(try jsonObject(request.httpBody) as? [String: String] == ["keyword": "캐릭터"])
         }

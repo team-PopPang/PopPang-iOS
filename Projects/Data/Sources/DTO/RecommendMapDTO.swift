@@ -1,7 +1,7 @@
 import Domain
 import Foundation
 
-/// `GET /api/v2/recommend/map`의 항목. 카테고리와 지도 마커 색이다.
+/// `GET /api/v2/mobile/recommend/map`의 항목. 카테고리와 지도 마커 색이다.
 public struct RecommendMapDTO: Decodable, Sendable {
     public let id: Int
     public let recommendName: String

@@ -23,6 +23,33 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 - **성공 응답 형식도 API마다 달라요.** V2라도 `APIResponse`로 감싸지 않는 API가 있어서, 모든 응답에 같은 디코더를 쓰지 않아요.
 - **로그인한 뒤에만 탐색해요.** V2에서는 로그인 전에 쓰던 조회 API에도 Access Token이 필요해요. 로그인 전 화면이 부르는 API는 V2로 바꾸기 전에 따로 확인해요.
 
+## 모바일 전용 경로 (`/api/v2/mobile`)
+
+서버가 iOS·AOS가 쓰는 API를 `/api/v2/mobile/...` 경로로 모으기로 했어요(2026-11-20 공지). 새 앱 버전은 이 경로만 호출해야 해요. 기존 `/api/v2/...` 경로는 구버전 앱을 위해 서버에 당분간 남아요.
+
+| 항목 | 내용 |
+| --- | --- |
+| 기준 | 서버가 공유한 모바일 API 정리본(HTML). 기존 v2 경로(BEFORE)와 앱이 쓸 경로(AFTER) 40건을 짝지어 적었어요. 공개 저장소라 원문은 싣지 않아요. |
+| 경로 규칙 | AFTER는 BEFORE의 `/api/v2` 뒤에 `/mobile`을 붙인 값이에요. method, 요청·응답 형식, 인증 종류는 그대로예요. |
+| 앱 코드 | `APIVersion.mobile`(기본 URL `https://poppang.co.kr/api/v2/mobile`)을 추가했어요. 앱이 쓰는 V2 target의 `apiVersion`을 `.mobile`로 바꾸고, `path`는 그대로 뒀어요. |
+| `.mobile` target | `AuthAPI`, `AuthTokenRefreshAPI`, `V2UserAPI`, `V2PopupAPI`, `V2FavoriteAPI`, `V2AlertAPI`, `V2AlertKeywordAPI`, `MigrationAPI`, `ServerHealthAPI` |
+| 확인 테스트 | `Data/Tests/MobileAPIRouteTests.swift`가 위 target의 모든 요청이 정리본 AFTER 40건 중 하나인지 확인해요. |
+
+이 문서의 아래 표들은 V1→V2 전환 기록이라 경로를 `/api/v2/...`로 적었어요. 실제 호출 경로는 그 값의 `/api/v2` 뒤에 `/mobile`을 붙인 것이에요. 관리자 API는 예외예요.
+
+### 아직 `/api/v2`에 남은 호출
+
+정리본에 없어서 서버에 `/mobile` 경로 추가를 요청했어요. 경로가 정해지면 바꿔요.
+
+| API | 쓰는 곳 |
+| --- | --- |
+| `PATCH /api/v2/admin/popup/{popupUuid}/deactivate` | 팝업 상세의 관리자 비활성화 (`V2AdminAPI`) |
+| `GET /api/v2/admin/popup-submissions` | RN 제보 관리 화면의 목록 (PopPang-RN) |
+| `GET /api/v2/admin/popup-submissions/{id}` | RN 제보 관리 화면의 상세 (PopPang-RN) |
+| `PUT /api/v2/admin/popup-submissions/{id}` | RN 제보 관리 화면의 승인·반려 (PopPang-RN) |
+
+PopPang-RN(1.4.0)은 제보 등록 `POST /api/v2/popup-submissions`와 카테고리 조회 `GET /api/v2/recommend`도 기존 경로로 불러요. 이 두 경로는 정리본에 `/mobile` 경로가 있어서 PopPang-RN 저장소에서 바꾼 뒤 iOS의 패키지 버전을 올려야 해요. v1 `PopupAPI`는 앱에 연결되지 않은 `MapFeatureV1`·`CalendarFeature`(V1)만 써서, 출시 앱은 호출하지 않아요.
+
 ## 단계
 
 | 단계 | 내용 | 명세 묶음 | 화면 동작 변경 | 상태 |
@@ -44,8 +71,8 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 
 | 구성 요소 | 위치 | 역할 |
 | --- | --- | --- |
-| `APIVersion`, `APIAuthorization` | `Core/Sources/Network/BaseAPI.swift` | API target마다 버전(`v1`·`v2`)과 인증 종류(`none`·`access`·`signup`)를 정해요. 기본값은 `v1`, `none`이라 기존 target은 그대로예요. V1 target에는 인증 종류를 정해도 헤더를 붙이지 않아요(`resolvedAuthorization`). |
-| `NetworkConfig.apiBaseURL(for:)` | `Core/Sources/Network/NetworkConfig.swift` | 버전마다 기본 URL을 만들어요. `https://poppang.co.kr/api/v1`, `https://poppang.co.kr/api/v2` |
+| `APIVersion`, `APIAuthorization` | `Core/Sources/Network/BaseAPI.swift` | API target마다 버전(`v1`·`v2`·`mobile`)과 인증 종류(`none`·`access`·`signup`)를 정해요. 기본값은 `v1`, `none`이라 기존 target은 그대로예요. V1 target에는 인증 종류를 정해도 헤더를 붙이지 않아요(`resolvedAuthorization`). |
+| `NetworkConfig.apiBaseURL(for:)` | `Core/Sources/Network/NetworkConfig.swift` | 버전마다 기본 URL을 만들어요. `https://poppang.co.kr/api/v1`, `https://poppang.co.kr/api/v2`, `https://poppang.co.kr/api/v2/mobile` |
 | `APIResponse<T>`, `ErrorResponse` | `Core/Sources/Network/APIResponse.swift` | V2 성공 응답 래퍼와 V1·V2 공통 실패 응답 형식 |
 | `asyncRequest(_:decodeDataTo:)` | `Core/Sources/Network/MoyaProvider+Async.swift` | `APIResponse`로 감싼 API만 이 함수로 요청하고 `data`를 돌려받아요. |
 | `NetworkError.statusCode`, `serverErrorCode`, `isExpiredToken` | `Core/Sources/Network/NetworkError.swift` | 실패 본문에서 서버 에러 코드를 읽어요. 5xx 기본 오류 본문처럼 형식이 다르면 `serverErrorCode`는 `nil`이고, HTTP 상태로 처리해요. |
@@ -82,12 +109,12 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 
 ### V2 target 만들기
 
-V2로 옮기는 target은 버전과 인증 종류를 정하고, 경로는 명세의 V2 경로에서 `/api/v2`를 뺀 값을 써요.
+V2로 옮기는 target은 버전과 인증 종류를 정하고, 경로는 명세의 V2 경로에서 `/api/v2`를 뺀 값을 써요. 앱이 쓰는 API는 버전을 `.mobile`로 정해서 [모바일 전용 경로](#모바일-전용-경로-apiv2mobile)로 불러요.
 
 ```swift
 extension V2UserAPI: BaseAPI {
     public var apiVersion: APIVersion {
-        .v2
+        .mobile
     }
 
     public var authorization: APIAuthorization {

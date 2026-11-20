@@ -11,10 +11,10 @@ struct AlertRepositoryTests {
         let list = try MoyaProvider<V2AlertAPI>.defaultEndpointMapping(for: .popups).urlRequest()
         let remove = try MoyaProvider<V2AlertAPI>.defaultEndpointMapping(for: .remove(popupUuid: "popup-1")).urlRequest()
 
-        #expect(list.url?.path == "/api/v2/user/alert/popups")
+        #expect(list.url?.path == "/api/v2/mobile/user/alert/popups")
         #expect(list.httpMethod == "GET")
         #expect(list.httpBody == nil)
-        #expect(remove.url?.path == "/api/v2/user/alert")
+        #expect(remove.url?.path == "/api/v2/mobile/user/alert")
         #expect(remove.httpMethod == "DELETE")
         let body = try JSONSerialization.jsonObject(with: try #require(remove.httpBody)) as? [String: String]
         #expect(body == ["popupUuid": "popup-1"])

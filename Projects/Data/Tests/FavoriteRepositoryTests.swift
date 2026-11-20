@@ -12,12 +12,12 @@ struct FavoriteRepositoryTests {
         let add = try MoyaProvider<V2FavoriteAPI>.defaultEndpointMapping(for: .add(popupUuid: "popup-1")).urlRequest()
         let remove = try MoyaProvider<V2FavoriteAPI>.defaultEndpointMapping(for: .remove(popupUuid: "popup-1")).urlRequest()
 
-        #expect(list.url?.path == "/api/v2/favorite/popup")
+        #expect(list.url?.path == "/api/v2/mobile/favorite/popup")
         #expect(list.httpMethod == "GET")
         #expect(list.httpBody == nil)
-        #expect(add.url?.path == "/api/v2/favorite")
+        #expect(add.url?.path == "/api/v2/mobile/favorite")
         #expect(add.httpMethod == "POST")
-        #expect(remove.url?.path == "/api/v2/favorite")
+        #expect(remove.url?.path == "/api/v2/mobile/favorite")
         #expect(remove.httpMethod == "DELETE")
         for target in [V2FavoriteAPI.list, .add(popupUuid: "popup-1"), .remove(popupUuid: "popup-1")] {
             #expect(target.resolvedAuthorization == .access)

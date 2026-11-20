@@ -2,7 +2,7 @@ import Core
 import Domain
 import Foundation
 
-/// 팝업 단건 조회(`GET /api/v2/user/popups/{popupUuid}`) 응답
+/// 팝업 단건 조회(`GET /api/v2/mobile/user/popups/{popupUuid}`) 응답
 ///
 /// 지금은 목록의 `PopupDTO`와 같은 키에 `isFavorited`가 있다. 상세 전용 값이 생기면 여기에 더한다.
 /// null일 수 있는 값은 `PopupDTO`와 같은 기준으로 바꾼다.

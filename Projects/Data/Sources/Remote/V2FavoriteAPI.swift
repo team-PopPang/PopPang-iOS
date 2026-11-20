@@ -6,17 +6,17 @@ import Moya
 ///
 /// Access Token의 사용자로 처리하므로 경로·본문에 `userUuid`를 넣지 않는다.
 public enum V2FavoriteAPI {
-    /// `GET /api/v2/favorite/popup` (FAV-04). 성공 응답은 `APIResponse`로 감싼 팝업 배열이다.
+    /// `GET /api/v2/mobile/favorite/popup` (FAV-04). 성공 응답은 `APIResponse`로 감싼 팝업 배열이다.
     case list
-    /// `POST /api/v2/favorite` (FAV-01). 성공 응답은 본문이 없다.
+    /// `POST /api/v2/mobile/favorite` (FAV-01). 성공 응답은 본문이 없다.
     case add(popupUuid: String)
-    /// `DELETE /api/v2/favorite` (FAV-02). 서버가 DELETE에도 JSON 본문을 요구한다. 성공 응답은 본문이 없다.
+    /// `DELETE /api/v2/mobile/favorite` (FAV-02). 서버가 DELETE에도 JSON 본문을 요구한다. 성공 응답은 본문이 없다.
     case remove(popupUuid: String)
 }
 
 extension V2FavoriteAPI: BaseAPI {
     public var apiVersion: APIVersion {
-        .v2
+        .mobile
     }
 
     public var authorization: APIAuthorization {

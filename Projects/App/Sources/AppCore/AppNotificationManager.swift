@@ -129,7 +129,7 @@ final class AppNotificationManager: NSObject, UNUserNotificationCenterDelegate, 
         Logger.e("❌ APNs 등록 실패: \(error.localizedDescription)")
     }
 
-    /// 로그인한 사용자의 푸시 토큰을 서버에 저장한다(V2 `PUT /api/v2/user/fcm-token`).
+    /// 로그인한 사용자의 푸시 토큰을 서버에 저장한다(V2 `PUT /api/v2/mobile/user/fcm-token`).
     /// 서버는 받은 값을 저장만 하므로 V1처럼 중복 확인을 먼저 하지 않는다(V2에는 확인 API가 없다).
     /// 같은 토큰을 다시 보내도 결과가 같아 따로 막지 않는다. 막으면 같은 실행에서 다른 계정으로 로그인했을 때 그 계정의 토큰이 가지 않는다.
     ///

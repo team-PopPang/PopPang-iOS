@@ -5,6 +5,8 @@ import Moya
 public enum APIVersion: String, Sendable {
     case v1
     case v2
+    /// iOS·AOS 전용 경로(`/api/v2/mobile`). 앱이 쓰는 V2 API는 이 경로로 호출한다.
+    case mobile = "v2/mobile"
 }
 
 /// 요청에 붙일 `Authorization` 헤더 종류.
