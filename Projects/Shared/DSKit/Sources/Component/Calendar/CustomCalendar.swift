@@ -168,6 +168,8 @@ private extension CustomCalendar {
         currentMonth += value
         currentDate = getCurrentMonth()
         extractDate()
+        // 달을 넘기면 선택 날짜가 오늘 기준 같은 날로 바뀐다. 화면의 목록도 같은 날짜로 맞추도록 알린다.
+        onDateSelected(currentDate)
     }
 }
 
