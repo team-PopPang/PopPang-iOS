@@ -29,6 +29,15 @@ public struct MapFeatureView: View {
     @State private var windowSafeAreaInsets: UIEdgeInsets?
     /// 검색창·칩 아래 끝(화면 좌표). 시트를 끝까지 올렸을 때 목록이 이 아래에서 시작한다.
     @State private var topControlsMaxY: CGFloat = 0
+    /// 아래 떠 있는 버튼·미리보기 카드의 위쪽 끝(화면 좌표). 시트가 없을 때 지도를 가리는 높이를 잰다.
+    @State private var bottomControlsMinY: CGFloat = 0
+    /// 화면 아래 끝(화면 좌표).
+    @State private var screenBottomY: CGFloat = 0
+    /// 탭바 높이(아래 safe area 포함). 시트를 끝까지 내렸을 때 지도를 가리는 높이를 바로 계산하는 데 쓴다.
+    @State private var bottomBarHeightValue: CGFloat = 0
+    /// 미리보기 카드가 떠 있을 때 지도를 가리는 높이. 한 번 재면 다음에 고를 때 미리 쓴다.
+    @State private var cardBottomInset: CGFloat?
+    @State private var cardInsetWork: DispatchWorkItem?
 
     public init(store: StoreOf<MapFeature>) {
         self.store = store
@@ -74,6 +83,7 @@ public struct MapFeatureView: View {
                 .ppBottomSheetStyle()
                 .onBottomSheetGeometryChange { geometry in
                     sheetPosition.geometry = geometry
+                    updateMapVisibleInsets()
                 }
                 // 검색창·칩과 아래 버튼·미리보기 카드는 시트보다 위에 그린다. 시트를 끝까지 올려도 가려지지 않는다.
                 .overlay(alignment: .top) {
@@ -82,9 +92,25 @@ public struct MapFeatureView: View {
                 }
                 .overlay(alignment: .bottom) {
                     bottomControls
+                        .onGeometryChange(for: CGFloat.self) { proxy in
+                            proxy.frame(in: .global).minY
+                        } action: { minY in
+                            if abs(bottomControlsMinY - minY) > 0.5 { bottomControlsMinY = minY }
+                        }
                         .padding(.bottom, bottomBarHeight + Self.floatingPillBottom)
                         .animation(.easeInOut(duration: 0.2), value: store.selectedPopupUuid)
                 }
+                .onGeometryChange(for: CGFloat.self) { mapProxy in
+                    mapProxy.frame(in: .global).maxY
+                } action: { maxY in
+                    screenBottomY = maxY
+                }
+                .onAppear { bottomBarHeightValue = bottomBarHeight }
+                .onChange(of: bottomBarHeight) { _, height in bottomBarHeightValue = height }
+                .onChange(of: listDetent) { _, _ in updateMapVisibleInsets() }
+                .onChange(of: store.selectedPopupUuid) { _, _ in updateMapVisibleInsets() }
+                .onChange(of: bottomControlsMinY) { _, _ in updateMapVisibleInsets() }
+                .onChange(of: topControlsMaxY) { _, _ in updateMapVisibleInsets() }
                 .overlayPreferenceValue(MapMenuAnchorKey.self) { anchors in
                     dropdownLayer(anchors: anchors)
                 }
@@ -270,9 +296,24 @@ private extension MapFeatureView {
 
     /// 목록에서 팝업을 누르면 상세로 가지 않고 지도에서 그 팝업을 골라 미리보기 카드를 띄운다.
     func selectFromList(_ popup: Popup) {
-        NaverMapCoordinator.shared.moveCamera(to: popup)
+        // 목록에서 고르면 예전처럼 줌 15로 그 팝업을 보여 준다.
+        selectOnMap(popup, zoomLevel: 15)
+    }
+
+    /// 팝업을 고르면 미리보기 카드가 뜬다. 카드에 가리는 높이를 먼저 반영해 지도가 한 번에 그 팝업으로 간다.
+    /// - Parameter zoomLevel: `nil`이면 지금 줌을 그대로 둔다. 지도에서 마커를 누를 때는 사용자가 맞춰 둔 줌을 바꾸지 않는다.
+    func selectOnMap(_ popup: Popup, zoomLevel: Double? = nil) {
+        NaverMapCoordinator.shared.moveCamera(
+            to: popup,
+            topInset: topControlsMaxY > 0 ? topControlsMaxY : nil,
+            bottomInset: cardBottomInset ?? Self.estimatedCardInset,
+            zoomLevel: zoomLevel
+        )
         store.send(.mapMarkerTapped(popup))
     }
+
+    /// 카드 높이를 아직 재지 못했을 때 쓰는 값. 카드·"목록 보기"·탭바를 합친 대략의 높이다.
+    static let estimatedCardInset: CGFloat = 315
 
     /// 미리보기 카드의 "목록 보기"는 끝까지(③), 시트를 내렸을 때의 "목록 보기"는 절반(①)으로 올린다.
     func showList(_ detent: BottomSheetDetent) {
@@ -286,7 +327,62 @@ private extension MapFeatureView {
     }
 
     func moveToUserLocation() {
-        NaverMapCoordinator.shared.moveToUserLocation(yOffset: listDetent == nil ? 0 : -300)
+        NaverMapCoordinator.shared.moveToUserLocation()
+    }
+
+    /// 지도에서 실제로 보이는 영역(검색창·칩 아래 ~ 시트나 미리보기 카드 위)을 지도에 알린다.
+    /// 카메라 중심이 그 영역의 가운데에 오므로, 고른 팝업과 내 위치가 시트나 카드에 가리지 않는다.
+    /// 목록을 끝까지 펼친 동안(`.large`)은 지도가 가려져 있으므로 마지막 값을 그대로 둔다.
+    func updateMapVisibleInsets() {
+        guard screenBottomY > 0, topControlsMaxY > 0 else { return }
+        if store.selectedPopup != nil {
+            // 카드는 고를 때 미리 반영했다. 카드가 올라오는 애니메이션 동안의 중간 값은 쓰지 않도록 멈춘 뒤 실제 높이를 맞추고 기억한다.
+            // 실제 카드 높이가 고를 때 쓴 값과 다르면(처음 고를 때, 글자 크기가 클 때) 그 높이로 고른 팝업을 다시 가운데에 둔다.
+            guard bottomControlsMinY > 0 else { return }
+            let inset = screenBottomY - bottomControlsMinY
+            let usedInset = cardBottomInset ?? Self.estimatedCardInset
+            let top = topControlsMaxY
+            cardInsetWork?.cancel()
+            let work = DispatchWorkItem {
+                guard let popup = store.selectedPopup else { return }
+                cardBottomInset = inset
+                guard abs(inset - usedInset) > 1 else { return }
+                if NaverMapCoordinator.shared.userMovedSinceProgrammaticMove {
+                    // 그사이 사용자가 지도를 직접 움직였으면 되돌리지 않고 여백만 맞춘다.
+                    NaverMapCoordinator.shared.setVisibleInsets(top: top, bottom: inset, recenter: false)
+                } else {
+                    NaverMapCoordinator.shared.moveCamera(to: popup, topInset: top, bottomInset: inset, zoomLevel: nil)
+                }
+            }
+            cardInsetWork = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
+        } else if listDetent == nil {
+            cardInsetWork?.cancel()
+            // 시트를 끝까지 내리면 "목록 보기" 버튼만 남는다. 버튼 위치는 고정이라(탭바 위 12pt, 높이 38pt)
+            // 버튼이 나타나길 기다리지 않고 손을 떼는 순간 바로 반영한다.
+            guard bottomBarHeightValue > 0 else { return }
+            let inset = bottomBarHeightValue + Self.floatingPillBottom + MapFloatingPill.height
+            NaverMapCoordinator.shared.setVisibleInsets(top: topControlsMaxY, bottom: inset)
+        } else if listDetent == .large {
+            // 끝까지 펼친 동안은 지도가 가려져 있다. 지도는 움직이지 않고 절반 높이 여백만 맞춰 두어,
+            // 카드 여백이 남은 채로 "지도 보기"를 누르는 일이 없게 한다.
+            cardInsetWork?.cancel()
+            NaverMapCoordinator.shared.setVisibleInsets(top: topControlsMaxY, bottom: mediumSheetHeight, recenter: false)
+        } else if listDetent == .medium {
+            cardInsetWork?.cancel()
+            let height = mediumSheetHeight
+            // 시트는 손을 떼는 순간 멈출 높이를 정하고 `listDetent`를 바꾼다.
+            // 다 내려오길 기다리지 않고 그 높이를 바로 반영해, 시트와 지도가 같이 움직이게 한다.
+            NaverMapCoordinator.shared.setVisibleInsets(top: topControlsMaxY, bottom: height)
+        }
+    }
+
+    /// 목록을 절반(`.medium`)에 놓았을 때의 시트 높이. SheetKit은 절반을 시트를 붙인 화면 높이의 0.5로 정하고,
+    /// 이 화면은 위 여백을 두지 않아(`bottomSheetTopInset(0)`) 끝까지 올린 높이(`maxHeight`)가 곧 화면 높이다.
+    /// 시트 높이를 아직 받지 못했으면 화면 높이로 계산한다(시트를 붙인 지도가 화면 전체라서 같다).
+    var mediumSheetHeight: CGFloat {
+        let maxHeight = sheetPosition.geometry?.maxHeight ?? 0
+        return (maxHeight > 0 ? maxHeight : screenBottomY) * 0.5
     }
 
     /// 지도 아래쪽을 가리는 탭바 높이. 기존 지도 화면과 같은 계산이다.
@@ -309,14 +405,14 @@ private extension MapFeatureView {
 
     func configureCallbacks() {
         NaverMapCoordinator.shared.onMarkerSelected = { popup in
-            store.send(.mapMarkerTapped(popup))
+            selectOnMap(popup)
         }
         NaverMapCoordinator.shared.onMapTapped = {
             openMenu = nil
             if store.selectedPopupUuid != nil { closePreview() }
         }
-        NaverMapCoordinator.shared.onCenterChanged = { coordinate in
-            store.send(.mapCenterChanged(coordinate))
+        NaverMapCoordinator.shared.onCenterChanged = { coordinate, byGesture in
+            store.send(.mapCenterChanged(coordinate, byGesture: byGesture))
         }
 
         LocationPermissionManager.shared.onPermissionDenied = {
@@ -383,7 +479,7 @@ private struct MapListSheet: View {
                 .padding(.horizontal, 24)
         } else if store.popups.isEmpty {
             Group {
-                if store.appliedKeyword == nil {
+                if store.resultKeyword == nil {
                     Text("이 지역에 팝업이 없어요.", bundle: .module)
                 } else {
                     Text("검색 결과가 없어요.", bundle: .module)

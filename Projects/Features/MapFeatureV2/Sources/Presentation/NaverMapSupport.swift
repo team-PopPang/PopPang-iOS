@@ -42,11 +42,25 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
     /// 지금 팝업 마커로 그려진 마커. 클러스터러가 마커 객체를 다시 쓰므로 마커 객체 기준으로 들고 있는다.
     private var markers: [ObjectIdentifier: (marker: NMFMarker, key: ItemKey)] = [:]
     private var leafUpdater: LeafMarkerUpdater?
+    /// 보이는 영역 여백을 한 번이라도 반영했는지.
+    private var hasAppliedInsets = false
+    /// 마지막 멈춤 이후 보이는 영역 맞추기(콘텐츠 패딩)가 아닌 이동(손 제스처, 내 위치, 팝업 선택)이 있었는지.
+    /// 멈췄을 때 이 값이 참일 때만 지도 중심 변경을 알린다. 마지막 원인 하나만 보면 패딩 이동이 앞선 제스처를 덮어쓴다.
+    private var hasMeaningfulChangeSinceIdle = false
+    /// 진행 중인 코드 이동(내 위치, 팝업 선택)의 도착점. 그사이 보이는 영역이 바뀌면 중간 위치가 아니라 이 도착점을 가운데로 둔다.
+    private var pendingMoveTarget: NMGLatLng?
+    /// 진행 중인 코드 이동의 도착 줌. 그사이 보이는 영역이 바뀌어도 이 줌까지 간다.
+    private var pendingMoveZoom: Double?
+    /// 마지막 멈춤 이후 손 제스처가 있었는지.
+    private var hasGestureSinceIdle = false
+    /// 마지막 코드 이동 이후 사용자가 손으로 지도를 움직였는지.
+    private(set) var userMovedSinceProgrammaticMove = false
     private var clusterUpdater: ClusterMarkerUpdater?
 
     var onMarkerSelected: ((Popup) -> Void)?
     var onMapTapped: (() -> Void)?
-    var onCenterChanged: ((MapCoordinate) -> Void)?
+    /// 지도가 멈췄을 때 중심과, 그사이 사용자가 손으로 움직였는지를 알린다.
+    var onCenterChanged: ((MapCoordinate, _ byGesture: Bool) -> Void)?
 
     override init() {
         super.init()
@@ -54,7 +68,7 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             self.makeClusterer()
-            self.moveToUserLocation(yOffset: -300)
+            self.moveToUserLocation()
         }
     }
 
@@ -62,15 +76,22 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
         view
     }
 
-    func moveToUserLocation(zoomLevel: Double = 15, yOffset: CGFloat = 0) {
+    func moveToUserLocation(zoomLevel: Double = 15) {
         enableUserTracking()
-        view.mapView.contentInset = yOffset == 0 ? .zero : UIEdgeInsets(top: yOffset, left: 0, bottom: 0, right: 0)
 
         let coord = view.mapView.locationOverlay.location
         let cameraPosition = NMFCameraPosition(coord, zoom: zoomLevel, tilt: 0, heading: 0)
         let cameraUpdate = NMFCameraUpdate(position: cameraPosition)
-        cameraUpdate.animation = .easeIn
+        Self.applyMoveAnimation(to: cameraUpdate)
+        startProgrammaticMove(to: coord, zoom: zoomLevel)
         view.mapView.moveCamera(cameraUpdate)
+    }
+
+    /// 코드로 카메라를 옮기기 시작할 때 부른다. 도착점을 기억하고, 손 이동 표시를 지운다.
+    private func startProgrammaticMove(to target: NMGLatLng, zoom: Double) {
+        pendingMoveTarget = target
+        pendingMoveZoom = zoom
+        userMovedSinceProgrammaticMove = false
     }
 
     func moveToUserLocation(to coordinate: CLLocationCoordinate2D, zoomLevel: Double = 15) {
@@ -80,7 +101,8 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
 
         let cameraPosition = NMFCameraPosition(coord, zoom: zoomLevel, tilt: 0, heading: 0)
         let cameraUpdate = NMFCameraUpdate(position: cameraPosition)
-        cameraUpdate.animation = .easeIn
+        Self.applyMoveAnimation(to: cameraUpdate)
+        startProgrammaticMove(to: coord, zoom: zoomLevel)
         view.mapView.moveCamera(cameraUpdate)
     }
 
@@ -123,18 +145,89 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
         }
     }
 
-    func moveCamera(to popup: Popup, zoomLevel: Double = 15, yOffset: CGFloat = 0) {
+    /// 팝업 위치로 옮긴다. `bottomInset`을 주면 도착했을 때 지도를 가릴 높이(미리보기 카드 등)를 먼저 반영해,
+    /// 옮긴 뒤에 다시 움직이지 않고 한 번에 보이는 영역 가운데로 간다.
+    /// - Parameter zoomLevel: 옮긴 뒤의 줌. `nil`이면 지금 줌을 그대로 둔다(지도에서 마커를 누를 때).
+    func moveCamera(to popup: Popup, topInset: CGFloat? = nil, bottomInset: CGFloat? = nil, zoomLevel: Double? = 15) {
         guard let lat = popup.latitude, let lng = popup.longitude else { return }
         disableUserTracking()
+        if topInset != nil || bottomInset != nil {
+            var insets = view.mapView.contentInset
+            if let topInset { insets.top = max(0, topInset) }
+            if let bottomInset { insets.bottom = max(0, bottomInset) }
+            // 화면에 보이는 지도는 그대로 두고 여백만 바꾼다(카메라 좌표만 새 영역 가운데로 옮겨지고 화면은 튀지 않는다).
+            // 이어지는 팝업 이동이 한 번의 애니메이션으로 보이는 영역 가운데에 도착한다.
+            view.mapView.setContentInset(insets, reason: Int32(NMFMapChangedByContentPadding))
+            hasAppliedInsets = true
+        }
 
-        view.mapView.contentInset = yOffset == 0 ? .zero : UIEdgeInsets(top: yOffset, left: 0, bottom: 0, right: 0)
-
-        let update = NMFCameraUpdate(scrollTo: NMGLatLng(lat: lat, lng: lng), zoomTo: zoomLevel)
-        update.animation = .easeIn
+        let target = NMGLatLng(lat: lat, lng: lng)
+        let zoom = zoomLevel ?? view.mapView.zoomLevel
+        let update = NMFCameraUpdate(scrollTo: target, zoomTo: zoom)
+        Self.applyMoveAnimation(to: update)
+        startProgrammaticMove(to: target, zoom: zoom)
         view.mapView.moveCamera(update)
     }
 
+    /// 지도를 움직이는 애니메이션. 내 위치·팝업 위치로 옮길 때와 시트·카드에 맞춰 가운데를 옮길 때 모두 같은 움직임을 쓴다.
+    /// 시트를 내린 상태에서 "목록 보기"를 눌렀을 때의 움직임(짧게 감속, 0.25초)에 맞췄다.
+    static func applyMoveAnimation(to update: NMFCameraUpdate) {
+        update.animation = .easeOut
+        update.animationDuration = 0.25
+    }
+
+    /// 지도에서 검색창·칩(위)과 시트·미리보기 카드(아래)에 가리지 않고 보이는 영역을 정한다.
+    /// 카메라 중심(마커를 고르거나 내 위치로 옮길 때의 기준점)이 이 영역의 가운데에 오도록 지도 여백(`contentInset`)으로 둔다.
+    /// - Parameter recenter: 보고 있던 중심을 새 영역의 가운데로 옮길지. `false`면 카메라 좌표를 두고 여백만 바꾼다(지도가 가려진 동안 쓴다).
+    func setVisibleInsets(top: CGFloat, bottom: CGFloat, recenter: Bool = true) {
+        let insets = UIEdgeInsets(top: max(0, top), left: 0, bottom: max(0, bottom), right: 0)
+        let mapView = view.mapView
+        let current = mapView.contentInset
+        guard abs(current.top - insets.top) > 1 || abs(current.bottom - insets.bottom) > 1 else { return }
+        defer { hasAppliedInsets = true }
+        guard recenter else {
+            // 카메라 좌표는 그대로 두고 보이는 영역만 바꾼다. 카메라 이벤트가 오지 않는다.
+            mapView.setContentInset(insets, keepCamera: true)
+            return
+        }
+        // 코드 이동(내 위치, 팝업 선택)이 진행 중이면 중간 위치가 아니라 그 도착점을 새 영역 가운데로 둔다.
+        // 이때는 원래 이동의 원인을 이어받아, 멈췄을 때 그 위치를 지도 중심 변경으로 알린다.
+        let pendingTarget = pendingMoveTarget
+        let target = pendingTarget ?? mapView.cameraPosition.target
+        // 여백만 바꾸면 카메라 좌표가 새 영역의 가운데로 옮겨지고(원인: 콘텐츠 패딩), 이어서 보던 중심으로 되돌린다.
+        mapView.setContentInset(insets, reason: Int32(NMFMapChangedByContentPadding))
+        // 진행 중이던 이동이 있으면 그 줌까지 함께 이어 간다(중간 줌에서 멈추지 않게).
+        let update = if let pendingTarget, let zoom = pendingMoveZoom {
+            NMFCameraUpdate(scrollTo: pendingTarget, zoomTo: zoom)
+        } else {
+            NMFCameraUpdate(scrollTo: target)
+        }
+        update.reason = Int32(pendingTarget == nil ? NMFMapChangedByContentPadding : NMFMapChangedByDeveloper)
+        // 처음 한 번은 화면을 그리는 중이라 움직임 없이 바로 맞춘다.
+        if hasAppliedInsets {
+            Self.applyMoveAnimation(to: update)
+        }
+        mapView.moveCamera(update)
+    }
+
+    func mapView(_ mapView: NMFMapView, cameraDidChangeByReason reason: Int, animated: Bool) {
+        noteCameraChange(reason: reason)
+    }
+
+    private func noteCameraChange(reason: Int) {
+        guard reason != NMFMapChangedByContentPadding else { return }
+        hasMeaningfulChangeSinceIdle = true
+        if reason == NMFMapChangedByGesture {
+            userMovedSinceProgrammaticMove = true
+            hasGestureSinceIdle = true
+            // 손으로 움직이면 진행 중이던 코드 이동은 끝난 것으로 본다.
+            pendingMoveTarget = nil
+            pendingMoveZoom = nil
+        }
+    }
+
     func mapView(_ mapView: NMFMapView, cameraIsChangingByReason reason: Int) {
+        noteCameraChange(reason: reason)
         updateLabelVisibility(zoomLevel: mapView.zoomLevel)
     }
 
@@ -150,9 +243,18 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
 
     func mapViewCameraIdle(_ mapView: NMFMapView) {
         updateLabelVisibility(zoomLevel: mapView.zoomLevel)
+        // 멈춤 사이에 보이는 영역 맞추기(콘텐츠 패딩)만 있었으면 사용자가 지도를 옮긴 것이 아니므로 알리지 않는다.
+        // 손 제스처, 내 위치, 팝업 선택이 한 번이라도 있었으면 알린다.
+        let shouldNotify = hasMeaningfulChangeSinceIdle
+        let byGesture = hasGestureSinceIdle
+        hasMeaningfulChangeSinceIdle = false
+        hasGestureSinceIdle = false
+        pendingMoveTarget = nil
+        pendingMoveZoom = nil
+        guard shouldNotify else { return }
         let center = mapView.cameraPosition.target
         DispatchQueue.main.async {
-            self.onCenterChanged?(MapCoordinate(latitude: center.lat, longitude: center.lng))
+            self.onCenterChanged?(MapCoordinate(latitude: center.lat, longitude: center.lng), byGesture)
         }
     }
 
@@ -176,7 +278,7 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
         view.mapView.logoMargin = UIEdgeInsets(top: 0, left: 0, bottom: 20, right: 20)
 
         let cameraUpdate = NMFCameraUpdate(scrollTo: NMGLatLng(lat: 37.5665, lng: 126.9780))
-        cameraUpdate.animation = .easeIn
+        Self.applyMoveAnimation(to: cameraUpdate)
         view.mapView.moveCamera(cameraUpdate)
     }
 

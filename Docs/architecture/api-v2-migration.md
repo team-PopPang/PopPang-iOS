@@ -1,0 +1,449 @@
+# V2 API 마이그레이션
+
+이 문서는 앱이 호출하는 서버 API를 V1에서 V2로 옮기는 계획이에요. 어떤 순서로 옮기는지, 단계마다 앱 코드의 무엇을 바꾸는지, 아직 정하지 못한 것이 무엇인지 적어요.
+
+## 원본 명세
+
+API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 명세를 봐요.
+
+| 항목 | 값 |
+| --- | --- |
+| 명세 | PopPang 앱 API V1 → V2 마이그레이션 명세 (HTML 9개, 2026-10-15 생성) |
+| 기준 서버 코드 | PopPang-BE-Prod `origin/main` `cc55e51` |
+| 대상 | 앱이 호출하는 API 57개 (V2 대응 55개, V2가 없는 V1 API 2개) |
+| 공개 범위 | 내부용이에요. 이 저장소는 공개 저장소라서 명세 원문과 API 전체 표는 싣지 않아요. 명세가 필요하면 팀에 요청해요. |
+
+명세에 없거나 명세가 `확인 필요`로 남긴 내용은 추측해서 구현하지 않아요. 이 문서의 [정해야 할 것](#정해야-할-것)에 올리고 정한 뒤에 진행해요.
+
+## 기본 원칙
+
+- **V1과 V2를 함께 써요.** V1은 앱 전환이 끝날 때까지 서버에서 그대로 동작해요. 묶음 하나씩 옮기는 동안 V1 호출과 V2 호출이 앱 안에 같이 있어도 돼요.
+- **V2 경로는 명세의 값을 그대로 써요.** `/api/v1`을 `/api/v2`로 기계적으로 바꾸지 않아요. 사용자 종속 API는 경로의 `{userUuid}`가 빠지고, method가 바뀌는 API도 있어요.
+- **인증 헤더는 API마다 정해요.** V1 요청에는 `Authorization` 헤더를 보내지 않아요. V2는 API에 따라 헤더 없음, `Bearer {accessToken}`, `Bearer {signupToken}` 가운데 하나예요.
+- **성공 응답 형식도 API마다 달라요.** V2라도 `APIResponse`로 감싸지 않는 API가 있어서, 모든 응답에 같은 디코더를 쓰지 않아요.
+- **로그인한 뒤에만 탐색해요.** V2에서는 로그인 전에 쓰던 조회 API에도 Access Token이 필요해요. 로그인 전 화면이 부르는 API는 V2로 바꾸기 전에 따로 확인해요.
+
+## 모바일 전용 경로 (`/api/v2/mobile`)
+
+서버가 iOS·AOS가 쓰는 API를 `/api/v2/mobile/...` 경로로 모으기로 했어요(2026-11-20 공지). 새 앱 버전은 이 경로만 호출해야 해요. 기존 `/api/v2/...` 경로는 구버전 앱을 위해 서버에 당분간 남아요.
+
+| 항목 | 내용 |
+| --- | --- |
+| 기준 | 서버가 공유한 모바일 API 정리본(HTML). 기존 v2 경로(BEFORE)와 앱이 쓸 경로(AFTER) 40건을 짝지어 적었어요. 공개 저장소라 원문은 싣지 않아요. |
+| 경로 규칙 | AFTER는 BEFORE의 `/api/v2` 뒤에 `/mobile`을 붙인 값이에요. method, 요청·응답 형식, 인증 종류는 그대로예요. |
+| 앱 코드 | `APIVersion.mobile`(기본 URL `https://poppang.co.kr/api/v2/mobile`)을 추가했어요. 앱이 쓰는 V2 target의 `apiVersion`을 `.mobile`로 바꾸고, `path`는 그대로 뒀어요. |
+| `.mobile` target | `AuthAPI`, `AuthTokenRefreshAPI`, `V2UserAPI`, `V2PopupAPI`, `V2FavoriteAPI`, `V2AlertAPI`, `V2AlertKeywordAPI`, `MigrationAPI`, `ServerHealthAPI` |
+| 확인 테스트 | `Data/Tests/MobileAPIRouteTests.swift`가 위 target의 모든 요청이 정리본 AFTER 40건 중 하나인지 확인해요. |
+
+이 문서의 아래 표들은 V1→V2 전환 기록이라 경로를 `/api/v2/...`로 적었어요. 실제 호출 경로는 그 값의 `/api/v2` 뒤에 `/mobile`을 붙인 것이에요. 관리자 API는 예외예요.
+
+### `/api/v2`에 남는 관리자 호출
+
+관리자 API는 `/mobile` 전환 대상이 아니에요. 서버 공지(2026-11-20)대로 웹·ETL·관리자·QA API는 기존 v2 경로에 그대로 남아서, 앱도 아래 관리자 API는 `/api/v2/admin/...`으로 불러요.
+
+| API | 쓰는 곳 |
+| --- | --- |
+| `PATCH /api/v2/admin/popup/{popupUuid}/deactivate` | 팝업 상세의 관리자 비활성화 (`V2AdminAPI`) |
+| `GET /api/v2/admin/popup-submissions` | RN 제보 관리 화면의 목록 (PopPang-RN) |
+| `GET /api/v2/admin/popup-submissions/{id}` | RN 제보 관리 화면의 상세 (PopPang-RN) |
+| `PUT /api/v2/admin/popup-submissions/{id}` | RN 제보 관리 화면의 승인·반려 (PopPang-RN) |
+
+PopPang-RN은 `1.5.0`부터 제보 화면의 카테고리 조회와 제보 등록을 `GET /api/v2/mobile/recommend`, `POST /api/v2/mobile/popup-submissions`로 불러요. `1.6.0`부터는 제보 관리 화면의 카테고리 조회도 `GET /api/v2/mobile/recommend`를 써요. v1 `PopupAPI`는 앱에 연결되지 않은 `MapFeatureV1`·`CalendarFeature`(V1)만 써서, 출시 앱은 호출하지 않아요.
+
+## 단계
+
+| 단계 | 내용 | 명세 묶음 | 화면 동작 변경 | 상태 |
+| --- | --- | --- | --- | --- |
+| 1 | 공통 네트워크 기반 | COMMON | 없음 | 완료 (#117) |
+| 2 | 로그인 모듈과 유저 엔티티 | A1, A2, USER-01 | 있음 (기존 사용자 재로그인) | 완료 (#119) |
+| 3 | 내 정보 | U | 없음 | 진행 중 (프로필 화면 #120) |
+| 4~ | 나머지 화면 | P1, P2, P3, F, K, USER-06 | 거의 없음 | [feature별로 진행](#남은-작업-feature별-전환) |
+
+- 1단계와 2단계는 순서대로 해요. 2단계는 1단계의 토큰 처리를 쓰고, 나머지 단계는 2단계가 저장한 Access Token을 써요.
+- 4단계부터는 feature 단위로 옮겨요. 순서와 진행 상태는 [남은 작업](#남은-작업-feature별-전환)에 있어요.
+- 2단계 중간 상태로는 출시하지 않아요. 2단계가 끝나야 로그인, 가입, 앱 시작, 로그아웃이 모두 V2로 맞춰져요.
+
+## 1단계: 공통 네트워크 기반
+
+모든 V2 API가 함께 쓰는 기반을 `Core`에 만들어요. 이 단계에서는 어떤 API도 V2로 바꾸지 않아서 앱 동작은 그대로예요.
+
+### 구성 요소
+
+| 구성 요소 | 위치 | 역할 |
+| --- | --- | --- |
+| `APIVersion`, `APIAuthorization` | `Core/Sources/Network/BaseAPI.swift` | API target마다 버전(`v1`·`v2`·`mobile`)과 인증 종류(`none`·`access`·`signup`)를 정해요. 기본값은 `v1`, `none`이라 기존 target은 그대로예요. V1 target에는 인증 종류를 정해도 헤더를 붙이지 않아요(`resolvedAuthorization`). |
+| `NetworkConfig.apiBaseURL(for:)` | `Core/Sources/Network/NetworkConfig.swift` | 버전마다 기본 URL을 만들어요. `https://poppang.co.kr/api/v1`, `https://poppang.co.kr/api/v2`, `https://poppang.co.kr/api/v2/mobile` |
+| `APIResponse<T>`, `ErrorResponse` | `Core/Sources/Network/APIResponse.swift` | V2 성공 응답 래퍼와 V1·V2 공통 실패 응답 형식 |
+| `asyncRequest(_:decodeDataTo:)` | `Core/Sources/Network/MoyaProvider+Async.swift` | `APIResponse`로 감싼 API만 이 함수로 요청하고 `data`를 돌려받아요. |
+| `NetworkError.statusCode`, `serverErrorCode`, `isExpiredToken` | `Core/Sources/Network/NetworkError.swift` | 실패 본문에서 서버 에러 코드를 읽어요. 5xx 기본 오류 본문처럼 형식이 다르면 `serverErrorCode`는 `nil`이고, HTTP 상태로 처리해요. |
+| `AuthTokenStorage` | `Core/Sources/LocalStorage/Storage/AuthToken/` | Access·Refresh·Signup Token을 UserDefaults(`UserDefaultsStore`)에 저장해요. 키는 `auth.accessToken`, `auth.refreshToken`, `auth.signupToken`이에요. 명세와 다른 결정이라 [정해야 할 것](#정해야-할-것) 8번에 이유를 적었어요. |
+| `KeychainStoring`, `KeychainStore` | `Core/Sources/LocalStorage/Store/Keychain/` | Keychain 저장 구현이에요. 지금은 쓰지 않고 남겨 둬요. |
+| `AccessTokenRefresher` | `Core/Sources/Network/Auth/AccessTokenRefresher.swift` | 만료된 Access Token을 갱신해요. 동시에 여러 요청이 만료돼도 갱신 요청은 하나만 보내요. |
+| `AuthenticationPlugin` | `Core/Sources/Network/Auth/AuthenticationPlugin.swift` | V2 요청에 `Authorization` 헤더를 붙이는 Moya plugin이에요. `NetworkProvider(authentication:)`로 넣어요. |
+
+### 토큰 처리 규칙
+
+`AuthenticationPlugin`이 들어간 provider에서 `asyncRequest`는 아래처럼 동작해요.
+
+| 상황 | 동작 |
+| --- | --- |
+| `access` API가 401 5002(만료)를 받아요. | 그 요청에 실제로 담았던 토큰을 기준으로 한 번 갱신하고, 새 토큰으로 원래 요청을 한 번만 다시 보내요. 다시 보낸 요청이 다시 5002를 받으면 받은 오류를 그대로 던지고 토큰은 지우지 않아요(명세가 정하지 않은 경우예요). 다시 보낸 요청이 5002가 아닌 401을 받으면 아래 줄처럼 처리해요. |
+| 여러 요청이 동시에 만료돼요. | 갱신 요청은 하나만 보내요. 나머지 요청은 그 결과를 기다렸다가 새 토큰으로 다시 보내요. |
+| `access` API가 5002가 아닌 401을 받아요. | 같은 토큰으로는 다시 성공할 수 없어서 Access·Refresh Token을 지우고 `AuthSessionError.loginRequired`를 던져요. 다만 요청을 보낸 뒤 다른 요청이 토큰을 갱신했으면 새 토큰은 지우지 않고, 새 토큰으로 원래 요청을 한 번만 다시 보내요. 토큰 없이 보낸 요청이면, 토큰 쌍이 없을 때 남은 토큰을 지우고 `loginRequired`를 던져요. 그사이 로그인으로 쌍이 생겼으면 새 토큰으로 한 번만 다시 보내요. |
+| 토큰 쌍이 다 갖춰지지 않았어요 (Refresh Token만 남음 등). | 로그아웃 상태로 봐요. `removeIncompleteTokens()`가 lock 안에서 확인한 뒤 남은 토큰을 지워요. |
+| 갱신 API가 401을 주거나 Refresh Token이 없어요. | 토큰을 지우고 `AuthSessionError.loginRequired`를 던져요. 지우다 실패해도 그 토큰은 더 쓸 수 없으므로 `loginRequired`를 던져요. |
+| 갱신이 401이 아닌 이유로 실패해요 (400, 403, 429, 500, 503, 네트워크 오류). | 토큰을 그대로 두고, 원래 요청이 받은 401 5002 오류를 던져요. 다음 요청이 만료되면 다시 갱신해요. 이 정책은 [정해야 할 것](#정해야-할-것) 3번이 정해지면 다시 봐요. |
+| 갱신하는 동안 로그아웃으로 토큰이 지워져요. | 늦게 온 응답을 저장하지 않고 `AuthSessionError.loginRequired`를 던져요. |
+| 갱신하는 동안 다시 로그인해서 새 토큰이 저장돼요. | 늦게 온 응답(성공이든 401이든)으로 새 로그인 토큰을 덮어쓰거나 지우지 않고, 새 로그인의 Access Token을 써요. |
+| 갱신한 토큰을 저장하지 못해요. | 서버는 이미 이전 Refresh Token을 폐기했으므로, 남은 옛 토큰을 지우고 `AuthSessionError.loginRequired`를 던져요. |
+| 만료 응답을 받은 요청에 어떤 토큰을 담았는지 알 수 없어요. | 다른 요청이 갱신했다고 보지 않고 갱신해요. |
+| 403을 받아요. | 갱신하지 않아요. |
+| `signup` API가 401 5002를 받아요. | 갱신하지 않아요. Signup Token이 만료된 것이라 소셜 로그인부터 다시 해요. |
+| V1 API | 헤더를 붙이지 않고, 401을 받아도 갱신하지 않아요. |
+
+### 동시에 일어나는 토큰 변경
+
+토큰 갱신, 로그아웃, 재로그인은 서로 다른 스레드에서 겹칠 수 있어요. `AuthTokenStorage`는 모든 동작을 lock 하나로 묶고, "저장된 토큰이 내가 쓴 토큰일 때만 바꾸거나 지우는" 동작을 한 번에 처리해요(`replaceTokens(_:ifRefreshTokenIs:)`, `removeTokens(ifAccessTokenIs:)`, `removeTokens(ifRefreshTokenIs:)`). 그래서 늦게 온 갱신 응답이 로그아웃으로 지운 토큰을 되살리거나, 옛 토큰으로 보낸 요청의 실패가 새 토큰을 지우지 않아요.
+
+토큰 갱신과 재요청은 `MoyaProvider.asyncRequest(_:)` 안에서만 일어나요. V2 `access` API를 `provider.request`의 callback으로 직접 부르면 갱신되지 않으니, Repository는 지금처럼 `asyncRequest` 계열 함수만 써요. Alamofire `AuthenticationInterceptor`로 옮기면 모든 요청 경로에 적용되지만, 401 본문의 서버 코드(5002)로 갱신 여부를 나눠야 해서 이번에는 직접 구현했어요.
+
+### V2 target 만들기
+
+V2로 옮기는 target은 버전과 인증 종류를 정하고, 경로는 명세의 V2 경로에서 `/api/v2`를 뺀 값을 써요. 앱이 쓰는 API는 버전을 `.mobile`로 정해서 [모바일 전용 경로](#모바일-전용-경로-apiv2mobile)로 불러요.
+
+```swift
+extension V2UserAPI: BaseAPI {
+    public var apiVersion: APIVersion {
+        .mobile
+    }
+
+    public var authorization: APIAuthorization {
+        .access
+    }
+}
+```
+
+case마다 인증 종류가 다르면 `switch`로 나눠요. 응답이 `APIResponse`로 감싸진 API는 `asyncRequest(_:decodeDataTo:)`로, 감싸지 않은 API는 지금처럼 `asyncRequest(_:decodeTo:)`로 요청해요. 성공 본문이 없거나 `data`가 늘 null인 API(`ApiResponse[null]`)는 `asyncRequestVoid(_:)`로 요청해요.
+
+### 2단계에서 연결한 것
+
+- `NetworkProvider.shared`에 `AuthenticationPlugin`을 넣는 일과 갱신 API target은 2단계에서 했어요. [2단계](#2단계-로그인-모듈과-유저-엔티티)를 봐요.
+
+## 2단계: 로그인 모듈과 유저 엔티티
+
+로그인·가입·앱 시작 세션 복구·로그아웃을 V2로 옮기고, 카카오·애플·구글 로그인을 전략 패턴으로 묶었어요. PR 하나로 해요(#118).
+
+### 구조
+
+소셜 로그인은 "SDK로 증명 값을 받는 단계"만 제공자마다 다르고, "그 값을 서버에 보내는 단계"는 같아요. 다른 부분은 전략으로, 같은 부분은 Repository 하나로 나눴어요.
+
+| 구성 요소 | 위치 | 역할 |
+| --- | --- | --- |
+| `SocialLoginStrategy` | `Data/Sources/SocialLogin/` | `login() -> SocialCredential`. 제공자마다 SDK로 로그인하고 서버에 보낼 증명 값을 돌려줘요. 사용자가 창을 닫으면 `AuthError.cancelled`를 던져요. |
+| `KakaoLoginStrategy` | 같음 | 카카오톡 앱이 있으면 앱으로, 없으면 카카오 계정 웹으로 로그인해 `access_token`을 받아요. |
+| `GoogleLoginStrategy` | 같음 | `GIDSignIn`으로 `id_token`을 받아요. |
+| `AppleLoginStrategy` | 같음 | `ASAuthorizationController`를 Data 안에서 직접 띄워요. 요청마다 nonce 원문을 만들고, Apple 요청에는 그 SHA-256 값(소문자 16진수)을 넣어요. 서버에는 `auth_code`와 원문(`raw_nonce`)을 보내요. |
+| `AuthRepositoryImpl` | `Data/Sources/RepositoryImpl/` | 모든 제공자에 같은 서버 단계예요. V2 로그인·가입·내 정보 조회·로그아웃을 부르고 토큰을 `AuthTokenStorage`에 저장해요. 토큰은 feature에 넘기지 않아요. 서버 오류 코드는 `AuthError`로 바꿔요. |
+| `AuthAPI`, `AuthTokenRefreshAPI` | `Data/Sources/Remote/Auth/` | V2 인증 API target. 갱신 API는 인증 plugin이 없는 provider로 불러서 갱신 요청에 다시 갱신이 걸리지 않아요. |
+| `Provider`, `Role`, `LoginResult`, `SignupRequest`, `AuthError`, `AuthRepositoryProtocol`, `AuthUsecase` | `Domain` | `LoginResult`는 `.completed(User)` 또는 `.pending(Provider)`예요. |
+| `User` | `Domain/Sources/Entities/User.swift` | V2 사용자 정보 모양이에요. `uid`·`fcmToken`·`alertKeywordList`·`recommendList`를 뺐고, `provider`·`role`은 enum이에요. 관리자 판단은 `isAdmin`으로 해요. |
+
+새 제공자를 추가하려면 `SocialLoginStrategy`를 채택한 전략 하나를 만들고 `AuthRepositoryImpl` 기본 목록에 넣어요.
+
+### 흐름
+
+1. 로그인 버튼 3개가 같은 action(`loginTapped(Provider)`)을 보내요.
+2. COMPLETED이면 토큰 쌍을 저장하고 메인으로, PENDING이면 가입 전용 토큰을 저장하고 가입 화면으로 가요.
+3. 가입은 가입 전용 토큰으로 요청하고 본문에 `"signupOs": "IOS"`를 넣어요. 성공하면 토큰 쌍을 저장하고 가입 전용 토큰을 지워요. 가입 단계가 만료됐거나(401 5002·5014 등) 탈퇴한 계정(401 5010)이면 안내와 함께 로그인 화면으로 돌아가요. 닉네임이 중복이면(409 4202) 닉네임 단계로 돌아가요.
+4. 앱 시작은 `autoLogin` 대신 저장된 토큰으로 내 정보 조회(`GET /api/v2/user`)를 불러 세션을 되살려요. 아직 V1인 API를 위해 받은 `userUuid`를 저장해요.
+5. 로그아웃은 기기의 토큰과 세션을 지우고 서버 로그아웃(`POST /api/v2/auth/logout`)을 알려요.
+6. 앱을 쓰는 중에 `AuthSessionError.loginRequired`가 나면 `AuthenticationPlugin`이 `AuthSessionEvents`로 알리고, `AppFeature`가 메인 화면에서만 로그아웃 전환을 해요. 화면 전환용 closure 대신 구독할 때마다 새 stream을 주는 알림 객체를 써요.
+7. 로그아웃은 로컬 세션과 기기 토큰을 먼저 지우고, 미리 꺼내 둔 Access Token을 헤더에 직접 담아 서버 로그아웃을 보내요. 그래서 기다리는 동안 다시 로그인해도 새 토큰이 지워지지 않고, Access Token이 만료됐어도 갱신된 토큰이 기기에 남는 일이 없어요. 로그아웃 요청이 401 5002(만료)를 받으면 꺼내 둔 Refresh Token으로 한 번 갱신해 그 Access Token으로 다시 보내요. 서버의 Refresh 세션을 지우기 위해서예요. 갱신한 토큰은 저장하지 않아요.
+
+`AppBootstrap`이 토큰 저장소, refresher, 인증 plugin을 만들어 `NetworkProvider.shared.configureAuthentication(_:)`으로 요청 전에 연결해요.
+
+### 2단계에서 정한 것
+
+| 상황 | 결정 |
+| --- | --- |
+| 가입 화면의 추천 목록·닉네임 중복 확인 | 서버가 두 V2 API를 Signup Token으로 부를 수 있게 권한을 바꿔서, 가입 화면은 `GET /api/v2/recommend`와 `GET /api/v2/user/nickname/duplicated`를 Signup Token으로 불러요(`AuthAPI.signupRecommendList`, `.signupNicknameDuplicated`). 가입 단계가 만료되면(401 5002·5014·5006) 로그인 화면으로 돌아가요. 프로필 화면의 닉네임 중복 확인은 Access Token으로 3단계에서 옮겨요. ([정해야 할 것](#정해야-할-것) 1번) |
+| 가입 화면의 닉네임 추천·인기 키워드 (#138) | 회원가입 V2 화면(`AuthFeatureV2`)이 두 V2 API를 Signup Token으로 불러요. `GET /api/v2/user/nickname/recommendation`(`AuthAPI.signupNicknameRecommendation`)은 감싼 응답 `data.nickname`을 닉네임 칸에 미리 채워요. 추천은 예약이 아니라 가입할 때 서버가 다시 중복을 확인하고, 실패(503 4208)하면 빈 칸으로 둬요. `GET /api/v2/alert-keyword/popular`(`AuthAPI.popularAlertKeywords`)는 `data: [{ alertKeyword }]`로 최대 6개를 주고, 실패하거나 빈 배열이면 "많이 등록한 키워드" 영역을 숨겨요. 둘 다 가입 단계가 만료되면 로그인 화면으로 돌아가요. |
+| 기존 사용자 | 업데이트 뒤 한 번 다시 로그인해요. |
+| 서버 로그아웃 실패 | 기기의 토큰과 세션은 지우고 로그아웃해요. 서버 세션은 남을 수 있어요. |
+| 앱 시작 때 내 정보 조회가 서버 오류·네트워크로 실패 | 토큰은 지우지 않고 로그인 화면을 보여 줘요. 다음 실행 때 다시 확인해요. |
+| 가입 도중 앱을 다시 켬 | 가입 전용 토큰을 지우고 로그인부터 다시 해요. |
+| 로그인 실패 안내 | 탈퇴 계정(5010), 다른 방식으로 가입된 계정(5016), 그 밖의 실패 세 가지로 안내해요(ko·en·ja). 사용자가 창을 닫으면 안내하지 않아요. |
+| 애플 로그인 요청 범위 | 이전처럼 이름·이메일 범위(scope)를 요청하지 않아요. |
+
+### 직접 확인할 것
+
+- 제공자마다 신규 가입(PENDING)과 기존 로그인(COMPLETED)
+- 앱을 다시 켰을 때 로그인 유지, 로그아웃
+- 애플 로그인은 실제 기기에서 확인해요. nonce 형식이 틀리면 401 5015로 실패해요.
+
+## 3단계: 내 정보
+
+프로필 화면이 부르는 사용자 API 4개를 먼저 옮겼어요(#120). FCM 토큰 등록(USER-06)은 다음 PR에서 옮겨요.
+
+### 프로필 화면
+
+| 기능 | V1 | V2 | 성공 응답 |
+| --- | --- | --- | --- |
+| 닉네임 중복 확인 (USER-04) | `GET /api/v1/user/nickname/duplicated` | `GET /api/v2/user/nickname/duplicated` | `APIResponse`로 감싼 `{ isDuplicated }` |
+| 닉네임 변경 (USER-02) | `PATCH /api/v1/user/{userUuid}` | `PATCH /api/v2/user` | 빈 본문 |
+| 알림 켜기·끄기 (USER-05) | `PATCH /api/v1/user/{userUuid}/alert-status` | `PATCH /api/v2/user/alert-status` | `APIResponse`로 감싼 `{ userUuid, isAlerted }` |
+| 회원 탈퇴 (USER-03) | `DELETE /api/v1/user/{userUuid}/hard-delete` | `DELETE /api/v2/user` | 빈 본문 |
+
+- 모두 Access Token으로 부르고 경로에 `userUuid`를 넣지 않아요. 요청은 `Data/Sources/Remote/V2UserAPI.swift`에 있고, `UserRepositoryImpl`이 불러요.
+- `UserRepositoryProtocol`·`UserUsecase`·`ProfileFeatureClient`의 해당 함수에서 `userUuid` 인자를 뺐어요. 탈퇴 함수 이름은 `hardDeleteUser`에서 `withdraw`로 바꿨어요. 프로필 화면 state도 `userUuid`를 들고 있지 않아요.
+- 실패는 `UserError`로 바꿔요. 닉네임 중복(409 4202)은 `.duplicateNickname`, 빈 값이나 공백만 있는 닉네임(400 4205)은 `.invalidNickname`, 나머지는 `.failed`예요. 다시 로그인해야 하는 실패(`AuthSessionError`)는 바꾸지 않고 그대로 던져서, 프로필 화면이 실패 안내를 띄우지 않아요. 프로필 화면은 `ProfileErrorMessage`로 안내 문구를 골라요(ko·en·ja).
+- 닉네임 변경이 중복으로 실패하면 입력란 아래 중복 안내를, 잘못된 값으로 실패하면 "사용 가능" 표시를 지우고 안내해요. 둘 다 다시 중복 확인을 해야 바꿀 수 있어요.
+- 닉네임 확인·변경 응답에는 보낸 닉네임을 함께 실어요. 응답을 기다리는 동안 입력이 바뀌면 확인 결과를 새 입력에 붙이지 않고, 변경에 성공하면 실제로 보낸 닉네임을 홈 화면에 알려요. 입력이 바뀐 뒤 실패가 오면 확인 상태는 두고 바꾸지 못했다는 안내만 해요.
+- 탈퇴 요청을 기다리는 동안(`isWithdrawing`)에는 탈퇴·로그아웃·뒤로가기 버튼을 막아요. 화면이 닫히면 탈퇴 effect가 취소돼 로그아웃 전환이 일어나지 않기 때문이에요. 화면 왼쪽 끝에서 밀어서 닫는 제스처는 DSKit이 앱 전체에 켜 둔 것이라 막지 않았어요.
+- 알림 켜기·끄기는 응답의 `isAlerted`를 화면 상태에 반영해요.
+- 탈퇴에 성공하면 기존 로그아웃 전환(`logoutRequested`)으로 보내고, 기기의 토큰은 그 전환이 지워요. Repository에서 먼저 지우면 아직 진행 중인 다른 요청이 토큰 없이 실패해 세션 만료 알림이 로그아웃 전환과 겹치기 때문이에요. 뒤이은 서버 로그아웃은 사용자가 없어 실패하지만, 로그아웃은 서버 응답과 관계없이 끝나요.
+- 탈퇴 응답을 받지 못해 다시 보냈는데 사용자가 없다는 응답(404 4201)이 오면 이미 탈퇴한 것으로 봐요.
+
+### 3단계에서 정한 것
+
+| 상황 | 결정 |
+| --- | --- |
+| 회원 탈퇴 | 명세(`cc55e51`)의 V2 탈퇴는 탈퇴 표시만 해서(soft delete) 같은 소셜 계정으로 다시 가입할 수 없었어요. 서버가 V2 탈퇴를 영구 삭제로 바꿔 배포해서(2026-10-25), V1 영구 삭제처럼 탈퇴한 뒤 다시 가입할 수 있어요. 탈퇴 안내 문구("모든 데이터가 삭제되며 복구할 수 없습니다")는 그대로 둬요. 확인 필요: 바뀐 서버 명세나 서버 PR |
+| 회원 복구 | V2에 없어요. 앱은 V1 복구(`resotre`)를 부르지 않아요. |
+
+### 직접 확인할 것
+
+- 프로필 화면에서 닉네임 중복 확인과 변경, 알림 켜기·끄기
+- 테스트 계정으로 탈퇴한 뒤 같은 소셜 계정으로 다시 가입되는지
+
+## 기존 사용자 데이터 보정
+
+V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용자는 서버에 가입 OS가 비어 있어요. 서버가 이 값을 채우는 API를 마이그레이션 명세(`cc55e51`) 뒤에 추가했어요(2026-10-25).
+
+| 항목 | 값 |
+| --- | --- |
+| API | `PATCH /api/v2/user/signup-os`, Access Token, 본문 `{"signupOs":"IOS"}`, 성공 응답은 빈 본문 |
+| 인증 | 시작할 때 꺼낸 Access Token을 헤더에 직접 담아요. 인증 plugin의 갱신·재시도를 거치지 않아요. |
+| 서버 동작 | 가입 OS가 비어 있으면 저장하고, 이미 값이 있으면 유지해요. |
+| 부르는 때 | 자동 로그인이나 로그인 완료로 메인 화면에 들어갈 때(`AppFeature`). 신규 가입은 가입 요청이 가입 OS를 보내서 부르지 않아요. |
+
+| 구성 요소 | 위치 | 역할 |
+| --- | --- | --- |
+| `MigrationUsecase` | `Domain` | 이 사용자에게 아직 하지 않은 마이그레이션을 실행하고, 성공한 것만 기록해요. |
+| `MigrationRepositoryProtocol` | `Domain` | 서버 요청과 기기의 완료 기록을 맡아요. |
+| `MigrationAPI`, `MigrationRepositoryImpl` | `Data` | 요청을 보내고, 마친 사용자 UUID를 UserDefaults(`migration.signupOsFilledUsers`)에 기록해요. |
+| `AppMigrationClient` | `App` | `AppFeature`가 부르는 TCA 의존성이에요. 실패하면 로그만 남겨요. |
+
+- 기록은 사용자별이라, 한 기기에서 다른 계정으로 로그인하면 그 계정에서 한 번 더 보내요.
+- 요청은 그때의 Access Token으로 나가요. 그래서 로그아웃하면(`sessionExpired` 포함) 진행 중인 마이그레이션을 취소해요. 요청 전후로 취소를 확인해서, 취소됐으면 보내지 않거나 완료로 기록하지 않아요.
+- 이미 보낸 요청 자체는 멈추지 않아요(`MoyaProvider.asyncRequest`가 취소를 네트워크 요청에 전하지 않아요). 그래서 토큰 갱신 뒤 다시 보내는 일이 없게, 로그아웃 요청처럼 시작할 때의 Access Token을 헤더에 직접 담아요. 요청은 늘 처음 사용자의 토큰으로만 나가요. 토큰이 만료돼 실패하면(401 5002) 기록하지 않고 다음 실행 때 다시 해요. 자동 로그인은 내 정보 조회에서 토큰을 갱신한 뒤라 보통 만료되지 않아요.
+- 신규 가입한 사용자는 완료로 기록하지 않아서, 다음 실행 때 한 번 보내요. 서버가 이미 있는 값을 유지해요.
+- 확인 필요: Android로 가입했지만 서버에 가입 OS가 비어 있는 사용자가 iOS 앱을 처음 열면 IOS로 채워져요. 서버 설계대로예요.
+- 실패하면 기록하지 않아서 다음 실행 때 다시 보내요. 화면에는 알리지 않고 메인 화면은 그대로 들어가요.
+- 기록은 앱을 지우면 함께 지워져요. 다시 설치해 한 번 더 보내도 서버가 이미 있는 값을 유지해요.
+- 사용자 엔티티(`User`)에는 가입 OS를 넣지 않았어요. V2 내 정보 응답에 없고, 채울지는 서버가 판단해요.
+- 새 마이그레이션이 생기면 `MigrationRepositoryProtocol`에 요청과 기록 함수를, `MigrationUsecaseImpl.runPendingMigrations`에 실행 단계를 더해요.
+
+## 남은 작업: feature별 전환
+
+3단계(프로필) 이후에는 명세 묶음 대신 **화면(feature) 단위**로 옮겨요. PR도 feature마다 하나씩 올려요.
+
+| 순서 | feature | 옮길 V1 API (명세) | 상태 |
+| --- | --- | --- | --- |
+| 1 | SearchFeature | 회원 팝업 검색 (UPOP-11) | 완료 (#131) |
+| 2 | FavoritesFeature | 찜 목록 (FAV-04), 찜 등록·해제 (FAV-01·02) | 완료 (#133) |
+| 3 | PopupDetailFeature | 조회수 기록 (POP-14), 관련 팝업 (UPOP-03), 찜 등록·해제, 단건 조회, 관리자 비활성화 | 완료 (#140) |
+| 4 | CalendarFeature | 필터 팝업 (UPOP-04), 지역 목록 (POP-10), 찜 등록·해제 | 완료 (#142, `CalendarFeatureV2`) |
+| 5 | HomeFeatureV2 | 오픈 예정 (UPOP-12), 필터 팝업, 랜덤 (UPOP-07), 지역 목록, 찜 등록·해제 | 완료 (#144) |
+| 6 | MapFeature | 지도 필터 (UPOP-05, 카테고리 `recommendIds`), 지도 카테고리·마커 색 (`recommend/map`), 지역 목록, 찜 등록·해제 | 진행 중 (#146, `MapFeatureV2`) |
+| 7 | AlertFeature | 알림 키워드 목록·등록·삭제 (ALERT-01~03), 알림함 목록·삭제 (ALERT-04·05), 찜 등록·해제 | 완료 (#150) |
+| 8 | App (푸시) | FCM 토큰 중복 확인·갱신 두 요청을 `PUT /api/v2/user/fcm-token` 하나로 (USER-06) | 완료 (#148) |
+| 9 | 정리 | 쓰지 않는 V1 case(비회원 팝업 목록 등), Repository·Usecase의 `userUuid` 인자, 세션의 `userUuid` 저장 | 진행 중 (#152에서 앱이 부르지 않는 V1 함수 삭제. 지도가 쓰는 V1 함수와 `userUuid`는 지도 전환 뒤) |
+| 10 | React Native 제보·제보 관리 (PopPang-RN) | 추천 카테고리 (RECO-01), 팝업 제보 (SUB-01), 관리자 제보 목록·수정 | 완료 (#154, RN `1.4.0`) |
+
+- 여러 feature가 같이 쓰는 API(찜 등록·해제, 지역 목록, 필터 팝업)는 **처음 쓰는 feature에서 V2로 만들고**, 뒤의 feature는 가져다 써요. 옮기는 동안 화면마다 V1·V2가 섞여도 서버 데이터가 같아서 괜찮아요(명세 C-9).
+- 회원 팝업 V2 API는 `Data/Sources/Remote/V2PopupAPI.swift`에 모아요. 응답은 V1과 같은 감싸지 않은 팝업 배열이라 `PopupDTO`를 그대로 써요.
+- 찜 V2 API는 경로(`/favorite`)가 달라 `Data/Sources/Remote/V2FavoriteAPI.swift`에 따로 둬요. 찜 목록은 검색과 달리 `APIResponse`로 감싼 팝업 배열이에요. 등록·해제는 본문에 `popupUuid`만 담고, DELETE도 JSON 본문을 보내요.
+- 찜 등록·해제 V2는 `PopupUsecaseProtocol`의 `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)`예요(#132). 3번부터의 화면은 기존 `addFavorite(userUuid:popupUuid:)` 대신 이 함수를 가져다 써요. 기존 함수는 지도 탭(`MapFeature`)과 남겨 둔 옛 달력 모듈(`CalendarFeature`)이 아직 써서 남아 있어요.
+- V2 팝업·찜 요청이 실패하면 Repository가 `PopupError.failed`로 바꾸고, 화면은 원본 오류 대신 안내 문구를 보여 줘요. 이미 찜함(409 4101)·찜 없음(404 4102)도 성공으로 보지 않아요. 찜 탭의 하트는 해제만 해요. 누르면 응답을 기다리지 않고 `popupUuid`를 해제 중 Set에 넣어 숨기고, 그동안 온 목록 응답에서도 빼고 보여 줘요. 해제가 끝나면 그 전의 목록 요청을 취소하고 목록을 새로 받아요. 실패하면 Set에서 빼서 다시 보여 줘요(로그인 끊김은 다시 받지 않아요).
+- `PopupDTO`는 명세상 null일 수 있는 `roadAddress`·`mediaType`·`recommendList`를 null로 받아요. null이면 각각 일반 주소(`address`)·이미지·빈 배열로 바꿔요. 도로명 주소가 빈 문자열이어도 일반 주소를 써요. 전에는 null을 받으면 목록 전체를 읽지 못했어요(V1부터 있던 문제, #130에서 수정).
+- 세션의 `userUuid`는 아직 V1인 지도 탭(`MapFeature`)이 요청에 넣어 보내므로 남겨요. 검색·팝업 상세는 V2로 옮겨 `userUuid`를 쓰지 않아요.
+
+**확인 필요 (백엔드)**
+- 팝업 제보(SUB-01)는 Swift 코드에서 부르지 않고 React Native 화면이 직접 불러요. #154에서 V2로 옮겼어요([React Native 제보 화면](#react-native-제보-화면-154)).
+
+헬스 체크는 `GET /api/v2/health`를 써요(#156). 백엔드가 2026-11-17에 운영에 배포했어요. V1처럼 인증 없이 부르고 응답도 같은 `{ "isHealthy": Bool }`이에요(`Cache-Control: no-store`). 처리 규칙은 그대로예요: `200`에 `isHealthy: true`면 들어가고, `false`·200이 아닌 응답·본문 형식 오류·5초 타임아웃·연결 실패면 안내 화면, 기기 인터넷이 없으면 오프라인 안내예요(`ServerHealthRepositoryImpl`). 서버는 DB·Redis 상태를 검사하지 않아요. `GET /api/v1/health`도 서버에 그대로 남아 있어요.
+
+### 팝업 상세 (#140)
+
+상세 화면은 `popupUuid`만 받아 열리고, 화면 내용을 직접 불러와요. 목록이 넘기던 `Popup`을 그대로 보여 주지 않아요. 상세 내용은 앞으로 팝업보다 넓어질 수 있고, SDUI로 바꿀 때도 상세가 직접 부르는 방식이 교체하기 쉬워서예요. 결정과 이유는 `Docs/specs/002-popup-detail-v2/`에 있어요.
+
+| 기능 | V2 | 응답 | 함수 |
+| --- | --- | --- | --- |
+| 단건 조회 | `GET /api/v2/user/popups/{popupUuid}` | 감싸지 않은 팝업 하나 (`PopupDetailDTO`) | `getPopupDetail(popupUuid:) -> PopupDetail` |
+| 조회 기록 | `POST /api/v2/popup/{popupUuid}/view` | 본문 쓰지 않음 | `increaseViewCount(popupUuid:)` |
+| 관련 팝업 | `GET /api/v2/user/popups/{popupUuid}/related` | 감싸지 않은 팝업 배열 (`PopupDTO`) | `getRelatedPopupList(popupUuid:)` |
+| 찜 등록·해제 | #132의 V2 찜 | | `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)` |
+| 관리자 비활성화 | `PATCH /api/v2/admin/popup/{popupUuid}/deactivate` (query 없음) | 본문 없음 | `deactivatePopup(popupUuid:)` (`V2AdminAPI`) |
+
+- 모두 Access Token을 써요. 상세 화면과 MainTab의 상세 진입에서 `userUuid`를 지웠어요. 각 탭이 MainTab에 보내는 `popupSelected(Popup)`는 그대로 두고, MainTab이 `popupUuid`만 꺼내 상세에 넘겨요. 각 탭을 V2로 옮길 때 uuid로 바꿔요.
+- 조회 기록과 관련 팝업은 단건 조회로 상세를 받은 뒤에 보내요. 둘이 실패해도 상세 내용은 보여 줘요.
+- 단건 조회가 서버 오류·네트워크로 실패하면(`PopupError.failed`) 로딩을 유지한 채 1·2·4·8초 간격으로 받을 때까지 다시 요청해요. 없는 팝업(404 4301)은 단건 조회에서만 `PopupError.notFound`로 바꿔 "팝업을 찾을 수 없어요"와 뒤로 가기를 보여 줘요. 로그인이 끊기면(`AuthSessionError`) 다시 요청하지 않아요. 로그인 화면 전환은 AppFeature가 해요.
+- 상세 데이터는 Domain `PopupDetail`이에요. 지금은 `Popup`과 같은 값이고, 상세 전용 값이 생기면 여기에 더해요. 이미지 주소·도로명 주소·미디어 종류 변환은 `PopupFieldMapping`에 모아 목록과 상세가 같은 기준을 써요.
+- V1 `PopupAPI.increaseViewCount`·`getPersonalRelatedPopupList`와 `AdminAPI.deactivatePopup`은 지웠어요. 상세 화면에서만 쓰던 API라 9번 정리 단계를 기다리지 않았어요.
+
+### 달력 (#142)
+
+달력은 새 모듈 `CalendarFeatureV2`로 옮겼어요. 화면과 동작은 기존 `CalendarFeature`와 같고, State와 client에서 `userUuid`를 뺐어요. 기존 모듈은 남겨 두고 `MainTabFeature`가 새 모듈을 써요.
+
+| 기능 | V2 | 응답 | 함수 |
+| --- | --- | --- | --- |
+| 필터 팝업 | `GET /api/v2/user/popups/filtered/home?region&district&homeSortStandard` | 감싸지 않은 팝업 배열 (`PopupDTO`) | `getFilteredPopupList(region:district:homeSortStandard:)` |
+| 지역 목록 | `GET /api/v2/popup/regions/districts` | 감싸지 않은 지역 배열 (`RegionListDTO`) | `getRegionList()` |
+| 찜 등록·해제 | #132의 V2 찜 | | `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)` |
+
+- 두 API 모두 Access Token으로 불러요(`V2PopupAPI.filteredHome`, `.regionList`). 필터 팝업이 실패하면 `PopupError.failed`로 바꿔요. 지역 목록은 홈·지도가 V1 때처럼 오류 문구를 보여 주도록 받은 오류를 그대로 던져요. V1 `PopupAPI.getRegionList`는 지웠어요.
+- 달력은 불러오기 실패에 "팝업을 불러오지 못했어요", 찜 실패에 "찜을 바꾸지 못했어요"를 보여 줘요. 로그인이 끊긴 실패(`AuthSessionError`)는 문구를 띄우지 않아요. 처음 열 때는 지역 목록을 먼저 받고, 팝업은 그 뒤에 지금 선택으로 받아요. 팝업 요청은 모두 같은 취소 ID를 써서 마지막 요청의 응답만 반영하고, 지역 목록 요청은 따로 취소해요.
+- 지역 목록은 함수 이름을 그대로 두고 안쪽 요청만 V2로 바꿨어요. 홈과 지도도 같은 함수를 쓰므로 이 PR부터 함께 V2를 불러요. 서버 데이터가 같아 화면은 바뀌지 않아요.
+- 필터 팝업은 새 함수를 더했어요. 홈은 아직 V1 `getPersonalFilteredPopupList(userUuid:...)`를 쓰고, 5번에서 새 함수로 바꿔요.
+- V2 경로와 인증 종류는 API 계약 문서(2026-10-30)로 확인했어요. 두 API 모두 Access Token이에요.
+
+### 홈 (#144)
+
+홈은 이미 `HomeFeatureV2` 모듈이라 API만 V2로 바꿨어요. 화면은 그대로이고, `HomePopupClient`와 오픈 예정 목록(`ComingPopupDetailFeature`)의 요청에서 `userUuid` 인자를 뺐어요. State의 `userUuid`는 광고 식별자와 화면 ID에 쓰여서 9번 정리 단계까지 남겨요.
+
+| 기능 | V2 | 응답 | 함수 |
+| --- | --- | --- | --- |
+| 추천 (랜덤) | `GET /api/v2/user/popups/random` | 감싸지 않은 팝업 배열 (`PopupDTO`) | `getUserRandomPopupList()` |
+| 오픈 예정 | `GET /api/v2/user/popups/upcoming` | 감싸지 않은 팝업 배열 (`PopupDTO`) | `getUserUpcomingPopupList()` |
+| 그리드 필터·지역 목록 | 달력(#143)과 같음 | | `getFilteredPopupList(...)`·`getRegionList()` |
+| 찜 등록·해제 | #132의 V2 찜 | | `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)` |
+
+- 경로·인증·응답은 API 계약 문서(2026-10-30)로 확인했어요. 모두 Access Token이에요.
+- 함수 이름에 `User`를 붙였어요. 같은 이름의 V1 비회원 함수(`getRandomPopupList()`·`getUpcomingPopupList()`)가 아직 있어서예요.
+- 랜덤은 운영 중 팝업 중 최대 10개를 무작위로 고르고, 유효한 광고 팝업을 앞에 넣어요.
+- 오픈 예정의 `upcomingDays`(선택, 기본 10)는 V1처럼 보내지 않아요. 명세상 실제 범위는 내일부터 D+11이에요.
+- 실패하면 `PopupError.failed`로 바꿔요. 홈은 오류 문구를 화면에 띄우지 않고, 오픈 예정 목록은 "오픈 예정 팝업을 불러오지 못했어요", "찜을 바꾸지 못했어요"를 알림으로 보여 줘요. 로그인이 끊긴 실패(`AuthSessionError`)는 알림을 띄우지 않아요.
+- 그리드는 처음 불러올 때도 그리드 다시 불러오기와 같은 경로(취소 ID 하나)로 받아서, 마지막 조건의 응답만 반영해요. 지역 목록이 늦게 와도 그사이 사용자가 고른 지역·구를 덮어쓰지 않아요. 찜은 응답을 기다리는 동안 같은 하트를 다시 누르면 무시해요(V2 찜은 같은 요청을 두 번 보내면 409·404로 거절해요).
+
+### 지도 (#146, 진행 중)
+
+지도 탭을 피그마 "팝팡 리뉴얼 최종"(2467:10300)의 지도 화면에 맞춘 새 모듈 `MapFeatureV2`로 바꿔요. 예전 지도 모듈은 `MapFeatureV1`로 이름만 바꿔 남겨 뒀어요(앱에서는 쓰지 않아요). 메인 색은 앱 색(`PPColor.brand`)이에요.
+
+| 기능 | V2 | 비고 |
+| --- | --- | --- |
+| 지도 목록 | `GET /api/v2/user/popups/filtered/map?region&district&mapSortStandard&latitude&longitude&recommendIds&q` | 운영 중 팝업만 줘요. `recommendIds`는 쉼표로 여러 개(`3,5`), 하나라도 해당하는 팝업을 받아요. 고른 카테고리가 없으면 보내지 않아요. `q`는 이름·주소 검색어예요(2026-11-21 서버 추가). 비었거나 공백뿐이면 보내지 않아요. |
+| 지도 카테고리·마커 색 | `GET /api/v2/recommend/map` | 감싸지 않은 `{id, recommendName, color}` 배열이에요. `color`는 대문자 `#RRGGBB`예요. 필터 칩과 마커 색에 써요. |
+| 지역 목록 | `GET /api/v2/popup/regions/districts` | 달력(#143)과 같음 |
+| 찜 등록·해제 | #132의 V2 찜 | |
+
+- 앱은 목록을 거르지 않아요. 화면에서 고른 조건을 `MapPopupQuery`로 모아 `MapFeatureClient.searchMapPopups`에 넘기고, 받은 결과를 그대로 그려요.
+- 필터는 카테고리만 둬요(2026-11-17 피그마 결정으로 상태·기간을 뺐어요). 필터 시트 버튼은 결과 개수만 받는 API가 없어 "팝업 보기"로 개수 없이 보여 줘요.
+- 카테고리와 색은 지도 탭에 처음 들어갈 때 지역 목록과 함께 한 번 받아요. `MapFeature.State`는 메인 탭에 남아 있어서 탭에 다시 들어와도 받지 않아요. 받지 못했으면 다음에 탭에 들어올 때만 다시 받아요.
+- 마커는 모양이 고정된 동그라미예요. 피그마 `MapPin`(2467:10337)처럼 카테고리 색 테두리, 흰 띠, 연한 같은 색 원 위에 갈색 가게 아이콘(`map_marker_store` 에셋, 피그마 `icon/store`)을 그리고 아래에 이름을 붙여요. 고른 마커는 1.35배로 크게, 나머지는 흐리게 그려요. 이름표는 줌 14 이상에서만 보이고(`NaverMapCoordinator.labelMinZoom`), 그보다 멀리 보면 동그라미만 보여요. 숫자 묶음은 줌 12까지예요. 고른 마커는 줌과 상관없이 이름을 보여요.
+- 목록·미리보기 배지는 카테고리와 지역만 보여요. 지도 API는 운영 중 팝업만 주므로 "운영중" 배지는 뺐어요(2026-11-18).
+- 마커 색은 팝업 응답의 `recommendList`(카테고리 이름)를 `recommend/map`의 `recommendName`과 맞춰 정해요(`MapMarkerColor`). 카테고리 필터를 걸었으면 고른 카테고리를 먼저 보고, 아니면 `recommendList` 순서대로 색이 있는 첫 카테고리예요. 맞는 카테고리가 없으면 회색(`#9E9E9E`)이에요.
+- 검색은 지도 목록 API의 `q`로 해요. 지도에서는 검색 전용 API(`/user/popups/search`)를 쓰지 않아요. 서버는 지역·구·카테고리 조건 안에서 이름·주소를 대소문자 구분 없이 찾고, 고른 정렬을 그대로 둬요.
+  - 키보드 "검색"을 누를 때만 검색해요(입력하는 동안에는 부르지 않아요). 검색어를 다 지우면 바로 검색 전 목록으로 돌아가요.
+  - 가까운순에서 손으로 지도를 1km 넘게 옮기면 검색을 풀고(검색창이 적용된 검색어 그대로면 비우고) 새 위치의 전체 목록을 받아요(`MapFeature.refetchDistance`, 전에는 300m). 내 위치 버튼처럼 코드로 옮긴 경우는 검색을 두고 새 위치에서 같은 검색어로 받아요.
+  - 검색 결과가 비면 가까운순이어도 최신순으로 다시 묻지 않고, 목록에 "검색 결과가 없어요."를 보여요. 이 문구는 마지막으로 받은 목록이 검색 결과일 때만 보여요.
+  - 같은 검색어로 다시 누르면 부르지 않아요. 마지막 조회가 실패했을 때만 같은 검색어로 다시 불러요.
+  - 미리보기 카드를 보는 중에 검색하면 카드를 닫고 목록을 절반으로 올려요.
+  - 팝업을 고르면 그 팝업 위치를 다시 받기 기준(`refetchBaseCenter`)으로 삼아요. 목록을 받은 위치(`searchedCenter`)와는 따로 두고, 팝업을 보는 중에 늦게 온 응답이 이 기준을 덮지 않아요. 멀리 있는 팝업을 고른 뒤 카드를 닫고 조금만 움직여도 검색이 풀리지 않아요. 카드를 보는 동안 손으로 옮긴 위치는 기준으로 삼지 않아요.
+  - 지역 목록을 받기 전에는 검색해도 부르지 않고, 검색어만 정해 둬요.
+- 지도의 카메라 중심은 실제로 보이는 지도 영역(검색창·칩 아래 ~ 시트나 미리보기 카드 위)의 가운데예요(`NaverMapCoordinator.setVisibleInsets`, 지도 `contentInset`). 그래서 고른 팝업과 내 위치가 시트나 카드에 가리지 않아요.
+  - 시트를 손으로 끌어 절반에 놓거나 끝까지 내리면, SheetKit이 손을 떼는 순간 멈출 높이를 정하므로 그때 바로 반영해 시트와 지도가 같이 움직여요. 절반 높이는 화면 높이의 0.5, 끝까지 내렸을 때는 탭바 + "목록 보기" 버튼 높이예요.
+  - 팝업을 고르면 미리보기 카드가 가릴 높이를 먼저 반영하고 한 번에 그 팝업으로 옮겨요. 카드 높이는 처음 한 번 재서 기억해요. 목록에서 고르면 줌 15로, 지도에서 마커를 누르면 지금 줌 그대로 옮겨요.
+  - 지도를 움직이는 애니메이션은 모두 `NaverMapCoordinator.applyMoveAnimation(to:)`(easeOut 0.25초) 하나를 써요.
+  - 보이는 영역에 맞추느라 생긴 카메라 이동은 원인을 콘텐츠 패딩(`NMFMapChangedByContentPadding`)으로 둬요. 멈춤 사이에 이 이동만 있었으면 지도 중심 변경으로 알리지 않고, 손 제스처·내 위치·팝업 선택이 한 번이라도 있었으면 알려요. 그래서 시트·카드 때문에 지도가 움직여도 가까운순 다시 받기나 검색 풀기가 일어나지 않아요.
+  - 내 위치·팝업으로 옮기는 중에 보이는 영역이 바뀌면 중간 위치가 아니라 그 도착점과 도착 줌으로 이어 가요. 카드 높이를 다시 재서 고른 팝업을 다시 가운데로 둘 때, 그사이 손으로 지도를 움직였으면 되돌리지 않아요.
+- 서버는 `recommendList`에 고른 카테고리를 맨 앞에 둬요. 목록·미리보기 배지는 `recommendList`의 첫 항목을 그대로 보여 주므로, 카테고리 필터를 걸면 고른 카테고리가 배지에 나와요.
+
+### 알림 (#150)
+
+알림 화면(`AlertFeature`)은 화면을 그대로 두고 API만 V2로 바꿨어요. `AlertFeatureClient`의 요청과 State에서 `userUuid`를 뺐어요. `State.init(user:)`는 닉네임을 받으려고 그대로 둬요.
+
+| 기능 | V2 | 응답 | 함수 |
+| --- | --- | --- | --- |
+| 알림함 목록 | `GET /api/v2/user/alert/popups` | `APIResponse`로 감싼 팝업 배열 (`PopupDTO`) | `getAlertPopupList()` |
+| 알림 삭제 | `DELETE /api/v2/user/alert` (본문 `{ popupUuid }`) | 본문 없음 | `removeAlertPopup(popupUuid:)` |
+| 키워드 목록 | `GET /api/v2/alert-keyword` | `APIResponse`로 감싼 `[{ alertKeyword }]` (`KeywordDTO`) | `getAlertKeywordList()` |
+| 키워드 등록 | `POST /api/v2/alert-keyword` (본문 `{ keyword }`) | 본문 없음 | `addAlertKeyword(alertKeyword:)` |
+| 키워드 삭제 | `DELETE /api/v2/alert-keyword` (본문 `{ keyword }`) | 본문 없음 | `removeAlertKeyword(alertKeyword:)` |
+| 찜 등록·해제 | #132의 V2 찜 | | `addFavorite(popupUuid:)`·`removeFavorite(popupUuid:)` |
+
+- 경로·인증·응답·오류 코드는 API 계약 문서(2026-10-30)로 확인했어요. 모두 Access Token이에요. 알림함 API는 `V2AlertAPI`, 키워드 API는 `V2AlertKeywordAPI`에 둬요.
+- 알림함 요청이 실패하면 `PopupError.failed`로 바꿔요. 이미 지운 알림(404 4001)은 Repository가 지운 것으로 봐요. 키워드 실패도 팝업처럼 HTTP 상태와 서버 코드만 로그로 남겨요.
+- 키워드 요청이 실패하면 Domain `AlertKeywordError`로 바꿔요. 이미 있는 키워드(409 4004)는 `alreadyExists`로 구분하고, 화면은 등록하려던 상태와 같으므로 목록에 남기고 문구를 띄우지 않아요. 서버에 없는 키워드 삭제(404 4003)는 Repository가 지운 것으로 봐요.
+- 화면은 원본 오류 대신 "알림을 불러오지 못했어요", "알림을 지우지 못했어요", "찜을 바꾸지 못했어요", "키워드를 등록하지 못했어요", "키워드를 지우지 못했어요"를 보여 줘요. 로그인이 끊긴 실패(`AuthSessionError`)는 문구를 띄우지 않아요.
+- 찜·알림 삭제·키워드 등록과 삭제는 응답을 기다리는 동안 같은 대상을 다시 누르면 무시해요. 같은 키워드의 등록과 삭제가 겹치면 서버와 화면이 어긋날 수 있어서예요.
+- 처음 열 때 알림함과 키워드를 따로 받아, 한쪽이 실패해도 받은 쪽은 보여 줘요.
+- 알림함 응답의 읽음 여부(`isRead`)와 읽음 처리 API(`PATCH /api/v2/user/alert/read`)는 아직 쓰지 않아요. 전체 삭제는 V2에도 한꺼번에 지우는 API가 없어 하나씩 차례로 지우고, 중간에 실패하면 그때까지 지운 알림만 목록에서 빼요. 지우는 동안 새로 받은 알림은 남겨요.
+- V1 알림·키워드 함수는 #152에서 지웠어요.
+
+### 푸시 토큰 (#148)
+
+`AppNotificationManager.syncStoredToken()`이 로그인한 사용자의 FCM 토큰을 `PUT /api/v2/user/fcm-token`(Access Token, 본문 `{"fcmToken"}`, 빈 본문 응답)으로 보내요. 서버는 저장만 하므로 V1의 중복 확인(GET) 단계를 없앴어요.
+
+- 보내는 때: 로그인 복구나 로그인이 끝나 메인 화면에 들어갈 때(`AppFeature.configureAuthenticatedSession` → `startSession()`), 그 뒤 FCM 토큰을 새로 받았을 때(APNs 등록 직후, Firebase 갱신). 앱이 켜지는 중(로그인 확인 중)에는 보내지 않아요. 이 요청이 401을 받으면 실행 판단 전에 로그아웃될 수 있어서예요. 로그인 토큰(`AuthTokenStorage`)이 없으면 보내지 않고, 로그아웃·세션 만료 때(`endSession()`) 기다리던 전송을 취소해요.
+- 요청은 하나씩 순서대로 보내고, 보낼 때 저장된 최신 토큰을 읽어요. 앱 시작 직후 Firebase가 토큰을 바꿔 두 번 보내도 서버에 옛 토큰이 남지 않아요.
+- 로그아웃해도 서버의 토큰은 그대로 남아요(이전 계정 알림이 이 기기로 올 수 있음). 로그아웃 시 토큰 해제 API가 필요해 백엔드 확인 항목으로 남겨요.
+- 서버는 저장만 하므로 같은 토큰을 다시 보내도 결과가 같아요. 그래서 중복 전송을 따로 막지 않아요(막으면 같은 실행에서 다른 계정으로 로그인했을 때 그 계정의 토큰이 가지 않아요).
+- 실패(404 4201 사용자 없음, 400 4205 토큰 누락 등)는 화면에 알리지 않고 로그만 남겨요. 다음 기회(앱 시작·로그인·토큰 갱신)에 다시 보내요.
+- V1 `checkFcmToken`·`updateFcmToken(userUuid:)`은 #152에서 지웠어요.
+
+### 정리 (#152)
+
+화면을 V2로 옮기며 남겨 둔 V1 함수 중 앱이 더 부르지 않는 것을 지웠어요. 화면 동작과 보내는 요청은 바뀌지 않아요.
+
+| 묶음 | 지운 V1 함수 |
+| --- | --- |
+| 팝업 (`PopupRepository`·`PopupUsecase`·`PopupAPI`) | `getPopupList`, `getUpcomingPopupList`, `getInProgressPopupList`, `searchPopupList`, `getRandomPopupList`, `getPersonalPopupList`, `getPersonalUseerRecommendPopupList`, `getPersonalUpcomingPopupList`, `getPersonalRandomPopupList`, `getAlertPopupList(userUuid:)`, `removeAlertPopup(userUuid:popupUuid:)` |
+| 사용자 (`UserRepository`·`UserUsecase`·`UserAPI`) | `getRecommandList`, `getAlertKeywordList(userUuid:)`, `addAlertKeyword(userUuid:alertKeyword:)`, `removeAlertKeyword(userUuid:alertKeyword:)`, `checkFcmToken`, `updateFcmToken(userUuid:fcmToken:)` |
+| 관리자 (`AdminRepository`·`AdminUsecase`·`AdminAPI`) | `getPopupSubmissionList`, `createPopupSubmission`, `deactivatePopupByUser`, `updatePopupSubmissionStatus`. 같은 이름의 `PopupSubmissionRepository` 함수는 남겼다가 #158에서 지웠어요. |
+
+- Repository·Usecase protocol과 구현, V1 API case를 함께 지웠어요. case가 모두 없어진 `UserAPI`·`AdminAPI`는 파일째 지웠어요. 관리자 V1 함수만 쓰던 `PopupSubmissionDTO`·`PopupSubmissionStatusUpdateRequestDTO`와 매핑, Domain `PopupSubmission`도 지웠어요. 다른 제보 매핑이 쓰던 `PopupSubmissionMappingError`는 따로 파일로 남겼다가 #158에서 함께 지웠어요.
+- 남긴 것: 지도 탭(`MapFeature`)과 옛 달력 모듈(`CalendarFeature`)이 쓰는 `PopupAPI`의 필터 팝업(home·map), 인기 추천 카테고리, 카테고리별 팝업, `userUuid` 찜 등록·해제. 세션의 `userUuid`도 지도가 요청에 넣어 보내므로 남겨요. 지도를 V2로 옮긴 뒤 지워요.
+- `PopupSubmission` repository(`PopupSubmissionAPI`)는 Swift 화면에서 부르지 않지만 제보 화면(React Native)과 관련이 있어 이 범위에서 뺐어요. PopPang-RN은 이 Swift API를 쓰지 않고 같은 서버 API를 직접 불러서(#154에서 V2로 전환), #158에서 V1 API·DTO·매핑·Repository·Usecase·Entity를 모두 지웠어요. 팝업 제보는 이제 RN 화면만 해요.
+
+### React Native 제보 화면 (#154)
+
+팝업 제보·제보 관리 화면은 PopPang-RN 저장소의 React Native 화면이 서버를 직접 불러요. V2는 Access Token이 필요해서, 앱이 RN에 토큰을 넘기는 길을 만들고 RN이 V2를 부르게 했어요.
+
+| 화면 | V1 | V2 |
+| --- | --- | --- |
+| 팝업 제보 | `GET /api/v1/recommend`, `POST /api/v1/popup-submissions` | `GET /api/v2/recommend`, `POST /api/v2/popup-submissions` (본문에 `userUuid` 없음) |
+| 제보 관리 (관리자) | `GET`·`PUT /api/v1/admin/popup-submissions?uuid=관리자 userUuid` | `GET`·`PUT /api/v2/admin/popup-submissions` (`uuid` 없음) |
+
+- 토큰 전달: RN `1.4.0`(Nativepiece Swift Package)의 계약 `calls.getAccessToken({ rejectedAccessToken, expired })`로 받아요. 앱은 시작할 때 `AppBootstrap`에서 `PopPangRNRuntime.start(authentication:)`으로 RN 런타임을 시작하고, 생성된 `PopPangRNHost`가 `AuthenticationPlugin.hostAccessToken(rejected:expired:)`로 답해요.
+- RN은 요청 전에 `rejectedAccessToken` 없이 토큰을 받아요. V2 요청이 401이면 보냈던 토큰과 응답 코드가 5002(토큰 만료)인지를 넘겨 토큰을 한 번 다시 받고 재시도해요(요청마다 한 번). 앱은 네트워크 요청(`MoyaProvider+Async`)과 같은 판단을 써요. 5002가 아닌 401의 판단은 `AuthenticationPlugin.handleUnauthorized(sentAccessToken:)` 하나를 두 경로가 함께 불러요.
+
+| RN이 넘긴 값 | 앱이 하는 일 |
+| --- | --- |
+| `rejectedAccessToken` 없음 (요청 전) | 저장된 Access Token을 돌려줘요. 없으면 로그인 필요로 답하되 토큰을 지우거나 로그인 화면으로 보내지 않아요. 아직 서버가 세션을 거절한 근거가 없어서, 판단은 앱 요청의 서버 응답에 맡겨요. |
+| 보낸 토큰 + `expired: true` (401 5002) | 그 토큰을 만료된 토큰으로 넘겨 `AccessTokenRefresher`로 갱신해요. 다른 요청이 이미 갱신했으면 다시 갱신하지 않고 새 토큰을 돌려줘요. 다른 요청이 이미 토큰을 지웠으면 갱신하지 않고 로그인 필요로 답하되 다시 알리지 않아요. |
+| 보낸 토큰 + `expired: false` (다른 401) | 그 토큰이 아직 저장돼 있으면 토큰을 지우고 로그인 필요로 답해요. 그 사이 다른 토큰으로 바뀌었으면 새 토큰을 돌려줘요. 다른 요청이 이미 토큰을 지웠으면 로그인 필요로 답하되 로그인 화면 알림은 다시 보내지 않아요. |
+
+- 로그인 필요로 답할 때는 네트워크 요청과 똑같이 로그인 화면으로 보내요(`AuthSessionEvents.notifyLoginRequired`). 토큰을 지운 쪽만 알려요. 다른 요청이 이미 지운 뒤에는 다시 알리지 않아요(`AppFeature`도 메인 화면에 있고 로그아웃 중이 아닐 때만 처리해요). 앱은 `NativepieceCallError(code: "login_required")`로 거절하고, RN은 "로그인 정보가 만료되었습니다. 다시 로그인해 주세요."를 보여요.
+- 갱신이 로그인 필요가 아닌 이유(503, 네트워크 오류 등)로 실패하면 토큰을 그대로 두고 일시 실패로 답해요. 앱은 `NativepieceCallError(code: "temporary_failure")`로 거절하고, RN은 "로그인 정보를 잠시 확인하지 못했습니다. 잠시 후 다시 시도해 주세요."를 보여요.
+- 403은 RN이 권한 없음 안내를 보여요.
+- RN 패키지 연결과 버전은 [React Native 패키지](../development/react-native.md)를 봐요. 이전 prebuild 산출물(`v1.1.0`·`v1.2.0`의 `PopPangHostAuth` 네이티브 모듈)은 앱에 쓰지 않아요.
+
+## 정해야 할 것
+
+| 번호 | 내용 | 관련 단계 | 상태 |
+| --- | --- | --- | --- |
+| 1 | 가입 화면이 추천 카테고리 목록과 닉네임 중복 확인을 인증 없이 불러요. V2에서는 Signup Token으로 두 API를 부를 수 없어요. 당분간 V1로 둘지, 서버 계약을 정할지 | 2, 3, 5 | 해결함 (2026-10-21). 서버가 두 API를 Signup Token으로도 부를 수 있게 권한을 바꾸기로 했어요. 확인 필요: 운영 서버 반영 여부. 반영 전이면 가입 화면 요청이 403 5008로 실패해요. |
+| 2 | 업데이트하면 기존 사용자는 V2 토큰이 없어서 한 번 다시 로그인해야 해요. 그대로 받아들일지 | 2 | 받아들이기로 결정함 |
+| 3 | 토큰 갱신이 401이 아닌 이유로 실패할 때 토큰을 지울지, 언제 다시 시도할지. 1단계는 토큰을 그대로 둬요. | 1, 2 | 미정 |
+| 4 | 서버 로그아웃이 실패할 때 로컬 로그인 정보를 지울지 | 2 | 지우기로 결정함 |
+| 5 | 가입 OS 기록. 명세(`cc55e51`)의 V2 가입은 `signupOs`를 받지 않았어요. | 2 | 해결함 (2026-10-21). 서버가 V2 가입에 `signupOs`를 추가해 배포했어요. 앱은 가입 요청 본문에 항상 `"signupOs": "IOS"`를 보내요(`V2SignupRequestDTO`). |
+| 6 | 로그인 전 화면이 부르는 V1 조회 API가 있는지 | 4 | 해결함 (2026-10-27). 온보딩 화면은 API를 부르지 않고, 로그인 화면은 V2 인증 API만 불러요. 팝업 조회는 모두 메인 탭 안에서만 일어나요. |
+| 7 | 토큰 유효기간과 요청 제한 횟수의 운영 값. 앱에 하드코딩하지 않아요. | 2 | 확인 필요: 서버 운영 설정 |
+| 8 | 토큰 저장 위치. 명세는 iOS Keychain에만 두라고 해요. 하지만 Keychain 항목은 앱을 지워도 남아서, 재설치 뒤 이전 계정 토큰이 요청에 실릴 수 있어요. 그래서 앱을 지우면 함께 지워지는 UserDefaults에 두기로 했어요. 대신 UserDefaults는 암호화되지 않은 파일이라 기기 백업이나 탈옥 기기에서 토큰이 보일 수 있어요. `KeychainStore` 구현은 남겨 둬서 나중에 다시 바꿀 수 있어요. | 1 | 결정함 (2026-10-19) |
+
+## 관련 문서
+
+- [아키텍처](architecture.md)
+- [의존성 주입](dependency-injection.md)
+- [테스트](../development/testing.md)
