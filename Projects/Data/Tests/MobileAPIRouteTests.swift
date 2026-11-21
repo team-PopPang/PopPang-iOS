@@ -7,7 +7,7 @@ import Testing
 
 /// 앱이 호출하는 V2 API가 서버의 모바일 전용 경로(`/api/v2/mobile/...`)만 쓰는지 확인한다.
 /// 기준은 서버가 공유한 모바일 API 정리본의 AFTER 40건이다.
-/// 관리자 API(`V2AdminAPI`)는 정리본에 없어 서버와 경로를 정하는 중이므로 대상에서 뺀다.
+/// 관리자 API(`V2AdminAPI`)는 모바일 전환 대상이 아니라 기존 `/api/v2/admin` 경로를 쓰므로 대상에서 뺀다.
 struct MobileAPIRouteTests {
     /// 정리본의 AFTER 40건. 경로 변수 `{popupUuid}`는 아래 요청에서 쓰는 `popup-1`로 바꿔 적는다.
     static let mobileRoutes: Set<String> = [

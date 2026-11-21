@@ -4,7 +4,7 @@ import Moya
 
 /// V1 회원 팝업 API
 ///
-/// 다른 화면은 모두 V2로 옮겼다. 지도 탭(`MapFeature`)과 남겨 둔 옛 달력 모듈(`CalendarFeature`)이 쓰는 case만 남았다.
+/// 앱에 연결된 화면은 모두 V2(`/api/v2/mobile`)로 옮겼다. 앱에 연결되지 않은 옛 모듈 `MapFeatureV1`과 `CalendarFeature`가 쓰는 case만 남아서, 출시 앱은 이 API를 호출하지 않는다.
 public enum PopupAPI {
     case getPersonalFilteredPopupList(userUuid: String, region: String, district: String, homeSortStandard: String)
     case getPersonalMapFilteredPopupList(
