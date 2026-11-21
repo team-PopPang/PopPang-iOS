@@ -113,6 +113,8 @@ Projects
 - `.classic`: 시스템 탭바를 숨기고, 기존 모양을 그대로 옮긴 `PopPangTabBar`를 overlay로 그린다. `TabView`는 바깥에서 더한 safe area를 탭 화면에 전달하지 않으므로, `PopPangTabView`가 탭 화면마다 하단 safe area에 탭바 높이(49pt)를 직접 더한다.
 - `.system`: 시스템 탭바를 쓴다. Xcode 27부터는 `UIDesignRequiresCompatibility`가 무시되어 Liquid Glass로 그려진다.
 
+`.classic`에서 이미 고른 탭을 다시 누르면 `PopPangTabBar`가 알리고, `PopPangTabView`가 그 탭 화면에 전한다. 받고 싶은 탭 화면만 `.onPopPangTabReselect { }`로 동작을 붙인다. SwiftUI 스크롤 뷰를 맨 위로 올리려면 `ScrollView`에 `.scrollsToTopOnPopPangTabReselect()`, 그 안 첫 내용에 `.popPangTabReselectTopAnchor()`를 붙인다. `.system`은 SwiftUI `TabView`가 같은 탭을 다시 골랐을 때 알려 준다는 보장이 없어 지원하지 않는다. 다른 탭으로 바꾼 직후 0.5초 안에 한 번 더 누른 것은 다시 누름으로 보지 않는다. 알림은 SwiftUI environment로 전하므로 `UIHostingController`를 따로 만드는 화면에는 이어지지 않는다. 찜 탭의 `SegmentedControlView`는 페이지에 값을 다시 넣어 준다. 지금은 홈(`listProxy.scrollToTop`), 캘린더, 찜(찜리스트·찜캘린더)이 맨 위로 올리고, 지도와 마이는 아무것도 하지 않는다.
+
 두 모양 모두 safe area를 따르는 탭 화면은 탭바 위까지만 그려진다. 두 모양은 DSKit 데모의 탭바 비교 화면에서 비교한다. 실행 인자 `-tabBarStyle system` 또는 `-tabBarStyle classic`으로 고른다. safe area를 무시하고 그리는 화면만 탭바 높이를 직접 더하고, 이때 `@Environment(\.popPangTabBarStyle)`로 스타일을 확인한다(예: `MapFeatureView`의 목록 보기 버튼).
 
 내비게이션 바는 시스템 바를 그대로 쓴다. Xcode 27로 빌드하면 툴바 항목 뒤에 유리 배경이 붙으므로, 툴바는 `toolbar` 대신 DSKit `ppToolbar`로 붙여 유리 배경을 끈다. 공통 뒤로가기 바 `ppBackNavigationBar`는 이미 `ppToolbar`를 쓰고, 툴바 항목을 직접 넣는 화면만 따로 쓴다(예: `PopupDetailFeatureView`의 뒤로가기 버튼).

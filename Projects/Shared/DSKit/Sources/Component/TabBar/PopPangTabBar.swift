@@ -24,6 +24,10 @@ public enum PopPangTabBarMetrics {
 /// 탭 화면은 `@Environment(\.popPangTabBarStyle)`로 현재 스타일을 읽는다.
 public struct PopPangTabView<Tab: Hashable, Content: View>: View {
     @Binding private var selection: Tab
+    /// 탭별로 이미 고른 탭을 다시 누른 횟수. 탭 화면은 `onPopPangTabReselect`로 이 값이 늘어나는 것을 받는다.
+    /// `.classic`의 `PopPangTabBar`만 다시 누름을 알린다. `.system`은 SwiftUI `TabView`가 같은 탭을 다시 골랐을 때
+    /// 알려 준다는 보장이 없어(값을 다시 쓰지 않거나, 나타날 때 같은 값을 쓰기도 한다) 지원하지 않는다.
+    @State private var reselectCounts: [Tab: Int] = [:]
     private let tabs: [Tab]
     private let style: PopPangTabBarStyle
     private let title: (Tab) -> String
@@ -50,6 +54,7 @@ public struct PopPangTabView<Tab: Hashable, Content: View>: View {
         TabView(selection: $selection) {
             ForEach(tabs, id: \.self) { tab in
                 content(tab)
+                    .environment(\.popPangTabReselectCount, reselectCounts[tab, default: 0])
                     // TabView는 바깥에서 더한 safe area를 탭 화면에 전달하지 않는다.
                     // 시스템 탭바처럼 탭 화면의 하단 safe area에 커스텀 탭바 높이를 직접 더한다.
                     .safeAreaPadding(.bottom, style == .classic ? PopPangTabBarMetrics.height : 0)
@@ -69,12 +74,16 @@ public struct PopPangTabView<Tab: Hashable, Content: View>: View {
             if style == .classic {
                 // overlay는 키보드 safe area 안에 놓여, 키보드가 올라오면 탭바도 키보드 위로 따라 올라간다.
                 // 화면 전체 높이로 펼친 뒤 키보드 safe area를 무시해 탭바를 화면 바닥에 고정한다(키보드가 탭바를 덮는다).
-                PopPangTabBar(tabs: tabs, selection: $selection, title: title, image: image)
+                PopPangTabBar(tabs: tabs, selection: $selection, title: title, image: image, onReselect: reselect)
                     .frame(maxHeight: .infinity, alignment: .bottom)
                     .ignoresSafeArea(.keyboard, edges: .bottom)
             }
         }
         .environment(\.popPangTabBarStyle, style)
+    }
+
+    private func reselect(_ tab: Tab) {
+        reselectCounts[tab, default: 0] += 1
     }
 }
 
@@ -84,17 +93,24 @@ public struct PopPangTabBar<Tab: Hashable>: View {
     private let tabs: [Tab]
     private let title: (Tab) -> String
     private let image: (Tab, _ isSelected: Bool) -> Image
+    private let onReselect: ((Tab) -> Void)?
+    /// 마지막으로 다른 탭으로 바꾼 시각. 다른 탭을 빠르게 두 번 누른 것을 다시 누름으로 보지 않는 데 쓴다.
+    @State private var lastSelectionChange = Date.distantPast
+    private static var reselectGuardInterval: TimeInterval { 0.5 }
 
+    /// - Parameter onReselect: 이미 고른 탭을 다시 눌렀을 때 부른다.
     public init(
         tabs: [Tab],
         selection: Binding<Tab>,
         title: @escaping (Tab) -> String,
-        image: @escaping (Tab, _ isSelected: Bool) -> Image
+        image: @escaping (Tab, _ isSelected: Bool) -> Image,
+        onReselect: ((Tab) -> Void)? = nil
     ) {
         self.tabs = tabs
         self._selection = selection
         self.title = title
         self.image = image
+        self.onReselect = onReselect
     }
 
     public var body: some View {
@@ -120,7 +136,14 @@ public struct PopPangTabBar<Tab: Hashable>: View {
 
     private func item(for tab: Tab, isSelected: Bool) -> some View {
         Button {
-            selection = tab
+            if selection == tab {
+                // 다른 탭으로 바꾸자마자 한 번 더 누른 것(빠른 두 번 누르기)은 다시 누름으로 보지 않는다.
+                guard Date().timeIntervalSince(lastSelectionChange) > Self.reselectGuardInterval else { return }
+                onReselect?(tab)
+            } else {
+                selection = tab
+                lastSelectionChange = Date()
+            }
         } label: {
             // 기존 시스템 탭바처럼 아이콘을 에셋 원래 크기로 그리고, 중심 위치를 고정한다.
             // 고른 탭은 같은 아이콘의 모양만 쓰고 `PPColor.tabSelected`로 칠한다. 고르지 않은 탭은 에셋 원래 색(피그마 #9A9A9A)이다.
@@ -155,5 +178,72 @@ public extension EnvironmentValues {
     var popPangTabBarStyle: PopPangTabBarStyle {
         get { self[PopPangTabBarStyleKey.self] }
         set { self[PopPangTabBarStyleKey.self] = newValue }
+    }
+}
+
+private struct PopPangTabReselectCountKey: EnvironmentKey {
+    static let defaultValue = 0
+}
+
+extension EnvironmentValues {
+    /// 이 탭 화면의 탭을 이미 고른 상태에서 다시 누른 횟수.
+    var popPangTabReselectCount: Int {
+        get { self[PopPangTabReselectCountKey.self] }
+        set { self[PopPangTabReselectCountKey.self] = newValue }
+    }
+}
+
+public extension View {
+    /// 이 화면이 들어 있는 탭을 이미 고른 상태에서 다시 누르면 `action`을 부른다.
+    /// 목록이 있는 탭 화면이 맨 위로 올리는 데 쓴다. 쓰지 않는 화면은 아무 일도 하지 않는다.
+    func onPopPangTabReselect(perform action: @escaping () -> Void) -> some View {
+        modifier(PopPangTabReselectModifier(action: action))
+    }
+}
+
+private struct PopPangTabReselectModifier: ViewModifier {
+    @Environment(\.popPangTabReselectCount) private var count
+    let action: () -> Void
+
+    func body(content: Content) -> some View {
+        // 탭 화면이 다시 만들어져 0으로 돌아가는 경우는 다시 누름이 아니다. 늘어날 때만 부른다.
+        content.onChange(of: count) { oldValue, newValue in
+            guard newValue > oldValue else { return }
+            action()
+        }
+    }
+}
+
+public extension View {
+    /// 스크롤 뷰 안의 첫 내용에 붙인다. 탭을 다시 누르면 스크롤 뷰가 이 위치(내용 맨 위)로 올라온다.
+    /// 높이가 0인 표시를 overlay로 얹어서 레이아웃은 바뀌지 않는다. `scrollsToTopOnPopPangTabReselect()`와 함께 쓴다.
+    func popPangTabReselectTopAnchor() -> some View {
+        overlay(alignment: .top) {
+            Color.clear
+                .frame(height: 0)
+                .id(PopPangTabReselectScroll.topID)
+        }
+    }
+
+    /// `ScrollView`에 붙인다. 이 화면의 탭을 다시 누르면 `popPangTabReselectTopAnchor()`를 붙인 곳으로 올린다.
+    func scrollsToTopOnPopPangTabReselect() -> some View {
+        modifier(PopPangTabReselectScrollToTopModifier())
+    }
+}
+
+private enum PopPangTabReselectScroll {
+    static let topID = "popPangTabReselectTop"
+}
+
+private struct PopPangTabReselectScrollToTopModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        ScrollViewReader { proxy in
+            content
+                .onPopPangTabReselect {
+                    withAnimation {
+                        proxy.scrollTo(PopPangTabReselectScroll.topID, anchor: .top)
+                    }
+                }
+        }
     }
 }

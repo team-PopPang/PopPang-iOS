@@ -154,7 +154,9 @@ private struct ListGridPopupScrollView: View {
                     }
                 }
             }
+            .popPangTabReselectTopAnchor()
         }
+        .scrollsToTopOnPopPangTabReselect()
     }
 }
 
@@ -264,7 +266,9 @@ private struct FavoriteCalendarView: View {
 
                 Spacer()
             }
+            .popPangTabReselectTopAnchor()
         }
+        .scrollsToTopOnPopPangTabReselect()
     }
 }
 

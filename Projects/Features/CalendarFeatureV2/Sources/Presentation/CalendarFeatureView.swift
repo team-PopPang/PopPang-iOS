@@ -88,7 +88,9 @@ public struct CalendarFeatureView: View {
 
                     Spacer()
                 }
+                .popPangTabReselectTopAnchor()
             }
+            .scrollsToTopOnPopPangTabReselect()
             .padding(.top, 10)
 
             Spacer()

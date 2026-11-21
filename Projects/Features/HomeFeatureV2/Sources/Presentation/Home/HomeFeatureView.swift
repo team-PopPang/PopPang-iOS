@@ -84,6 +84,10 @@ public struct HomeFeatureView: View {
                         )
                     }
                 }
+                // 홈 탭을 다시 누르면 목록 맨 위로 올린다.
+                .onPopPangTabReselect {
+                    _ = listProxy.scrollToTop(animated: true)
+                }
             }
         }
         .sheet(item: $sheetRoute, onDismiss: handleSheetDismiss) { route in
