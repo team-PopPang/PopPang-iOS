@@ -10,6 +10,7 @@ struct DSKitCatalogView: View {
     @State private var catalogSheetDetent: BottomSheetDetent? = .medium
     @State private var dropdownSelection: String? = "전체"
     @State private var sortOption: SortButton.SortOption = .mostFavorited
+    @State private var calendarSelectedDate = Date()
 
     var body: some View {
         NavigationStack {
@@ -383,12 +384,15 @@ struct DSKitCatalogView: View {
             ]
         ) {
             CustomCalendar(
+                selectedDate: calendarSelectedDate,
                 eventCounts: [
                     today: 2,
                     tomorrow: 1,
                     dayAfterTomorrow: 4,
                 ]
-            ) { _ in }
+            ) { date in
+                calendarSelectedDate = date
+            }
         }
     }
 

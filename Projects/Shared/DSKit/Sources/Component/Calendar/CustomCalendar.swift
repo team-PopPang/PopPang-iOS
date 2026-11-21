@@ -1,17 +1,18 @@
 import SwiftUI
 
+/// 월 달력. 선택 날짜는 화면 state가 가진 값을 받아서 그리고, 날짜를 누르거나 달을 넘기면 `onDateSelected`로 알린다.
+/// 달력은 선택 날짜를 따로 들지 않는다. 그래서 달력이 다시 만들어져도 화면 state의 날짜와 어긋나지 않는다.
 public struct CustomCalendar: View {
-    @State private var dates: [DateValue] = []
-    @State private var currentDate: Date = .init()
-    @State private var currentMonth: Int = 0
-
+    let selectedDate: Date
     let eventCounts: [Date: Int]
     let onDateSelected: (Date) -> Void
 
     public init(
+        selectedDate: Date,
         eventCounts: [Date: Int],
         onDateSelected: @escaping (Date) -> Void
     ) {
+        self.selectedDate = selectedDate
         self.eventCounts = eventCounts
         self.onDateSelected = onDateSelected
     }
@@ -20,7 +21,7 @@ public struct CustomCalendar: View {
         VStack(spacing: 0) {
             VStack {
                 MonthHeaderView(
-                    currentDate: currentDate,
+                    currentDate: selectedDate,
                     onPreviousTapped: {
                         moveMonth(by: -1)
                     },
@@ -32,20 +33,31 @@ public struct CustomCalendar: View {
                 WeekHeaderView()
                     .padding(.top, 20)
                 DateGridView(
-                    dates: dates,
-                    currentDate: currentDate,
+                    dates: Self.dates(inMonthOf: selectedDate),
+                    currentDate: selectedDate,
                     eventCounts: eventCounts,
-                    onSelect: { date in
-                        currentDate = date
-                        onDateSelected(date)
-                    }
+                    onSelect: select
                 )
             }
             .padding(.horizontal, .contentPadding)
         }
-        .onAppear {
-            extractDate()
-        }
+    }
+
+    /// 달을 넘겼을 때 선택할 날짜. 오늘 기준으로, 보이는 달에서 `value`만큼 옮긴 달의 오늘과 같은 날이다.
+    /// 그 달에 같은 날이 없으면 그 달의 마지막 날이다(1/31 기준이면 2월은 28·29일, 3월은 다시 31일).
+    public static func date(
+        movingMonthOf selectedDate: Date,
+        by value: Int,
+        today: Date = Date(),
+        calendar: Calendar = .current
+    ) -> Date {
+        let todayStart = calendar.startOfDay(for: today)
+        guard
+            let todayMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: todayStart)),
+            let selectedMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: selectedDate))
+        else { return todayStart }
+        let offset = calendar.dateComponents([.month], from: todayMonth, to: selectedMonth).month ?? 0
+        return calendar.date(byAdding: .month, value: offset + value, to: todayStart) ?? todayStart
     }
 }
 
@@ -122,7 +134,8 @@ private struct DateGridView: View {
 
     var body: some View {
         LazyVGrid(columns: columns, spacing: 15) {
-            ForEach(dates) { value in
+            // 날짜 칸은 그릴 때마다 새로 만들므로, 칸의 위치로 구분해 같은 칸이 다시 생성되지 않게 한다.
+            ForEach(Array(dates.enumerated()), id: \.offset) { _, value in
                 let isSelected = Calendar.current.isDate(value.date, inSameDayAs: currentDate)
                 let eventCount = eventCounts[value.date.stripTime()] ?? 0
 
@@ -141,35 +154,29 @@ private struct DateGridView: View {
 }
 
 private extension CustomCalendar {
-    func getCurrentMonth() -> Date {
-        let calendar = Calendar.current
-        return calendar.date(byAdding: .month, value: currentMonth, to: Date()) ?? Date()
-    }
-
-    func extractDate() {
-        let calendar = Calendar.current
-        let currentMonth = getCurrentMonth()
-
-        var days = currentMonth.getAllDates().compactMap { date in
-            let day = calendar.component(.day, from: date)
-            return DateValue(day: day, date: date)
-        }
-
-        let firstWeekDay = calendar.component(.weekday, from: days.first?.date ?? Date())
-
-        for _ in 0 ..< firstWeekDay - 1 {
-            days.insert(DateValue(day: -1, date: Date()), at: 0)
-        }
-
-        dates = days
+    /// 날짜를 누를 때와 달을 넘길 때 모두 이 함수로 선택을 알린다.
+    func select(_ date: Date) {
+        onDateSelected(date)
     }
 
     func moveMonth(by value: Int) {
-        currentMonth += value
-        currentDate = getCurrentMonth()
-        extractDate()
-        // 달을 넘기면 선택 날짜가 오늘 기준 같은 날로 바뀐다. 화면의 목록도 같은 날짜로 맞추도록 알린다.
-        onDateSelected(currentDate)
+        select(Self.date(movingMonthOf: selectedDate, by: value))
+    }
+
+    /// `date`가 속한 달의 날짜 칸. 첫 주의 앞쪽 빈칸은 `day == -1`로 채운다.
+    static func dates(inMonthOf date: Date) -> [DateValue] {
+        let calendar = Calendar.current
+        var days = date.getAllDates().compactMap { date in
+            DateValue(day: calendar.component(.day, from: date), date: date)
+        }
+
+        let firstWeekDay = calendar.component(.weekday, from: days.first?.date ?? date)
+
+        for _ in 0 ..< firstWeekDay - 1 {
+            days.insert(DateValue(day: -1, date: date), at: 0)
+        }
+
+        return days
     }
 }
 
