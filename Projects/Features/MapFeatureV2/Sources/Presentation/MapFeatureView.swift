@@ -109,10 +109,13 @@ public struct MapFeatureView: View {
                 }
                 .onAppear {
                     bottomBarHeightValue = bottomBarHeight
+                    // 네이버 로고를 탭바 바로 위 오른쪽에 고정한다.
+                    NaverMapCoordinator.shared.fixedBottomInset = bottomBarHeight
                     updateMapVisibleInsets()
                 }
                 .onChange(of: bottomBarHeight) { _, height in
                     bottomBarHeightValue = height
+                    NaverMapCoordinator.shared.fixedBottomInset = height
                     updateMapVisibleInsets()
                 }
                 .onChange(of: listDetent) { _, _ in updateMapVisibleInsets() }

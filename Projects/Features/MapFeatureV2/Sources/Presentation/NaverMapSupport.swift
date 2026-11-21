@@ -48,10 +48,32 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
     private var paddingReturnTarget: NMGLatLng?
     /// 마지막 코드 이동을 시작한 뒤 카메라가 (여백 맞추기가 아닌 이유로) 움직였는지.
     private var cameraChangedSinceMoveStart = false
-    /// 지금 지도에 반영된 아래 여백(시트·카드가 가리는 높이).
-    var contentBottomInset: CGFloat { view.mapView.contentInset.bottom }
-    /// 지금 지도에 반영된 위 여백(검색창·칩이 가리는 높이).
-    var contentTopInset: CGFloat { view.mapView.contentInset.top }
+    /// 화면이 정한 보이는 영역의 위·아래 여백. 위는 검색창·칩, 아래는 시트·카드가 가리는 높이다.
+    /// 지도에는 그대로 넣지 않고 `mapInsets(for:)`로 바꿔 넣는다.
+    private var visibleInsets = UIEdgeInsets.zero
+    /// 지도 아래를 늘 가리는 높이(탭바). 지도의 아래 여백은 이 값으로 고정해 네이버 로고를 탭바 바로 위 오른쪽에 둔다.
+    var fixedBottomInset: CGFloat = 0 {
+        didSet {
+            guard abs(fixedBottomInset - oldValue) > 0.5 else { return }
+            // 보이는 영역의 가운데는 그대로라 카메라는 움직이지 않는다.
+            isIssuingInsetMove = true
+            view.mapView.setContentInset(mapInsets(for: visibleInsets), reason: Int32(NMFMapChangedByContentPadding))
+            isIssuingInsetMove = false
+        }
+    }
+    /// 지금 반영한 보이는 영역의 아래 여백(시트·카드가 가리는 높이).
+    var contentBottomInset: CGFloat { visibleInsets.bottom }
+    /// 지금 반영한 보이는 영역의 위 여백(검색창·칩이 가리는 높이).
+    var contentTopInset: CGFloat { visibleInsets.top }
+
+    /// 보이는 영역 여백을 지도의 콘텐츠 여백으로 바꾼다.
+    /// 네이버 SDK는 로고를 콘텐츠 여백을 뺀 영역의 구석에 그리므로, 아래 여백을 시트 높이만큼 주면 로고가 시트 위로 떠오른다.
+    /// 그래서 아래 여백은 탭바 높이로 고정하고, 시트·카드가 더 가리는 만큼 위 여백을 줄인다(음수 허용, 예전 지도도 위 여백을 음수로 썼다).
+    /// 콘텐츠 영역의 가운데는 보이는 영역의 가운데와 같다.
+    private func mapInsets(for visible: UIEdgeInsets) -> UIEdgeInsets {
+        let bottom = fixedBottomInset
+        return UIEdgeInsets(top: visible.top - (visible.bottom - bottom), left: 0, bottom: bottom, right: 0)
+    }
 
     /// 받은 위치를 위치 오버레이에 넣는다. 카메라는 옮기지 않는다. 내 위치 버튼이 이 위치로 옮긴다.
     func updateLocationOverlay(_ coordinate: CLLocationCoordinate2D) {
@@ -194,13 +216,14 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
         guard let lat = popup.latitude, let lng = popup.longitude else { return }
         disableUserTracking()
         if topInset != nil || bottomInset != nil {
-            var insets = view.mapView.contentInset
-            if let topInset { insets.top = max(0, topInset) }
-            if let bottomInset { insets.bottom = max(0, bottomInset) }
+            var visible = visibleInsets
+            if let topInset { visible.top = max(0, topInset) }
+            if let bottomInset { visible.bottom = max(0, bottomInset) }
+            visibleInsets = visible
             // 화면에 보이는 지도는 그대로 두고 여백만 바꾼다(카메라 좌표만 새 영역 가운데로 옮겨지고 화면은 튀지 않는다).
             // 이어지는 팝업 이동이 한 번의 애니메이션으로 보이는 영역 가운데에 도착한다.
             isIssuingInsetMove = true
-            view.mapView.setContentInset(insets, reason: Int32(NMFMapChangedByContentPadding))
+            view.mapView.setContentInset(mapInsets(for: visible), reason: Int32(NMFMapChangedByContentPadding))
             isIssuingInsetMove = false
             hasAppliedInsets = true
         }
@@ -225,10 +248,12 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
     /// - Parameter recenter: 보고 있던 중심을 새 영역의 가운데로 옮길지. `false`면 카메라 좌표를 그대로 두고 여백만 바꾼다.
     ///   이때 그려진 지도가 여백 차이만큼 밀리므로, 시트를 끝까지 펼쳐 지도가 가려진 동안에만 쓴다.
     func setVisibleInsets(top: CGFloat, bottom: CGFloat, recenter: Bool = true) {
-        let insets = UIEdgeInsets(top: max(0, top), left: 0, bottom: max(0, bottom), right: 0)
+        let visible = UIEdgeInsets(top: max(0, top), left: 0, bottom: max(0, bottom), right: 0)
         let mapView = view.mapView
-        let current = mapView.contentInset
-        guard abs(current.top - insets.top) > 1 || abs(current.bottom - insets.bottom) > 1 else { return }
+        let current = visibleInsets
+        guard abs(current.top - visible.top) > 1 || abs(current.bottom - visible.bottom) > 1 else { return }
+        visibleInsets = visible
+        let insets = mapInsets(for: visible)
         defer { hasAppliedInsets = true }
         guard recenter else {
             // 카메라 좌표(리듀서가 아는 지도 중심)는 그대로 두고 여백만 바꾼다. 카메라 이벤트가 오지 않아 중심이 몰래 바뀌지 않는다.
