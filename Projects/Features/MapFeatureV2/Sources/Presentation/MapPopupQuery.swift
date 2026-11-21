@@ -49,6 +49,8 @@ public struct MapPopupQuery: Equatable, Sendable {
     public var longitude: Double?
     public var sort: MapSortOption
     public var filter: MapPopupFilter
+    /// 팝업 이름·주소 검색어. 서버 `q`로 보낸다. `nil`이면 검색하지 않는다.
+    public var keyword: String?
 
     public init(
         region: String = "전체",
@@ -56,7 +58,8 @@ public struct MapPopupQuery: Equatable, Sendable {
         latitude: Double? = nil,
         longitude: Double? = nil,
         sort: MapSortOption = .closest,
-        filter: MapPopupFilter = MapPopupFilter()
+        filter: MapPopupFilter = MapPopupFilter(),
+        keyword: String? = nil
     ) {
         self.region = region
         self.district = district
@@ -64,6 +67,7 @@ public struct MapPopupQuery: Equatable, Sendable {
         self.longitude = longitude
         self.sort = sort
         self.filter = filter
+        self.keyword = keyword
     }
 }
 
@@ -82,7 +86,8 @@ public struct MapPopupSearchResult: Equatable, Sendable {
 /// 지도 API가 아직 지원하지 않는 기능. 화면에 "(x)"를 붙여 표시하고, 조건은 서버에 보내지 않는다.
 /// API가 생기면 해당 값을 `true`로 바꾸고 `MapFeatureClient.live`에서 조건을 보낸다.
 enum MapAPISupport {
-    static let keyword = false
+    /// 지도 API가 `q`(이름·주소 검색)를 받는다(2026-11-21 서버 반영).
+    static let keyword = true
 }
 
 /// 마커 색을 고르는 규칙. 팝업 응답의 `recommendList`(카테고리 이름)를 지도 카테고리(`recommend/map`) 이름과 맞춘다.

@@ -47,6 +47,30 @@
         }
       }
     },
+    "검색 결과가 없어요." : {
+      "comment" : "Empty state of the map list when a search keyword returns no pop-ups",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "No search results."
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "needs_review",
+            "value" : "検索結果がありません。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "검색 결과가 없어요."
+          }
+        }
+      }
+    },
     "내 위치" : {
       "extractionState" : "manual",
       "localizations" : {

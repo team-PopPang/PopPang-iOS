@@ -111,7 +111,7 @@ struct MobileAPIRouteTests {
             .regionList,
             .random,
             .upcoming,
-            .filteredMap(region: "서울", district: "전체", latitude: nil, longitude: nil, mapSortStandard: "NEWEST", recommendIds: []),
+            .filteredMap(region: "서울", district: "전체", latitude: nil, longitude: nil, mapSortStandard: "NEWEST", recommendIds: [], q: "성수"),
             .recommendMap,
         ].map(route)
         routes += try [V2FavoriteAPI.list, .add(popupUuid: popupUuid), .remove(popupUuid: popupUuid)].map(route)

@@ -170,6 +170,12 @@ private extension MapFeatureView {
                 onRegionTap: {
                     openMenu = nil
                     isRegionSheetPresented = true
+                },
+                onSubmit: {
+                    // 미리보기 카드를 보는 중에 검색하면 카드를 닫고 목록을 절반으로 올려 결과를 보여 준다.
+                    if store.selectedPopup != nil { store.send(.previewDismissed) }
+                    if listDetent == nil { listDetent = .medium }
+                    store.send(.searchSubmitted)
                 }
             )
             .padding(.horizontal, 16)
@@ -376,7 +382,13 @@ private struct MapListSheet: View {
                 .padding(.top, 32)
                 .padding(.horizontal, 24)
         } else if store.popups.isEmpty {
-            Text("이 지역에 팝업이 없어요.", bundle: .module)
+            Group {
+                if store.appliedKeyword == nil {
+                    Text("이 지역에 팝업이 없어요.", bundle: .module)
+                } else {
+                    Text("검색 결과가 없어요.", bundle: .module)
+                }
+            }
                 .font(.scdream(.regular, size: 14))
                 .foregroundStyle(MapColor.secondaryText)
                 .frame(maxWidth: .infinity)

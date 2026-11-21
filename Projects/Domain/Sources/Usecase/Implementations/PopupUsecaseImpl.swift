@@ -41,7 +41,8 @@ public final class PopupUsecaseImpl: PopupUsecaseProtocol {
         latitude: Double?,
         longitude: Double?,
         mapSortStandard: String,
-        recommendIds: [Int]
+        recommendIds: [Int],
+        keyword: String?
     ) async throws -> [Popup] {
         try await popupRepository.getMapPopupList(
             region: region,
@@ -49,7 +50,8 @@ public final class PopupUsecaseImpl: PopupUsecaseProtocol {
             latitude: latitude,
             longitude: longitude,
             mapSortStandard: mapSortStandard,
-            recommendIds: recommendIds
+            recommendIds: recommendIds,
+            keyword: keyword
         )
     }
 

@@ -38,6 +38,8 @@ struct MapSearchBar: View {
     var isOnList = false
     @Binding var text: String
     let onRegionTap: () -> Void
+    /// 키보드 "검색"을 눌렀을 때.
+    var onSubmit: () -> Void = {}
 
     var body: some View {
         HStack(spacing: 10) {
@@ -74,6 +76,7 @@ struct MapSearchBar: View {
             .font(.scdream(.regular, size: 14))
             .tint(MapColor.text)
             .submitLabel(.search)
+            .onSubmit(onSubmit)
 
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 17, weight: .medium))

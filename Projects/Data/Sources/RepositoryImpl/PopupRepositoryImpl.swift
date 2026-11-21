@@ -73,7 +73,8 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
         latitude: Double?,
         longitude: Double?,
         mapSortStandard: String,
-        recommendIds: [Int]
+        recommendIds: [Int],
+        keyword: String?
     ) async throws -> [Popup] {
         // 명세 UPOP-05: 감싸지 않은 팝업 배열이다. 운영 중 팝업만 준다.
         try await popupRequest {
@@ -84,7 +85,8 @@ public final class PopupRepositoryImpl: PopupRepositoryProtocol {
                     latitude: latitude,
                     longitude: longitude,
                     mapSortStandard: mapSortStandard,
-                    recommendIds: recommendIds
+                    recommendIds: recommendIds,
+                    q: keyword
                 ),
                 decodeTo: [PopupDTO].self
             ).map { $0.toEntity() }

@@ -38,14 +38,15 @@ public struct MapFeatureClient: Sendable {
                 try await popupUsecaseBox.usecase.getMapCategoryList()
             },
             searchMapPopups: { query in
-                // 지역·구·위치·정렬·카테고리를 서버에 보낸다. 앱에서 거르지 않는다.
+                // 지역·구·위치·정렬·카테고리·검색어를 서버에 보낸다. 앱에서 거르지 않는다.
                 let items = try await popupUsecaseBox.usecase.getMapPopupList(
                     region: query.region,
                     district: query.district,
                     latitude: query.latitude,
                     longitude: query.longitude,
                     mapSortStandard: query.sort.rawValue,
-                    recommendIds: query.filter.categoryIds.sorted()
+                    recommendIds: query.filter.categoryIds.sorted(),
+                    keyword: query.keyword
                 )
                 return MapPopupSearchResult(items: items, totalCount: items.count)
             },

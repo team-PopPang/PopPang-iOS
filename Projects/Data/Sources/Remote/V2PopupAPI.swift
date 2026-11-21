@@ -25,7 +25,8 @@ public enum V2PopupAPI {
     case upcoming
     /// `GET /api/v2/mobile/user/popups/filtered/map` (UPOP-05). 지도 목록이다. 운영 중 팝업만 준다. 위치는 가까운순(CLOSEST)에 쓴다.
     /// `recommendIds`는 카테고리 필터다. 하나라도 해당하는 팝업을 받고, 비어 있으면 보내지 않는다(카테고리로 거르지 않음).
-    case filteredMap(region: String, district: String, latitude: Double?, longitude: Double?, mapSortStandard: String, recommendIds: [Int])
+    /// `q`는 팝업 이름·주소 검색어다. 서버가 지역·구·카테고리 안에서 대소문자 구분 없이 찾고, 정렬은 그대로 둔다. 비었거나 공백뿐이면 보내지 않는다.
+    case filteredMap(region: String, district: String, latitude: Double?, longitude: Double?, mapSortStandard: String, recommendIds: [Int], q: String?)
     /// `GET /api/v2/mobile/recommend/map`. 지도 마커 색을 담은 카테고리 전체다. 감싸지 않은 `{id, recommendName, color}` 배열이고 `id` 오름차순이다.
     case recommendMap
 }
@@ -86,7 +87,7 @@ extension V2PopupAPI: BaseAPI {
                 ],
                 encoding: URLEncoding.queryString
             )
-        case let .filteredMap(region, district, latitude, longitude, mapSortStandard, recommendIds):
+        case let .filteredMap(region, district, latitude, longitude, mapSortStandard, recommendIds, q):
             var parameters: [String: Any] = [
                 "region": region,
                 "district": district,
@@ -99,6 +100,9 @@ extension V2PopupAPI: BaseAPI {
             }
             if recommendIds.isEmpty == false {
                 parameters["recommendIds"] = recommendIds.map(String.init).joined(separator: ",")
+            }
+            if let keyword = q?.trimmingCharacters(in: .whitespacesAndNewlines), keyword.isEmpty == false {
+                parameters["q"] = keyword
             }
             return .requestParameters(parameters: parameters, encoding: URLEncoding.queryString)
         case .detail, .view, .related, .regionList, .random, .upcoming, .recommendMap:
