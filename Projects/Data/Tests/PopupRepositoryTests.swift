@@ -10,7 +10,7 @@ struct PopupRepositoryTests {
     func searchRequestMatchesV2Contract() throws {
         let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .search(q: "성수")).urlRequest()
 
-        #expect(request.url?.path == "/api/v2/user/popups/search")
+        #expect(request.url?.path == "/api/v2/mobile/user/popups/search")
         #expect(URLComponents(url: try #require(request.url), resolvingAgainstBaseURL: false)?.queryItems == [URLQueryItem(name: "q", value: "성수")])
         #expect(request.httpMethod == "GET")
         #expect(V2PopupAPI.search(q: "성수").resolvedAuthorization == .access)
@@ -79,7 +79,7 @@ struct PopupRepositoryTests {
     func s01ViewRequestMatchesV2Contract() throws {
         let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .view(popupUuid: "popup-1")).urlRequest()
 
-        #expect(request.url?.path == "/api/v2/popup/popup-1/view")
+        #expect(request.url?.path == "/api/v2/mobile/popup/popup-1/view")
         #expect(request.url?.query == nil)
         #expect(request.httpMethod == "POST")
         #expect(request.httpBody == nil)
@@ -109,7 +109,7 @@ struct PopupRepositoryTests {
     func s01RelatedRequestMatchesV2Contract() throws {
         let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .related(popupUuid: "popup-1")).urlRequest()
 
-        #expect(request.url?.path == "/api/v2/user/popups/popup-1/related")
+        #expect(request.url?.path == "/api/v2/mobile/user/popups/popup-1/related")
         #expect(request.url?.query == nil)
         #expect(request.httpMethod == "GET")
         #expect(V2PopupAPI.related(popupUuid: "popup-1").resolvedAuthorization == .access)
@@ -140,7 +140,7 @@ struct PopupRepositoryTests {
     func s03DetailRequestMatchesV2Contract() throws {
         let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .detail(popupUuid: "popup-1")).urlRequest()
 
-        #expect(request.url?.path == "/api/v2/user/popups/popup-1")
+        #expect(request.url?.path == "/api/v2/mobile/user/popups/popup-1")
         #expect(request.url?.query == nil)
         #expect(request.httpMethod == "GET")
         #expect(V2PopupAPI.detail(popupUuid: "popup-1").resolvedAuthorization == .access)
@@ -218,7 +218,7 @@ struct PopupRepositoryTests {
         let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: target).urlRequest()
         let queryItems = URLComponents(url: try #require(request.url), resolvingAgainstBaseURL: false)?.queryItems ?? []
 
-        #expect(request.url?.path == "/api/v2/user/popups/filtered/home")
+        #expect(request.url?.path == "/api/v2/mobile/user/popups/filtered/home")
         #expect(Set(queryItems) == [
             URLQueryItem(name: "region", value: "서울"),
             URLQueryItem(name: "district", value: "성동구"),
@@ -247,6 +247,64 @@ struct PopupRepositoryTests {
         }
     }
 
+    // MARK: - 지도 목록·카테고리 (V2)
+
+    @Test("지도 목록은 V2 경로에 지역·구·위치·정렬·카테고리를 query로 보내고 Access Token을 쓴다")
+    func mapRequestMatchesV2Contract() throws {
+        let target = V2PopupAPI.filteredMap(region: "서울", district: "전체", latitude: 37.5, longitude: 127.05, mapSortStandard: "CLOSEST", recommendIds: [3, 5], q: nil)
+        let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: target).urlRequest()
+        let queryItems = URLComponents(url: try #require(request.url), resolvingAgainstBaseURL: false)?.queryItems ?? []
+
+        #expect(request.url?.path == "/api/v2/mobile/user/popups/filtered/map")
+        #expect(Set(queryItems) == [
+            URLQueryItem(name: "region", value: "서울"),
+            URLQueryItem(name: "district", value: "전체"),
+            URLQueryItem(name: "latitude", value: "37.5"),
+            URLQueryItem(name: "longitude", value: "127.05"),
+            URLQueryItem(name: "mapSortStandard", value: "CLOSEST"),
+            URLQueryItem(name: "recommendIds", value: "3,5"),
+        ])
+        #expect(target.resolvedAuthorization == .access)
+    }
+
+    @Test("지도 목록은 위치를 모르면 위도·경도를, 카테고리를 고르지 않으면 카테고리를, 검색어가 공백뿐이면 q를 보내지 않는다")
+    func mapRequestOmitsUnknownLocation() throws {
+        let target = V2PopupAPI.filteredMap(region: "전체", district: "전체", latitude: nil, longitude: nil, mapSortStandard: "NEWEST", recommendIds: [], q: "  ")
+        let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: target).urlRequest()
+        let names = Set((URLComponents(url: try #require(request.url), resolvingAgainstBaseURL: false)?.queryItems ?? []).map(\.name))
+
+        #expect(names == ["region", "district", "mapSortStandard"])
+    }
+
+    @Test("지도 목록은 검색어를 앞뒤 공백을 뺀 q로 다른 조건과 함께 보낸다")
+    func mapRequestSendsKeyword() throws {
+        let target = V2PopupAPI.filteredMap(region: "서울", district: "영등포구", latitude: nil, longitude: nil, mapSortStandard: "CLOSEST", recommendIds: [2, 3], q: " NOT4NERD ")
+        let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: target).urlRequest()
+        let queryItems = URLComponents(url: try #require(request.url), resolvingAgainstBaseURL: false)?.queryItems ?? []
+
+        #expect(request.url?.path == "/api/v2/mobile/user/popups/filtered/map")
+        #expect(queryItems.contains(URLQueryItem(name: "q", value: "NOT4NERD")))
+        #expect(queryItems.contains(URLQueryItem(name: "recommendIds", value: "2,3")))
+        #expect(queryItems.contains(URLQueryItem(name: "district", value: "영등포구")))
+    }
+
+    @Test("지도 목록과 지도 카테고리(색)는 감싸지 않은 배열을 읽고, 실패하면 PopupError로 바꾼다")
+    func mapAndRecommendRead() async throws {
+        let context = PopupRepositoryContext(response: (200, "[\(PopupFixture.popup)]"))
+        let popups = try await context.repository.getMapPopupList(region: "전체", district: "전체", latitude: nil, longitude: nil, mapSortStandard: "NEWEST", recommendIds: [], keyword: nil)
+        #expect(popups.map(\.popupUuid) == ["popup-1"])
+
+        let categoryContext = PopupRepositoryContext(response: (200, ##"[{"id":21,"recommendName":"두바이쫀득쿠키","color":"#7A8B3C"}]"##))
+        #expect(try await categoryContext.repository.getMapCategoryList() == [MapCategory(id: 21, name: "두바이쫀득쿠키", colorHex: "#7A8B3C")])
+        #expect(categoryContext.recorder.authorizationHeaders == ["Bearer access"])
+        #expect(try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .recommendMap).urlRequest().url?.path == "/api/v2/mobile/recommend/map")
+
+        let failing = PopupRepositoryContext(response: (500, #"{"success":false,"code":6000,"message":"서버 에러","data":null}"#))
+        await #expect(throws: PopupError.failed) {
+            _ = try await failing.repository.getMapCategoryList()
+        }
+    }
+
     // MARK: - 홈 랜덤·오픈 예정 (V2)
 
     @Test("랜덤·오픈 예정은 V2 경로에 사용자 UUID와 query 없이 GET으로 보내고 Access Token을 쓴다")
@@ -254,8 +312,8 @@ struct PopupRepositoryTests {
         let random = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .random).urlRequest()
         let upcoming = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .upcoming).urlRequest()
 
-        #expect(random.url?.path == "/api/v2/user/popups/random")
-        #expect(upcoming.url?.path == "/api/v2/user/popups/upcoming")
+        #expect(random.url?.path == "/api/v2/mobile/user/popups/random")
+        #expect(upcoming.url?.path == "/api/v2/mobile/user/popups/upcoming")
         #expect(random.url?.query == nil)
         #expect(upcoming.url?.query == nil)
         #expect(random.httpMethod == "GET")
@@ -289,7 +347,7 @@ struct PopupRepositoryTests {
     func regionListRequestMatchesV2Contract() throws {
         let request = try MoyaProvider<V2PopupAPI>.defaultEndpointMapping(for: .regionList).urlRequest()
 
-        #expect(request.url?.path == "/api/v2/popup/regions/districts")
+        #expect(request.url?.path == "/api/v2/mobile/popup/regions/districts")
         #expect(request.httpMethod == "GET")
         #expect(V2PopupAPI.regionList.resolvedAuthorization == .access)
     }

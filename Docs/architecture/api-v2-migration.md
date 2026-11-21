@@ -23,6 +23,33 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 - **성공 응답 형식도 API마다 달라요.** V2라도 `APIResponse`로 감싸지 않는 API가 있어서, 모든 응답에 같은 디코더를 쓰지 않아요.
 - **로그인한 뒤에만 탐색해요.** V2에서는 로그인 전에 쓰던 조회 API에도 Access Token이 필요해요. 로그인 전 화면이 부르는 API는 V2로 바꾸기 전에 따로 확인해요.
 
+## 모바일 전용 경로 (`/api/v2/mobile`)
+
+서버가 iOS·AOS가 쓰는 API를 `/api/v2/mobile/...` 경로로 모으기로 했어요(2026-11-20 공지). 새 앱 버전은 이 경로만 호출해야 해요. 기존 `/api/v2/...` 경로는 구버전 앱을 위해 서버에 당분간 남아요.
+
+| 항목 | 내용 |
+| --- | --- |
+| 기준 | 서버가 공유한 모바일 API 정리본(HTML). 기존 v2 경로(BEFORE)와 앱이 쓸 경로(AFTER) 40건을 짝지어 적었어요. 공개 저장소라 원문은 싣지 않아요. |
+| 경로 규칙 | AFTER는 BEFORE의 `/api/v2` 뒤에 `/mobile`을 붙인 값이에요. method, 요청·응답 형식, 인증 종류는 그대로예요. |
+| 앱 코드 | `APIVersion.mobile`(기본 URL `https://poppang.co.kr/api/v2/mobile`)을 추가했어요. 앱이 쓰는 V2 target의 `apiVersion`을 `.mobile`로 바꾸고, `path`는 그대로 뒀어요. |
+| `.mobile` target | `AuthAPI`, `AuthTokenRefreshAPI`, `V2UserAPI`, `V2PopupAPI`, `V2FavoriteAPI`, `V2AlertAPI`, `V2AlertKeywordAPI`, `MigrationAPI`, `ServerHealthAPI` |
+| 확인 테스트 | `Data/Tests/MobileAPIRouteTests.swift`가 위 target의 모든 요청이 정리본 AFTER 40건 중 하나인지 확인해요. |
+
+이 문서의 아래 표들은 V1→V2 전환 기록이라 경로를 `/api/v2/...`로 적었어요. 실제 호출 경로는 그 값의 `/api/v2` 뒤에 `/mobile`을 붙인 것이에요. 관리자 API는 예외예요.
+
+### `/api/v2`에 남는 관리자 호출
+
+관리자 API는 `/mobile` 전환 대상이 아니에요. 서버 공지(2026-11-20)대로 웹·ETL·관리자·QA API는 기존 v2 경로에 그대로 남아서, 앱도 아래 관리자 API는 `/api/v2/admin/...`으로 불러요.
+
+| API | 쓰는 곳 |
+| --- | --- |
+| `PATCH /api/v2/admin/popup/{popupUuid}/deactivate` | 팝업 상세의 관리자 비활성화 (`V2AdminAPI`) |
+| `GET /api/v2/admin/popup-submissions` | RN 제보 관리 화면의 목록 (PopPang-RN) |
+| `GET /api/v2/admin/popup-submissions/{id}` | RN 제보 관리 화면의 상세 (PopPang-RN) |
+| `PUT /api/v2/admin/popup-submissions/{id}` | RN 제보 관리 화면의 승인·반려 (PopPang-RN) |
+
+PopPang-RN은 `1.5.0`부터 제보 화면의 카테고리 조회와 제보 등록을 `GET /api/v2/mobile/recommend`, `POST /api/v2/mobile/popup-submissions`로 불러요. `1.6.0`부터는 제보 관리 화면의 카테고리 조회도 `GET /api/v2/mobile/recommend`를 써요. v1 `PopupAPI`는 앱에 연결되지 않은 `MapFeatureV1`·`CalendarFeature`(V1)만 써서, 출시 앱은 호출하지 않아요.
+
 ## 단계
 
 | 단계 | 내용 | 명세 묶음 | 화면 동작 변경 | 상태 |
@@ -44,8 +71,8 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 
 | 구성 요소 | 위치 | 역할 |
 | --- | --- | --- |
-| `APIVersion`, `APIAuthorization` | `Core/Sources/Network/BaseAPI.swift` | API target마다 버전(`v1`·`v2`)과 인증 종류(`none`·`access`·`signup`)를 정해요. 기본값은 `v1`, `none`이라 기존 target은 그대로예요. V1 target에는 인증 종류를 정해도 헤더를 붙이지 않아요(`resolvedAuthorization`). |
-| `NetworkConfig.apiBaseURL(for:)` | `Core/Sources/Network/NetworkConfig.swift` | 버전마다 기본 URL을 만들어요. `https://poppang.co.kr/api/v1`, `https://poppang.co.kr/api/v2` |
+| `APIVersion`, `APIAuthorization` | `Core/Sources/Network/BaseAPI.swift` | API target마다 버전(`v1`·`v2`·`mobile`)과 인증 종류(`none`·`access`·`signup`)를 정해요. 기본값은 `v1`, `none`이라 기존 target은 그대로예요. V1 target에는 인증 종류를 정해도 헤더를 붙이지 않아요(`resolvedAuthorization`). |
+| `NetworkConfig.apiBaseURL(for:)` | `Core/Sources/Network/NetworkConfig.swift` | 버전마다 기본 URL을 만들어요. `https://poppang.co.kr/api/v1`, `https://poppang.co.kr/api/v2`, `https://poppang.co.kr/api/v2/mobile` |
 | `APIResponse<T>`, `ErrorResponse` | `Core/Sources/Network/APIResponse.swift` | V2 성공 응답 래퍼와 V1·V2 공통 실패 응답 형식 |
 | `asyncRequest(_:decodeDataTo:)` | `Core/Sources/Network/MoyaProvider+Async.swift` | `APIResponse`로 감싼 API만 이 함수로 요청하고 `data`를 돌려받아요. |
 | `NetworkError.statusCode`, `serverErrorCode`, `isExpiredToken` | `Core/Sources/Network/NetworkError.swift` | 실패 본문에서 서버 에러 코드를 읽어요. 5xx 기본 오류 본문처럼 형식이 다르면 `serverErrorCode`는 `nil`이고, HTTP 상태로 처리해요. |
@@ -82,12 +109,12 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 
 ### V2 target 만들기
 
-V2로 옮기는 target은 버전과 인증 종류를 정하고, 경로는 명세의 V2 경로에서 `/api/v2`를 뺀 값을 써요.
+V2로 옮기는 target은 버전과 인증 종류를 정하고, 경로는 명세의 V2 경로에서 `/api/v2`를 뺀 값을 써요. 앱이 쓰는 API는 버전을 `.mobile`로 정해서 [모바일 전용 경로](#모바일-전용-경로-apiv2mobile)로 불러요.
 
 ```swift
 extension V2UserAPI: BaseAPI {
     public var apiVersion: APIVersion {
-        .v2
+        .mobile
     }
 
     public var authorization: APIAuthorization {
@@ -228,7 +255,7 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 | 3 | PopupDetailFeature | 조회수 기록 (POP-14), 관련 팝업 (UPOP-03), 찜 등록·해제, 단건 조회, 관리자 비활성화 | 완료 (#140) |
 | 4 | CalendarFeature | 필터 팝업 (UPOP-04), 지역 목록 (POP-10), 찜 등록·해제 | 완료 (#142, `CalendarFeatureV2`) |
 | 5 | HomeFeatureV2 | 오픈 예정 (UPOP-12), 필터 팝업, 랜덤 (UPOP-07), 지역 목록, 찜 등록·해제 | 완료 (#144) |
-| 6 | MapFeature | 지도 필터 (UPOP-05), 인기 추천 카테고리 (RECO-02), 카테고리별 팝업 (UPOP-09), 지역 목록, 찜 등록·해제 | 예정 |
+| 6 | MapFeature | 지도 필터 (UPOP-05, 카테고리 `recommendIds`), 지도 카테고리·마커 색 (`recommend/map`), 지역 목록, 찜 등록·해제 | 진행 중 (#146, `MapFeatureV2`) |
 | 7 | AlertFeature | 알림 키워드 목록·등록·삭제 (ALERT-01~03), 알림함 목록·삭제 (ALERT-04·05), 찜 등록·해제 | 완료 (#150) |
 | 8 | App (푸시) | FCM 토큰 중복 확인·갱신 두 요청을 `PUT /api/v2/user/fcm-token` 하나로 (USER-06) | 완료 (#148) |
 | 9 | 정리 | 쓰지 않는 V1 case(비회원 팝업 목록 등), Repository·Usecase의 `userUuid` 인자, 세션의 `userUuid` 저장 | 진행 중 (#152에서 앱이 부르지 않는 V1 함수 삭제. 지도가 쓰는 V1 함수와 `userUuid`는 지도 전환 뒤) |
@@ -298,6 +325,42 @@ V2 가입은 가입 OS(`signupOs`)를 보내지만, 그 전에 가입한 사용�
 - 오픈 예정의 `upcomingDays`(선택, 기본 10)는 V1처럼 보내지 않아요. 명세상 실제 범위는 내일부터 D+11이에요.
 - 실패하면 `PopupError.failed`로 바꿔요. 홈은 오류 문구를 화면에 띄우지 않고, 오픈 예정 목록은 "오픈 예정 팝업을 불러오지 못했어요", "찜을 바꾸지 못했어요"를 알림으로 보여 줘요. 로그인이 끊긴 실패(`AuthSessionError`)는 알림을 띄우지 않아요.
 - 그리드는 처음 불러올 때도 그리드 다시 불러오기와 같은 경로(취소 ID 하나)로 받아서, 마지막 조건의 응답만 반영해요. 지역 목록이 늦게 와도 그사이 사용자가 고른 지역·구를 덮어쓰지 않아요. 찜은 응답을 기다리는 동안 같은 하트를 다시 누르면 무시해요(V2 찜은 같은 요청을 두 번 보내면 409·404로 거절해요).
+
+### 지도 (#146, 진행 중)
+
+지도 탭을 피그마 "팝팡 리뉴얼 최종"(2467:10300)의 지도 화면에 맞춘 새 모듈 `MapFeatureV2`로 바꿔요. 예전 지도 모듈은 `MapFeatureV1`로 이름만 바꿔 남겨 뒀어요(앱에서는 쓰지 않아요). 메인 색은 앱 색(`PPColor.brand`)이에요.
+
+| 기능 | V2 | 비고 |
+| --- | --- | --- |
+| 지도 목록 | `GET /api/v2/mobile/user/popups/filtered/map?region&district&mapSortStandard&latitude&longitude&recommendIds&q` | 운영 중 팝업만 줘요. `recommendIds`는 쉼표로 여러 개(`3,5`), 하나라도 해당하는 팝업을 받아요. 고른 카테고리가 없으면 보내지 않아요. `q`는 이름·주소 검색어예요(2026-11-21 서버 추가). 비었거나 공백뿐이면 보내지 않아요. |
+| 지도 카테고리·마커 색 | `GET /api/v2/mobile/recommend/map` | 감싸지 않은 `{id, recommendName, color}` 배열이에요. `color`는 대문자 `#RRGGBB`예요. 필터 칩과 마커 색에 써요. |
+| 지역 목록 | `GET /api/v2/popup/regions/districts` | 달력(#143)과 같음 |
+| 찜 등록·해제 | #132의 V2 찜 | |
+
+- 앱은 목록을 거르지 않아요. 화면에서 고른 조건을 `MapPopupQuery`로 모아 `MapFeatureClient.searchMapPopups`에 넘기고, 받은 결과를 그대로 그려요.
+- 필터는 카테고리만 둬요(2026-11-17 피그마 결정으로 상태·기간을 뺐어요). 필터 시트 버튼은 결과 개수만 받는 API가 없어 "팝업 보기"로 개수 없이 보여 줘요.
+- 카테고리와 색은 지도 탭에 처음 들어갈 때 지역 목록과 함께 한 번 받아요. `MapFeature.State`는 메인 탭에 남아 있어서 탭에 다시 들어와도 받지 않아요. 받지 못했으면 다음에 탭에 들어올 때만 다시 받아요.
+- 마커는 모양이 고정된 동그라미예요. 피그마 `MapPin`(2467:10337)처럼 카테고리 색 테두리, 흰 띠, 연한 같은 색 원 위에 갈색 가게 아이콘(`map_marker_store` 에셋, 피그마 `icon/store`)을 그리고 아래에 이름을 붙여요. 고른 마커는 1.35배로 크게, 나머지는 흐리게 그려요. 이름표는 줌 14 이상에서만 보이고(`NaverMapCoordinator.labelMinZoom`), 그보다 멀리 보면 동그라미만 보여요. 숫자 묶음은 줌 12까지예요. 고른 마커는 줌과 상관없이 이름을 보여요.
+- 목록·미리보기 배지는 카테고리와 지역만 보여요. 지도 API는 운영 중 팝업만 주므로 "운영중" 배지는 뺐어요(2026-11-18).
+- 마커 색은 팝업 응답의 `recommendList`(카테고리 이름)를 `recommend/map`의 `recommendName`과 맞춰 정해요(`MapMarkerColor`). 카테고리 필터를 걸었으면 고른 카테고리를 먼저 보고, 아니면 `recommendList` 순서대로 색이 있는 첫 카테고리예요. 맞는 카테고리가 없으면 회색(`#9E9E9E`)이에요.
+- 검색은 지도 목록 API의 `q`로 해요. 지도에서는 검색 전용 API(`/user/popups/search`)를 쓰지 않아요. 서버 모바일 API 정리본(2026-11-21)에 따르면 서버는 지역·구·카테고리 조건 안에서 이름·주소를 대소문자 구분 없이 찾고, 고른 정렬을 그대로 둬요.
+  - 키보드 "검색"을 누를 때만 검색해요(입력하는 동안에는 부르지 않아요). 검색어를 다 지우면 바로 검색 전 목록으로 돌아가요.
+  - 가까운순에서 손으로 지도를 1km 넘게 옮기면 검색을 풀고(검색창이 적용된 검색어 그대로면 비우고) 새 위치의 전체 목록을 받아요(`MapFeature.refetchDistance`, 전에는 300m). 내 위치 버튼처럼 코드로 옮긴 경우는 검색을 두고 새 위치에서 같은 검색어로 받아요.
+  - 1km는 목록을 받은 위치와 마지막으로 고른 팝업 위치 양쪽에서 재요. 둘 중 하나라도 1km 안이면 다시 받지 않아요. 400ms 안에 이어진 이동은 마지막 이동이 손인지 코드인지로 정해요. 그 400ms 안에 다른 조회(검색, 검색어 지우기, 지역·정렬·필터 변경)를 시작하면 걸어 둔 재조회를 취소해요.
+  - 카드를 보는 동안 지도를 옮기면 다시 받지 않고, 카드를 닫을 때 지금 중심이 1km 넘게 멀어졌으면 다시 받아요. 카드를 보는 동안 손으로 옮겼으면 검색을 풀고, 아니면 검색을 둬요. 지도를 옮긴 직후(재조회를 기다리는 400ms 안) 마커를 골랐으면 그 재조회를 카드를 닫을 때 이어서 해요. 카드를 보는 중에 검색어를 지우면 검색할 때처럼 카드를 닫고 목록을 열어요.
+  - 가까운순 검색 결과가 비면 검색이 없을 때와 같이 같은 검색어로 최신순에 다시 물어요. 그래도 비면 목록에 "검색 결과가 없어요."를 보여요. 이 문구는 마지막으로 받은 목록이 검색 결과일 때만 보여요.
+  - 같은 검색어로 다시 누르면 부르지 않고 미리보기 카드도 닫지 않아요. 마지막 조회가 실패했을 때만 같은 검색어로 다시 불러요.
+  - 미리보기 카드를 보는 중에 검색하면 카드를 닫고 목록을 절반으로 올려요.
+  - 팝업을 고르면 그 팝업 위치를 다시 받기 기준(`refetchBaseCenter`)으로 삼아요. 목록을 받은 위치(`searchedCenter`)와는 따로 두고, 팝업을 보지 않을 때 새 조회를 시작할 때만 지워요(고르기 전에 보낸 조회가 늦게 와도 지우지 않아요). 멀리 있는 팝업을 고른 뒤 카드를 닫고 조금만 움직여도 검색이 풀리지 않아요. 카드를 보는 동안 손으로 옮긴 위치는 기준으로 삼지 않아요.
+  - 지역 목록을 받지 못한 상태에서 검색하면 검색어를 정해 두고 처음 데이터부터 다시 받아요. 받으면 그 검색어로 조회해요.
+- 지도의 카메라 중심은 실제로 보이는 지도 영역(검색창·칩 아래 ~ 시트나 미리보기 카드 위)의 가운데예요(`NaverMapCoordinator.setVisibleInsets`, 지도 `contentInset`). 그래서 고른 팝업과 내 위치가 시트나 카드에 가리지 않아요.
+  - 시트를 손으로 끌어 절반에 놓거나 끝까지 내리면, SheetKit이 손을 떼는 순간 멈출 높이를 정하므로 그때 바로 반영해 시트와 지도가 같이 움직여요. 절반 높이는 화면 높이의 0.5, 끝까지 내렸을 때는 탭바 + "목록 보기" 버튼 높이예요.
+  - 팝업을 고르면 미리보기 카드가 가릴 높이를 먼저 반영하고 한 번에 그 팝업으로 옮겨요. 카드 높이는 처음 한 번 재서 기억해요. 목록에서 고르면 줌 15로, 지도에서 마커를 누르면 지금 줌 그대로 옮겨요.
+  - 지도를 움직이는 애니메이션은 모두 `NaverMapCoordinator.applyMoveAnimation(to:)`(easeOut 0.25초) 하나를 써요.
+  - 보이는 영역에 맞추느라 생긴 카메라 이동은 원인을 콘텐츠 패딩(`NMFMapChangedByContentPadding`)으로 둬요. 멈춤 사이에 이 이동만 있었으면 지도 중심 변경으로 알리지 않고, 손 제스처·내 위치·팝업 선택이 한 번이라도 있었으면 알려요. 그래서 시트·카드 때문에 지도가 움직여도 가까운순 다시 받기나 검색 풀기가 일어나지 않아요.
+  - 내 위치·팝업으로 옮기는 중에 보이는 영역이 바뀌면 중간 위치가 아니라 그 도착점과 도착 줌으로 이어 가요. 카드 높이를 다시 재서 고른 팝업을 다시 가운데로 둘 때, 그사이 손으로 지도를 움직였으면 되돌리지 않고 높이만 기억해요.
+  - 목록을 끝까지 펼친 동안에는 카메라 중심을 그대로 두고 여백만 절반 높이로 바꿔요(`keepCamera`). 지도가 가려져 있어 그려진 지도가 밀려도 보이지 않고, 리듀서가 아는 지도 중심도 바뀌지 않아요.
+- 서버는 `recommendList`에 고른 카테고리를 맨 앞에 두는 것으로 QA에서 봤어요(서버 정리본에는 없어 확인 필요: 서버 담당자에게 확인). 목록·미리보기 배지는 `recommendList`의 첫 항목을 그대로 보여 주므로, 카테고리 필터를 걸면 고른 카테고리가 배지에 나와요.
 
 ### 알림 (#150)
 

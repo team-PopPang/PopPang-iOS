@@ -6,7 +6,7 @@ import Domain
 import FavoritesFeature
 import Foundation
 import HomeFeatureV2
-import MapFeature
+import MapFeatureV2
 import PopupDetailFeature
 import PopPangRNFeature
 import ProfileFeature
@@ -35,24 +35,24 @@ public enum MainTab: Hashable, CaseIterable, Sendable {
         }
     }
     
-    private var rawImageName: String {
+    /// 탭바 전용 아이콘(DSKit `Tab/tab_*`). 피그마 "팝팡 리뉴얼 최종" 탭바(2467:10374) 아이콘이다.
+    /// 고른 탭은 탭바가 같은 아이콘을 `PPColor.tabSelected`로 칠하므로 선택용 에셋을 따로 두지 않는다.
+    /// `favorite`·`favorite_fill`은 찜 하트 버튼이 쓰므로 탭바는 이름을 나눈다.
+    var tabImageName: String {
         switch self {
         case .home:
-            "home"
+            "tab_home"
         case .calendar:
-            "calendar"
+            "tab_calendar"
         case .map:
-            "map"
+            "tab_map"
         case .favorites:
-            "favorite"
+            "tab_favorite"
         case .profile:
-            "profile"
+            "tab_profile"
         }
     }
-    
-    func tabImageName(selected: Bool) -> String {
-        selected ? "\(rawImageName)_fill" : rawImageName
-    }
+
 }
 
 @Reducer
@@ -80,7 +80,7 @@ public struct MainTabFeature {
             self.calendar = .init()
             self.favorites = .init()
             self.home = .init(user: user)
-            self.map = .init(userUuid: user.userUuid)
+            self.map = .init()
             self.profile = .init(user: user)
         }
 

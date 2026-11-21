@@ -37,6 +37,7 @@ public struct CalendarFeatureView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
                     CustomCalendar(
+                        selectedDate: store.selectedDate,
                         eventCounts: store.popupEventCounts,
                         onDateSelected: { date in
                             store.send(.dateSelected(date))
@@ -87,7 +88,9 @@ public struct CalendarFeatureView: View {
 
                     Spacer()
                 }
+                .popPangTabReselectTopAnchor()
             }
+            .scrollsToTopOnPopPangTabReselect()
             .padding(.top, 10)
 
             Spacer()

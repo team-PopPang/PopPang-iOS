@@ -5,7 +5,7 @@ let project = Project(
     packages: [
         // PopPangRNFeature와 같은 패키지. 두 target이 함께 쓰면 Xcode가 product를 동적 framework 하나로 만들어
         // 앱에 넣고, React·Hermes 동적 XCFramework도 앱의 Frameworks에 넣는다. 빼면 실행 시 React.framework를 찾지 못한다.
-        .remote(url: "https://github.com/team-PopPang/PopPang-RN", requirement: .exact("1.4.0")),
+        .remote(url: "https://github.com/team-PopPang/PopPang-RN", requirement: .exact("1.6.0")),
     ],
     targets: [
         .target(
@@ -156,7 +156,7 @@ let project = Project(
                     "DEVELOPMENT_TEAM": "",
                     "DEVELOPMENT_TEAM[sdk=iphoneos*]": "LGX4B4WC66",
                     "CURRENT_PROJECT_VERSION": "1",
-                    "MARKETING_VERSION": "1.1.9",
+                    "MARKETING_VERSION": "1.2.0",
                     "PROVISIONING_PROFILE_SPECIFIER": "",
                     "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]": "match Development kr.co.poppang.PopPang",
                 ],

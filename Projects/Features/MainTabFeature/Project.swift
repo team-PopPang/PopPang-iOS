@@ -20,7 +20,7 @@ let project = Project(
                 .project(target: "DSKit", path: "../../Shared/DSKit"),
                 .project(target: "FavoritesFeature", path: "../FavoritesFeature"),
                 .project(target: "HomeFeatureV2", path: "../HomeFeatureV2"),
-                .project(target: "MapFeature", path: "../MapFeature"),
+                .project(target: "MapFeatureV2", path: "../MapFeatureV2"),
                 .project(target: "PopupDetailFeature", path: "../PopupDetailFeature"),
                 .project(target: "PopPangRNFeature", path: "../PopPangRNFeature"),
                 .project(target: "ProfileFeature", path: "../ProfileFeature"),

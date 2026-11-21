@@ -5,7 +5,7 @@ import Core
 import Domain
 import FavoritesFeature
 import HomeFeatureV2
-import MapFeature
+import MapFeatureV2
 import PopupDetailFeature
 import ProfileFeature
 import SearchFeature

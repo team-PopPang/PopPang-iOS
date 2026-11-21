@@ -1,13 +1,13 @@
 import ProjectDescription
 
 let project = Project(
-    name: "MapFeature",
+    name: "MapFeatureV1",
     targets: [
         .target(
-            name: "MapFeature",
+            name: "MapFeatureV1",
             destinations: [.iPhone],
             product: .staticFramework,
-            bundleId: "com.poppang.features.map",
+            bundleId: "com.poppang.features.map.v1",
             deploymentTargets: .iOS("17.0"),
             infoPlist: .default,
             sources: [
@@ -23,7 +23,7 @@ let project = Project(
             ]
         ),
         .target(
-            name: "MapFeatureDemo",
+            name: "MapFeatureV1Demo",
             destinations: [.iPhone],
             product: .app,
             bundleId: "kr.co.poppang.PopPang",
@@ -40,7 +40,7 @@ let project = Project(
             ),
             sources: ["Demo/Sources/**"],
             dependencies: [
-                .target(name: "MapFeature"),
+                .target(name: "MapFeatureV1"),
                 .project(target: "Domain", path: "../../Domain"),
                 .project(target: "Data", path: "../../Data"),
             ],

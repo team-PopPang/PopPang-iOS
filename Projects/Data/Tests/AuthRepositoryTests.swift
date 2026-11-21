@@ -13,9 +13,9 @@ struct AuthRepositoryTests {
     @Test(
         "제공자마다 V2 로그인 경로와 본문 키가 맞고 인증 헤더 종류가 없다",
         arguments: [
-            (SocialCredential.kakao(accessToken: "kakao-token"), "/api/v2/auth/kakao/mobile/login", ["access_token": "kakao-token"]),
-            (.google(idToken: "google-token"), "/api/v2/auth/google/mobile/login", ["id_token": "google-token"]),
-            (.apple(authCode: "code", rawNonce: "nonce"), "/api/v2/auth/apple/mobile/login", ["auth_code": "code", "raw_nonce": "nonce"]),
+            (SocialCredential.kakao(accessToken: "kakao-token"), "/api/v2/mobile/auth/kakao/mobile/login", ["access_token": "kakao-token"]),
+            (.google(idToken: "google-token"), "/api/v2/mobile/auth/google/mobile/login", ["id_token": "google-token"]),
+            (.apple(authCode: "code", rawNonce: "nonce"), "/api/v2/mobile/auth/apple/mobile/login", ["auth_code": "code", "raw_nonce": "nonce"]),
         ]
     )
     func loginRequestsMatchV2Contract(credential: SocialCredential, path: String, body: [String: String]) throws {
@@ -33,7 +33,7 @@ struct AuthRepositoryTests {
         let request = try urlRequest(for: signup)
         let body = try #require(try jsonObject(request.httpBody) as? [String: Any])
 
-        #expect(request.url?.path == "/api/v2/auth/apple/signup")
+        #expect(request.url?.path == "/api/v2/mobile/auth/apple/signup")
         #expect(signup.resolvedAuthorization == .signup)
         #expect(Set(body.keys) == ["nickname", "isAlerted", "fcmToken", "alertKeywordList", "recommendList", "signupOs"])
         #expect(body["signupOs"] as? String == "IOS")
@@ -44,32 +44,32 @@ struct AuthRepositoryTests {
     @Test("가입 화면의 닉네임 중복 확인과 관심 카테고리 목록은 V2 경로에 가입 전용 토큰을 쓴다")
     func signupScreenRequestsUseSignupToken() throws {
         let nickname = try urlRequest(for: .signupNicknameDuplicated(nickname: "팝팡"))
-        #expect(nickname.url?.path == "/api/v2/user/nickname/duplicated")
+        #expect(nickname.url?.path == "/api/v2/mobile/user/nickname/duplicated")
         #expect(URLComponents(url: try #require(nickname.url), resolvingAgainstBaseURL: false)?.queryItems == [URLQueryItem(name: "nickname", value: "팝팡")])
         #expect(nickname.httpMethod == "GET")
         #expect(AuthAPI.signupNicknameDuplicated(nickname: "팝팡").resolvedAuthorization == .signup)
 
         let recommend = try urlRequest(for: .signupRecommendList)
-        #expect(recommend.url?.path == "/api/v2/recommend")
+        #expect(recommend.url?.path == "/api/v2/mobile/recommend")
         #expect(recommend.httpMethod == "GET")
         #expect(AuthAPI.signupRecommendList.resolvedAuthorization == .signup)
     }
 
     @Test("내 정보 조회·로그아웃·토큰 갱신의 경로와 인증 종류가 맞다")
     func otherRequestsMatchV2Contract() throws {
-        #expect(try urlRequest(for: .me).url?.path == "/api/v2/user")
+        #expect(try urlRequest(for: .me).url?.path == "/api/v2/mobile/user")
         #expect(try urlRequest(for: .me).httpMethod == "GET")
         #expect(AuthAPI.me.resolvedAuthorization == .access)
 
         let logout = try urlRequest(for: .logout(accessToken: "access"))
-        #expect(logout.url?.path == "/api/v2/auth/logout")
+        #expect(logout.url?.path == "/api/v2/mobile/auth/logout")
         #expect(logout.value(forHTTPHeaderField: "Authorization") == "Bearer access")
         #expect(AuthAPI.logout(accessToken: "access").resolvedAuthorization == .none)
 
         let refresh = try MoyaProvider<AuthTokenRefreshAPI>
             .defaultEndpointMapping(for: .refresh(refreshToken: "refresh"))
             .urlRequest()
-        #expect(refresh.url?.path == "/api/v2/auth/refresh")
+        #expect(refresh.url?.path == "/api/v2/mobile/auth/refresh")
         #expect(try jsonObject(refresh.httpBody) as? [String: String] == ["refreshToken": "refresh"])
         #expect(AuthTokenRefreshAPI.refresh(refreshToken: "refresh").resolvedAuthorization == .none)
     }
@@ -210,7 +210,7 @@ struct AuthRepositoryTests {
     func s02NicknameRecommendationRequestUsesSignupToken() throws {
         let request = try urlRequest(for: .signupNicknameRecommendation)
 
-        #expect(request.url?.path == "/api/v2/user/nickname/recommendation")
+        #expect(request.url?.path == "/api/v2/mobile/user/nickname/recommendation")
         #expect(request.httpMethod == "GET")
         #expect(request.httpBody == nil)
         #expect(AuthAPI.signupNicknameRecommendation.resolvedAuthorization == .signup)
@@ -240,7 +240,7 @@ struct AuthRepositoryTests {
     func s04PopularKeywordsRequestUsesSignupToken() throws {
         let request = try urlRequest(for: .popularAlertKeywords)
 
-        #expect(request.url?.path == "/api/v2/alert-keyword/popular")
+        #expect(request.url?.path == "/api/v2/mobile/alert-keyword/popular")
         #expect(request.httpMethod == "GET")
         #expect(request.httpBody == nil)
         #expect(AuthAPI.popularAlertKeywords.resolvedAuthorization == .signup)

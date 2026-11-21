@@ -7,8 +7,8 @@ public enum ServerHealthAPI {
 }
 
 extension ServerHealthAPI: BaseAPI {
-    /// `GET /api/v2/health`. 인증 없이 부른다(`authorization` 기본값 `.none`). 응답은 V1과 같은 `{ "isHealthy": Bool }`이다.
-    public var apiVersion: APIVersion { .v2 }
+    /// `GET /api/v2/mobile/health`. 인증 없이 부른다(`authorization` 기본값 `.none`). 응답은 V1과 같은 `{ "isHealthy": Bool }`이다.
+    public var apiVersion: APIVersion { .mobile }
 
     public var path: String {
         switch self {
