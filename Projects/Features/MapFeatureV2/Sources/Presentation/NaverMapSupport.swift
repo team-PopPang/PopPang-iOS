@@ -360,7 +360,8 @@ final class NaverMapCoordinator: NSObject, NMFMapViewCameraDelegate, NMFMapViewT
         view.showCompass = false
         view.showScaleBar = false
         view.mapView.logoAlign = .rightBottom
-        view.mapView.logoMargin = UIEdgeInsets(top: 0, left: 0, bottom: 20, right: 20)
+        // 아래 여백(탭바 높이) 바로 위에 붙인다.
+        view.mapView.logoMargin = UIEdgeInsets(top: 0, left: 0, bottom: 8, right: 20)
 
         let cameraUpdate = NMFCameraUpdate(scrollTo: NMGLatLng(lat: 37.5665, lng: 126.9780))
         Self.applyMoveAnimation(to: cameraUpdate)
