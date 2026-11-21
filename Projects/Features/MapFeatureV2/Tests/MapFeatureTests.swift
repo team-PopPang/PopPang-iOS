@@ -205,16 +205,16 @@ struct MapFeatureTests {
         }
         store.exhaustivity = .off(showSkippedAssertions: false)
 
-        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.5005, longitude: 127.0)))
+        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.5005, longitude: 127.0), byGesture: true))
         await clock.advance(by: .seconds(1))
         #expect(queries.value.isEmpty)
 
         // 약 550m. 예전 기준(300m)이면 다시 받았지만 1km 기준이라 받지 않는다.
-        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.505, longitude: 127.0)))
+        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.505, longitude: 127.0), byGesture: true))
         await clock.advance(by: .seconds(1))
         #expect(queries.value.isEmpty)
 
-        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.51, longitude: 127.0)))
+        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.51, longitude: 127.0), byGesture: true))
         await clock.advance(by: .milliseconds(400))
         await store.finish()
         await store.skipReceivedActions(strict: false)
@@ -249,9 +249,11 @@ struct MapFeatureTests {
         await store.finish()
         await store.skipReceivedActions(strict: false)
 
-        // 검색 결과가 비어도 최신순으로 다시 묻지 않는다.
-        #expect(queries.value.count == 1)
+        // 가까운순 결과가 비면 같은 검색어로 최신순에 다시 묻는다.
+        #expect(queries.value.count == 2)
         #expect(queries.value.first?.keyword == "딸기")
+        #expect(queries.value.last?.sort == .newest)
+        #expect(queries.value.last?.keyword == "딸기")
         #expect(queries.value.first?.filter.categoryIds == [3])
         #expect(store.state.appliedKeyword == "딸기")
     }
@@ -312,7 +314,7 @@ struct MapFeatureTests {
         // 목록을 받은 위치는 그대로다.
         #expect(store.state.searchedCenter == MapCoordinate(latitude: 35.1, longitude: 129.0))
 
-        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.6, longitude: 127.1)))
+        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.6, longitude: 127.1), byGesture: true))
         #expect(store.state.refetchBaseCenter == MapCoordinate(latitude: 37.5, longitude: 127.0))
     }
 
@@ -346,6 +348,27 @@ struct MapFeatureTests {
         #expect(store.state.searchText == "딸기")
     }
 
+    @Test("카드를 닫은 뒤 늦게 온 응답은 고른 팝업 기준점을 지우지 않고, 새 조회를 시작할 때 지운다")
+    func lateResponseAfterDismissKeepsPopupBase() async {
+        var state = Self.loadedState()
+        state.popups = [.fixture()]
+        state.refetchBaseCenter = MapCoordinate(latitude: 37.5, longitude: 127.0)
+        let store = TestStore(initialState: state) {
+            MapFeature()
+        } withDependencies: {
+            $0.mapFeatureClient = .mock()
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.searchResultLoaded(MapPopupSearchResult(items: [.fixture()], totalCount: 1), center: MapCoordinate(latitude: 35.1, longitude: 129.0)))
+        #expect(store.state.refetchBaseCenter == MapCoordinate(latitude: 37.5, longitude: 127.0))
+
+        await store.send(.sortOptionSelected(.newest))
+        #expect(store.state.refetchBaseCenter == nil)
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+    }
+
     @Test("팝업을 보는 중에 늦게 온 목록 응답은 고른 팝업 기준점을 덮지 않는다")
     func lateResponseKeepsPopupBase() async {
         var state = Self.loadedState()
@@ -361,16 +384,200 @@ struct MapFeatureTests {
         #expect(store.state.refetchBaseCenter == MapCoordinate(latitude: 37.5, longitude: 127.0))
     }
 
-    @Test("지역 목록을 받기 전에는 검색을 눌러도 조회하지 않고 검색어만 정해 둔다")
-    func submittingBeforeRegionsLoadedDoesNotFetch() async {
+    @Test("지역 목록을 받기 전에 검색을 누르면 검색어를 정해 두고 처음 데이터부터 다시 받는다")
+    func submittingBeforeRegionsLoadedReloadsInitialData() async {
         var state = MapFeature.State()
         state.searchText = "성수"
         let store = TestStore(initialState: state) {
             MapFeature()
+        } withDependencies: {
+            $0.mapFeatureClient = .mock(searchMapPopups: { _ in MapPopupSearchResult(items: [], totalCount: 0) })
         }
-        await store.send(.searchSubmitted) {
-            $0.appliedKeyword = "성수"
+        store.exhaustivity = .off(showSkippedAssertions: false)
+        await store.send(.searchSubmitted)
+        await store.receive(\.onAppear)
+        #expect(store.state.appliedKeyword == "성수")
+        await store.skipReceivedActions(strict: false)
+    }
+
+    @Test("지역 목록을 받지 못해 검색이 끝나지 않았으면 같은 검색어로 다시 누를 때 다시 받는다")
+    func retryingSameKeywordAfterInitialLoadFailure() async {
+        struct LoadError: Error {}
+        let regionCalls = LockIsolated(0)
+        var state = MapFeature.State()
+        state.searchText = "성수"
+        let store = TestStore(initialState: state) {
+            MapFeature()
+        } withDependencies: {
+            $0.mapFeatureClient = .mock(getRegionList: {
+                regionCalls.withValue { $0 += 1 }
+                throw LoadError()
+            })
         }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+        await store.send(.searchSubmitted)
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+        #expect(store.state.willSearchOnSubmit)
+
+        await store.send(.searchSubmitted)
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+        #expect(regionCalls.value == 2)
+    }
+
+    @Test("고른 팝업 카드를 닫고 목록을 받은 위치 가까이로 돌아오면 다시 받지 않는다")
+    func returningNearSearchedCenterAfterSelectionDoesNotRefetch() async {
+        let clock = TestClock()
+        let queries = LockIsolated<[MapPopupQuery]>([])
+        var state = Self.loadedState()
+        state.searchedCenter = MapCoordinate(latitude: 37.5, longitude: 127.0)
+        state.refetchBaseCenter = MapCoordinate(latitude: 37.52, longitude: 127.0)
+        state.appliedKeyword = "성수"
+        let store = TestStore(initialState: state) {
+            MapFeature()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.mapFeatureClient = .mock(searchMapPopups: { query in
+                queries.withValue { $0.append(query) }
+                return MapPopupSearchResult(items: [], totalCount: 0)
+            })
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        // 고른 팝업(37.52)에서 약 2km, 목록을 받은 곳(37.5)에서 약 50m.
+        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.5005, longitude: 127.0), byGesture: true))
+        await clock.advance(by: .seconds(1))
+        #expect(queries.value.isEmpty)
+        #expect(store.state.appliedKeyword == "성수")
+    }
+
+    @Test("짧게 이어진 이동은 마지막 이동이 정한다. 손으로 옮기다 코드로 옮기면 검색을 둔다")
+    func latestMoveWithinDebounceDecides() async {
+        let clock = TestClock()
+        var state = Self.loadedState()
+        state.searchedCenter = MapCoordinate(latitude: 37.5, longitude: 127.0)
+        state.appliedKeyword = "성수"
+        state.searchText = "성수"
+        let store = TestStore(initialState: state) {
+            MapFeature()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.mapFeatureClient = .mock()
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.52, longitude: 127.0), byGesture: true))
+        await clock.advance(by: .milliseconds(100))
+        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.53, longitude: 127.0), byGesture: false))
+        await clock.advance(by: .milliseconds(400))
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+        #expect(store.state.appliedKeyword == "성수")
+        #expect(store.state.searchText == "성수")
+    }
+
+    @Test("지도를 옮긴 직후 검색을 누르면 걸어 둔 재조회를 취소해 방금 누른 검색어를 지우지 않는다")
+    func submittingRightAfterPanKeepsKeyword() async {
+        let clock = TestClock()
+        let queries = LockIsolated<[MapPopupQuery]>([])
+        var state = Self.loadedState()
+        state.searchedCenter = MapCoordinate(latitude: 37.5, longitude: 127.0)
+        let store = TestStore(initialState: state) {
+            MapFeature()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.mapFeatureClient = .mock(searchMapPopups: { query in
+                queries.withValue { $0.append(query) }
+                return MapPopupSearchResult(items: [.fixture()], totalCount: 1)
+            })
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.52, longitude: 127.0), byGesture: true))
+        await clock.advance(by: .milliseconds(100))
+        await store.send(.searchTextChanged("성수"))
+        await store.send(.searchSubmitted)
+        await clock.advance(by: .seconds(1))
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+
+        #expect(store.state.appliedKeyword == "성수")
+        #expect(store.state.searchText == "성수")
+        #expect(queries.value.map(\.keyword) == ["성수"])
+        #expect(queries.value.last?.latitude == 37.52)
+    }
+
+    @Test("카드를 보는 동안 손으로 지도를 1km 넘게 옮기고 카드를 닫으면 검색을 풀고 새 위치로 다시 받는다")
+    func dismissingAfterGestureWhileSelectedClearsKeyword() async {
+        let clock = TestClock()
+        let queries = LockIsolated<[MapPopupQuery]>([])
+        var state = Self.loadedState()
+        state.popups = [.fixture()]
+        state.searchedCenter = MapCoordinate(latitude: 37.5, longitude: 127.0)
+        state.appliedKeyword = "딸기"
+        state.searchText = "딸기"
+        let store = TestStore(initialState: state) {
+            MapFeature()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.mapFeatureClient = .mock(searchMapPopups: { query in
+                queries.withValue { $0.append(query) }
+                return MapPopupSearchResult(items: [.fixture()], totalCount: 1)
+            })
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        await store.send(.mapMarkerTapped(.fixture()))
+        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.53, longitude: 127.0), byGesture: true))
+        await clock.advance(by: .seconds(1))
+        #expect(queries.value.isEmpty)
+
+        await store.send(.previewDismissed)
+        await clock.advance(by: .milliseconds(400))
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+
+        #expect(queries.value.count == 1)
+        #expect(queries.value.first?.keyword == nil)
+        #expect(store.state.appliedKeyword == nil)
+    }
+
+    @Test("지도를 옮긴 직후 마커를 고르면 카드를 닫을 때 걸려 있던 재조회를 이어서 한다")
+    func markerTapDuringPendingRefetchCarriesIt() async {
+        let clock = TestClock()
+        let queries = LockIsolated<[MapPopupQuery]>([])
+        var state = Self.loadedState()
+        state.popups = [.fixture()]
+        state.searchedCenter = MapCoordinate(latitude: 37.4, longitude: 127.0)
+        state.appliedKeyword = "딸기"
+        state.searchText = "딸기"
+        let store = TestStore(initialState: state) {
+            MapFeature()
+        } withDependencies: {
+            $0.continuousClock = clock
+            $0.mapFeatureClient = .mock(searchMapPopups: { query in
+                queries.withValue { $0.append(query) }
+                return MapPopupSearchResult(items: [.fixture()], totalCount: 1)
+            })
+        }
+        store.exhaustivity = .off(showSkippedAssertions: false)
+
+        // 목록을 받은 곳에서 약 11km 옮기고, 400ms가 지나기 전에 그 근처 마커(37.5)를 고른다.
+        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.5005, longitude: 127.0), byGesture: true))
+        await clock.advance(by: .milliseconds(100))
+        await store.send(.mapMarkerTapped(.fixture()))
+        await clock.advance(by: .seconds(1))
+        #expect(queries.value.isEmpty)
+
+        await store.send(.previewDismissed)
+        await store.finish()
+        await store.skipReceivedActions(strict: false)
+
+        #expect(queries.value.count == 1)
+        #expect(queries.value.first?.keyword == nil)
+        #expect(store.state.appliedKeyword == nil)
+        #expect(store.state.carriedRefetchByGesture == nil)
     }
 
     @Test("지도를 옮겨 검색을 풀 때, 검색창에 새로 입력하던 글자는 남긴다")
@@ -390,7 +597,7 @@ struct MapFeatureTests {
         }
         store.exhaustivity = .off(showSkippedAssertions: false)
 
-        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.51, longitude: 127.0)))
+        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.51, longitude: 127.0), byGesture: true))
         await clock.advance(by: .milliseconds(400))
         await store.finish()
         await store.skipReceivedActions(strict: false)
@@ -448,7 +655,7 @@ struct MapFeatureTests {
         }
         store.exhaustivity = .off(showSkippedAssertions: false)
 
-        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.51, longitude: 127.0)))
+        await store.send(.mapCenterChanged(MapCoordinate(latitude: 37.51, longitude: 127.0), byGesture: true))
         await clock.advance(by: .milliseconds(400))
         await store.finish()
         await store.skipReceivedActions(strict: false)
@@ -480,6 +687,8 @@ struct MapFeatureTests {
         await store.send(.previewDismissed) {
             $0.selectedPopupUuid = nil
         }
+        // 카드를 닫으면 지금 중심으로 다시 받을지 확인한다. 고른 팝업 가까이라 다시 받지 않는다.
+        await store.receive(\.mapCenterChanged)
     }
 
     @Test("찜 응답을 기다리는 동안 같은 하트를 다시 누르면 요청을 다시 보내지 않는다")

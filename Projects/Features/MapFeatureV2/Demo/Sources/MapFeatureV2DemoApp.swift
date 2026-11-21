@@ -142,9 +142,15 @@ private extension MapFeatureClient {
                 MapCategory(id: $0.offset + 1, name: $0.element.0, colorHex: $0.element.1)
             }
         },
-        searchMapPopups: { _ in
+        searchMapPopups: { query in
             try await Task.sleep(for: .milliseconds(300))
-            return MapPopupSearchResult(items: DemoPopups.all, totalCount: DemoPopups.all.count)
+            // 서버처럼 이름·주소에서 대소문자 구분 없이 검색어를 찾는다.
+            let keyword = query.keyword?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let items = keyword.isEmpty ? DemoPopups.all : DemoPopups.all.filter {
+                $0.name.localizedCaseInsensitiveContains(keyword)
+                    || $0.address.localizedCaseInsensitiveContains(keyword)
+            }
+            return MapPopupSearchResult(items: items, totalCount: items.count)
         },
         addFavorite: { _ in try await Task.sleep(for: .milliseconds(300)) },
         removeFavorite: { _ in try await Task.sleep(for: .milliseconds(300)) }

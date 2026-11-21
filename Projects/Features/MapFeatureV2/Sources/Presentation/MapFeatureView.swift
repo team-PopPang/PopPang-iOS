@@ -104,9 +104,17 @@ public struct MapFeatureView: View {
                     mapProxy.frame(in: .global).maxY
                 } action: { maxY in
                     screenBottomY = maxY
+                    // 처음 열 때 다른 값보다 늦게 재질 수 있다. 재지는 순간 보이는 영역을 맞춘다.
+                    updateMapVisibleInsets()
                 }
-                .onAppear { bottomBarHeightValue = bottomBarHeight }
-                .onChange(of: bottomBarHeight) { _, height in bottomBarHeightValue = height }
+                .onAppear {
+                    bottomBarHeightValue = bottomBarHeight
+                    updateMapVisibleInsets()
+                }
+                .onChange(of: bottomBarHeight) { _, height in
+                    bottomBarHeightValue = height
+                    updateMapVisibleInsets()
+                }
                 .onChange(of: listDetent) { _, _ in updateMapVisibleInsets() }
                 .onChange(of: store.selectedPopupUuid) { _, _ in updateMapVisibleInsets() }
                 .onChange(of: bottomControlsMinY) { _, _ in updateMapVisibleInsets() }
@@ -191,16 +199,27 @@ private extension MapFeatureView {
                 isOnList: listDetent == .large,
                 text: Binding(
                     get: { store.searchText },
-                    set: { store.send(.searchTextChanged($0)) }
+                    set: { text in
+                        // 검색어를 다 지우면 검색 전 목록으로 다시 받는다. 카드를 보는 중이면 검색할 때처럼 카드를 닫고 목록을 연다.
+                        let clearsSearch = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            && store.appliedKeyword != nil
+                        if clearsSearch, store.selectedPopup != nil {
+                            store.send(.previewDismissed)
+                            if listDetent == nil { listDetent = .medium }
+                        }
+                        store.send(.searchTextChanged(text))
+                    }
                 ),
                 onRegionTap: {
                     openMenu = nil
                     isRegionSheetPresented = true
                 },
                 onSubmit: {
-                    // 미리보기 카드를 보는 중에 검색하면 카드를 닫고 목록을 절반으로 올려 결과를 보여 준다.
-                    if store.selectedPopup != nil { store.send(.previewDismissed) }
-                    if listDetent == nil { listDetent = .medium }
+                    // 새로 검색할 때만, 미리보기 카드를 보는 중이면 카드를 닫고 목록을 절반으로 올려 결과를 보여 준다.
+                    if store.willSearchOnSubmit {
+                        if store.selectedPopup != nil { store.send(.previewDismissed) }
+                        if listDetent == nil { listDetent = .medium }
+                    }
                     store.send(.searchSubmitted)
                 }
             )
@@ -339,20 +358,23 @@ private extension MapFeatureView {
             // 카드는 고를 때 미리 반영했다. 카드가 올라오는 애니메이션 동안의 중간 값은 쓰지 않도록 멈춘 뒤 실제 높이를 맞추고 기억한다.
             // 실제 카드 높이가 고를 때 쓴 값과 다르면(처음 고를 때, 글자 크기가 클 때) 그 높이로 고른 팝업을 다시 가운데에 둔다.
             guard bottomControlsMinY > 0 else { return }
-            let inset = screenBottomY - bottomControlsMinY
-            let usedInset = cardBottomInset ?? Self.estimatedCardInset
-            let top = topControlsMaxY
+            let scheduledUuid = store.selectedPopupUuid
             cardInsetWork?.cancel()
             let work = DispatchWorkItem {
-                guard let popup = store.selectedPopup else { return }
+                // 그사이 다른 팝업을 골랐으면 그 팝업의 측정에 맡긴다. 높이는 기다린 뒤의 값으로 다시 잰다.
+                guard let popup = store.selectedPopup, popup.popupUuid == scheduledUuid,
+                      bottomControlsMinY > 0
+                else { return }
+                let inset = screenBottomY - bottomControlsMinY
+                let top = topControlsMaxY
                 cardBottomInset = inset
-                guard abs(inset - usedInset) > 1 else { return }
-                if NaverMapCoordinator.shared.userMovedSinceProgrammaticMove {
-                    // 그사이 사용자가 지도를 직접 움직였으면 되돌리지 않고 여백만 맞춘다.
-                    NaverMapCoordinator.shared.setVisibleInsets(top: top, bottom: inset, recenter: false)
-                } else {
-                    NaverMapCoordinator.shared.moveCamera(to: popup, topInset: top, bottomInset: inset, zoomLevel: nil)
-                }
+                // 지도에 실제로 반영된 여백과 비교한다. 지난번에 사용자가 움직여 반영을 건너뛰었으면 다시 맞춘다.
+                let coordinator = NaverMapCoordinator.shared
+                guard abs(inset - coordinator.contentBottomInset) > 1 || abs(top - coordinator.contentTopInset) > 1 else { return }
+                // 그사이 사용자가 지도를 직접 움직였으면 되돌리지 않는다. 높이만 기억해 다음 이동에 쓴다.
+                // 여기서 여백을 바꾸면 보이는 지도나 카메라 중심 중 하나가 사용자 모르게 바뀐다.
+                guard NaverMapCoordinator.shared.userMovedSinceProgrammaticMove == false else { return }
+                NaverMapCoordinator.shared.moveCamera(to: popup, topInset: top, bottomInset: inset, zoomLevel: nil)
             }
             cardInsetWork = work
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
@@ -430,6 +452,7 @@ private extension MapFeatureView {
     }
 
     func clearCallbacks() {
+        cardInsetWork?.cancel()
         NaverMapCoordinator.shared.onMarkerSelected = nil
         NaverMapCoordinator.shared.onMapTapped = nil
         NaverMapCoordinator.shared.onCenterChanged = nil
@@ -465,7 +488,9 @@ private struct MapListSheet: View {
 
     @ViewBuilder
     private var content: some View {
-        if store.isWaitingForUserLocation || (store.isLoading && store.popups.isEmpty) {
+        // 검색어가 바뀐 조회를 기다리는 동안에도 지난 목록을 검색 결과처럼 보여 주지 않는다.
+        if store.isWaitingForUserLocation
+            || (store.isLoading && (store.popups.isEmpty || store.requestedKeyword != store.resultKeyword)) {
             ProgressView()
                 .frame(maxWidth: .infinity)
                 .padding(.top, 32)
@@ -477,6 +502,10 @@ private struct MapListSheet: View {
                 .frame(maxWidth: .infinity)
                 .padding(.top, 32)
                 .padding(.horizontal, 24)
+        } else if store.popups.isEmpty, store.lastSearchFailed {
+            // 문구 없이 실패한 경우(로그인이 끊김)는 빈 결과 문구를 보여 주지 않는다.
+            Color.clear
+                .frame(maxWidth: .infinity)
         } else if store.popups.isEmpty {
             Group {
                 if store.resultKeyword == nil {

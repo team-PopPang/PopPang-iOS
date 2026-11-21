@@ -51,6 +51,12 @@ public struct MapFeature {
         /// 지도를 옮겼을 때 다시 받을지 잴 기준점. 보통은 목록을 받은 위치(`searchedCenter`)이고,
         /// 팝업을 고르면 지도가 그 팝업으로 가므로 그 위치로 바꾼다. `nil`이면 `searchedCenter`를 쓴다.
         var refetchBaseCenter: MapCoordinate?
+        /// 미리보기 카드를 보는 동안 손으로 지도를 옮겼는지. 카드를 닫고 다시 받을 때 검색을 풀지 정한다.
+        var movedByGestureWhileSelected = false
+        /// 지도를 옮겨 걸어 둔 재조회가 있으면 그 이동이 손이었는지. 없으면 `nil`이다.
+        var pendingRefetchByGesture: Bool?
+        /// 카드를 고를 때 걸려 있던 재조회. 카드가 닫히면 거리와 관계없이 이어서 받는다(손 이동이었는지를 담는다).
+        var carriedRefetchByGesture: Bool?
         /// 지금 진행 중인 목록 조회의 검색어.
         var requestedKeyword: String?
         /// 지금 보이는 목록을 받을 때 쓴 검색어. 빈 목록 문구("검색 결과가 없어요.")를 고르는 데 쓴다.
@@ -86,6 +92,13 @@ public struct MapFeature {
             return selectedDistrict
         }
 
+        /// 지금 검색을 누르면 새로 조회하는지. 같은 검색어(앞선 조회가 성공한 경우)면 조회하지 않는다.
+        var willSearchOnSubmit: Bool {
+            let keyword = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let newKeyword: String? = keyword.isEmpty ? nil : keyword
+            return newKeyword != appliedKeyword || lastSearchFailed
+        }
+
         func query(center: MapCoordinate?) -> MapPopupQuery {
             MapPopupQuery(
                 region: selectedRegion?.region ?? "전체",
@@ -113,11 +126,11 @@ public struct MapFeature {
         /// 키보드 "검색"을 눌렀다.
         case searchSubmitted
         /// 지도가 멈췄다. `byGesture`는 그사이 사용자가 손으로 지도를 움직였는지다.
-        case mapCenterChanged(MapCoordinate, byGesture: Bool = true)
+        case mapCenterChanged(MapCoordinate, byGesture: Bool)
         case userLocationChanged(MapCoordinate)
         case locationPermissionDenied
         /// 지도 이동이 멈추고 잠깐 기다린 뒤 보낸다. 가까운순이면 그 중심으로 다시 받는다.
-        case mapCenterSettled(MapCoordinate, byGesture: Bool = true)
+        case mapCenterSettled(MapCoordinate, byGesture: Bool)
         case mapMarkerTapped(Popup)
         case previewDismissed
         case popupDetailTapped(Popup)
@@ -189,31 +202,46 @@ public struct MapFeature {
                       state.appliedKeyword != nil
                 else { return .none }
                 state.appliedKeyword = nil
+                state.lastSearchFailed = false
                 guard state.regions.isEmpty == false else { return .none }
                 return search(state: &state, center: state.mapCenter ?? state.searchedCenter)
 
             case .searchSubmitted:
                 // 지역 목록을 받기 전에는 조회하지 않는다(다른 자동 조회와 같다). 처음 데이터를 받으면 검색어로 조회한다.
+                // 같은 검색어면 다시 부르지 않는다. 앞선 요청이 실패했으면 같은 검색어로도 다시 부른다.
+                guard state.willSearchOnSubmit else { return .none }
                 let keyword = state.searchText.trimmingCharacters(in: .whitespacesAndNewlines)
                 let newKeyword: String? = keyword.isEmpty ? nil : keyword
-                // 같은 검색어면 다시 부르지 않는다. 앞선 요청이 실패했으면 같은 검색어로도 다시 부른다.
-                guard newKeyword != state.appliedKeyword || state.lastSearchFailed else { return .none }
                 state.appliedKeyword = newKeyword
-                guard state.regions.isEmpty == false else { return .none }
+                // 지역 목록을 받지 못했으면 처음 데이터부터 다시 받는다. 받으면 이 검색어로 조회한다.
+                // 검색 결과를 받기 전까지는 실패로 두어, 처음 데이터가 실패해도 같은 검색어로 다시 누를 수 있게 한다.
+                guard state.regions.isEmpty == false else {
+                    state.lastSearchFailed = true
+                    // 처음 데이터를 받는 중이면 다시 시작하지 않는다. 받으면 정해 둔 검색어로 조회한다.
+                    return state.isLoading ? .none : .send(.onAppear)
+                }
                 return search(state: &state, center: state.mapCenter ?? state.searchedCenter)
 
             case let .mapCenterChanged(coordinate, byGesture):
                 state.mapCenter = coordinate
+                if state.selectedPopupUuid != nil, byGesture {
+                    state.movedByGestureWhileSelected = true
+                }
                 // 예전 지도처럼 가까운순일 때만 옮긴 중심으로 다시 받는다. 짧게 여러 번 움직이면 마지막 위치만 쓴다.
                 // 미리보기 카드를 보는 중(목록에서 고른 팝업으로 지도를 옮긴 경우 포함)에는 다시 받지 않는다.
+                // 목록을 받은 위치와 마지막으로 고른 팝업 위치 중 어느 쪽에서든 가까우면 다시 받지 않는다.
+                let bases = [state.searchedCenter, state.refetchBaseCenter].compactMap { $0 }
                 guard state.sort == .closest,
                       state.selectedPopupUuid == nil,
                       state.regions.isEmpty == false,
-                      ((state.refetchBaseCenter ?? state.searchedCenter)?.distance(to: coordinate) ?? .infinity) > Self.refetchDistance
+                      bases.allSatisfy({ $0.distance(to: coordinate) > Self.refetchDistance })
                 else {
                     // 다시 가까이 돌아왔으면 앞서 걸어 둔 재조회를 취소한다.
+                    state.pendingRefetchByGesture = nil
                     return .cancel(id: CancelID.mapCenter)
                 }
+                // 짧게 이어진 이동은 마지막 이동이 정한다. 손으로 옮기다 내 위치를 누르면 코드 이동으로 보고 검색을 둔다.
+                state.pendingRefetchByGesture = byGesture
                 return .run { [clock] send in
                     try await clock.sleep(for: .milliseconds(400))
                     await send(.mapCenterSettled(coordinate, byGesture: byGesture))
@@ -221,9 +249,11 @@ public struct MapFeature {
                 .cancellable(id: CancelID.mapCenter, cancelInFlight: true)
 
             case let .mapCenterSettled(coordinate, byGesture):
+                state.pendingRefetchByGesture = nil
                 // 기다리는 사이 마커를 고르거나 정렬을 바꿨으면 다시 받지 않는다.
                 guard state.sort == .closest, state.selectedPopupUuid == nil else { return .none }
-                // 손으로 지도를 옮겨 새 위치로 다시 받을 때는 검색을 풀고 그 위치의 전체 목록을 받는다.
+                // 기획 결정(2026-11-21): 손으로 지도를 1km 넘게 옮겨 새 위치로 다시 받을 때는 검색을 풀고 그 위치의 전체 목록을 받는다.
+                // 검색 결과를 보러 가려면 목록에서 팝업을 고르면 된다(코드 이동이라 검색이 남고, 그 팝업 위치가 기준점이 된다).
                 // 내 위치 버튼처럼 코드로 옮긴 경우는 검색을 두고 새 위치에서 같은 검색어로 받는다.
                 if byGesture, let applied = state.appliedKeyword {
                     state.appliedKeyword = nil
@@ -254,6 +284,13 @@ public struct MapFeature {
 
             case .mapMarkerTapped(let popup):
                 state.selectedPopupUuid = popup.popupUuid
+                state.movedByGestureWhileSelected = false
+                // 지도를 옮긴 직후(재조회를 기다리는 중) 마커를 고르면 그 재조회는 카드를 닫을 때 이어서 한다.
+                // 기준점이 팝업으로 바뀌어 닫을 때 거리로는 다시 받을지 알 수 없기 때문이다.
+                if let pending = state.pendingRefetchByGesture {
+                    state.carriedRefetchByGesture = pending
+                    state.pendingRefetchByGesture = nil
+                }
                 // 팝업을 고르면 지도가 그 팝업으로 간다. 그 위치를 다시 받기 기준으로 삼아,
                 // 카드를 닫은 뒤 조금만 움직였는데 고르기 전 위치와 멀다고 다시 받는(검색이 풀리는) 일을 막는다.
                 // 카드를 보는 동안 손으로 옮긴 위치는 기준으로 삼지 않는다.
@@ -263,8 +300,10 @@ public struct MapFeature {
                 return .none
 
             case .previewDismissed:
+                // "목록 보기"처럼 카드가 없을 때도 온다. 그때는 걸어 둔 재조회를 덮지 않게 아무것도 하지 않는다.
+                guard state.selectedPopupUuid != nil else { return .none }
                 state.selectedPopupUuid = nil
-                return .none
+                return refetchAfterCardClosed(state: &state)
 
             case .popupDetailTapped(let popup):
                 return .send(.delegate(.popupSelected(popup)))
@@ -308,26 +347,31 @@ public struct MapFeature {
                 state.popups = result.items
                 state.totalCount = result.totalCount
                 state.searchedCenter = center ?? state.searchedCenter
-                // 팝업을 보는 중이면 그 팝업 위치를 기준으로 둔 채로 두고(늦게 온 응답이 덮지 않게), 아니면 받은 위치로 돌린다.
-                if state.selectedPopupUuid == nil {
-                    state.refetchBaseCenter = nil
-                }
+                // 고른 팝업 기준점은 응답이 아니라 새 조회를 시작할 때 정리한다(`search`). 고르기 전에 보낸 조회가 늦게 와도 지우지 않는다.
                 state.resultKeyword = state.requestedKeyword
                 state.errorMessage = nil
                 state.lastSearchFailed = false
                 if let selected = state.selectedPopupUuid,
                    result.items.contains(where: { $0.popupUuid == selected }) == false {
                     state.selectedPopupUuid = nil
+                    // 고른 팝업이 목록에서 빠져 카드가 사라지면 그 팝업 기준점을 지우고,
+                    // 카드를 닫을 때처럼 카드를 보는 동안 멀리 옮겼는지 확인해 다시 받는다.
+                    state.refetchBaseCenter = nil
+                    return refetchAfterCardClosed(state: &state)
                 }
                 return .none
 
             case .searchFailed(let message):
                 state.popups = []
                 state.totalCount = 0
-                state.selectedPopupUuid = nil
+                state.resultKeyword = state.requestedKeyword
                 state.errorMessage = message
                 state.lastSearchFailed = true
-                return .none
+                // 카드가 사라지면 카드를 닫을 때처럼 카드를 보는 동안 멀리 옮겼는지 확인해 다시 받는다.
+                guard state.selectedPopupUuid != nil else { return .none }
+                state.selectedPopupUuid = nil
+                state.refetchBaseCenter = nil
+                return refetchAfterCardClosed(state: &state)
 
             case .loadingChanged(let isLoading):
                 state.isLoading = isLoading
@@ -391,8 +435,31 @@ private extension MapFeature {
         .cancellable(id: CancelID.categories, cancelInFlight: true)
     }
 
+    /// 미리보기 카드가 닫힌 뒤(닫기, 결과에서 빠짐, 조회 실패) 지도 위치로 다시 받을지 정한다.
+    /// 카드를 보는 동안에는 지도를 옮겨도 다시 받지 않았으므로, 지금 중심이 멀어졌으면 그 위치로 다시 받는다.
+    /// 그사이 손으로 옮겼으면 카드 없이 옮긴 것과 같이 검색을 푼다.
+    /// 카드를 고를 때 걸려 있던 재조회가 있으면 거리와 관계없이 이어서 받는다.
+    func refetchAfterCardClosed(state: inout State) -> Effect<Action> {
+        let movedByGesture = state.movedByGestureWhileSelected
+        let carried = state.carriedRefetchByGesture
+        state.movedByGestureWhileSelected = false
+        state.carriedRefetchByGesture = nil
+        guard let center = state.mapCenter else { return .none }
+        if let carried {
+            return .send(.mapCenterSettled(center, byGesture: carried || movedByGesture))
+        }
+        return .send(.mapCenterChanged(center, byGesture: movedByGesture))
+    }
+
     /// 지금 조건으로 목록을 다시 받는다. 앞선 요청은 취소해 마지막 조건의 응답만 반영한다.
     func search(state: inout State, center: MapCoordinate?) -> Effect<Action> {
+        // 지도를 옮겨 걸어 둔 재조회는 취소한다. 이 조회가 최신 조건이고, 늦게 오는 재조회(손 이동이면 검색을 푼다)가
+        // 방금 바꾼 검색어·필터·정렬을 덮지 않게 한다.
+        state.pendingRefetchByGesture = nil
+        return .merge(.cancel(id: CancelID.mapCenter), startSearch(state: &state, center: center))
+    }
+
+    func startSearch(state: inout State, center: MapCoordinate?) -> Effect<Action> {
         // 가까운순인데 아직 내 위치를 모르면 위치를 받은 뒤에 부른다. 지도 기본 위치(시청)로 부르지 않는다.
         // 앞서 보낸 조회는 취소해 지난 조건의 결과가 늦게 와서 목록을 바꾸지 않게 한다.
         // 위치 권한을 거부했으면 기다리지 않고 최신순으로 받는다.
@@ -400,6 +467,9 @@ private extension MapFeature {
             state.sort = .newest
         }
         if state.sort == .closest, state.hasUserLocation == false {
+            // 위치를 기다리는 동안 목록은 로딩 표시를 보여(`MapFeatureView.content`) 지난 결과가 이 조회의 결과처럼 보이지 않는다.
+            // 기다리는 조회의 검색어는 지금 남겨 둔다(위치를 받으면 같은 조건으로 다시 부른다).
+            state.requestedKeyword = state.appliedKeyword
             state.isWaitingForUserLocation = true
             state.isLoading = false
             return .cancel(id: CancelID.search)
@@ -408,6 +478,11 @@ private extension MapFeature {
         state.isWaitingForUserLocation = false
         state.isLoading = true
         state.errorMessage = nil
+        // 팝업을 보지 않을 때 새로 조회하면 이 조회 위치가 다시 받기 기준이 되므로, 앞서 고른 팝업 기준점은 지운다.
+        // 응답 때 지우면 팝업을 고르기 전에 보낸 조회가 늦게 와서 고른 팝업 기준점을 지운다.
+        if state.selectedPopupUuid == nil {
+            state.refetchBaseCenter = nil
+        }
         let query = state.query(center: center)
         state.requestedKeyword = query.keyword
         let mapFeatureClient = mapFeatureClient
@@ -415,9 +490,8 @@ private extension MapFeature {
         return .run { send in
             do {
                 var result = try await mapFeatureClient.searchMapPopups(query)
-                // 가까운순 결과가 비면 서버에 최신순으로 다시 묻는다(기존 지도와 같은 동작).
-                // 검색 결과가 빈 것은 검색어에 맞는 팝업이 없다는 뜻이라 다시 묻지 않는다.
-                if result.items.isEmpty, query.sort == .closest, query.keyword == nil {
+                // 가까운순 결과가 비면 서버에 최신순으로 다시 묻는다(기존 지도와 같은 동작). 검색어가 있어도 같은 검색어로 묻는다.
+                if result.items.isEmpty, query.sort == .closest {
                     var fallback = query
                     fallback.sort = .newest
                     result = try await mapFeatureClient.searchMapPopups(fallback)
