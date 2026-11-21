@@ -110,12 +110,12 @@ public struct MapFeatureView: View {
                 .onAppear {
                     bottomBarHeightValue = bottomBarHeight
                     // 네이버 로고를 탭바 바로 위 오른쪽에 고정한다.
-                    NaverMapCoordinator.shared.fixedBottomInset = bottomBarHeight
+                    updateLogoBaseInset(bottomBarHeight: bottomBarHeight)
                     updateMapVisibleInsets()
                 }
                 .onChange(of: bottomBarHeight) { _, height in
                     bottomBarHeightValue = height
-                    NaverMapCoordinator.shared.fixedBottomInset = height
+                    updateLogoBaseInset(bottomBarHeight: height)
                     updateMapVisibleInsets()
                 }
                 .onChange(of: listDetent) { _, _ in updateMapVisibleInsets() }
@@ -400,6 +400,14 @@ private extension MapFeatureView {
             // 다 내려오길 기다리지 않고 그 높이를 바로 반영해, 시트와 지도가 같이 움직이게 한다.
             NaverMapCoordinator.shared.setVisibleInsets(top: topControlsMaxY, bottom: height)
         }
+    }
+
+    /// 지도의 고정 아래 여백을 정한다. 네이버 SDK는 로고를 아래 safe area(홈 인디케이터) 위에 두므로,
+    /// 탭바 높이에서 그만큼 빼야 로고가 탭바 바로 위에 붙는다. 탭바 높이를 아직 모르면 정하지 않는다.
+    func updateLogoBaseInset(bottomBarHeight: CGFloat) {
+        guard bottomBarHeight > 0 else { return }
+        let safeBottom = (windowSafeAreaInsets ?? keyWindowSafeAreaInsets)?.bottom ?? 0
+        NaverMapCoordinator.shared.fixedBottomInset = max(0, bottomBarHeight - safeBottom)
     }
 
     /// 목록을 절반(`.medium`)에 놓았을 때의 시트 높이. SheetKit은 절반을 시트를 붙인 화면 높이의 0.5로 정하고,
