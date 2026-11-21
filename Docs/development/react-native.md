@@ -8,7 +8,7 @@
 | --- | --- |
 | RN 저장소 | [`team-PopPang/PopPang-RN`](https://github.com/team-PopPang/PopPang-RN) (우리 팀 저장소, 공개) |
 | 배포 도구 | [Nativepiece](https://github.com/team-PopPang/Nativepiece). RN 앱을 Swift Package 하나로 만들어 RN 저장소에 태그와 GitHub Release로 배포한다. |
-| 앱이 쓰는 버전 | `1.5.0` (제보 화면이 모바일 전용 경로 `/api/v2/mobile`을 쓴다. 제보 관리 화면은 관리자 API라 `/api/v2/admin`을 그대로 쓴다. 두 화면 모두 앱의 Access Token을 쓴다) |
+| 앱이 쓰는 버전 | `1.6.0` (제보 화면과 제보 관리 화면의 카테고리 목록이 모바일 전용 경로 `/api/v2/mobile`을 쓴다. 제보 관리의 목록·상세·승인/반려는 관리자 API라 `/api/v2/admin`을 그대로 쓴다. 두 화면 모두 앱의 Access Token을 쓴다) |
 | 앱에서 쓰는 곳 | `PopPangRNFeature` 모듈의 팝업 제보(`popupRequest`), 팝업 제보 관리(`popupRequestManagement`) 화면 |
 | 받는 방법 | Xcode가 `tuist generate` 뒤 빌드할 때 Swift Package로 받는다. 따로 실행할 스크립트는 없다. |
 
@@ -18,7 +18,7 @@ Swift Package에는 React Native·Hermes·네이티브 모듈 XCFramework(GitHub
 
 | 파일 | 연결 |
 | --- | --- |
-| `Projects/Features/PopPangRNFeature/Project.swift` | `packages: [.remote(url: "https://github.com/team-PopPang/PopPang-RN", requirement: .exact("1.5.0"))]`, `.package(product: "PopPangRN")` |
+| `Projects/Features/PopPangRNFeature/Project.swift` | `packages: [.remote(url: "https://github.com/team-PopPang/PopPang-RN", requirement: .exact("1.6.0"))]`, `.package(product: "PopPangRN")` |
 | `Projects/App/Project.swift` | 같은 `.remote(...)`와 `.package(product: "PopPangRN")` |
 
 - 앱 target과 `PopPangRNFeature` 두 곳에 연결한다. 두 target이 함께 쓰면 Xcode가 product를 동적 framework 하나(`PopPangRN_…_PackageProduct.framework`)로 만들어 코드가 한 번만 들어가고, 패키지의 동적 XCFramework(`React`, `hermesvm`, `ReactNativeDependencies`)도 앱 `Frameworks/`에 들어간다.

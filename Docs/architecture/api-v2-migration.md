@@ -47,9 +47,8 @@ API별 요청·응답·에러 코드는 서버 팀이 만든 마이그레이션 
 | `GET /api/v2/admin/popup-submissions` | RN 제보 관리 화면의 목록 (PopPang-RN) |
 | `GET /api/v2/admin/popup-submissions/{id}` | RN 제보 관리 화면의 상세 (PopPang-RN) |
 | `PUT /api/v2/admin/popup-submissions/{id}` | RN 제보 관리 화면의 승인·반려 (PopPang-RN) |
-| `GET /api/v2/recommend` | RN 제보 관리 화면의 카테고리 목록 (PopPang-RN) |
 
-PopPang-RN은 `1.5.0`부터 제보 화면의 카테고리 조회와 제보 등록을 `GET /api/v2/mobile/recommend`, `POST /api/v2/mobile/popup-submissions`로 불러요. 제보 관리 화면의 카테고리 조회는 아직 `GET /api/v2/recommend`를 써요. v1 `PopupAPI`는 앱에 연결되지 않은 `MapFeatureV1`·`CalendarFeature`(V1)만 써서, 출시 앱은 호출하지 않아요.
+PopPang-RN은 `1.5.0`부터 제보 화면의 카테고리 조회와 제보 등록을 `GET /api/v2/mobile/recommend`, `POST /api/v2/mobile/popup-submissions`로 불러요. `1.6.0`부터는 제보 관리 화면의 카테고리 조회도 `GET /api/v2/mobile/recommend`를 써요. v1 `PopupAPI`는 앱에 연결되지 않은 `MapFeatureV1`·`CalendarFeature`(V1)만 써서, 출시 앱은 호출하지 않아요.
 
 ## 단계
 

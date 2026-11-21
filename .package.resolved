@@ -6,8 +6,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/team-PopPang/PopPang-RN",
       "state" : {
-        "revision" : "20f231ea90a58cc215cba87b851adb1dbd9f9239",
-        "version" : "1.5.0"
+        "revision" : "b13ce988370b82b7889c03b32a2350610b422f63",
+        "version" : "1.6.0"
       }
     }
   ],
