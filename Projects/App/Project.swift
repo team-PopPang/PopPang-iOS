@@ -156,7 +156,7 @@ let project = Project(
                     "DEVELOPMENT_TEAM": "",
                     "DEVELOPMENT_TEAM[sdk=iphoneos*]": "LGX4B4WC66",
                     "CURRENT_PROJECT_VERSION": "1",
-                    "MARKETING_VERSION": "1.1.9",
+                    "MARKETING_VERSION": "1.2.0",
                     "PROVISIONING_PROFILE_SPECIFIER": "",
                     "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]": "match Development kr.co.poppang.PopPang",
                 ],
