@@ -1,13 +1,13 @@
 {
-  "originHash" : "ddc44317e4d4e53ccc7ed0566044f62565483b7b787861a09112669ee3f3bfaf",
+  "originHash" : "89bf9a562239fc01b419876e4e6429a89e63bfd78224c3e8522166b85a59a3ad",
   "pins" : [
     {
       "identity" : "poppang-rn",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/team-PopPang/PopPang-RN",
       "state" : {
-        "revision" : "0c2af9bff5548b3c34ecd522da014c96a89ed6b1",
-        "version" : "1.4.0"
+        "revision" : "b13ce988370b82b7889c03b32a2350610b422f63",
+        "version" : "1.6.0"
       }
     }
   ],

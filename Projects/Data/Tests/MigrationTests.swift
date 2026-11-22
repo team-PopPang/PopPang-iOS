@@ -11,7 +11,7 @@ struct MigrationTests {
         let target = MigrationAPI.fillSignupOs(accessToken: "access")
         let request = try MoyaProvider<MigrationAPI>.defaultEndpointMapping(for: target).urlRequest()
 
-        #expect(request.url?.path == "/api/v2/user/signup-os")
+        #expect(request.url?.path == "/api/v2/mobile/user/signup-os")
         #expect(request.httpMethod == "PATCH")
         #expect(request.value(forHTTPHeaderField: "Authorization") == "Bearer access")
         #expect(try JSONSerialization.jsonObject(with: try #require(request.httpBody)) as? [String: String] == ["signupOs": "IOS"])

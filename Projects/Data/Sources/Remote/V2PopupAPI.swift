@@ -7,27 +7,33 @@ import Moya
 /// 모두 Access Token의 사용자를 기준으로 찜 여부·개인화를 계산하므로 경로에 `userUuid`를 넣지 않는다.
 /// 팝업 목록 응답은 명세상 V1과 같은 감싸지 않은 팝업 배열(`wrapper NONE → NONE`)이라 `APIResponse` 없이 `PopupDTO`로 읽는다.
 public enum V2PopupAPI {
-    /// `GET /api/v2/user/popups/search` (UPOP-11). 검색어는 `q`로 보낸다.
+    /// `GET /api/v2/mobile/user/popups/search` (UPOP-11). 검색어는 `q`로 보낸다.
     case search(q: String)
-    /// `GET /api/v2/user/popups/{popupUuid}`. 상세 화면의 단건 조회다. 감싸지 않은 팝업 하나를 준다.
+    /// `GET /api/v2/mobile/user/popups/{popupUuid}`. 상세 화면의 단건 조회다. 감싸지 않은 팝업 하나를 준다.
     case detail(popupUuid: String)
-    /// `POST /api/v2/popup/{popupUuid}/view` (POP-14). 조회 기록을 남긴다. 응답 본문은 쓰지 않는다.
+    /// `POST /api/v2/mobile/popup/{popupUuid}/view` (POP-14). 조회 기록을 남긴다. 응답 본문은 쓰지 않는다.
     case view(popupUuid: String)
-    /// `GET /api/v2/user/popups/{popupUuid}/related` (UPOP-03). 상세 화면의 관련 팝업이다.
+    /// `GET /api/v2/mobile/user/popups/{popupUuid}/related` (UPOP-03). 상세 화면의 관련 팝업이다.
     case related(popupUuid: String)
-    /// `GET /api/v2/user/popups/filtered/home` (UPOP-04). 지역·구·정렬로 거른 팝업 목록이다. 달력·홈이 쓴다.
+    /// `GET /api/v2/mobile/user/popups/filtered/home` (UPOP-04). 지역·구·정렬로 거른 팝업 목록이다. 달력·홈이 쓴다.
     case filteredHome(region: String, district: String, homeSortStandard: String)
-    /// `GET /api/v2/popup/regions/districts` (POP-10). 지역과 그 안의 구 목록이다.
+    /// `GET /api/v2/mobile/popup/regions/districts` (POP-10). 지역과 그 안의 구 목록이다.
     case regionList
-    /// `GET /api/v2/user/popups/random` (UPOP-07). 운영 중 팝업에서 무작위로 최대 10개, 광고 팝업이 앞에 온다. 홈 추천이 쓴다.
+    /// `GET /api/v2/mobile/user/popups/random` (UPOP-07). 운영 중 팝업에서 무작위로 최대 10개, 광고 팝업이 앞에 온다. 홈 추천이 쓴다.
     case random
-    /// `GET /api/v2/user/popups/upcoming` (UPOP-12). 오픈 예정 팝업이다. `upcomingDays`(기본 10)는 V1처럼 보내지 않는다.
+    /// `GET /api/v2/mobile/user/popups/upcoming` (UPOP-12). 오픈 예정 팝업이다. `upcomingDays`(기본 10)는 V1처럼 보내지 않는다.
     case upcoming
+    /// `GET /api/v2/mobile/user/popups/filtered/map` (UPOP-05). 지도 목록이다. 운영 중 팝업만 준다. 위치는 가까운순(CLOSEST)에 쓴다.
+    /// `recommendIds`는 카테고리 필터다. 하나라도 해당하는 팝업을 받고, 비어 있으면 보내지 않는다(카테고리로 거르지 않음).
+    /// `q`는 팝업 이름·주소 검색어다. 서버가 지역·구·카테고리 안에서 대소문자 구분 없이 찾고, 정렬은 그대로 둔다. 비었거나 공백뿐이면 보내지 않는다.
+    case filteredMap(region: String, district: String, latitude: Double?, longitude: Double?, mapSortStandard: String, recommendIds: [Int], q: String?)
+    /// `GET /api/v2/mobile/recommend/map`. 지도 마커 색을 담은 카테고리 전체다. 감싸지 않은 `{id, recommendName, color}` 배열이고 `id` 오름차순이다.
+    case recommendMap
 }
 
 extension V2PopupAPI: BaseAPI {
     public var apiVersion: APIVersion {
-        .v2
+        .mobile
     }
 
     public var authorization: APIAuthorization {
@@ -52,12 +58,16 @@ extension V2PopupAPI: BaseAPI {
             return "/user/popups/random"
         case .upcoming:
             return "/user/popups/upcoming"
+        case .filteredMap:
+            return "/user/popups/filtered/map"
+        case .recommendMap:
+            return "/recommend/map"
         }
     }
 
     public var method: Moya.Method {
         switch self {
-        case .search, .detail, .related, .filteredHome, .regionList, .random, .upcoming:
+        case .search, .detail, .related, .filteredHome, .regionList, .random, .upcoming, .filteredMap, .recommendMap:
             return .get
         case .view:
             return .post
@@ -77,7 +87,25 @@ extension V2PopupAPI: BaseAPI {
                 ],
                 encoding: URLEncoding.queryString
             )
-        case .detail, .view, .related, .regionList, .random, .upcoming:
+        case let .filteredMap(region, district, latitude, longitude, mapSortStandard, recommendIds, q):
+            var parameters: [String: Any] = [
+                "region": region,
+                "district": district,
+                "mapSortStandard": mapSortStandard,
+            ]
+            // 위치를 모르면 보내지 않는다. 서버는 가까운순에서 좌표 없는 팝업을 뒤로 보낸다.
+            if let latitude, let longitude {
+                parameters["latitude"] = latitude
+                parameters["longitude"] = longitude
+            }
+            if recommendIds.isEmpty == false {
+                parameters["recommendIds"] = recommendIds.map(String.init).joined(separator: ",")
+            }
+            if let keyword = q?.trimmingCharacters(in: .whitespacesAndNewlines), keyword.isEmpty == false {
+                parameters["q"] = keyword
+            }
+            return .requestParameters(parameters: parameters, encoding: URLEncoding.queryString)
+        case .detail, .view, .related, .regionList, .random, .upcoming, .recommendMap:
             return .requestPlain
         }
     }

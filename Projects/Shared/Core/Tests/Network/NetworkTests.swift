@@ -20,6 +20,7 @@ struct NetworkTests {
         #expect(TestAPI.sample.baseURL.absoluteString == "https://poppang.co.kr/api/v1")
         #expect(NetworkConfig.apiURLString == "https://poppang.co.kr/api/v1")
         #expect(NetworkConfig.apiBaseURL(for: .v2).absoluteString == "https://poppang.co.kr/api/v2")
+        #expect(NetworkConfig.apiBaseURL(for: .mobile).absoluteString == "https://poppang.co.kr/api/v2/mobile")
     }
 
     @Test("인증 종류를 정하지 않은 target은 헤더를 보내지 않는다")

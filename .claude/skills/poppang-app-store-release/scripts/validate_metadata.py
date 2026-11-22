@@ -95,6 +95,10 @@ def main() -> int:
     errors: list[str] = []
     warnings: list[str] = []
 
+    if not root.is_dir():
+        print(f"메타데이터 폴더가 없습니다: {root} (먼저 download_store_metadata를 실행하세요)", file=sys.stderr)
+        return 1
+
     locales = sorted(path.parent.name for path in root.glob("*/release_notes.txt"))
     for locale in REQUIRED_RELEASE_NOTE_LOCALES:
         if locale not in locales:

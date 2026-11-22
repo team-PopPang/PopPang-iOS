@@ -9,6 +9,7 @@
 - [스토어 문구와 스크린샷](#스토어-문구와-스크린샷)
 - [빌드 번호](#빌드-번호)
 - [Claude 출시 준비 스킬](#claude-출시-준비-스킬)
+- [문제 해결](#문제-해결)
 - [출시한 뒤](#출시한-뒤)
 
 ## 준비
@@ -111,10 +112,18 @@ Claude Code에서 `/poppang-app-store-release`를 입력하거나 "출시 준비
 | 6~7. 문구 쓰기 | 출시 문구(ko·en-US)와 심사 노트 업데이트 구역(한글·영문)을 쓴다. | |
 | 8. 검사 | `scripts/validate_metadata.py`로 형식을 검사한다. | 최종 문구 |
 | 9. 문구 반영 | `upload_store_metadata`를 실행한다. | |
-| 10. 업로드 | `beta`로 TestFlight에 올린다. | |
+| 10. 업로드 | 같은 버전 빌드가 이미 있으면 쓸지 묻고, `beta`를 세션과 분리해(`nohup`) TestFlight에 올린다. | 업로드 |
 | 11. 보고 | 버전, 빌드 번호, 반영한 문구, PR 링크, 남은 일을 정리한다. | |
 
 심사 제출은 하지 않는다.
+
+## 문제 해결
+
+| 증상 | 원인과 해결 |
+| --- | --- |
+| `A required agreement is missing or has expired` | Apple 약관이 갱신됐다. 계정 소유자가 developer.apple.com > Account와 App Store Connect > 비즈니스(계약)에서 동의한다. 반영까지 몇 분 걸린다. |
+| `beta`가 archive 도중 에러 없이 끝남 | 실행한 터미널이나 에이전트 세션이 끝나 프로세스가 함께 멈췄다. `nohup fastlane beta > beta.log 2>&1 &`처럼 분리해 다시 실행한다. |
+| match 단계의 `MAC verification failed during PKCS12 import` | 키체인 가져오기 재시도 경고다. 뒤이어 `build_app`이 진행되면 무시한다. |
 
 ## 출시한 뒤
 

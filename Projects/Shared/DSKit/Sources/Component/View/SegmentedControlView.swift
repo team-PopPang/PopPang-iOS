@@ -74,6 +74,13 @@ private struct SegmentedPageView: UIViewControllerRepresentable {
         Coordinator(parent: self)
     }
 
+    /// 페이지마다 따로 만든 `UIHostingController`에는 SwiftUI environment가 이어지지 않는다.
+    /// 탭 다시 누름처럼 페이지 안에서 읽어야 하는 값은 여기서 다시 넣어 준다.
+    private func pageViews(context: Context) -> [AnyView] {
+        let reselectCount = context.environment.popPangTabReselectCount
+        return views.map { AnyView($0.environment(\.popPangTabReselectCount, reselectCount)) }
+    }
+
     func makeUIViewController(context: Context) -> UIPageViewController {
         let pageViewController = UIPageViewController(
             transitionStyle: .scroll,
@@ -81,7 +88,7 @@ private struct SegmentedPageView: UIViewControllerRepresentable {
         )
         pageViewController.dataSource = context.coordinator
         pageViewController.delegate = context.coordinator
-        context.coordinator.updateViews(views)
+        context.coordinator.updateViews(pageViews(context: context))
 
         if let initialController = context.coordinator.controller(at: selectedIndex) {
             pageViewController.setViewControllers([initialController], direction: .forward, animated: false)
@@ -92,7 +99,7 @@ private struct SegmentedPageView: UIViewControllerRepresentable {
 
     func updateUIViewController(_ pageViewController: UIPageViewController, context: Context) {
         context.coordinator.parent = self
-        context.coordinator.updateViews(views)
+        context.coordinator.updateViews(pageViews(context: context))
 
         guard !views.isEmpty else {
             pageViewController.setViewControllers([], direction: .forward, animated: false)

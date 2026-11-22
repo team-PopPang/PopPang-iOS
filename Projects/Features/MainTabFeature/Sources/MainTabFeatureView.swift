@@ -5,7 +5,7 @@ import DSKit
 import FavoritesFeature
 import struct HomeFeatureV2.HomeComingPopupDetailDestinationView
 import struct HomeFeatureV2.HomeFeatureView
-import MapFeature
+import MapFeatureV2
 import PopupDetailFeature
 import PopPangRNFeature
 import ProfileFeature
@@ -33,8 +33,8 @@ public struct MainTabFeatureView: View {
                 tabs: MainTab.allCases,
                 style: tabBarStyle,
                 title: \.title,
-                image: { tab, isSelected in
-                    DSKitResource.image(tab.tabImageName(selected: isSelected))
+                image: { tab, _ in
+                    DSKitResource.image(tab.tabImageName)
                 }
             ) { tab in
                 tabView(for: tab)

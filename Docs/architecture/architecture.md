@@ -38,7 +38,8 @@ Projects
 │   ├── MainTabFeature        로그인 이후 탭과 탭 공통 push·fullScreen 소유
 │   ├── HomeFeatureV2         홈 탭 (MainTabFeature가 사용하는 홈)
 │   ├── CalendarFeatureV2     달력 탭 (MainTabFeature가 사용하는 달력, 기존 CalendarFeature는 남겨 둠)
-│   ├── CalendarFeature, MapFeature, FavoritesFeature, ProfileFeature
+│   ├── MapFeatureV2          지도 탭 (MainTabFeature가 사용하는 지도, 기존 지도는 MapFeatureV1로 이름을 바꿔 남겨 둠)
+│   ├── CalendarFeature, MapFeatureV1, FavoritesFeature, ProfileFeature
 │   ├── AuthFeatureV2         로그인·회원가입 화면 (App이 사용하는 인증, 기존 AuthFeature는 남겨 둠)
 │   ├── OnboardingFeatureV2   온보딩 화면 (App이 사용하는 온보딩, 기존 OnboardingFeature는 남겨 둠)
 │   ├── PopupDetailFeature, ReviewFeature, SearchFeature, AlertFeature
@@ -66,12 +67,13 @@ Projects
 | Shared/SheetKit | framework | 없음 | Demo (지도 모양 시트), `SheetKitTests` |
 | Shared/ADKit | framework | Core, GoogleMobileAds, JavaScriptCore | 없음 |
 | Shared/ThirdParty | framework | 외부 패키지만 | 없음 |
-| MainTabFeature | staticFramework | Alert, CalendarFeatureV2, Favorites, HomeFeatureV2, Map, PopupDetail, PopPangRN, Profile, Review, Search Feature, Domain, Core, DSKit | `MainTabFeatureTests` |
+| MainTabFeature | staticFramework | Alert, CalendarFeatureV2, Favorites, HomeFeatureV2, MapFeatureV2, PopupDetail, PopPangRN, Profile, Review, Search Feature, Domain, Core, DSKit | `MainTabFeatureTests` |
 | HomeFeatureV2 | staticFramework | ADKit, Domain, DSKit, Core, ThirdParty | Demo, `HomeFeatureV2Tests` |
 | CalendarFeatureV2 | staticFramework | Domain, Core, DSKit, ThirdParty | Demo, `CalendarFeatureV2Tests` |
 | Alert, Calendar, Favorites, Profile Feature | staticFramework | Domain, Core, DSKit, ThirdParty | Demo |
 | PopupDetailFeature | staticFramework | Domain, Core, DSKit, ThirdParty | Demo, `PopupDetailFeatureTests` |
-| MapFeature | staticFramework | Domain, DSKit, Core, SheetKit, ThirdParty | Demo |
+| MapFeatureV2 | staticFramework | Domain, DSKit, Core, SheetKit, ThirdParty | Demo, `MapFeatureV2Tests` |
+| MapFeatureV1 | staticFramework | Domain, DSKit, Core, SheetKit, ThirdParty | Demo (예전 지도, 앱에서 쓰지 않음) |
 | SearchFeature | staticFramework | Domain, DSKit, Core, ThirdParty | 없음 |
 | Auth, Onboarding, Review Feature | staticFramework | Domain, DSKit, ThirdParty | 없음 (Demo 주석 처리) |
 | OnboardingFeatureV2 | staticFramework | Domain, DSKit, ThirdParty | Demo, `OnboardingFeatureV2Tests` |
@@ -110,6 +112,8 @@ Projects
 
 - `.classic`: 시스템 탭바를 숨기고, 기존 모양을 그대로 옮긴 `PopPangTabBar`를 overlay로 그린다. `TabView`는 바깥에서 더한 safe area를 탭 화면에 전달하지 않으므로, `PopPangTabView`가 탭 화면마다 하단 safe area에 탭바 높이(49pt)를 직접 더한다.
 - `.system`: 시스템 탭바를 쓴다. Xcode 27부터는 `UIDesignRequiresCompatibility`가 무시되어 Liquid Glass로 그려진다.
+
+`.classic`에서 이미 고른 탭을 다시 누르면 `PopPangTabBar`가 알리고, `PopPangTabView`가 그 탭 화면에 전한다. 받고 싶은 탭 화면만 `.onPopPangTabReselect { }`로 동작을 붙인다. SwiftUI 스크롤 뷰를 맨 위로 올리려면 `ScrollView`에 `.scrollsToTopOnPopPangTabReselect()`, 그 안 첫 내용에 `.popPangTabReselectTopAnchor()`를 붙인다. `.system`은 SwiftUI `TabView`가 같은 탭을 다시 골랐을 때 알려 준다는 보장이 없어 지원하지 않는다. 다른 탭으로 바꾼 직후 0.5초 안에 한 번 더 누른 것은 다시 누름으로 보지 않는다. 알림은 SwiftUI environment로 전하므로 `UIHostingController`를 따로 만드는 화면에는 이어지지 않는다. 찜 탭의 `SegmentedControlView`는 페이지에 값을 다시 넣어 준다. 지금은 홈(`listProxy.scrollToTop`), 캘린더, 찜(찜리스트·찜캘린더)이 맨 위로 올리고, 지도와 마이는 아무것도 하지 않는다.
 
 두 모양 모두 safe area를 따르는 탭 화면은 탭바 위까지만 그려진다. 두 모양은 DSKit 데모의 탭바 비교 화면에서 비교한다. 실행 인자 `-tabBarStyle system` 또는 `-tabBarStyle classic`으로 고른다. safe area를 무시하고 그리는 화면만 탭바 높이를 직접 더하고, 이때 `@Environment(\.popPangTabBarStyle)`로 스타일을 확인한다(예: `MapFeatureView`의 목록 보기 버튼).
 

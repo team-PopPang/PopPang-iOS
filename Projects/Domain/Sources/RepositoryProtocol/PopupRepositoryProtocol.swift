@@ -27,6 +27,22 @@ public protocol PopupRepositoryProtocol {
     /// 로그인한 사용자의 오픈 예정 팝업 목록을 반환합니다(V2).
     func getUserUpcomingPopupList() async throws -> [Popup]
 
+    /// 지도에 보일 운영 중 팝업 목록을 반환합니다(V2). 위치는 가까운순에 씁니다.
+    /// `recommendIds`가 비어 있지 않으면 그중 하나라도 해당하는 팝업만 받습니다.
+    /// `keyword`가 있으면 팝업 이름·주소에 검색어가 들어간 팝업만 받습니다. 비었거나 `nil`이면 검색하지 않습니다.
+    func getMapPopupList(
+        region: String,
+        district: String,
+        latitude: Double?,
+        longitude: Double?,
+        mapSortStandard: String,
+        recommendIds: [Int],
+        keyword: String?
+    ) async throws -> [Popup]
+
+    /// 지도 마커 색을 담은 카테고리 전체를 반환합니다(V2).
+    func getMapCategoryList() async throws -> [MapCategory]
+
     /// 회원 팝업 검색 결과를 반환합니다. 찜 여부는 로그인한 사용자 기준입니다.
     func getPersonalSearchPopupList(searchText: String) async throws -> [Popup]
 

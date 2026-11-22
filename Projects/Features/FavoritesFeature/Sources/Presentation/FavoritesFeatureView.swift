@@ -154,7 +154,9 @@ private struct ListGridPopupScrollView: View {
                     }
                 }
             }
+            .popPangTabReselectTopAnchor()
         }
+        .scrollsToTopOnPopPangTabReselect()
     }
 }
 
@@ -226,6 +228,7 @@ private struct FavoriteCalendarView: View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 0) {
                 CustomCalendar(
+                    selectedDate: selectedDate,
                     eventCounts: popupEventCounts,
                     onDateSelected: onDateSelected
                 )
@@ -263,7 +266,9 @@ private struct FavoriteCalendarView: View {
 
                 Spacer()
             }
+            .popPangTabReselectTopAnchor()
         }
+        .scrollsToTopOnPopPangTabReselect()
     }
 }
 
